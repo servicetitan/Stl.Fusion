@@ -14,7 +14,7 @@ public class MatchingComponentFor : ComponentBase
     /// <summary>
     /// Matching type finder (auto-injected).
     /// </summary>
-    [Inject] protected IMatchingTypeFinder MatchingTypeFinder { get; set; } = null!;
+    [Inject] protected IMatchingTypeFinder MatchingTypeFinder { get; init; } = null!;
 
     /// <summary>
     /// Scope to use with <see cref="MatchingTypeFinder"/>.

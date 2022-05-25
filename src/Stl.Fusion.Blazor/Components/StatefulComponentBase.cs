@@ -5,8 +5,9 @@ namespace Stl.Fusion.Blazor;
 
 public abstract class StatefulComponentBase : ComponentBase, IAsyncDisposable, IHandleEvent
 {
-    [Inject] protected IServiceProvider Services { get; set; } = null!;
-    [Inject] protected BlazorCircuitContext BlazorCircuitContext { get; set; } = null!;
+    [Inject] protected IServiceProvider Services { get; init; } = null!;
+    [Inject] protected BlazorCircuitContext BlazorCircuitContext { get; init; } = null!;
+
     protected IStateFactory StateFactory => Services.StateFactory();
     protected bool OwnsState { get; set; } = true;
     protected internal abstract IState UntypedState { get; }

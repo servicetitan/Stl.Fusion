@@ -26,7 +26,7 @@ public static class Computed
         if (newCurrent != null)
             ComputeContext.Current.TryCapture(newCurrent);
         if (oldCurrent == newCurrent)
-            return Disposable.NewClosed(oldCurrent, _ => { });
+            return default;
         CurrentLocal.Value = newCurrent;
         return Disposable.NewClosed(oldCurrent, oldCurrent1 => CurrentLocal.Value = oldCurrent1);
     }

@@ -23,7 +23,7 @@ public abstract class MixedStateComponent<TState, TMutableState> : ComputedState
     {
         // ReSharper disable once ConstantNullCoalescingCondition
         MutableState ??= CreateMutableState();
-        MutableState.Updated += (_, _) => State.Recompute();
+        MutableState.Updated += (_, _) => _ = State.Recompute();
         base.OnInitialized();
     }
 

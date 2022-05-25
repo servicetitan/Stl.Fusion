@@ -32,7 +32,7 @@ public abstract class WorkerBase : ProcessorBase, IWorker
             var flowSuppressor =
                 (MustFlowExecutionContext && !ExecutionContext.IsFlowSuppressed())
                     ? Disposable.NewClosed(ExecutionContext.SuppressFlow(), d => d.Dispose())
-                    : Disposable.NewClosed<AsyncFlowControl>(default, _ => {});
+                    : default;
             using (flowSuppressor) {
                 var startingTask = OnStarting(StopToken);
                 _whenRunning = Task

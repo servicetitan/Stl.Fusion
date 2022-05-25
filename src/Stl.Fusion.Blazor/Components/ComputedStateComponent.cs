@@ -1,17 +1,29 @@
 namespace Stl.Fusion.Blazor;
 
-public abstract class ComputedStateComponent<TState> : StatefulComponentBase<IComputedState<TState>>
+public static class ComputedStateComponent
 {
-    protected ComputedStateComponentOptions Options { get; set; } =
+    public static ComputedStateComponentOptions DefaultOptions { get; set; } =
         ComputedStateComponentOptions.SynchronizeComputeState
         | ComputedStateComponentOptions.RecomputeOnParametersSet;
+
+    // MAUI's Blazor doesn't flow ExecutionContext into InvokeAsync,
+    // so we have to explicitly pass whatever makes sense to pass there.
+    // ComputedStateComponent passes Computed.GetCurrent() value to
+    // make sure the dependencies are captured when ComputeState runs
+    // inside InvokeAsync (w/ SynchronizeComputeState option). 
+    public static bool MustPassComputedIntoSynchronizedComputeState { get; set; } = true; 
+}
+
+public abstract class ComputedStateComponent<TState> : StatefulComponentBase<IComputedState<TState>>
+{
+    protected ComputedStateComponentOptions Options { get; init; } = ComputedStateComponent.DefaultOptions;
 
     // State frequently depends on component parameters, so...
     protected override Task OnParametersSetAsync()
     {
         if (0 == (Options & ComputedStateComponentOptions.RecomputeOnParametersSet))
             return Task.CompletedTask;
-        State.Recompute();
+        _ = State.Recompute();
         return Task.CompletedTask;
     }
 
@@ -25,7 +37,11 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
             // Synchronizes ComputeState call as per:
             // https://github.com/servicetitan/Stl.Fusion/issues/202
             var ts = TaskSource.New<TState>(false);
+            var computed = (IComputed?) null;
+            if (ComputedStateComponent.MustPassComputedIntoSynchronizedComputeState)
+                computed = Computed.GetCurrent();
             await InvokeAsync(async () => {
+                var disposable = computed != null ? Computed.ChangeCurrent(computed) : default;
                 try {
                     ts.TrySetResult(await ComputeState(cancellationToken));
                 }
@@ -34,6 +50,9 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
                 }
                 catch (Exception e) {
                     ts.TrySetException(e);
+                }
+                finally {
+                    disposable.Dispose();
                 }
             });
             return await ts.Task.ConfigureAwait(false);

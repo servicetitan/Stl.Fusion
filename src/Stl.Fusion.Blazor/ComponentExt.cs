@@ -2,7 +2,6 @@ using System.Collections.ObjectModel;
 using System.Linq.Expressions;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.RenderTree;
-using Stl.Internal;
 
 namespace Stl.Fusion.Blazor;
 
