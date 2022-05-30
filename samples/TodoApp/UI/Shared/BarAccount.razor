@@ -1,5 +1,5 @@
-@inject BlazorModeHelper _blazorModeHelper
-@inject ClientAuthHelper _clientAuthHelper
+@inject BlazorModeHelper BlazorModeHelper
+@inject ClientAuthHelper ClientAuthHelper
 
 @{
     var usedAuthSchemas = User.Identities.Select(kv => kv.Key.Schema).ToHashSet();
@@ -20,14 +20,14 @@
     </BarDropdownToggle>
     <BarDropdownMenu>
         @foreach (var (name, displayName) in unusedAuthSchemas) {
-            <BarDropdownItem Color="Color.Primary" Clicked="@(_ => _clientAuthHelper.SignIn(name))">
+            <BarDropdownItem Color="Color.Primary" Clicked="@(_ => ClientAuthHelper.SignIn(name))">
                 <Blazorise.Icon Name="@signInIconName" />
                 @(string.Format(signInOrAddFormat, displayName))
             </BarDropdownItem>
         }
         <AuthorizeView>
             <Authorized>
-                <BarDropdownItem Clicked="@(_ => _clientAuthHelper.SignOut())">
+                <BarDropdownItem Clicked="@(_ => ClientAuthHelper.SignOut())">
                     <Blazorise.Icon Name="FontAwesomeIcons.SignOutAlt" />
                     Sign out
                 </BarDropdownItem>
@@ -52,7 +52,7 @@
     {
         if (firstRender) {
             // GetSchemas requires JS interop, so it can be called only at this point
-            AuthSchemas = await _clientAuthHelper.GetSchemas();
+            AuthSchemas = await ClientAuthHelper.GetSchemas();
             StateHasChanged();
         }
     }

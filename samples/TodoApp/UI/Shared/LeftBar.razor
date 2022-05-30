@@ -18,7 +18,7 @@
 @code {
     private RenderFragment Item(object icon, string title, string href, Match match = Match.All)
     {
-        var target = href.StartsWith("http://") || href.StartsWith("https://") ? Target.Blank : Target.Default;
+        var target = href.StartsWith("http://") || href.StartsWith("https://") ? Target.Blank : Target.Self;
         return
             @<BarItem>
                 <BarLink Title="@title" To="@href" Target="@target" Match="@match">

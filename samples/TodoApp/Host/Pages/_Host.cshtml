@@ -1,20 +1,18 @@
 ﻿@page "/"
 @addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 @namespace Templates.TodoApp.Host.Pages
-@using Microsoft.AspNetCore.Html
 @using Stl.Fusion.Blazor
 @using Templates.TodoApp.UI
 @using Stl.Fusion.Server.Authentication
 @using Stl.Fusion.Server.Controllers
-@inject ServerAuthHelper _serverAuthHelper
-@inject HostSettings _hostSettings
-@inject BlazorCircuitContext _blazorCircuitContext
+@inject ServerAuthHelper ServerAuthHelper
+@inject BlazorCircuitContext BlazorCircuitContext
 @{
-    await _serverAuthHelper.UpdateAuthState(HttpContext);
-    var authSchemas = await _serverAuthHelper.GetSchemas(HttpContext);
-    var sessionId = _serverAuthHelper.Session.Id.Value;
+    await ServerAuthHelper.UpdateAuthState(HttpContext);
+    var authSchemas = await ServerAuthHelper.GetSchemas(HttpContext);
+    var sessionId = ServerAuthHelper.Session.Id.Value;
     var isServerSideBlazor = BlazorModeController.IsServerSideBlazor(HttpContext);
-    var isCloseWindowRequest = _serverAuthHelper.IsCloseWindowRequest(HttpContext, out var closeWindowFlowName);
+    var isCloseWindowRequest = ServerAuthHelper.IsCloseWindowRequest(HttpContext, out var closeWindowFlowName);
     Layout = null;
 }
 
@@ -45,7 +43,7 @@
 } else {
     <app id="app">
         @{
-            using var prerendering = _blazorCircuitContext.Prerendering();
+            using var prerendering = BlazorCircuitContext.Prerendering();
             var prerenderedApp = await Html.RenderComponentAsync<App>(
                 isServerSideBlazor ? RenderMode.ServerPrerendered : RenderMode.WebAssemblyPrerendered,
                 new { SessionId = sessionId });

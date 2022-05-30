@@ -1,10 +1,10 @@
 @inherits ComputedStateComponent<TodoSummary>
-@inject Session _session
-@inject ITodoService _todos
-@inject ILogger<TodoSummaryBadge> _log
+@inject Session Session
+@inject ITodoService Todos
+@inject ILogger<TodoSummaryBadge> Log
 
 @{
-    _log.LogInformation("Rendering");
+    Log.LogInformation("Rendering");
     var summary = State.ValueOrDefault ?? new();
 }
 
@@ -13,5 +13,5 @@
 
 @code {
     protected override Task<TodoSummary> ComputeState(CancellationToken cancellationToken)
-        => _todos.GetSummary(_session, cancellationToken);
+        => Todos.GetSummary(Session, cancellationToken);
 }

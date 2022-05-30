@@ -1,5 +1,5 @@
 @inherits ComputedStateComponent<string>
-@inject IFusionTime _fusionTime
+@inject IFusionTime FusionTime
 
 <span class="@CssClass">@State.Value</span>
 
@@ -12,5 +12,5 @@
     public string None { get; set; } = "n/a";
 
     protected override Task<string> ComputeState(CancellationToken cancellationToken)
-        => Value.HasValue ? _fusionTime.GetMomentsAgo(Value.Value) : Task.FromResult(None);
+        => Value.HasValue ? FusionTime.GetMomentsAgo(Value.Value) : Task.FromResult(None);
 }

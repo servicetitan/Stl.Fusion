@@ -1,14 +1,14 @@
 @using Stl.OS
 @using System.Web
 @using System.Reflection
-@inject BlazorModeHelper _blazorModeHelper
-@inject IJSRuntime _js
+@inject BlazorModeHelper BlazorModeHelper
+@inject IJSRuntime JS
 
 <BarDropdown Class="@CssClass">
     <BarDropdownToggle>@(_isPrerendering ? "Loading..." : GetModeName(_isServerSideBlazor))</BarDropdownToggle>
     <BarDropdownMenu RightAligned="true">
         @foreach(var mode in new [] {true, false}) {
-            <BarDropdownItem Clicked="@(() => _blazorModeHelper.ChangeMode(mode))">@GetModeName(mode)</BarDropdownItem>
+            <BarDropdownItem Clicked="@(() => BlazorModeHelper.ChangeMode(mode))">@GetModeName(mode)</BarDropdownItem>
         }
     </BarDropdownMenu>
 </BarDropdown>
@@ -22,13 +22,13 @@
 
     protected override void OnInitialized()
     {
-        var jsRuntimeType = _js.GetType();
+        var jsRuntimeType = JS.GetType();
         if (jsRuntimeType.Name != "RemoteJSRuntime") {
             _isPrerendering = false;
             return;
         }
         var fClientProxy = jsRuntimeType.GetField("_clientProxy", BindingFlags.Instance | BindingFlags.NonPublic);
-        var clientProxy = fClientProxy?.GetValue(_js);
+        var clientProxy = fClientProxy?.GetValue(JS);
         _isPrerendering = fClientProxy != null && clientProxy == null;
     }
 

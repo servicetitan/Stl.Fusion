@@ -14,7 +14,7 @@ public record TodoSummary(int Count, int DoneCount)
 
 public record AddOrUpdateTodoCommand(Session Session, Todo Item) : ISessionCommand<Todo>
 {
-    public AddOrUpdateTodoCommand() : this(Session.Null, default(Todo)!) { }
+    public AddOrUpdateTodoCommand() : this(Session.Null, default!) { }
 }
 
 public record RemoveTodoCommand(Session Session, string Id) : ISessionCommand<Unit>

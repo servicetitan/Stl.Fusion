@@ -1,5 +1,6 @@
-@inject BlazorModeHelper _blazorModeHelper
-@inject ClientAuthHelper _clientAuthHelper
+@inject BlazorModeHelper BlazorModeHelper
+@inject ClientAuthHelper ClientAuthHelper
+
 @{
     var usedAuthSchemas = User.Identities.Select(kv => kv.Key.Schema).ToHashSet();
     var unusedAuthSchemas = AuthSchemas.Where(p => !usedAuthSchemas.Contains(p.Name)).ToArray();
@@ -13,7 +14,7 @@
             </DropdownToggle>
             <DropdownMenu>
                 @foreach (var (name, displayName) in unusedAuthSchemas) {
-                    <DropdownItem Color="Color.Primary" Clicked="@(_ => _clientAuthHelper.SignIn(name))">
+                    <DropdownItem Color="Color.Primary" Clicked="@(_ => ClientAuthHelper.SignIn(name))">
                         With @displayName
                     </DropdownItem>
                 }
@@ -42,7 +43,7 @@
     {
         if (firstRender) {
             // GetSchemas requires JS interop, so it can be called only at this point
-            AuthSchemas = await _clientAuthHelper.GetSchemas();
+            AuthSchemas = await ClientAuthHelper.GetSchemas();
             StateHasChanged();
         }
     }
