@@ -37,8 +37,10 @@ public static class TaskExt
 
         async Task<T> TaskOrCancellationTokenTask() {
             using var dTask = cancellationToken.ToTask<T>(task.CreationOptions);
-            var winner = await Task.WhenAny(task, dTask.Resource).ConfigureAwait(false);
-            return await winner.ConfigureAwait(false);
+            var winnerTask = await Task.WhenAny(task, dTask.Resource).ConfigureAwait(false);
+#pragma warning disable MA0004
+            return await winnerTask;
+#pragma warning restore MA0004
         }
 
         return TaskOrCancellationTokenTask();
@@ -53,8 +55,10 @@ public static class TaskExt
 
         async Task TaskOrCancellationTokenTask() {
             using var dTask = cancellationToken.ToTask(task.CreationOptions);
-            var winner = await Task.WhenAny(task, dTask.Resource).ConfigureAwait(false);
-            await winner.ConfigureAwait(false);
+            var winnerTask = await Task.WhenAny(task, dTask.Resource).ConfigureAwait(false);
+#pragma warning disable MA0004
+            await winnerTask;
+#pragma warning restore MA0004
         }
 
         return TaskOrCancellationTokenTask();
@@ -74,7 +78,13 @@ public static class TaskExt
         TimeSpan timeout,
         CancellationToken cancellationToken = default)
     {
-        Task? completedTask = null;
+        if (task.IsCompleted) {
+#pragma warning disable MA0004
+            await task;
+#pragma warning restore MA0004
+            return true;
+        }
+
         using var cts = new CancellationTokenSource();
         var ctsToken = cts.Token;
 
@@ -83,15 +93,16 @@ public static class TaskExt
             .ToAsyncDisposableAdapter().ConfigureAwait(false);
 
         var delayTask = clock.Delay(timeout, ctsToken);
-        completedTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
-
-        if (completedTask != task) {
+        var winnerTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
+        if (winnerTask != task) {
             ctsToken.ThrowIfCancellationRequested();
             return false;
         }
 
         cts.Cancel(); // Ensures delayTask is cancelled to avoid memory leak
-        await task.ConfigureAwait(false);
+#pragma warning disable MA0004
+        await task;
+#pragma warning restore MA0004
         return true;
     }
 
@@ -107,7 +118,11 @@ public static class TaskExt
         TimeSpan timeout,
         CancellationToken cancellationToken = default)
     {
-        Task? completedTask = null;
+        if (task.IsCompleted)
+#pragma warning disable MA0004
+            return await task;
+#pragma warning restore MA0004
+
         using var cts = new CancellationTokenSource();
         var ctsToken = cts.Token;
         await using var _ = cancellationToken
@@ -115,15 +130,16 @@ public static class TaskExt
             .ToAsyncDisposableAdapter().ConfigureAwait(false);
 
         var delayTask = clock.Delay(timeout, ctsToken);
-        completedTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
-
-        if (completedTask != task) {
+        var winnerTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
+        if (winnerTask != task) {
             ctsToken.ThrowIfCancellationRequested();
             return Option<T>.None;
         }
 
         cts.Cancel(); // Ensures delayTask is cancelled to avoid memory leak
-        return await task.ConfigureAwait(false);
+#pragma warning disable MA0004
+        return await task;
+#pragma warning restore MA0004
     }
 
     /// <summary>
