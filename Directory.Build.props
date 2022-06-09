@@ -38,6 +38,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Features>strict</Features>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
