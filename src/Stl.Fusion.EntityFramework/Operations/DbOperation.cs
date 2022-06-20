@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 
 namespace Stl.Fusion.EntityFramework.Operations;
 
@@ -38,13 +37,13 @@ public class DbOperation : IOperation
         set => _items.Data = value;
     }
 
-    [NotMapped, JsonIgnore]
+    [NotMapped]
     public object? Command {
         get => _command.Value;
         set => _command.Value = value;
     }
 
-    [NotMapped, JsonIgnore]
+    [NotMapped]
     public OptionSet Items {
         get => _items.Value;
         set => _items.Value = value;

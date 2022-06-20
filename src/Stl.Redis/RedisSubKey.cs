@@ -4,6 +4,7 @@ namespace Stl.Redis;
 
 [Serializable]
 [DataContract]
+[Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
 public readonly struct RedisSubKey
 {
     [DataMember(Order = 0)]
@@ -12,6 +13,7 @@ public readonly struct RedisSubKey
     public RedisChannel.PatternMode PatternMode { get; }
 
     public RedisSubKey(string key) : this(key, RedisChannel.PatternMode.Auto) { }
+    [Newtonsoft.Json.JsonConstructor, JsonConstructor]
     public RedisSubKey(string key, RedisChannel.PatternMode patternMode)
     {
         Key = key;

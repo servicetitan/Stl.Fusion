@@ -1,6 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
-
 namespace Stl.Reflection.Internal;
 
 public class TypeRefJsonConverter : JsonConverter<TypeRef>

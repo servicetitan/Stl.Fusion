@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.ExceptionServices;
-using System.Text.Json.Serialization;
 using Stl.Conversion;
 
 namespace Stl;

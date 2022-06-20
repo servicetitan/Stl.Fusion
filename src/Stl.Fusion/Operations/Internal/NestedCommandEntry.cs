@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace Stl.Fusion.Operations.Internal;
 
 public readonly struct NestedCommandEntry : IEquatable<NestedCommandEntry>

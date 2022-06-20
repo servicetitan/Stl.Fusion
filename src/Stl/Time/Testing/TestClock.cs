@@ -1,5 +1,4 @@
 using System.Reactive.PlatformServices;
-using System.Text.Json.Serialization;
 using Stl.Internal;
 
 namespace Stl.Time.Testing;

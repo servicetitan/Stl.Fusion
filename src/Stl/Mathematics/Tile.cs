@@ -1,9 +1,9 @@
-using System.Text.Json.Serialization;
 using Stl.Mathematics.Internal;
 
 namespace Stl.Mathematics;
 
 [DataContract]
+[Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
 [StructLayout(LayoutKind.Auto)]
 public readonly struct Tile<T>
     where T : notnull
@@ -30,6 +30,13 @@ public readonly struct Tile<T>
     {
         Range = range;
         Layer = layer;
+    }
+
+    [Newtonsoft.Json.JsonConstructor, JsonConstructor]
+    private Tile(Range<T> range)
+    {
+        Range = range;
+        Layer = null!;
     }
 
     public void Deconstruct(out T start, out T end)

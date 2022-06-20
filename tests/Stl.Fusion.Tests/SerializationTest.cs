@@ -38,7 +38,6 @@ public class SerializationTest : TestBase
         AssertEquals(user.PassThroughAllSerializers(Out), user);
     }
 
-
     [Fact]
     public void AuthCommandSerialization()
     {
@@ -49,6 +48,17 @@ public class SerializationTest : TestBase
         new SignOutCommand(session, true).PassThroughAllSerializers().Session.Should().Be(session);
         new EditUserCommand(session, "X").PassThroughAllSerializers().Session.Should().Be(session);
         new SetupSessionCommand(session, "a", "b").PassThroughAllSerializers().Session.Should().Be(session);
+        var sso = new SetSessionOptionsCommand(session, ImmutableOptionSet.Empty.Set(true), 1);
+        sso.Options.Get<bool>().Should().BeTrue();
+        sso.BaseVersion.Should().Be(1);
+    }
+
+    [Fact]
+    public void TestCommandSerialization()
+    {
+        var c = new TestCommand<HasStringId>("1", new("2")).PassThroughAllSerializers();
+        c.Id.Should().Be("1");
+        c.Value!.Id.Should().Be("2");
     }
 
     [Fact]
@@ -61,5 +71,24 @@ public class SerializationTest : TestBase
             Image = new Base64Encoded(new byte[] { 1, 2, 3 })
         };
         s.AssertPassesThroughAllSerializers();
+    }
+
+    [DataContract]
+    public record HasStringId(
+        [property: DataMember] string Id
+        ) : IHasId<string>
+    {
+        public HasStringId() : this("") { }
+    }
+
+    [DataContract]
+    public record TestCommand<TValue>(
+        [property: DataMember] string Id,
+        [property: DataMember] TValue? Value = null
+        ) : ICommand<Unit>
+        where TValue : class, IHasId<string>
+    {
+        public TestCommand(TValue value) : this(value.Id, value) { }
+        public TestCommand() : this("") { }
     }
 }

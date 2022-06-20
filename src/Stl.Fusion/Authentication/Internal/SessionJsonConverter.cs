@@ -1,6 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
-
 namespace Stl.Fusion.Authentication.Internal;
 
 public class SessionJsonConverter : JsonConverter<Session?>

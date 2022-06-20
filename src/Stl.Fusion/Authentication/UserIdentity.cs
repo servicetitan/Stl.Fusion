@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace Stl.Fusion.Authentication;
 
 [DataContract]

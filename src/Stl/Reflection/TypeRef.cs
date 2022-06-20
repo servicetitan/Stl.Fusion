@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Text.Json.Serialization;
 using Stl.Reflection.Internal;
 
 namespace Stl.Reflection;
@@ -8,7 +7,7 @@ namespace Stl.Reflection;
 [JsonConverter(typeof(TypeRefJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(TypeRefNewtonsoftJsonConverter))]
 [TypeConverter(typeof(TypeRefTypeConverter))]
-public struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRef>, ISerializable
+public readonly struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRef>, ISerializable
 {
     public static readonly TypeRef None = default;
 
@@ -17,6 +16,7 @@ public struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRef>, ISerializable
     public string Name => AssemblyQualifiedName.Value.Substring(0, AssemblyQualifiedName.Value.IndexOf(','));
 
     public TypeRef(Type type) : this(type.AssemblyQualifiedName!) { }
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor]
     public TypeRef(Symbol assemblyQualifiedName) => AssemblyQualifiedName = assemblyQualifiedName;
     public TypeRef(string assemblyQualifiedName) => AssemblyQualifiedName = assemblyQualifiedName;
 

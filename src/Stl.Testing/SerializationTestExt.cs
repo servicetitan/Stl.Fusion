@@ -1,4 +1,3 @@
-using System.Text.Json;
 using FluentAssertions;
 using Newtonsoft.Json;
 using Xunit.Abstractions;

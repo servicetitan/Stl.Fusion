@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Security.Claims;
 using System.Security.Principal;
-using System.Text.Json.Serialization;
 using Stl.Versioning;
 
 namespace Stl.Fusion.Authentication;

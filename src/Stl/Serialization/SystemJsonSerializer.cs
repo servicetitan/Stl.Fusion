@@ -1,5 +1,4 @@
 using System.Buffers;
-using System.Text.Json;
 using Stl.Serialization.Internal;
 
 namespace Stl.Serialization;

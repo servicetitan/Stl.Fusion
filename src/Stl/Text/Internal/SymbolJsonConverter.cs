@@ -1,6 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
-
 namespace Stl.Text.Internal;
 
 public class SymbolJsonConverter : JsonConverter<Symbol>

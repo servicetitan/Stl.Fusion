@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework.Authentication;
@@ -45,7 +44,7 @@ public class DbSessionInfo<TDbUserId> : IHasId<string>, IHasVersion<long>
         set => _options.Data = value;
     }
 
-    [NotMapped, JsonIgnore]
+    [NotMapped]
     public ImmutableOptionSet Options {
         get => _options.Value;
         set => _options.Value = value;

@@ -1,5 +1,4 @@
 using System.Linq.Expressions;
-using System.Text.Json.Serialization;
 
 namespace Stl.Fusion.Bridge.Messages;
 

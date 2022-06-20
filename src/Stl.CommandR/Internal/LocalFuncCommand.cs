@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace Stl.CommandR.Internal;
 
 public record LocalFuncCommand<T> : LocalCommand, ICommand<T>

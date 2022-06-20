@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Globalization;
-using System.Text.Json.Serialization;
 using Stl.Time.Internal;
 
 namespace Stl.Time;

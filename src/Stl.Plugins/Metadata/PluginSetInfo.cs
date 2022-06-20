@@ -1,5 +1,3 @@
-using Newtonsoft.Json;
-
 namespace Stl.Plugins.Metadata;
 
 public class PluginSetInfo
@@ -13,7 +11,7 @@ public class PluginSetInfo
     public ImmutableDictionary<TypeRef, ImmutableHashSet<TypeRef>> TypesByBaseType { get; }
     public ImmutableDictionary<TypeRef, ImmutableArray<TypeRef>> TypesByBaseTypeOrderedByDependency { get; }
 
-    [JsonConstructor]
+    [Newtonsoft.Json.JsonConstructor, JsonConstructor]
     public PluginSetInfo(
         ImmutableDictionary<TypeRef, PluginInfo> infoByType,
         ImmutableDictionary<TypeRef, ImmutableHashSet<TypeRef>> typesByBaseType,

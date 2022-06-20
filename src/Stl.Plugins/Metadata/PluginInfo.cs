@@ -1,4 +1,3 @@
-using Newtonsoft.Json;
 using Stl.Plugins.Internal;
 
 namespace Stl.Plugins.Metadata;
@@ -14,7 +13,7 @@ public class PluginInfo
     public ImmutableHashSet<TypeRef> AllDependencies { get; protected set; }
     public int OrderByDependencyIndex { get; protected internal set; }
 
-    [JsonConstructor]
+    [Newtonsoft.Json.JsonConstructor, JsonConstructor]
     public PluginInfo(TypeRef type,
         ImmutableArray<TypeRef> ancestors,
         ImmutableArray<TypeRef> interfaces,

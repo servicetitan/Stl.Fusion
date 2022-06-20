@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Text.Json.Serialization;
 using Stl.Conversion;
 using Stl.Text.Internal;
 

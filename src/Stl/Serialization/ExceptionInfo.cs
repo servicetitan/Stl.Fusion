@@ -1,4 +1,3 @@
-using System.Text.Json.Serialization;
 using Stl.Serialization.Internal;
 
 namespace Stl.Serialization;

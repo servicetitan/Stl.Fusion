@@ -1,6 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
-
 namespace Stl.Serialization.Internal;
 
 public class Base64EncodedJsonConverter : JsonConverter<Base64Encoded>

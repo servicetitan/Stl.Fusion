@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace Stl.Mathematics;
 
 /// <summary>
@@ -8,6 +6,7 @@ namespace Stl.Mathematics;
 /// </summary>
 /// <typeparam name="T">Type of the elements inside the range.</typeparam>
 [DataContract]
+[Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
 [StructLayout(LayoutKind.Sequential)]
 public readonly struct Range<T> : IEquatable<Range<T>>
     where T : notnull

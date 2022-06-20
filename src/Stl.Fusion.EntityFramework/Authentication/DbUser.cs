@@ -25,7 +25,7 @@ public class DbUser<TDbUserId> : IHasId<TDbUserId>, IHasVersion<long>
         set => _claims.Data = value;
     }
 
-    [NotMapped, JsonIgnore]
+    [NotMapped]
     public ImmutableDictionary<string, string> Claims {
         get => _claims.Value;
         set => _claims.Value = value;
