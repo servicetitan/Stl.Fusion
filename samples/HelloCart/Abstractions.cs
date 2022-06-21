@@ -16,6 +16,8 @@ public record EditCommand<TValue>(string Id, TValue? Value = null) : ICommand<Un
     where TValue : class, IHasId<string>
 {
     public EditCommand(TValue value) : this(value.Id, value) { }
+    // Newtonsoft.Json needs this constructor to deserialize this record
+    public EditCommand() : this("") { }
 }
 
 public interface IProductService
