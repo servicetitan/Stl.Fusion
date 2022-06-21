@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework.Internal;
+using Stl.Fusion.EntityFramework.Multitenancy;
 using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework;
@@ -7,7 +8,7 @@ namespace Stl.Fusion.EntityFramework;
 public class DbHub<TDbContext>
     where TDbContext : DbContext
 {
-    private IDbContextFactory<TDbContext>? _dbContextFactory;
+    private IMultitenantDbContextFactory<TDbContext>? _dbContextFactory;
     private MomentClockSet? _clocks;
     private VersionGenerator<long>? _versionGenerator;
     private ILogger? _log;
@@ -15,8 +16,8 @@ public class DbHub<TDbContext>
     protected ILogger Log => _log ??= Services.LogFor(GetType());
     protected IServiceProvider Services { get; }
 
-    public IDbContextFactory<TDbContext> DbContextFactory
-        => _dbContextFactory ??= Services.GetRequiredService<IDbContextFactory<TDbContext>>();
+    public IMultitenantDbContextFactory<TDbContext> DbContextFactory
+        => _dbContextFactory ??= Services.GetRequiredService<IMultitenantDbContextFactory<TDbContext>>();
     public MomentClockSet Clocks
         => _clocks ??= Services.Clocks();
     public VersionGenerator<long> VersionGenerator
@@ -26,11 +27,13 @@ public class DbHub<TDbContext>
         => Services = services;
 
     public TDbContext CreateDbContext(bool readWrite = false)
-        => DbContextFactory.CreateDbContext().ReadWrite(readWrite);
+        => DbContextFactory.CreateDbContext(tenantInfo: null).ReadWrite(readWrite);
+    public TDbContext CreateDbContext(TenantInfo? tenantInfo, bool readWrite = false)
+        => DbContextFactory.CreateDbContext(tenantInfo).ReadWrite(readWrite);
 
     public Task<TDbContext> CreateCommandDbContext(CancellationToken cancellationToken = default)
-        => CreateCommandDbContext(true, cancellationToken);
-    public Task<TDbContext> CreateCommandDbContext(bool readWrite = true, CancellationToken cancellationToken = default)
+        => CreateCommandDbContext(tenantInfo: null, cancellationToken);
+    public Task<TDbContext> CreateCommandDbContext(TenantInfo? tenantInfo, CancellationToken cancellationToken = default)
     {
         if (Computed.IsInvalidating())
             throw Errors.CreateCommandDbContextIsCalledFromInvalidationCode();
@@ -38,6 +41,7 @@ public class DbHub<TDbContext>
         var commandContext = CommandContext.GetCurrent();
         var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>()
             ?? throw new KeyNotFoundException();
-        return operationScope.CreateDbContext(readWrite, cancellationToken);
+        operationScope.TenantInfo = tenantInfo;
+        return operationScope.CreateDbContext(readWrite: true, cancellationToken);
     }
 }

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Stl.Fusion.EntityFramework.Multitenancy;
 using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework;
@@ -24,6 +25,6 @@ public abstract class DbWakeSleepWorkerBase<TDbContext> : WakeSleepWorkerBase
         => DbHub.CreateDbContext(readWrite);
     protected Task<TDbContext> CreateCommandDbContext(CancellationToken cancellationToken = default)
         => DbHub.CreateCommandDbContext(cancellationToken);
-    protected Task<TDbContext> CreateCommandDbContext(bool readWrite = true, CancellationToken cancellationToken = default)
-        => DbHub.CreateCommandDbContext(readWrite, cancellationToken);
+    protected Task<TDbContext> CreateCommandDbContext(TenantInfo? tenantInfo, CancellationToken cancellationToken = default)
+        => DbHub.CreateCommandDbContext(tenantInfo, cancellationToken);
 }

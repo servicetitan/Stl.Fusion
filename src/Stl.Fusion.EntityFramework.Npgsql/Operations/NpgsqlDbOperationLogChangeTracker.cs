@@ -49,7 +49,7 @@ public class NpgsqlDbOperationLogChangeTracker<TDbContext> : DbWakeSleepWorkerBa
                 ReleaseWaitForChanges();
         };
         await dbContext.Database
-            .ExecuteSqlRawAsync($"LISTEN " + Options.ChannelName, cancellationToken)
+            .ExecuteSqlRawAsync($"LISTEN {Options.ChannelName}", cancellationToken)
             .ConfigureAwait(false);
         while (!cancellationToken.IsCancellationRequested)
             await dbConnection.WaitAsync(cancellationToken).ConfigureAwait(false);

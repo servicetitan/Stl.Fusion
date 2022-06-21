@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Stl.Fusion.EntityFramework.Multitenancy;
 using Stl.Locking;
 
 namespace Stl.Fusion.EntityFramework.Npgsql.Operations;
@@ -50,31 +51,33 @@ public class NpgsqlDbOperationLogChangeNotifier<TDbContext> : DbServiceBase<TDbC
         if (!StringComparer.Ordinal.Equals(operation.AgentId, AgentInfo.Id.Value)) // Only local commands require notification
             return Task.CompletedTask;
         var commandContext = CommandContext.Current;
+        var tenantInfo = (TenantInfo?) null;
         if (commandContext != null) { // It's a command
             var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>();
             if (operationScope == null || !operationScope.IsUsed) // But it didn't change anything related to TDbContext
                 return Task.CompletedTask;
+            tenantInfo = operationScope.TenantInfo;
         }
         // If it wasn't command, we pessimistically assume it changed something
         using var _ = ExecutionContextExt.SuppressFlow();
-        Task.Run(Notify);
+        Task.Run(() => Notify(tenantInfo));
         return Task.CompletedTask;
     }
 
     // Protected methods
 
-    protected virtual async Task Notify()
+    protected virtual async Task Notify(TenantInfo? tenantInfo)
     {
 #pragma warning disable MA0074
         var qPayload = AgentInfo.Id.Value.Replace("'", "''");
 #pragma warning restore MA0074
         TDbContext? dbContext = null;
-        while (true) {
+        for (var retryIndex = 1; retryIndex <= Options.RetryCount; retryIndex++) {
             try {
                 using (await AsyncLock.Lock().ConfigureAwait(false)) {
                     if (IsDisposed)
                         return;
-                    dbContext = DbContext ??= CreateDbContext();
+                    dbContext = DbContext ??= CreateDbContext(tenantInfo);
                     await dbContext.Database
                         .ExecuteSqlRawAsync($"NOTIFY {Options.ChannelName}, '{qPayload}'")
                         .ConfigureAwait(false);
@@ -82,7 +85,7 @@ public class NpgsqlDbOperationLogChangeNotifier<TDbContext> : DbServiceBase<TDbC
                 return;
             }
             catch (Exception e) {
-                Log.LogError(e, "Notification failed - retrying");
+                Log.LogError(e, "Notification failed - retrying ({RetryIndex})", retryIndex);
                 DbContext = null;
                 _ = dbContext?.DisposeAsync(); // Doesn't matter if it fails
                 await Clocks.CoarseCpuClock.Delay(Options.RetryDelay).ConfigureAwait(false);

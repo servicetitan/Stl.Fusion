@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Stl.Fusion.EntityFramework.Multitenancy;
 using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework;
@@ -20,8 +21,11 @@ public abstract class DbServiceBase<TDbContext>
 
     protected TDbContext CreateDbContext(bool readWrite = false)
         => DbHub.CreateDbContext(readWrite);
+    protected TDbContext CreateDbContext(TenantInfo? tenantInfo, bool readWrite = false)
+        => DbHub.CreateDbContext(readWrite);
+
     protected Task<TDbContext> CreateCommandDbContext(CancellationToken cancellationToken = default)
         => DbHub.CreateCommandDbContext(cancellationToken);
-    protected Task<TDbContext> CreateCommandDbContext(bool readWrite = true, CancellationToken cancellationToken = default)
-        => DbHub.CreateCommandDbContext(readWrite, cancellationToken);
+    protected Task<TDbContext> CreateCommandDbContext(TenantInfo? tenantInfo, CancellationToken cancellationToken = default)
+        => DbHub.CreateCommandDbContext(tenantInfo, cancellationToken);
 }

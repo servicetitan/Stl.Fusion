@@ -1,7 +1,11 @@
+using Microsoft.EntityFrameworkCore;
+
 namespace Stl.Fusion.EntityFramework.Npgsql.Operations;
 
-public class NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>
+public record NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>
+    where TDbContext : DbContext
 {
-    public string ChannelName { get; set; } = "_Operations";
-    public TimeSpan RetryDelay { get; set; } = TimeSpan.FromSeconds(1);
+    public string ChannelName { get; init; } = "_Operations";
+    public TimeSpan RetryDelay { get; init; } = TimeSpan.FromSeconds(1);
+    public int RetryCount { get; init; } = 10;
 }
