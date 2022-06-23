@@ -6,17 +6,20 @@ namespace Stl.Fusion.Authentication.Internal;
 public partial class InMemoryAuthService : IAuth, IAuthBackend
 {
     private long _nextUserId;
+    
     protected ConcurrentDictionary<Symbol, User> Users { get; } = new();
     protected ConcurrentDictionary<Symbol, SessionInfo> SessionInfos { get; } = new();
     protected ISessionFactory SessionFactory { get; }
-    protected MomentClockSet Clocks { get; }
     protected VersionGenerator<long> VersionGenerator { get; }
+    protected MomentClockSet Clocks { get; }
+    protected ICommander Commander { get; }
 
     public InMemoryAuthService(IServiceProvider services)
     {
         SessionFactory = services.GetRequiredService<ISessionFactory>();
-        Clocks = services.Clocks();
         VersionGenerator = services.VersionGenerator<long>();
+        Clocks = services.Clocks();
+        Commander = services.Commander();
     }
 
     // Command handlers
@@ -94,7 +97,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
         if (delta < TimeSpan.FromSeconds(10))
             return; // We don't want to update this too frequently
         var command = new SetupSessionCommand(session);
-        await SetupSession(command, cancellationToken).ConfigureAwait(false);
+        await Commander.Call(command, cancellationToken).ConfigureAwait(false);
     }
 
     // Compute methods

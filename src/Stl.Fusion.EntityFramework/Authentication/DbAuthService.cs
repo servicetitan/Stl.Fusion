@@ -108,7 +108,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         if (delta < MinUpdatePresencePeriod)
             return; // We don't want to update this too frequently
         var command = new SetupSessionCommand(session);
-        await SetupSession(command, cancellationToken).ConfigureAwait(false);
+        await Commander.Call(command, cancellationToken).ConfigureAwait(false);
     }
 
     // Compute methods

@@ -23,6 +23,7 @@ public class ServerAuthHelper
     protected IAuthBackend AuthBackend { get; }
     protected ISessionResolver SessionResolver { get; }
     protected AuthSchemasCache AuthSchemasCache { get; }
+    protected ICommander Commander { get; }
     protected MomentClockSet Clocks { get; }
 
     public Options Settings { get; }
@@ -34,6 +35,7 @@ public class ServerAuthHelper
         IAuthBackend authBackend,
         ISessionResolver sessionResolver,
         AuthSchemasCache authSchemasCache,
+        ICommander commander,
         MomentClockSet clocks)
     {
         Settings = settings ?? DefaultSettings;
@@ -41,6 +43,7 @@ public class ServerAuthHelper
         AuthBackend = authBackend;
         SessionResolver = sessionResolver;
         AuthSchemasCache = authSchemasCache;
+        Commander = commander;
         Clocks = clocks;
     }
 
@@ -84,7 +87,7 @@ public class ServerAuthHelper
             || sessionInfo.LastSeenAt + Settings.SessionInfoUpdatePeriod < Clocks.SystemClock.Now;
         if (mustUpdateSessionInfo) {
             var setupSessionCommand = new SetupSessionCommand(session, ipAddress, userAgent);
-            sessionInfo = await AuthBackend.SetupSession(setupSessionCommand, cancellationToken).ConfigureAwait(false);
+            sessionInfo = await Commander.Call(setupSessionCommand, cancellationToken).ConfigureAwait(false);
         }
 
         var userId = sessionInfo!.UserId;
@@ -100,11 +103,11 @@ public class ServerAuthHelper
                     return;
                 var (newUser, authenticatedIdentity) = UpsertUser(user, httpUser, httpAuthenticationSchema);
                 var signInCommand = new SignInCommand(session, newUser, authenticatedIdentity);
-                await AuthBackend.SignIn(signInCommand, cancellationToken).ConfigureAwait(false);
+                await Commander.Call(signInCommand, cancellationToken).ConfigureAwait(false);
             }
             else if (userIsAuthenticated && !Settings.KeepSignedIn) {
                 var signOutCommand = new SignOutCommand(session);
-                await Auth.SignOut(signOutCommand, cancellationToken).ConfigureAwait(false);
+                await Commander.Call(signOutCommand, cancellationToken).ConfigureAwait(false);
             }
         }
         finally {

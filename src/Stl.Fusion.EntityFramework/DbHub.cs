@@ -10,8 +10,9 @@ public class DbHub<TDbContext>
     where TDbContext : DbContext
 {
     private IMultitenantDbContextFactory<TDbContext>? _dbContextFactory;
-    private MomentClockSet? _clocks;
     private VersionGenerator<long>? _versionGenerator;
+    private MomentClockSet? _clocks;
+    private ICommander? _commander;
     private ILogger? _log;
 
     protected ILogger Log => _log ??= Services.LogFor(GetType());
@@ -19,10 +20,12 @@ public class DbHub<TDbContext>
 
     public IMultitenantDbContextFactory<TDbContext> DbContextFactory
         => _dbContextFactory ??= Services.GetRequiredService<IMultitenantDbContextFactory<TDbContext>>();
-    public MomentClockSet Clocks
-        => _clocks ??= Services.Clocks();
     public VersionGenerator<long> VersionGenerator
         => _versionGenerator ??= Services.VersionGenerator<long>();
+    public MomentClockSet Clocks
+        => _clocks ??= Services.Clocks();
+    public ICommander Commander
+        => _commander ??= Services.Commander();
 
     public DbHub(IServiceProvider services)
         => Services = services;

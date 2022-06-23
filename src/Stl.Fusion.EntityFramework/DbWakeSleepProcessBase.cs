@@ -14,6 +14,7 @@ public abstract class DbWakeSleepWorkerBase<TDbContext> : WakeSleepWorkerBase
     protected DbHub<TDbContext> DbHub => _dbHub ??= Services.DbHub<TDbContext>();
     protected VersionGenerator<long> VersionGenerator => DbHub.VersionGenerator;
     protected MomentClockSet Clocks => DbHub.Clocks;
+    protected ICommander Commander => DbHub.Commander;
 
     protected DbWakeSleepWorkerBase(IServiceProvider services, CancellationTokenSource? stopTokenSource = null)
         : base(stopTokenSource)
