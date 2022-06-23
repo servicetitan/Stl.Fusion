@@ -4,6 +4,7 @@ using Stl.Fusion.Authentication;
 using Stl.Fusion.EntityFramework.Authentication;
 using Stl.Fusion.EntityFramework.Extensions;
 using Stl.Fusion.EntityFramework.Internal;
+using Stl.Fusion.EntityFramework.Multitenancy;
 using Stl.Fusion.EntityFramework.Operations;
 using Stl.Fusion.Extensions;
 using Stl.IO;
@@ -18,6 +19,7 @@ public readonly struct DbContextBuilder<TDbContext>
     internal DbContextBuilder(IServiceCollection services)
     {
         Services = services;
+        Services.TryAddSingleton<IMultitenantDbContextFactory<TDbContext>, SingleTenantDbContextFactory<TDbContext>>();
         Services.TryAddSingleton<DbHub<TDbContext>>();
     }
 

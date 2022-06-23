@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework.Multitenancy;
+using Stl.Fusion.Multitenancy;
 using Stl.Locking;
 
 namespace Stl.Fusion.EntityFramework.Npgsql.Operations;

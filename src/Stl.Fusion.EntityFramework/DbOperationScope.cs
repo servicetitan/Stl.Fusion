@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.EntityFramework.Multitenancy;
 using Stl.Fusion.EntityFramework.Operations;
+using Stl.Fusion.Multitenancy;
 using Stl.Locking;
 using AsyncLock = Stl.Locking.AsyncLock;
 

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.EntityFramework.Multitenancy;
+using Stl.Fusion.Multitenancy;
 using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework;
