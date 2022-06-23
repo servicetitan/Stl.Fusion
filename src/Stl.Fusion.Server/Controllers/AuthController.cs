@@ -8,20 +8,24 @@ namespace Stl.Fusion.Server.Controllers;
 [ApiController, JsonifyErrors(RewriteErrors = true), UseDefaultSession]
 public class AuthController : ControllerBase, IAuth
 {
-    protected IAuth Auth { get; }
+    private IAuth Auth { get; }
+    private ICommander Commander { get; }
 
-    public AuthController(IAuth auth) 
-        => Auth = auth;
+    public AuthController(IAuth auth, ICommander commander)
+    {
+        Auth = auth;
+        Commander = commander;
+    }
 
     // Commands
 
     [HttpPost]
     public Task SignOut([FromBody] SignOutCommand command, CancellationToken cancellationToken = default)
-        => Auth.SignOut(command, cancellationToken);
+        => Commander.Call(command, cancellationToken);
 
     [HttpPost]
     public Task EditUser(EditUserCommand command, CancellationToken cancellationToken = default)
-        => Auth.EditUser(command, cancellationToken);
+        => Commander.Call(command, cancellationToken);
 
     [HttpPost]
     public Task UpdatePresence([FromBody] Session session, CancellationToken cancellationToken = default)

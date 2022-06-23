@@ -21,20 +21,23 @@ public class CommandServiceInterceptor : InterceptorBase
     protected override Action<IInvocation> CreateHandler<T>(
         IInvocation initialInvocation, MethodDef methodDef)
         => invocation => {
-            if (!(invocation.Proxy is ICommandService)) {
+            var command = (ICommand) invocation.Arguments[0];
+            var cancellationToken = (CancellationToken) invocation.Arguments[^1];
+            var context = CommandContext.Current;
+            if (ReferenceEquals(command, context?.UntypedCommand)) {
+                // We're already inside the ICommander pipeline created for exactly this command
                 invocation.Proceed();
                 return;
             }
-            var command = (ICommand) invocation.Arguments[0];
-            var cancellationToken1 = (CancellationToken) invocation.Arguments[^1];
-            var context = CommandContext.Current;
-            if (ReferenceEquals(command, context?.UntypedCommand))
-                invocation.Proceed();
-            else {
-                invocation.ReturnValue = methodDef.IsAsyncVoidMethod
-                    ? Commander.Call(command, false, cancellationToken1)
-                    : Commander.Call((ICommand<T>) command, false, cancellationToken1);
-            }
+
+            // We're outside the ICommander pipeline, so we either have to block this call...
+            if (!Commander.Options.AllowDirectCommandHandlerCalls)
+                throw Errors.DirectCommandHandlerCallsAreNotAllowed();
+
+            // Or route it via ICommander
+            invocation.ReturnValue = methodDef.IsAsyncVoidMethod
+                ? Commander.Call(command, cancellationToken)
+                : Commander.Call((ICommand<T>)command, cancellationToken);
         };
 
     protected override MethodDef? CreateMethodDef(MethodInfo methodInfo, IInvocation initialInvocation)

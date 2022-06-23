@@ -10,19 +10,23 @@ namespace Templates.TodoApp.Host.Controllers;
 public class TodoController : ControllerBase, ITodoService
 {
     private readonly ITodoService _todos;
+    private readonly ICommander _commander;
 
-    public TodoController(ITodoService todos) 
-        => _todos = todos;
+    public TodoController(ITodoService todos, ICommander commander)
+    {
+        _todos = todos;
+        _commander = commander;
+    }
 
     // Commands
 
     [HttpPost]
     public Task<Todo> AddOrUpdate([FromBody] AddOrUpdateTodoCommand command, CancellationToken cancellationToken = default)
-        => _todos.AddOrUpdate(command, cancellationToken);
+        => _commander.Call(command, cancellationToken);
 
     [HttpPost]
     public Task Remove([FromBody] RemoveTodoCommand command, CancellationToken cancellationToken = default)
-        => _todos.Remove(command, cancellationToken);
+        => _commander.Call(command, cancellationToken);
 
     // Queries
 

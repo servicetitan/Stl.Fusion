@@ -9,28 +9,32 @@ namespace Stl.Fusion.Server.Controllers;
 [ApiController, JsonifyErrors(RewriteErrors = true), UseDefaultSession]
 public class SandboxedKeyValueStoreController : ControllerBase, ISandboxedKeyValueStore
 {
-    protected ISandboxedKeyValueStore Store { get; }
+    private ISandboxedKeyValueStore Store { get; }
+    private ICommander Commander { get; }
 
-    public SandboxedKeyValueStoreController(ISandboxedKeyValueStore store) 
-        => Store = store;
+    public SandboxedKeyValueStoreController(ISandboxedKeyValueStore store, ICommander commander)
+    {
+        Store = store;
+        Commander = commander;
+    }
 
     // Commands
 
     [HttpPost]
     public Task Set([FromBody] SandboxedSetCommand command, CancellationToken cancellationToken = default)
-        => Store.Set(command, cancellationToken);
+        => Commander.Call(command, cancellationToken);
 
     [HttpPost]
     public Task SetMany([FromBody] SandboxedSetManyCommand command, CancellationToken cancellationToken = default)
-        => Store.SetMany(command, cancellationToken);
+        => Commander.Call(command, cancellationToken);
 
     [HttpPost]
     public Task Remove([FromBody] SandboxedRemoveCommand command, CancellationToken cancellationToken = default)
-        => Store.Remove(command, cancellationToken);
+        => Commander.Call(command, cancellationToken);
 
     [HttpPost]
     public Task RemoveMany([FromBody] SandboxedRemoveManyCommand command, CancellationToken cancellationToken = default)
-        => Store.RemoveMany(command, cancellationToken);
+        => Commander.Call(command, cancellationToken);
 
     // Queries
 

@@ -16,7 +16,6 @@ public record RecSumCommand : ICommand<double>
     public static AsyncLocal<object> Tag { get; } = new();
 
     public double[] Arguments { get; set; } = Array.Empty<double>();
-    public bool Isolate { get; set; }
 }
 
 public record RecAddUsersCommand : ICommand<Unit>

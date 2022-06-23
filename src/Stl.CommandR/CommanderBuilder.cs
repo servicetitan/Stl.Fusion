@@ -26,6 +26,7 @@ public readonly struct CommanderBuilder
         Services.Insert(0, AddedTagDescriptor);
 
         // Common services
+        Services.TryAddSingleton<CommanderOptions>();
         Services.TryAddSingleton<ICommander, Commander>();
         Services.TryAddSingleton<ICommandHandlerRegistry>(new CommandHandlerRegistry());
         Services.TryAddSingleton<ICommandHandlerResolver, CommandHandlerResolver>();

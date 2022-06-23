@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <PropertyGroup Label="ASP.NET Core Versions">
-    <AspNetCoreVersion>6.0.5</AspNetCoreVersion>
+    <AspNetCoreVersion>6.0.6</AspNetCoreVersion>
     <AspNetCoreVersion5>5.*</AspNetCoreVersion5>
     <AspNetCoreVersion3>3.*</AspNetCoreVersion3>
   </PropertyGroup>
@@ -89,18 +89,18 @@
     <PackageReference Update="MySqlConnector" Version="$(MySqlVersion)" />
     <PackageReference Update="Npgsql" Version="$(EntityFrameworkCoreVersion)" />
     <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="$(EntityFrameworkCoreNpgsqlVersion)" />
-    <PackageReference Update="Microsoft.Identity.Web" Version="1.24.*" />
+    <PackageReference Update="Microsoft.Identity.Web" Version="1.25.*" />
     <PackageReference Update="MsgPack.Cli" Version="1.0.*" />
     <PackageReference Update="Newtonsoft.Json" Version="13.0.*" />
     <PackageReference Update="Pluralize.NET" Version="1.0.*" />
     <PackageReference Update="Pomelo.EntityFrameworkCore.MySql" Version="$(EntityFrameworkCoreMySqlVersion)" />
     <PackageReference Update="RestEase" Version="1.5.*" />
-    <PackageReference Update="StackExchange.Redis" Version="2.5.*" />
+    <PackageReference Update="StackExchange.Redis" Version="2.6.*" />
     <PackageReference Update="Swashbuckle.AspNetCore" Version="6.3.1" />
     <PackageReference Update="System.Collections.Immutable" Version="6.0.*" />
     <PackageReference Update="System.ComponentModel.Annotations" Version="6.0.*" />
     <PackageReference Update="System.Configuration.ConfigurationManager" Version="6.0.*" />
-    <PackageReference Update="System.CommandLine" Version="2.0.0-beta3.22114.1" />
+    <PackageReference Update="System.CommandLine" Version="2.0.0-beta4.22272.1" />
     <PackageReference Update="System.CommandLine.DragonFruit" Version="0.3.0-alpha.21216.1" />
     <PackageReference Update="System.Drawing.Common" Version="6.0.*" />
     <PackageReference Update="System.IO.Abstractions" Version="17.0.15" />
