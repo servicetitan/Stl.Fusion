@@ -25,13 +25,16 @@ public class CommandServiceInterceptor : InterceptorBase
             var cancellationToken = (CancellationToken) invocation.Arguments[^1];
             var context = CommandContext.Current;
             if (ReferenceEquals(command, context?.UntypedCommand)) {
+                // We're already inside the ICommander pipeline created for exactly this command
                 invocation.Proceed();
                 return;
             }
 
+            // We're outside the ICommander pipeline, so we either have to block this call...
             if (!Commander.Options.AllowDirectCommandHandlerCalls)
                 throw Errors.DirectCommandHandlerCallsAreNotAllowed();
 
+            // Or route it via ICommander
             invocation.ReturnValue = methodDef.IsAsyncVoidMethod
                 ? Commander.Call(command, cancellationToken)
                 : Commander.Call((ICommand<T>)command, cancellationToken);
