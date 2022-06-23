@@ -13,6 +13,7 @@ public abstract class DbServiceBase<TDbContext>
     protected DbHub<TDbContext> DbHub => _dbHub ??= Services.DbHub<TDbContext>();
     protected VersionGenerator<long> VersionGenerator => DbHub.VersionGenerator;
     protected MomentClockSet Clocks => DbHub.Clocks;
+    protected ICommander Commander => DbHub.Commander;
     protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     protected DbServiceBase(IServiceProvider services)

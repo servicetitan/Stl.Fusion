@@ -12,7 +12,7 @@ public abstract class WakeSleepWorkerBase : WorkerBase
         init => _activitySource = value;
     }
 
-    protected WakeSleepWorkerBase(ILogger? log = null) 
+    protected WakeSleepWorkerBase(ILogger? log = null)
         => Log = log ?? NullLogger.Instance;
 
     protected WakeSleepWorkerBase(CancellationTokenSource? stopTokenSource, ILogger? log = null)

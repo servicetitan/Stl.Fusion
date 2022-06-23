@@ -14,14 +14,17 @@ public class ClientAuthHelper
     public IAuth Auth { get; }
     public ISessionResolver SessionResolver { get; }
     public Session Session => SessionResolver.Session;
+    public ICommander Commander { get; }
 
     public ClientAuthHelper(
         IAuth auth,
         ISessionResolver sessionResolver,
+        ICommander commander,
         IJSRuntime jsRuntime)
     {
         Auth = auth;
         SessionResolver = sessionResolver;
+        Commander = commander;
         JSRuntime = jsRuntime;
     }
 
@@ -47,11 +50,8 @@ public class ClientAuthHelper
         => JSRuntime.InvokeVoidAsync("FusionAuth.signOut");
     public virtual Task SignOut(Symbol sessionId, bool force = false)
         => SignOut(new Session(sessionId), force);
-    public virtual async Task SignOut(Session session, bool force = false)
-    {
-        var signOutCommand = new SignOutCommand(session, force);
-        await Task.Run(() => Auth.SignOut(signOutCommand)).ConfigureAwait(false);
-    }
+    public virtual Task SignOut(Session session, bool force = false)
+        => Commander.Call(new SignOutCommand(session, force));
 
     public virtual async Task SignOutEverywhere(bool force = true)
     {
