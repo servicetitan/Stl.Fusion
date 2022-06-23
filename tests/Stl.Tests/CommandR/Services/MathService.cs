@@ -28,13 +28,11 @@ public class MathService : ServiceBase
         var handler = context.ExecutionState.Handlers[^1];
         handler.GetType().Should().Be(typeof(MethodCommandHandler<RecSumCommand>));
         handler.Priority.Should().Be(1);
-        if (command.Isolate) {
-            context.IsOutermost.Should().BeTrue();
+        if (context.IsOutermost) {
             RecSumCommand.Tag.Value.Should().BeNull();
+            RecSumCommand.Tag.Value = new();
         }
         else {
-            if (command.Arguments.Length == 1)
-                context.IsOutermost.Should().BeFalse();
             RecSumCommand.Tag.Value.Should().NotBeNull();
         }
 
@@ -45,11 +43,8 @@ public class MathService : ServiceBase
 
         var tailCommand = new RecSumCommand() {
             Arguments = command.Arguments[1..],
-            Isolate = command.Isolate,
         };
-        var tailSumTask = command.Isolate
-            ? context.Commander.Call(tailCommand, command.Isolate, cancellationToken)
-            : RecSum(tailCommand, cancellationToken);
+        var tailSumTask = RecSum(tailCommand, cancellationToken);
         var tailSum = await tailSumTask.ConfigureAwait(false);
         return command.Arguments[0] + tailSum;
     }

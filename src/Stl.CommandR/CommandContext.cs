@@ -17,7 +17,7 @@ public abstract class CommandContext : ICommandContext, IHasServices, IAsyncDisp
 
     public CommandContext? OuterContext { get; protected set; }
     public CommandContext OutermostContext { get; protected set; } = null!;
-    public bool IsOutermost => OutermostContext == this;
+    public bool IsOutermost => ReferenceEquals(OutermostContext, this);
     public CommandExecutionState ExecutionState { get; set; }
     public IServiceProvider Services => ServiceScope.ServiceProvider;
     public OptionSet Items { get; protected set; } = null!;
@@ -25,12 +25,11 @@ public abstract class CommandContext : ICommandContext, IHasServices, IAsyncDisp
     // Static methods
 
     public static CommandContext New(
-        ICommander commander, ICommand command, bool isolate = false)
+        ICommander commander, ICommand command, bool isOutermost)
     {
-        var previousContext = isolate ? null : Current;
         var tCommandResult = command.GetResultType();
         var tContext = typeof(CommandContext<>).MakeGenericType(tCommandResult);
-        return (CommandContext) tContext.CreateInstance(commander, command, previousContext);
+        return (CommandContext) tContext.CreateInstance(commander, command, isOutermost);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -62,15 +61,14 @@ public abstract class CommandContext : ICommandContext, IHasServices, IAsyncDisp
 
     // IAsyncDisposable
 
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (!IsOutermost)
-            return ValueTaskExt.CompletedTask;
+            return;
 
         if (ServiceScope is IAsyncDisposable ad)
-            return ad.DisposeAsync();
+            await ad.DisposeAsync().ConfigureAwait(false);
         ServiceScope.Dispose();
-        return ValueTaskExt.CompletedTask;
     }
 
     // Instance methods
@@ -110,7 +108,7 @@ public sealed class CommandContext<TResult> : CommandContext
     public override Task UntypedResultTask => ResultTask;
     public override Result<object> UntypedResult => Result.Cast<object>();
 
-    public CommandContext(ICommander commander, ICommand command, CommandContext? previousContext)
+    public CommandContext(ICommander commander, ICommand command, bool isOutermost)
         : base(commander)
     {
         var tResult = typeof(TResult);
@@ -119,15 +117,20 @@ public sealed class CommandContext<TResult> : CommandContext
             throw Errors.CommandResultTypeMismatch(tResult, tCommandResult);
         Command = (ICommand<TResult>) command;
         ResultTask = TaskSource.New<TResult>(true).Task;
-        if (previousContext?.Commander != commander) {
+
+        var outerContext = isOutermost ? null : Current;
+        if (outerContext != null && outerContext.Commander != commander)
+            outerContext = null;
+
+        if (outerContext == null) {
             OuterContext = null;
             OutermostContext = this;
             ServiceScope = Commander.Services.CreateScope();
             Items = new OptionSet();
         }
         else {
-            OuterContext = previousContext;
-            OutermostContext = previousContext!.OutermostContext;
+            OuterContext = outerContext;
+            OutermostContext = outerContext!.OutermostContext;
             ServiceScope = OutermostContext.ServiceScope;
             Items = OutermostContext.Items;
         }

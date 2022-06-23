@@ -5,41 +5,40 @@ public class Commander : ICommander
     protected ILogger Log { get; init; }
     protected ICommandHandlerResolver HandlerResolver { get; }
 
+    public CommanderOptions Options { get; }
     public IServiceProvider Services { get; }
 
     public Commander(
+        CommanderOptions options,
         IServiceProvider services,
         ILogger<Commander>? log = null)
     {
         Log = log ?? NullLogger<Commander>.Instance;
+        Options = options;
         Services = services;
         HandlerResolver = services.GetRequiredService<ICommandHandlerResolver>();
     }
 
-    public Task Run(
-        CommandContext context, bool isolate,
-        CancellationToken cancellationToken = default)
+    public Task Run(CommandContext context, CancellationToken cancellationToken = default)
     {
         // Task.Run is used to call RunInternal to make sure parent
         // task's ExecutionContext won't be "polluted" by temp.
         // change of CommandContext.Current (via AsyncLocal).
-        if (!isolate)
-            return Task.Run(() => RunInternal(context, cancellationToken), default);
-
-        using var _ = ExecutionContextExt.SuppressFlow();
+        using var _ = context.IsOutermost ? ExecutionContextExt.SuppressFlow() : default;
         return Task.Run(() => RunInternal(context, cancellationToken), default);
     }
 
     protected virtual async Task RunInternal(
         CommandContext context, CancellationToken cancellationToken = default)
     {
-        var activationScope = context.Activate();
         try {
             var command = context.UntypedCommand;
             var handlers = HandlerResolver.GetCommandHandlers(command.GetType());
             context.ExecutionState = new CommandExecutionState(handlers);
-            if (handlers!.Count == 0)
+            if (handlers.Count == 0)
                 await OnUnhandledCommand(command, context, cancellationToken).ConfigureAwait(false);
+
+            using var _ = context.Activate();
             await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
         }
         catch (Exception e) {
@@ -47,7 +46,6 @@ public class Commander : ICommander
         }
         finally {
             context.TryComplete(cancellationToken);
-            activationScope.Dispose();
             await context.DisposeAsync().ConfigureAwait(false);
         }
     }

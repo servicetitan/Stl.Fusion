@@ -46,11 +46,13 @@ public class InvalidationInfoProvider
             return null;
         return FinalHandlerServiceTypeCache.GetOrAdd(command.GetType(), (type, arg) => {
             var (self, command1) = arg;
-            var context = CommandContext.New(self.Commander, command1!);
+            var context = CommandContext.New(self.Commander, command1!, isOutermost: true);
             try {
                 var handlers = self.CommandHandlerResolver.GetCommandHandlers(command1.GetType());
                 var finalHandler = handlers.FirstOrDefault(h => !h.IsFilter);
-                var finalHandlerServiceType = finalHandler?.GetHandlerService(command1, context)?.GetType();
+                var finalHandlerServiceType = finalHandler?
+                    .GetHandlerService(command1, context)
+                    .GetType();
                 return finalHandlerServiceType;
             }
             finally {

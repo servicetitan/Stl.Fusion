@@ -12,8 +12,13 @@ namespace Stl.Fusion.Tests.Services;
 public class StringKeyValueController : ControllerBase
 {
     protected IKeyValueService<string> Service { get; }
+    protected ICommander Commander { get; }
 
-    public StringKeyValueController(IKeyValueService<string> service) => Service = service;
+    public StringKeyValueController(IKeyValueService<string> service, ICommander commander)
+    {
+        Service = service;
+        Commander = commander;
+    }
 
     [HttpGet, Publish]
     public Task<Option<string>> TryGet(string? key)
@@ -39,11 +44,13 @@ public class StringKeyValueController : ControllerBase
     public Task Remove(string? key)
         => Service.Remove(key ?? "", this.RequestAborted());
 
+    // Commands
+
     [HttpPost]
     public Task SetCmd([FromBody] IKeyValueService<string>.SetCommand cmd)
-        => Service.SetCmd(cmd, this.RequestAborted());
+        => Commander.Call(cmd, this.RequestAborted());
 
     [HttpPost]
     public virtual Task RemoveCmd([FromBody] IKeyValueService<string>.RemoveCommand cmd)
-        => Service.RemoveCmd(cmd, this.RequestAborted());
+        => Commander.Call(cmd, this.RequestAborted());
 }

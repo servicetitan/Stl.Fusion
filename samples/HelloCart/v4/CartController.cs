@@ -8,15 +8,19 @@ namespace Samples.HelloCart.V4;
 public class CartController : ControllerBase, ICartService
 {
     private readonly ICartService _cartService;
+    private readonly ICommander _commander;
 
-    public CartController(ICartService cartService)
-        => _cartService = cartService;
+    public CartController(ICartService cartService, ICommander commander)
+    {
+        _cartService = cartService;
+        _commander = commander;
+    }
 
     // Commands
 
     [HttpPost]
     public Task Edit([FromBody] EditCommand<Cart> command, CancellationToken cancellationToken = default)
-        => _cartService.Edit(command, cancellationToken);
+        => _commander.Call(command, cancellationToken);
 
     // Queries
 
