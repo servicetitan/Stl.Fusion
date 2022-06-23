@@ -52,8 +52,7 @@ public class CommandRTestBase : TestBase
                 LogFilter));
         });
 
-        var commander = services.AddCommander();
-        services.AddSingleton(_ => new CommanderOptions() {
+        var commander = services.AddCommander(new CommanderOptions() {
             AllowDirectCommandHandlerCalls = AllowDirectCommandHandlerCalls,
         });
         if (CommandHandlerFilter != null)

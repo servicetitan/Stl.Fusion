@@ -13,7 +13,7 @@ public readonly struct CommanderBuilder
     public IServiceCollection Services { get; }
     public ICommandHandlerRegistry Handlers { get; }
 
-    internal CommanderBuilder(IServiceCollection services)
+    internal CommanderBuilder(IServiceCollection services, CommanderOptions? options = null)
     {
         Services = services;
         if (Services.Contains(AddedTagDescriptor)) {
@@ -26,7 +26,7 @@ public readonly struct CommanderBuilder
         Services.Insert(0, AddedTagDescriptor);
 
         // Common services
-        Services.TryAddSingleton<CommanderOptions>();
+        Services.TryAddSingleton(options ?? new());
         Services.TryAddSingleton<ICommander, Commander>();
         Services.TryAddSingleton<ICommandHandlerRegistry>(new CommandHandlerRegistry());
         Services.TryAddSingleton<ICommandHandlerResolver, CommandHandlerResolver>();
@@ -66,6 +66,22 @@ public readonly struct CommanderBuilder
             }
         }
         return null;
+    }
+
+    // Options
+
+    public CommanderBuilder SetOptions(CommanderOptions options)
+    {
+        Services.RemoveAll<CommanderOptions>();
+        Services.AddSingleton(options);
+        return this;
+    }
+
+    public CommanderBuilder SetOptions(Func<IServiceProvider, CommanderOptions> optionsBuilder)
+    {
+        Services.RemoveAll<CommanderOptions>();
+        Services.AddSingleton(optionsBuilder);
+        return this;
     }
 
     // Handler discovery
