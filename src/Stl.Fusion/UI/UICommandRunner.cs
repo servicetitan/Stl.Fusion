@@ -31,7 +31,7 @@ public record UICommandRunner
     public Task<UICommandEvent> Run(
         ICommand command,
         CancellationToken cancellationToken = default)
-        => Run(command, false, cancellationToken);
+        => Run(command, throwOnError: false, cancellationToken);
 
     public virtual async Task<UICommandEvent> Run(
         ICommand command,
