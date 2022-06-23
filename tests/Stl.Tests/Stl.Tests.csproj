@@ -23,6 +23,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" VersionOverride="$(EntityFrameworkCoreVersion3)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" VersionOverride="$(EntityFrameworkCoreVersion3)" />
     <PackageReference Include="System.Drawing.Common" VersionOverride="$(SystemDrawingVersion5)" />
+    <PackageReference Include="Microsoft.CSharp" />
   </ItemGroup>
 
   <ItemGroup>
