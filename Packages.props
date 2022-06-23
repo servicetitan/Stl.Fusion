@@ -95,7 +95,7 @@
     <PackageReference Update="Pluralize.NET" Version="1.0.*" />
     <PackageReference Update="Pomelo.EntityFrameworkCore.MySql" Version="$(EntityFrameworkCoreMySqlVersion)" />
     <PackageReference Update="RestEase" Version="1.5.*" />
-    <PackageReference Update="StackExchange.Redis" Version="2.5.*" />
+    <PackageReference Update="StackExchange.Redis" Version="2.6.*" />
     <PackageReference Update="Swashbuckle.AspNetCore" Version="6.3.1" />
     <PackageReference Update="System.Collections.Immutable" Version="6.0.*" />
     <PackageReference Update="System.ComponentModel.Annotations" Version="6.0.*" />
