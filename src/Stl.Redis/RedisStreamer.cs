@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using StackExchange.Redis;
 using Stl.Redis.Internal;
 
@@ -12,9 +11,11 @@ public sealed class RedisStreamer<T>
         public string AppendPubKeySuffix { get; init; } = "-updates";
         public TimeSpan AppendCheckPeriod { get; init; } = TimeSpan.FromSeconds(1);
         public TimeSpan? AppendSubscribeTimeout { get; init; } = TimeSpan.FromSeconds(5);
+        public TimeSpan? EndedStreamTtl { get; set; } = TimeSpan.FromMinutes(1);
         public IByteSerializer<T> Serializer { get; init; } = ByteSerializer<T>.Default;
         public ITextSerializer<ExceptionInfo> ErrorSerializer { get; init; } = TextSerializer<ExceptionInfo>.Default;
         public IMomentClock Clock { get; init; } = MomentClockSet.Default.CpuClock;
+        public ILogger Log { get; init; } = NullLogger.Instance;
 
         // You normally don't need to modify these
         public string ItemKey { get; init; } = "i";
@@ -100,6 +101,8 @@ public sealed class RedisStreamer<T>
         var appendPub = GetAppendPub();
         var error = (Exception?) null;
         var lastAppendTask = AppendStart(newStreamAnnouncer, appendPub, cancellationToken);
+        await using var _ = AsyncDisposable.New(KeyExpireSilently).ConfigureAwait(false);
+
         try {
             await foreach (var item in source.WithCancellation(cancellationToken).ConfigureAwait(false)) {
                 await lastAppendTask.ConfigureAwait(false);
@@ -174,6 +177,7 @@ public sealed class RedisStreamer<T>
     public Task Remove()
         => RedisDb.Database.KeyDeleteAsync(Key, CommandFlags.FireAndForget);
 
+
     // Protected methods
 
     private RedisPub GetAppendPub()
@@ -183,4 +187,16 @@ public sealed class RedisStreamer<T>
         => RedisDb.GetTaskSub(
             (Key + Settings.AppendPubKeySuffix, RedisChannel.PatternMode.Literal),
             Settings.AppendSubscribeTimeout);
+
+    private async ValueTask KeyExpireSilently()
+    {
+        try {
+            if (Settings.EndedStreamTtl != null)
+                await RedisDb.Database.KeyExpireAsync(Key, Settings.EndedStreamTtl).ConfigureAwait(false);
+        }
+        catch (Exception exc)
+        {
+            Settings.Log.LogError(exc, "Could not set expiration for redis key='{RedisKey}'", Key);
+        }
+    }
 }
