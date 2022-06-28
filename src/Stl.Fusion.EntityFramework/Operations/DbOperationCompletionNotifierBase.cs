@@ -33,7 +33,6 @@ public abstract class DbOperationCompletionNotifierBase<TDbContext, TOptions> : 
         StopToken = StopTokenSource.Token;
     }
 
-
     public void Dispose()
         => _ = DisposeAsync();
 
