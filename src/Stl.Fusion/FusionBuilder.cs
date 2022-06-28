@@ -1,6 +1,7 @@
 using Castle.DynamicProxy.Generators;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Conversion;
+using Stl.Extensibility;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
@@ -42,9 +43,10 @@ public readonly struct FusionBuilder
         Services.TryAddSingleton(ClockBasedVersionGenerator.DefaultCoarse);
 
         // Compute services & their dependencies
-        Services.TryAddSingleton(_ => ComputeServiceProxyGenerator.Default);
+        Services.TryAddSingleton(new ComputeServiceProxyGenerator.Options());
+        Services.TryAddSingleton<IComputeServiceProxyGenerator, ComputeServiceProxyGenerator>();
         Services.TryAddSingleton<IComputedOptionsProvider, ComputedOptionsProvider>();
-        Services.TryAddSingleton(new ArgumentHandlerProvider.Options());
+        Services.TryAddSingleton<IMatchingTypeFinder>(_ => new MatchingTypeFinder());
         Services.TryAddSingleton<IArgumentHandlerProvider, ArgumentHandlerProvider>();
         Services.TryAddSingleton(new ComputeMethodInterceptor.Options());
         Services.TryAddSingleton<ComputeMethodInterceptor>();
@@ -112,33 +114,28 @@ public readonly struct FusionBuilder
 
     // AddPublisher, AddReplicator
 
-    public FusionBuilder AddPublisher(Action<IServiceProvider, Publisher.Options>? configurePublisherOptions = null)
+    public FusionBuilder AddPublisher(
+        Func<IServiceProvider, PublisherOptions>? optionsFactory = null)
     {
         // Publisher
-        Services.TryAddSingleton(c => {
-            var options = new Publisher.Options();
-            configurePublisherOptions?.Invoke(c, options);
-            return options;
-        });
+        Services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
         Services.TryAddSingleton<IPublisher, Publisher>();
         return this;
     }
 
-    public FusionBuilder AddReplicator(Action<IServiceProvider, Replicator.Options>? configureReplicatorOptions = null)
+    public FusionBuilder AddReplicator(
+        Func<IServiceProvider, ReplicatorOptions>? optionsFactory = null)
     {
         // ReplicaServiceProxyGenerator
-        Services.TryAddSingleton(_ => ReplicaServiceProxyGenerator.Default);
+        Services.TryAddSingleton(new ReplicaServiceProxyGenerator.Options());
+        Services.TryAddSingleton<IReplicaServiceProxyGenerator, ReplicaServiceProxyGenerator>();
         Services.TryAddSingleton(new ReplicaMethodInterceptor.Options());
         Services.TryAddSingleton<ReplicaMethodInterceptor>();
         Services.TryAddSingleton(new ReplicaServiceInterceptor.Options());
         Services.TryAddSingleton<ReplicaServiceInterceptor>();
         Services.TryAddSingleton(c => new [] { c.GetRequiredService<ReplicaServiceInterceptor>() });
         // Replicator
-        Services.TryAddSingleton(c => {
-            var options = new Replicator.Options();
-            configureReplicatorOptions?.Invoke(c, options);
-            return options;
-        });
+        Services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
         Services.TryAddSingleton<IReplicator, Replicator>();
         return this;
     }
@@ -200,18 +197,14 @@ public readonly struct FusionBuilder
     // AddOperationReprocessor
 
     public FusionBuilder AddOperationReprocessor(
-        Action<IServiceProvider, OperationReprocessor.Options>? optionsBuilder = null)
-        => AddOperationReprocessor<OperationReprocessor>(optionsBuilder);
+        Func<IServiceProvider, OperationReprocessorOptions>? optionsFactory = null)
+        => AddOperationReprocessor<OperationReprocessor>(optionsFactory);
 
     public FusionBuilder AddOperationReprocessor<TOperationReprocessor>(
-        Action<IServiceProvider, OperationReprocessor.Options>? optionsBuilder = null)
+        Func<IServiceProvider, OperationReprocessorOptions>? optionsFactory = null)
         where TOperationReprocessor : class, IOperationReprocessor
     {
-        Services.TryAddSingleton(c => {
-            var options = new OperationReprocessor.Options();
-            optionsBuilder?.Invoke(c, options);
-            return options;
-        });
+        Services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
         if (!Services.HasService<IOperationReprocessor>()) {
             Services.AddTransient<TOperationReprocessor>();
             Services.AddTransient<IOperationReprocessor>(c => c.GetRequiredService<TOperationReprocessor>());

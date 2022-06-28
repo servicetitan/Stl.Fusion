@@ -281,11 +281,11 @@ public class FusionTestBase : TestBase, IAsyncLifetime
 
             // Fusion client
             var fusionClient = fusion.AddRestEaseClient(
-                (c, options) => {
-                    options.BaseUri = WebHost.ServerUri;
-                    options.IsMessageLoggingEnabled = true;
+                _ => new() {
+                    BaseUri = WebHost.ServerUri,
+                    MessageLogLevel = LogLevel.Information,
                 }).ConfigureHttpClientFactory(
-                (c, name, options) => {
+                (_, name, options) => {
                     var baseUri = WebHost.ServerUri;
                     var apiUri = new Uri($"{baseUri}api/");
                     var isFusionService = !(name ?? "").Contains("Tests");

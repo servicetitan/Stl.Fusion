@@ -9,7 +9,7 @@ public class FileBasedDbOperationLogChangeTracker<TDbContext>
     where TDbContext : DbContext
 {
     public FileBasedDbOperationLogChangeTracker(
-        FileBasedDbOperationLogChangeTrackingOptions<TDbContext>? options, 
+        FileBasedDbOperationLogChangeTrackingOptions<TDbContext> options, 
         IServiceProvider services) 
         : base(options, services) { }
 

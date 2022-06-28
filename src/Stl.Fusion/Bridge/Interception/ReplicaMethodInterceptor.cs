@@ -14,11 +14,11 @@ public class ReplicaMethodInterceptor : ComputeMethodInterceptorBase
     protected readonly VersionGenerator<LTag> VersionGenerator;
 
     public ReplicaMethodInterceptor(
-        Options? options,
+        Options options,
         IServiceProvider services,
         IReplicator replicator,
         ILoggerFactory? loggerFactory = null)
-        : base(options ??= new(), services, loggerFactory)
+        : base(options, services, loggerFactory)
     {
         Replicator = replicator;
         VersionGenerator = options.VersionGenerator ?? services.VersionGenerator<LTag>();

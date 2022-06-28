@@ -43,11 +43,11 @@ public static class DbContextBuilderExt
 
     public static DbContextBuilder<TDbContext> AddRedisOperationLogChangeTracking<TDbContext>(
         this DbContextBuilder<TDbContext> dbContextBuilder,
-        Func<IServiceProvider, RedisOperationLogChangeTrackingOptions<TDbContext>>? configureOptions = null)
+        Func<IServiceProvider, RedisOperationLogChangeTrackingOptions<TDbContext>>? optionsFactory = null)
         where TDbContext : DbContext
     {
         var services = dbContextBuilder.Services;
-        services.TryAddSingleton(c => configureOptions?.Invoke(c) ?? new());
+        services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
 
         // RedisOperationLogChangeTracker<TDbContext>
         services.TryAddSingleton<RedisOperationLogChangeTracker<TDbContext>>();

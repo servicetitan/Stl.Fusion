@@ -4,9 +4,9 @@ namespace Stl.Plugins.Internal;
 
 public class PredefinedPluginFinder : IPluginFinder
 {
-    public class Options
+    public record Options
     {
-        public IEnumerable<Type> PluginTypes { get; set; } = Enumerable.Empty<Type>();
+        public IEnumerable<Type> PluginTypes { get; init; } = Enumerable.Empty<Type>();
     }
 
     public PluginSetInfo FoundPlugins { get; }

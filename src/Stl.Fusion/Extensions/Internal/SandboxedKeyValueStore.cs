@@ -6,7 +6,7 @@ namespace Stl.Fusion.Extensions.Internal;
 
 public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
 {
-    public class Options
+    public record Options
     {
         public string SessionKeyPrefixFormat { get; set; } = "@session/{0}";
         public TimeSpan? SessionKeyExpirationTime { get; set; } = TimeSpan.FromDays(30);
@@ -15,24 +15,17 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
         public IMomentClock? Clock { get; set; } = null;
     }
 
+    protected Options Settings { get; }
     protected IKeyValueStore Store { get; }
     protected IAuth Auth { get; }
     protected IMomentClock Clock { get; }
-    public string SessionKeyPrefixFormat { get; }
-    public TimeSpan? SessionKeyExpirationTime { get; }
-    public string UserKeyPrefixFormat { get; }
-    public TimeSpan? UserKeyExpirationTime { get; }
 
-    public SandboxedKeyValueStore(Options? options, IServiceProvider services)
+    public SandboxedKeyValueStore(Options settings, IServiceProvider services)
     {
-        options ??= new Options();
-        SessionKeyPrefixFormat = options.SessionKeyPrefixFormat;
-        SessionKeyExpirationTime = options.SessionKeyExpirationTime;
-        UserKeyPrefixFormat = options.UserKeyPrefixFormat;
-        UserKeyExpirationTime = options.UserKeyExpirationTime;
+        Settings = settings;
         Store = services.GetRequiredService<IKeyValueStore>();
         Auth = services.GetRequiredService<IAuth>();
-        Clock = options.Clock ?? services.SystemClock();
+        Clock = settings.Clock ?? services.SystemClock();
     }
 
     public virtual async Task Set(SandboxedSetCommand command, CancellationToken cancellationToken = default)
@@ -114,15 +107,15 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
         if (!user.IsAuthenticated)
             return new KeyChecker() {
                 Clock = Clock,
-                Prefix = string.Format(CultureInfo.InvariantCulture, SessionKeyPrefixFormat, session.Id),
-                ExpirationTime = SessionKeyExpirationTime,
+                Prefix = string.Format(CultureInfo.InvariantCulture, Settings.SessionKeyPrefixFormat, session.Id),
+                ExpirationTime = Settings.SessionKeyExpirationTime,
             };
         return new KeyChecker() {
             Clock = Clock,
-            Prefix = string.Format(CultureInfo.InvariantCulture, SessionKeyPrefixFormat, session.Id),
-            ExpirationTime = SessionKeyExpirationTime,
-            SecondaryPrefix = string.Format(CultureInfo.InvariantCulture, UserKeyPrefixFormat, user.Id),
-            SecondaryExpirationTime = UserKeyExpirationTime,
+            Prefix = string.Format(CultureInfo.InvariantCulture, Settings.SessionKeyPrefixFormat, session.Id),
+            ExpirationTime = Settings.SessionKeyExpirationTime,
+            SecondaryPrefix = string.Format(CultureInfo.InvariantCulture, Settings.UserKeyPrefixFormat, user.Id),
+            SecondaryExpirationTime = Settings.UserKeyExpirationTime,
         };
     }
 }

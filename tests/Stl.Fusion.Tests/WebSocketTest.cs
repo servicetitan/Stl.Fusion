@@ -12,7 +12,7 @@ public class WebSocketTest : FusionTestBase
     protected override void ConfigureServices(IServiceCollection services, bool isClient = false)
     {
         // We need the same publisher Id here for DropReconnectTest
-        services.AddSingleton(new Publisher.Options() { Id = "p" });
+        services.AddSingleton(new PublisherOptions() { Id = "p" });
         base.ConfigureServices(services, isClient);
     }
 

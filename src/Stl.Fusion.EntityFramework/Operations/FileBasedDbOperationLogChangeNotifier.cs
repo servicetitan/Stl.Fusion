@@ -8,7 +8,7 @@ public class FileBasedDbOperationLogChangeNotifier<TDbContext>
     where TDbContext : DbContext
 {
     public FileBasedDbOperationLogChangeNotifier(
-        FileBasedDbOperationLogChangeTrackingOptions<TDbContext>? options, 
+        FileBasedDbOperationLogChangeTrackingOptions<TDbContext> options, 
         IServiceProvider services) 
         : base(options, services) { }
 

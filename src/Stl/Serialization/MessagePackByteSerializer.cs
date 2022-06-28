@@ -13,8 +13,9 @@ public class MessagePackByteSerializer : IByteSerializer
 
     public MessagePackSerializerOptions Options { get; }
 
-    public MessagePackByteSerializer(MessagePackSerializerOptions? options = null)
-        => Options = options ?? DefaultOptions;
+    public MessagePackByteSerializer() : this(DefaultOptions) { }
+    public MessagePackByteSerializer(MessagePackSerializerOptions options)
+        => Options = options;
 
     public IByteSerializer<T> ToTyped<T>(Type? serializedType = null)
         => (IByteSerializer<T>) GetTypedSerializer(serializedType ?? typeof(T));

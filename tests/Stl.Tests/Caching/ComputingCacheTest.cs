@@ -44,8 +44,10 @@ public class ComputingCacheTest : TestBase
 
             async ValueTask<char> Compute(char c, CancellationToken ct)
             {
+#pragma warning disable MA0012
                 if (cache == null)
                     throw new NullReferenceException();
+#pragma warning restore MA0012
                 foreach (var d in depSelector(c))
                     // ReSharper disable once AccessToModifiedClosure
                     await cache.Get(d, ct).ConfigureAwait(false);

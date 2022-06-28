@@ -15,12 +15,10 @@ public class SignInController : Controller
         public Action<HttpContext, AuthenticationProperties>? SignOutPropertiesBuilder { get; init; } = null;
     }
 
-    public static Options DefaultSettings { get; set; } = new();
-
     public Options Settings { get; }
 
-    public SignInController(Options? settings)
-        => Settings = settings ?? DefaultSettings;
+    public SignInController(Options settings)
+        => Settings = settings;
 
     [HttpGet("~/signIn")]
     [HttpGet("~/signIn/{scheme}")]

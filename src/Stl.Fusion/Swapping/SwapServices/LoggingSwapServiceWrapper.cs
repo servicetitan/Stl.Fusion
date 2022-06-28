@@ -5,33 +5,25 @@ namespace Stl.Fusion.Swapping;
 public class LoggingSwapServiceWrapper<TSwapService> : ISwapService
     where TSwapService : ISwapService
 {
-    public class Options
+    public record Options
     {
-        public bool IsLoggingEnabled { get; set; } = true;
-        public LogLevel LogLevel { get; set; } = LogLevel.Information;
+        public LogLevel LogLevel { get; init; } = LogLevel.Information;
     }
 
-    protected readonly TSwapService SwapService;
+    protected Options Settings { get; }
+    protected TSwapService SwapService { get; }
     protected ILogger Log { get; }
-    protected bool IsLoggingEnabled { get; set; }
-    protected LogLevel LogLevel { get; set; }
+    protected bool IsLoggingEnabled { get; }
 
     public LoggingSwapServiceWrapper(
-        TSwapService swapService,
-        ILoggerFactory? loggerFactory = null)
-        : this(null, swapService, loggerFactory)
-    { }
-
-    public LoggingSwapServiceWrapper(
-        Options? options,
+        Options settings,
         TSwapService swapService,
         ILoggerFactory? loggerFactory = null)
     {
-        options ??= new();
+        Settings = settings;
         loggerFactory ??= NullLoggerFactory.Instance;
         Log = loggerFactory.CreateLogger(swapService.GetType());
-        LogLevel = options.LogLevel;
-        IsLoggingEnabled = options.IsLoggingEnabled && Log.IsEnabled(LogLevel);
+        IsLoggingEnabled = Log.IsLogging(settings.LogLevel);
 
         SwapService = swapService;
     }
@@ -40,7 +32,7 @@ public class LoggingSwapServiceWrapper<TSwapService> : ISwapService
     {
         var value = await SwapService.Load(key, cancellationToken).ConfigureAwait(false);
         if (IsLoggingEnabled)
-            Log.Log(LogLevel, "[?] {Key} -> {Value}", key, value);
+            Log.Log(Settings.LogLevel, "[?] {Key} -> {Value}", key, value);
         return value;
     }
 
@@ -48,7 +40,7 @@ public class LoggingSwapServiceWrapper<TSwapService> : ISwapService
         CancellationToken cancellationToken = default)
     {
         if (IsLoggingEnabled)
-            Log.Log(LogLevel, "[=] {Key} <- {Value}", key, value);
+            Log.Log(Settings.LogLevel, "[=] {Key} <- {Value}", key, value);
         return SwapService.Store(key, value, cancellationToken);
     }
 }

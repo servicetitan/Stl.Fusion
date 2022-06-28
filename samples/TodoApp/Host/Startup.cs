@@ -101,18 +101,18 @@ public class Startup
         });
 
         // Fusion services
-        services.AddSingleton(new Publisher.Options() { Id = HostSettings.PublisherId });
+        services.AddSingleton(new PublisherOptions() { Id = HostSettings.PublisherId });
         var fusion = services.AddFusion();
         var fusionServer = fusion.AddWebServer();
         var fusionClient = fusion.AddRestEaseClient();
         var fusionAuth = fusion.AddAuthentication().AddServer(
-            signInControllerSettingsFactory: _ => SignInController.DefaultSettings with {
+            signInControllerOptionsFactory: _ => new() {
                 DefaultScheme = MicrosoftAccountDefaults.AuthenticationScheme,
                 SignInPropertiesBuilder = (_, properties) => {
                     properties.IsPersistent = true;
                 }
             },
-            serverAuthHelperSettingsFactory: _ => ServerAuthHelper.DefaultSettings with {
+            serverAuthHelperOptionsFactory: _ => new() {
                 NameClaimKeys = Array.Empty<string>(),
             });
         fusion.AddSandboxedKeyValueStore();

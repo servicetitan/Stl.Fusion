@@ -9,8 +9,21 @@ public class ConcurrentTimerSetTest : TestBase
 {
     public class Timer
     {
+        private readonly object _lock = new();
+        private Moment _firedAt;
+
         public Moment DueAt { get; set; }
-        public Moment FiredAt { get; set; }
+
+        public Moment FiredAt {
+            get {
+                lock (_lock)
+                    return _firedAt;
+            }
+            set {
+                lock (_lock)
+                    _firedAt = value;
+            }
+        }
     }
 
     private int _runnerId;

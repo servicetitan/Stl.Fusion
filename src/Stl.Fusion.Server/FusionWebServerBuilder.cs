@@ -16,7 +16,7 @@ public readonly struct FusionWebServerBuilder
     public IServiceCollection Services => Fusion.Services;
 
     internal FusionWebServerBuilder(FusionBuilder fusion,
-        Action<IServiceProvider, WebSocketServer.Options>? webSocketServerOptionsBuilder)
+        Func<IServiceProvider, WebSocketServer.Options>? webSocketServerOptionsFactory)
     {
         Fusion = fusion;
         if (Services.Contains(AddedTagDescriptor))
@@ -25,11 +25,7 @@ public readonly struct FusionWebServerBuilder
         Services.Insert(0, AddedTagDescriptor);
 
         Fusion.AddPublisher();
-        Services.TryAddSingleton(c => {
-            var options = new WebSocketServer.Options();
-            webSocketServerOptionsBuilder?.Invoke(c, options);
-            return options;
-        });
+        Services.TryAddSingleton(c => webSocketServerOptionsFactory?.Invoke(c) ?? new());
         Services.TryAddSingleton<WebSocketServer>();
 
         var mvcBuilder = Services.AddMvcCore(options => {
@@ -60,9 +56,9 @@ public readonly struct FusionWebServerBuilder
     }
 
     public FusionWebServerBuilder AddControllers(
-        Func<IServiceProvider, SignInController.Options>? signInControllerSettingsFactory = null)
+        Func<IServiceProvider, SignInController.Options>? signInControllerOptionsFactory = null)
     {
-        Services.TryAddSingleton(c => signInControllerSettingsFactory?.Invoke(c) ?? SignInController.DefaultSettings);
+        Services.TryAddSingleton(c => signInControllerOptionsFactory?.Invoke(c) ?? new());
         Services.AddControllers()
             .AddApplicationPart(typeof(AuthController).Assembly);
         return this;

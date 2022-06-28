@@ -12,7 +12,7 @@ public readonly struct FusionWebServerBuilder
     public IServiceCollection Services => Fusion.Services;
 
     internal FusionWebServerBuilder(FusionBuilder fusion,
-        Action<IServiceProvider, WebSocketServer.Options>? webSocketServerOptionsBuilder)
+        Func<IServiceProvider, WebSocketServer.Options>? webSocketServerOptionsFactory)
     {
         Fusion = fusion;
         if (Services.Contains(AddedTagDescriptor))
@@ -21,11 +21,7 @@ public readonly struct FusionWebServerBuilder
         Services.Insert(0, AddedTagDescriptor);
 
         Fusion.AddPublisher();
-        Services.TryAddSingleton(c => {
-            var options = new WebSocketServer.Options();
-            webSocketServerOptionsBuilder?.Invoke(c, options);
-            return options;
-        });
+        Services.TryAddSingleton(c => webSocketServerOptionsFactory?.Invoke(c) ?? new());
         Services.TryAddSingleton<WebSocketServer>();
 
         // TODO: configure model binder providers

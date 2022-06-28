@@ -48,7 +48,7 @@ public class RedisStreamerTest : RedisTestBase
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(0.4));
         var writeTask = streamer.Write(Delays(new[] {0.1, 0.2, 0.3, 0.1}), cts.Token);
 
-        await Assert.ThrowsAsync<OperationCanceledException>(async () => {
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => {
             await streamer.Read().ToArrayAsync();
         });
         (await streamer.Read().Take(2).CountAsync()).Should().Be(2);
@@ -88,7 +88,9 @@ public class RedisStreamerTest : RedisTestBase
         yield break;
     }
 
-    async IAsyncEnumerable<int> Delays(IEnumerable<double> delays, CancellationToken cancellationToken = default)
+    async IAsyncEnumerable<int> Delays(
+        IEnumerable<double> delays, 
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var index = 0;
         foreach (var d in delays) {

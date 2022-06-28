@@ -5,10 +5,11 @@ public sealed class TimerSet<TTimer> : WorkerBase
 {
     public record Options
     {
-        private readonly TimeSpan _quanta = TimeSpan.FromSeconds(1);
-
         // ReSharper disable once StaticMemberInGenericType
         public static TimeSpan MinQuanta { get; } = TimeSpan.FromMilliseconds(10);
+        public static Options Default { get; } = new();
+
+        private readonly TimeSpan _quanta = TimeSpan.FromSeconds(1);
 
         public TimeSpan Quanta {
             get => _quanta;
@@ -32,9 +33,9 @@ public sealed class TimerSet<TTimer> : WorkerBase
         }
     }
 
-    public TimerSet(Options? options = null, Action<TTimer>? fireHandler = null)
+    public TimerSet(Action<TTimer>? fireHandler = null) : this(Options.Default, fireHandler) { }
+    public TimerSet(Options options, Action<TTimer>? fireHandler = null)
     {
-        options ??= new();
         Quanta = options.Quanta;
         Clock = options.Clock;
         _fireHandler = fireHandler;

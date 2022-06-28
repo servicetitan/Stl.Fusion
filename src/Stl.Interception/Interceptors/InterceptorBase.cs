@@ -32,7 +32,7 @@ public abstract class InterceptorBase : IOptionalInterceptor, IHasServices
     {
         LoggerFactory = loggerFactory ??= NullLoggerFactory.Instance;
         Log = LoggerFactory.CreateLogger(GetType());
-        IsLoggingEnabled = options.IsLoggingEnabled && Log.IsEnabled(LogLevel);
+        IsLoggingEnabled = options.IsLoggingEnabled && Log.IsLogging(LogLevel);
 
         Services = services;
         _createHandlerUntyped = CreateHandlerUntyped;

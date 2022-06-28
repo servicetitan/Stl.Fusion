@@ -6,7 +6,7 @@ using Stl.Fusion.Server.Internal;
 
 namespace Stl.Fusion.Server.Authentication;
 
-public class ServerAuthHelper
+public class ServerAuthHelper : IHasServices
 {
     public record Options
     {
@@ -17,8 +17,6 @@ public class ServerAuthHelper
         public bool KeepSignedIn { get; init; }
     }
 
-    public static Options DefaultSettings { get; set; } = new();
-
     protected IAuth Auth { get; }
     protected IAuthBackend AuthBackend { get; }
     protected ISessionResolver SessionResolver { get; }
@@ -27,24 +25,22 @@ public class ServerAuthHelper
     protected MomentClockSet Clocks { get; }
 
     public Options Settings { get; }
+    public IServiceProvider Services { get; }
+    public ILogger Log { get; }
     public Session Session => SessionResolver.Session;
 
-    public ServerAuthHelper(
-        Options? settings,
-        IAuth auth,
-        IAuthBackend authBackend,
-        ISessionResolver sessionResolver,
-        AuthSchemasCache authSchemasCache,
-        ICommander commander,
-        MomentClockSet clocks)
+    public ServerAuthHelper(Options settings, IServiceProvider services)
     {
-        Settings = settings ?? DefaultSettings;
-        Auth = auth;
-        AuthBackend = authBackend;
-        SessionResolver = sessionResolver;
-        AuthSchemasCache = authSchemasCache;
-        Commander = commander;
-        Clocks = clocks;
+        Settings = settings;
+        Services = services;
+        Log = services.LogFor(GetType());
+
+        Auth = services.GetRequiredService<IAuth>();
+        AuthBackend = services.GetRequiredService<IAuthBackend>();
+        SessionResolver = services.GetRequiredService<ISessionResolver>();
+        AuthSchemasCache = services.GetRequiredService<AuthSchemasCache>();
+        Commander = services.Commander();
+        Clocks = services.Clocks();
     }
 
     public virtual async ValueTask<string> GetSchemas(HttpContext httpContext, bool cache = true)

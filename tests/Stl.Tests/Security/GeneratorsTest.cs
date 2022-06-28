@@ -56,7 +56,7 @@ public class GeneratorsTest : TestBase
     private static void ValidateGeneratedValues(IEnumerable<string> values, int expectedLength, string expectedAlphabet)
     {
         var l = values.ToList();
-        var hs = new HashSet<string>(l);
+        var hs = new HashSet<string>(l, StringComparer.Ordinal);
         hs.Count.Should().Be(l.Count);
         foreach (var v in hs) {
             v.Length.Should().Be(expectedLength);

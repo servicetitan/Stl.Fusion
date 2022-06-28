@@ -9,11 +9,11 @@ public static class DbContextBuilderExt
 {
     public static DbContextBuilder<TDbContext> AddNpgsqlOperationLogChangeTracking<TDbContext>(
         this DbContextBuilder<TDbContext> dbContextBuilder,
-        Func<IServiceProvider, NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>>? configureOptions = null)
+        Func<IServiceProvider, NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>>? optionsFactory = null)
         where TDbContext : DbContext
     {
         var services = dbContextBuilder.Services;
-        services.TryAddSingleton(c => configureOptions?.Invoke(c) ?? new());
+        services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
 
         // NpgsqlDbOperationLogChangeTracker<TDbContext>
         services.TryAddSingleton<NpgsqlDbOperationLogChangeTracker<TDbContext>>();

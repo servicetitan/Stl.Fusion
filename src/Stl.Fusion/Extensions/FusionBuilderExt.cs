@@ -6,15 +6,11 @@ namespace Stl.Fusion.Extensions;
 public static class FusionBuilderExt
 {
     public static FusionBuilder AddFusionTime(this FusionBuilder fusion,
-        Action<IServiceProvider, FusionTime.Options>? optionsBuilder = null)
+        Func<IServiceProvider, FusionTime.Options>? optionsFactory = null)
     {
         var services = fusion.Services;
-        services.TryAddSingleton(c => {
-            var options = new FusionTime.Options();
-            optionsBuilder?.Invoke(c, options);
-            return options;
-        });
-        fusion.AddComputeService<IFusionTime, Internal.FusionTime>();
+        services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
+        fusion.AddComputeService<IFusionTime, FusionTime>();
         return fusion;
     }
 
@@ -29,28 +25,20 @@ public static class FusionBuilderExt
     }
 
     public static FusionBuilder AddInMemoryKeyValueStore(this FusionBuilder fusion,
-        Action<IServiceProvider, InMemoryKeyValueStore.Options>? optionsBuilder = null)
+        Func<IServiceProvider, InMemoryKeyValueStore.Options>? optionsFactory = null)
     {
         var services = fusion.Services;
-        services.TryAddSingleton(c => {
-            var options = new InMemoryKeyValueStore.Options();
-            optionsBuilder?.Invoke(c, options);
-            return options;
-        });
+        services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
         fusion.AddComputeService<IKeyValueStore, InMemoryKeyValueStore>();
         services.AddHostedService(c => (InMemoryKeyValueStore) c.GetRequiredService<IKeyValueStore>());
         return fusion;
     }
 
     public static FusionBuilder AddSandboxedKeyValueStore(this FusionBuilder fusion,
-        Action<IServiceProvider, SandboxedKeyValueStore.Options>? optionsBuilder = null)
+        Func<IServiceProvider, SandboxedKeyValueStore.Options>? optionsFactory = null)
     {
         var services = fusion.Services;
-        services.TryAddSingleton(c => {
-            var options = new SandboxedKeyValueStore.Options();
-            optionsBuilder?.Invoke(c, options);
-            return options;
-        });
+        services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
         fusion.AddComputeService<ISandboxedKeyValueStore, SandboxedKeyValueStore>();
         return fusion;
     }

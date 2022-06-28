@@ -12,18 +12,15 @@ public interface ITypeViewFactory
 
 public class TypeViewFactory : ITypeViewFactory
 {
-    public static TypeViewFactory Default { get; } = new(DependencyInjection.ServiceProviderExt.Empty);
+    public static ITypeViewFactory Default { get; } = 
+        new ServiceCollection()
+            .AddTypeViewFactory()
+            .BuildServiceProvider()
+            .GetRequiredService<ITypeViewFactory>();
 
     protected IServiceProvider Services { get; }
     protected ITypeViewProxyGenerator ProxyGenerator { get; }
     protected IInterceptor[] Interceptors { get; }
-
-    public TypeViewFactory(IServiceProvider services)
-        : this(
-            services,
-            services.GetService<ITypeViewProxyGenerator>() ?? services.Activate<TypeViewProxyGenerator>(),
-            services.GetOrActivate<TypeViewInterceptor>())
-    { }
 
     public TypeViewFactory(
         IServiceProvider services,

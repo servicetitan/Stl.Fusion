@@ -37,9 +37,9 @@ public class AppV3 : AppBase
             });
             dbContext.AddFileBasedOperationLogChangeTracking();
             dbContext.AddEntityResolver<string, DbProduct>();
-            dbContext.AddEntityResolver<string, DbCart>((_, options) => {
+            dbContext.AddEntityResolver<string, DbCart>(_ => new() {
                 // Cart is always loaded together with items
-                options.QueryTransformer = carts => carts.Include(c => c.Items);
+                QueryTransformer = carts => carts.Include(c => c.Items),
             });
         });
         ClientServices = HostServices = services.BuildServiceProvider();

@@ -11,14 +11,14 @@ public class DefaultTenantResolver<TContext> : ITenantResolver<TContext>
         public string TenantIdOptionName { get; init; } = "TenantId";
     }
 
-    protected Options Settings { get; init; }
+    protected Options Settings { get; }
     protected IServiceProvider Services { get; }
     protected ITenantRegistry<TContext> TenantRegistry { get; }
     protected IAuth Auth { get; }
 
-    public DefaultTenantResolver(Options? settings, IServiceProvider services)
+    public DefaultTenantResolver(Options settings, IServiceProvider services)
     {
-        Settings = settings ?? new();
+        Settings = settings;
         Services = services;
         TenantRegistry = services.GetRequiredService<ITenantRegistry<TContext>>();
         Auth = services.GetRequiredService<IAuth>();

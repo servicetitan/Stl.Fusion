@@ -38,14 +38,12 @@ public class CommandServiceProxyGenerator : ProxyGeneratorBase<CommandServicePro
             => emitter.CreateField("__interceptors", Options.InterceptorType.MakeArrayType());
     }
 
-    public static readonly ICommandServiceProxyGenerator Default = new CommandServiceProxyGenerator();
-
     protected ConcurrentDictionary<Type, Type> Cache { get; } = new();
 
     public CommandServiceProxyGenerator(
-        Options? options = null,
+        Options options,
         ModuleScope? moduleScope = null)
-        : base(options ??= new(), moduleScope) { }
+        : base(options, moduleScope) { }
 
     public virtual Type GetProxyType(Type type)
         => Cache.GetOrAddChecked(type, (type1, self) => {

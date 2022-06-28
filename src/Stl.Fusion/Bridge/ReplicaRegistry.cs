@@ -3,18 +3,19 @@ using Stl.OS;
 
 namespace Stl.Fusion.Bridge;
 
-public class ReplicaRegistry : IDisposable
+public sealed class ReplicaRegistry : IDisposable
 {
     public static ReplicaRegistry Instance { get; set; } = new();
 
-    public sealed class Options
+    public sealed record Options
     {
         public static int DefaultInitialCapacity { get; }
         public static int DefaultInitialConcurrency { get; }
+        public static Options Default { get; }
 
-        public int InitialCapacity { get; set; } = DefaultInitialCapacity;
-        public int ConcurrencyLevel { get; set; } = DefaultInitialConcurrency;
-        public GCHandlePool? GCHandlePool { get; set; } = null;
+        public int InitialCapacity { get; init; } = DefaultInitialCapacity;
+        public int ConcurrencyLevel { get; init; } = DefaultInitialConcurrency;
+        public GCHandlePool? GCHandlePool { get; init; } = null;
 
         static Options()
         {
@@ -24,6 +25,7 @@ public class ReplicaRegistry : IDisposable
             while (!ps.IsPrime(capacity))
                 capacity--;
             DefaultInitialCapacity = capacity;
+            Default = new();
         }
     }
 
@@ -34,9 +36,9 @@ public class ReplicaRegistry : IDisposable
     private Task? _pruneTask;
     private object Lock => _handles;
 
-    public ReplicaRegistry(Options? options = null)
+    public ReplicaRegistry() : this(Options.Default) { }
+    public ReplicaRegistry(Options options)
     {
-        options ??= new();
         _handles = new ConcurrentDictionary<PublicationRef, GCHandle>(options.ConcurrencyLevel, options.InitialCapacity);
         _opCounter = new StochasticCounter(1);
         _gcHandlePool = options.GCHandlePool ?? new GCHandlePool(GCHandleType.Weak);
@@ -47,19 +49,9 @@ public class ReplicaRegistry : IDisposable
     }
 
     public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
+        => _gcHandlePool.Dispose();
 
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!disposing) return;
-
-        _gcHandlePool.Dispose();
-    }
-
-    public virtual IReplica? Get(PublicationRef publicationRef)
+    public IReplica? Get(PublicationRef publicationRef)
     {
         var random = publicationRef.PublicationId.HashCode;
         OnOperation(random);
@@ -77,7 +69,7 @@ public class ReplicaRegistry : IDisposable
         return null;
     }
 
-    public virtual (IReplica Replica, bool IsNew) GetOrRegister(PublicationRef publicationRef, Func<IReplica> replicaFactory)
+    public (IReplica Replica, bool IsNew) GetOrRegister(PublicationRef publicationRef, Func<IReplica> replicaFactory)
     {
         var random = publicationRef.PublicationId.HashCode;
         OnOperation(random);
@@ -105,7 +97,7 @@ public class ReplicaRegistry : IDisposable
         }
     }
 
-    public virtual bool Remove(IReplica replica)
+    public bool Remove(IReplica replica)
     {
         var publicationRef = replica.PublicationRef;
         var random = publicationRef.PublicationId.HashCode;
@@ -133,10 +125,10 @@ public class ReplicaRegistry : IDisposable
         }
     }
 
-    // Protected members
+    // Private members
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected void OnOperation(int random)
+    private void OnOperation(int random)
     {
         if (!_opCounter.Increment(random, out var opCounterValue))
             return;
@@ -144,7 +136,7 @@ public class ReplicaRegistry : IDisposable
             TryPrune();
     }
 
-    protected void TryPrune()
+    private void TryPrune()
     {
         lock (Lock) {
             // Double check locking
@@ -155,7 +147,7 @@ public class ReplicaRegistry : IDisposable
         }
     }
 
-    protected virtual void PruneInternal()
+    private void PruneInternal()
     {
         var type = GetType();
         using var activity = type.GetActivitySource().StartActivity(type, nameof(Prune));
@@ -170,7 +162,7 @@ public class ReplicaRegistry : IDisposable
         }
     }
 
-    protected void UpdatePruneCounterThreshold()
+    private void UpdatePruneCounterThreshold()
     {
         lock (Lock) {
             // Should be called inside Lock

@@ -13,7 +13,7 @@ public class RedisOperationLogChangeNotifier<TDbContext>
     protected ConcurrentDictionary<Symbol, RedisPub<TDbContext>> RedisPubCache { get; }
 
     public RedisOperationLogChangeNotifier(
-        RedisOperationLogChangeTrackingOptions<TDbContext>? options, 
+        RedisOperationLogChangeTrackingOptions<TDbContext> options, 
         IServiceProvider services) 
         : base(options, services)
     {

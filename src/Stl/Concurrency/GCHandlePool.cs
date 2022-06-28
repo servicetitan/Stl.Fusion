@@ -1,12 +1,14 @@
 namespace Stl.Concurrency;
 
-public class GCHandlePool : IDisposable
+public sealed class GCHandlePool : IDisposable
 {
-    public class Options
+    public record Options
     {
-        public int Capacity { get; set; } = 1024;
-        public GCHandleType HandleType { get; set; } = GCHandleType.Weak;
-        public StochasticCounter OperationCounter { get; set; } = new();
+        public static Options Default { get; } = new();
+
+        public int Capacity { get; init; } = 1024;
+        public GCHandleType HandleType { get; init; } = GCHandleType.Weak;
+        public StochasticCounter OperationCounter { get; init; } = new();
     }
 
     private readonly ConcurrentQueue<GCHandle> _queue;
@@ -20,10 +22,10 @@ public class GCHandlePool : IDisposable
         set => Interlocked.Exchange(ref _capacity, value);
     }
 
-    public GCHandlePool(GCHandleType handleType) : this(new Options() { HandleType = handleType }) { }
-    public GCHandlePool(Options? options = null)
+    public GCHandlePool() : this(Options.Default) { }
+    public GCHandlePool(GCHandleType handleType) : this(Options.Default with { HandleType = handleType }) { }
+    public GCHandlePool(Options options)
     {
-        options ??= new();
         _queue = new ConcurrentQueue<GCHandle>();
         _opCounter = options.OperationCounter;
         HandleType = options.HandleType;

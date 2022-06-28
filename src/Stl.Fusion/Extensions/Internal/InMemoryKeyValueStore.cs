@@ -5,21 +5,21 @@ namespace Stl.Fusion.Extensions.Internal;
 
 public class InMemoryKeyValueStore : WorkerBase, IKeyValueStore
 {
-    public class Options
+    public record Options
     {
-        public IMomentClock? Clock { get; set; } = null;
-        public TimeSpan CleanupPeriod { get; set; } = TimeSpan.FromMinutes(1);
+        public TimeSpan CleanupPeriod { get; init; } = TimeSpan.FromMinutes(1);
+        public IMomentClock? Clock { get; init; } = null;
     }
 
-    protected ConcurrentDictionary<string, (string Value, Moment? ExpiresAt)> Store { get; } = new(StringComparer.Ordinal);
+    protected Options Settings { get; }
     protected IMomentClock Clock { get; }
-    public TimeSpan CleanupPeriod { get; }
-
-    public InMemoryKeyValueStore(Options? options, IServiceProvider services)
+    protected ConcurrentDictionary<string, (string Value, Moment? ExpiresAt)> Store { get; }
+    
+    public InMemoryKeyValueStore(Options settings, IServiceProvider services)
     {
-        options ??= new();
-        CleanupPeriod = options.CleanupPeriod;
-        Clock = options.Clock ?? services.SystemClock();
+        Settings = settings;
+        Clock = settings.Clock ?? services.SystemClock();
+        Store = new(StringComparer.Ordinal);
     }
 
     // Commands
@@ -162,7 +162,7 @@ public class InMemoryKeyValueStore : WorkerBase, IKeyValueStore
     protected override async Task RunInternal(CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested) {
-            await Clock.Delay(CleanupPeriod, cancellationToken).ConfigureAwait(false);
+            await Clock.Delay(Settings.CleanupPeriod, cancellationToken).ConfigureAwait(false);
             await Cleanup(cancellationToken).ConfigureAwait(false);
         }
     }

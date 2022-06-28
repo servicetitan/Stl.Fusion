@@ -39,14 +39,12 @@ public class ComputeServiceProxyGenerator : ProxyGeneratorBase<ComputeServicePro
             => emitter.CreateField("__interceptors", Options.InterceptorType.MakeArrayType());
     }
 
-    public static readonly IComputeServiceProxyGenerator Default = new ComputeServiceProxyGenerator();
-
     protected ConcurrentDictionary<Type, Type> Cache { get; } = new();
 
     public ComputeServiceProxyGenerator(
-        Options? options = null,
+        Options options,
         ModuleScope? moduleScope = null)
-        : base(options ??= new(), moduleScope) { }
+        : base(options, moduleScope) { }
 
     public virtual Type GetProxyType(Type type)
         => Cache.GetOrAddChecked(type, (type1, self) => {

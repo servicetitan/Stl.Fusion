@@ -40,14 +40,12 @@ public class ReplicaServiceProxyGenerator : ProxyGeneratorBase<ReplicaServicePro
             => emitter.CreateField("__interceptors", Options.InterceptorType.MakeArrayType());
     }
 
-    public static readonly IReplicaServiceProxyGenerator Default = new ReplicaServiceProxyGenerator();
-
     protected ConcurrentDictionary<(Type, bool), Type> Cache { get; } = new();
 
     public ReplicaServiceProxyGenerator(
-        Options? options = null,
+        Options options,
         ModuleScope? moduleScope = null)
-        : base(options ??= new(), moduleScope) { }
+        : base(options, moduleScope) { }
 
     public virtual Type GetProxyType(Type type, bool isCommandService)
         => Cache.GetOrAddChecked((type, isCommandService), (key, self) => {

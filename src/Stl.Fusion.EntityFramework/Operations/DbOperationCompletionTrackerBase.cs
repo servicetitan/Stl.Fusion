@@ -76,10 +76,10 @@ public abstract class DbOperationCompletionTrackerBase<TDbContext, TOptions>
     protected TOptions Options { get; init; }
     protected ITenantRegistry<TDbContext> TenantRegistry { get; }
 
-    protected DbOperationCompletionTrackerBase(TOptions? options, IServiceProvider services)
+    protected DbOperationCompletionTrackerBase(TOptions options, IServiceProvider services)
         : base(services)
     {
-        Options = options ?? new();
+        Options = options;
         TenantRegistry = services.GetRequiredService<ITenantRegistry<TDbContext>>();
     }
 

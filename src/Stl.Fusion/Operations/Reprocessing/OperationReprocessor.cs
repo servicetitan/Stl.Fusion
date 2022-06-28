@@ -9,7 +9,8 @@ namespace Stl.Fusion.Operations.Reprocessing;
 /// </summary>
 public interface IOperationReprocessor : ICommandHandler<ICommand>
 {
-    int MaxTryCount { get; }
+    public OperationReprocessorOptions Options { get; }
+    public IMomentClock DelayClock { get; }
     int FailedTryCount { get; }
     Exception? LastError { get; }
 
@@ -18,45 +19,43 @@ public interface IOperationReprocessor : ICommandHandler<ICommand>
     bool WillRetry(Exception error);
 }
 
+public record OperationReprocessorOptions
+{
+    public int MaxRetryCount { get; init; } = 3;
+    public RetryDelaySeq RetryDelays { get; init; } =
+        new RetryDelaySeq(0.053, 3, 0.5) with { Multiplier = Math.Sqrt(Math.Sqrt(2)) };
+    public IMomentClock? DelayClock { get; init; }
+}
+
 /// <summary>
 /// Tries to reprocess commands that failed with a reprocessable (transient) error.
 /// Must be a transient service.
 /// </summary>
 public class OperationReprocessor : IOperationReprocessor
 {
-    public class Options
-    {
-        public int MaxTryCount { get; set; } = 3;
-        public Func<Exception, TimeSpan> RetryDelayProvider { get; set; } =
-            _ => TimeSpan.FromMilliseconds(53 + Math.Abs(Random.Next() % 198));
-        public IMomentClock? DelayClock { get; set; }
-    }
-
     public static Generator<long> Random { get; } = new RandomInt64Generator();
 
-    public int MaxTryCount { get; init; }
+    protected ILogger Log { get; }
+    protected IServiceProvider Services { get; }
+    protected IEnumerable<ITransientFailureDetector> TransientFailureDetectors { get; init; }
+    protected HashSet<Exception> KnownTransientFailures { get; init; }
+
+    public OperationReprocessorOptions Options { get; }
+    public IMomentClock DelayClock { get; }
     public int FailedTryCount { get; protected set; }
     public Exception? LastError { get; protected set; }
     public CommandContext CommandContext { get; protected set; } = null!;
 
-    protected Func<Exception, TimeSpan> RetryDelayProvider { get; init; }
-    protected IEnumerable<ITransientFailureDetector> TransientFailureDetectors { get; init; }
-    protected HashSet<Exception> KnownTransientFailures { get; init; }
-    protected IMomentClock DelayClock { get; init; }
-    protected IServiceProvider Services { get; init; }
-    protected ILogger Log { get; init; }
-
     public OperationReprocessor(
-        Options? options,
+        OperationReprocessorOptions options,
         IServiceProvider services,
         ILogger<OperationReprocessor>? log = null)
     {
-        options ??= new();
+        Options = options;
         Log = log ?? NullLogger<OperationReprocessor>.Instance;
         Services = services;
-        MaxTryCount = options.MaxTryCount;
-        RetryDelayProvider = options.RetryDelayProvider;
         DelayClock = options.DelayClock ?? services.Clocks().CpuClock;
+
         TransientFailureDetectors = services.GetServices<ITransientFailureDetector>();
         KnownTransientFailures = new();
     }
@@ -84,7 +83,7 @@ public class OperationReprocessor : IOperationReprocessor
     }
 
     public virtual bool WillRetry(Exception error)
-        => FailedTryCount + 1 < MaxTryCount && IsTransientFailure(error);
+        => FailedTryCount <= Options.MaxRetryCount && IsTransientFailure(error);
 
     [CommandHandler(Priority = 100_000, IsFilter = true)]
     public virtual async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
@@ -116,12 +115,14 @@ public class OperationReprocessor : IOperationReprocessor
                     throw;
                 LastError = error;
                 FailedTryCount++;
-                var delay = RetryDelayProvider(error);
-                Log.LogWarning(
-                    "Retry #{TryCount}/{MaxTryCount} on {Error}: {Command} with {Delay}ms delay",
-                    FailedTryCount + 1, MaxTryCount, new ExceptionInfo(error), command, delay.TotalMilliseconds);
                 context.ExecutionState = executionStateBackup;
                 context.Items.Items = itemsBackup;
+                var delay = Options.RetryDelays[FailedTryCount];
+                Log.LogWarning(
+                    "Retry #{FailedTryCount}/{MaxTryCount} on {Error}: {Command} with {Delay} delay",
+                    FailedTryCount, Options.MaxRetryCount,
+                    new ExceptionInfo(error), command, delay.ToShortString());
+                await DelayClock.Delay(delay, cancellationToken).ConfigureAwait(false);
             }
         }
     }

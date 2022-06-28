@@ -13,21 +13,19 @@ public class DbOperationLogTrimmer<TDbContext> : DbTenantWorkerBase<TDbContext>
         public RetryDelaySeq RetryDelays { get; init; } = (TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(10));
         public TimeSpan MaxOperationAge { get; init; } = TimeSpan.FromMinutes(10);
         public int BatchSize { get; init; } = 1000;
-        public bool IsLoggingEnabled { get; init; } = true;
+        public LogLevel LogLevel { get; init; } = LogLevel.Information;
     }
 
-    protected bool IsLoggingEnabled { get; set; }
-    protected LogLevel LogLevel { get; set; } = LogLevel.Information;
-
-    protected Options Settings { get; init; }
+    protected Options Settings { get; }
     protected IDbOperationLog<TDbContext> DbOperationLog { get; init; }
     protected override IReadOnlyMutableDictionary<Symbol, Tenant> TenantSet => TenantRegistry.AccessedTenants;
+    protected bool IsLoggingEnabled { get; set; }
 
-    public DbOperationLogTrimmer(Options? settings, IServiceProvider services)
+    public DbOperationLogTrimmer(Options settings, IServiceProvider services)
         : base(services)
     {
-        Settings = settings ?? new();
-        IsLoggingEnabled = Settings.IsLoggingEnabled && Log.IsEnabled(LogLevel);
+        Settings = settings;
+        IsLoggingEnabled = Log.IsLogging(settings.LogLevel);
         DbOperationLog = services.GetRequiredService<IDbOperationLog<TDbContext>>();
     }
 
@@ -43,8 +41,9 @@ public class DbOperationLogTrimmer<TDbContext> : DbTenantWorkerBase<TDbContext>
                 .ConfigureAwait(false);
 
             if (lastTrimCount > 0 && IsLoggingEnabled)
-                Log.Log(LogLevel, "Trim({tenant.Id}) trimmed {Count} operations", tenant.Id, lastTrimCount);
-        }).Trace(() => activitySource.StartActivity("Trim")?.AddBaggage("TenantId", tenant.Id.Value), Log);
+                Log.Log(Settings.LogLevel,
+                    "Trim({tenant.Id}) trimmed {Count} operations", tenant.Id, lastTrimCount);
+        }).Trace(() => activitySource.StartActivity("Trim")?.AddTag("TenantId", tenant.Id.Value), Log);
 
         var sleepChain = new AsyncChain("Sleep", cancellationToken1 => {
             var delay = lastTrimCount < Settings.BatchSize

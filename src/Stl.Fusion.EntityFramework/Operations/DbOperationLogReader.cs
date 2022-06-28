@@ -14,17 +14,17 @@ public class DbOperationLogReader<TDbContext> : DbTenantWorkerBase<TDbContext>
         public RetryDelaySeq RetryDelays { get; init; } = (TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5));
     }
 
-    protected Options Settings { get; init; }
+    protected Options Settings { get; }
     protected AgentInfo AgentInfo { get; }
     protected IOperationCompletionNotifier OperationCompletionNotifier { get; }
     protected IDbOperationLogChangeTracker<TDbContext>? OperationLogChangeTracker { get;  }
     protected IDbOperationLog<TDbContext> DbOperationLog { get; }
     protected override IReadOnlyMutableDictionary<Symbol, Tenant> TenantSet => TenantRegistry.AccessedTenants;
 
-    public DbOperationLogReader(Options? settings, IServiceProvider services)
+    public DbOperationLogReader(Options settings, IServiceProvider services)
         : base(services)
     {
-        Settings = settings ?? new();
+        Settings = settings;
         AgentInfo = services.GetRequiredService<AgentInfo>();
         OperationLogChangeTracker = services.GetService<IDbOperationLogChangeTracker<TDbContext>>();
         OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
@@ -66,8 +66,8 @@ public class DbOperationLogReader<TDbContext> : DbTenantWorkerBase<TDbContext>
             // we might end up creating too many tasks
             await Task.WhenAll(tasks).ConfigureAwait(false);
             lastCount = operations.Count;
-        }).Trace(() => activitySource.StartActivity("Read")?.AddBaggage("TenantId", tenant.Id.Value), Log);
-        
+        }).Trace(() => activitySource.StartActivity("Read")?.AddTag("TenantId", tenant.Id.Value), Log);
+
         var sleepChain = new AsyncChain("Sleep", cancellationToken1 => {
             if (lastCount == Settings.BatchSize)
                 return Task.CompletedTask;
@@ -77,7 +77,7 @@ public class DbOperationLogReader<TDbContext> : DbTenantWorkerBase<TDbContext>
                 .WaitForChanges(tenant.Id, cancellationToken1)
                 .WithTimeout(Clocks.CpuClock, Settings.UnconditionalCheckPeriod.Next(), cancellationToken1);
         });
-        
+
         var chain = runChain
             .RetryForever(Settings.RetryDelays, Clocks.CpuClock, Log)
             .Append(sleepChain)

@@ -110,7 +110,7 @@ public class SerializationTest : TestBase
 
         Test(default);
         Test(new Base64Encoded(null!));
-        Test(new Base64Encoded(new byte[] {}));
+        Test(new Base64Encoded(Array.Empty<byte>()));
         Test(new Base64Encoded(new byte[] {1}));
         Test(new Base64Encoded(new byte[] {1, 2}));
     }

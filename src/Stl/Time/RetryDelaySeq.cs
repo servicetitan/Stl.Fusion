@@ -12,11 +12,11 @@ public record RetryDelaySeq(
 
     [DataMember] public double Multiplier { get; init; } = Math.Sqrt(2);
 
-    public virtual TimeSpan this[int retryCount] {
+    public virtual TimeSpan this[int failedTryCount] {
         get {
-            if (retryCount <= 0)
+            if (failedTryCount <= 0)
                 return TimeSpan.Zero;
-            var multiplier = Math.Pow(Multiplier, retryCount - 1);
+            var multiplier = Math.Pow(Multiplier, failedTryCount - 1);
             var result = (Min.TotalSeconds * multiplier).Clamp(Min.TotalSeconds, Max.TotalSeconds);
             return TimeSpan.FromSeconds(result).ToRandom(MaxDelta).Next();
         }

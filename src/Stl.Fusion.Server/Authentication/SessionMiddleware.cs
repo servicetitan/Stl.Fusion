@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Http.Extensions;
 using Stl.Fusion.Authentication;
 namespace Stl.Fusion.Server.Authentication;
 
-public class SessionMiddleware : IMiddleware
+public class SessionMiddleware : IMiddleware, IHasServices
 {
     public record Options
     {
@@ -29,23 +29,23 @@ public class SessionMiddleware : IMiddleware
         }
     }
 
-    public static Options DefaultSettings { get; set; } = new();
-
     public Options Settings { get; }
+    public IServiceProvider Services { get; }
+    public ILogger Log { get; }
+
+    public IAuth Auth { get; }
     public ISessionProvider SessionProvider { get; }
     public ISessionFactory SessionFactory { get; }
-    public IAuth? Auth { get; }
 
-    public SessionMiddleware(
-        Options? settings,
-        ISessionProvider sessionProvider,
-        ISessionFactory sessionFactory,
-        IAuth? auth = null)
+    public SessionMiddleware(Options settings, IServiceProvider services)
     {
-        Settings = settings ?? DefaultSettings;
-        SessionProvider = sessionProvider;
-        SessionFactory = sessionFactory;
-        Auth = auth;
+        Settings = settings;
+        Services = services;
+        Log = services.LogFor(GetType());
+
+        Auth = services.GetRequiredService<IAuth>();
+        SessionProvider = services.GetRequiredService<ISessionProvider>();
+        SessionFactory = services.GetRequiredService<ISessionFactory>();
     }
 
     public async Task InvokeAsync(HttpContext httpContext, RequestDelegate next)

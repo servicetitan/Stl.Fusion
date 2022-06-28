@@ -31,13 +31,12 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
     public IComputedState<AuthState> State { get; }
 
     public AuthStateProvider(
-        Options? options,
+        Options options,
         ISessionResolver sessionResolver,
         IAuth auth,
         IUICommandTracker uiCommandTracker,
         IStateFactory stateFactory)
     {
-        options ??= new();
         SessionResolver = sessionResolver;
         Auth = auth;
         UICommandTracker = uiCommandTracker;

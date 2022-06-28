@@ -1,5 +1,7 @@
 namespace Stl.Tests.CommandR;
 
+#pragma warning disable MA0012
+
 public class LocalCommandTest : CommandRTestBase
 {
     public LocalCommandTest(ITestOutputHelper @out) : base(@out) { }

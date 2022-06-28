@@ -20,10 +20,10 @@ public abstract class DbOperationCompletionNotifierBase<TDbContext, TOptions> : 
     public CancellationToken StopToken { get; }
     public Task? WhenDisposed => _disposeTask;
 
-    protected DbOperationCompletionNotifierBase(TOptions? options, IServiceProvider services) 
+    protected DbOperationCompletionNotifierBase(TOptions options, IServiceProvider services)
         : base(services)
     {
-        Options = options ?? new();
+        Options = options;
         AgentInfo = services.GetRequiredService<AgentInfo>();
         // CpuClock caching is needed coz otherwise an attempt to get them
         // in DisposeAsync will fail (service resolution fails during the disposal).

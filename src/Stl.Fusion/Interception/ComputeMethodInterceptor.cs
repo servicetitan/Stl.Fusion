@@ -14,10 +14,10 @@ public class ComputeMethodInterceptor : ComputeMethodInterceptorBase
     protected readonly VersionGenerator<LTag> VersionGenerator;
 
     public ComputeMethodInterceptor(
-        Options? options,
+        Options options,
         IServiceProvider services,
         ILoggerFactory? loggerFactory = null)
-        : base(options ??= new(), services, loggerFactory)
+        : base(options, services, loggerFactory)
         => VersionGenerator = options.VersionGenerator ?? services.VersionGenerator<LTag>();
 
     protected override ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method)

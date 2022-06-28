@@ -2,28 +2,25 @@ namespace Stl.Fusion.Extensions.Internal;
 
 public class FusionTime : IFusionTime
 {
-    public class Options
+    public record Options
     {
-        public TimeSpan DefaultUpdatePeriod { get; set; } = TimeSpan.FromSeconds(1);
-        public TimeSpan MaxInvalidationDelay { get; set; } = TimeSpan.FromMinutes(10);
-        public IMomentClock? Clock { get; set; }
+        public TimeSpan DefaultUpdatePeriod { get; init; } = TimeSpan.FromSeconds(1);
+        public TimeSpan MaxInvalidationDelay { get; init; } = TimeSpan.FromMinutes(10);
+        public IMomentClock? Clock { get; init; }
     }
 
-    protected TimeSpan DefaultUpdatePeriod { get; set; }
-    protected TimeSpan MaxInvalidationDelay { get; set; }
-    protected IMomentClock Clock { get; set; }
+    public Options Settings { get; }
+    public IMomentClock Clock { get; }
 
-    public FusionTime(Options? options, IServiceProvider services)
+    public FusionTime(Options settings, IServiceProvider services)
     {
-        options ??= new Options();
-        DefaultUpdatePeriod = options.DefaultUpdatePeriod;
-        MaxInvalidationDelay = options.MaxInvalidationDelay;
-        Clock = options.Clock ?? services.SystemClock();
+        Settings = settings;
+        Clock = Settings.Clock ?? services.SystemClock();
     }
 
     public virtual Task<DateTime> GetUtcNow()
     {
-        Computed.GetCurrent()!.Invalidate(TrimInvalidationDelay(DefaultUpdatePeriod));
+        Computed.GetCurrent()!.Invalidate(TrimInvalidationDelay(Settings.DefaultUpdatePeriod));
         return Task.FromResult(Clock.Now.ToDateTime());
     }
 
@@ -74,5 +71,5 @@ public class FusionTime : IFusionTime
     }
 
     protected virtual TimeSpan TrimInvalidationDelay(TimeSpan delay)
-        => TimeSpanExt.Min(delay, MaxInvalidationDelay);
+        => TimeSpanExt.Min(delay, Settings.MaxInvalidationDelay);
 }

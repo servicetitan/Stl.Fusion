@@ -17,7 +17,7 @@ public class BatchProcessorTest
                 await Task.Delay(100).ConfigureAwait(false);
                 foreach (var item in batch) {
                     if (item.Input == -1000)
-                        throw new ArgumentOutOfRangeException();
+                        throw new InvalidOperationException();
                     if (!item.TryCancel(cancellationToken))
                         item.SetResult((bi, item.Input), cancellationToken);
                 }
@@ -84,6 +84,6 @@ public class BatchProcessorTest
             await Task.WhenAll(tasks);
             true.Should().BeFalse("No exception was thrown.");
         }
-        catch (ArgumentOutOfRangeException) { }
+        catch (InvalidOperationException) { }
     }
 }

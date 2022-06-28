@@ -58,25 +58,11 @@ public readonly struct FusionRestEaseClientBuilder
     }
 
     public FusionRestEaseClientBuilder ConfigureWebSocketChannel(
-        WebSocketChannelProvider.Options options)
+        Func<IServiceProvider, WebSocketChannelProvider.Options>? optionsFactory)
     {
         var serviceDescriptor = new ServiceDescriptor(
             typeof(WebSocketChannelProvider.Options),
-            options);
-        Services.Replace(serviceDescriptor);
-        return this;
-    }
-
-    public FusionRestEaseClientBuilder ConfigureWebSocketChannel(
-        Action<IServiceProvider, WebSocketChannelProvider.Options> optionsBuilder)
-    {
-        var serviceDescriptor = new ServiceDescriptor(
-            typeof(WebSocketChannelProvider.Options),
-            c => {
-                var options = new WebSocketChannelProvider.Options();
-                optionsBuilder(c, options);
-                return options;
-            },
+            c => optionsFactory?.Invoke(c) ?? new(),
             ServiceLifetime.Singleton);
         Services.Replace(serviceDescriptor);
         return this;

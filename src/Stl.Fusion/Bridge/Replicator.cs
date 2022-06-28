@@ -5,9 +5,9 @@ using Stl.Generators;
 
 namespace Stl.Fusion.Bridge;
 
-public interface IReplicator
+public interface IReplicator : IHasId<Symbol>, IHasServices
 {
-    Symbol Id { get; }
+    ReplicatorOptions Options { get; }
 
     IReplica? Get(PublicationRef publicationRef);
     IReplica<T> GetOrAdd<T>(PublicationStateInfo<T> publicationStateInfo, bool requestUpdate = false);
@@ -15,39 +15,40 @@ public interface IReplicator
     IState<bool> GetPublisherConnectionState(Symbol publisherId);
 }
 
-public interface IReplicatorImpl : IReplicator, IHasServices
+public interface IReplicatorImpl : IReplicator
 {
     IChannelProvider ChannelProvider { get; }
-    TimeSpan ReconnectDelay { get; }
 
     void Subscribe(IReplica replica);
     void OnReplicaDisposed(IReplica replica);
 }
 
+public record ReplicatorOptions
+{
+    public static Symbol NewId() => "R-" + RandomStringGenerator.Default.Next();
+
+    public Symbol Id { get; init; } = NewId();
+    public TimeSpan ReconnectDelay { get; init; } = TimeSpan.FromSeconds(10);
+    public IChannelProvider? ChannelProvider { get; init; }
+}
+
 public class Replicator : SafeAsyncDisposableBase, IReplicatorImpl
 {
-    public class Options
-    {
-        public static Symbol NewId() => "R-" + RandomStringGenerator.Default.Next();
-
-        public Symbol Id { get; set; } = NewId();
-        public TimeSpan ReconnectDelay = TimeSpan.FromSeconds(10);
-    }
-
     protected ConcurrentDictionary<Symbol, ReplicatorChannelProcessor> ChannelProcessors { get; }
     protected Func<Symbol, ReplicatorChannelProcessor> CreateChannelProcessorHandler { get; }
+
+    public ReplicatorOptions Options { get; }
     public Symbol Id { get; }
     public IServiceProvider Services { get; }
     public IChannelProvider ChannelProvider { get; }
-    public TimeSpan ReconnectDelay { get; }
 
-    public Replicator(Options? options, IServiceProvider services, IChannelProvider channelProvider)
+    public Replicator(ReplicatorOptions options, IServiceProvider services)
     {
-        options ??= new();
-        Id = options.Id;
-        ReconnectDelay = options.ReconnectDelay;
+        Options = options;
+        Id = Options.Id;
         Services = services;
-        ChannelProvider = channelProvider;
+        ChannelProvider = options.ChannelProvider ?? Services.GetRequiredService<IChannelProvider>();
+
         ChannelProcessors = new ConcurrentDictionary<Symbol, ReplicatorChannelProcessor>();
         CreateChannelProcessorHandler = CreateChannelProcessor;
     }

@@ -10,7 +10,7 @@ public class NpgsqlDbOperationLogChangeTracker<TDbContext>
     where TDbContext : DbContext
 {
     public NpgsqlDbOperationLogChangeTracker(
-        NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>? options, 
+        NpgsqlDbOperationLogChangeTrackingOptions<TDbContext> options, 
         IServiceProvider services) 
         : base(options, services) { }
 

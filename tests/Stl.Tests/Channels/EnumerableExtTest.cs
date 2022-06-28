@@ -45,7 +45,9 @@ public class EnumerableExtTest : TestBase
             ).Should().Equal(0, 1);
     }
 
-    async IAsyncEnumerable<int> Delays(IEnumerable<double> delays, CancellationToken cancellationToken = default)
+    async IAsyncEnumerable<int> Delays(
+        IEnumerable<double> delays,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var index = 0;
         foreach (var d in delays) {

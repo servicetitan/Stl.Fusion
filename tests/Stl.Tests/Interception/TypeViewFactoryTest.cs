@@ -2,6 +2,9 @@ using Stl.Interception;
 
 namespace Stl.Tests.Interception;
 
+#pragma warning disable MA0042
+#pragma warning disable VSTHRD103
+
 public class TypeViewFactoryTest
 {
     public interface IService

@@ -65,17 +65,17 @@ public static class AsyncChainExt
     public static AsyncChain RetryForever(this AsyncChain asyncChain, RetryDelaySeq retryDelays, IMomentClock? clock, ILogger? log = null)
         => new($"{asyncChain.Name}.RetryForever({retryDelays}", async cancellationToken => {
             clock ??= MomentClockSet.Default.CpuClock;
-            for (var retryCount = 0;; retryCount++) {
+            for (var failedTryCount = 0;; failedTryCount++) {
                 try {
-                    if (retryCount >= 1)
-                        log?.LogInformation("Retrying {ChainName} ({RetryCount})", asyncChain.Name, retryCount);
+                    if (failedTryCount >= 1)
+                        log?.LogInformation("Retrying {ChainName} (#{FailedTryCount})", asyncChain.Name, failedTryCount);
                     await asyncChain.Start(cancellationToken).ConfigureAwait(false);
                     return;
                 }
                 catch (Exception e) {
                     if (IsAlwaysThrowable(e)) throw;
                 }
-                var retryDelay = retryDelays[retryCount];
+                var retryDelay = retryDelays[failedTryCount];
                 await clock.Delay(retryDelay, cancellationToken).ConfigureAwait(false);
             }
         });
@@ -89,18 +89,18 @@ public static class AsyncChainExt
         return new($"{asyncChain.Name}.Retry({retryDelays}, {maxRetryCount.ToString()})",
             async cancellationToken => {
                 clock ??= MomentClockSet.Default.CpuClock;
-                for (var retryCount = 0; retryCount <= maxCount; retryCount++) {
+                for (var failedTryCount = 0; failedTryCount <= maxCount; failedTryCount++) {
                     try {
-                        if (retryCount >= 1)
-                            log?.LogInformation("Retrying {ChainName} ({RetryCount} / {MaxRetryCount})",
-                                asyncChain.Name, retryCount, maxCount);
+                        if (failedTryCount >= 1)
+                            log?.LogInformation("Retrying {ChainName} (#{FailedTryCount}/{MaxRetryCount})",
+                                asyncChain.Name, failedTryCount, maxCount);
                         await asyncChain.Start(cancellationToken).ConfigureAwait(false);
                         return;
                     }
                     catch (Exception e) {
-                        if (IsAlwaysThrowable(e) || retryCount >= maxCount) throw;
+                        if (IsAlwaysThrowable(e) || failedTryCount >= maxCount) throw;
                     }
-                    var retryDelay = retryDelays[retryCount];
+                    var retryDelay = retryDelays[failedTryCount];
                     await clock.Delay(retryDelay, cancellationToken).ConfigureAwait(false);
                 }
             });

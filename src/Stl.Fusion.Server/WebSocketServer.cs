@@ -8,12 +8,12 @@ namespace Stl.Fusion.Server;
 
 public class WebSocketServer
 {
-    public class Options
+    public record Options
     {
-        public string RequestPath { get; set; } = "/fusion/ws";
-        public string PublisherIdQueryParameterName { get; set; } = "publisherId";
-        public string ClientIdQueryParameterName { get; set; } = "clientId";
-        public Func<ITextSerializer<BridgeMessage>> SerializerFactory { get; set; } = DefaultSerializerFactory;
+        public string RequestPath { get; init; } = "/fusion/ws";
+        public string PublisherIdQueryParameterName { get; init; } = "publisherId";
+        public string ClientIdQueryParameterName { get; init; } = "clientId";
+        public Func<ITextSerializer<BridgeMessage>> SerializerFactory { get; init; } = DefaultSerializerFactory;
 
         public static ITextSerializer<BridgeMessage> DefaultSerializerFactory()
             => TextSerializer.NewAsymmetric(
@@ -27,22 +27,15 @@ public class WebSocketServer
     }
 
     protected IPublisher Publisher { get; }
-    protected Func<ITextSerializer<BridgeMessage>> SerializerFactory { get; }
     protected ILogger Log { get; }
 
-    public string RequestPath { get; }
-    public string PublisherIdQueryParameterName { get; }
-    public string ClientIdQueryParameterName { get; }
+    public Options Settings { get; }
 
-    public WebSocketServer(Options? options, IPublisher publisher, ILogger<WebSocketServer>? log = null)
+    public WebSocketServer(Options settings, IPublisher publisher, ILogger<WebSocketServer>? log = null)
     {
-        options ??= new();
+        Settings = settings;
         Log = log ?? NullLogger<WebSocketServer>.Instance;
-        RequestPath = options.RequestPath;
-        PublisherIdQueryParameterName = options.PublisherIdQueryParameterName;
-        ClientIdQueryParameterName = options.ClientIdQueryParameterName;
         Publisher = publisher;
-        SerializerFactory = options.SerializerFactory;
     }
 
     public async Task HandleRequest(HttpContext context)
@@ -51,14 +44,14 @@ public class WebSocketServer
             context.Response.StatusCode = 400;
             return;
         }
-        var publisherId = context.Request.Query[PublisherIdQueryParameterName];
+        var publisherId = context.Request.Query[Settings.PublisherIdQueryParameterName];
         if (Publisher.Id != publisherId) {
             context.Response.StatusCode = 400;
             return;
         }
 
-        var serializers = SerializerFactory();
-        var clientId = context.Request.Query[ClientIdQueryParameterName];
+        var serializers = Settings.SerializerFactory();
+        var clientId = context.Request.Query[Settings.ClientIdQueryParameterName];
         var webSocket = await context.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
 
         var wsChannel = new WebSocketChannel(webSocket);

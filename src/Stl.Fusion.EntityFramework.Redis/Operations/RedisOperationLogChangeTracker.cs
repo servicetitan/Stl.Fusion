@@ -12,7 +12,7 @@ public class RedisOperationLogChangeTracker<TDbContext>
     protected RedisDb RedisDb { get; }
 
     public RedisOperationLogChangeTracker(
-        RedisOperationLogChangeTrackingOptions<TDbContext>? options, 
+        RedisOperationLogChangeTrackingOptions<TDbContext> options, 
         IServiceProvider services) 
         : base(options, services)
     {

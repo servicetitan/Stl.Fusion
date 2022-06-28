@@ -7,6 +7,8 @@ public sealed class ConcurrentTimerSet<TTimer> : SafeAsyncDisposableBase
 {
     public record Options : TimerSet<TTimer>.Options
     {
+        public new static Options Default { get; } = new();
+
         public int ConcurrencyLevel { get; init; } = HardwareInfo.GetProcessorCountPo2Factor(5);
     }
 
@@ -18,9 +20,9 @@ public sealed class ConcurrentTimerSet<TTimer> : SafeAsyncDisposableBase
     public int ConcurrencyLevel { get; }
     public int Count => _timerSets.Sum(ts => ts.Count);
 
-    public ConcurrentTimerSet(Options? options = null, Action<TTimer>? fireHandler = null)
+    public ConcurrentTimerSet(Action<TTimer>? fireHandler = null) : this(Options.Default, fireHandler) { }
+    public ConcurrentTimerSet(Options options, Action<TTimer>? fireHandler = null)
     {
-        options ??= new();
         Quanta = options.Quanta;
         Clock = options.Clock;
         ConcurrencyLevel = (int) Bits.GreaterOrEqualPowerOf2((ulong) Math.Max(1, options.ConcurrencyLevel));
