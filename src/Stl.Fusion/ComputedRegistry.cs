@@ -1,6 +1,5 @@
 using Stl.Concurrency;
 using Stl.Locking;
-using Stl.Mathematics;
 using Stl.OS;
 using Stl.Time.Internal;
 using Errors = Stl.Fusion.Internal.Errors;

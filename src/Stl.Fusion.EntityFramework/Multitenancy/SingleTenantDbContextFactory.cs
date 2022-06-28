@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework.Internal;
-using Stl.Fusion.Multitenancy;
+using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework.Multitenancy;
 
@@ -12,8 +12,8 @@ public sealed class SingleTenantDbContextFactory<TDbContext> : IMultitenantDbCon
     public SingleTenantDbContextFactory(IDbContextFactory<TDbContext> dbContextFactory)
         => DbContextFactory = dbContextFactory;
 
-    public TDbContext CreateDbContext(TenantInfo? tenantInfo) 
-        => ReferenceEquals(tenantInfo, null)
+    public TDbContext CreateDbContext(Tenant tenant)
+        => tenant == Tenant.Single
             ? DbContextFactory.CreateDbContext()
             : throw Errors.DefaultDbContextFactoryDoesNotSupportMultitenancy();
 }

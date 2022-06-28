@@ -1,4 +1,3 @@
-using Stl.Mathematics;
 using Stl.OS;
 
 namespace Stl.Concurrency;

@@ -45,6 +45,8 @@ public class TransientOperationScopeProvider : ICommandHandler<ICommand>
 
         try {
             await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
+            if (!OperationCompletionNotifier.IsReady())
+                throw Errors.OperationCompletionNotifierIsNotReady();
             await scope.Commit(cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) {

@@ -1,8 +1,6 @@
 using System.Diagnostics;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
-using Stl.Async;
-using Stl.Fusion.EntityFramework.Internal;
 using Stl.OS;
 
 namespace Stl.Fusion.EntityFramework;

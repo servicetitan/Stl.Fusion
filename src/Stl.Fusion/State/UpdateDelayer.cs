@@ -4,62 +4,49 @@ namespace Stl.Fusion;
 
 public interface IUpdateDelayer
 {
-    Task UpdateDelay(IStateSnapshot stateSnapshot, CancellationToken cancellationToken = default);
+    Task Delay(IStateSnapshot stateSnapshot, CancellationToken cancellationToken = default);
 }
 
 public record UpdateDelayer : IUpdateDelayer
 {
     public static class Defaults
     {
-        public static TimeSpan UpdateDelayDuration { get; set; } = TimeSpan.FromSeconds(1);
-        public static TimeSpan MinRetryDelayDuration { get; set; } =   TimeSpan.FromSeconds(2);
-        public static TimeSpan MaxRetryDelayDuration { get; set; } =  TimeSpan.FromMinutes(2);
+        public static RandomTimeSpan UpdateDelay { get; set; } = TimeSpan.FromSeconds(1);
+        public static RetryDelaySeq RetryDelays { get; set; } = new(TimeSpan.FromSeconds(2), TimeSpan.FromMinutes(2));
+        public static RandomTimeSpan UICommandUpdateDelay { get; set; } =  TimeSpan.FromMilliseconds(50);
         public static TimeSpan UICommandRecencyDelta { get; set; } =  TimeSpan.FromMilliseconds(100);
-        public static TimeSpan UICommandUpdateDelayDuration { get; set; } =  TimeSpan.FromMilliseconds(50);
     }
 
     public static UpdateDelayer ZeroDelay { get; } = new(UI.UICommandTracker.None, 0, 0);
-    public static UpdateDelayer MinDelay { get; } = new(UI.UICommandTracker.None, Defaults.UICommandUpdateDelayDuration);
+    public static UpdateDelayer MinDelay { get; } = new(UI.UICommandTracker.None, Defaults.UICommandUpdateDelay);
 
     public IUICommandTracker UICommandTracker { get; init; }
     public MomentClockSet Clocks => UICommandTracker.Clocks;
-    public TimeSpan UpdateDelayDuration { get; init; } = Defaults.UpdateDelayDuration;
-    public TimeSpan MinRetryDelayDuration { get; init; } =  Defaults.MinRetryDelayDuration;
-    public TimeSpan MaxRetryDelayDuration { get; init; } = Defaults.MaxRetryDelayDuration;
+    public RandomTimeSpan UpdateDelay { get; init; } = Defaults.UpdateDelay;
+    public RetryDelaySeq RetryDelays { get; set; } = Defaults.RetryDelays;
+    public RandomTimeSpan UICommandUpdateDelay { get; init; } = Defaults.UICommandUpdateDelay;
     public TimeSpan UICommandRecencyDelta { get; init; } = Defaults.UICommandRecencyDelta;
-    public TimeSpan UICommandUpdateDelayDuration { get; init; } = Defaults.UICommandUpdateDelayDuration;
 
     public UpdateDelayer(IUICommandTracker uiCommandTracker)
         => UICommandTracker = uiCommandTracker;
 
-    public UpdateDelayer(IUICommandTracker uiCommandTracker, double updateDelaySeconds)
-        : this(uiCommandTracker, TimeSpan.FromSeconds(updateDelaySeconds)) { }
-
-    public UpdateDelayer(IUICommandTracker uiCommandTracker, TimeSpan updateDelayDuration)
+    public UpdateDelayer(IUICommandTracker uiCommandTracker, RandomTimeSpan updateDelay)
     {
         UICommandTracker = uiCommandTracker;
-        UpdateDelayDuration = updateDelayDuration;
+        UpdateDelay = updateDelay;
     }
 
     public UpdateDelayer(
         IUICommandTracker uiCommandTracker,
-        double updateDelaySeconds,
-        double uiCommandUpdateDelaySeconds)
-        : this(uiCommandTracker,
-            TimeSpan.FromSeconds(updateDelaySeconds),
-            TimeSpan.FromSeconds(uiCommandUpdateDelaySeconds)) { }
-
-    public UpdateDelayer(
-        IUICommandTracker uiCommandTracker,
-        TimeSpan updateDelayDuration,
-        TimeSpan uiCommandUpdateDelayDuration)
+        RandomTimeSpan updateDelay,
+        RandomTimeSpan uiCommandUpdateDelay)
     {
         UICommandTracker = uiCommandTracker;
-        UpdateDelayDuration = updateDelayDuration;
-        UICommandUpdateDelayDuration = uiCommandUpdateDelayDuration;
+        UpdateDelay = updateDelay;
+        UICommandUpdateDelay = uiCommandUpdateDelay;
     }
 
-    public virtual async Task UpdateDelay(
+    public virtual async Task Delay(
         IStateSnapshot stateSnapshot, CancellationToken cancellationToken = default)
     {
         // 1. The update already happened? No need for delay.
@@ -70,9 +57,10 @@ public record UpdateDelayer : IUpdateDelayer
         // 2. Wait a bit to see if the invalidation is caused by a UI command
         var delayStart = Clocks.UIClock.Now;
         var commandCompletedTask = UICommandTracker.LastOrWhenCommandCompleted(UICommandRecencyDelta);
-        if (UpdateDelayDuration > TimeSpan.Zero) {
+        var updateDelay = UpdateDelay.Next();
+        if (updateDelay > TimeSpan.Zero) {
             if (!commandCompletedTask.IsCompleted) {
-                var waitDuration = TimeSpanExt.Min(UpdateDelayDuration, UICommandRecencyDelta);
+                var waitDuration = TimeSpanExt.Min(updateDelay, UICommandRecencyDelta);
                 await Task.WhenAny(whenUpdatedTask, commandCompletedTask)
                     .WithTimeout(Clocks.UIClock, waitDuration, cancellationToken)
                     .ConfigureAwait(false);
@@ -83,7 +71,7 @@ public record UpdateDelayer : IUpdateDelayer
 
         // 3. Actual delay
         var retryCount = stateSnapshot.RetryCount;
-        var retryDelay = GetUpdateDelay(commandCompletedTask.IsCompleted, retryCount);
+        var retryDelay = GetDelay(commandCompletedTask.IsCompleted, retryCount);
         var remainingDelay = delayStart + retryDelay - Clocks.UIClock.Now;
         if (remainingDelay < TimeSpan.Zero)
             return;
@@ -92,16 +80,12 @@ public record UpdateDelayer : IUpdateDelayer
             .ConfigureAwait(false);
     }
 
-    public virtual TimeSpan GetUpdateDelay(bool isUICommandCaused, int retryCount)
+    public virtual TimeSpan GetDelay(bool isUICommandCaused, int retryCount)
     {
-        var uiCommandUpdateDelayDuration = TimeSpanExt.Min(UpdateDelayDuration, UICommandUpdateDelayDuration);
-        var baseDelay = isUICommandCaused ? uiCommandUpdateDelayDuration : UpdateDelayDuration;
-        if (retryCount <= 0)
-            return baseDelay;
-        var retryDelay = Math.Pow(Math.Sqrt(2), retryCount) * MinRetryDelayDuration.TotalSeconds;
-        retryDelay = Math.Min(MaxRetryDelayDuration.TotalSeconds, retryDelay);
-        retryDelay = Math.Max(MinRetryDelayDuration.TotalSeconds, retryDelay);
-        return TimeSpan.FromSeconds(retryDelay);
+        var updateDelay = UpdateDelay.Next();
+        var uiCommandUpdateDelay = TimeSpanExt.Min(updateDelay, UICommandUpdateDelay.Next());
+        var baseDelay = isUICommandCaused ? uiCommandUpdateDelay : updateDelay;
+        return retryCount <= 0 ? baseDelay : RetryDelays[retryCount];
     }
 
     // We want referential equality back for this type:

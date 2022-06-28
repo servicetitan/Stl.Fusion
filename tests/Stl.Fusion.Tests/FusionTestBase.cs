@@ -236,10 +236,10 @@ public class FusionTestBase : TestBase, IAsyncLifetime
                 builder.EnableSensitiveDataLogging();
             }, 256);
             services.AddDbContextServices<TestDbContext>(b => {
-                b.AddOperations((_, o) => {
-                    o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(5);
+                b.AddOperations(_ => new() {
+                    UnconditionalCheckPeriod = TimeSpan.FromSeconds(5),
                     // Enable this if you debug multi-host invalidation
-                    // o.MaxCommitDuration = TimeSpan.FromMinutes(5);
+                    // MaxCommitDuration = TimeSpan.FromMinutes(5), 
                 });
                 if (Options.UseRedisOperationLogChangeTracking) {
                     b.AddRedisDb("localhost", "Fusion.Tests");

@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.EntityFramework.Multitenancy;
 using Stl.Fusion.EntityFramework.Operations;
-using Stl.Fusion.Multitenancy;
+using Stl.Multitenancy;
 using Stl.Locking;
 using AsyncLock = Stl.Locking.AsyncLock;
 
@@ -17,7 +17,7 @@ public interface IDbOperationScope : IOperationScope
     DbConnection? Connection { get; }
     IDbContextTransaction? Transaction { get; }
     IsolationLevel IsolationLevel { get; }
-    TenantInfo? TenantInfo { get; set; }
+    Tenant Tenant { get; set; }
 
     Task<DbContext> CreateDbContext(bool readWrite = true, CancellationToken cancellationToken = default);
 }
@@ -26,7 +26,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
     where TDbContext : DbContext
 {
     private bool _isInMemoryProvider;
-    private TenantInfo? _tenantInfo;
+    private Tenant _tenant = Tenant.Single;
 
     DbContext? IDbOperationScope.MasterDbContext => MasterDbContext;
     public TDbContext? MasterDbContext { get; protected set; }
@@ -41,12 +41,12 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
     public bool IsClosed { get; private set; }
     public bool? IsConfirmed { get; private set; }
 
-    public TenantInfo? TenantInfo {
-        get => _tenantInfo;
+    public Tenant Tenant {
+        get => _tenant;
         set {
-            if (ReferenceEquals(_tenantInfo, value))
+            if (_tenant == value)
                 return;
-            _tenantInfo = !IsUsed ? value : throw Errors.TenantInfoIsReadOnly();
+            _tenant = !IsUsed ? value : throw Errors.TenantPropertyIsReadOnly();
         }
     }
 
@@ -107,7 +107,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
             throw Stl.Fusion.Operations.Internal.Errors.OperationScopeIsAlreadyClosed();
         if (MasterDbContext == null) {
             // Creating MasterDbContext
-            var masterDbContext = DbContextFactory.CreateDbContext(TenantInfo).ReadWrite();
+            var masterDbContext = DbContextFactory.CreateDbContext(Tenant).ReadWrite();
             masterDbContext.Database.AutoTransactionsEnabled = false;
 #if NET6_0_OR_GREATER
             masterDbContext.Database.AutoSavepointsEnabled = false;
@@ -123,7 +123,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
             MasterDbContext = masterDbContext;
         }
         // Creating requested DbContext, which is going to share MasterDbContext's transaction
-        var dbContext = DbContextFactory.CreateDbContext(TenantInfo).ReadWrite(readWrite);
+        var dbContext = DbContextFactory.CreateDbContext(Tenant).ReadWrite(readWrite);
         dbContext.Database.AutoTransactionsEnabled = false;
 #if NET6_0_OR_GREATER
         dbContext.Database.AutoSavepointsEnabled = false;
@@ -167,7 +167,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
                 // See https://docs.microsoft.com/en-us/ef/ef6/fundamentals/connection-resiliency/commit-failures
                 try {
                     // We need a new connection here, since the old one might be broken
-                    masterDbContext = DbContextFactory.CreateDbContext(TenantInfo);
+                    masterDbContext = DbContextFactory.CreateDbContext(Tenant);
                     masterDbContext.Database.AutoTransactionsEnabled = true;
                     var committedOperation = await DbOperationLog
                         .Get(masterDbContext, operation.Id, cancellationToken)

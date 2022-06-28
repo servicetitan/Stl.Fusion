@@ -2,6 +2,7 @@ namespace Stl.Fusion.Operations;
 
 public interface IOperationCompletionNotifier
 {
+    bool IsReady();
     Task<bool> NotifyCompleted(IOperation operation);
 }
 
@@ -36,6 +37,9 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
         AgentInfo = services.GetRequiredService<AgentInfo>();
         OperationCompletionListeners = services.GetServices<IOperationCompletionListener>().ToArray();
     }
+
+    public bool IsReady() 
+        => OperationCompletionListeners.All(x => x.IsReady());
 
     public Task<bool> NotifyCompleted(IOperation operation)
     {

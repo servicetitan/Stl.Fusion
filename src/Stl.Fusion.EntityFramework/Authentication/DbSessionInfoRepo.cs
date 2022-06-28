@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.Authentication;
+using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework.Authentication;
 
@@ -16,7 +17,7 @@ public interface IDbSessionInfoRepo<in TDbContext, TDbSessionInfo, in TDbUserId>
     Task<TDbSessionInfo> Upsert(
         TDbContext dbContext, SessionInfo sessionInfo, CancellationToken cancellationToken = default);
     Task<int> Trim(
-        DateTime minLastSeenAt, int maxCount, CancellationToken cancellationToken = default);
+        Tenant tenant, DateTime minLastSeenAt, int maxCount, CancellationToken cancellationToken = default);
 
     // Read methods
     Task<TDbSessionInfo?> Get(string sessionId, CancellationToken cancellationToken = default);
@@ -87,9 +88,10 @@ public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId> : DbServic
         return dbSessionInfo;
     }
 
-    public virtual async Task<int> Trim(DateTime minLastSeenAt, int maxCount, CancellationToken cancellationToken = default)
+    public virtual async Task<int> Trim(
+        Tenant tenant, DateTime minLastSeenAt, int maxCount, CancellationToken cancellationToken = default)
     {
-        var dbContext = CreateDbContext(true);
+        var dbContext = CreateDbContext(tenant, true);
         await using var _ = dbContext.ConfigureAwait(false);
         dbContext.DisableChangeTracking();
 

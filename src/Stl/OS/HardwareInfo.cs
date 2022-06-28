@@ -1,5 +1,3 @@
-using Stl.Mathematics;
-
 namespace Stl.OS;
 
 public static class HardwareInfo

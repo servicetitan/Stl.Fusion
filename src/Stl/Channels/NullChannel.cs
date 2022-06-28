@@ -6,7 +6,7 @@ public class NullChannel<T> : Channel<T, T>
 
     private class NullChannelReader : ChannelReader<T>
     {
-        public override Task Completion => TaskExt.InfiniteUnitTask;
+        public override Task Completion => TaskExt.NeverEndingUnitTask;
 
         public override bool TryRead(out T item)
         {

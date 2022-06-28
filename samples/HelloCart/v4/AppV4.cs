@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration.Memory;
 using Samples.HelloCart.V2;
 using Stl.Fusion.Client;
 using Stl.Fusion.EntityFramework;
+using Stl.Fusion.EntityFramework.Operations;
 using Stl.Fusion.EntityFramework.Redis;
 using Stl.Fusion.Server;
 using Stl.IO;
@@ -48,8 +49,9 @@ public class AppV4 : AppBase
                         dbContext.EnableSensitiveDataLogging();
                     });
                     services.AddDbContextServices<AppDbContext>(dbContext => {
-                        dbContext.AddOperations((_, o) => { o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(5); });
-                        // dbContext.AddFileBasedOperationLogChangeTracking(dbPath + "_changed");
+                        dbContext.AddOperations(_ => new() {
+                            UnconditionalCheckPeriod = TimeSpan.FromSeconds(5),
+                        });
                         dbContext.AddRedisDb("localhost", "Fusion.Samples.HelloCart");
                         dbContext.AddRedisOperationLogChangeTracking();
                         dbContext.AddEntityResolver<string, DbProduct>();

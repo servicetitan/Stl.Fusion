@@ -22,6 +22,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.EntityFramework.Npgsql;
+using Stl.Fusion.EntityFramework.Operations;
 using Stl.Fusion.Extensions;
 using Stl.Fusion.Operations.Reprocessing;
 using Stl.Fusion.Server.Authentication;
@@ -86,13 +87,12 @@ public class Startup
         });
         services.AddDbContextServices<AppDbContext>(dbContext => {
             // This is the best way to add DbContext-related services from Stl.Fusion.EntityFramework
-            dbContext.AddOperations((_, o) => {
+            dbContext.AddOperations(_ => new() {
                 // We use FileBasedDbOperationLogChangeMonitor, so unconditional wake up period
                 // can be arbitrary long - all depends on the reliability of Notifier-Monitor chain.
-                o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(Env.IsDevelopment() ? 60 : 5);
+                UnconditionalCheckPeriod = TimeSpan.FromSeconds(Env.IsDevelopment() ? 60 : 5),
             });
-            var operationLogChangeAlertPath = dbPath + "_changed";
-            dbContext.AddFileBasedOperationLogChangeTracking(operationLogChangeAlertPath);
+            dbContext.AddFileBasedOperationLogChangeTracking();
             // dbContext.AddRedisDb("localhost", "Fusion.Samples.TodoApp");
             // dbContext.AddRedisOperationLogChangeTracking();
             if (!HostSettings.UseInMemoryAuthService)

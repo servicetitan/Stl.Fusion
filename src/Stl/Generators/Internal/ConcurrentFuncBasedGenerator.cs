@@ -1,5 +1,3 @@
-using Stl.Mathematics;
-
 namespace Stl.Generators.Internal;
 
 public sealed class ConcurrentFuncBasedGenerator<T> : ConcurrentGenerator<T>

@@ -7,7 +7,7 @@ using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.EntityFramework.Multitenancy;
 using Stl.Fusion.EntityFramework.Operations;
 using Stl.Fusion.Extensions;
-using Stl.IO;
+using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework;
 
@@ -19,6 +19,7 @@ public readonly struct DbContextBuilder<TDbContext>
     internal DbContextBuilder(IServiceCollection services)
     {
         Services = services;
+        Services.TryAddSingleton<ITenantRegistry<TDbContext>, SingleTenantRegistry<TDbContext>>();
         Services.TryAddSingleton<IMultitenantDbContextFactory<TDbContext>, SingleTenantDbContextFactory<TDbContext>>();
         Services.TryAddSingleton<DbHub<TDbContext>>();
     }
@@ -74,13 +75,13 @@ public readonly struct DbContextBuilder<TDbContext>
     // Operations
 
     public DbContextBuilder<TDbContext> AddOperations(
-        Action<IServiceProvider, DbOperationLogReader<TDbContext>.Options>? logReaderOptionsBuilder = null,
-        Action<IServiceProvider, DbOperationLogTrimmer<TDbContext>.Options>? logTrimmerOptionsBuilder = null)
+        Func<IServiceProvider, DbOperationLogReader<TDbContext>.Options>? logReaderOptionsBuilder = null,
+        Func<IServiceProvider, DbOperationLogTrimmer<TDbContext>.Options>? logTrimmerOptionsBuilder = null)
         => AddOperations<DbOperation>(logReaderOptionsBuilder, logTrimmerOptionsBuilder);
 
     public DbContextBuilder<TDbContext> AddOperations<TDbOperation>(
-        Action<IServiceProvider, DbOperationLogReader<TDbContext>.Options>? logReaderOptionsBuilder = null,
-        Action<IServiceProvider, DbOperationLogTrimmer<TDbContext>.Options>? logTrimmerOptionsBuilder = null)
+        Func<IServiceProvider, DbOperationLogReader<TDbContext>.Options>? logReaderOptionsBuilder = null,
+        Func<IServiceProvider, DbOperationLogTrimmer<TDbContext>.Options>? logTrimmerOptionsBuilder = null)
         where TDbOperation : DbOperation, new()
     {
         // Common services
@@ -94,20 +95,12 @@ public readonly struct DbContextBuilder<TDbContext>
         }
 
         // DbOperationLogReader - hosted service!
-        Services.TryAddSingleton(c => {
-            var options = new DbOperationLogReader<TDbContext>.Options();
-            logReaderOptionsBuilder?.Invoke(c, options);
-            return options;
-        });
+        Services.TryAddSingleton(c => logReaderOptionsBuilder?.Invoke(c) ?? new());
         Services.TryAddSingleton<DbOperationLogReader<TDbContext>>();
         Services.AddHostedService(c => c.GetRequiredService<DbOperationLogReader<TDbContext>>());
 
         // DbOperationLogTrimmer - hosted service!
-        Services.TryAddSingleton(c => {
-            var options = new DbOperationLogTrimmer<TDbContext>.Options();
-            logTrimmerOptionsBuilder?.Invoke(c, options);
-            return options;
-        });
+        Services.TryAddSingleton(c => logTrimmerOptionsBuilder?.Invoke(c) ?? new());
         Services.TryAddSingleton<DbOperationLogTrimmer<TDbContext>>();
         Services.AddHostedService(c => c.GetRequiredService<DbOperationLogTrimmer<TDbContext>>());
 
@@ -116,17 +109,10 @@ public readonly struct DbContextBuilder<TDbContext>
 
     // File-based operation log change tracking
 
-    public DbContextBuilder<TDbContext> AddFileBasedOperationLogChangeTracking(FilePath filePath)
-        => AddFileBasedOperationLogChangeTracking((_, o) => { o.FilePath = filePath; });
-
     public DbContextBuilder<TDbContext> AddFileBasedOperationLogChangeTracking(
-        Action<IServiceProvider, FileBasedDbOperationLogChangeTrackingOptions<TDbContext>>? configureOptions = null)
+        Func<IServiceProvider, FileBasedDbOperationLogChangeTrackingOptions<TDbContext>>? configureOptions = null)
     {
-        Services.TryAddSingleton(c => {
-            var options = new FileBasedDbOperationLogChangeTrackingOptions<TDbContext>();
-            configureOptions?.Invoke(c, options);
-            return options;
-        });
+        Services.TryAddSingleton(c => configureOptions?.Invoke(c) ?? new());
         Services.TryAddSingleton<
             IDbOperationLogChangeTracker<TDbContext>,
             FileBasedDbOperationLogChangeTracker<TDbContext>>();

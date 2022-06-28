@@ -16,7 +16,7 @@ public abstract class ProcessorBase : IAsyncDisposable, IDisposable, IHasWhenDis
         StopToken = StopTokenSource.Token;
     }
 
-    public void Dispose() 
+    public void Dispose()
         => _ = DisposeAsync();
 
     public async ValueTask DisposeAsync()
@@ -32,6 +32,6 @@ public abstract class ProcessorBase : IAsyncDisposable, IDisposable, IHasWhenDis
         await disposeTask.ConfigureAwait(false);
     }
 
-    protected virtual Task DisposeAsyncCore() 
+    protected virtual Task DisposeAsyncCore()
         => Task.CompletedTask;
 }

@@ -10,6 +10,8 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     where TDbUser : DbUser<TDbUserId>, new()
     where TDbUserId : notnull
 {
+    protected Options Settings { get; init; }
+
     protected IDbUserIdHandler<TDbUserId> DbUserIdHandler { get; init; }
     protected IDbUserRepo<TDbContext, TDbUser, TDbUserId> Users { get; init; }
     protected IDbEntityConverter<TDbUser, User> UserConverter { get; init; }
@@ -17,12 +19,9 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     protected IDbEntityConverter<TDbSessionInfo, SessionInfo> SessionConverter { get; init; }
     protected ISessionFactory SessionFactory { get; init; }
 
-    protected TimeSpan MinUpdatePresencePeriod { get; }
-
     public DbAuthService(Options? options, IServiceProvider services) : base(services)
     {
-        options ??= new();
-        MinUpdatePresencePeriod = options.MinUpdatePresencePeriod;
+        Settings = options ?? new();
         DbUserIdHandler = services.GetRequiredService<IDbUserIdHandler<TDbUserId>>();
         Users = services.GetRequiredService<IDbUserRepo<TDbContext, TDbUser, TDbUserId>>();
         UserConverter = services.DbEntityConverter<TDbUser, User>();
@@ -105,7 +104,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         if (sessionInfo == null)
             return;
         var delta = Clocks.SystemClock.Now - sessionInfo.LastSeenAt;
-        if (delta < MinUpdatePresencePeriod)
+        if (delta < Settings.MinUpdatePresencePeriod)
             return; // We don't want to update this too frequently
         var command = new SetupSessionCommand(session);
         await Commander.Call(command, cancellationToken).ConfigureAwait(false);

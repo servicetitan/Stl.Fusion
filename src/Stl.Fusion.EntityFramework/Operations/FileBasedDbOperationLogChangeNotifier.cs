@@ -1,34 +1,20 @@
 using Microsoft.EntityFrameworkCore;
+using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework.Operations;
 
-public class FileBasedDbOperationLogChangeNotifier<TDbContext> : IOperationCompletionListener
+public class FileBasedDbOperationLogChangeNotifier<TDbContext> 
+    : DbOperationCompletionNotifierBase<TDbContext, FileBasedDbOperationLogChangeTrackingOptions<TDbContext>>
     where TDbContext : DbContext
 {
-    protected FileBasedDbOperationLogChangeTrackingOptions<TDbContext> Options { get; init; }
-    protected AgentInfo AgentInfo { get; init; }
-
     public FileBasedDbOperationLogChangeNotifier(
-        FileBasedDbOperationLogChangeTrackingOptions<TDbContext> options,
-        AgentInfo agentInfo)
-    {
-        Options = options;
-        AgentInfo = agentInfo;
-    }
+        FileBasedDbOperationLogChangeTrackingOptions<TDbContext>? options, 
+        IServiceProvider services) 
+        : base(options, services) { }
 
-    public Task OnOperationCompleted(IOperation operation)
+    protected override Task Notify(Tenant tenant)
     {
-        if (!StringComparer.Ordinal.Equals(operation.AgentId, AgentInfo.Id.Value)) // Only local commands require notification
-            return Task.CompletedTask;
-        var commandContext = CommandContext.Current;
-        if (commandContext != null) { // It's a command
-            var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>();
-            if (operationScope == null || !operationScope.IsUsed) // But it didn't change anything related to TDbContext
-                return Task.CompletedTask;
-        }
-        // If it wasn't command, we pessimistically assume it changed something
-
-        var filePath = Options.FilePath;
+        var filePath = Options.FilePathFactory(tenant);
         if (!File.Exists(filePath))
             File.WriteAllText(filePath, "");
         else

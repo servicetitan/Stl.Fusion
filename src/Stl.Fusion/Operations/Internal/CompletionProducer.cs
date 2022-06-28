@@ -26,6 +26,9 @@ public class CompletionProducer : IOperationCompletionListener
         Commander = commander;
     }
 
+    public bool IsReady() 
+        => true;
+
     public virtual Task OnOperationCompleted(IOperation operation)
     {
         if (operation.Command is not ICommand command)
