@@ -12,10 +12,13 @@ public class MultitenantDbContextFactory<TDbContext> : IMultitenantDbContextFact
         public Action<IServiceProvider, Tenant, ServiceCollection> DbServiceCollectionBuilder { get; init; } = null!;
     }
 
-    private ConcurrentDictionary<Symbol, IDbContextFactory<TDbContext>> _factories;
+    private readonly ConcurrentDictionary<Symbol, IDbContextFactory<TDbContext>> _factories;
+    private ITenantRegistry<TDbContext>? _tenantRegistry;
 
     protected Options Settings { get; }
     protected IServiceProvider Services { get; }
+    protected ITenantRegistry<TDbContext> TenantRegistry // Let's avoid possible cycle 
+        => _tenantRegistry ??= Services.GetRequiredService<ITenantRegistry<TDbContext>>();
 
     public MultitenantDbContextFactory(Options settings, IServiceProvider services)
     {
@@ -24,17 +27,19 @@ public class MultitenantDbContextFactory<TDbContext> : IMultitenantDbContextFact
         _factories = new();
     }
 
-    public TDbContext CreateDbContext(Tenant tenant)
+
+    public TDbContext CreateDbContext(Symbol tenantId)
     {
-        if (tenant == Tenant.Default)
-            throw Errors.DefaultTenantCanBeUsedOnlyWithSingleTenantResolver();
+        if (tenantId == Tenant.Default)
+            throw Errors.DefaultTenantCanOnlyBeUsedInSingleTenantMode();
+        var tenant = TenantRegistry.Get(tenantId);
         var factory = GetDbContextFactory(tenant);
         return factory.CreateDbContext();
     }
 
     // Protected methods
 
-    protected virtual IDbContextFactory<TDbContext> GetDbContextFactory(Tenant tenant) 
+    protected virtual IDbContextFactory<TDbContext> GetDbContextFactory(Tenant tenant)
         => _factories.GetOrAdd(tenant.Id, static (_, state) => {
             var (self, tenant1) = state;
             var services = new ServiceCollection();

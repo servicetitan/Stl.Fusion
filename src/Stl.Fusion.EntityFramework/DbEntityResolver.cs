@@ -55,8 +55,8 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
     {
         Settings = settings;
         if (settings.KeyPropertyName == null) {
-            var exampleTenant = TenantRegistry.IsSingleTenant ? Tenant.Default : Tenant.Example;
-            using var dbContext = CreateDbContext(exampleTenant);
+            var dummyTenant = TenantRegistry.IsSingleTenant ? Tenant.Default : Tenant.Dummy;
+            using var dbContext = CreateDbContext(dummyTenant);
             KeyPropertyName = dbContext.Model
                 .FindEntityType(typeof(TDbEntity))!
                 .FindPrimaryKey()!

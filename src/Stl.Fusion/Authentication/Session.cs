@@ -36,14 +36,14 @@ public sealed class Session : IHasId<Symbol>, IEquatable<Session>,
         return idValue[(atIndex + 1)..];
     }
 
-    public Session WithTenantId(string tenantId)
+    public Session WithTenantId(Symbol tenantId)
     {
         var idValue = Id.Value;
         var atIndex = idValue.IndexOf('@');
         if (atIndex < 0)
-            return tenantId.IsNullOrEmpty() ? this : new Session($"{idValue}@{tenantId}");
+            return tenantId.IsEmpty ? this : new Session($"{idValue}@{tenantId.Value}");
         var prefix = idValue[..atIndex];
-        return new Session(tenantId.IsNullOrEmpty() ? prefix :$"{prefix}@{tenantId}");
+        return new Session(tenantId.IsEmpty ? prefix :$"{prefix}@{tenantId.Value}");
     }
 
     // Conversion

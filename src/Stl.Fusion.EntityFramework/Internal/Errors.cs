@@ -18,13 +18,12 @@ public static class Errors
 
     public static Exception TenantPropertyIsReadOnly()
         => new InvalidOperationException("DbContext is already created, so Tenant property cannot be changed at this point.");
-    public static Exception DefaultDbContextFactoryDoesNotSupportMultitenancy()
+    public static Exception NonDefaultTenantIsUsedInSingleTenantMode()
         => new NotSupportedException(
-            "DefaultDbContextFactory does not support multitenancy, " +
-            "but (tenant != Tenant.Single) is passed to its CreateDbContext method.");
-    public static Exception DefaultTenantCanBeUsedOnlyWithSingleTenantResolver()
+            "A tenant other than Tenant.Default is attempted to be used in single-tenant mode.");
+    public static Exception DefaultTenantCanOnlyBeUsedInSingleTenantMode()
         => new NotSupportedException(
-            "Tenant.Default can be used only with SingleTenantResolver.");
+            "Tenant.Default can only be used in single-tenant mode (with SingleTenantResolver).");
 
     public static Exception EntityNotFound<TEntity>()
         => EntityNotFound(typeof(TEntity));

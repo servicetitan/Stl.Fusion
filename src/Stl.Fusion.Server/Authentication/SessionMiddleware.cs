@@ -1,5 +1,4 @@
 using System.Globalization;
-using Castle.Core.Internal;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
@@ -19,7 +18,7 @@ public class SessionMiddleware : IMiddleware, IHasServices
         };
         public Func<SessionMiddleware, HttpContext, Task<bool>> ForcedSignOutHandler { get; init; } =
             DefaultForcedSignOutHandler;
-        public TenantIdSource TenantIdSource { get; init; }
+        public Func<HttpContext, Symbol> TenantIdExtractor { get; init; } = TenantIdExtractors.None;
 
         public static async Task<bool> DefaultForcedSignOutHandler(SessionMiddleware self, HttpContext httpContext)
         {
@@ -59,7 +58,7 @@ public class SessionMiddleware : IMiddleware, IHasServices
         var cookieName = Settings.Cookie.Name ?? "";
         cookies.TryGetValue(cookieName, out var sessionId);
 
-        var tenantId = GetTenantId(httpContext);
+        var tenantId = Settings.TenantIdExtractor(httpContext);
         var originalSession = string.IsNullOrEmpty(sessionId) ? null : new Session(sessionId);
         var session = originalSession?.WithTenantId(tenantId);
 
@@ -78,23 +77,5 @@ public class SessionMiddleware : IMiddleware, IHasServices
             responseCookies.Append(cookieName, session.Id, Settings.Cookie.Build(httpContext));
         SessionProvider.Session = session;
         await next(httpContext).ConfigureAwait(false);
-    }
-
-    protected virtual string GetTenantId(HttpContext httpContext)
-    {
-        switch (Settings.TenantIdSource) {
-        case TenantIdSource.None:
-            return "";
-        case TenantIdSource.Subdomain:
-            var host = httpContext.Request.Host.Host;
-            var dotIndex = host.IndexOf('.');
-            if (dotIndex < 0)
-                return "";
-            return host[..dotIndex];
-        case TenantIdSource.Port:
-            return httpContext.Connection.LocalPort.ToString(CultureInfo.InvariantCulture);
-        default:
-            throw new ArgumentOutOfRangeException();
-        }
     }
 }

@@ -12,8 +12,8 @@ public sealed class SingleTenantDbContextFactory<TDbContext> : IMultitenantDbCon
     public SingleTenantDbContextFactory(IDbContextFactory<TDbContext> dbContextFactory)
         => DbContextFactory = dbContextFactory;
 
-    public TDbContext CreateDbContext(Tenant tenant)
-        => tenant == Tenant.Default
+    public TDbContext CreateDbContext(Symbol tenantId)
+        => tenantId == Tenant.Default
             ? DbContextFactory.CreateDbContext()
-            : throw Errors.DefaultDbContextFactoryDoesNotSupportMultitenancy();
+            : throw Errors.NonDefaultTenantIsUsedInSingleTenantMode();
 }

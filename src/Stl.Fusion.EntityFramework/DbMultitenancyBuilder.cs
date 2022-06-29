@@ -22,6 +22,8 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
         Services.TryAddSingleton<IMultitenantDbContextFactory<TDbContext>, SingleTenantDbContextFactory<TDbContext>>();
     }
 
+    // Mode
+
     public DbMultitenancyBuilder<TDbContext> SingleTenantMode()
     {
         Clear();
@@ -42,14 +44,20 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
         return this;
     }
 
+    // SetupMultitenantRegistry
+
     public DbMultitenancyBuilder<TDbContext> SetupMultitenantRegistry(params Tenant[] tenants)
+        => SetupMultitenantRegistry(tenants.AsEnumerable());
+
+    public DbMultitenancyBuilder<TDbContext> SetupMultitenantRegistry(IEnumerable<Tenant> tenants)
     {
         var allTenants = tenants.ToImmutableDictionary(t => t.Id);
         SetupMultitenantRegistry(_ => new () {
-            AllTenantsFetcher = () => allTenants, 
+            AllTenantsFetcher = () => allTenants,
         });
         return this;
     }
+
     public DbMultitenancyBuilder<TDbContext> SetupMultitenantRegistry(
         Func<IServiceProvider, MultitenantRegistry<TDbContext>.Options> optionsFactory)
     {
@@ -67,6 +75,8 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
         return this;
     }
 
+    // SetupMultitenantDbContextFactory
+
     public DbMultitenancyBuilder<TDbContext> SetupMultitenantDbContextFactory(
         Action<IServiceProvider, Tenant, ServiceCollection> dbServiceCollectionBuilder)
     {
@@ -83,6 +93,8 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
         return this;
     }
 
+    // MakeDefault / UseDefault / UseFrom
+
     public DbMultitenancyBuilder<TDbContext> MakeDefault()
     {
         Services.AddTransient<ITenantRegistry>(c => c.GetRequiredService<ITenantRegistry<TDbContext>>());
@@ -97,7 +109,7 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
         Services.AddSingleton<ITenantResolver<TDbContext>>(
             c => new TenantResolverAlias<TDbContext>(c.GetRequiredService<ITenantResolver>()));
         return this;
-    } 
+    }
 
     public DbMultitenancyBuilder<TDbContext> UseFrom<TSourceContext>()
     {
@@ -108,7 +120,7 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
         return this;
     }
 
-    // Useful helpers
+    // AddXxx & Clear helpers
 
     public DbMultitenancyBuilder<TDbContext> AddTenantRegistry(
         Func<IServiceProvider, ITenantRegistry<TDbContext>> factory)

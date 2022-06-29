@@ -89,8 +89,7 @@ public class Startup
             dbContext.AddMultitenancy(multitenancy => {
                 multitenancy.MultitenantMode();
                 multitenancy.SetupMultitenantRegistry(
-                    new Tenant("5005"), 
-                    new Tenant("5006"));
+                    Enumerable.Range(0, 3).Select(i => new Tenant($"tenant{i}")));
                 multitenancy.SetupMultitenantDbContextFactory((_, tenant, db) => {
                     if (!string.IsNullOrEmpty(HostSettings.UseSqlServer))
                         db.UseSqlServer(HostSettings.UseSqlServer.Interpolate(tenant));
@@ -113,7 +112,11 @@ public class Startup
         services.AddSingleton(new PublisherOptions() { Id = HostSettings.PublisherId });
         var fusion = services.AddFusion();
         var fusionServer = fusion.AddWebServer();
-        fusionServer.SetupSessionMiddleware(_ => new() { TenantIdSource = TenantIdSource.Port });
+        fusionServer.SetupSessionMiddleware(_ => new() {
+            TenantIdExtractor = TenantIdExtractors.FromSubdomain(".localhost")
+                .Or(TenantIdExtractors.FromPort((5005, 5010)))
+                .WithValidator(tenantId => tenantId.Value.StartsWith("tenant")),
+        });
         var fusionClient = fusion.AddRestEaseClient();
         var fusionAuth = fusion.AddAuthentication().AddServer(
             signInControllerOptionsFactory: _ => new() {
