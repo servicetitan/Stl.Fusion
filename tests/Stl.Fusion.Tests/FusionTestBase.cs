@@ -249,9 +249,9 @@ public class FusionTestBase : TestBase, IAsyncLifetime
                     b.AddNpgsqlOperationLogChangeTracking();
                 else
                     b.AddFileBasedOperationLogChangeTracking();
+
                 if (!Options.UseInMemoryAuthService)
                     b.AddAuthentication<DbAuthSessionInfo, DbAuthUser, long>();
-
                 if (!Options.UseInMemoryKeyValueStore)
                     b.AddKeyValueStore();
                 b.AddEntityResolver<long, User>();

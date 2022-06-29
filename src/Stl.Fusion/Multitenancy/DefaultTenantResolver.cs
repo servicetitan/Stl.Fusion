@@ -14,22 +14,23 @@ public class DefaultTenantResolver<TContext> : ITenantResolver<TContext>
     protected Options Settings { get; }
     protected IServiceProvider Services { get; }
     protected ITenantRegistry<TContext> TenantRegistry { get; }
-    protected IAuth Auth { get; }
 
     public DefaultTenantResolver(Options settings, IServiceProvider services)
     {
         Settings = settings;
         Services = services;
         TenantRegistry = services.GetRequiredService<ITenantRegistry<TContext>>();
-        Auth = services.GetRequiredService<IAuth>();
     }
 
     public virtual async Task<Tenant> Resolve(object source, object context, CancellationToken cancellationToken)
     {
         switch (source) {
         case Session session:
-            var options = await Auth.GetOptions(session, cancellationToken).ConfigureAwait(false);
-            var sTenantId = options.GetOrDefault(Settings.TenantIdOptionName);
+            var sessionId = session.Id.Value;
+            var atIndex = sessionId.IndexOf('@');
+            if (atIndex <= 0)
+                return Tenant.Default;
+            var sTenantId = sessionId.Substring(atIndex + 1);
             return sTenantId.IsNullOrEmpty() ? Tenant.Default : TenantRegistry.Get(sTenantId);
         case ICommand command:
             object? oTenantId = null;

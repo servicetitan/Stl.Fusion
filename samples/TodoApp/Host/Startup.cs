@@ -70,7 +70,7 @@ public class Startup
         // DbContext & related services
         var appTempDir = FilePath.GetApplicationTempDirectory("", true);
         var dbPath = appTempDir & "App.db";
-        services.AddDbContextFactory<AppDbContext>(dbContext => {
+        services.AddPooledDbContextFactory<AppDbContext>(dbContext => {
             if (!string.IsNullOrEmpty(HostSettings.UseSqlServer))
                 dbContext.UseSqlServer(HostSettings.UseSqlServer);
             else if (!string.IsNullOrEmpty(HostSettings.UsePostgreSql)) {

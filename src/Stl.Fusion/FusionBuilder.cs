@@ -101,13 +101,11 @@ public readonly struct FusionBuilder
             Services.AddSingleton<CatchAllCompletionHandler>();
             commander.AddHandlers<CatchAllCompletionHandler>();
         }
-        
+
         // Multitenancy
-        services.TryAddSingleton<ITenantRegistry<Unit>, SingleTenantRegistry<Unit>>();
-        services.TryAddTransient<ITenantRegistry>(c => c.GetRequiredService<ITenantRegistry<Unit>>());
+        services.TryAddSingleton<ITenantRegistry, SingleTenantRegistry<Unit>>();
         services.TryAddSingleton<DefaultTenantResolver<Unit>.Options>();
-        services.TryAddSingleton<ITenantResolver<Unit>, DefaultTenantResolver<Unit>>();
-        services.TryAddTransient<ITenantResolver>(c => c.GetRequiredService<ITenantResolver<Unit>>());
+        services.TryAddSingleton<ITenantResolver, DefaultTenantResolver<Unit>>();
     }
 
     static FusionBuilder()
