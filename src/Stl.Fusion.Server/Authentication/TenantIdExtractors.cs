@@ -37,14 +37,14 @@ public static class TenantIdExtractors
         => httpContext => {
             var cookies = httpContext.Request.Cookies;
             cookies.TryGetValue(cookieName, out var tenantId);
-            return tenantId;
+            return tenantId ?? "";
         };
 
     public static Func<HttpContext, Symbol> FromHeader(string headerName = DefaultHeaderName)
         => httpContext => {
             var cookies = httpContext.Request.Headers;
             cookies.TryGetValue(headerName, out var tenantId);
-            return tenantId.LastOrDefault();
+            return tenantId.LastOrDefault() ?? "";
         };
 
     // Combinators
