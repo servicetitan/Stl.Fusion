@@ -1,4 +1,3 @@
-using Stl.Fusion.Internal;
 using Stl.Fusion.Swapping;
 using Stl.Testing.Collections;
 
@@ -9,42 +8,42 @@ public class SwappingTest : SimpleFusionTestBase
 {
     public class Service
     {
-        public int CallCount { get; set; }
+        public ThreadSafe<int> CallCount { get; } = 0;
 
         [ComputeMethod(KeepAliveTime = 0.5)]
         [Swap(1)]
         public virtual async Task<object> SameValue(object x)
         {
             await Task.Yield();
-            CallCount++;
+            CallCount.Value++;
             return x;
         }
     }
 
     public class SwapService : SimpleSwapService
     {
-        public int LoadCallCount { get; set; }
-        public int RenewCallCount { get; set; }
-        public int StoreCallCount { get; set; }
+        public ThreadSafe<int> LoadCallCount { get; } = 0;
+        public ThreadSafe<int> TouchCallCount { get; } = 0;
+        public ThreadSafe<int> StoreCallCount { get; } = 0;
 
-        public SwapService(Options? options, IServiceProvider services)
+        public SwapService(Options options, IServiceProvider services)
             : base(options, services) { }
 
         protected override ValueTask<string?> Load(string key, CancellationToken cancellationToken)
         {
-            LoadCallCount++;
+            LoadCallCount.Value++;
             return base.Load(key, cancellationToken);
         }
 
-        protected override ValueTask<bool> Renew(string key, CancellationToken cancellationToken)
+        protected override ValueTask<bool> Touch(string key, CancellationToken cancellationToken)
         {
-            RenewCallCount++;
-            return base.Renew(key, cancellationToken);
+            TouchCallCount.Value++;
+            return base.Touch(key, cancellationToken);
         }
 
         protected override ValueTask Store(string key, string value, CancellationToken cancellationToken)
         {
-            StoreCallCount++;
+            StoreCallCount.Value++;
             return base.Store(key, value, cancellationToken);
         }
     }
@@ -58,6 +57,7 @@ public class SwappingTest : SimpleFusionTestBase
             TimerQuanta = TimeSpan.FromSeconds(0.1),
             ExpirationTime = TimeSpan.FromSeconds(3),
         });
+        services.AddSingleton<LoggingSwapServiceWrapper<SwapService>.Options>();
         services.AddSingleton<ISwapService, LoggingSwapServiceWrapper<SwapService>>();
     }
 
@@ -71,49 +71,53 @@ public class SwappingTest : SimpleFusionTestBase
         var services = CreateServiceProviderFor<Service>();
         var swapService = services.GetRequiredService<SwapService>();
         var service = services.GetRequiredService<Service>();
-        var clock = Timeouts.Clock;
 
-        service.CallCount = 0;
+        service.CallCount.Value = 0;
         var a = "a";
         var v = await service.SameValue(a);
-        service.CallCount.Should().Be(1);
-        swapService.LoadCallCount.Should().Be(0);
-        swapService.StoreCallCount.Should().Be(0);
-        swapService.RenewCallCount.Should().Be(0);
         v.Should().BeSameAs(a);
 
-        await Delay(1.4);
-        swapService.LoadCallCount.Should().Be(0);
-        swapService.RenewCallCount.Should().Be(1);
-        swapService.StoreCallCount.Should().Be(1);
+        service.CallCount.Value.Should().Be(1);
+        swapService.LoadCallCount.Value.Should().Be(0);
+        swapService.StoreCallCount.Value.Should().Be(0);
+        swapService.TouchCallCount.Value.Should().Be(0);
+
+        await Delay(1.4); // 1s swap time
+
+        swapService.LoadCallCount.Value.Should().Be(0);
+        swapService.TouchCallCount.Value.Should().Be(1);
+        swapService.StoreCallCount.Value.Should().Be(1);
+
         v = await service.SameValue(a);
-        service.CallCount.Should().Be(1);
-        swapService.LoadCallCount.Should().Be(1);
-        swapService.RenewCallCount.Should().Be(1);
-        swapService.StoreCallCount.Should().Be(1);
         v.Should().Be(a);
         v.Should().NotBeSameAs(a);
+
+        service.CallCount.Value.Should().Be(1);
+        swapService.LoadCallCount.Value.Should().Be(1);
+        swapService.TouchCallCount.Value.Should().Be(1);
+        swapService.StoreCallCount.Value.Should().Be(1);
 
         // We accessed the value, so we need to wait for
         // SwapTime + KeepAliveTime to make sure it's
         // available for GC
         await Delay(1.9);
-        swapService.LoadCallCount.Should().Be(1);
-        swapService.RenewCallCount.Should().Be(2);
-        swapService.StoreCallCount.Should().Be(1);
+        swapService.LoadCallCount.Value.Should().Be(1);
+        swapService.TouchCallCount.Value.Should().Be(2);
+        swapService.StoreCallCount.Value.Should().Be(1);
 
         for (var i = 0; i < 10; i++) {
             GCCollect();
             v = await service.SameValue(a);
-            if (service.CallCount != 1)
+            if (service.CallCount.Value != 1)
                 break;
             await Delay(0.1);
         }
-        service.CallCount.Should().Be(2);
-        swapService.LoadCallCount.Should().Be(1);
-        swapService.RenewCallCount.Should().Be(2);
-        swapService.StoreCallCount.Should().Be(1);
         v.Should().Be(a);
         v.Should().BeSameAs(a);
+
+        service.CallCount.Value.Should().Be(2);
+        swapService.LoadCallCount.Value.Should().Be(1);
+        swapService.TouchCallCount.Value.Should().Be(2);
+        swapService.StoreCallCount.Value.Should().Be(1);
     }
 }

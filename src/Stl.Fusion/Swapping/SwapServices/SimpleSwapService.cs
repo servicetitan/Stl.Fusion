@@ -16,7 +16,7 @@ public class SimpleSwapService : SwapServiceBase
 
     protected ConcurrentDictionary<string, string> Storage { get; }
     protected ConcurrentTimerSet<string> ExpirationTimers { get; }
-    
+
     public Options Settings { get; }
     public IMomentClock Clock { get; }
 
@@ -24,16 +24,16 @@ public class SimpleSwapService : SwapServiceBase
     {
         Settings = settings;
         SerializerFactory = settings.SerializerFactory;
-        Clock = settings.Clock ?? services.GetRequiredService<MomentClockSet>().CoarseCpuClock;
+        Clock = settings.Clock ?? services.GetRequiredService<MomentClockSet>().CpuClock;
         Storage = new ConcurrentDictionary<string, string>(
             settings.ConcurrencyLevel,
             ComputedRegistry.Options.DefaultInitialCapacity,
             StringComparer.Ordinal);
         ExpirationTimers = new ConcurrentTimerSet<string>(
-            new ConcurrentTimerSet<string>.Options() {
-                Clock = Clock,
+            new() {
                 Quanta = settings.TimerQuanta,
                 ConcurrencyLevel = settings.ConcurrencyLevel,
+                Clock = Clock,
             },
             key => Storage.TryRemove(key, out _));
     }
@@ -46,7 +46,7 @@ public class SimpleSwapService : SwapServiceBase
         return ValueTaskExt.FromResult(value)!;
     }
 
-    protected override ValueTask<bool> Renew(string key, CancellationToken cancellationToken)
+    protected override ValueTask<bool> Touch(string key, CancellationToken cancellationToken)
     {
         if (!Storage.TryGetValue(key, out var value))
             return ValueTaskExt.FalseTask;

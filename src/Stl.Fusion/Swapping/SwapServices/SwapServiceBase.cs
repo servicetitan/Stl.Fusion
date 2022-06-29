@@ -4,11 +4,7 @@ namespace Stl.Fusion.Swapping;
 
 public abstract class SwapServiceBase : ISwapService
 {
-    protected Func<ITextSerializer<object>> SerializerFactory { get; set; } = null!;
-
-    protected SwapServiceBase() { }
-    protected SwapServiceBase(Func<ITextSerializer<object>> serializerFactory)
-        => SerializerFactory = serializerFactory;
+    protected Func<ITextSerializer<object>> SerializerFactory { get; init; } = null!;
 
     public async ValueTask<IResult?> Load(
         (ComputeMethodInput Input, LTag Version) key,
@@ -26,7 +22,7 @@ public abstract class SwapServiceBase : ISwapService
         CancellationToken cancellationToken = default)
     {
         var serializedKey = SerializeKey(key.Input, key.Version);
-        if (await Renew(serializedKey, cancellationToken).ConfigureAwait(false))
+        if (await Touch(serializedKey, cancellationToken).ConfigureAwait(false))
             return;
         var data = SerializerFactory().Write(value);
         await Store(serializedKey, data, cancellationToken).ConfigureAwait(false);
@@ -35,7 +31,7 @@ public abstract class SwapServiceBase : ISwapService
     // Protected methods
 
     protected abstract ValueTask<string?> Load(string key, CancellationToken cancellationToken);
-    protected abstract ValueTask<bool> Renew(string key, CancellationToken cancellationToken);
+    protected abstract ValueTask<bool> Touch(string key, CancellationToken cancellationToken);
     protected abstract ValueTask Store(string key, string value, CancellationToken cancellationToken);
 
     protected virtual string SerializeKey(ComputeMethodInput input, LTag version)
