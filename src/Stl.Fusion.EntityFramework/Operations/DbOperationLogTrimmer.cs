@@ -43,7 +43,7 @@ public class DbOperationLogTrimmer<TDbContext> : DbTenantWorkerBase<TDbContext>
             if (lastTrimCount > 0 && IsLoggingEnabled)
                 Log.Log(Settings.LogLevel,
                     "Trim({tenant.Id}) trimmed {Count} operations", tenant.Id, lastTrimCount);
-        }).Trace(() => activitySource.StartActivity("Trim")?.AddTag("TenantId", tenant.Id.Value), Log);
+        }).Trace(() => activitySource.StartActivity("Trim").AddTenantTags(tenant), Log);
 
         var sleepChain = new AsyncChain("Sleep", cancellationToken1 => {
             var delay = lastTrimCount < Settings.BatchSize

@@ -1,7 +1,6 @@
 using Castle.DynamicProxy;
 using Castle.DynamicProxy.Generators;
 using Castle.DynamicProxy.Generators.Emitters;
-using Stl.CommandR.Interception;
 using Stl.Concurrency;
 using Stl.Interception.Interceptors;
 
@@ -48,9 +47,10 @@ public class ComputeServiceProxyGenerator : ProxyGeneratorBase<ComputeServicePro
 
     public virtual Type GetProxyType(Type type)
         => Cache.GetOrAddChecked(type, (type1, self) => {
+            var tInterfaces = typeof(IComputeService).IsAssignableFrom(type1)
+                ? Array.Empty<Type>()
+                : new[] { typeof(IComputeService) };
             var generator = new Implementation(self.ModuleScope, type1, self.ProxyGeneratorOptions);
-            return generator.GenerateCode(
-                new[] { typeof(IComputeService), typeof(ICommandService) },
-                self.ProxyGeneratorOptions);
+            return generator.GenerateCode(tInterfaces, self.ProxyGeneratorOptions);
         }, this);
 }

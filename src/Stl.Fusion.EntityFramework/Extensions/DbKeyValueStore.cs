@@ -17,48 +17,16 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
 
     public virtual async Task Set(SetCommand command, CancellationToken cancellationToken = default)
     {
-        var (key, value, expiresAt) = command;
-        var context = CommandContext.GetCurrent();
-        if (string.IsNullOrEmpty(key))
-#pragma warning disable MA0015
-            throw new ArgumentOutOfRangeException($"{nameof(command)}.{nameof(SetCommand.Key)}");
-#pragma warning restore MA0015
-        if (Computed.IsInvalidating()) {
-            if (context.Operation().Items.GetOrDefault(true))
-                PseudoGetAllPrefixes(key);
-            else
-                _ = PseudoGet(key);
-            return;
-        }
-
-        var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
-        await using var _1 = dbContext.ConfigureAwait(false);
-        dbContext.DisableChangeTracking(); // Just to speed up things a bit
-
-        var dbKeyValue = await dbContext.FindAsync<TDbKeyValue>(DbKey.Compose(key), cancellationToken).ConfigureAwait(false);
-        if (dbKeyValue == null) {
-            dbKeyValue = CreateDbKeyValue(key, value, expiresAt);
-            dbContext.Add(dbKeyValue);
-        }
-        else {
-            context.Operation().Items.Set(false); // Don't invalidate prefixes
-            dbKeyValue.Value = value;
-            dbKeyValue.ExpiresAt = expiresAt;
-            dbContext.Update(dbKeyValue);
-        }
-        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
-
-    public virtual async Task SetMany(SetManyCommand command, CancellationToken cancellationToken = default)
-    {
         var items = command.Items;
+        var tenantId = command.TenantId;
+
         if (Computed.IsInvalidating()) {
             foreach (var item in items)
-                PseudoGetAllPrefixes(item.Key);
+                PseudoGetAllPrefixes(tenantId, item.Key);
             return;
         }
 
-        var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        var dbContext = await CreateCommandDbContext(tenantId, cancellationToken).ConfigureAwait(false);
         await using var _ = dbContext.ConfigureAwait(false);
         dbContext.DisableChangeTracking(); // Just to speed up things a bit
 
@@ -86,39 +54,16 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
 
     public virtual async Task Remove(RemoveCommand command, CancellationToken cancellationToken = default)
     {
-        var key = command.Key;
-        if (string.IsNullOrEmpty(key))
-            throw new ArgumentOutOfRangeException($"{nameof(command)}.{nameof(RemoveCommand.Key)}");
-        var context = CommandContext.GetCurrent();
-        if (Computed.IsInvalidating()) {
-            if (context.Operation().Items.GetOrDefault(true))
-                PseudoGetAllPrefixes(key);
-            return;
-        }
-
-        var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
-        await using var _ = dbContext.ConfigureAwait(false);
-        dbContext.DisableChangeTracking(); // Just to speed up things a bit
-
-        var dbKeyValue = await dbContext.FindAsync<TDbKeyValue>(DbKey.Compose(key), cancellationToken).ConfigureAwait(false);
-        if (dbKeyValue == null) {
-            context.Operation().Items.Set(false); // No need to invalidate anything
-            return;
-        }
-        dbContext.Remove(dbKeyValue);
-        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
-
-    public virtual async Task RemoveMany(RemoveManyCommand command, CancellationToken cancellationToken = default)
-    {
         var keys = command.Keys;
+        var tenantId = command.TenantId;
+
         if (Computed.IsInvalidating()) {
             foreach (var key in keys)
-                PseudoGetAllPrefixes(key);
+                PseudoGetAllPrefixes(tenantId, key);
             return;
         }
 
-        var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        var dbContext = await CreateCommandDbContext(tenantId, cancellationToken).ConfigureAwait(false);
         await using var _ = dbContext.ConfigureAwait(false);
         dbContext.DisableChangeTracking(); // Just to speed up things a bit
 
@@ -135,10 +80,10 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
 
     // Queries
 
-    public virtual async Task<string?> Get(string key, CancellationToken cancellationToken = default)
+    public virtual async Task<string?> Get(string tenantId, string key, CancellationToken cancellationToken = default)
     {
-        _ = PseudoGet(key);
-        var dbKeyValue = await KeyValueResolver.Get(key, cancellationToken).ConfigureAwait(false);
+        _ = PseudoGet(tenantId, key);
+        var dbKeyValue = await KeyValueResolver.Get(tenantId, key, cancellationToken).ConfigureAwait(false);
         if (dbKeyValue == null)
             return null;
         var expiresAt = dbKeyValue.ExpiresAt;
@@ -148,11 +93,11 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
     }
 
     public virtual async Task<int> Count(
-        string prefix, CancellationToken cancellationToken = default)
+        string tenantId, string prefix, CancellationToken cancellationToken = default)
     {
-        _ = PseudoGet(prefix);
+        _ = PseudoGet(tenantId, prefix);
 
-        var dbContext = CreateDbContext();
+        var dbContext = CreateDbContext(tenantId);
         await using var _1 = dbContext.ConfigureAwait(false);
 
         var count = await dbContext.Set<TDbKeyValue>().AsQueryable()
@@ -162,14 +107,15 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
     }
 
     public virtual async Task<string[]> ListKeySuffixes(
+        string tenantId,
         string prefix,
         PageRef<string> pageRef,
         SortDirection sortDirection = SortDirection.Ascending,
         CancellationToken cancellationToken = default)
     {
-        _ = PseudoGet(prefix);
+        _ = PseudoGet(tenantId, prefix);
 
-        var dbContext = CreateDbContext();
+        var dbContext = CreateDbContext(tenantId);
         await using var _1 = dbContext.ConfigureAwait(false);
 
         var query = dbContext.Set<TDbKeyValue>().AsQueryable()
@@ -194,18 +140,18 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
     // Protected methods
 
     [ComputeMethod]
-    protected virtual Task<Unit> PseudoGet(string keyPart)
+    protected virtual Task<Unit> PseudoGet(string tenantId, string keyPart)
         => TaskExt.UnitTask;
 
-    protected void PseudoGetAllPrefixes(string key)
+    protected void PseudoGetAllPrefixes(string tenantId, string key)
     {
         var delimiter = KeyValueStoreExt.Delimiter;
         var delimiterIndex = key.IndexOf(delimiter, 0);
         for (; delimiterIndex >= 0; delimiterIndex = key.IndexOf(delimiter, delimiterIndex + 1)) {
             var keyPart = key.Substring(0, delimiterIndex);
-            _ = PseudoGet(keyPart);
+            _ = PseudoGet(tenantId, keyPart);
         }
-        _ = PseudoGet(key);
+        _ = PseudoGet(tenantId, key);
     }
 
     protected virtual TDbKeyValue CreateDbKeyValue(string key, string value, Moment? expiresAt)

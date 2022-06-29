@@ -1,18 +1,15 @@
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Extensions.Commands;
+using Stl.Fusion.Interception;
 
 namespace Stl.Fusion.Extensions;
 
-public interface ISandboxedKeyValueStore
+public interface ISandboxedKeyValueStore : IComputeService
 {
     [CommandHandler]
     Task Set(SandboxedSetCommand command, CancellationToken cancellationToken = default);
     [CommandHandler]
-    Task SetMany(SandboxedSetManyCommand command, CancellationToken cancellationToken = default);
-    [CommandHandler]
     Task Remove(SandboxedRemoveCommand command, CancellationToken cancellationToken = default);
-    [CommandHandler]
-    Task RemoveMany(SandboxedRemoveManyCommand command, CancellationToken cancellationToken = default);
 
     [ComputeMethod]
     Task<string?> Get(Session session, string key, CancellationToken cancellationToken = default);

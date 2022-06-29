@@ -11,7 +11,7 @@ public record FileBasedDbOperationLogChangeTrackingOptions<TDbContext> : DbOpera
     {
         var tDbContext = typeof(TDbContext);
         var appTempDir = FilePath.GetApplicationTempDirectory("", true);
-        var tenantSuffix = tenant == Tenant.Single ? "" : $"_{tenant.Id.Value}";
+        var tenantSuffix = tenant == Tenant.Default ? "" : $"_{tenant.Id.Value}";
         return appTempDir & FilePath.GetHashedName($"{tDbContext.Name}_{tDbContext.Namespace}{tenantSuffix}.tracker");
     }
 }

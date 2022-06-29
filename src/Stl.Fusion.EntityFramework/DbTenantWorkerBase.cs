@@ -21,15 +21,11 @@ public abstract class DbTenantWorkerBase<TDbContext> : TenantWorkerBase<TDbConte
         : base(services.GetRequiredService<ITenantRegistry<TDbContext>>(), stopTokenSource)
         => Services = services;
 
-    protected TDbContext CreateDbContext(bool readWrite = false)
-        => DbHub.CreateDbContext(readWrite);
     protected TDbContext CreateDbContext(Symbol tenantId, bool readWrite = false)
         => DbHub.CreateDbContext(tenantId, readWrite);
     protected TDbContext CreateDbContext(Tenant tenant, bool readWrite = false)
         => DbHub.CreateDbContext(tenant, readWrite);
 
-    protected Task<TDbContext> CreateCommandDbContext(CancellationToken cancellationToken = default)
-        => DbHub.CreateCommandDbContext(cancellationToken);
     protected Task<TDbContext> CreateCommandDbContext(Symbol tenantId, CancellationToken cancellationToken = default)
         => DbHub.CreateCommandDbContext(tenantId, cancellationToken);
     protected Task<TDbContext> CreateCommandDbContext(Tenant tenant, CancellationToken cancellationToken = default)

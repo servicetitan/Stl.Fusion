@@ -2,6 +2,8 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
+using Stl.Internal;
+using Stl.Multitenancy;
 using Stl.OS;
 
 namespace Stl.Fusion.EntityFramework;
@@ -10,8 +12,10 @@ public interface IDbEntityResolver<TKey, TDbEntity>
     where TKey : notnull
     where TDbEntity : class
 {
-    Task<TDbEntity?> Get(TKey key, CancellationToken cancellationToken = default);
-    Task<Dictionary<TKey, TDbEntity>> GetMany(IEnumerable<TKey> keys, CancellationToken cancellationToken = default);
+    public Func<Expression, Expression> KeyExtractorExpressionBuilder { get; }
+    public Func<TDbEntity, TKey> KeyExtractor { get; }
+
+    Task<TDbEntity?> Get(Symbol tenantId, TKey key, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -23,95 +27,106 @@ public interface IDbEntityResolver<TKey, TDbEntity>
 /// <typeparam name="TDbEntity">The type of entity to pipeline batch for.</typeparam>
 public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbContext>,
     IDbEntityResolver<TKey, TDbEntity>,
-    IDisposable
+    IAsyncDisposable
     where TDbContext : DbContext
     where TKey : notnull
     where TDbEntity : class
 {
     public record Options
     {
-        public Func<DbEntityResolver<TDbContext, TKey, TDbEntity>, BatchProcessor<TKey, TDbEntity>>? BatchProcessorFactory { get; init; }
         public string? KeyPropertyName { get; init; }
         public Func<Expression, Expression>? KeyExtractorExpressionBuilder { get; init; }
         public Func<IQueryable<TDbEntity>, IQueryable<TDbEntity>> QueryTransformer { get; init; } = q => q;
         public Action<Dictionary<TKey, TDbEntity>> PostProcessor { get; init; } = _ => { };
+        public Action<BatchProcessor<TKey, TDbEntity?>>? ConfigureBatchProcessor { get; init; }
     }
 
     protected static MethodInfo ContainsMethod { get; } = typeof(HashSet<TKey>).GetMethod(nameof(HashSet<TKey>.Contains))!;
 
-    private readonly Lazy<BatchProcessor<TKey, TDbEntity>> _batchProcessorLazy;
+    private ConcurrentDictionary<Symbol, BatchProcessor<TKey, TDbEntity?>>? _batchProcessors;
 
     protected Options Settings { get; }
-    protected BatchProcessor<TKey, TDbEntity> BatchProcessor => _batchProcessorLazy.Value;
     protected string KeyPropertyName { get; init; }
-    protected Func<TDbEntity, TKey> KeyExtractor { get; init; }
-    protected Func<Expression, Expression> KeyExtractorExpressionBuilder { get; init; }
+
+    public Func<Expression, Expression> KeyExtractorExpressionBuilder { get; init; }
+    public Func<TDbEntity, TKey> KeyExtractor { get; init; }
 
     public DbEntityResolver(Options settings, IServiceProvider services) : base(services)
     {
         Settings = settings;
-        var batchProcessorFactory = settings.BatchProcessorFactory ??
-            (self => new BatchProcessor<TKey, TDbEntity> {
-                MaxBatchSize = 16,
-                ConcurrencyLevel = Math.Min(HardwareInfo.ProcessorCount, 4),
-                BatchingDelayTaskFactory = cancellationToken => Task.Delay(1, cancellationToken),
-                Implementation = self.ProcessBatch,
-            });
-        _batchProcessorLazy = new Lazy<BatchProcessor<TKey, TDbEntity>>(
-            () => batchProcessorFactory(this));
-
         if (settings.KeyPropertyName == null) {
-            using var dbContext = CreateDbContext();
+            using var dbContext = CreateDbContext(Tenant.Any);
             KeyPropertyName = dbContext.Model
                 .FindEntityType(typeof(TDbEntity))!
                 .FindPrimaryKey()!
                 .Properties.Single().Name;
         }
-        else 
+        else
             KeyPropertyName = settings.KeyPropertyName;
         KeyExtractorExpressionBuilder = settings.KeyExtractorExpressionBuilder
-            ?? (eEntity => Expression.PropertyOrField(eEntity, KeyPropertyName));        
+            ?? (eEntity => Expression.PropertyOrField(eEntity, KeyPropertyName));
         var pEntity = Expression.Parameter(typeof(TDbEntity), "e");
         var eBody = KeyExtractorExpressionBuilder(pEntity);
         KeyExtractor = (Func<TDbEntity, TKey>) Expression.Lambda(eBody, pEntity).Compile();
+        _batchProcessors = new();
     }
 
-    protected virtual void Dispose(bool disposing)
+    public async ValueTask DisposeAsync()
     {
-        if (!disposing) return;
-
-        if (_batchProcessorLazy.IsValueCreated)
-            BatchProcessor.Dispose();
+        var batchProcessors = Interlocked.Exchange(ref _batchProcessors, null);
+        if (batchProcessors == null)
+            return;
+        await Task.WhenAll(batchProcessors.Values.Select(p => p.DisposeAsync().AsTask()))
+            .ConfigureAwait(false);
     }
 
-    public void Dispose()
+    public virtual Task<TDbEntity?> Get(Symbol tenantId, TKey key, CancellationToken cancellationToken = default)
     {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    public virtual async Task<TDbEntity?> Get(TKey key, CancellationToken cancellationToken = default)
-        => await BatchProcessor.Process(key, cancellationToken).ConfigureAwait(false);
-
-    public virtual async Task<Dictionary<TKey, TDbEntity>> GetMany(IEnumerable<TKey> keys, CancellationToken cancellationToken = default)
-    {
-        var tasks = keys.Distinct().Select(key => Get(key, cancellationToken)).ToArray();
-        var entities = await Task.WhenAll(tasks).ConfigureAwait(false);
-        var result = new Dictionary<TKey, TDbEntity>();
-        foreach (var entity in entities)
-            if (entity != null!)
-                result.Add(KeyExtractor(entity), entity);
-        return result;
+        var batchProcessor = GetBatchProcessor(tenantId);
+        return batchProcessor.Process(key, cancellationToken)!;
     }
 
     // Protected methods
 
-    protected virtual async Task ProcessBatch(List<BatchItem<TKey, TDbEntity>> batch, CancellationToken cancellationToken)
+    protected BatchProcessor<TKey, TDbEntity?> GetBatchProcessor(Symbol tenantId)
     {
-        // using var activity = ActivitySource.StartActivity(ProcessBatchOperationName);
-        // activity?.AddTag("batchSize", batch.Count.ToString(CultureInfo.InvariantCulture));
+        var batchProcessors = _batchProcessors;
+        if (batchProcessors == null)
+            throw Errors.AlreadyDisposed();
+        return batchProcessors.GetOrAdd(tenantId, 
+            static (tenantId1, self) => self.CreateBatchProcessor(tenantId1), this);
+    }
+    
+    protected virtual BatchProcessor<TKey, TDbEntity?> CreateBatchProcessor(Symbol tenantId)
+    {
+        var tenant = TenantRegistry.Get(tenantId); 
+        var batchProcessor = new BatchProcessor<TKey, TDbEntity?> {
+            MaxBatchSize = 16,
+            ConcurrencyLevel = Math.Min(HardwareInfo.ProcessorCount, 4),
+            BatchingDelayTaskFactory = cancellationToken => Task.Delay(1, cancellationToken),
+            Implementation = (batch, cancellationToken) => ProcessBatch(tenant, batch, cancellationToken),
+        };
+        Settings.ConfigureBatchProcessor?.Invoke(batchProcessor);
+        return batchProcessor;
+    }
 
-        var dbContext = CreateDbContext();
+    protected virtual Activity? StartProcessBatchActivity(Tenant tenant, int batchSize)
+    {
+        var activitySource = GetType().GetActivitySource();
+        var activity = activitySource
+            .StartActivity(nameof(ProcessBatch))
+            .AddTenantTags(tenant)?
+            .AddTag("batchSize", batchSize.ToString(CultureInfo.InvariantCulture));
+        return activity;
+    }
+
+    protected virtual async Task ProcessBatch(
+        Tenant tenant, 
+        List<BatchItem<TKey, TDbEntity?>> batch, 
+        CancellationToken cancellationToken)
+    {
+        using var activity = StartProcessBatchActivity(tenant, batch.Count);
+        var dbContext = CreateDbContext(tenant);
         await using var _ = dbContext.ConfigureAwait(false);
 
         var keys = new HashSet<TKey>();
@@ -130,7 +145,7 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
         Settings.PostProcessor(entities);
 
         foreach (var item in batch) {
-            entities.TryGetValue(item.Input, out var entity);
+            var entity = entities.GetValueOrDefault(item.Input);
             item.SetResult(Result.Value(entity)!, cancellationToken);
         }
     }

@@ -36,7 +36,7 @@ public class DbKeyValueTrimmer<TDbContext, TDbKeyValue> : DbTenantWorkerBase<TDb
 
         var activitySource = GetType().GetActivitySource();
         var runChain = new AsyncChain($"Trim({tenant.Id})", async cancellationToken1 => {
-            var dbContext = CreateDbContext(true);
+            var dbContext = CreateDbContext(tenant, true);
             await using var _ = dbContext.ConfigureAwait(false);
             dbContext.DisableChangeTracking();
 
@@ -53,13 +53,13 @@ public class DbKeyValueTrimmer<TDbContext, TDbKeyValue> : DbTenantWorkerBase<TDb
 
             // This must be done via IKeyValueStore & operations,
             // otherwise invalidation won't happen for removed entries
-            await KeyValueStore.RemoveMany(keys, cancellationToken).ConfigureAwait(false);
+            await KeyValueStore.Remove(tenant.Id, keys, cancellationToken).ConfigureAwait(false);
             lastTrimCount = keys.Length;
 
             if (lastTrimCount > 0 && IsLoggingEnabled)
                 Log.Log(Settings.LogLevel,
                     "Trim({tenant.Id}) trimmed {Count} entries", tenant.Id, lastTrimCount);
-        }).Trace(() => activitySource.StartActivity("Trim")?.AddTag("TenantId", tenant.Id.Value), Log);
+        }).Trace(() => activitySource.StartActivity("Trim").AddTenantTags(tenant), Log);
 
         var sleepChain = new AsyncChain("Sleep", cancellationToken1 => {
             var delay = lastTrimCount < Settings.BatchSize

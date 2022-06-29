@@ -6,7 +6,6 @@ namespace Stl.Fusion.Client;
 public class RegisterRestEaseReplicaServiceAttribute : RegisterAttribute
 {
     public Type? ServiceType { get; set; }
-    public bool IsCommandService { get; set; } = true;
 
     public RegisterRestEaseReplicaServiceAttribute(Type? serviceType = null)
         => ServiceType = serviceType;
@@ -15,7 +14,5 @@ public class RegisterRestEaseReplicaServiceAttribute : RegisterAttribute
         => services
             .AddFusion()
             .AddRestEaseClient()
-            .AddReplicaService(
-                ServiceType ?? implementationType, implementationType,
-                isCommandService: IsCommandService);
+            .AddReplicaService(ServiceType ?? implementationType, implementationType);
 }

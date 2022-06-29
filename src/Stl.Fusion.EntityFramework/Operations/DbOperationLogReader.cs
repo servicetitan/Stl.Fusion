@@ -66,7 +66,7 @@ public class DbOperationLogReader<TDbContext> : DbTenantWorkerBase<TDbContext>
             // we might end up creating too many tasks
             await Task.WhenAll(tasks).ConfigureAwait(false);
             lastCount = operations.Count;
-        }).Trace(() => activitySource.StartActivity("Read")?.AddTag("TenantId", tenant.Id.Value), Log);
+        }).Trace(() => activitySource.StartActivity("Read").AddTenantTags(tenant), Log);
 
         var sleepChain = new AsyncChain("Sleep", cancellationToken1 => {
             if (lastCount == Settings.BatchSize)

@@ -1,8 +1,9 @@
 using Stl.Fusion.Authentication.Commands;
+using Stl.Fusion.Interception;
 
 namespace Stl.Fusion.Authentication;
 
-public interface IAuth
+public interface IAuth : IComputeService
 {
     // Commands
     [CommandHandler]
@@ -26,10 +27,10 @@ public interface IAuth
     Task<SessionInfo[]> GetUserSessions(Session session, CancellationToken cancellationToken = default);
 }
 
-public interface IAuthBackend
+public interface IAuthBackend : IComputeService
 {
     [ComputeMethod(KeepAliveTime = 10)]
-    Task<User?> GetUser(string userId, CancellationToken cancellationToken = default);
+    Task<User?> GetUser(string tenantId, string userId, CancellationToken cancellationToken = default);
 
     [CommandHandler]
     Task SignIn(SignInCommand command, CancellationToken cancellationToken = default);

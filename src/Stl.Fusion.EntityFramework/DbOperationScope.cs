@@ -3,7 +3,6 @@ using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Stl.Fusion.EntityFramework.Internal;
-using Stl.Fusion.EntityFramework.Multitenancy;
 using Stl.Fusion.EntityFramework.Operations;
 using Stl.Multitenancy;
 using Stl.Locking;
@@ -17,16 +16,16 @@ public interface IDbOperationScope : IOperationScope
     DbConnection? Connection { get; }
     IDbContextTransaction? Transaction { get; }
     IsolationLevel IsolationLevel { get; }
-    Tenant Tenant { get; set; }
+    Tenant Tenant { get; }
 
-    Task<DbContext> CreateDbContext(bool readWrite = true, CancellationToken cancellationToken = default);
+    Task<DbContext> CreateDbContext(Tenant tenant, bool readWrite = true, CancellationToken cancellationToken = default);
 }
 
 public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperationScope
     where TDbContext : DbContext
 {
     private bool _isInMemoryProvider;
-    private Tenant _tenant = Tenant.Single;
+    private Tenant _tenant = Tenant.Default;
 
     DbContext? IDbOperationScope.MasterDbContext => MasterDbContext;
     public TDbContext? MasterDbContext { get; protected set; }
@@ -43,7 +42,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
 
     public Tenant Tenant {
         get => _tenant;
-        set {
+        protected set {
             if (_tenant == value)
                 return;
             _tenant = !IsUsed ? value : throw Errors.TenantPropertyIsReadOnly();
@@ -97,11 +96,12 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
         }
     }
 
-    async Task<DbContext> IDbOperationScope.CreateDbContext(bool readWrite, CancellationToken cancellationToken)
-        => await CreateDbContext(readWrite, cancellationToken).ConfigureAwait(false);
+    async Task<DbContext> IDbOperationScope.CreateDbContext(Tenant tenant, bool readWrite, CancellationToken cancellationToken)
+        => await CreateDbContext(tenant, readWrite, cancellationToken).ConfigureAwait(false);
     public virtual async Task<TDbContext> CreateDbContext(
-        bool readWrite = true, CancellationToken cancellationToken = default)
+        Tenant tenant, bool readWrite = true, CancellationToken cancellationToken = default)
     {
+        Tenant = tenant;
         using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
         if (IsClosed)
             throw Stl.Fusion.Operations.Internal.Errors.OperationScopeIsAlreadyClosed();

@@ -20,7 +20,8 @@ public interface IDbSessionInfoRepo<in TDbContext, TDbSessionInfo, in TDbUserId>
         Tenant tenant, DateTime minLastSeenAt, int maxCount, CancellationToken cancellationToken = default);
 
     // Read methods
-    Task<TDbSessionInfo?> Get(string sessionId, CancellationToken cancellationToken = default);
+    Task<TDbSessionInfo?> Get(
+        Tenant tenant, string sessionId, CancellationToken cancellationToken = default);
     Task<TDbSessionInfo?> Get(
         TDbContext dbContext, string sessionId, bool forUpdate, CancellationToken cancellationToken = default);
     Task<TDbSessionInfo[]> ListByUser(
@@ -33,10 +34,11 @@ public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId> : DbServic
     where TDbSessionInfo : DbSessionInfo<TDbUserId>, new()
     where TDbUserId : notnull
 {
-    protected DbAuthService<TDbContext>.Options Options { get; init; }
-    protected IDbUserIdHandler<TDbUserId> DbUserIdHandler { get; }
-    protected IDbEntityResolver<string, TDbSessionInfo> SessionResolver { get; }
-    protected IDbEntityConverter<TDbSessionInfo, SessionInfo> SessionConverter { get; }
+    protected DbAuthService<TDbContext>.Options Options { get; }
+    protected IDbUserIdHandler<TDbUserId> DbUserIdHandler { get; init; }
+    protected IDbEntityResolver<string, TDbSessionInfo> SessionResolver { get; init; }
+    protected IDbEntityConverter<TDbSessionInfo, SessionInfo> SessionConverter { get; init; }
+    protected ITenantResolver<TDbContext> TenantResolver { get; init; }
 
     public Type SessionInfoEntityType => typeof(TDbSessionInfo);
 
@@ -47,6 +49,7 @@ public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId> : DbServic
         DbUserIdHandler = services.GetRequiredService<IDbUserIdHandler<TDbUserId>>();
         SessionResolver = services.DbEntityResolver<string, TDbSessionInfo>();
         SessionConverter = services.DbEntityConverter<TDbSessionInfo, SessionInfo>();
+        TenantResolver = services.GetRequiredService<ITenantResolver<TDbContext>>();
     }
 
     // Write methods
@@ -110,8 +113,8 @@ public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId> : DbServic
 
     // Read methods
 
-    public async Task<TDbSessionInfo?> Get(string sessionId, CancellationToken cancellationToken = default)
-        => await SessionResolver.Get(sessionId, cancellationToken).ConfigureAwait(false);
+    public async Task<TDbSessionInfo?> Get(Tenant tenant, string sessionId, CancellationToken cancellationToken = default) 
+        => await SessionResolver.Get(tenant, sessionId, cancellationToken).ConfigureAwait(false);
 
     public virtual async Task<TDbSessionInfo?> Get(
         TDbContext dbContext, string sessionId, bool forUpdate, CancellationToken cancellationToken = default)

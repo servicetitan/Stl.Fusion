@@ -156,7 +156,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         user.Claims["id"].Should().Be("robert");
 
         // Server-side methods to get the same user
-        var sameUser = await webAuthBackend.GetUser(user.Id);
+        var sameUser = await webAuthBackend.GetUser("", user.Id);
         sameUser!.Id.Should().Be(user.Id);
         sameUser.Name.Should().Be(user.Name);
         sameUser.Identities.Keys.Select(i => i.Id.Value).Should().BeEquivalentTo(new [] {"g:1"});
@@ -288,7 +288,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         await authBackend.SignIn(signInCmd);
         var user = await auth.GetUser(sessionA);
         user.Name.Should().Be(bob.Name);
-        bob = await authBackend.GetUser(user.Id)
+        bob = await authBackend.GetUser("", user.Id)
             ?? throw new NullReferenceException();
 
         sessions = await auth.GetUserSessions(sessionA);

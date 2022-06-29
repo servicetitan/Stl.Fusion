@@ -1,20 +1,15 @@
-using Stl.Fusion.Authentication;
-using Stl.Multitenancy;
-
-namespace Stl.Fusion.Multitenancy;
+namespace Stl.Multitenancy;
 
 // Resolves tenants from any ITenantResolver to TContext
 public class TenantResolverAlias<TContext> : ITenantResolver<TContext>
 {
     private readonly ITenantResolver _source;
 
-    public TenantResolverAlias(ITenantResolver source) 
+    public TenantResolverAlias(ITenantResolver source)
         => _source = source;
 
-    public Task<Tenant> Resolve(Session session, CancellationToken cancellationToken = default) 
-        => _source.Resolve(session, cancellationToken);
-    public Task<Tenant> Resolve(ICommand command, CancellationToken cancellationToken = default)
-        => _source.Resolve(command, cancellationToken);
+    public Task<Tenant> Resolve(object source, object context, CancellationToken cancellationToken)
+        => _source.Resolve(source, context, cancellationToken);
 }
 
 // Resolves tenants from ITenantResolver<TSourceContext> to TContext

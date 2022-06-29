@@ -13,7 +13,7 @@ public class SingleTenantRegistry<TContext> : ITenantRegistry<TContext>
     public SingleTenantRegistry()
     {
         var tenants = new MutableDictionary<Symbol, Tenant>(
-            ImmutableDictionary<Symbol, Tenant>.Empty.Add(Tenant.Single.Id, Tenant.Single));
+            ImmutableDictionary<Symbol, Tenant>.Empty.Add(Tenant.Default.Id, Tenant.Default));
         AllTenants = AccessedTenants = tenants;
     }
 }

@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework.Internal;
-using Stl.Fusion.EntityFramework.Multitenancy;
 using Stl.Multitenancy;
 using Stl.Versioning;
 
@@ -34,14 +33,14 @@ public class DbHub<TDbContext>
         => Services = services;
 
     public TDbContext CreateDbContext(bool readWrite = false)
-        => DbContextFactory.CreateDbContext(Tenant.Single).ReadWrite(readWrite);
+        => DbContextFactory.CreateDbContext(Tenant.Default).ReadWrite(readWrite);
     public TDbContext CreateDbContext(Symbol tenantId, bool readWrite = false)
         => DbContextFactory.CreateDbContext(TenantRegistry.Get(tenantId)).ReadWrite(readWrite);
     public TDbContext CreateDbContext(Tenant tenant, bool readWrite = false)
         => DbContextFactory.CreateDbContext(tenant).ReadWrite(readWrite);
 
     public Task<TDbContext> CreateCommandDbContext(CancellationToken cancellationToken = default)
-        => CreateCommandDbContext(Tenant.Single, cancellationToken);
+        => CreateCommandDbContext(Tenant.Default, cancellationToken);
     public Task<TDbContext> CreateCommandDbContext(Symbol tenantId, CancellationToken cancellationToken = default)
         => CreateCommandDbContext(TenantRegistry.Get(tenantId), cancellationToken);
     public Task<TDbContext> CreateCommandDbContext(Tenant tenant, CancellationToken cancellationToken = default)
@@ -52,7 +51,6 @@ public class DbHub<TDbContext>
         var commandContext = CommandContext.GetCurrent();
         var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>()
             ?? throw new KeyNotFoundException();
-        operationScope.Tenant = tenant;
-        return operationScope.CreateDbContext(readWrite: true, cancellationToken);
+        return operationScope.CreateDbContext(tenant, readWrite: true, cancellationToken);
     }
 }

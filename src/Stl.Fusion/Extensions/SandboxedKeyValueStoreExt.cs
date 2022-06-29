@@ -25,18 +25,16 @@ public static class SandboxedKeyValueStoreExt
     public static Task Set(this ISandboxedKeyValueStore keyValueStore,
         Session session, string key, string value, Moment? expiresAt, CancellationToken cancellationToken = default)
     {
-        var command = new SandboxedSetCommand(session, key, value, expiresAt);
-        return keyValueStore.Set(command, cancellationToken);
+        var command = new SandboxedSetCommand(session, new[] { (key, value, expiresAt) });
+        return keyValueStore.GetCommander().Call(command, cancellationToken);
     }
 
-    // SetMany
-
-    public static Task SetMany(this ISandboxedKeyValueStore keyValueStore,
+    public static Task Set(this ISandboxedKeyValueStore keyValueStore,
         Session session, (string Key, string Value, Moment? ExpiresAt)[] items,
         CancellationToken cancellationToken = default)
     {
-        var command = new SandboxedSetManyCommand(session, items);
-        return keyValueStore.SetMany(command, cancellationToken);
+        var command = new SandboxedSetCommand(session, items);
+        return keyValueStore.GetCommander().Call(command, cancellationToken);
     }
 
     // Remove
@@ -45,16 +43,14 @@ public static class SandboxedKeyValueStoreExt
         Session session, string key, CancellationToken cancellationToken = default)
     {
         var command = new SandboxedRemoveCommand(session, key);
-        return keyValueStore.Remove(command, cancellationToken);
+        return keyValueStore.GetCommander().Call(command, cancellationToken);
     }
 
-    // RemoveMany
-
-    public static Task RemoveMany(this ISandboxedKeyValueStore keyValueStore,
+    public static Task Remove(this ISandboxedKeyValueStore keyValueStore,
         Session session, string[] keys, CancellationToken cancellationToken = default)
     {
-        var command = new SandboxedRemoveManyCommand(session, keys);
-        return keyValueStore.RemoveMany(command, cancellationToken);
+        var command = new SandboxedRemoveCommand(session, keys);
+        return keyValueStore.GetCommander().Call(command, cancellationToken);
     }
 
     // TryGet & Get

@@ -64,7 +64,7 @@ public abstract class DbOperationCompletionNotifierBase<TDbContext, TOptions> : 
             return Task.CompletedTask;
         
         var commandContext = CommandContext.Current;
-        var tenant = Tenant.Single;
+        var tenant = Tenant.Default;
         if (commandContext != null) { // It's a command
             var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>();
             if (operationScope == null || !operationScope.IsUsed) // But it didn't change anything related to TDbContext

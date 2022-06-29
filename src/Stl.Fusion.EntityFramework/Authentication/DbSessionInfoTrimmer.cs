@@ -54,7 +54,7 @@ public class DbSessionInfoTrimmer<TDbContext, TDbSessionInfo, TDbUserId> : DbSes
             if (lastTrimCount > 0 && IsLoggingEnabled)
                 Log.Log(Settings.LogLevel,
                     "Trim({tenant.Id}) trimmed {Count} sessions", tenant.Id, lastTrimCount);
-        }).Trace(() => activitySource.StartActivity("Trim")?.AddTag("TenantId", tenant.Id.Value), Log);
+        }).Trace(() => activitySource.StartActivity("Trim").AddTenantTags(tenant), Log);
 
         var sleepChain = new AsyncChain("Sleep", cancellationToken1 => {
             var delay = lastTrimCount < Settings.BatchSize

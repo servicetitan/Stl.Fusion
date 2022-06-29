@@ -3,7 +3,8 @@ namespace Stl.Multitenancy;
 [DataContract]
 public record Tenant : IHasId<Symbol>
 {
-    public static Tenant Single { get; } = new(Symbol.Empty, "The only tenant", "");
+    public static Tenant Default { get; } = new(Symbol.Empty, "The only tenant", "");
+    public static Tenant Any { get; } = new("*", "Any tenant", "");
 
     [DataMember] public Symbol Id { get; init; } = Symbol.Empty;
     [DataMember] public string Title { get; init; } = "";
@@ -16,6 +17,10 @@ public record Tenant : IHasId<Symbol>
         Title = title ?? id.Value;
         StorageId = storageId ?? id.Value;
     }
+
+    // Conversion
+
+    public static implicit operator Symbol(Tenant tenant) => tenant.Id;
 
     // Equality
 

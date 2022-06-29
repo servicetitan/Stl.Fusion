@@ -20,7 +20,7 @@ public class RedisOperationLogChangeNotifier<TDbContext>
         RedisDb = services.GetService<RedisDb<TDbContext>>() ?? services.GetRequiredService<RedisDb>();
         RedisPubCache = new();
         // ReSharper disable once VirtualMemberCallInConstructor
-        Log.LogInformation("Using pub/sub key = '{Key}'", GetRedisPub(Tenant.Single).FullKey);
+        Log.LogInformation("Using pub/sub key = '{Key}'", GetRedisPub(Tenant.Default).FullKey);
     }
 
     protected override async Task Notify(Tenant tenant)

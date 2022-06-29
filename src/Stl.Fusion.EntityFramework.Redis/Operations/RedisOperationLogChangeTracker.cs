@@ -17,7 +17,7 @@ public class RedisOperationLogChangeTracker<TDbContext>
         : base(options, services)
     {
         RedisDb = services.GetService<RedisDb<TDbContext>>() ?? services.GetRequiredService<RedisDb>();
-        var redisPub = RedisDb.GetPub<TDbContext>(Options.PubSubKeyFactory.Invoke(Tenant.Single));
+        var redisPub = RedisDb.GetPub<TDbContext>(Options.PubSubKeyFactory.Invoke(Tenant.Default));
         Log.LogInformation("Using pub/sub key = '{Key}'", redisPub.FullKey);
     }
 

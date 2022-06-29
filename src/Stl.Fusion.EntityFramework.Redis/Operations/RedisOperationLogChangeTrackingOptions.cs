@@ -10,7 +10,7 @@ public record RedisOperationLogChangeTrackingOptions<TDbContext> : DbOperationCo
     public static string DefaultPubSubKeyFactory(Tenant tenant)
     {
         var tDbContext = typeof(TDbContext);
-        var tenantSuffix = tenant == Tenant.Single ? "" : $".{tenant.Id.Value}";
+        var tenantSuffix = tenant == Tenant.Default ? "" : $".{tenant.Id.Value}";
         return $"{tDbContext.Name}{tenantSuffix}._Operations";
     }
 }

@@ -4,7 +4,6 @@ using Stl.Fusion.Authentication;
 using Stl.Fusion.EntityFramework.Authentication;
 using Stl.Fusion.EntityFramework.Extensions;
 using Stl.Fusion.EntityFramework.Internal;
-using Stl.Fusion.EntityFramework.Multitenancy;
 using Stl.Fusion.EntityFramework.Operations;
 using Stl.Fusion.Extensions;
 using Stl.Multitenancy;
