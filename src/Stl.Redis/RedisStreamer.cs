@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using StackExchange.Redis;
 using Stl.Redis.Internal;
 
@@ -12,6 +11,7 @@ public sealed class RedisStreamer<T>
         public string AppendPubKeySuffix { get; init; } = "-updates";
         public TimeSpan AppendCheckPeriod { get; init; } = TimeSpan.FromSeconds(1);
         public TimeSpan? AppendSubscribeTimeout { get; init; } = TimeSpan.FromSeconds(5);
+        public TimeSpan? ExpirationPeriod { get; set; } = TimeSpan.FromHours(1);
         public IByteSerializer<T> Serializer { get; init; } = ByteSerializer<T>.Default;
         public ITextSerializer<ExceptionInfo> ErrorSerializer { get; init; } = TextSerializer<ExceptionInfo>.Default;
         public IMomentClock Clock { get; init; } = MomentClockSet.Default.CpuClock;
@@ -100,6 +100,8 @@ public sealed class RedisStreamer<T>
         var appendPub = GetAppendPub();
         var error = (Exception?) null;
         var lastAppendTask = AppendStart(newStreamAnnouncer, appendPub, cancellationToken);
+        if (Settings.ExpirationPeriod is { } expirationPeriod)
+            await RedisDb.Database.KeyExpireAsync(Key, expirationPeriod).ConfigureAwait(false);
         try {
             await foreach (var item in source.WithCancellation(cancellationToken).ConfigureAwait(false)) {
                 await lastAppendTask.ConfigureAwait(false);
@@ -173,6 +175,7 @@ public sealed class RedisStreamer<T>
 
     public Task Remove()
         => RedisDb.Database.KeyDeleteAsync(Key, CommandFlags.FireAndForget);
+
 
     // Protected methods
 
