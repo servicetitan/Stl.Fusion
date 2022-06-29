@@ -28,6 +28,7 @@ using Stl.Fusion.Operations.Reprocessing;
 using Stl.Fusion.Server.Authentication;
 using Stl.Fusion.Server.Controllers;
 using Stl.IO;
+using Stl.Multitenancy;
 using Templates.TodoApp.Abstractions;
 using Templates.TodoApp.UI;
 
@@ -69,19 +70,6 @@ public class Startup
 
         // DbContext & related services
         var appTempDir = FilePath.GetApplicationTempDirectory("", true);
-        var dbPath = appTempDir & "App.db";
-        services.AddPooledDbContextFactory<AppDbContext>(dbContext => {
-            if (!string.IsNullOrEmpty(HostSettings.UseSqlServer))
-                dbContext.UseSqlServer(HostSettings.UseSqlServer);
-            else if (!string.IsNullOrEmpty(HostSettings.UsePostgreSql)) {
-                dbContext.UseNpgsql(HostSettings.UsePostgreSql);
-                dbContext.UseNpgsqlHintFormatter();
-            }
-            else
-                dbContext.UseSqlite($"Data Source={dbPath}");
-            if (Env.IsDevelopment())
-                dbContext.EnableSensitiveDataLogging();
-        });
         services.AddTransient(c => new DbOperationScope<AppDbContext>(c) {
             IsolationLevel = IsolationLevel.Serializable,
         });
@@ -98,12 +86,34 @@ public class Startup
             if (!HostSettings.UseInMemoryAuthService)
                 dbContext.AddAuthentication<string>();
             dbContext.AddKeyValueStore();
+            dbContext.AddMultitenancy(multitenancy => {
+                multitenancy.MultitenantMode();
+                multitenancy.SetupMultitenantRegistry(
+                    new Tenant("5005"), 
+                    new Tenant("5006"));
+                multitenancy.SetupMultitenantDbContextFactory((_, tenant, db) => {
+                    if (!string.IsNullOrEmpty(HostSettings.UseSqlServer))
+                        db.UseSqlServer(HostSettings.UseSqlServer.Interpolate(tenant));
+                    else if (!string.IsNullOrEmpty(HostSettings.UsePostgreSql)) {
+                        db.UseNpgsql(HostSettings.UsePostgreSql.Interpolate(tenant));
+                        db.UseNpgsqlHintFormatter();
+                    }
+                    else {
+                        var dbPath = (appTempDir & "App_{0:StorageId}.db").Value.Interpolate(tenant);
+                        db.UseSqlite($"Data Source={dbPath}");
+                    }
+                    if (Env.IsDevelopment())
+                        db.EnableSensitiveDataLogging();
+                });
+                multitenancy.MakeDefault();
+            });
         });
 
         // Fusion services
         services.AddSingleton(new PublisherOptions() { Id = HostSettings.PublisherId });
         var fusion = services.AddFusion();
         var fusionServer = fusion.AddWebServer();
+        fusionServer.SetupSessionMiddleware(_ => new() { TenantIdSource = TenantIdSource.Port });
         var fusionClient = fusion.AddRestEaseClient();
         var fusionAuth = fusion.AddAuthentication().AddServer(
             signInControllerOptionsFactory: _ => new() {
