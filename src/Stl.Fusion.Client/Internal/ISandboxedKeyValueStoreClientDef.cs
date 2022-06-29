@@ -11,11 +11,11 @@ public interface ISandboxedKeyValueStoreClientDef
     [Post(nameof(Set))]
     Task Set([Body] SandboxedSetCommand command, CancellationToken cancellationToken = default);
     [Post(nameof(SetMany))]
-    Task SetMany([Body] SandboxedSetManyCommand command, CancellationToken cancellationToken = default);
+    Task SetMany([Body] SandboxedSetCommand command, CancellationToken cancellationToken = default);
     [Post(nameof(Remove))]
     Task Remove([Body] SandboxedRemoveCommand command, CancellationToken cancellationToken = default);
     [Post(nameof(RemoveMany))]
-    Task RemoveMany([Body] SandboxedRemoveManyCommand command, CancellationToken cancellationToken = default);
+    Task RemoveMany([Body] SandboxedRemoveCommand command, CancellationToken cancellationToken = default);
 
     [Get(nameof(Get))]
     Task<string?> Get(Session session, string key, CancellationToken cancellationToken = default);

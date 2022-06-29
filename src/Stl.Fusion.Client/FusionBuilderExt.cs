@@ -3,19 +3,19 @@ namespace Stl.Fusion.Client;
 public static class FusionBuilderExt
 {
     public static FusionRestEaseClientBuilder AddRestEaseClient(this FusionBuilder fusion,
-        Action<IServiceProvider, WebSocketChannelProvider.Options>? optionsBuilder = null)
+        Func<IServiceProvider, WebSocketChannelProvider.Options>? optionsFactory = null)
     {
         var builder = new FusionRestEaseClientBuilder(fusion);
-        if (optionsBuilder != null)
-            builder.ConfigureWebSocketChannel(optionsBuilder);
+        if (optionsFactory != null)
+            builder.ConfigureWebSocketChannel(optionsFactory);
         return builder;
     }
 
     public static FusionBuilder AddRestEaseClient(this FusionBuilder fusion,
         Action<FusionRestEaseClientBuilder> configureClient,
-        Action<IServiceProvider, WebSocketChannelProvider.Options>? optionsBuilder = null)
+        Func<IServiceProvider, WebSocketChannelProvider.Options>? optionsFactory = null)
     {
-        var restEaseClient = fusion.AddRestEaseClient(optionsBuilder);
+        var restEaseClient = fusion.AddRestEaseClient(optionsFactory);
         configureClient(restEaseClient);
         return fusion;
     }

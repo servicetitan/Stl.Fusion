@@ -9,7 +9,7 @@ namespace Stl.Fusion.Bridge.Interception;
 
 public interface IReplicaServiceProxyGenerator
 {
-    Type GetProxyType(Type type, bool isCommandService);
+    Type GetProxyType(Type type);
 }
 
 public class ReplicaServiceProxyGenerator : ProxyGeneratorBase<ReplicaServiceProxyGenerator.Options>,
@@ -40,20 +40,17 @@ public class ReplicaServiceProxyGenerator : ProxyGeneratorBase<ReplicaServicePro
             => emitter.CreateField("__interceptors", Options.InterceptorType.MakeArrayType());
     }
 
-    public static readonly IReplicaServiceProxyGenerator Default = new ReplicaServiceProxyGenerator();
-
-    protected ConcurrentDictionary<(Type, bool), Type> Cache { get; } = new();
+    protected ConcurrentDictionary<Type, Type> Cache { get; } = new();
 
     public ReplicaServiceProxyGenerator(
-        Options? options = null,
+        Options options,
         ModuleScope? moduleScope = null)
-        : base(options ??= new(), moduleScope) { }
+        : base(options, moduleScope) { }
 
-    public virtual Type GetProxyType(Type type, bool isCommandService)
-        => Cache.GetOrAddChecked((type, isCommandService), (key, self) => {
-            var (type1, isCommandService1) = key;
-            var tInterfaces = isCommandService1
-                ? new[] { typeof(IReplicaService), typeof(ICommandService) }
+    public virtual Type GetProxyType(Type type)
+        => Cache.GetOrAddChecked(type, (type1, self) => {
+            var tInterfaces = typeof(IReplicaService).IsAssignableFrom(type1)
+                ? Array.Empty<Type>()
                 : new[] { typeof(IReplicaService) };
             var generator = new Implementation(self.ModuleScope, type1, self.ProxyGeneratorOptions);
             return generator.GenerateCode(

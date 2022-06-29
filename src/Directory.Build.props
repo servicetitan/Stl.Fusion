@@ -67,6 +67,7 @@
     <Using Include="Stl.Collections" />
     <Using Include="Stl.DependencyInjection" />
     <Using Include="Stl.Diagnostics" />
+    <Using Include="Stl.Mathematics" />
     <Using Include="Stl.Reflection" />
     <Using Include="Stl.Serialization" />
     <Using Include="Stl.Text" />

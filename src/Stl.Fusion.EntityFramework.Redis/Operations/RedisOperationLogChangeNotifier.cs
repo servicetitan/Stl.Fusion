@@ -1,58 +1,40 @@
 using Microsoft.EntityFrameworkCore;
+using Stl.Fusion.EntityFramework.Operations;
+using Stl.Multitenancy;
 using Stl.Redis;
 
 namespace Stl.Fusion.EntityFramework.Redis.Operations;
 
-public class RedisOperationLogChangeNotifier<TDbContext> : DbServiceBase<TDbContext>, IOperationCompletionListener
+public class RedisOperationLogChangeNotifier<TDbContext> 
+    : DbOperationCompletionNotifierBase<TDbContext, RedisOperationLogChangeTrackingOptions<TDbContext>>
     where TDbContext : DbContext
 {
-    public RedisOperationLogChangeTrackingOptions<TDbContext> Options { get; }
-
-    protected AgentInfo AgentInfo { get; }
     protected RedisDb RedisDb { get; }
-    protected RedisPub RedisPub { get; }
+    protected ConcurrentDictionary<Symbol, RedisPub<TDbContext>> RedisPubCache { get; }
 
     public RedisOperationLogChangeNotifier(
-        RedisOperationLogChangeTrackingOptions<TDbContext> options,
-        IServiceProvider services)
-        : base(services)
+        RedisOperationLogChangeTrackingOptions<TDbContext> options, 
+        IServiceProvider services) 
+        : base(options, services)
     {
-        Options = options;
-        AgentInfo = services.GetRequiredService<AgentInfo>();
         RedisDb = services.GetService<RedisDb<TDbContext>>() ?? services.GetRequiredService<RedisDb>();
-        RedisPub = RedisDb.GetPub(options.PubSubKey);
-        Log.LogInformation("Using pub/sub key = '{Key}'", RedisPub.FullKey);
+        RedisPubCache = new();
+        // ReSharper disable once VirtualMemberCallInConstructor
+        Log.LogInformation("Using pub/sub key = '{Key}'", GetRedisPub(Tenant.Default).FullKey);
     }
 
-    public Task OnOperationCompleted(IOperation operation)
+    protected override async Task Notify(Tenant tenant)
     {
-        if (!StringComparer.Ordinal.Equals(operation.AgentId, AgentInfo.Id.Value)) // Only local commands require notification
-            return Task.CompletedTask;
-        var commandContext = CommandContext.Current;
-        if (commandContext != null) { // It's a command
-            var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>();
-            if (operationScope == null || !operationScope.IsUsed) // But it didn't change anything related to TDbContext
-                return Task.CompletedTask;
-        }
-        // If it wasn't command, we pessimistically assume it changed something
-        using var _ = ExecutionContextExt.SuppressFlow();
-        Task.Run(Notify);
-        return Task.CompletedTask;
+        var redisPub = GetRedisPub(tenant);
+        await redisPub.Publish(AgentInfo.Id.Value).ConfigureAwait(false);
     }
 
-    // Protected methods
-
-    protected virtual async Task Notify()
-    {
-        while (true) {
-            try {
-                await RedisPub.Publish(AgentInfo.Id.Value).ConfigureAwait(false);
-                return;
-            }
-            catch (Exception e) {
-                Log.LogError(e, "Failed to publish to pub/sub key = '{Key}'; retrying", RedisPub.FullKey);
-                await Clocks.CoarseCpuClock.Delay(Options.RetryDelay).ConfigureAwait(false);
-            }
-        }
-    }
+    protected virtual RedisPub<TDbContext> GetRedisPub(Tenant tenant)
+        => RedisPubCache.GetOrAdd(tenant.Id,
+            static (_, state) => {
+                var (self, tenant1) = state;
+                var key = self.Options.PubSubKeyFactory.Invoke(tenant1);
+                return self.RedisDb.GetPub<TDbContext>(key);
+            },
+            (this, tenant));
 }

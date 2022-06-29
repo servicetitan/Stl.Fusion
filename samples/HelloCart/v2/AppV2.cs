@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework;
+using Stl.Fusion.EntityFramework.Operations;
 using Stl.IO;
 
 namespace Samples.HelloCart.V2;
@@ -30,10 +31,10 @@ public class AppV2 : AppBase
             dbContext.EnableSensitiveDataLogging();
         });
         services.AddDbContextServices<AppDbContext>(dbContext => {
-            dbContext.AddOperations((_, o) => {
-                o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(5);
+            dbContext.AddOperations(_ => new() {
+                UnconditionalCheckPeriod = TimeSpan.FromSeconds(5),
             });
-            dbContext.AddFileBasedOperationLogChangeTracking(dbPath + "_changed");
+            dbContext.AddFileBasedOperationLogChangeTracking();
         });
         ClientServices = HostServices = services.BuildServiceProvider();
     }

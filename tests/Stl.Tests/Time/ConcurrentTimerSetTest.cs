@@ -9,8 +9,21 @@ public class ConcurrentTimerSetTest : TestBase
 {
     public class Timer
     {
+        private readonly object _lock = new();
+        private Moment _firedAt;
+
         public Moment DueAt { get; set; }
-        public Moment FiredAt { get; set; }
+
+        public Moment FiredAt {
+            get {
+                lock (_lock)
+                    return _firedAt;
+            }
+            set {
+                lock (_lock)
+                    _firedAt = value;
+            }
+        }
     }
 
     private int _runnerId;
@@ -22,7 +35,7 @@ public class ConcurrentTimerSetTest : TestBase
     {
         var clock = MomentClockSet.Default.CpuClock;
         await using var timerSet = new ConcurrentTimerSet<Timer>(
-            new ConcurrentTimerSet<Timer>.Options() {
+            new() {
                 Quanta = TimeSpan.FromMilliseconds(10),
                 Clock = clock,
             },
@@ -84,7 +97,7 @@ public class ConcurrentTimerSetTest : TestBase
     {
         var clock = MomentClockSet.Default.CoarseCpuClock;
         var timerSet = new ConcurrentTimerSet<Timer>(
-            new ConcurrentTimerSet<Timer>.Options() {
+            new() {
                 Quanta = TimeSpan.FromMilliseconds(100),
             },
             timer => {
@@ -104,7 +117,7 @@ public class ConcurrentTimerSetTest : TestBase
     {
         var clock = MomentClockSet.Default.CoarseCpuClock;
         await using var timerSet = new ConcurrentTimerSet<Timer>(
-            new ConcurrentTimerSet<Timer>.Options() {
+            new() {
                 Quanta = TimeSpan.FromMilliseconds(100),
             },
             timer => timer.FiredAt = clock.Now);

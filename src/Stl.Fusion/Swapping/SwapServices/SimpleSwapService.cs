@@ -4,36 +4,36 @@ namespace Stl.Fusion.Swapping;
 
 public class SimpleSwapService : SwapServiceBase
 {
-    public class Options
+    public record Options
     {
-        public TimeSpan ExpirationTime { get; set; } = TimeSpan.FromMinutes(1);
-        public TimeSpan TimerQuanta { get; set; } = TimeSpan.FromSeconds(1);
-        public int ConcurrencyLevel { get; set; } = HardwareInfo.GetProcessorCountPo2Factor();
-        public Func<ITextSerializer<object>> SerializerFactory { get; set; } =
+        public TimeSpan ExpirationTime { get; init; } = TimeSpan.FromMinutes(1);
+        public TimeSpan TimerQuanta { get; init; } = TimeSpan.FromSeconds(1);
+        public int ConcurrencyLevel { get; init; } = HardwareInfo.GetProcessorCountPo2Factor();
+        public Func<ITextSerializer<object>> SerializerFactory { get; init; } =
             () => new NewtonsoftJsonSerializer().ToTyped<object>();
-        public IMomentClock? Clock { get; set; }
+        public IMomentClock? Clock { get; init; }
     }
 
-    protected readonly ConcurrentDictionary<string, string> Storage;
-    protected readonly ConcurrentTimerSet<string> ExpirationTimers;
-    public TimeSpan ExpirationTime { get; }
+    protected ConcurrentDictionary<string, string> Storage { get; }
+    protected ConcurrentTimerSet<string> ExpirationTimers { get; }
+
+    public Options Settings { get; }
     public IMomentClock Clock { get; }
 
-    public SimpleSwapService(Options? options, IServiceProvider services)
+    public SimpleSwapService(Options settings, IServiceProvider services)
     {
-        options ??= new();
-        SerializerFactory = options.SerializerFactory;
-        ExpirationTime = options.ExpirationTime;
-        Clock = options.Clock ?? services.GetRequiredService<MomentClockSet>().CoarseCpuClock;
+        Settings = settings;
+        SerializerFactory = settings.SerializerFactory;
+        Clock = settings.Clock ?? services.GetRequiredService<MomentClockSet>().CpuClock;
         Storage = new ConcurrentDictionary<string, string>(
-            options.ConcurrencyLevel,
+            settings.ConcurrencyLevel,
             ComputedRegistry.Options.DefaultInitialCapacity,
             StringComparer.Ordinal);
         ExpirationTimers = new ConcurrentTimerSet<string>(
-            new ConcurrentTimerSet<string>.Options() {
+            new() {
+                Quanta = settings.TimerQuanta,
+                ConcurrencyLevel = settings.ConcurrencyLevel,
                 Clock = Clock,
-                Quanta = options.TimerQuanta,
-                ConcurrencyLevel = options.ConcurrencyLevel,
             },
             key => Storage.TryRemove(key, out _));
     }
@@ -42,22 +42,22 @@ public class SimpleSwapService : SwapServiceBase
     {
         if (!Storage.TryGetValue(key, out var value))
             return ValueTaskExt.FromResult((string?) null);
-        ExpirationTimers.AddOrUpdateToLater(key, Clock.Now + ExpirationTime);
+        ExpirationTimers.AddOrUpdateToLater(key, Clock.Now + Settings.ExpirationTime);
         return ValueTaskExt.FromResult(value)!;
     }
 
-    protected override ValueTask<bool> Renew(string key, CancellationToken cancellationToken)
+    protected override ValueTask<bool> Touch(string key, CancellationToken cancellationToken)
     {
         if (!Storage.TryGetValue(key, out var value))
             return ValueTaskExt.FalseTask;
-        ExpirationTimers.AddOrUpdateToLater(key, Clock.Now + ExpirationTime);
+        ExpirationTimers.AddOrUpdateToLater(key, Clock.Now + Settings.ExpirationTime);
         return ValueTaskExt.TrueTask;
     }
 
     protected override ValueTask Store(string key, string value, CancellationToken cancellationToken)
     {
         Storage[key] = value;
-        ExpirationTimers.AddOrUpdateToLater(key, Clock.Now + ExpirationTime);
+        ExpirationTimers.AddOrUpdateToLater(key, Clock.Now + Settings.ExpirationTime);
         return ValueTaskExt.CompletedTask;
     }
 }

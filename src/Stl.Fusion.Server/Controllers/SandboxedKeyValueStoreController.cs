@@ -25,7 +25,7 @@ public class SandboxedKeyValueStoreController : ControllerBase, ISandboxedKeyVal
         => Commander.Call(command, cancellationToken);
 
     [HttpPost]
-    public Task SetMany([FromBody] SandboxedSetManyCommand command, CancellationToken cancellationToken = default)
+    public Task SetMany([FromBody] SandboxedSetCommand command, CancellationToken cancellationToken = default)
         => Commander.Call(command, cancellationToken);
 
     [HttpPost]
@@ -33,7 +33,7 @@ public class SandboxedKeyValueStoreController : ControllerBase, ISandboxedKeyVal
         => Commander.Call(command, cancellationToken);
 
     [HttpPost]
-    public Task RemoveMany([FromBody] SandboxedRemoveManyCommand command, CancellationToken cancellationToken = default)
+    public Task RemoveMany([FromBody] SandboxedRemoveCommand command, CancellationToken cancellationToken = default)
         => Commander.Call(command, cancellationToken);
 
     // Queries

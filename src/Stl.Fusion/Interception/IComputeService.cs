@@ -1,5 +1,7 @@
+using Stl.CommandR.Interception;
+
 namespace Stl.Fusion.Interception;
 
 // A tagging interface for proxy types
-public interface IComputeService
+public interface IComputeService : ICommandService
 { }

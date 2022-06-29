@@ -8,10 +8,11 @@ using Stl.Generators;
 
 namespace Stl.Fusion.Bridge;
 
-public interface IPublisher : IHasServices, IHasId<Symbol>
+public interface IPublisher : IHasId<Symbol>, IHasServices
 {
+    PublisherOptions Options { get; }
     IChannelHub<BridgeMessage> ChannelHub { get; }
-    bool OwnsChannelHub { get; }
+    MomentClockSet Clocks { get; }
 
     IPublication Publish(IComputed computed);
     IPublication? Get(Symbol publicationId);
@@ -25,72 +26,49 @@ public interface IPublisher : IHasServices, IHasId<Symbol>
 
 public interface IPublisherImpl : IPublisher
 {
-    IPublicationFactory PublicationFactory { get; }
-    ISubscriptionProcessorFactory SubscriptionProcessorFactory { get; }
-    Type PublicationGeneric { get; }
-    Type SubscriptionProcessorGeneric { get; }
-    TimeSpan PublicationExpirationTime { get; }
-    TimeSpan SubscriptionExpirationTime { get; }
-    Generator<Symbol> PublicationIdGenerator { get; }
-    MomentClockSet Clocks { get; }
-
     void OnPublicationDisposed(IPublication publication);
     void OnChannelProcessorDisposed(PublisherChannelProcessor channelProcessor);
 }
 
+public record PublisherOptions
+{
+    public static Symbol NewId() => "P-" + RandomStringGenerator.Default.Next();
+
+    public Symbol Id { get; init; } = NewId();
+    public IChannelHub<BridgeMessage> ChannelHub { get; init; } = new ChannelHub<BridgeMessage>();
+    public bool OwnsChannelHub { get; init; } = true;
+    public MomentClockSet? Clocks { get; init; } = null;
+
+    public IPublicationFactory PublicationFactory { get; init; } = Internal.PublicationFactory.Instance;
+    public Type PublicationGeneric { get; init; } = typeof(Publication<>);
+    public TimeSpan PublicationExpirationTime { get; init; } = TimeSpan.FromSeconds(60);
+    public Generator<Symbol> PublicationIdGenerator { get; init; } = new RandomSymbolGenerator("p-");
+
+    public ISubscriptionProcessorFactory SubscriptionProcessorFactory { get; init; } = Internal.SubscriptionProcessorFactory.Instance;
+    public Type SubscriptionProcessorGeneric { get; init; } = typeof(SubscriptionProcessor<>);
+    public TimeSpan SubscriptionExpirationTime { get; init; } = TimeSpan.FromSeconds(60);
+}
+
 public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
 {
-    public class Options
-    {
-        public static Symbol NewId() => "P-" + RandomStringGenerator.Default.Next();
-
-        public Symbol Id { get; set; } = NewId();
-        public IChannelHub<BridgeMessage> ChannelHub { get; set; } = new ChannelHub<BridgeMessage>();
-        public bool OwnsChannelHub { get; set; } = true;
-        public IPublicationFactory PublicationFactory { get; set; } = Internal.PublicationFactory.Instance;
-        public Type PublicationGeneric { get; set; } = typeof(Publication<>);
-        public TimeSpan PublicationExpirationTime { get; set; } = TimeSpan.FromSeconds(60);
-        public Generator<Symbol> PublicationIdGenerator { get; set; } = new RandomSymbolGenerator("p-");
-        public ISubscriptionProcessorFactory SubscriptionProcessorFactory { get; set; } = Internal.SubscriptionProcessorFactory.Instance;
-        public Type SubscriptionProcessorGeneric { get; set; } = typeof(SubscriptionProcessor<>);
-        public TimeSpan SubscriptionExpirationTime { get; set; } = TimeSpan.FromSeconds(60);
-        public MomentClockSet? Clocks { get; set; }
-    }
-
     protected ConcurrentDictionary<ComputedInput, IPublication> Publications { get; }
     protected ConcurrentDictionary<Symbol, IPublication> PublicationsById { get; }
     protected ConcurrentDictionary<Channel<BridgeMessage>, PublisherChannelProcessor> ChannelProcessors { get; }
     protected ChannelAttachedHandler<BridgeMessage> OnChannelAttachedHandler { get; }
     protected ChannelDetachedHandler<BridgeMessage> OnChannelDetachedHandler { get; }
 
+    public PublisherOptions Options { get; }
     public Symbol Id { get; }
-    public IServiceProvider Services { get; }
     public IChannelHub<BridgeMessage> ChannelHub { get; }
-    public bool OwnsChannelHub { get; }
-    public IPublicationFactory PublicationFactory { get; }
-    public Type PublicationGeneric { get; }
-    public TimeSpan PublicationExpirationTime { get; }
-    public Generator<Symbol> PublicationIdGenerator { get; }
-    public ISubscriptionProcessorFactory SubscriptionProcessorFactory { get; }
-    public Type SubscriptionProcessorGeneric { get; }
-    public TimeSpan SubscriptionExpirationTime { get; }
+    public IServiceProvider Services { get; }
     public MomentClockSet Clocks { get; }
 
-    public Publisher(Options? options, IServiceProvider services)
+    public Publisher(PublisherOptions options, IServiceProvider services)
     {
-        options ??= new();
+        Options = options;
         Services = services;
         Id = options.Id;
         ChannelHub = options.ChannelHub;
-        OwnsChannelHub = options.OwnsChannelHub;
-
-        PublicationFactory = options.PublicationFactory;
-        PublicationGeneric = options.PublicationGeneric;
-        PublicationExpirationTime = options.PublicationExpirationTime;
-        PublicationIdGenerator = options.PublicationIdGenerator;
-        SubscriptionProcessorFactory = options.SubscriptionProcessorFactory;
-        SubscriptionProcessorGeneric = options.SubscriptionProcessorGeneric;
-        SubscriptionExpirationTime = options.SubscriptionExpirationTime;
         Clocks = options.Clocks ?? Services.Clocks();
 
         var concurrencyLevel = HardwareInfo.GetProcessorCountPo2Factor(4);
@@ -115,9 +93,10 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
                  computed.Input,
                  (key, arg) => {
                      var (this1, computed1) = arg;
-                     var id = this1.PublicationIdGenerator.Next();
-                     var p1 = this1.PublicationFactory.Create(
-                         this1.PublicationGeneric, this1, computed1, id, this1.Clocks.CoarseCpuClock);
+                     var id = this1.Options.PublicationIdGenerator.Next();
+                     var p1 = this1.Options.PublicationFactory.Create(
+                         this1.Options.PublicationGeneric, this1, computed1, id,
+                         this1.Clocks.CoarseCpuClock);
                      this1.PublicationsById[id] = p1;
                      p1.Run();
                      return p1;
@@ -229,7 +208,7 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
                 });
             await Task.WhenAll(tasks).ConfigureAwait(false);
         }
-        if (OwnsChannelHub)
+        if (Options.OwnsChannelHub)
             await ChannelHub.DisposeAsync().ConfigureAwait(false);
     }
 }

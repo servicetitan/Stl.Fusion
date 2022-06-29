@@ -4,6 +4,8 @@ namespace Stl.Async;
 
 public static class ValueTaskExt
 {
+    public static ValueTask NeverEndingTask { get; } = TaskExt.NeverEndingTask.ToValueTask();
+    public static ValueTask<Unit> NeverEndingUnitTask { get; } = TaskExt.NeverEndingUnitTask.ToValueTask();
     public static ValueTask CompletedTask { get;  } = Task.CompletedTask.ToValueTask();
     public static ValueTask<bool> TrueTask { get;  } = FromResult(true);
     public static ValueTask<bool> FalseTask { get;  } = FromResult(false);

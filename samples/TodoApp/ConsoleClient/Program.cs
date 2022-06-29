@@ -31,16 +31,16 @@ IServiceProvider CreateServiceProvider()
     var apiBaseUri = new Uri($"{baseUri}api/");
 
     var fusion = services.AddFusion();
-    var fusionClient = fusion.AddRestEaseClient(
-        (c, o) => {
-            o.BaseUri = baseUri;
-        }).ConfigureHttpClientFactory(
-        (c, name, o) => {
-            var isFusionClient = (name ?? "").StartsWith("Stl.Fusion");
-            var clientBaseUri = isFusionClient ? baseUri : apiBaseUri;
-            o.HttpClientActions.Add(client => client.BaseAddress = clientBaseUri);
+    fusion.AddRestEaseClient(
+        client => {
+            client.ConfigureWebSocketChannel(_ => new() { BaseUri = baseUri });
+            client.ConfigureHttpClientFactory((_, name, o) => {
+                var isFusionClient = (name ?? "").StartsWith("Stl.Fusion");
+                var clientBaseUri = isFusionClient ? baseUri : apiBaseUri;
+                o.HttpClientActions.Add(httpClient => httpClient.BaseAddress = clientBaseUri);
+            });
+            client.AddReplicaService<ITodoService, ITodoClientDef>();
         });
-    fusionClient.AddReplicaService<ITodoService, ITodoClientDef>();
     fusion.AddAuthentication().AddRestEaseClient();
 
     // Default update delay is 0.1s

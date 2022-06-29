@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Stl.Multitenancy;
 using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework;
@@ -11,6 +12,7 @@ public abstract class DbWorkerBase<TDbContext> : WorkerBase
 
     protected IServiceProvider Services { get; init; }
     protected DbHub<TDbContext> DbHub => _dbHub ??= Services.DbHub<TDbContext>();
+    protected ITenantRegistry<TDbContext> TenantRegistry => DbHub.TenantRegistry;
     protected VersionGenerator<long> VersionGenerator => DbHub.VersionGenerator;
     protected MomentClockSet Clocks => DbHub.Clocks;
     protected ICommander Commander => DbHub.Commander;
@@ -22,8 +24,15 @@ public abstract class DbWorkerBase<TDbContext> : WorkerBase
 
     protected TDbContext CreateDbContext(bool readWrite = false)
         => DbHub.CreateDbContext(readWrite);
+    protected TDbContext CreateDbContext(Symbol tenantId, bool readWrite = false)
+        => DbHub.CreateDbContext(tenantId, readWrite);
+    protected TDbContext CreateDbContext(Tenant tenant, bool readWrite = false)
+        => DbHub.CreateDbContext(tenant, readWrite);
+
     protected Task<TDbContext> CreateCommandDbContext(CancellationToken cancellationToken = default)
         => DbHub.CreateCommandDbContext(cancellationToken);
-    protected Task<TDbContext> CreateCommandDbContext(bool readWrite = true, CancellationToken cancellationToken = default)
-        => DbHub.CreateCommandDbContext(readWrite, cancellationToken);
+    protected Task<TDbContext> CreateCommandDbContext(Symbol tenantId, CancellationToken cancellationToken = default)
+        => DbHub.CreateCommandDbContext(tenantId, cancellationToken);
+    protected Task<TDbContext> CreateCommandDbContext(Tenant tenant, CancellationToken cancellationToken = default)
+        => DbHub.CreateCommandDbContext(tenant, cancellationToken);
 }

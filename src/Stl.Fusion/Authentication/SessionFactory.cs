@@ -11,7 +11,7 @@ public class SessionFactory : ISessionFactory
 {
     protected Generator<string> SessionIdGenerator { get; }
 
-    public SessionFactory() : this(RandomStringGenerator.Default) { }
+    public SessionFactory() : this(new RandomStringGenerator(20)) { }
     public SessionFactory(Generator<string> sessionIdGenerator)
         => SessionIdGenerator = sessionIdGenerator;
 

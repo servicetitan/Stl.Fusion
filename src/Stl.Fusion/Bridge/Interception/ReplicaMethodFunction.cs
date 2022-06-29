@@ -20,7 +20,7 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
         : base(method, ((IReplicatorImpl) replicator).Services)
     {
         Log = log ?? NullLogger<ReplicaMethodFunction<T>>.Instance;
-        DebugLog = Log.IsEnabled(LogLevel.Debug) ? Log : null;
+        DebugLog = Log.IsLogging(LogLevel.Debug) ? Log : null;
         VersionGenerator = versionGenerator;
         Replicator = replicator;
     }

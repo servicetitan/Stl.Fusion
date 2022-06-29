@@ -19,7 +19,7 @@ public class ReplicatorChannelProcessor : WorkerBase
     }
 
     protected readonly IServiceProvider Services;
-    protected readonly IReplicatorImpl ReplicatorImpl;
+    protected IReplicatorImpl ReplicatorImpl => (IReplicatorImpl) Replicator;
     protected readonly HashSet<Symbol> Subscriptions;
     protected volatile Task<Channel<BridgeMessage>> ChannelTask = null!;
     protected volatile Channel<BridgeMessage> SendChannel = null!;
@@ -34,10 +34,9 @@ public class ReplicatorChannelProcessor : WorkerBase
     {
         Services = services;
         Replicator = replicator;
-        ReplicatorImpl = (IReplicatorImpl) replicator;
         PublisherId = publisherId;
         Subscriptions = new HashSet<Symbol>();
-        var stateFactory = ReplicatorImpl.Services.StateFactory();
+        var stateFactory = Replicator.Services.StateFactory();
         IsConnected = stateFactory.NewMutable(true);
         // ReSharper disable once VirtualMemberCallInConstructor
         Reconnect();
@@ -195,7 +194,7 @@ public class ReplicatorChannelProcessor : WorkerBase
             var cancellationToken = CancellationToken.None;
             if (error != null) {
                 Log.LogError(error, "{ClientId}: error", ClientId);
-                await Task.Delay(ReplicatorImpl.ReconnectDelay, cancellationToken).ConfigureAwait(false);
+                await Task.Delay(Replicator.Options.ReconnectDelay, cancellationToken).ConfigureAwait(false);
                 Log.LogInformation("{ClientId}: reconnecting...", ClientId);
             }
             else

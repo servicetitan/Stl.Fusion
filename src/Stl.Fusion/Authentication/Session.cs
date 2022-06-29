@@ -27,6 +27,25 @@ public sealed class Session : IHasId<Symbol>, IEquatable<Session>,
         Id = id;
     }
 
+    public Symbol GetTenantId()
+    {
+        var idValue = Id.Value;
+        var atIndex = idValue.IndexOf('@');
+        if (atIndex <= 0)
+            return Symbol.Empty;
+        return idValue[(atIndex + 1)..];
+    }
+
+    public Session WithTenantId(Symbol tenantId)
+    {
+        var idValue = Id.Value;
+        var atIndex = idValue.IndexOf('@');
+        if (atIndex < 0)
+            return tenantId.IsEmpty ? this : new Session($"{idValue}@{tenantId.Value}");
+        var prefix = idValue[..atIndex];
+        return new Session(tenantId.IsEmpty ? prefix :$"{prefix}@{tenantId.Value}");
+    }
+
     // Conversion
 
     public override string ToString() => Id.Value;

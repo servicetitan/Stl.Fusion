@@ -58,25 +58,11 @@ public readonly struct FusionRestEaseClientBuilder
     }
 
     public FusionRestEaseClientBuilder ConfigureWebSocketChannel(
-        WebSocketChannelProvider.Options options)
+        Func<IServiceProvider, WebSocketChannelProvider.Options>? optionsFactory)
     {
         var serviceDescriptor = new ServiceDescriptor(
             typeof(WebSocketChannelProvider.Options),
-            options);
-        Services.Replace(serviceDescriptor);
-        return this;
-    }
-
-    public FusionRestEaseClientBuilder ConfigureWebSocketChannel(
-        Action<IServiceProvider, WebSocketChannelProvider.Options> optionsBuilder)
-    {
-        var serviceDescriptor = new ServiceDescriptor(
-            typeof(WebSocketChannelProvider.Options),
-            c => {
-                var options = new WebSocketChannelProvider.Options();
-                optionsBuilder(c, options);
-                return options;
-            },
+            c => optionsFactory?.Invoke(c) ?? new(),
             ServiceLifetime.Singleton);
         Services.Replace(serviceDescriptor);
         return this;
@@ -120,20 +106,20 @@ public readonly struct FusionRestEaseClientBuilder
     }
 
     public FusionRestEaseClientBuilder AddReplicaService<TClient>(
-        string? clientName = null, bool isCommandService = true)
+        string? clientName = null)
         where TClient : class
-        => AddReplicaService(typeof(TClient), clientName, isCommandService);
+        => AddReplicaService(typeof(TClient), clientName);
     public FusionRestEaseClientBuilder AddReplicaService<TService, TClient>(
-        string? clientName = null, bool isCommandService = true)
+        string? clientName = null)
         where TClient : class
-        => AddReplicaService(typeof(TService), typeof(TClient), clientName, isCommandService);
+        => AddReplicaService(typeof(TService), typeof(TClient), clientName);
     public FusionRestEaseClientBuilder AddReplicaService(
         Type clientType,
-        string? clientName = null, bool isCommandService = true)
-        => AddReplicaService(clientType, clientType, clientName, isCommandService);
+        string? clientName = null)
+        => AddReplicaService(clientType, clientType, clientName);
     public FusionRestEaseClientBuilder AddReplicaService(
         Type serviceType, Type clientType,
-        string? clientName = null, bool isCommandService = true)
+        string? clientName = null)
     {
         if (!(serviceType.IsInterface && serviceType.IsVisible))
             throw Internal.Errors.InterfaceTypeExpected(serviceType, true, nameof(serviceType));
@@ -174,7 +160,7 @@ public readonly struct FusionRestEaseClientBuilder
 
             // 4. Create Replica Client
             var replicaProxyGenerator = c.GetRequiredService<IReplicaServiceProxyGenerator>();
-            var replicaProxyType = replicaProxyGenerator.GetProxyType(serviceType, isCommandService);
+            var replicaProxyType = replicaProxyGenerator.GetProxyType(serviceType);
             var replicaInterceptors = c.GetRequiredService<ReplicaServiceInterceptor[]>();
             client = replicaProxyType.CreateInstance(replicaInterceptors, client);
             return client;
@@ -182,8 +168,7 @@ public readonly struct FusionRestEaseClientBuilder
 
         Services.AddSingleton(clientAccessorType, ClientAccessorFactory);
         Services.AddSingleton(serviceType, ServiceFactory);
-        if (isCommandService)
-            Services.AddCommander().AddCommandService(serviceType);
+        Services.AddCommander().AddCommandService(serviceType);
         return this;
     }
 

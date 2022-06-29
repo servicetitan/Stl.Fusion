@@ -1,7 +1,6 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration.Memory;
-using Microsoft.Extensions.Hosting;
+using Stl.Fusion.EntityFramework;
+using Stl.Multitenancy;
 using Templates.TodoApp.Host;
 using Templates.TodoApp.Services;
 
@@ -10,7 +9,7 @@ var host = Host.CreateDefaultBuilder()
         // Looks like there is no better way to set _default_ URL
         cfg.Sources.Insert(0, new MemoryConfigurationSource() {
             InitialData = new Dictionary<string, string>() {
-                {WebHostDefaults.ServerUrlsKey, "http://localhost:5005"},
+                {WebHostDefaults.ServerUrlsKey, "http://localhost:5005;http://localhost:5006"},
             }
         });
     })
@@ -25,9 +24,12 @@ var host = Host.CreateDefaultBuilder()
     .Build();
 
 // Ensure the DB is created
-var dbContextFactory = host.Services.GetRequiredService<IDbContextFactory<AppDbContext>>();
-await using var dbContext = dbContextFactory.CreateDbContext();
-// await dbContext.Database.EnsureDeletedAsync();
-await dbContext.Database.EnsureCreatedAsync();
+var dbContextFactory = host.Services.GetRequiredService<IMultitenantDbContextFactory<AppDbContext>>();
+var tenantRegistry = host.Services.GetRequiredService<ITenantRegistry>();
+foreach (var tenant in tenantRegistry.AllTenants.Values) {
+    await using var dbContext = dbContextFactory.CreateDbContext(tenant);
+    // await dbContext.Database.EnsureDeletedAsync();
+    await dbContext.Database.EnsureCreatedAsync();
+}
 
 await host.RunAsync();

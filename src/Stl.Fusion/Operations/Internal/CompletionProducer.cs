@@ -2,29 +2,32 @@ namespace Stl.Fusion.Operations.Internal;
 
 public class CompletionProducer : IOperationCompletionListener
 {
-    public class Options
+    public record Options
     {
-        public bool IsLoggingEnabled { get; set; } = true;
+        public LogLevel LogLevel { get; init; } = LogLevel.Information;
     }
 
+    protected Options Settings { get; }
     protected ICommander Commander { get; }
     protected AgentInfo AgentInfo { get; }
     protected ILogger Log { get; }
-    protected bool IsLoggingEnabled { get; set; }
-    protected LogLevel LogLevel { get; set; } = LogLevel.Information;
+    protected bool IsLoggingEnabled { get; }
 
-    public CompletionProducer(Options? options,
+    public CompletionProducer(Options settings,
         ICommander commander,
         AgentInfo agentInfo,
         ILogger<CompletionProducer>? log = null)
     {
-        options ??= new();
+        Settings = settings;
         Log = log ?? NullLogger<CompletionProducer>.Instance;
-        IsLoggingEnabled = options.IsLoggingEnabled && Log.IsEnabled(LogLevel);
+        IsLoggingEnabled = Log.IsLogging(settings.LogLevel);
 
         AgentInfo = agentInfo;
         Commander = commander;
     }
+
+    public bool IsReady()
+        => true;
 
     public virtual Task OnOperationCompleted(IOperation operation)
     {
@@ -38,7 +41,7 @@ public class CompletionProducer : IOperationCompletionListener
                 //     backendCommand.MarkValid();
                 await Commander.Call(Completion.New(operation), true).ConfigureAwait(false);
                 if (IsLoggingEnabled)
-                    Log.Log(LogLevel,
+                    Log.Log(Settings.LogLevel,
                         "{OperationType} operation completion succeeded. Agent: '{AgentId}', Command: {Command}",
                         operationType, operation.AgentId, command);
             }

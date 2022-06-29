@@ -1,61 +1,62 @@
 using Microsoft.EntityFrameworkCore;
+using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework.Operations;
 
-public class DbOperationLogTrimmer<TDbContext> : DbWakeSleepWorkerBase<TDbContext>
+public class DbOperationLogTrimmer<TDbContext> : DbTenantWorkerBase<TDbContext>
     where TDbContext : DbContext
 {
-    public class Options
+    public record Options
     {
-        public TimeSpan CheckInterval { get; set; } = TimeSpan.FromMinutes(5);
-        public TimeSpan MaxOperationAge { get; set; } = TimeSpan.FromMinutes(6);
-        public int BatchSize { get; set; } = 1000;
-        public bool IsLoggingEnabled { get; set; } = true;
+        public RandomTimeSpan CheckPeriod { get; init; } = TimeSpan.FromMinutes(5).ToRandom(0.1);
+        public RandomTimeSpan NextBatchDelay { get; init; } = TimeSpan.FromSeconds(1).ToRandom(0.25);
+        public RetryDelaySeq RetryDelays { get; init; } = (TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(10));
+        public TimeSpan MaxOperationAge { get; init; } = TimeSpan.FromMinutes(10);
+        public int BatchSize { get; init; } = 1000;
+        public LogLevel LogLevel { get; init; } = LogLevel.Information;
     }
 
-    protected TimeSpan CheckInterval { get; init; }
-    protected TimeSpan MaxCommitAge { get; init; }
-    protected int BatchSize { get; init; }
-    protected Random Random { get; init; }
-
+    protected Options Settings { get; }
     protected IDbOperationLog<TDbContext> DbOperationLog { get; init; }
-
-    protected int LastTrimCount { get; set; }
+    protected override IReadOnlyMutableDictionary<Symbol, Tenant> TenantSet => TenantRegistry.AccessedTenants;
     protected bool IsLoggingEnabled { get; set; }
-    protected LogLevel LogLevel { get; set; } = LogLevel.Information;
 
-    public DbOperationLogTrimmer(Options? options, IServiceProvider services)
+    public DbOperationLogTrimmer(Options settings, IServiceProvider services)
         : base(services)
     {
-        options ??= new();
-        IsLoggingEnabled = options.IsLoggingEnabled && Log.IsEnabled(LogLevel);
-
-        CheckInterval = options.CheckInterval;
-        MaxCommitAge = options.MaxOperationAge;
-        BatchSize = options.BatchSize;
-        Random = new Random();
-
+        Settings = settings;
+        IsLoggingEnabled = Log.IsLogging(settings.LogLevel);
         DbOperationLog = services.GetRequiredService<IDbOperationLog<TDbContext>>();
     }
 
-    protected override async Task WakeUp(CancellationToken cancellationToken)
+    protected override Task RunInternal(Tenant tenant, CancellationToken cancellationToken)
     {
-        var minCommitTime = (Clocks.SystemClock.Now - MaxCommitAge).ToDateTime();
-        LastTrimCount = await DbOperationLog
-            .Trim(minCommitTime, BatchSize, cancellationToken)
-            .ConfigureAwait(false);
+        var lastTrimCount = 0;
 
-        if (LastTrimCount > 0 && IsLoggingEnabled)
-            Log.Log(LogLevel, "Trimmed {Count} operations", LastTrimCount);
-    }
+        var activitySource = GetType().GetActivitySource();
+        var runChain = new AsyncChain($"Trim({tenant.Id})", async cancellationToken1 => {
+            var minCommitTime = (Clocks.SystemClock.Now - Settings.MaxOperationAge).ToDateTime();
+            lastTrimCount = await DbOperationLog
+                .Trim(tenant, minCommitTime, Settings.BatchSize, cancellationToken1)
+                .ConfigureAwait(false);
 
-    protected override Task Sleep(Exception? error, CancellationToken cancellationToken)
-    {
-        var delay = default(TimeSpan);
-        if (error != null)
-            delay = TimeSpan.FromMilliseconds(1000 * Random.NextDouble());
-        else if (LastTrimCount < BatchSize)
-            delay = CheckInterval + TimeSpan.FromMilliseconds(100 * Random.NextDouble());
-        return Clocks.CoarseCpuClock.Delay(delay, cancellationToken);
+            if (lastTrimCount > 0 && IsLoggingEnabled)
+                Log.Log(Settings.LogLevel,
+                    "Trim({tenant.Id}) trimmed {Count} operations", tenant.Id, lastTrimCount);
+        }).Trace(() => activitySource.StartActivity("Trim").AddTenantTags(tenant), Log);
+
+        var sleepChain = new AsyncChain("Sleep", cancellationToken1 => {
+            var delay = lastTrimCount < Settings.BatchSize
+                ? Settings.NextBatchDelay
+                : Settings.CheckPeriod;
+            return Clocks.CpuClock.Delay(delay.Next(), cancellationToken1);
+        });
+        
+        var chain = runChain
+            .RetryForever(Settings.RetryDelays, Clocks.CpuClock, Log)
+            .Append(sleepChain)
+            .Cycle();
+
+        return chain.Start(cancellationToken);
     }
 }

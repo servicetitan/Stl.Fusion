@@ -1,71 +1,50 @@
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Stl.Fusion.EntityFramework.Operations;
+using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework.Npgsql.Operations;
 
-public class NpgsqlDbOperationLogChangeTracker<TDbContext> : DbWakeSleepWorkerBase<TDbContext>,
-    IDbOperationLogChangeTracker<TDbContext>
+public class NpgsqlDbOperationLogChangeTracker<TDbContext> 
+    : DbOperationCompletionTrackerBase<TDbContext, NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>>
     where TDbContext : DbContext
 {
-    public NpgsqlDbOperationLogChangeTrackingOptions<TDbContext> Options { get; }
-    protected AgentInfo AgentInfo { get; }
-    protected Task<Unit> NextEventTask { get; set; } = null!;
-
     public NpgsqlDbOperationLogChangeTracker(
-        NpgsqlDbOperationLogChangeTrackingOptions<TDbContext> options,
-        IServiceProvider services)
-        : base(services)
-    {
-        Options = options;
-        AgentInfo = services.GetRequiredService<AgentInfo>();
+        NpgsqlDbOperationLogChangeTrackingOptions<TDbContext> options, 
+        IServiceProvider services) 
+        : base(options, services) { }
 
-        // ReSharper disable once VirtualMemberCallInConstructor
-        ReplaceNextEventTask();
-    }
+    protected override DbOperationCompletionTrackerBase.TenantWatcher CreateTenantWatcher(Symbol tenantId) 
+        => new TenantWatcher(this, tenantId);
 
-    public Task WaitForChanges(CancellationToken cancellationToken = default)
+    protected new class TenantWatcher : DbOperationCompletionTrackerBase.TenantWatcher
     {
-        lock (Lock) {
-            var task = NextEventTask;
-            if (NextEventTask.IsCompleted)
-                ReplaceNextEventTask();
-            return task;
+        public TenantWatcher(NpgsqlDbOperationLogChangeTracker<TDbContext> owner, Symbol tenantId) 
+            : base(owner.TenantRegistry.Get(tenantId))
+        {
+            var dbHub = owner.Services.DbHub<TDbContext>();
+            var agentInfo = owner.Services.GetRequiredService<AgentInfo>();
+
+            var watchChain = new AsyncChain($"Watch({tenantId})", async cancellationToken => {
+                var dbContext = dbHub.CreateDbContext(Tenant);
+                await using var _ = dbContext.ConfigureAwait(false);
+
+                var database = dbContext.Database;
+                await database.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                var dbConnection = (NpgsqlConnection) database.GetDbConnection()!;
+                dbConnection.Notification += (_, eventArgs) => {
+                    if (eventArgs.Payload != agentInfo.Id)
+                        CompleteWaitForChanges();
+                };
+                await dbContext.Database
+                    .ExecuteSqlRawAsync($"LISTEN {owner.Options.ChannelName}", cancellationToken)
+                    .ConfigureAwait(false);
+                while (!cancellationToken.IsCancellationRequested)
+                    await dbConnection.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+            }).RetryForever(owner.Options.TrackerRetryDelays, owner.Log);
+            
+            watchChain.RunIsolated(StopToken);
         }
     }
-
-    // Protected methods
-
-    protected override async Task WakeUp(CancellationToken cancellationToken)
-    {
-        var dbContext = CreateDbContext();
-        await using var _ = dbContext.ConfigureAwait(false);
-
-        var database = dbContext.Database;
-        await database.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        var dbConnection = (NpgsqlConnection) database.GetDbConnection()!;
-        dbConnection.Notification += (_, eventArgs) => {
-            if (eventArgs.Payload != AgentInfo.Id)
-                ReleaseWaitForChanges();
-        };
-        await dbContext.Database
-            .ExecuteSqlRawAsync($"LISTEN " + Options.ChannelName, cancellationToken)
-            .ConfigureAwait(false);
-        while (!cancellationToken.IsCancellationRequested)
-            await dbConnection.WaitAsync(cancellationToken).ConfigureAwait(false);
-    }
-
-    protected override Task Sleep(Exception? error, CancellationToken cancellationToken)
-        => error != null
-            ? Clocks.CoarseCpuClock.Delay(Options.RetryDelay, cancellationToken)
-            : Task.CompletedTask;
-
-    protected virtual void ReleaseWaitForChanges()
-    {
-        lock (Lock)
-            TaskSource.For(NextEventTask).TrySetResult(default);
-    }
-
-    protected virtual void ReplaceNextEventTask()
-        => NextEventTask = TaskSource.New<Unit>(false).Task;
 }

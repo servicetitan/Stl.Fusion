@@ -7,11 +7,16 @@ public static class MathExt
     private static readonly ConcurrentDictionary<int, BigInteger> _factorials =
         new ConcurrentDictionary<int, BigInteger>();
 
+    public static double Clamp(this double value, double min, double max) => Math.Min(Math.Max(value, min), max);
+    public static float Clamp(this float value, float min, float max) => Math.Min(Math.Max(value, min), max);
+
     public static long Min(long a, long b) => a <= b ? a : b;
     public static long Max(long a, long b) => a >= b ? a : b;
+    public static long Clamp(this long value, long min, long max) => Min(Max(value, min), max);
 
     public static ulong Min(ulong a, ulong b) => a <= b ? a : b;
     public static ulong Max(ulong a, ulong b) => a >= b ? a : b;
+    public static ulong Clamp(this ulong value, ulong min, ulong max) => Min(Max(value, min), max);
 
     public static long Gcd(long a, long b) => b == 0 ? a : Gcd(b, a%b);
     public static BigInteger Gcd(BigInteger a, BigInteger b) => b == 0 ? a : Gcd(b, a%b);

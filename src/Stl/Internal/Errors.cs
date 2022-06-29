@@ -88,4 +88,6 @@ public static class Errors
     public static Exception ConcreteMatchForGenericType(Type type, Type matchType)
         => new InvalidOperationException($"Concrete type '{matchType}' can't be a match for generic type '{type}'.");
 
+    public static Exception TenantNotFound(Symbol tenantId)
+        => new KeyNotFoundException($"Tenant '{tenantId.Value}' doesn't exist.");
 }

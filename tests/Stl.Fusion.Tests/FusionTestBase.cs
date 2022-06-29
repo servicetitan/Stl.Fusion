@@ -236,10 +236,10 @@ public class FusionTestBase : TestBase, IAsyncLifetime
                 builder.EnableSensitiveDataLogging();
             }, 256);
             services.AddDbContextServices<TestDbContext>(b => {
-                b.AddOperations((_, o) => {
-                    o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(5);
+                b.AddOperations(_ => new() {
+                    UnconditionalCheckPeriod = TimeSpan.FromSeconds(5),
                     // Enable this if you debug multi-host invalidation
-                    // o.MaxCommitDuration = TimeSpan.FromMinutes(5);
+                    // MaxCommitDuration = TimeSpan.FromMinutes(5), 
                 });
                 if (Options.UseRedisOperationLogChangeTracking) {
                     b.AddRedisDb("localhost", "Fusion.Tests");
@@ -249,9 +249,9 @@ public class FusionTestBase : TestBase, IAsyncLifetime
                     b.AddNpgsqlOperationLogChangeTracking();
                 else
                     b.AddFileBasedOperationLogChangeTracking();
+
                 if (!Options.UseInMemoryAuthService)
                     b.AddAuthentication<DbAuthSessionInfo, DbAuthUser, long>();
-
                 if (!Options.UseInMemoryKeyValueStore)
                     b.AddKeyValueStore();
                 b.AddEntityResolver<long, User>();
@@ -281,11 +281,11 @@ public class FusionTestBase : TestBase, IAsyncLifetime
 
             // Fusion client
             var fusionClient = fusion.AddRestEaseClient(
-                (c, options) => {
-                    options.BaseUri = WebHost.ServerUri;
-                    options.IsMessageLoggingEnabled = true;
+                _ => new() {
+                    BaseUri = WebHost.ServerUri,
+                    MessageLogLevel = LogLevel.Information,
                 }).ConfigureHttpClientFactory(
-                (c, name, options) => {
+                (_, name, options) => {
                     var baseUri = WebHost.ServerUri;
                     var apiUri = new Uri($"{baseUri}api/");
                     var isFusionService = !(name ?? "").Contains("Tests");

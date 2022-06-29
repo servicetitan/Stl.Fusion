@@ -9,22 +9,22 @@ namespace Stl.Fusion.Client;
 
 public class WebSocketChannelProvider : IChannelProvider, IHasServices
 {
-    public class Options
+    public record Options
     {
-        public Uri BaseUri { get; set; } = new("http://localhost:5000/");
-        public string RequestPath { get; set; } = "/fusion/ws";
-        public string PublisherIdQueryParameterName { get; set; } = "publisherId";
-        public string ClientIdQueryParameterName { get; set; } = "clientId";
-        public TimeSpan ConnectTimeout { get; set; } = TimeSpan.FromSeconds(10);
-        public int? MessageMaxLength { get; set; } = 2048;
-        public Func<IServiceProvider, ITextSerializer<BridgeMessage>> SerializerFactory { get; set; } =
+        public Uri BaseUri { get; init; } = new("http://localhost:5000/");
+        public string RequestPath { get; init; } = "/fusion/ws";
+        public string PublisherIdQueryParameterName { get; init; } = "publisherId";
+        public string ClientIdQueryParameterName { get; init; } = "clientId";
+        public TimeSpan ConnectTimeout { get; init; } = TimeSpan.FromSeconds(10);
+        public int? MessageMaxLength { get; init; } = 2048;
+        public Func<IServiceProvider, ITextSerializer<BridgeMessage>> SerializerFactory { get; init; } =
             DefaultSerializerFactory;
-        public Func<IServiceProvider, ClientWebSocket> ClientWebSocketFactory { get; set; } =
+        public Func<IServiceProvider, ClientWebSocket> ClientWebSocketFactory { get; init; } =
             DefaultClientWebSocketFactory;
-        public Func<WebSocketChannelProvider, Symbol, Uri> ConnectionUrlResolver { get; set; } =
+        public Func<WebSocketChannelProvider, Symbol, Uri> ConnectionUrlResolver { get; init; } =
             DefaultConnectionUrlResolver;
-        public bool IsLoggingEnabled { get; set; } = true;
-        public bool IsMessageLoggingEnabled { get; set; } = false;
+        public LogLevel LogLevel { get; set; } = LogLevel.Information;
+        public LogLevel MessageLogLevel { get; set; } = LogLevel.None;
 
         public static ITextSerializer<BridgeMessage> DefaultSerializerFactory(IServiceProvider services)
             => TextSerializer.NewAsymmetric(
@@ -39,20 +39,23 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
         public static ClientWebSocket DefaultClientWebSocketFactory(IServiceProvider services)
             => services?.GetService<ClientWebSocket>() ?? new ClientWebSocket();
 
-        public static Uri DefaultConnectionUrlResolver(WebSocketChannelProvider channelProvider, Symbol publisherId)
+        public static Uri DefaultConnectionUrlResolver(
+            WebSocketChannelProvider channelProvider,
+            Symbol publisherId)
         {
-            var url = channelProvider.BaseUri.ToString();
+            var settings = channelProvider.Settings;
+            var url = settings.BaseUri.ToString();
             if (url.StartsWith("http://", StringComparison.Ordinal))
                 url = "ws://" + url.Substring(7);
             else if (url.StartsWith("https://", StringComparison.Ordinal))
                 url = "wss://" + url.Substring(8);
             if (url.EndsWith("/", StringComparison.Ordinal))
                 url = url.Substring(0, url.Length - 1);
-            url += channelProvider.RequestPath;
+            url += settings.RequestPath;
             var uriBuilder = new UriBuilder(url);
             var queryTail =
-                $"{channelProvider.PublisherIdQueryParameterName}={publisherId.Value}" +
-                $"&{channelProvider.ClientIdQueryParameterName}={channelProvider.ClientId.Value}";
+                $"{settings.PublisherIdQueryParameterName}={publisherId.Value}" +
+                $"&{settings.ClientIdQueryParameterName}={channelProvider.ClientId.Value}";
             if (!string.IsNullOrEmpty(uriBuilder.Query))
                 uriBuilder.Query += "&" + queryTail;
             else
@@ -62,45 +65,27 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
     }
 
     protected ILogger Log { get; init; }
-    protected Func<IServiceProvider, ITextSerializer<BridgeMessage>> SerializerFactory { get; }
-    protected Func<IServiceProvider, ClientWebSocket> ClientWebSocketFactory { get; }
-    protected int? MessageMaxLength { get; }
-    protected Lazy<IReplicator>? ReplicatorLazy { get; }
-    protected Symbol ClientId => ReplicatorLazy?.Value.Id ?? Symbol.Empty;
     protected bool IsLoggingEnabled { get; set; }
     protected bool IsMessageLoggingEnabled { get; set; }
-    protected LogLevel LogLevel { get; set; } = LogLevel.Information;
-    protected LogLevel MessageLogLevel { get; set; } = LogLevel.Information;
 
-    public Uri BaseUri { get; }
-    public Func<WebSocketChannelProvider, Symbol, Uri> ConnectionUrlResolver { get; }
-    public string RequestPath { get; }
-    public string PublisherIdQueryParameterName { get; }
-    public string ClientIdQueryParameterName { get; }
-    public TimeSpan ConnectTimeout { get; }
+    protected Lazy<IReplicator>? ReplicatorLazy { get; }
+    protected Symbol ClientId => ReplicatorLazy?.Value.Id ?? Symbol.Empty;
+
+    public Options Settings { get; }
     public IServiceProvider Services { get; }
 
     public WebSocketChannelProvider(
-        Options? options,
+        Options settings,
         IServiceProvider services,
         ILogger<WebSocketChannelProvider>? log = null)
     {
-        options ??= new();
+        Settings = settings;
         Log = log ?? NullLogger<WebSocketChannelProvider>.Instance;
-        IsLoggingEnabled = options.IsLoggingEnabled && Log.IsEnabled(LogLevel);
-        IsMessageLoggingEnabled = options.IsMessageLoggingEnabled && Log.IsEnabled(MessageLogLevel);
+        IsLoggingEnabled = Log.IsLogging(settings.LogLevel);
+        IsMessageLoggingEnabled = Log.IsLogging(settings.MessageLogLevel);
 
         Services = services;
-        BaseUri = options.BaseUri;
-        RequestPath = options.RequestPath;
-        PublisherIdQueryParameterName = options.PublisherIdQueryParameterName;
-        ClientIdQueryParameterName = options.ClientIdQueryParameterName;
-        MessageMaxLength = options.MessageMaxLength;
-        ConnectTimeout = options.ConnectTimeout;
         ReplicatorLazy = new Lazy<IReplicator>(services.GetRequiredService<IReplicator>);
-        SerializerFactory = options.SerializerFactory;
-        ClientWebSocketFactory = options.ClientWebSocketFactory;
-        ConnectionUrlResolver = options.ConnectionUrlResolver;
     }
 
     public async Task<Channel<BridgeMessage>> CreateChannel(
@@ -108,21 +93,24 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
     {
         var clientId = ClientId.Value;
         try {
-            var connectionUri = ConnectionUrlResolver(this, publisherId);
+            var connectionUri = Settings.ConnectionUrlResolver(this, publisherId);
             if (IsLoggingEnabled)
-                Log.Log(LogLevel, "{ClientId}: connecting to {ConnectionUri}...", clientId, connectionUri);
-            var ws = ClientWebSocketFactory(Services);
-            using var cts = new CancellationTokenSource(ConnectTimeout);
+                Log.Log(Settings.LogLevel,
+                    "{ClientId}: connecting to {ConnectionUri}...", clientId, connectionUri);
+            var ws = Settings.ClientWebSocketFactory(Services);
+            using var cts = new CancellationTokenSource(Settings.ConnectTimeout);
             using var lts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
             await ws.ConnectAsync(connectionUri, lts.Token).ConfigureAwait(false);
             if (IsLoggingEnabled)
-                Log.Log(LogLevel, "{ClientId}: connected", clientId);
+                Log.Log(Settings.LogLevel,
+                    "{ClientId}: connected", clientId);
 
             var wsChannel = new WebSocketChannel(ws);
             Channel<string> stringChannel = wsChannel;
             if (IsMessageLoggingEnabled)
-                stringChannel = stringChannel.WithLogger(clientId, Log, MessageLogLevel, MessageMaxLength);
-            var serializers = SerializerFactory(Services);
+                stringChannel = stringChannel.WithLogger(
+                    clientId, Log, Settings.MessageLogLevel, Settings.MessageMaxLength);
+            var serializers = Settings.SerializerFactory(Services);
             var resultChannel = stringChannel.WithTextSerializer(serializers);
             _ = wsChannel.WhenCompleted(CancellationToken.None)
                 .ContinueWith(async _ => {

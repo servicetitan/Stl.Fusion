@@ -15,20 +15,20 @@ public static class Timeouts
         Clock = MomentClockSet.Default.CpuClock;
         var concurrencyLevel = HardwareInfo.GetProcessorCountPo2Factor(8);
         KeepAlive = new ConcurrentTimerSet<object>(
-            new ConcurrentTimerSet<object>.Options() {
+            new() {
                 Quanta = TimeSpan.FromMilliseconds(250),
                 ConcurrencyLevel = concurrencyLevel,
                 Clock = Clock,
             });
         Swap = new ConcurrentTimerSet<ISwappable>(
-            new ConcurrentTimerSet<ISwappable>.Options() {
+            new() {
                 Quanta = TimeSpan.FromMilliseconds(250),
                 ConcurrencyLevel = concurrencyLevel,
                 Clock = Clock,
             },
             t => t.Swap());
         Invalidate = new ConcurrentTimerSet<IComputed>(
-            new ConcurrentTimerSet<IComputed>.Options() {
+            new() {
                 Quanta = TimeSpan.FromMilliseconds(250),
                 ConcurrencyLevel = concurrencyLevel,
                 Clock = Clock,

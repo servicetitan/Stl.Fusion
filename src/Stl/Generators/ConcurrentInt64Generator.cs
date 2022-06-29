@@ -1,5 +1,4 @@
 using Stl.Generators.Internal;
-using Stl.Mathematics;
 using Stl.Time.Internal;
 
 namespace Stl.Generators;

@@ -1,74 +1,78 @@
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.Extensions;
+using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework.Extensions;
 
-public class DbKeyValueTrimmer<TDbContext, TDbKeyValue> : DbWakeSleepWorkerBase<TDbContext>
+public class DbKeyValueTrimmer<TDbContext, TDbKeyValue> : DbTenantWorkerBase<TDbContext>
     where TDbContext : DbContext
     where TDbKeyValue : DbKeyValue, new()
 {
-    public class Options
+    public record Options
     {
-        public TimeSpan CheckInterval { get; set; } = TimeSpan.FromMinutes(5);
-        public int BatchSize { get; set; } = 100;
-        public bool IsLoggingEnabled { get; set; } = true;
+        public RandomTimeSpan CheckPeriod { get; init; } = TimeSpan.FromMinutes(5).ToRandom(0.1);
+        public RandomTimeSpan NextBatchDelay { get; init; } = TimeSpan.FromSeconds(1).ToRandom(0.25);
+        public RetryDelaySeq RetryDelays { get; init; } = (TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(10));
+        public int BatchSize { get; init; } = 100;
+        public LogLevel LogLevel { get; init; } = LogLevel.Information;
     }
 
-    protected TimeSpan CheckInterval { get; init; }
-    protected int BatchSize { get; init; }
+    protected Options Settings { get; }
     protected IKeyValueStore KeyValueStore { get; init; }
-    protected Random Random { get; init; }
+    protected override IReadOnlyMutableDictionary<Symbol, Tenant> TenantSet => TenantRegistry.AccessedTenants;
+    protected bool IsLoggingEnabled { get; }
 
-    protected int LastTrimCount { get; set; }
-    protected bool IsLoggingEnabled { get; set; }
-    protected LogLevel LogLevel { get; set; } = LogLevel.Information;
-
-    public DbKeyValueTrimmer(Options? options, IServiceProvider services)
+    public DbKeyValueTrimmer(Options settings, IServiceProvider services)
         : base(services)
     {
-        options ??= new();
-        IsLoggingEnabled = options.IsLoggingEnabled && Log.IsEnabled(LogLevel);
-
-        CheckInterval = options.CheckInterval;
-        BatchSize = options.BatchSize;
-        Random = new Random();
-
+        Settings = settings;
+        IsLoggingEnabled = Log.IsLogging(Settings.LogLevel);
         KeyValueStore = services.GetRequiredService<IKeyValueStore>();
     }
 
-    protected override async Task WakeUp(CancellationToken cancellationToken)
+    protected override Task RunInternal(Tenant tenant, CancellationToken cancellationToken)
     {
-        var dbContext = CreateDbContext(true);
-        await using var _ = dbContext.ConfigureAwait(false);
-        dbContext.DisableChangeTracking();
+        var lastTrimCount = 0;
 
-        LastTrimCount = 0;
-        var minExpiresAt = Clocks.SystemClock.Now.ToDateTime();
-        var keys = await dbContext.Set<TDbKeyValue>().AsQueryable()
-            .Where(o => o.ExpiresAt < minExpiresAt)
-            .OrderBy(o => o.ExpiresAt)
-            .Select(o => o.Key)
-            .Take(BatchSize)
-            .ToArrayAsync(cancellationToken).ConfigureAwait(false);
-        if (keys.Length == 0)
-            return;
+        var activitySource = GetType().GetActivitySource();
+        var runChain = new AsyncChain($"Trim({tenant.Id})", async cancellationToken1 => {
+            var dbContext = CreateDbContext(tenant, true);
+            await using var _ = dbContext.ConfigureAwait(false);
+            dbContext.DisableChangeTracking();
 
-        // This must be done via IKeyValueStore & operations,
-        // otherwise invalidation won't happen for removed entries
-        await KeyValueStore.RemoveMany(keys, cancellationToken).ConfigureAwait(false);
-        LastTrimCount = keys.Length;
+            lastTrimCount = 0;
+            var minExpiresAt = Clocks.SystemClock.Now.ToDateTime();
+            var keys = await dbContext.Set<TDbKeyValue>().AsQueryable()
+                .Where(o => o.ExpiresAt < minExpiresAt)
+                .OrderBy(o => o.ExpiresAt)
+                .Select(o => o.Key)
+                .Take(Settings.BatchSize)
+                .ToArrayAsync(cancellationToken).ConfigureAwait(false);
+            if (keys.Length == 0)
+                return;
 
-        if (LastTrimCount > 0 && IsLoggingEnabled)
-            Log.Log(LogLevel, "Trimmed {Count} entries", LastTrimCount);
-    }
+            // This must be done via IKeyValueStore & operations,
+            // otherwise invalidation won't happen for removed entries
+            await KeyValueStore.Remove(tenant.Id, keys, cancellationToken).ConfigureAwait(false);
+            lastTrimCount = keys.Length;
 
-    protected override Task Sleep(Exception? error, CancellationToken cancellationToken)
-    {
-        var delay = default(TimeSpan);
-        if (error != null)
-            delay = TimeSpan.FromMilliseconds(1000 * Random.NextDouble());
-        else if (LastTrimCount < BatchSize)
-            delay = CheckInterval + TimeSpan.FromMilliseconds(10 * Random.NextDouble());
-        return Clocks.CoarseCpuClock.Delay(delay, cancellationToken);
+            if (lastTrimCount > 0 && IsLoggingEnabled)
+                Log.Log(Settings.LogLevel,
+                    "Trim({tenant.Id}) trimmed {Count} entries", tenant.Id, lastTrimCount);
+        }).Trace(() => activitySource.StartActivity("Trim").AddTenantTags(tenant), Log);
+
+        var sleepChain = new AsyncChain("Sleep", cancellationToken1 => {
+            var delay = lastTrimCount < Settings.BatchSize
+                ? Settings.NextBatchDelay
+                : Settings.CheckPeriod;
+            return Clocks.CpuClock.Delay(delay.Next(), cancellationToken1);
+        });
+        
+        var chain = runChain
+            .RetryForever(Settings.RetryDelays, Clocks.CpuClock, Log)
+            .Append(sleepChain)
+            .Cycle();
+
+        return chain.Start(cancellationToken);
     }
 }

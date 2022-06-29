@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using Stl.Internal;
-using Stl.Mathematics;
 
 namespace Stl;
 

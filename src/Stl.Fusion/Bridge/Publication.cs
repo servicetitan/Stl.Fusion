@@ -123,7 +123,7 @@ public class Publication<T> : WorkerBase, IPublication<T>
 
     protected virtual async Task Expire(CancellationToken cancellationToken)
     {
-        var expirationTime = PublisherImpl.PublicationExpirationTime;
+        var expirationTime = Publisher.Options.PublicationExpirationTime;
 
         Moment GetLastUseTime()
             => UseCount > 0 ? Clock.Now : LastTouchTime;

@@ -30,7 +30,7 @@ public class HashSetSlimTest
 
     private void Test(IHashSetSlim<string> c)
     {
-        var hs = new HashSet<string>();
+        var hs = new HashSet<string>(StringComparer.Ordinal);
         var rnd = new Random();
         for (var pass = 0; pass < 1000; pass++) {
             var opCount = pass * 2;

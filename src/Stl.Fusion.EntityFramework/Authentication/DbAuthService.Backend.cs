@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.Authentication.Internal;
+using Stl.Multitenancy;
 using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework.Authentication;
@@ -16,13 +17,15 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     {
         var (session, user, authenticatedIdentity) = command;
         var context = CommandContext.GetCurrent();
+        var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
+
         if (Computed.IsInvalidating()) {
             _ = GetSessionInfo(session, default); // Must go first!
             _ = GetAuthInfo(session, default);
             var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
             if (invSessionInfo != null) {
-                _ = GetUser(invSessionInfo.UserId, default);
-                _ = GetUserSessions(invSessionInfo.UserId, default);
+                _ = GetUser(tenant.Id, invSessionInfo.UserId, default);
+                _ = GetUserSessions(tenant.Id, invSessionInfo.UserId, default);
             }
             return;
         }
@@ -35,7 +38,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         if (await IsSignOutForced(session, cancellationToken).ConfigureAwait(false))
             throw Errors.ForcedSignOut();
 
-        var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        var dbContext = await CreateCommandDbContext(tenant, cancellationToken).ConfigureAwait(false);
         await using var _1 = dbContext.ConfigureAwait(false);
 
         var isNewUser = false;
@@ -80,6 +83,8 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     {
         var (session, ipAddress, userAgent) = command;
         var context = CommandContext.GetCurrent();
+        var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
+
         if (Computed.IsInvalidating()) {
             var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
             if (invSessionInfo == null)
@@ -91,11 +96,11 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
                 _ = GetOptions(session, default);
             }
             if (invSessionInfo.IsAuthenticated)
-                _ = GetUserSessions(invSessionInfo.UserId, default);
+                _ = GetUserSessions(tenant.Id, invSessionInfo.UserId, default);
             return null!;
         }
 
-        var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        var dbContext = await CreateCommandDbContext(tenant, cancellationToken).ConfigureAwait(false);
         await using var _1 = dbContext.ConfigureAwait(false);
 
         var dbSessionInfo = await Sessions.Get(dbContext, session.Id, true, cancellationToken).ConfigureAwait(false);
@@ -119,7 +124,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
             var scope = context.Items.Get<DbOperationScope<TDbContext>>();
             await scope!.Rollback().ConfigureAwait(false);
 
-            var readDbContext = CreateDbContext();
+            var readDbContext = CreateDbContext(tenant);
             await using var __ = readDbContext.ConfigureAwait(false);
 
             dbSessionInfo = await Sessions.Get(readDbContext, session.Id, false, cancellationToken).ConfigureAwait(false);
@@ -143,7 +148,8 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
             return;
         }
 
-        var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
+        var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
+        var dbContext = await CreateCommandDbContext(tenant, cancellationToken).ConfigureAwait(false);
         await using var _1 = dbContext.ConfigureAwait(false);
 
         var dbSessionInfo = await Sessions.Get(dbContext, session.Id, true, cancellationToken).ConfigureAwait(false);
@@ -164,10 +170,11 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
 
     // [ComputeMethod] inherited
     public override async Task<User?> GetUser(
-        string userId, CancellationToken cancellationToken = default)
+        string tenantId, string userId, CancellationToken cancellationToken = default)
     {
         var dbUserId = DbUserIdHandler.Parse(userId);
-        var dbUser = await Users.Get(dbUserId, cancellationToken).ConfigureAwait(false);
+        var tenant = TenantRegistry.Get(tenantId);
+        var dbUser = await Users.Get(tenant, dbUserId, cancellationToken).ConfigureAwait(false);
         return UserConverter.ToModel(dbUser);
     }
 
@@ -175,12 +182,12 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
 
     [ComputeMethod]
     protected virtual async Task<SessionInfo[]> GetUserSessions(
-        string userId, CancellationToken cancellationToken = default)
+        string tenantId, string userId, CancellationToken cancellationToken = default)
     {
         if (!DbUserIdHandler.TryParse(userId).IsSome(out var dbUserId))
             return Array.Empty<SessionInfo>();
 
-        var dbContext = CreateDbContext();
+        var dbContext = CreateDbContext(tenantId);
         await using var _1 = dbContext.ConfigureAwait(false);
         var tx = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await using var _2 = tx.ConfigureAwait(false);

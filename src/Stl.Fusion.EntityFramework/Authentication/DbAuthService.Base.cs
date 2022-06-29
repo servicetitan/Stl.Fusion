@@ -7,10 +7,10 @@ namespace Stl.Fusion.EntityFramework.Authentication;
 public abstract class DbAuthService<TDbContext> : DbServiceBase<TDbContext>, IAuth, IAuthBackend
     where TDbContext : DbContext
 {
-    public class Options
+    public record Options
     {
         // The default should be less than 3 min - see PresenceService.Options
-        public TimeSpan MinUpdatePresencePeriod { get; set; } = TimeSpan.FromMinutes(2.75);
+        public TimeSpan MinUpdatePresencePeriod { get; init; } = TimeSpan.FromMinutes(2.75);
     }
 
     protected DbAuthService(IServiceProvider services) : base(services) { }
@@ -30,5 +30,5 @@ public abstract class DbAuthService<TDbContext> : DbServiceBase<TDbContext>, IAu
     public abstract Task SetOptions(SetSessionOptionsCommand command, CancellationToken cancellationToken = default);
     public abstract Task<SessionInfo?> GetSessionInfo(Session session, CancellationToken cancellationToken = default);
     public abstract Task<ImmutableOptionSet> GetOptions(Session session, CancellationToken cancellationToken = default);
-    public abstract Task<User?> GetUser(string userId, CancellationToken cancellationToken = default);
+    public abstract Task<User?> GetUser(string tenantId, string userId, CancellationToken cancellationToken = default);
 }

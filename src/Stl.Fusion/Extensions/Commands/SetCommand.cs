@@ -2,10 +2,9 @@ namespace Stl.Fusion.Extensions.Commands;
 
 [DataContract]
 public record SetCommand(
-    [property: DataMember] string Key,
-    [property: DataMember] string Value,
-    [property: DataMember] Moment? ExpiresAt = null
+    [property: DataMember] Symbol TenantId,
+    [property: DataMember] (string Key, string Value, Moment? ExpiresAt)[] Items
     ) : ICommand<Unit>, IBackendCommand
 {
-    public SetCommand() : this("", "") { }
+    public SetCommand() : this(default, Array.Empty<(string, string, Moment?)>()) { }
 }

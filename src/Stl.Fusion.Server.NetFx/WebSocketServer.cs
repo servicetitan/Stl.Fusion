@@ -16,12 +16,12 @@ namespace Stl.Fusion.Server;
 
 public class WebSocketServer
 {
-    public class Options
+    public record Options
     {
-        public string RequestPath { get; set; } = "/fusion/ws";
-        public string PublisherIdQueryParameterName { get; set; } = "publisherId";
-        public string ClientIdQueryParameterName { get; set; } = "clientId";
-        public Func<ITextSerializer<BridgeMessage>> SerializerFactory { get; set; } =
+        public string RequestPath { get; init; } = "/fusion/ws";
+        public string PublisherIdQueryParameterName { get; init; } = "publisherId";
+        public string ClientIdQueryParameterName { get; init; } = "clientId";
+        public Func<ITextSerializer<BridgeMessage>> SerializerFactory { get; init; } =
             DefaultSerializerFactory;
 
         public static ITextSerializer<BridgeMessage> DefaultSerializerFactory()
@@ -36,22 +36,15 @@ public class WebSocketServer
     }
 
     protected IPublisher Publisher { get; }
-    protected Func<ITextSerializer<BridgeMessage>> SerializerFactory { get; }
     protected ILogger Log { get; }
 
-    public string RequestPath { get; }
-    public string PublisherIdQueryParameterName { get; }
-    public string ClientIdQueryParameterName { get; }
+    public Options Settings { get; }
 
-    public WebSocketServer(Options? options, IPublisher publisher, ILogger<WebSocketServer>? log = null)
+    public WebSocketServer(Options settings, IPublisher publisher, ILogger<WebSocketServer>? log = null)
     {
-        options ??= new();
+        Settings = settings;
         Log = log ?? NullLogger<WebSocketServer>.Instance;
-        RequestPath = options.RequestPath;
-        PublisherIdQueryParameterName = options.PublisherIdQueryParameterName;
-        ClientIdQueryParameterName = options.ClientIdQueryParameterName;
         Publisher = publisher;
-        SerializerFactory = options.SerializerFactory;
     }
 
     public HttpStatusCode HandleRequest(IOwinContext owinContext)
@@ -62,11 +55,11 @@ public class WebSocketServer
         if (acceptToken == null)
             return HttpStatusCode.BadRequest;
 
-        var publisherId = owinContext.Request.Query[PublisherIdQueryParameterName];
+        var publisherId = owinContext.Request.Query[Settings.PublisherIdQueryParameterName];
         if (Publisher.Id != publisherId)
             return HttpStatusCode.BadRequest;
 
-        var clientId = owinContext.Request.Query[ClientIdQueryParameterName];
+        var clientId = owinContext.Request.Query[Settings.ClientIdQueryParameterName];
 
         var requestHeaders =
             GetValue<IDictionary<string, string[]>>(owinContext.Environment, "owin.RequestHeaders")
@@ -88,7 +81,7 @@ public class WebSocketServer
 
     private async Task HandleWebSocket(WebSocketContext wsContext, string clientId)
     {
-        var serializers = SerializerFactory();
+        var serializers = Settings.SerializerFactory();
         var webSocket = wsContext.WebSocket;
 
         var wsChannel = new WebSocketChannel(webSocket);

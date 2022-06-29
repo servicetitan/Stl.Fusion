@@ -1,15 +1,17 @@
+using Stl.Multitenancy;
 using Stl.IO;
 
 namespace Stl.Fusion.EntityFramework.Operations;
 
-public class FileBasedDbOperationLogChangeTrackingOptions<TDbContext>
+public record FileBasedDbOperationLogChangeTrackingOptions<TDbContext> : DbOperationCompletionTrackingOptions
 {
-    public FilePath FilePath { get; set; }
+    public Func<Tenant, FilePath> FilePathFactory { get; init; } = DefaultFilePathFactory;
 
-    public FileBasedDbOperationLogChangeTrackingOptions()
+    public static FilePath DefaultFilePathFactory(Tenant tenant)
     {
         var tDbContext = typeof(TDbContext);
         var appTempDir = FilePath.GetApplicationTempDirectory("", true);
-        FilePath = appTempDir & FilePath.GetHashedName($"{tDbContext.Name}_{tDbContext.Namespace}.tracker");
+        var tenantSuffix = tenant == Tenant.Default ? "" : $"_{tenant.Id.Value}";
+        return appTempDir & FilePath.GetHashedName($"{tDbContext.Name}_{tDbContext.Namespace}{tenantSuffix}.tracker");
     }
 }

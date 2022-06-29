@@ -4,26 +4,26 @@ namespace Stl.Fusion.Operations.Internal;
 
 public class InvalidateOnCompletionCommandHandler : ICommandHandler<ICompletion>
 {
-    public class Options
+    public record Options
     {
-        public bool IsLoggingEnabled { get; set; } = false;
+        public LogLevel LogLevel { get; init; } = LogLevel.None;
     }
 
-    protected ActivitySource ActivitySource { get; init; }
+    protected Options Settings { get; }
+    protected ActivitySource ActivitySource { get; }
     protected InvalidationInfoProvider InvalidationInfoProvider { get; }
     protected ILogger Log { get; }
-    protected bool IsLoggingEnabled { get; set; }
-    protected LogLevel LogLevel { get; set; } = LogLevel.Information;
+    protected bool IsLoggingEnabled { get; }
 
-    public InvalidateOnCompletionCommandHandler(Options? options,
+    public InvalidateOnCompletionCommandHandler(Options settings,
         InvalidationInfoProvider invalidationInfoProvider,
         ILogger<InvalidateOnCompletionCommandHandler>? log = null)
     {
-        options ??= new();
+        Settings = settings;
         Log = log ?? NullLogger<InvalidateOnCompletionCommandHandler>.Instance;
-        IsLoggingEnabled = options.IsLoggingEnabled && Log.IsEnabled(LogLevel);
-        ActivitySource = GetType().GetActivitySource();
+        IsLoggingEnabled = Log.IsLogging(settings.LogLevel);
 
+        ActivitySource = GetType().GetActivitySource();
         InvalidationInfoProvider = invalidationInfoProvider;
     }
 
@@ -51,18 +51,18 @@ public class InvalidateOnCompletionCommandHandler : ICommandHandler<ICompletion>
             if (useOriginalCommandHandler) {
                 if (InvalidationInfoProvider.IsReplicaServiceCommand(originalCommand)) {
                     if (IsLoggingEnabled)
-                        Log.Log(LogLevel, "No invalidation for replica service command '{CommandType}'",
+                        Log.Log(Settings.LogLevel, "No invalidation for replica service command '{CommandType}'",
                             originalCommand.GetType());
                     return;
                 }
                 if (IsLoggingEnabled)
-                    Log.Log(LogLevel, "Invalidating via original command handler for '{CommandType}'",
+                    Log.Log(Settings.LogLevel, "Invalidating via original command handler for '{CommandType}'",
                         originalCommand.GetType());
                 await context.Commander.Call(originalCommand, cancellationToken).ConfigureAwait(false);
             }
             else {
                 if (IsLoggingEnabled)
-                    Log.Log(LogLevel, "Invalidating via dedicated command handler for '{CommandType}'",
+                    Log.Log(Settings.LogLevel, "Invalidating via dedicated command handler for '{CommandType}'",
                         command.GetType());
                 await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
             }

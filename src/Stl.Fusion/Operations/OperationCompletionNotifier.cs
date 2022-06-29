@@ -2,52 +2,54 @@ namespace Stl.Fusion.Operations;
 
 public interface IOperationCompletionNotifier
 {
+    bool IsReady();
     Task<bool> NotifyCompleted(IOperation operation);
 }
 
 public class OperationCompletionNotifier : IOperationCompletionNotifier
 {
-    public class Options
+    public record Options
     {
-        public int MaxKnownOperationCount { get; set; } = 10_000;
-        public TimeSpan MaxKnownOperationAge { get; set; } = TimeSpan.FromHours(1);
-        public IMomentClock? Clock { get; set; }
+        public int MaxKnownOperationCount { get; init; } = 10_000;
+        public TimeSpan MaxKnownOperationAge { get; init; } = TimeSpan.FromHours(1);
+        public IMomentClock? Clock { get; init; }
     }
 
-    protected int MaxKnownOperationCount { get; }
-    protected TimeSpan MaxKnownOperationAge { get; }
+    protected Options Settings { get; }
     protected AgentInfo AgentInfo { get; }
-    protected IMomentClock Clock { get; }
     protected IOperationCompletionListener[] OperationCompletionListeners { get; }
     protected BinaryHeap<Moment, Symbol> KnownOperationHeap { get; } = new();
     protected HashSet<Symbol> KnownOperationSet { get; } = new();
     protected object Lock { get; } = new();
+    protected IMomentClock Clock { get; }
     protected ILogger Log { get; }
 
-    public OperationCompletionNotifier(Options? options,
+    public OperationCompletionNotifier(Options settings,
         IServiceProvider services,
         ILogger<OperationCompletionNotifier>? log = null)
     {
-        options ??= new();
+        Settings = settings;
         Log = log ?? NullLogger<OperationCompletionNotifier>.Instance;
-        MaxKnownOperationCount = options.MaxKnownOperationCount;
-        MaxKnownOperationAge = options.MaxKnownOperationAge;
-        Clock = options.Clock ?? services.SystemClock();
+        Clock = settings.Clock ?? services.SystemClock();
+
         AgentInfo = services.GetRequiredService<AgentInfo>();
         OperationCompletionListeners = services.GetServices<IOperationCompletionListener>().ToArray();
     }
 
+    public bool IsReady() 
+        => OperationCompletionListeners.All(x => x.IsReady());
+
     public Task<bool> NotifyCompleted(IOperation operation)
     {
         var now = Clock.Now;
-        var minOperationStartTime = now - MaxKnownOperationAge;
+        var minOperationStartTime = now - Settings.MaxKnownOperationAge;
         var operationStartTime = operation.StartTime.ToMoment();
         var operationId = (Symbol) operation.Id;
         lock (Lock) {
             if (KnownOperationSet.Contains(operationId))
                 return TaskExt.FalseTask;
             // Removing some operations if there are too many
-            while (KnownOperationSet.Count >= MaxKnownOperationCount) {
+            while (KnownOperationSet.Count >= Settings.MaxKnownOperationCount) {
                 if (KnownOperationHeap.ExtractMin().IsSome(out var value))
                     KnownOperationSet.Remove(value.Value);
                 else

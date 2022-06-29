@@ -41,9 +41,9 @@ public class TypeViewProxyGenerator : ProxyGeneratorBase<TypeViewProxyGenerator.
     protected ConcurrentDictionary<(Type, Type), Type> Cache { get; } = new();
 
     public TypeViewProxyGenerator(
-        Options? options = null,
+        Options options,
         ModuleScope? moduleScope = null)
-        : base(options ??= new(), moduleScope) { }
+        : base(options, moduleScope) { }
 
     public virtual Type GetProxyType(Type implementationType, Type viewType)
         => Cache.GetOrAddChecked((implementationType, viewType), (key, self) => {

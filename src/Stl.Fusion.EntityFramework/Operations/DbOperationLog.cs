@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework.Operations;
 
@@ -9,8 +10,8 @@ public interface IDbOperationLog<in TDbContext>
     Task<DbOperation> Add(TDbContext dbContext, IOperation operation, CancellationToken cancellationToken);
     Task<DbOperation?> Get(TDbContext dbContext, string id, CancellationToken cancellationToken);
 
-    Task<List<DbOperation>> ListNewlyCommitted(DateTime minCommitTime, int maxCount, CancellationToken cancellationToken);
-    Task<int> Trim(DateTime minCommitTime, int maxCount, CancellationToken cancellationToken);
+    Task<List<DbOperation>> ListNewlyCommitted(Tenant tenant, DateTime minCommitTime, int maxCount, CancellationToken cancellationToken);
+    Task<int> Trim(Tenant tenant, DateTime minCommitTime, int maxCount, CancellationToken cancellationToken);
 }
 
 public class DbOperationLog<TDbContext, TDbOperation> : DbServiceBase<TDbContext>, IDbOperationLog<TDbContext>
@@ -54,9 +55,9 @@ public class DbOperationLog<TDbContext, TDbOperation> : DbServiceBase<TDbContext
     }
 
     public virtual async Task<List<DbOperation>> ListNewlyCommitted(
-        DateTime minCommitTime, int maxCount, CancellationToken cancellationToken)
+        Tenant tenant, DateTime minCommitTime, int maxCount, CancellationToken cancellationToken)
     {
-        var dbContext = CreateDbContext();
+        var dbContext = CreateDbContext(tenant);
         await using var _ = dbContext.ConfigureAwait(false);
 
         var operations = await dbContext.Set<TDbOperation>().AsQueryable()
@@ -67,9 +68,10 @@ public class DbOperationLog<TDbContext, TDbOperation> : DbServiceBase<TDbContext
         return operations.Cast<DbOperation>().ToList()!;
     }
 
-    public virtual async Task<int> Trim(DateTime minCommitTime, int maxCount, CancellationToken cancellationToken)
+    public virtual async Task<int> Trim(
+        Tenant tenant, DateTime minCommitTime, int maxCount, CancellationToken cancellationToken)
     {
-        var dbContext = CreateDbContext(true);
+        var dbContext = CreateDbContext(tenant, true);
         await using var _ = dbContext.ConfigureAwait(false);
         dbContext.DisableChangeTracking();
 

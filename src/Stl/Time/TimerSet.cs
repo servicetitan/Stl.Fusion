@@ -1,23 +1,18 @@
 namespace Stl.Time;
 
+public record TimerSetOptions
+{
+    // ReSharper disable once StaticMemberInGenericType
+    public static TimeSpan MinQuanta { get; } = TimeSpan.FromMilliseconds(10);
+    public static TimerSetOptions Default { get; } = new();
+
+    public TimeSpan Quanta { get; init; } = TimeSpan.FromSeconds(1);
+    public IMomentClock Clock { get; init; } = MomentClockSet.Default.CpuClock;
+}
+
 public sealed class TimerSet<TTimer> : WorkerBase
     where TTimer : notnull
 {
-    public record Options
-    {
-        private readonly TimeSpan _quanta = TimeSpan.FromSeconds(1);
-
-        // ReSharper disable once StaticMemberInGenericType
-        public static TimeSpan MinQuanta { get; } = TimeSpan.FromMilliseconds(10);
-
-        public TimeSpan Quanta {
-            get => _quanta;
-            init => _quanta = TimeSpanExt.Max(MinQuanta, value);
-        }
-
-        public IMomentClock Clock { get; init; } = MomentClockSet.Default.CpuClock;
-    }
-
     private readonly Action<TTimer>? _fireHandler;
     private readonly RadixHeapSet<TTimer> _timers = new(45);
     private readonly Moment _start;
@@ -32,9 +27,10 @@ public sealed class TimerSet<TTimer> : WorkerBase
         }
     }
 
-    public TimerSet(Options? options = null, Action<TTimer>? fireHandler = null)
+    public TimerSet(TimerSetOptions options, Action<TTimer>? fireHandler = null)
     {
-        options ??= new();
+        if (options.Quanta < TimerSetOptions.MinQuanta)
+            throw new ArgumentOutOfRangeException(nameof(options), "Quanta < MinQuanta.");
         Quanta = options.Quanta;
         Clock = options.Clock;
         _fireHandler = fireHandler;

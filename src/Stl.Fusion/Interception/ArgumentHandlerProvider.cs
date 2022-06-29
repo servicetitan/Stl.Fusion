@@ -10,23 +10,20 @@ public interface IArgumentHandlerProvider
 
 public class ArgumentHandlerProvider : IArgumentHandlerProvider, IHasServices
 {
-    public class Options
-    {
-        public IMatchingTypeFinder MatchingTypeFinder { get; set; } = new MatchingTypeFinder();
+    public IServiceProvider Services { get; }
+    public IMatchingTypeFinder MatchingTypeFinder { get; }
 
-        static Options()
-            // We need to add the current assembly as a default one to search handlers in
-            => Extensibility.MatchingTypeFinder.AddAssembly(typeof(Options).Assembly);
+    static ArgumentHandlerProvider()
+    {
+        // Let's register this assembly in the list of assemblies
+        // MatchingTypeFinder scans by default.
+        Extensibility.MatchingTypeFinder.AddAssembly(typeof(ArgumentHandlerProvider).Assembly);
     }
 
-    protected IMatchingTypeFinder MatchingTypeFinder { get; }
-    public IServiceProvider Services { get; }
-
-    public ArgumentHandlerProvider(Options? options, IServiceProvider services)
+    public ArgumentHandlerProvider(IServiceProvider services)
     {
-        options ??= new();
-        MatchingTypeFinder = options.MatchingTypeFinder;
         Services = services;
+        MatchingTypeFinder = services.GetRequiredService<IMatchingTypeFinder>();
     }
 
     public ArgumentHandler GetInvocationTargetHandler(MethodInfo methodInfo, Type invocationTargetType)

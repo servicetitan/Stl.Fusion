@@ -13,7 +13,7 @@ public static class EndpointRouteBuilderExt
 
         var server = services.GetRequiredService<WebSocketServer>();
 
-        return appBuilder.Map(pattern ?? server.RequestPath, app => {
+        return appBuilder.Map(pattern ?? server.Settings.RequestPath, app => {
             app.Run(delegate(IOwinContext ctx) {
                 var statusCode = server.HandleRequest(ctx);
                 ctx.Response.StatusCode = (int)statusCode;

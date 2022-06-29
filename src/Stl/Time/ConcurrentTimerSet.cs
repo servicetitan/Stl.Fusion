@@ -1,16 +1,17 @@
-using Stl.Mathematics;
 using Stl.OS;
 
 namespace Stl.Time;
 
+public record ConcurrentTimerSetOptions : TimerSetOptions
+{
+    public new static ConcurrentTimerSetOptions Default { get; } = new();
+
+    public int ConcurrencyLevel { get; init; } = HardwareInfo.GetProcessorCountPo2Factor(5);
+}
+
 public sealed class ConcurrentTimerSet<TTimer> : SafeAsyncDisposableBase
     where TTimer : notnull
 {
-    public record Options : TimerSet<TTimer>.Options
-    {
-        public int ConcurrencyLevel { get; init; } = HardwareInfo.GetProcessorCountPo2Factor(5);
-    }
-
     private readonly TimerSet<TTimer>[] _timerSets;
     private readonly int _concurrencyLevelMask;
 
@@ -19,9 +20,10 @@ public sealed class ConcurrentTimerSet<TTimer> : SafeAsyncDisposableBase
     public int ConcurrencyLevel { get; }
     public int Count => _timerSets.Sum(ts => ts.Count);
 
-    public ConcurrentTimerSet(Options? options = null, Action<TTimer>? fireHandler = null)
+    public ConcurrentTimerSet(ConcurrentTimerSetOptions options, Action<TTimer>? fireHandler = null)
     {
-        options ??= new();
+        if (options.Quanta < TimerSetOptions.MinQuanta)
+            throw new ArgumentOutOfRangeException(nameof(options), "Quanta < MinQuanta.");
         Quanta = options.Quanta;
         Clock = options.Clock;
         ConcurrencyLevel = (int) Bits.GreaterOrEqualPowerOf2((ulong) Math.Max(1, options.ConcurrencyLevel));

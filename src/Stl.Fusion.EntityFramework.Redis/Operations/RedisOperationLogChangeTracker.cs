@@ -1,75 +1,52 @@
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework.Operations;
+using Stl.Multitenancy;
 using Stl.Redis;
 
 namespace Stl.Fusion.EntityFramework.Redis.Operations;
 
-public class RedisOperationLogChangeTracker<TDbContext> : DbWakeSleepWorkerBase<TDbContext>,
-    IDbOperationLogChangeTracker<TDbContext>
+public class RedisOperationLogChangeTracker<TDbContext> 
+    : DbOperationCompletionTrackerBase<TDbContext, RedisOperationLogChangeTrackingOptions<TDbContext>>
     where TDbContext : DbContext
 {
-    public RedisOperationLogChangeTrackingOptions<TDbContext> Options { get; }
-    protected AgentInfo AgentInfo { get; }
     protected RedisDb RedisDb { get; }
-    protected RedisChannelSub RedisSub { get; }
-    protected Task<Unit> NextEventTask { get; set; } = null!;
 
     public RedisOperationLogChangeTracker(
-        RedisOperationLogChangeTrackingOptions<TDbContext> options,
-        IServiceProvider services)
-        : base(services)
+        RedisOperationLogChangeTrackingOptions<TDbContext> options, 
+        IServiceProvider services) 
+        : base(options, services)
     {
-        Options = options;
-        AgentInfo = services.GetRequiredService<AgentInfo>();
         RedisDb = services.GetService<RedisDb<TDbContext>>() ?? services.GetRequiredService<RedisDb>();
-        RedisSub = RedisDb.GetChannelSub(options.PubSubKey);
-        Log.LogInformation("Using pub/sub key = '{Key}'", RedisSub.FullKey);
-
-        // ReSharper disable once VirtualMemberCallInConstructor
-        ReplaceNextEventTask();
+        var redisPub = RedisDb.GetPub<TDbContext>(Options.PubSubKeyFactory.Invoke(Tenant.Default));
+        Log.LogInformation("Using pub/sub key = '{Key}'", redisPub.FullKey);
     }
 
-    public Task WaitForChanges(CancellationToken cancellationToken = default)
+    protected override DbOperationCompletionTrackerBase.TenantWatcher CreateTenantWatcher(Symbol tenantId) 
+        => new TenantWatcher(this, tenantId);
+
+    protected new class TenantWatcher : DbOperationCompletionTrackerBase.TenantWatcher
     {
-        lock (Lock) {
-            var task = NextEventTask;
-            if (NextEventTask.IsCompleted)
-                ReplaceNextEventTask();
-            return task;
+        public TenantWatcher(RedisOperationLogChangeTracker<TDbContext> owner, Symbol tenantId) 
+            : base(owner.TenantRegistry.Get(tenantId))
+        {
+            var agentInfo = owner.Services.GetRequiredService<AgentInfo>();
+            var key = owner.Options.PubSubKeyFactory.Invoke(Tenant);
+
+            var watchChain = new AsyncChain($"Watch({tenantId})", async cancellationToken => {
+                var redisSub = owner.RedisDb.GetChannelSub(key);
+                await using var _ = redisSub.ConfigureAwait(false);
+
+                await redisSub.Subscribe().ConfigureAwait(false);
+                while (!cancellationToken.IsCancellationRequested) {
+                    var value = await redisSub.Messages
+                        .ReadAsync(cancellationToken)
+                        .ConfigureAwait(false);
+                    if (!StringComparer.Ordinal.Equals(agentInfo.Id.Value, value))
+                        CompleteWaitForChanges();
+                }
+            }).RetryForever(owner.Options.TrackerRetryDelays, owner.Log);
+            
+            watchChain.RunIsolated(StopToken);
         }
     }
-
-    // Protected methods
-
-    protected override async Task DisposeAsyncCore()
-    {
-        await base.DisposeAsyncCore().ConfigureAwait(false);
-        await RedisSub.DisposeAsync().ConfigureAwait(false);
-    }
-
-    protected override async Task WakeUp(CancellationToken cancellationToken)
-    {
-        await RedisSub.Subscribe().ConfigureAwait(false);
-        while (!cancellationToken.IsCancellationRequested) {
-            var value = await RedisSub.Messages
-                .ReadAsync(cancellationToken)
-                .ConfigureAwait(false);
-            if (!StringComparer.Ordinal.Equals(AgentInfo.Id.Value, value))
-                ReleaseWaitForChanges();
-        }
-    }
-
-    protected override Task Sleep(Exception? error, CancellationToken cancellationToken)
-        => error != null
-            ? Clocks.CoarseCpuClock.Delay(Options.RetryDelay, cancellationToken)
-            : Task.CompletedTask;
-
-    protected virtual void ReleaseWaitForChanges()
-    {
-        lock (Lock)
-            TaskSource.For(NextEventTask).TrySetResult(default);
-    }
-
-    protected virtual void ReplaceNextEventTask()
-        => NextEventTask = TaskSource.New<Unit>(false).Task;
 }

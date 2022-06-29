@@ -3,10 +3,11 @@ using Microsoft.AspNetCore.Http;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.Server.Internal;
+using Stl.Multitenancy;
 
 namespace Stl.Fusion.Server.Authentication;
 
-public class ServerAuthHelper
+public class ServerAuthHelper : IHasServices
 {
     public record Options
     {
@@ -17,34 +18,32 @@ public class ServerAuthHelper
         public bool KeepSignedIn { get; init; }
     }
 
-    public static Options DefaultSettings { get; set; } = new();
-
     protected IAuth Auth { get; }
     protected IAuthBackend AuthBackend { get; }
     protected ISessionResolver SessionResolver { get; }
     protected AuthSchemasCache AuthSchemasCache { get; }
+    protected ITenantResolver TenantResolver { get; }
     protected ICommander Commander { get; }
     protected MomentClockSet Clocks { get; }
 
     public Options Settings { get; }
+    public IServiceProvider Services { get; }
+    public ILogger Log { get; }
     public Session Session => SessionResolver.Session;
 
-    public ServerAuthHelper(
-        Options? settings,
-        IAuth auth,
-        IAuthBackend authBackend,
-        ISessionResolver sessionResolver,
-        AuthSchemasCache authSchemasCache,
-        ICommander commander,
-        MomentClockSet clocks)
+    public ServerAuthHelper(Options settings, IServiceProvider services)
     {
-        Settings = settings ?? DefaultSettings;
-        Auth = auth;
-        AuthBackend = authBackend;
-        SessionResolver = sessionResolver;
-        AuthSchemasCache = authSchemasCache;
-        Commander = commander;
-        Clocks = clocks;
+        Settings = settings;
+        Services = services;
+        Log = services.LogFor(GetType());
+
+        Auth = services.GetRequiredService<IAuth>();
+        AuthBackend = services.GetRequiredService<IAuthBackend>();
+        SessionResolver = services.GetRequiredService<ISessionResolver>();
+        AuthSchemasCache = services.GetRequiredService<AuthSchemasCache>();
+        TenantResolver = services.GetRequiredService<ITenantResolver>();
+        Commander = services.Commander();
+        Clocks = services.Clocks();
     }
 
     public virtual async ValueTask<string> GetSchemas(HttpContext httpContext, bool cache = true)
@@ -92,8 +91,9 @@ public class ServerAuthHelper
 
         var userId = sessionInfo!.UserId;
         var userIsAuthenticated = sessionInfo.IsAuthenticated && !sessionInfo.IsSignOutForced;
+        var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);
         var user = userIsAuthenticated
-            ? await AuthBackend.GetUser(userId, cancellationToken).ConfigureAwait(false)
+            ? await AuthBackend.GetUser(tenant.Id, userId, cancellationToken).ConfigureAwait(false)
                 ?? throw new KeyNotFoundException()
             : new User(session.Id); // Guest
 

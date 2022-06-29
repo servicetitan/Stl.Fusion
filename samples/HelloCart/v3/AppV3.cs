@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Samples.HelloCart.V2;
 using Stl.Fusion.EntityFramework;
+using Stl.Fusion.EntityFramework.Operations;
 using Stl.IO;
 
 namespace Samples.HelloCart.V3;
@@ -31,14 +32,14 @@ public class AppV3 : AppBase
             dbContext.EnableSensitiveDataLogging();
         });
         services.AddDbContextServices<AppDbContext>(dbContext => {
-            dbContext.AddOperations((_, o) => {
-                o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(5);
+            dbContext.AddOperations(_ => new() {
+                UnconditionalCheckPeriod = TimeSpan.FromSeconds(5),
             });
-            dbContext.AddFileBasedOperationLogChangeTracking(dbPath + "_changed");
+            dbContext.AddFileBasedOperationLogChangeTracking();
             dbContext.AddEntityResolver<string, DbProduct>();
-            dbContext.AddEntityResolver<string, DbCart>((_, options) => {
+            dbContext.AddEntityResolver<string, DbCart>(_ => new() {
                 // Cart is always loaded together with items
-                options.QueryTransformer = carts => carts.Include(c => c.Items);
+                QueryTransformer = carts => carts.Include(c => c.Items),
             });
         });
         ClientServices = HostServices = services.BuildServiceProvider();

@@ -8,7 +8,7 @@ public class PublisherChannelProcessor : WorkerBase
     private ILogger? _log;
 
     protected readonly IServiceProvider Services;
-    protected readonly IPublisherImpl PublisherImpl;
+    protected IPublisherImpl PublisherImpl => (IPublisherImpl) Publisher;
     protected readonly ConcurrentDictionary<Symbol, SubscriptionProcessor> Subscriptions;
     protected ILogger Log => _log ??= Services.LogFor(GetType());
 
@@ -22,7 +22,6 @@ public class PublisherChannelProcessor : WorkerBase
     {
         Services = services;
         Publisher = publisher;
-        PublisherImpl = (IPublisherImpl) publisher;
         Channel = channel;
         Subscriptions = new ConcurrentDictionary<Symbol, SubscriptionProcessor>();
     }
@@ -83,10 +82,11 @@ public class PublisherChannelProcessor : WorkerBase
             if (Subscriptions.TryGetValue(publicationId, out subscriptionProcessor))
                 goto subscriptionExists;
 
-            subscriptionProcessor = PublisherImpl.SubscriptionProcessorFactory.Create(
-                PublisherImpl.SubscriptionProcessorGeneric,
-                publication, Channel, PublisherImpl.SubscriptionExpirationTime,
-                PublisherImpl.Clocks, Services);
+            var publisherOptions = Publisher.Options;
+            subscriptionProcessor = publisherOptions.SubscriptionProcessorFactory.Create(
+                publisherOptions.SubscriptionProcessorGeneric,
+                publication, Channel, publisherOptions.SubscriptionExpirationTime,
+                Publisher.Clocks, Services);
             Subscriptions[publicationId] = subscriptionProcessor;
         }
         _ = subscriptionProcessor.Run()

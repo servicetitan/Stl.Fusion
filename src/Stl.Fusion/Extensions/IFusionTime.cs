@@ -1,6 +1,8 @@
+using Stl.Fusion.Interception;
+
 namespace Stl.Fusion.Extensions;
 
-public interface IFusionTime
+public interface IFusionTime : IComputeService
 {
     [ComputeMethod]
     Task<DateTime> GetUtcNow();

@@ -11,28 +11,31 @@ namespace Stl.Plugins;
 
 public class FileSystemPluginFinder : CachingPluginFinderBase
 {
-    public FilePath PluginDir { get; }
-    public string AssemblyNamePattern { get; }
-    public Regex ExcludedAssemblyNamesRegex { get; }
-    public bool UseCache { get; }
-    public FilePath CacheDir { get; }
+    public new record Options : CachingPluginFinderBase.Options
+    {
+        public FilePath PluginDir { get; init; } =
+            Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? ".";
+
+        public string AssemblyNamePattern { get; init; } = "*.dll";
+        public Regex ExcludedAssemblyNamesRegex { get; init; } = new(
+            @"((System)|(Microsoft)|(Google)|(WindowsBase)|(mscorlib))\.(.*)\.dll",
+            RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture);
+        public bool UseCache { get; init; } = true;
+        public FilePath CacheDir { get; init; } = FilePath.GetApplicationTempDirectory();
+    }
+
+    public new Options Settings { get; }
 
     public FileSystemPluginFinder(
-        Options? options,
+        Options settings,
         IPluginInfoProvider pluginInfoProvider,
         ILogger<FileSystemPluginFinder>? log = null)
-        : base(options ??= new Options(), pluginInfoProvider, log ?? NullLogger<FileSystemPluginFinder>.Instance)
-    {
-        PluginDir = options.PluginDir;
-        AssemblyNamePattern = options.AssemblyNamePattern;
-        ExcludedAssemblyNamesRegex = options.ExcludedAssemblyNamesRegex;
-        UseCache = options.UseCache;
-        CacheDir = options.CacheDir;
-    }
+        : base(settings, pluginInfoProvider, log ?? NullLogger<FileSystemPluginFinder>.Instance)
+        => Settings = settings;
 
     protected override IAsyncCache<string, string> CreateCache()
     {
-        if (!UseCache) {
+        if (!Settings.UseCache) {
             Log.LogDebug("Cache isn't used");
             return new EmptyCache<string, string>();
         }
@@ -42,7 +45,8 @@ public class FileSystemPluginFinder : CachingPluginFinderBase
         return cache;
     }
 
-    protected virtual string GetCacheDir() => CacheDir;
+    protected virtual string GetCacheDir()
+        => Settings.CacheDir;
 
     protected override string GetCacheKey()
     {
@@ -56,9 +60,9 @@ public class FileSystemPluginFinder : CachingPluginFinderBase
 
     protected virtual FilePath[] GetPluginAssemblyNames()
         => Directory
-            .EnumerateFiles(PluginDir, AssemblyNamePattern, SearchOption.TopDirectoryOnly)
+            .EnumerateFiles(Settings.PluginDir, Settings.AssemblyNamePattern, SearchOption.TopDirectoryOnly)
             .Select(FilePath.New)
-            .Where(path => !ExcludedAssemblyNamesRegex.IsMatch(path.Value))
+            .Where(path => !Settings.ExcludedAssemblyNamesRegex.IsMatch(path.Value))
             .OrderBy(path => path)
             .ToArray();
 
@@ -102,17 +106,4 @@ public class FileSystemPluginFinder : CachingPluginFinderBase
     protected virtual AssemblyLoadContext GetAssemblyLoadContext()
         => AssemblyLoadContext.Default;
 #endif
-
-    public new class Options : CachingPluginFinderBase.Options
-    {
-        public FilePath PluginDir { get; set; } =
-            Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? ".";
-
-        public string AssemblyNamePattern { get; set; } = "*.dll";
-        public Regex ExcludedAssemblyNamesRegex { get; set; } = new(
-            @"((System)|(Microsoft)|(Google)|(WindowsBase)|(mscorlib))\.(.*)\.dll",
-            RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture);
-        public bool UseCache { get; set; } = true;
-        public FilePath CacheDir { get; set; } = FilePath.GetApplicationTempDirectory();
-    }
 }

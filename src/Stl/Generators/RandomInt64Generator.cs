@@ -14,7 +14,7 @@ public sealed class RandomInt64Generator : Generator<long>
     public override long Next()
     {
         lock (_rng) {
-            _rng!.GetBytes(_buffer);
+            _rng.GetBytes(_buffer);
         }
         var bufferSpan = MemoryMarshal.Cast<byte, long>(_buffer.AsSpan());
         return bufferSpan![0];

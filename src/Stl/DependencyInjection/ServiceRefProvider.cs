@@ -11,23 +11,16 @@ public interface IServiceRefProvider
 
 public class ServiceRefProvider : IServiceRefProvider
 {
-    public class Options
-    {
-        public IServiceCollection ServiceCollection { get; set; } = null!;
-        public bool UseServiceInstanceRefs { get; set; }
-    }
-
-    protected IServiceCollection ServiceCollection { get; }
-    protected bool UseServiceInstanceRefs { get; }
     protected ConcurrentDictionary<Type, Type?> ServiceTypeCache { get; } = new();
 
-    public ServiceRefProvider(Options options)
+    public IServiceCollection ServiceCollection { get; init; } = null!;
+    public bool AllowServiceInstanceRefs { get; init; }
+
+    public ServiceRefProvider() { }
+    public ServiceRefProvider(IServiceCollection serviceCollection, bool allowServiceInstanceRefs = false)
     {
-        ServiceCollection = options.ServiceCollection
-#pragma warning disable MA0015
-            ?? throw new ArgumentNullException($"{nameof(options)}.{nameof(ServiceCollection)}");
-#pragma warning restore MA0015
-        UseServiceInstanceRefs = options.UseServiceInstanceRefs;
+        ServiceCollection = serviceCollection;
+        AllowServiceInstanceRefs = allowServiceInstanceRefs;
     }
 
     public virtual ServiceRef GetServiceRef(object service)
@@ -37,7 +30,7 @@ public class ServiceRefProvider : IServiceRefProvider
         var serviceType = GetServiceType(service.GetType());
         if (serviceType != null)
             return new ServiceTypeRef(service.GetType());
-        if (UseServiceInstanceRefs)
+        if (AllowServiceInstanceRefs)
             return new ServiceInstanceRef(Ref.New(service)!);
         throw Errors.NoServiceRef(service.GetType());
     }

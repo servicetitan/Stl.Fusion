@@ -1,12 +1,13 @@
 using System.Globalization;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Extensions.Commands;
+using Stl.Multitenancy;
 
 namespace Stl.Fusion.Extensions.Internal;
 
 public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
 {
-    public class Options
+    public record Options
     {
         public string SessionKeyPrefixFormat { get; set; } = "@session/{0}";
         public TimeSpan? SessionKeyExpirationTime { get; set; } = TimeSpan.FromDays(30);
@@ -15,37 +16,22 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
         public IMomentClock? Clock { get; set; } = null;
     }
 
+    protected Options Settings { get; }
     protected IKeyValueStore Store { get; }
     protected IAuth Auth { get; }
+    protected ITenantResolver TenantResolver { get; }
     protected IMomentClock Clock { get; }
-    public string SessionKeyPrefixFormat { get; }
-    public TimeSpan? SessionKeyExpirationTime { get; }
-    public string UserKeyPrefixFormat { get; }
-    public TimeSpan? UserKeyExpirationTime { get; }
 
-    public SandboxedKeyValueStore(Options? options, IServiceProvider services)
+    public SandboxedKeyValueStore(Options settings, IServiceProvider services)
     {
-        options ??= new Options();
-        SessionKeyPrefixFormat = options.SessionKeyPrefixFormat;
-        SessionKeyExpirationTime = options.SessionKeyExpirationTime;
-        UserKeyPrefixFormat = options.UserKeyPrefixFormat;
-        UserKeyExpirationTime = options.UserKeyExpirationTime;
+        Settings = settings;
         Store = services.GetRequiredService<IKeyValueStore>();
         Auth = services.GetRequiredService<IAuth>();
-        Clock = options.Clock ?? services.SystemClock();
+        TenantResolver = services.GetRequiredService<ITenantResolver>();
+        Clock = settings.Clock ?? services.SystemClock();
     }
 
     public virtual async Task Set(SandboxedSetCommand command, CancellationToken cancellationToken = default)
-    {
-        if (Computed.IsInvalidating()) return;
-
-        var keyChecker = await GetKeyChecker(command.Session, cancellationToken).ConfigureAwait(false);
-        var expiresAt = command.ExpiresAt;
-        keyChecker.CheckKey(command.Key, ref expiresAt);
-        await Store.Set(command.Key, command.Value, expiresAt, cancellationToken).ConfigureAwait(false);
-    }
-
-    public virtual async Task SetMany(SandboxedSetManyCommand command, CancellationToken cancellationToken = default)
     {
         if (Computed.IsInvalidating()) return;
 
@@ -58,7 +44,10 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
             keyChecker.CheckKey(item.Key, ref expiresAt);
             newItems[i] = (item.Key, item.Value, expiresAt);
         }
-        await Store.SetMany(newItems, cancellationToken).ConfigureAwait(false);
+
+        var context = CommandContext.GetCurrent();
+        var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
+        await Store.Set(tenant.Id, newItems, cancellationToken).ConfigureAwait(false);
     }
 
     public virtual async Task Remove(SandboxedRemoveCommand command, CancellationToken cancellationToken = default)
@@ -66,33 +55,31 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
         if (Computed.IsInvalidating()) return;
 
         var keyChecker = await GetKeyChecker(command.Session, cancellationToken).ConfigureAwait(false);
-        keyChecker.CheckKey(command.Key);
-        await Store.Remove(command.Key, cancellationToken).ConfigureAwait(false);
-    }
-
-    public virtual async Task RemoveMany(SandboxedRemoveManyCommand command, CancellationToken cancellationToken = default)
-    {
-        if (Computed.IsInvalidating()) return;
-
-        var keyChecker = await GetKeyChecker(command.Session, cancellationToken).ConfigureAwait(false);
         var keys = command.Keys;
         foreach (var t in keys)
             keyChecker.CheckKey(t);
-        await Store.RemoveMany(keys, cancellationToken).ConfigureAwait(false);
+
+        var context = CommandContext.GetCurrent();
+        var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
+        await Store.Remove(tenant, keys, cancellationToken).ConfigureAwait(false);
     }
 
     public virtual async Task<string?> Get(Session session, string key, CancellationToken cancellationToken = default)
     {
         var keyChecker = await GetKeyChecker(session, cancellationToken).ConfigureAwait(false);
         keyChecker.CheckKey(key);
-        return await Store.Get(key, cancellationToken).ConfigureAwait(false);
+
+        var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);
+        return await Store.Get(tenant.Id, key, cancellationToken).ConfigureAwait(false);
     }
 
     public virtual async Task<int> Count(Session session, string prefix, CancellationToken cancellationToken = default)
     {
         var keyChecker = await GetKeyChecker(session, cancellationToken).ConfigureAwait(false);
         keyChecker.CheckKeyPrefix(prefix);
-        return await Store.Count(prefix, cancellationToken).ConfigureAwait(false);
+
+        var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);
+        return await Store.Count(tenant.Id, prefix, cancellationToken).ConfigureAwait(false);
     }
 
     public virtual async Task<string[]> ListKeySuffixes(
@@ -101,7 +88,9 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
     {
         var keyChecker = await GetKeyChecker(session, cancellationToken).ConfigureAwait(false);
         keyChecker.CheckKeyPrefix(prefix);
-        return await Store.ListKeySuffixes(prefix, pageRef, sortDirection, cancellationToken).ConfigureAwait(false);
+
+        var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);
+        return await Store.ListKeySuffixes(tenant.Id, prefix, pageRef, sortDirection, cancellationToken).ConfigureAwait(false);
     }
 
     [ComputeMethod]
@@ -114,15 +103,15 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
         if (!user.IsAuthenticated)
             return new KeyChecker() {
                 Clock = Clock,
-                Prefix = string.Format(CultureInfo.InvariantCulture, SessionKeyPrefixFormat, session.Id),
-                ExpirationTime = SessionKeyExpirationTime,
+                Prefix = string.Format(CultureInfo.InvariantCulture, Settings.SessionKeyPrefixFormat, session.Id),
+                ExpirationTime = Settings.SessionKeyExpirationTime,
             };
         return new KeyChecker() {
             Clock = Clock,
-            Prefix = string.Format(CultureInfo.InvariantCulture, SessionKeyPrefixFormat, session.Id),
-            ExpirationTime = SessionKeyExpirationTime,
-            SecondaryPrefix = string.Format(CultureInfo.InvariantCulture, UserKeyPrefixFormat, user.Id),
-            SecondaryExpirationTime = UserKeyExpirationTime,
+            Prefix = string.Format(CultureInfo.InvariantCulture, Settings.SessionKeyPrefixFormat, session.Id),
+            ExpirationTime = Settings.SessionKeyExpirationTime,
+            SecondaryPrefix = string.Format(CultureInfo.InvariantCulture, Settings.UserKeyPrefixFormat, user.Id),
+            SecondaryExpirationTime = Settings.UserKeyExpirationTime,
         };
     }
 }

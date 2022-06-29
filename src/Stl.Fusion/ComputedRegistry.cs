@@ -1,26 +1,27 @@
 using Stl.Concurrency;
 using Stl.Locking;
-using Stl.Mathematics;
 using Stl.OS;
 using Stl.Time.Internal;
 using Errors = Stl.Fusion.Internal.Errors;
 
 namespace Stl.Fusion;
 
-public class ComputedRegistry : IDisposable
+public sealed class ComputedRegistry : IDisposable
 {
     public static ComputedRegistry Instance { get; set; } = new();
 
-    public sealed class Options
+    public sealed record Options
     {
         internal static readonly PrimeSieve CapacityPrimeSieve;
+
         public static int DefaultInitialCapacity { get; }
         public static int DefaultInitialConcurrency { get; }
+        public static Options Default { get; }
 
-        public int InitialCapacity { get; set; } = DefaultInitialCapacity;
-        public int ConcurrencyLevel { get; set; } = DefaultInitialConcurrency;
-        public Func<IFunction, IAsyncLockSet<ComputedInput>>? LocksProvider { get; set; } = null;
-        public GCHandlePool? GCHandlePool { get; set; } = null;
+        public int InitialCapacity { get; init; } = DefaultInitialCapacity;
+        public int ConcurrencyLevel { get; init; } = DefaultInitialConcurrency;
+        public Func<IFunction, IAsyncLockSet<ComputedInput>>? LocksProvider { get; init; } = null;
+        public GCHandlePool? GCHandlePool { get; init; } = null;
 
         static Options()
         {
@@ -30,6 +31,7 @@ public class ComputedRegistry : IDisposable
             while (!CapacityPrimeSieve.IsPrime(capacity))
                 capacity--;
             DefaultInitialCapacity = capacity;
+            Default = new();
         }
     }
 
@@ -41,9 +43,9 @@ public class ComputedRegistry : IDisposable
     private Task? _pruneTask;
     private object Lock => _storage;
 
-    public ComputedRegistry(Options? options = null)
+    public ComputedRegistry() : this(Options.Default) { }
+    public ComputedRegistry(Options options)
     {
-        options ??= new();
         _storage = new ConcurrentDictionary<ComputedInput, GCHandle>(options.ConcurrencyLevel, options.InitialCapacity);
         var locksProvider = options.LocksProvider;
         if (locksProvider == null) {
@@ -60,19 +62,9 @@ public class ComputedRegistry : IDisposable
     }
 
     public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
+        => _gcHandlePool.Dispose();
 
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!disposing) return;
-
-        _gcHandlePool.Dispose();
-    }
-
-    public virtual IComputed? Get(ComputedInput key)
+    public IComputed? Get(ComputedInput key)
     {
         var random = Randomize(key.HashCode);
         OnOperation(random);
@@ -86,7 +78,7 @@ public class ComputedRegistry : IDisposable
         return null;
     }
 
-    public virtual void Register(IComputed computed)
+    public void Register(IComputed computed)
     {
         // Debug.WriteLine($"{nameof(Register)}: {computed}");
         var key = computed.Input;
@@ -124,7 +116,7 @@ public class ComputedRegistry : IDisposable
         }
     }
 
-    public virtual bool Unregister(IComputed computed)
+    public bool Unregister(IComputed computed)
     {
         // Debug.WriteLine($"{nameof(Unregister)}: {computed}");
         // We can't remove what still could be invalidated,
@@ -149,10 +141,10 @@ public class ComputedRegistry : IDisposable
         return true;
     }
 
-    public virtual IAsyncLockSet<ComputedInput> GetLocksFor(IFunction function)
+    public IAsyncLockSet<ComputedInput> GetLocksFor(IFunction function)
         => _locksProvider(function);
 
-    public virtual void InvalidateEverything()
+    public void InvalidateEverything()
     {
         var keys = _storage.Keys.ToList();
         foreach (var key in keys)
@@ -168,10 +160,10 @@ public class ComputedRegistry : IDisposable
         }
     }
 
-    // Protected members
+    // Private methods
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected void OnOperation(int random)
+    private void OnOperation(int random)
     {
         if (!_opCounter.Increment(random, out var opCounterValue))
             return;
@@ -179,7 +171,7 @@ public class ComputedRegistry : IDisposable
             TryPrune();
     }
 
-    protected void TryPrune()
+    private void TryPrune()
     {
         lock (Lock) {
             // Double check locking
@@ -190,7 +182,7 @@ public class ComputedRegistry : IDisposable
         }
     }
 
-    protected virtual void PruneInternal()
+    private void PruneInternal()
     {
         var type = GetType();
         using var activity = type.GetActivitySource().StartActivity(type, nameof(Prune));
@@ -207,7 +199,7 @@ public class ComputedRegistry : IDisposable
         }
     }
 
-    protected void UpdatePruneCounterThreshold()
+    private void UpdatePruneCounterThreshold()
     {
         lock (Lock) {
             // Should be called inside Lock
@@ -218,6 +210,6 @@ public class ComputedRegistry : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected int Randomize(int random)
+    private int Randomize(int random)
         => random + CoarseClockHelper.RandomInt32;
 }

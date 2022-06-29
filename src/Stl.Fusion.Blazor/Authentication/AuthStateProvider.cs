@@ -9,10 +9,15 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
 {
     public record Options
     {
-        public IUpdateDelayer UpdateDelayer { get; init; } =
-            Fusion.UpdateDelayer.MinDelay with {
-                MaxRetryDelayDuration = TimeSpan.FromSeconds(10),
+        public IUpdateDelayer UpdateDelayer { get; init; }
+
+        public Options()
+        {
+            var minDelayUpdateDelayer = Fusion.UpdateDelayer.MinDelay;
+            UpdateDelayer = minDelayUpdateDelayer with {
+                RetryDelays = minDelayUpdateDelayer.RetryDelays with { Max = TimeSpan.FromSeconds(10) },
             };
+        }
     };
 
     private volatile IStateSnapshot<AuthState>? _cachedStateSnapshot;
@@ -26,13 +31,12 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
     public IComputedState<AuthState> State { get; }
 
     public AuthStateProvider(
-        Options? options,
+        Options options,
         ISessionResolver sessionResolver,
         IAuth auth,
         IUICommandTracker uiCommandTracker,
         IStateFactory stateFactory)
     {
-        options ??= new();
         SessionResolver = sessionResolver;
         Auth = auth;
         UICommandTracker = uiCommandTracker;

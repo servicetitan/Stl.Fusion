@@ -5,17 +5,18 @@ namespace Stl.Async;
 
 public static class TaskExt
 {
-    public static readonly Task InfiniteTask;
-    public static readonly Task<Unit> InfiniteUnitTask;
-    public static readonly TaskCompletionSource<Unit> UnitTaskCompletionSource;
+    public static readonly Task NeverEndingTask;
+    public static readonly Task<Unit> NeverEndingUnitTask;
     public static readonly Task<Unit> UnitTask = Task.FromResult(Unit.Default);
     public static readonly Task<bool> TrueTask = Task.FromResult(true);
     public static readonly Task<bool> FalseTask = Task.FromResult(false);
 
+    public static readonly TaskCompletionSource<Unit> UnitTaskCompletionSource;
+
     static TaskExt()
     {
-        InfiniteUnitTask = new TaskCompletionSource<Unit>().Task;
-        InfiniteTask = InfiniteUnitTask;
+        NeverEndingUnitTask = new TaskCompletionSource<Unit>().Task;
+        NeverEndingTask = NeverEndingUnitTask;
         var unitTcs = new TaskCompletionSource<Unit>();
         unitTcs.SetResult(default);
         UnitTaskCompletionSource = unitTcs;

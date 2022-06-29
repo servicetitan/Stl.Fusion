@@ -12,9 +12,10 @@ public class SystemJsonSerializer : TextSerializerBase
 
     public JsonSerializerOptions Options { get; }
 
-    public SystemJsonSerializer(JsonSerializerOptions? options = null)
+    public SystemJsonSerializer() : this(DefaultOptions) { }
+    public SystemJsonSerializer(JsonSerializerOptions options)
     {
-        Options = options ??= DefaultOptions;
+        Options = options;
         PreferStringApi = false;
     }
 

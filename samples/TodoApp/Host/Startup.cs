@@ -22,11 +22,13 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.EntityFramework.Npgsql;
+using Stl.Fusion.EntityFramework.Operations;
 using Stl.Fusion.Extensions;
 using Stl.Fusion.Operations.Reprocessing;
 using Stl.Fusion.Server.Authentication;
 using Stl.Fusion.Server.Controllers;
 using Stl.IO;
+using Stl.Multitenancy;
 using Templates.TodoApp.Abstractions;
 using Templates.TodoApp.UI;
 
@@ -68,51 +70,62 @@ public class Startup
 
         // DbContext & related services
         var appTempDir = FilePath.GetApplicationTempDirectory("", true);
-        var dbPath = appTempDir & "App.db";
-        services.AddDbContextFactory<AppDbContext>(dbContext => {
-            if (!string.IsNullOrEmpty(HostSettings.UseSqlServer))
-                dbContext.UseSqlServer(HostSettings.UseSqlServer);
-            else if (!string.IsNullOrEmpty(HostSettings.UsePostgreSql)) {
-                dbContext.UseNpgsql(HostSettings.UsePostgreSql);
-                dbContext.UseNpgsqlHintFormatter();
-            }
-            else
-                dbContext.UseSqlite($"Data Source={dbPath}");
-            if (Env.IsDevelopment())
-                dbContext.EnableSensitiveDataLogging();
-        });
         services.AddTransient(c => new DbOperationScope<AppDbContext>(c) {
             IsolationLevel = IsolationLevel.Serializable,
         });
         services.AddDbContextServices<AppDbContext>(dbContext => {
             // This is the best way to add DbContext-related services from Stl.Fusion.EntityFramework
-            dbContext.AddOperations((_, o) => {
+            dbContext.AddOperations(_ => new() {
                 // We use FileBasedDbOperationLogChangeMonitor, so unconditional wake up period
                 // can be arbitrary long - all depends on the reliability of Notifier-Monitor chain.
-                o.UnconditionalWakeUpPeriod = TimeSpan.FromSeconds(Env.IsDevelopment() ? 60 : 5);
+                UnconditionalCheckPeriod = TimeSpan.FromSeconds(Env.IsDevelopment() ? 60 : 5),
             });
-            var operationLogChangeAlertPath = dbPath + "_changed";
-            dbContext.AddFileBasedOperationLogChangeTracking(operationLogChangeAlertPath);
+            dbContext.AddFileBasedOperationLogChangeTracking();
             // dbContext.AddRedisDb("localhost", "Fusion.Samples.TodoApp");
             // dbContext.AddRedisOperationLogChangeTracking();
             if (!HostSettings.UseInMemoryAuthService)
                 dbContext.AddAuthentication<string>();
             dbContext.AddKeyValueStore();
+            dbContext.AddMultitenancy(multitenancy => {
+                multitenancy.MultitenantMode();
+                multitenancy.SetupMultitenantRegistry(
+                    Enumerable.Range(0, 3).Select(i => new Tenant($"tenant{i}")));
+                multitenancy.SetupMultitenantDbContextFactory((_, tenant, db) => {
+                    if (!string.IsNullOrEmpty(HostSettings.UseSqlServer))
+                        db.UseSqlServer(HostSettings.UseSqlServer.Interpolate(tenant));
+                    else if (!string.IsNullOrEmpty(HostSettings.UsePostgreSql)) {
+                        db.UseNpgsql(HostSettings.UsePostgreSql.Interpolate(tenant));
+                        db.UseNpgsqlHintFormatter();
+                    }
+                    else {
+                        var dbPath = (appTempDir & "App_{0:StorageId}.db").Value.Interpolate(tenant);
+                        db.UseSqlite($"Data Source={dbPath}");
+                    }
+                    if (Env.IsDevelopment())
+                        db.EnableSensitiveDataLogging();
+                });
+                multitenancy.MakeDefault();
+            });
         });
 
         // Fusion services
-        services.AddSingleton(new Publisher.Options() { Id = HostSettings.PublisherId });
+        services.AddSingleton(new PublisherOptions() { Id = HostSettings.PublisherId });
         var fusion = services.AddFusion();
         var fusionServer = fusion.AddWebServer();
+        fusionServer.SetupSessionMiddleware(_ => new() {
+            TenantIdExtractor = TenantIdExtractors.FromSubdomain(".localhost")
+                .Or(TenantIdExtractors.FromPort((5005, 5010)))
+                .WithValidator(tenantId => tenantId.Value.StartsWith("tenant")),
+        });
         var fusionClient = fusion.AddRestEaseClient();
         var fusionAuth = fusion.AddAuthentication().AddServer(
-            signInControllerSettingsFactory: _ => SignInController.DefaultSettings with {
+            signInControllerOptionsFactory: _ => new() {
                 DefaultScheme = MicrosoftAccountDefaults.AuthenticationScheme,
                 SignInPropertiesBuilder = (_, properties) => {
                     properties.IsPersistent = true;
                 }
             },
-            serverAuthHelperSettingsFactory: _ => ServerAuthHelper.DefaultSettings with {
+            serverAuthHelperOptionsFactory: _ => new() {
                 NameClaimKeys = Array.Empty<string>(),
             });
         fusion.AddSandboxedKeyValueStore();

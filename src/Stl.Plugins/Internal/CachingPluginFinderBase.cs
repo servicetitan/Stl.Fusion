@@ -5,13 +5,14 @@ namespace Stl.Plugins.Internal;
 
 public abstract class CachingPluginFinderBase : IPluginFinder
 {
-    public class Options
+    public record Options
     {
-        public Func<IAsyncCache<string, string>>? CacheFactory { get; set; } = null;
+        public Func<IAsyncCache<string, string>>? CacheFactory { get; init; } = null;
     }
 
     private readonly Lazy<IAsyncCache<string, string>> _lazyCache;
 
+    protected Options Settings { get; }
     protected ILogger Log { get; }
     protected IPluginInfoProvider PluginInfoProvider { get; }
 
@@ -19,15 +20,14 @@ public abstract class CachingPluginFinderBase : IPluginFinder
     public PluginSetInfo? FoundPlugins { get; private set; }
 
     protected CachingPluginFinderBase(
-        Options? options,
+        Options settings,
         IPluginInfoProvider pluginInfoProvider,
         ILogger<CachingPluginFinderBase>? log = null)
     {
-        options ??= new Options();
+        Settings = settings;
         Log = log ?? NullLogger<CachingPluginFinderBase>.Instance;
         PluginInfoProvider = pluginInfoProvider;
-        _lazyCache = new Lazy<IAsyncCache<string, string>>(
-            options.CacheFactory ?? CreateCache);
+        _lazyCache = new Lazy<IAsyncCache<string, string>>(settings.CacheFactory ?? CreateCache);
     }
 
     public async Task Run(CancellationToken cancellationToken = default)

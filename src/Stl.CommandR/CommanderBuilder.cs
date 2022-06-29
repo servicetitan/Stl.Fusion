@@ -33,7 +33,8 @@ public readonly struct CommanderBuilder
         Services.TryAddTransient(_ => CommandContext.Current!);
 
         // Command services & their dependencies
-        Services.TryAddSingleton(_ => CommandServiceProxyGenerator.Default);
+        Services.TryAddSingleton(new CommandServiceProxyGenerator.Options());
+        Services.TryAddSingleton<ICommandServiceProxyGenerator, CommandServiceProxyGenerator>();
         Services.TryAddSingleton(new CommandServiceInterceptor.Options());
         Services.TryAddSingleton<CommandServiceInterceptor>();
         Services.TryAddSingleton(c => new [] { c.GetRequiredService<CommandServiceInterceptor>() });
@@ -77,10 +78,10 @@ public readonly struct CommanderBuilder
         return this;
     }
 
-    public CommanderBuilder SetOptions(Func<IServiceProvider, CommanderOptions> optionsBuilder)
+    public CommanderBuilder SetOptions(Func<IServiceProvider, CommanderOptions> optionsFactory)
     {
         Services.RemoveAll<CommanderOptions>();
-        Services.AddSingleton(optionsBuilder);
+        Services.AddSingleton(optionsFactory);
         return this;
     }
 

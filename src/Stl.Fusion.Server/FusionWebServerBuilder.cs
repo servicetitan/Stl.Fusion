@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Fusion.Authentication;
+using Stl.Fusion.Server.Authentication;
 using Stl.Fusion.Server.Controllers;
 using Stl.Fusion.Server.Internal;
 
@@ -16,7 +17,7 @@ public readonly struct FusionWebServerBuilder
     public IServiceCollection Services => Fusion.Services;
 
     internal FusionWebServerBuilder(FusionBuilder fusion,
-        Action<IServiceProvider, WebSocketServer.Options>? webSocketServerOptionsBuilder)
+        Func<IServiceProvider, WebSocketServer.Options>? webSocketServerOptionsFactory)
     {
         Fusion = fusion;
         if (Services.Contains(AddedTagDescriptor))
@@ -25,12 +26,10 @@ public readonly struct FusionWebServerBuilder
         Services.Insert(0, AddedTagDescriptor);
 
         Fusion.AddPublisher();
-        Services.TryAddSingleton(c => {
-            var options = new WebSocketServer.Options();
-            webSocketServerOptionsBuilder?.Invoke(c, options);
-            return options;
-        });
+        Services.TryAddSingleton(c => webSocketServerOptionsFactory?.Invoke(c) ?? new());
         Services.TryAddSingleton<WebSocketServer>();
+        Services.TryAddSingleton<SessionMiddleware.Options>();
+        Services.TryAddScoped<SessionMiddleware>();
 
         var mvcBuilder = Services.AddMvcCore(options => {
             var oldModelBinderProviders = options.ModelBinderProviders.ToList();
@@ -59,10 +58,17 @@ public readonly struct FusionWebServerBuilder
         */
     }
 
-    public FusionWebServerBuilder AddControllers(
-        Func<IServiceProvider, SignInController.Options>? signInControllerSettingsFactory = null)
+    public FusionWebServerBuilder SetupSessionMiddleware(
+        Func<IServiceProvider, SessionMiddleware.Options> sessionMiddlewareOptionsFactory)
     {
-        Services.TryAddSingleton(c => signInControllerSettingsFactory?.Invoke(c) ?? SignInController.DefaultSettings);
+        Services.AddSingleton(sessionMiddlewareOptionsFactory);
+        return this;
+    }
+
+    public FusionWebServerBuilder AddControllers(
+        Func<IServiceProvider, SignInController.Options>? signInControllerOptionsFactory = null)
+    {
+        Services.TryAddSingleton(c => signInControllerOptionsFactory?.Invoke(c) ?? new());
         Services.AddControllers()
             .AddApplicationPart(typeof(AuthController).Assembly);
         return this;

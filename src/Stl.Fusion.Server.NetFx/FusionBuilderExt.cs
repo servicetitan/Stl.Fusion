@@ -3,14 +3,14 @@ namespace Stl.Fusion.Server;
 public static class FusionBuilderExt
 {
     public static FusionWebServerBuilder AddWebServer(this FusionBuilder fusion,
-        Action<IServiceProvider, WebSocketServer.Options>? optionsBuilder = null)
-        => new(fusion, optionsBuilder);
+        Func<IServiceProvider, WebSocketServer.Options>? optionsFactory = null)
+        => new(fusion, optionsFactory);
 
     public static FusionBuilder AddWebServer(this FusionBuilder fusion,
         Action<FusionWebServerBuilder> configureWebSocketServer,
-        Action<IServiceProvider, WebSocketServer.Options>? optionsBuilder = null)
+        Func<IServiceProvider, WebSocketServer.Options>? optionsFactory = null)
     {
-        var webSocketServer = fusion.AddWebServer(optionsBuilder);
+        var webSocketServer = fusion.AddWebServer(optionsFactory);
         configureWebSocketServer(webSocketServer);
         return fusion;
     }

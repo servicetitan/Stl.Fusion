@@ -23,10 +23,10 @@ public static class StartupHelper
 
         // Fusion services
         var fusion = services.AddFusion();
-        var fusionClient = fusion.AddRestEaseClient((_, o) => {
-            o.BaseUri = baseUri;
-            o.IsLoggingEnabled = true;
-            o.IsMessageLoggingEnabled = false;
+        var fusionClient = fusion.AddRestEaseClient(_ => new() {
+            BaseUri = baseUri,
+            LogLevel = LogLevel.Information,
+            MessageLogLevel = LogLevel.None,
         });
         fusionClient.ConfigureHttpClientFactory((c, name, o) => {
             var isFusionClient = (name ?? "").StartsWith("Stl.Fusion");

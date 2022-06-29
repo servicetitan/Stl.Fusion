@@ -19,7 +19,7 @@ public class RedisPubSubTest : RedisTestBase
         var sub = GetRedisDb().GetTaskSub<string>("pub-*");
         await using var _ = sub.ConfigureAwait(false);
 
-        await sub.WhenSubscribed.ConfigureAwait(false);
+        await sub.WhenSubscribed!.ConfigureAwait(false);
         Out.WriteLine($"{sw.ElapsedMilliseconds}: <- 1");
         var messageTask = sub.NextMessage();
         await pub1.Publish("1");

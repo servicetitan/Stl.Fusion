@@ -146,8 +146,7 @@ public static partial class ChannelExt
         BoundedChannelOptions? channelOptions = null,
         CancellationToken cancellationToken = default)
     {
-        var mustLog = logLevel != LogLevel.None && logger.IsEnabled(logLevel);
-        if (!mustLog)
+        if (!logger.IsLogging(logLevel))
             return channel;
 
         channelOptions ??= new BoundedChannelOptions(16) {

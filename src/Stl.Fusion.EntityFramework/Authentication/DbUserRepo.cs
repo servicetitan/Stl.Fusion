@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.EntityFramework.Internal;
+using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework.Authentication;
 
@@ -23,7 +24,7 @@ public interface IDbUserRepo<in TDbContext, TDbUser, TDbUserId>
         TDbContext dbContext, TDbUser dbUser, CancellationToken cancellationToken = default);
 
     // Read methods
-    Task<TDbUser?> Get(TDbUserId userId, CancellationToken cancellationToken = default);
+    Task<TDbUser?> Get(Tenant tenant, TDbUserId userId, CancellationToken cancellationToken = default);
     Task<TDbUser?> Get(TDbContext dbContext, TDbUserId userId, bool forUpdate, CancellationToken cancellationToken = default);
     Task<TDbUser?> GetByUserIdentity(
         TDbContext dbContext, UserIdentity userIdentity, CancellationToken cancellationToken = default);
@@ -115,8 +116,8 @@ public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbConte
 
     // Read methods
 
-    public async Task<TDbUser?> Get(TDbUserId userId, CancellationToken cancellationToken = default)
-        => await UserResolver.Get(userId, cancellationToken).ConfigureAwait(false);
+    public async Task<TDbUser?> Get(Tenant tenant, TDbUserId userId, CancellationToken cancellationToken = default)
+        => await UserResolver.Get(tenant, userId, cancellationToken).ConfigureAwait(false);
 
     public virtual async Task<TDbUser?> Get(
         TDbContext dbContext, TDbUserId userId, bool forUpdate, CancellationToken cancellationToken = default)
