@@ -1,3 +1,5 @@
+using System.Globalization;
+using Castle.Core.Internal;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
@@ -17,6 +19,7 @@ public class SessionMiddleware : IMiddleware, IHasServices
         };
         public Func<SessionMiddleware, HttpContext, Task<bool>> ForcedSignOutHandler { get; init; } =
             DefaultForcedSignOutHandler;
+        public TenantIdSource TenantIdSource { get; init; }
 
         public static async Task<bool> DefaultForcedSignOutHandler(SessionMiddleware self, HttpContext httpContext)
         {
@@ -33,7 +36,7 @@ public class SessionMiddleware : IMiddleware, IHasServices
     public IServiceProvider Services { get; }
     public ILogger Log { get; }
 
-    public IAuth Auth { get; }
+    public IAuth? Auth { get; }
     public ISessionProvider SessionProvider { get; }
     public ISessionFactory SessionFactory { get; }
 
@@ -43,7 +46,7 @@ public class SessionMiddleware : IMiddleware, IHasServices
         Services = services;
         Log = services.LogFor(GetType());
 
-        Auth = services.GetRequiredService<IAuth>();
+        Auth = services.GetService<IAuth>();
         SessionProvider = services.GetRequiredService<ISessionProvider>();
         SessionFactory = services.GetRequiredService<ISessionFactory>();
     }
@@ -52,28 +55,46 @@ public class SessionMiddleware : IMiddleware, IHasServices
     {
         var cancellationToken = httpContext.RequestAborted;
         var cookies = httpContext.Request.Cookies;
+        var responseCookies = httpContext.Response.Cookies;
         var cookieName = Settings.Cookie.Name ?? "";
         cookies.TryGetValue(cookieName, out var sessionId);
-        var session = string.IsNullOrEmpty(sessionId) ? null : new Session(sessionId);
+
+        var tenantId = GetTenantId(httpContext);
+        var originalSession = string.IsNullOrEmpty(sessionId) ? null : new Session(sessionId);
+        var session = originalSession?.WithTenantId(tenantId);
+
         if (session != null) {
             if (Auth != null) {
                 var isSignOutForced = await Auth.IsSignOutForced(session, cancellationToken).ConfigureAwait(false);
                 if (isSignOutForced) {
-                    if (await Settings.ForcedSignOutHandler(this, httpContext).ConfigureAwait(false)) {
-                        var responseCookies = httpContext.Response.Cookies;
-                        responseCookies.Delete(cookieName);
-                        return;
-                    }
+                    await Settings.ForcedSignOutHandler(this, httpContext).ConfigureAwait(false);
                     session = null;
                 }
             }
         }
-        if (session == null) {
-            session = SessionFactory.CreateSession();
-            var responseCookies = httpContext.Response.Cookies;
+        if (session == null)
+            session = SessionFactory.CreateSession().WithTenantId(tenantId);
+        if (session != originalSession)
             responseCookies.Append(cookieName, session.Id, Settings.Cookie.Build(httpContext));
-        }
         SessionProvider.Session = session;
         await next(httpContext).ConfigureAwait(false);
+    }
+
+    protected virtual string GetTenantId(HttpContext httpContext)
+    {
+        switch (Settings.TenantIdSource) {
+        case TenantIdSource.None:
+            return "";
+        case TenantIdSource.Subdomain:
+            var host = httpContext.Request.Host.Host;
+            var dotIndex = host.IndexOf('.');
+            if (dotIndex < 0)
+                return "";
+            return host[..dotIndex];
+        case TenantIdSource.Port:
+            return httpContext.Connection.LocalPort.ToString(CultureInfo.InvariantCulture);
+        default:
+            throw new ArgumentOutOfRangeException();
+        }
     }
 }

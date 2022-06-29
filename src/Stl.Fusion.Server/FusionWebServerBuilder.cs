@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Fusion.Authentication;
+using Stl.Fusion.Server.Authentication;
 using Stl.Fusion.Server.Controllers;
 using Stl.Fusion.Server.Internal;
 
@@ -27,6 +28,8 @@ public readonly struct FusionWebServerBuilder
         Fusion.AddPublisher();
         Services.TryAddSingleton(c => webSocketServerOptionsFactory?.Invoke(c) ?? new());
         Services.TryAddSingleton<WebSocketServer>();
+        Services.TryAddSingleton<SessionMiddleware.Options>();
+        Services.TryAddScoped<SessionMiddleware>();
 
         var mvcBuilder = Services.AddMvcCore(options => {
             var oldModelBinderProviders = options.ModelBinderProviders.ToList();
@@ -53,6 +56,13 @@ public readonly struct FusionWebServerBuilder
                 });
         });
         */
+    }
+
+    public FusionWebServerBuilder SetupSessionMiddleware(
+        Func<IServiceProvider, SessionMiddleware.Options> sessionMiddlewareOptionsFactory)
+    {
+        Services.AddSingleton(sessionMiddlewareOptionsFactory);
+        return this;
     }
 
     public FusionWebServerBuilder AddControllers(

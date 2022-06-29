@@ -26,7 +26,7 @@ public class NestedOperationLoggerTester
         var first = keys.FirstOrDefault();
         if (first == null)
             return;
-        await KeyValueStore.Set(first, valuePrefix + keys.Length, cancellationToken);
+        await KeyValueStore.Set(default, first, valuePrefix + keys.Length, cancellationToken);
         var nextCommand = new SetManyCommand(keys[1..], valuePrefix);
         await SetMany(nextCommand, cancellationToken).ConfigureAwait(false);
     }

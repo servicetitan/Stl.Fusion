@@ -2,19 +2,28 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Stl.Multitenancy;
 
-public abstract class MultitenantRegistryBase<TContext> : ITenantRegistry<TContext>
+public class MultitenantRegistry<TContext> : ITenantRegistry<TContext>
 {
+    public record Options
+    {
+        public Func<ImmutableDictionary<Symbol, Tenant>> AllTenantsFetcher { get; init; } = null!;
+    }
+
     protected readonly object Lock = new();
 
+    public Options Settings { get; }
+    public bool IsSingleTenant => false;
     public MutableDictionary<Symbol, Tenant> AllTenants { get; }
     public MutableDictionary<Symbol, Tenant> AccessedTenants { get; }
 
-    protected MultitenantRegistryBase()
+    public MultitenantRegistry(Options settings)
     {
+        Settings = settings;
         var tenants = ImmutableDictionary<Symbol, Tenant>.Empty;
         AllTenants = new MutableDictionary<Symbol, Tenant>(tenants);
         AccessedTenants = new MutableDictionary<Symbol, Tenant>(tenants);
-        Task.Run(Update);
+        // ReSharper disable once VirtualMemberCallInConstructor
+        Update();
     }
 
     public virtual bool TryGet(Symbol tenantId, [MaybeNullWhen(false)] out Tenant tenant)
@@ -59,5 +68,6 @@ public abstract class MultitenantRegistryBase<TContext> : ITenantRegistry<TConte
 
     // Protected methods
 
-    protected abstract ImmutableDictionary<Symbol, Tenant> FetchAllTenants();
+    protected virtual ImmutableDictionary<Symbol, Tenant> FetchAllTenants()
+        => Settings.AllTenantsFetcher.Invoke();
 }

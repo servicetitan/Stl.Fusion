@@ -6,8 +6,6 @@ using Stl.Fusion.EntityFramework.Extensions;
 using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.EntityFramework.Operations;
 using Stl.Fusion.Extensions;
-using Stl.Fusion.Multitenancy;
-using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework;
 
@@ -20,12 +18,20 @@ public readonly struct DbContextBuilder<TDbContext>
     {
         Services = services;
         Services.TryAddSingleton<DbHub<TDbContext>>();
+        AddMultitenancy(); // Core multitenancy services
+    }
 
-        // Multitenancy
-        Services.TryAddSingleton<ITenantRegistry<TDbContext>, SingleTenantRegistry<TDbContext>>();
-        Services.TryAddSingleton<IMultitenantDbContextFactory<TDbContext>, SingleTenantDbContextFactory<TDbContext>>();
-        Services.TryAddSingleton<DefaultTenantResolver<TDbContext>.Options>();
-        Services.TryAddSingleton<ITenantResolver<TDbContext>, DefaultTenantResolver<TDbContext>>();
+    // Multitenancy
+
+    public DbMultitenancyBuilder<TDbContext> AddMultitenancy()
+        => new(this);
+
+    public DbContextBuilder<TDbContext> AddMultitenancy(
+        Action<DbMultitenancyBuilder<TDbContext>> configureDbContext)
+    {
+        var multitenancy = AddMultitenancy();
+        configureDbContext(multitenancy);
+        return this;
     }
 
     // Entity converters

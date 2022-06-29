@@ -5,7 +5,7 @@ namespace Stl.Fusion.Extensions.Commands;
 [DataContract]
 public record SandboxedRemoveCommand(
     [property: DataMember] Session Session,
-    [property: DataMember] params string[] Keys
+    [property: DataMember] string[] Keys
     ) : ISessionCommand<Unit>
 {
     public SandboxedRemoveCommand() : this(Session.Null, Array.Empty<string>()) { }

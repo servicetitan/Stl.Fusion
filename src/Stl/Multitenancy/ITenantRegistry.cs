@@ -4,6 +4,7 @@ namespace Stl.Multitenancy;
 
 public interface ITenantRegistry
 {
+    bool IsSingleTenant { get; }
     MutableDictionary<Symbol, Tenant> AllTenants { get; }
     MutableDictionary<Symbol, Tenant> AccessedTenants { get; }
 

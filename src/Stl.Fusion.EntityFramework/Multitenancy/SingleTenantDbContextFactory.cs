@@ -13,7 +13,7 @@ public sealed class SingleTenantDbContextFactory<TDbContext> : IMultitenantDbCon
         => DbContextFactory = dbContextFactory;
 
     public TDbContext CreateDbContext(Tenant tenant)
-        => tenant == Tenant.Default || tenant == Tenant.Any
+        => tenant == Tenant.Default
             ? DbContextFactory.CreateDbContext()
             : throw Errors.DefaultDbContextFactoryDoesNotSupportMultitenancy();
 }

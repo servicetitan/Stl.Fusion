@@ -22,6 +22,9 @@ public static class Errors
         => new NotSupportedException(
             "DefaultDbContextFactory does not support multitenancy, " +
             "but (tenant != Tenant.Single) is passed to its CreateDbContext method.");
+    public static Exception DefaultTenantCanBeUsedOnlyWithSingleTenantResolver()
+        => new NotSupportedException(
+            "Tenant.Default can be used only with SingleTenantResolver.");
 
     public static Exception EntityNotFound<TEntity>()
         => EntityNotFound(typeof(TEntity));

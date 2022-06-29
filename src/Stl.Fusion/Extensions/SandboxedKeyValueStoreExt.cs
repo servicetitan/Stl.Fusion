@@ -42,7 +42,7 @@ public static class SandboxedKeyValueStoreExt
     public static Task Remove(this ISandboxedKeyValueStore keyValueStore,
         Session session, string key, CancellationToken cancellationToken = default)
     {
-        var command = new SandboxedRemoveCommand(session, key);
+        var command = new SandboxedRemoveCommand(session, new[] { key });
         return keyValueStore.GetCommander().Call(command, cancellationToken);
     }
 

@@ -4,7 +4,7 @@ namespace Stl.Multitenancy;
 public record Tenant : IHasId<Symbol>
 {
     public static Tenant Default { get; } = new(Symbol.Empty, "The only tenant", "");
-    public static Tenant Any { get; } = new("*", "Any tenant", "");
+    public static Tenant Example { get; } = new("*", "Example tenant", "__example");
 
     [DataMember] public Symbol Id { get; init; } = Symbol.Empty;
     [DataMember] public string Title { get; init; } = "";

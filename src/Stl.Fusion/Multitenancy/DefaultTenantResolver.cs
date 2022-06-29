@@ -26,12 +26,8 @@ public class DefaultTenantResolver<TContext> : ITenantResolver<TContext>
     {
         switch (source) {
         case Session session:
-            var sessionId = session.Id.Value;
-            var atIndex = sessionId.IndexOf('@');
-            if (atIndex <= 0)
-                return Tenant.Default;
-            var sTenantId = sessionId.Substring(atIndex + 1);
-            return sTenantId.IsNullOrEmpty() ? Tenant.Default : TenantRegistry.Get(sTenantId);
+            var tenantId = session.GetTenantId();
+            return tenantId.IsEmpty ? Tenant.Default : TenantRegistry.Get(tenantId);
         case ICommand command:
             object? oTenantId = null;
             try {
@@ -40,8 +36,8 @@ public class DefaultTenantResolver<TContext> : ITenantResolver<TContext>
             catch {
                 // Intended
             }
-            if (oTenantId is Symbol tenantId)
-                return TenantRegistry.Get(tenantId);
+            if (oTenantId is Symbol tenantId1)
+                return TenantRegistry.Get(tenantId1);
             if (oTenantId is string sTenantId1)
                 return TenantRegistry.Get(sTenantId1);
             if (command is ISessionCommand sessionCommand)

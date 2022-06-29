@@ -45,7 +45,7 @@ public static class KeyValueStoreExt
     public static Task Remove(this IKeyValueStore keyValueStore,
         Symbol tenantId, string key, CancellationToken cancellationToken = default)
     {
-        var command = new RemoveCommand(key);
+        var command = new RemoveCommand(tenantId, new[] { key });
         return keyValueStore.GetCommander().Call(command, cancellationToken);
     }
 
