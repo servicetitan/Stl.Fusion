@@ -24,6 +24,12 @@ public class DefaultTenantResolver<TContext> : ITenantResolver<TContext>
 
     public virtual async Task<Tenant> Resolve(object source, object context, CancellationToken cancellationToken)
     {
+        if (TenantRegistry.IsSingleTenant)
+            return Tenant.Default;
+
+        // Note that it's impossible to use Tenant.Default in multitenant mode,
+        // i.e. whenever it is returned from any code below, it triggers
+        // "no tenant found" error.
         switch (source) {
         case Session session:
             var tenantId = session.GetTenantId();

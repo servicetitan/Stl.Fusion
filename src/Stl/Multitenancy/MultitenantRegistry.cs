@@ -28,6 +28,11 @@ public class MultitenantRegistry<TContext> : ITenantRegistry<TContext>
 
     public virtual bool TryGet(Symbol tenantId, [MaybeNullWhen(false)] out Tenant tenant)
     {
+        if (tenantId == Tenant.Default.Id) {
+            tenant = null;
+            return false;
+        }
+
         if (AccessedTenants.TryGetValue(tenantId, out tenant))
             return true;
         lock (Lock) {
