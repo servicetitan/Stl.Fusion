@@ -8,12 +8,9 @@ public class RedisStreamerTest : RedisTestBase
 {
     public RedisStreamerTest(ITestOutputHelper @out) : base(@out) { }
 
-    [Fact]
+    [SkipOnGitHubFact]
     public async Task BasicTest()
     {
-        if (TestRunnerInfo.IsBuildAgent())
-            return; // No Redis on build agent for now
-
         var db = GetRedisDb();
         var started = TaskSource.New<Unit>(true);
         var streamer = db.GetStreamer<int>("s");
@@ -35,12 +32,9 @@ public class RedisStreamerTest : RedisTestBase
         (await stream2.ToArrayAsync()).Should().Equal(0, 1, 2, 3);
     }
 
-    [Fact]
+    [SkipOnGitHubFact]
     public async Task CancellationTest()
     {
-        if (TestRunnerInfo.IsBuildAgent())
-            return; // No Redis on build agent for now
-
         var db = GetRedisDb();
         var streamer = db.GetStreamer<int>("s");
         await streamer.Remove();
@@ -57,12 +51,9 @@ public class RedisStreamerTest : RedisTestBase
         writeTask.IsCanceled.Should().BeTrue();
     }
 
-    [Fact]
+    [SkipOnGitHubFact]
     public async Task ExceptionTest1()
     {
-        if (TestRunnerInfo.IsBuildAgent())
-            return; // No Redis on build agent for now
-
         var db = GetRedisDb();
         var streamer = db.GetStreamer<int>("s");
         await streamer.Remove();

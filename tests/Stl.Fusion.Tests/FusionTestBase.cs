@@ -131,7 +131,8 @@ public class FusionTestBase : TestBase, IAsyncLifetime
             && Options.DbType
                 is FusionTestDbType.PostgreSql
                 or FusionTestDbType.MariaDb
-                or FusionTestDbType.SqlServer;
+                or FusionTestDbType.SqlServer
+                or FusionTestDbType.Sqlite;
 
     protected IServiceProvider CreateServices(bool isClient = false)
     {

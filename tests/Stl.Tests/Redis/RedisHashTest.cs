@@ -6,12 +6,9 @@ public class RedisHashTest : RedisTestBase
 {
     public RedisHashTest(ITestOutputHelper @out) : base(@out) { }
 
-    [Fact]
+    [SkipOnGitHubFact]
     public async Task BasicTest()
     {
-        if (TestRunnerInfo.IsBuildAgent())
-            return; // No Redis on build agent for now
-
         var hash = GetRedisDb().GetHash("hash");
         await hash.Clear();
         (await hash.GetAll()).Length.Should().Be(0);

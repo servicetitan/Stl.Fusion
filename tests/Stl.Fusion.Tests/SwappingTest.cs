@@ -61,13 +61,9 @@ public class SwappingTest : SimpleFusionTestBase
         services.AddSingleton<ISwapService, LoggingSwapServiceWrapper<SwapService>>();
     }
 
-    [Fact]
+    [SkipOnGitHubFact]
     public async Task BasicTest()
     {
-        if (TestRunnerInfo.IsBuildAgent())
-            // TODO: Fix intermittent failures on GitHub
-            return;
-
         var services = CreateServiceProviderFor<Service>();
         var swapService = services.GetRequiredService<SwapService>();
         var service = services.GetRequiredService<Service>();

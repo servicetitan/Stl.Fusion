@@ -7,13 +7,13 @@ public class KeepAliveTest : TestBase
 {
     public class Service
     {
-        public int CallCount { get; set; }
+        public ThreadSafe<int> CallCount { get; }
 
         [ComputeMethod(KeepAliveTime = 0.5)]
         public virtual async Task<double> Sum(double a, double b)
         {
             await Task.Yield();
-            CallCount++;
+            CallCount.Value++;
             return a + b;
         }
 
@@ -21,7 +21,7 @@ public class KeepAliveTest : TestBase
         public virtual async Task<double> Multiply(double a, double b)
         {
             await Task.Yield();
-            CallCount++;
+            CallCount.Value++;
             return a * b;
         }
     }
@@ -42,49 +42,41 @@ public class KeepAliveTest : TestBase
     [Fact]
     public async Task TestNoKeepAlive()
     {
-        if (TestRunnerInfo.IsBuildAgent())
-            // TODO: Fix intermittent failures on GitHub
-            return;
-
         var services = CreateProviderFor<Service>();
         var service = services.GetRequiredService<Service>();
 
-        service.CallCount = 0;
+        service.CallCount.Value = 0;
         await service.Multiply(1, 1);
-        service.CallCount.Should().Be(1);
+        service.CallCount.Value.Should().Be(1);
         await service.Multiply(1, 1);
-        service.CallCount.Should().Be(1);
+        service.CallCount.Value.Should().Be(1);
 
         await GCCollect();
         await service.Multiply(1, 1);
-        service.CallCount.Should().Be(2);
+        service.CallCount.Value.Should().Be(2);
     }
 
     [Fact]
     public async Task TestKeepAlive()
     {
-        if (TestRunnerInfo.IsBuildAgent())
-            // TODO: Fix intermittent failures on GitHub
-            return;
-
         var services = CreateProviderFor<Service>();
         var service = services.GetRequiredService<Service>();
 
-        service.CallCount = 0;
+        service.CallCount.Value = 0;
         await service.Sum(1, 1);
-        service.CallCount.Should().Be(1);
+        service.CallCount.Value.Should().Be(1);
         await service.Sum(1, 1);
-        service.CallCount.Should().Be(1);
+        service.CallCount.Value.Should().Be(1);
 
         await Task.Delay(250);
         await GCCollect();
         await service.Sum(1, 1);
-        service.CallCount.Should().Be(1);
+        service.CallCount.Value.Should().Be(1);
 
         await Task.Delay(1000);
         await GCCollect();
         await service.Sum(1, 1);
-        service.CallCount.Should().Be(2);
+        service.CallCount.Value.Should().Be(2);
     }
 
     private async Task GCCollect()

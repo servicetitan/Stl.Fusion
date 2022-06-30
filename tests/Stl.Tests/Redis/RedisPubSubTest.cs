@@ -6,12 +6,9 @@ public class RedisPubSubTest : RedisTestBase
 {
     public RedisPubSubTest(ITestOutputHelper @out) : base(@out) { }
 
-    [Fact]
+    [SkipOnGitHubFact]
     public async Task BasicTest()
     {
-        if (TestRunnerInfo.IsBuildAgent())
-            return; // No Redis on build agent for now
-
         var sw = new Stopwatch();
         sw.Start();
         var pub1 = GetRedisDb().GetPub<string>("pub-1");

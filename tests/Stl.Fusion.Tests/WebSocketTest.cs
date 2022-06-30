@@ -84,13 +84,9 @@ public class WebSocketTest : FusionTestBase
         rep2.Computed.IsConsistent().Should().BeTrue();
     }
 
-    [Fact(Timeout = 120_000)]
+    [SkipOnGitHubFact(Timeout = 120_000)]
     public async Task DropReconnectTest()
     {
-        if (TestRunnerInfo.IsBuildAgent())
-            // TODO: Fix intermittent failures on GitHub
-            return;
-
         var serving = await WebHost.Serve(false);
         var replicator = ClientServices.GetRequiredService<IReplicator>();
         var kvsClient = ClientServices.GetRequiredService<IKeyValueServiceClient<string>>();

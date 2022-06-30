@@ -8,12 +8,9 @@ public class RedisSequenceSetTest : RedisTestBase
 {
     public RedisSequenceSetTest(ITestOutputHelper @out) : base(@out) { }
 
-    [Fact]
+    [SkipOnGitHubFact]
     public async Task BasicTest()
     {
-        if (TestRunnerInfo.IsBuildAgent())
-            return; // No Redis on build agent for now
-
         var set = GetRedisDb().GetSequenceSet("seq", 250);
         await set.Clear();
 

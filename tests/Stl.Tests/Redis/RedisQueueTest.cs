@@ -9,12 +9,9 @@ public class RedisQueueTest : RedisTestBase
 {
     public RedisQueueTest(ITestOutputHelper @out) : base(@out) { }
 
-    [Fact]
+    [SkipOnGitHubFact]
     public async Task BasicTest()
     {
-        if (TestRunnerInfo.IsBuildAgent())
-            return; // No Redis on build agent for now
-
         await using var queue = await CreateQueue<string>("q", true).ConfigureAwait(false);
         var sw = new Stopwatch();
         sw.Start();
@@ -28,12 +25,9 @@ public class RedisQueueTest : RedisTestBase
         Out.WriteLine($"{sw.ElapsedMilliseconds}: -> {await queue.Dequeue()}");
     }
 
-    [Fact]
+    [SkipOnGitHubFact]
     public async Task DistributionTest()
     {
-        if (TestRunnerInfo.IsBuildAgent())
-            return; // No Redis on build agent for now
-
         var queueName = "iq";
         await using var queue = await CreateQueue<int>(queueName, true).ConfigureAwait(false);
 
