@@ -58,7 +58,7 @@ public class InMemoryKeyValueStore : WorkerBase, IKeyValueStore
 
     // Queries
 
-    public virtual Task<string?> Get(string tenantId, string key, CancellationToken cancellationToken = default)
+    public virtual Task<string?> Get(Symbol tenantId, string key, CancellationToken cancellationToken = default)
     {
         _ = PseudoGet(tenantId, key);
         if (!Store.TryGetValue((tenantId, key), out var item))
@@ -69,7 +69,7 @@ public class InMemoryKeyValueStore : WorkerBase, IKeyValueStore
         return Task.FromResult((string?) item.Value);
     }
 
-    public virtual Task<int> Count(string tenantId, string prefix, CancellationToken cancellationToken = default)
+    public virtual Task<int> Count(Symbol tenantId, string prefix, CancellationToken cancellationToken = default)
     {
         // O(Store.Count) cost - definitely not for prod,
         // but fine for client-side use cases & testing.
@@ -80,7 +80,7 @@ public class InMemoryKeyValueStore : WorkerBase, IKeyValueStore
     }
 
     public virtual Task<string[]> ListKeySuffixes(
-        string tenantId, 
+        Symbol tenantId,
         string prefix,
         PageRef<string> pageRef,
         SortDirection sortDirection = SortDirection.Ascending,
@@ -101,9 +101,9 @@ public class InMemoryKeyValueStore : WorkerBase, IKeyValueStore
     // PseudoXxx query-like methods
 
     [ComputeMethod]
-    protected virtual Task<Unit> PseudoGet(string tenantId, string keyPart) => TaskExt.UnitTask;
+    protected virtual Task<Unit> PseudoGet(Symbol tenantId, string keyPart) => TaskExt.UnitTask;
 
-    protected void PseudoGetAllPrefixes(string tenantId, string key)
+    protected void PseudoGetAllPrefixes(Symbol tenantId, string key)
     {
         var delimiter = KeyValueStoreExt.Delimiter;
         var delimiterIndex = key.IndexOf(delimiter, 0);

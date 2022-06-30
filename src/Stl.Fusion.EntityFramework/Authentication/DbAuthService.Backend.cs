@@ -170,7 +170,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
 
     // [ComputeMethod] inherited
     public override async Task<User?> GetUser(
-        string tenantId, string userId, CancellationToken cancellationToken = default)
+        Symbol tenantId, string userId, CancellationToken cancellationToken = default)
     {
         var dbUserId = DbUserIdHandler.Parse(userId);
         var tenant = TenantRegistry.Get(tenantId);
@@ -182,7 +182,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
 
     [ComputeMethod]
     protected virtual async Task<SessionInfo[]> GetUserSessions(
-        string tenantId, string userId, CancellationToken cancellationToken = default)
+        Symbol tenantId, string userId, CancellationToken cancellationToken = default)
     {
         if (!DbUserIdHandler.TryParse(userId).IsSome(out var dbUserId))
             return Array.Empty<SessionInfo>();

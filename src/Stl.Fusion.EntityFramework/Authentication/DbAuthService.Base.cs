@@ -30,5 +30,5 @@ public abstract class DbAuthService<TDbContext> : DbServiceBase<TDbContext>, IAu
     public abstract Task SetOptions(SetSessionOptionsCommand command, CancellationToken cancellationToken = default);
     public abstract Task<SessionInfo?> GetSessionInfo(Session session, CancellationToken cancellationToken = default);
     public abstract Task<ImmutableOptionSet> GetOptions(Session session, CancellationToken cancellationToken = default);
-    public abstract Task<User?> GetUser(string tenantId, string userId, CancellationToken cancellationToken = default);
+    public abstract Task<User?> GetUser(Symbol tenantId, string userId, CancellationToken cancellationToken = default);
 }

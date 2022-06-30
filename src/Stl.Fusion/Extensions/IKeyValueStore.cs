@@ -11,12 +11,12 @@ public interface IKeyValueStore : IComputeService
     Task Remove(RemoveCommand command, CancellationToken cancellationToken = default);
 
     [ComputeMethod]
-    Task<string?> Get(string tenantId, string key, CancellationToken cancellationToken = default);
+    Task<string?> Get(Symbol tenantId, string key, CancellationToken cancellationToken = default);
     [ComputeMethod]
-    Task<int> Count(string tenantId, string prefix, CancellationToken cancellationToken = default);
+    Task<int> Count(Symbol tenantId, string prefix, CancellationToken cancellationToken = default);
     [ComputeMethod]
     Task<string[]> ListKeySuffixes(
-        string tenantId,
+        Symbol tenantId,
         string prefix,
         PageRef<string> pageRef,
         SortDirection sortDirection = SortDirection.Ascending,

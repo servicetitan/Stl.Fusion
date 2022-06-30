@@ -12,9 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ILogger.Moq" />
     <PackageReference Include="System.Net.WebSockets.Client" />
-    <PackageReference Include="AutoFixture.AutoMoq" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('net6'))">
     <PackageReference Include="EFCore.CheckConstraints" />

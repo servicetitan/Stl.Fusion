@@ -131,19 +131,18 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
     // Compute methods
 
     // [ComputeMethod] inherited
-    public virtual Task<User?> GetUser(string tenantId, string userId, CancellationToken cancellationToken = default)
+    public virtual Task<User?> GetUser(Symbol tenantId, string userId, CancellationToken cancellationToken = default)
         => Task.FromResult(Users.TryGetValue((tenantId, userId), out var user) ? user : null);
 
     // Protected methods
 
     protected virtual Task<SessionInfo[]> GetUserSessions(
-        string tenantId, string userId, CancellationToken cancellationToken = default)
+        Symbol tenantId, string userId, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(userId))
             return Task.FromResult(Array.Empty<SessionInfo>());
-        var sTenantId = (Symbol) tenantId;
         var result = SessionInfos
-            .Where(kv => kv.Key.TenantId == sTenantId && StringComparer.Ordinal.Equals(kv.Value.UserId, userId))
+            .Where(kv => kv.Key.TenantId == tenantId && StringComparer.Ordinal.Equals(kv.Value.UserId, userId))
             .Select(kv => kv.Value)
             .OrderByDescending(si => si.LastSeenAt)
             .ToArray();

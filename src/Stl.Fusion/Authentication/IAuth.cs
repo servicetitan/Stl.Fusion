@@ -30,7 +30,7 @@ public interface IAuth : IComputeService
 public interface IAuthBackend : IComputeService
 {
     [ComputeMethod(KeepAliveTime = 10)]
-    Task<User?> GetUser(string tenantId, string userId, CancellationToken cancellationToken = default);
+    Task<User?> GetUser(Symbol tenantId, string userId, CancellationToken cancellationToken = default);
 
     [CommandHandler]
     Task SignIn(SignInCommand command, CancellationToken cancellationToken = default);

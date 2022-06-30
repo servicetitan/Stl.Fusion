@@ -80,7 +80,7 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
 
     // Queries
 
-    public virtual async Task<string?> Get(string tenantId, string key, CancellationToken cancellationToken = default)
+    public virtual async Task<string?> Get(Symbol tenantId, string key, CancellationToken cancellationToken = default)
     {
         _ = PseudoGet(tenantId, key);
         var dbKeyValue = await KeyValueResolver.Get(tenantId, key, cancellationToken).ConfigureAwait(false);
@@ -93,7 +93,7 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
     }
 
     public virtual async Task<int> Count(
-        string tenantId, string prefix, CancellationToken cancellationToken = default)
+        Symbol tenantId, string prefix, CancellationToken cancellationToken = default)
     {
         _ = PseudoGet(tenantId, prefix);
 
@@ -107,7 +107,7 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
     }
 
     public virtual async Task<string[]> ListKeySuffixes(
-        string tenantId,
+        Symbol tenantId,
         string prefix,
         PageRef<string> pageRef,
         SortDirection sortDirection = SortDirection.Ascending,
@@ -140,10 +140,10 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
     // Protected methods
 
     [ComputeMethod]
-    protected virtual Task<Unit> PseudoGet(string tenantId, string keyPart)
+    protected virtual Task<Unit> PseudoGet(Symbol tenantId, string keyPart)
         => TaskExt.UnitTask;
 
-    protected void PseudoGetAllPrefixes(string tenantId, string key)
+    protected void PseudoGetAllPrefixes(Symbol tenantId, string key)
     {
         var delimiter = KeyValueStoreExt.Delimiter;
         var delimiterIndex = key.IndexOf(delimiter, 0);
