@@ -7,31 +7,55 @@ namespace Stl.Fusion.Tests.Authentication;
 public class SqliteAuthServiceTest : AuthServiceTestBase
 {
     public SqliteAuthServiceTest(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions()) { }
+        : base(@out, new FusionTestOptions() {
+            DbType = FusionTestDbType.Sqlite
+        })
+    { }
 }
 
 public class PostgreSqlAuthServiceTest : AuthServiceTestBase
 {
     public PostgreSqlAuthServiceTest(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() { DbType = FusionTestDbType.PostgreSql }) { }
+        : base(@out, new FusionTestOptions() {
+            DbType = FusionTestDbType.PostgreSql
+        })
+    { }
 }
 
 public class MariaDbAuthServiceTest : AuthServiceTestBase
 {
     public MariaDbAuthServiceTest(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() { DbType = FusionTestDbType.MariaDb }) { }
+        : base(@out, new FusionTestOptions() {
+            DbType = FusionTestDbType.MariaDb
+        })
+    { }
 }
 
 public class SqlServerAuthServiceTest : AuthServiceTestBase
 {
     public SqlServerAuthServiceTest(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() { DbType = FusionTestDbType.SqlServer }) { }
+        : base(@out, new FusionTestOptions() {
+            DbType = FusionTestDbType.SqlServer
+        })
+    { }
 }
 
 public class InMemoryAuthServiceTest : AuthServiceTestBase
 {
     public InMemoryAuthServiceTest(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() { UseInMemoryAuthService = true } ) { }
+        : base(@out, new FusionTestOptions() {
+            DbType = FusionTestDbType.InMemory
+        })
+    { }
+}
+
+public class InMemoryInMemoryAuthServiceTest : AuthServiceTestBase
+{
+    public InMemoryInMemoryAuthServiceTest(ITestOutputHelper @out)
+        : base(@out, new FusionTestOptions() {
+            DbType = FusionTestDbType.InMemory,
+            UseInMemoryAuthService = true } )
+    { }
 }
 
 public abstract class AuthServiceTestBase : FusionTestBase

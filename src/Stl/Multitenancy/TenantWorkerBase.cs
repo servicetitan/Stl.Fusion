@@ -8,7 +8,7 @@ public abstract class TenantWorkerBase<TContext> : WorkerBase
     protected TenantWorkerBase(
         ITenantRegistry<TContext> tenantRegistry, 
         CancellationTokenSource? stopTokenSource = null) 
-        : base(stopTokenSource) 
+        : base(stopTokenSource)
         => TenantRegistry = tenantRegistry;
 
     protected override async Task RunInternal(CancellationToken cancellationToken)

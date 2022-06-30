@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Pomelo.EntityFrameworkCore.MySql.Storage;
 using Stl.IO;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
@@ -127,12 +126,11 @@ public class FusionTestBase : TestBase, IAsyncLifetime
     }
 
     protected bool MustSkip()
-        => TestRunnerInfo.IsBuildAgent()
+        => TestRunnerInfo.IsGitHubAction()
             && Options.DbType
                 is FusionTestDbType.PostgreSql
                 or FusionTestDbType.MariaDb
-                or FusionTestDbType.SqlServer
-                or FusionTestDbType.Sqlite;
+                or FusionTestDbType.SqlServer;
 
     protected IServiceProvider CreateServices(bool isClient = false)
     {
@@ -307,7 +305,7 @@ public class FusionTestBase : TestBase, IAsyncLifetime
     }
 
     protected TestDbContext CreateDbContext()
-        => Services.GetRequiredService<IDbContextFactory<TestDbContext>>().CreateDbContext();
+        => Services.GetRequiredService<DbHub<TestDbContext>>().CreateDbContext();
 
     protected Task<Channel<BridgeMessage>> ConnectToPublisher(CancellationToken cancellationToken = default)
     {

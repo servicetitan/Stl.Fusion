@@ -42,5 +42,7 @@ public static class TestRunnerInfo
     }
 
     public static bool IsBuildAgent()
-        => TeamCity.Version != null || GitHub.IsActionRunning;
+        => TeamCity.Version != null || IsGitHubAction();
+    public static bool IsGitHubAction()
+        => GitHub.IsActionRunning;
 }

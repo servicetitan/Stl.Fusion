@@ -4,7 +4,11 @@ namespace Stl.Fusion.Tests.Authentication;
 
 public class UserPropertiesTest : FusionTestBase
 {
-    public UserPropertiesTest(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out, options) { }
+    public UserPropertiesTest(ITestOutputHelper @out)
+        : base(@out, new FusionTestOptions() {
+            DbType = FusionTestDbType.InMemory
+        })
+    { }
 
     [Fact]
     public void BasicTest()

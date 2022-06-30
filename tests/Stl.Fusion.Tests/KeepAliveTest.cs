@@ -39,7 +39,7 @@ public class KeepAliveTest : TestBase
         return services.BuildServiceProvider();
     }
 
-    [Fact]
+    [SkipOnGitHubFact]
     public async Task TestNoKeepAlive()
     {
         var services = CreateProviderFor<Service>();
@@ -56,7 +56,7 @@ public class KeepAliveTest : TestBase
         service.CallCount.Value.Should().Be(2);
     }
 
-    [Fact]
+    [SkipOnGitHubFact]
     public async Task TestKeepAlive()
     {
         var services = CreateProviderFor<Service>();
