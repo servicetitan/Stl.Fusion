@@ -12,34 +12,20 @@ public interface ITypeViewFactory
 
 public class TypeViewFactory : ITypeViewFactory
 {
-    public static ITypeViewFactory Default { get; } = 
-        new ServiceCollection()
-            .AddTypeViewFactory()
-            .BuildServiceProvider()
-            .GetRequiredService<ITypeViewFactory>();
+    public static ITypeViewFactory Default { get; } =
+        new TypeViewFactory(
+            TypeViewProxyGenerator.Default,
+            new TypeViewInterceptor(DependencyInjection.ServiceProviderExt.Empty));
 
-    protected IServiceProvider Services { get; }
-    protected ITypeViewProxyGenerator ProxyGenerator { get; }
+    protected TypeViewProxyGenerator ProxyGenerator { get; }
     protected IInterceptor[] Interceptors { get; }
 
     public TypeViewFactory(
-        IServiceProvider services,
-        ITypeViewProxyGenerator proxyGenerator,
+        TypeViewProxyGenerator proxyGenerator,
         TypeViewInterceptor interceptor)
     {
-        Services = services;
         ProxyGenerator = proxyGenerator;
         Interceptors = new IInterceptor[] { interceptor };
-    }
-
-    public TypeViewFactory(
-        IServiceProvider services,
-        ITypeViewProxyGenerator proxyGenerator,
-        IInterceptor[] interceptors)
-    {
-        Services = services;
-        ProxyGenerator = proxyGenerator;
-        Interceptors = interceptors;
     }
 
     public object CreateView(object implementation, Type implementationType, Type viewType)
@@ -49,7 +35,9 @@ public class TypeViewFactory : ITypeViewFactory
         if (!viewType.IsInterface)
             throw new ArgumentOutOfRangeException(nameof(viewType));
         var proxyType = ProxyGenerator.GetProxyType(implementationType, viewType);
-        return proxyType.CreateInstance(Interceptors, implementation);
+        var view = (TypeView) proxyType.CreateInstance(Interceptors, (object?) null);
+        view.ViewTarget = implementation;
+        return view;
     }
 
     public TypeViewFactory<TView> For<TView>()

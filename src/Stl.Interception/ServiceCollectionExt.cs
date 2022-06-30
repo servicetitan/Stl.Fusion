@@ -4,13 +4,10 @@ namespace Stl.Interception;
 
 public static class ServiceCollectionExt
 {
-    public static IServiceCollection AddTypeViewFactory(
-        this IServiceCollection services,
-        Func<IServiceProvider, TypeViewProxyGenerator.Options>? optionsFactory = null)
+    public static IServiceCollection AddTypeViewFactory(this IServiceCollection services)
     {
         services.AddSingleton<TypeViewInterceptor>();
-        services.AddSingleton(c => optionsFactory?.Invoke(c) ?? new());
-        services.AddSingleton<ITypeViewProxyGenerator, TypeViewProxyGenerator>();
+        services.AddSingleton(TypeViewProxyGenerator.Default);
         services.AddSingleton<ITypeViewFactory, TypeViewFactory>();
         return services;
     }

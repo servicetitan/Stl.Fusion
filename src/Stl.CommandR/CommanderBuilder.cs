@@ -1,3 +1,4 @@
+using Castle.DynamicProxy;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.CommandR.Diagnostics;
 using Stl.CommandR.Interception;
@@ -33,11 +34,9 @@ public readonly struct CommanderBuilder
         Services.TryAddTransient(_ => CommandContext.Current!);
 
         // Command services & their dependencies
-        Services.TryAddSingleton(new CommandServiceProxyGenerator.Options());
-        Services.TryAddSingleton<ICommandServiceProxyGenerator, CommandServiceProxyGenerator>();
+        Services.TryAddSingleton(CommandServiceProxyGenerator.Default);
         Services.TryAddSingleton(new CommandServiceInterceptor.Options());
         Services.TryAddSingleton<CommandServiceInterceptor>();
-        Services.TryAddSingleton(c => new [] { c.GetRequiredService<CommandServiceInterceptor>() });
 
         Handlers = GetCommandHandlerRegistry(services)
             ?? throw Errors.CommandHandlerRegistryInstanceIsNotRegistered();
@@ -183,9 +182,9 @@ public readonly struct CommanderBuilder
             // will be intercepted, so no error will be thrown later.
             var interceptor = c.GetRequiredService<CommandServiceInterceptor>();
             interceptor.ValidateType(implementationType);
-            var proxyGenerator = c.GetRequiredService<ICommandServiceProxyGenerator>();
+            var proxyGenerator = c.GetRequiredService<CommandServiceProxyGenerator>();
             var proxyType = proxyGenerator.GetProxyType(implementationType);
-            return c.Activate(proxyType);
+            return c.Activate(proxyType, new object[] { new IInterceptor[] { interceptor } });
         }
 
         var descriptor = new ServiceDescriptor(serviceType, Factory, lifetime);

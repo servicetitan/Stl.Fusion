@@ -1,3 +1,4 @@
+using Castle.DynamicProxy;
 using Castle.DynamicProxy.Generators;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Conversion;
@@ -45,8 +46,7 @@ public readonly struct FusionBuilder
         Services.TryAddSingleton(ClockBasedVersionGenerator.DefaultCoarse);
 
         // Compute services & their dependencies
-        Services.TryAddSingleton(new ComputeServiceProxyGenerator.Options());
-        Services.TryAddSingleton<IComputeServiceProxyGenerator, ComputeServiceProxyGenerator>();
+        Services.TryAddSingleton(ComputeServiceProxyGenerator.Default);
         Services.TryAddSingleton<IComputedOptionsProvider, ComputedOptionsProvider>();
         Services.TryAddSingleton<IMatchingTypeFinder>(_ => new MatchingTypeFinder());
         Services.TryAddSingleton<IArgumentHandlerProvider, ArgumentHandlerProvider>();
@@ -54,7 +54,6 @@ public readonly struct FusionBuilder
         Services.TryAddSingleton<ComputeMethodInterceptor>();
         Services.TryAddSingleton(new ComputeServiceInterceptor.Options());
         Services.TryAddSingleton<ComputeServiceInterceptor>();
-        Services.TryAddSingleton(c => new [] { c.GetRequiredService<ComputeServiceInterceptor>() });
         Services.TryAddSingleton<IErrorRewriter, ErrorRewriter>();
 
         // States & their dependencies
@@ -137,13 +136,11 @@ public readonly struct FusionBuilder
         Func<IServiceProvider, ReplicatorOptions>? optionsFactory = null)
     {
         // ReplicaServiceProxyGenerator
-        Services.TryAddSingleton(new ReplicaServiceProxyGenerator.Options());
-        Services.TryAddSingleton<IReplicaServiceProxyGenerator, ReplicaServiceProxyGenerator>();
+        Services.TryAddSingleton(ReplicaServiceProxyGenerator.Default);
         Services.TryAddSingleton(new ReplicaMethodInterceptor.Options());
         Services.TryAddSingleton<ReplicaMethodInterceptor>();
         Services.TryAddSingleton(new ReplicaServiceInterceptor.Options());
         Services.TryAddSingleton<ReplicaServiceInterceptor>();
-        Services.TryAddSingleton(c => new [] { c.GetRequiredService<ReplicaServiceInterceptor>() });
         // Replicator
         Services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
         Services.TryAddSingleton<IReplicator, Replicator>();
@@ -182,9 +179,9 @@ public readonly struct FusionBuilder
             // will be intercepted, so no error will be thrown later.
             var interceptor = c.GetRequiredService<ComputeServiceInterceptor>();
             interceptor.ValidateType(implementationType);
-            var proxyGenerator = c.GetRequiredService<IComputeServiceProxyGenerator>();
+            var proxyGenerator = c.GetRequiredService<ComputeServiceProxyGenerator>();
             var proxyType = proxyGenerator.GetProxyType(implementationType);
-            return c.Activate(proxyType);
+            return c.Activate(proxyType, new object[] { new IInterceptor[] { interceptor } });
         }
 
         var descriptor = new ServiceDescriptor(serviceType, Factory, lifetime);

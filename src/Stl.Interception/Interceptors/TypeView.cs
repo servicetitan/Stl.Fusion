@@ -1,10 +1,15 @@
 namespace Stl.Interception.Interceptors;
 
-public class TypeView<TView>
+public class TypeView
+{
+    public object ViewTarget { get; set; } = default!;
+}
+
+public class TypeView<TView> : TypeView
     where TView : class
 { }
 
-public class TypeView<TImplementation, TView> : TypeView<TView>
+public class TypeView<TTarget, TView> : TypeView<TView>
     where TView : class
-    where TImplementation : class
+    where TTarget : class
 { }

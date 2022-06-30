@@ -42,11 +42,11 @@ public class TypeViewInterceptor : IInterceptor
     protected virtual Action<IInvocation>? CreateHandler((MethodInfo, Type) key, IInvocation initialInvocation)
     {
         var (_, tProxy) = key;
-        var tTarget = initialInvocation.TargetType;
+        var view = (TypeView) initialInvocation.Proxy;
+        var tTarget = view.ViewTarget.GetType();
         var mSource = initialInvocation.Method;
         var mArgTypes = mSource.GetParameters().Select(p => p.ParameterType).ToArray();
         var mTarget = tTarget.GetMethod(mSource.Name, mArgTypes);
-        var fTarget = tProxy.GetField("__target", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
         Type? GetTaskOfTArgument(Type t) {
             if (!t.IsGenericType)
@@ -75,7 +75,7 @@ public class TypeViewInterceptor : IInterceptor
             if (rtSource != null && rtTarget != null) {
                 result = (Action<IInvocation>?) _createTaskConvertingHandlerMethod
                     .MakeGenericMethod(rtSource, rtTarget)
-                    .Invoke(this, new object[] {initialInvocation, fTarget!, mTarget});
+                    .Invoke(this, new object[] {initialInvocation, mTarget});
                 if (result != null)
                     return result;
             }
@@ -86,7 +86,7 @@ public class TypeViewInterceptor : IInterceptor
             if (rtSource != null && rtTarget != null) {
                 result = (Action<IInvocation>?) _createValueTaskConvertingHandlerMethod
                     .MakeGenericMethod(rtSource, rtTarget)
-                    .Invoke(this, new object[] {initialInvocation, fTarget!, mTarget});
+                    .Invoke(this, new object[] {initialInvocation, mTarget});
                 if (result != null)
                     return result;
             }
@@ -96,20 +96,20 @@ public class TypeViewInterceptor : IInterceptor
             rtTarget = mTarget.ReturnType;
             result = (Action<IInvocation>?) _createConvertingHandlerMethod
                 .MakeGenericMethod(rtSource, rtTarget)
-                .Invoke(this, new object[] {initialInvocation, fTarget!, mTarget});
+                .Invoke(this, new object[] {initialInvocation, mTarget});
             if (result != null)
                 return result;
         }
 
         return invocation => {
             // TODO: Get rid of reflection here (not critical)
-            var target = fTarget!.GetValue(invocation.Proxy);
+            var target = ((TypeView) invocation.Proxy).ViewTarget;
             invocation.ReturnValue = mTarget.Invoke(target, invocation.Arguments);
         };
     }
 
     protected virtual Action<IInvocation>? CreateConvertingHandler<TSource, TTarget>(
-        IInvocation initialInvocation, FieldInfo fTarget, MethodInfo mTarget)
+        IInvocation initialInvocation, MethodInfo mTarget)
     {
         // !!! Note that TSource is type to convert to here, and TTarget is type to convert from
         var converter = Services.Converters().From<TTarget>().To<TSource>();
@@ -117,7 +117,7 @@ public class TypeViewInterceptor : IInterceptor
             return null;
 
         return invocation => {
-            var target = fTarget.GetValue(invocation.Proxy);
+            var target = ((TypeView) invocation.Proxy).ViewTarget;
             var result = (TTarget) mTarget.Invoke(target, invocation.Arguments)!;
             // ReSharper disable once HeapView.PossibleBoxingAllocation
             invocation.ReturnValue = converter.Convert(result);
@@ -125,7 +125,7 @@ public class TypeViewInterceptor : IInterceptor
     }
 
     protected virtual Action<IInvocation>? CreateTaskConvertingHandler<TSource, TTarget>(
-        IInvocation initialInvocation, FieldInfo fTarget, MethodInfo mTarget)
+        IInvocation initialInvocation, MethodInfo mTarget)
     {
         // !!! Note that TSource is type to convert to here, and TTarget is type to convert from
         var converter = Services.Converters().From<TTarget>().To<TSource>();
@@ -133,7 +133,7 @@ public class TypeViewInterceptor : IInterceptor
             return null;
 
         return invocation => {
-            var target = fTarget.GetValue(invocation.Proxy);
+            var target = ((TypeView) invocation.Proxy).ViewTarget;
             var untypedResult = mTarget.Invoke(target, invocation.Arguments);
             var result = (Task<TTarget>) untypedResult!;
             invocation.ReturnValue = result
@@ -142,7 +142,7 @@ public class TypeViewInterceptor : IInterceptor
     }
 
     protected virtual Action<IInvocation>? CreateValueTaskConvertingHandler<TSource, TTarget>(
-        IInvocation initialInvocation, FieldInfo fTarget, MethodInfo mTarget)
+        IInvocation initialInvocation, MethodInfo mTarget)
     {
         // !!! Note that TSource is type to convert to here, and TTarget is type to convert from
         var converter = Services.Converters().From<TTarget>().To<TSource>();
@@ -150,7 +150,7 @@ public class TypeViewInterceptor : IInterceptor
             return null;
 
         return invocation => {
-            var target = fTarget.GetValue(invocation.Proxy);
+            var target = ((TypeView) invocation.Proxy).ViewTarget;
             var untypedResult = mTarget.Invoke(target, invocation.Arguments);
             var result = (ValueTask<TTarget>) untypedResult!;
             // ReSharper disable once HeapView.BoxingAllocation
