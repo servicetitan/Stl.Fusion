@@ -306,7 +306,7 @@ public class FusionTestBase : TestBase, IAsyncLifetime
     }
 
     protected TestDbContext CreateDbContext()
-        => Services.GetRequiredService<DbHub<TestDbContext>>().CreateDbContext();
+        => Services.GetRequiredService<DbHub<TestDbContext>>().CreateDbContext(readWrite: true);
 
     protected Task<Channel<BridgeMessage>> ConnectToPublisher(CancellationToken cancellationToken = default)
     {
