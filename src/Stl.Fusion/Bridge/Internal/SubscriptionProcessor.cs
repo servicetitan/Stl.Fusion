@@ -91,7 +91,7 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
                 if (!LastSentVersion.IsConsistent)
                     continue;
 
-                // Awaiting for the state change
+                // Awaiting for invalidation or new message - whatever happens first
                 using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken)) {
                     var whenInvalidatedTask = computed.WhenInvalidated(cts.Token);
                     var completedTask = await Task
