@@ -72,10 +72,10 @@ public class PublisherTest : FusionTestBase
         await cReader.AssertCannotRead();
 
         Debug.WriteLine("f1");
-        await publisher.Subscribe(cp.Channel1, p1, true);
+        await Assert.ThrowsAsync<ObjectDisposedException>(async () => {
+            await publisher.Subscribe(cp.Channel1, p1, true);
+        });
         Debug.WriteLine("f2");
-        m = await cReader.AssertRead();
-        Debug.WriteLine("f3");
-        m.Should().BeOfType<PublicationAbsentsReply>();
+        await cReader.AssertCannotRead();
     }
 }
