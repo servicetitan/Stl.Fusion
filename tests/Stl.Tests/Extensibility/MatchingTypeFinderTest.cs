@@ -27,14 +27,12 @@ public class MatchingTypeFinderTest : TestBase
     public class MatchForG1<T> { }
 
     public MatchingTypeFinderTest(ITestOutputHelper @out) : base(@out) { }
-    static MatchingTypeFinderTest()
-        => MatchingTypeFinder.AddAssembly(typeof(MatchingTypeFinderTest).Assembly);
 
     [Fact]
     public void BasicMatchTest()
     {
         var scope = GetType();
-        var finder = new MatchingTypeFinder();
+        var finder = new MatchingTypeFinder(new () { ScannedAssemblies = new[] { typeof(MatchingTypeFinderTest).Assembly }});
         finder.TryFind(typeof(object), null!).Should().BeNull();
         finder.TryFind(typeof(int), scope).Should().Be(typeof(MatchForInt));
         finder.TryFind(typeof(bool), scope).Should().Be(typeof(MatchForValueType));
@@ -47,7 +45,7 @@ public class MatchingTypeFinderTest : TestBase
     public void GenericMatchTest()
     {
         var scope = GetType();
-        var finder = new MatchingTypeFinder();
+        var finder = new MatchingTypeFinder(new () { ScannedAssemblies = new[] { typeof(MatchingTypeFinderTest).Assembly }});
 
         finder.TryFind(typeof(NoMatch<int>), scope).Should().BeNull();
 
@@ -58,5 +56,21 @@ public class MatchingTypeFinderTest : TestBase
         finder.TryFind(typeof(Derived2), scope).Should().Be(typeof(MatchForG2<int, string>));
         finder.TryFind(typeof(Derived1D), scope).Should().Be(typeof(MatchForG1<int>));
         finder.TryFind(typeof(Derived2D), scope).Should().Be(typeof(MatchForG2<int, string>));
+    }
+
+    [Fact]
+    public void OptionsTest()
+    {
+        var scope = GetType();
+        var options = new MatchingTypeFinder.Options() {
+            ScannedAssemblies = new[] { typeof(MatchingTypeFinderTest).Assembly }
+        };
+        var finder = new ServiceCollection()
+            .AddSingleton(options)
+            .AddSingleton<MatchingTypeFinder>()
+            .BuildServiceProvider()
+            .GetRequiredService<MatchingTypeFinder>();
+
+        finder.TryFind(typeof(Derived1), scope).Should().Be(typeof(MatchForG1<int>));
     }
 }

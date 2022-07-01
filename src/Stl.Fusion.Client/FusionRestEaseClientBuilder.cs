@@ -136,8 +136,8 @@ public readonly struct FusionRestEaseClientBuilder
             // 1. Validate types
             var replicaMethodInterceptor = c.GetRequiredService<ReplicaMethodInterceptor>();
             replicaMethodInterceptor.ValidateType(clientType);
-            var commandMethodInterceptor = c.GetRequiredService<ComputeMethodInterceptor>();
-            commandMethodInterceptor.ValidateType(serviceType);
+            var computeMethodInterceptor = c.GetRequiredService<ComputeMethodInterceptor>();
+            computeMethodInterceptor.ValidateType(serviceType);
 
             // 2. Create REST client (of clientType)
             var httpClientFactory = c.GetRequiredService<IHttpClientFactory>();

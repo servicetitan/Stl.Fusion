@@ -17,7 +17,7 @@ public class ArgumentHandlerProvider : IArgumentHandlerProvider, IHasServices
     {
         // Let's register this assembly in the list of assemblies
         // MatchingTypeFinder scans by default.
-        Extensibility.MatchingTypeFinder.AddAssembly(typeof(ArgumentHandlerProvider).Assembly);
+        Extensibility.MatchingTypeFinder.AddScannedAssembly(typeof(ArgumentHandlerProvider).Assembly);
     }
 
     public ArgumentHandlerProvider(IServiceProvider services)
@@ -40,6 +40,7 @@ public class ArgumentHandlerProvider : IArgumentHandlerProvider, IHasServices
 
         if (isInvocationTarget)
             return ByRefArgumentHandler.Instance;
+
         var equatableType = typeof(IEquatable<>).MakeGenericType(type);
         if (equatableType.IsAssignableFrom(type)) {
             var eacType = typeof(EquatableArgumentHandler<>).MakeGenericType(type);

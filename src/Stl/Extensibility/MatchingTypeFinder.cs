@@ -10,30 +10,34 @@ public interface IMatchingTypeFinder
 
 public class MatchingTypeFinder : IMatchingTypeFinder
 {
-    private static volatile ImmutableHashSet<Assembly> _assemblies =
+    public record Options
+    {
+        // ReSharper disable once MemberHidesStaticFromOuterClass
+        public IEnumerable<Assembly> ScannedAssemblies { get; init; } = Array.Empty<Assembly>();
+        public IEnumerable<Type> ScannedTypes { get; init; } = Array.Empty<Type>();
+    }
+
+    private static volatile ImmutableHashSet<Assembly> _scannedAssemblies =
         ImmutableHashSet<Assembly>.Empty
             .Add(typeof(MatchingTypeFinder).Assembly);
 
-    public static ImmutableHashSet<Assembly> Assemblies {
-        get => _assemblies;
-        set => Interlocked.Exchange(ref _assemblies, value);
+    public static ImmutableHashSet<Assembly> ScannedAssemblies {
+        get => _scannedAssemblies;
+        set => Interlocked.Exchange(ref _scannedAssemblies, value);
     }
 
     private readonly Dictionary<(Type Source, Symbol Scope), Type> _matches;
     private readonly ConcurrentDictionary<(Type Source, Symbol Scope), Type?> _cache = new();
 
-    public MatchingTypeFinder()
-        : this(Assemblies) { }
-    public MatchingTypeFinder(params Assembly[] assemblies)
-        : this((IEnumerable<Assembly>) assemblies) { }
-    public MatchingTypeFinder(IEnumerable<Assembly> assemblies)
-        : this(assemblies.SelectMany(a => a.GetTypes())) { }
-    public MatchingTypeFinder(Dictionary<(Type Source, Symbol Scope), Type> matches)
-        => _matches = matches;
-    public MatchingTypeFinder(IEnumerable<Type> candidates)
+    public MatchingTypeFinder() : this(new()) { }
+    public MatchingTypeFinder(Options options)
     {
+        var types = ScannedAssemblies
+            .Concat(options.ScannedAssemblies)
+            .SelectMany(a => a.GetTypes())
+            .Concat(options.ScannedTypes);
         _matches = new Dictionary<(Type, Symbol), Type>();
-        foreach (var type in candidates) {
+        foreach (var type in types) {
             var attrs = type.GetCustomAttributes<MatchForAttribute>(false);
             foreach (var attr in attrs)
                 _matches.Add((attr.Source, new Symbol(attr.Scope)), type);
@@ -72,31 +76,31 @@ public class MatchingTypeFinder : IMatchingTypeFinder
 
     // AddSearchAssemblies
 
-    public static void AddAssembly(Assembly assembly)
+    public static void AddScannedAssembly(Assembly assembly)
     {
         var spinWait = new SpinWait();
         while (true) {
-            var oldSet = Assemblies;
+            var oldSet = ScannedAssemblies;
             var newSet = oldSet.Add(assembly);
-            if (Interlocked.CompareExchange(ref _assemblies, newSet, oldSet) == oldSet)
+            if (Interlocked.CompareExchange(ref _scannedAssemblies, newSet, oldSet) == oldSet)
                 return;
             spinWait.SpinOnce();
         }
     }
 
-    public static void AddAssemblies(params Assembly[] assemblies)
-        => AddAssemblies((IEnumerable<Assembly>) assemblies);
+    public static void AddScannedAssemblies(params Assembly[] assemblies)
+        => AddScannedAssemblies((IEnumerable<Assembly>) assemblies);
 
-    public static void AddAssemblies(IEnumerable<Assembly> assemblies)
+    public static void AddScannedAssemblies(IEnumerable<Assembly> assemblies)
     {
         var spinWait = new SpinWait();
         while (true) {
-            var oldSet = Assemblies;
+            var oldSet = ScannedAssemblies;
             var newSet = oldSet;
             // ReSharper disable once PossibleMultipleEnumeration
             foreach (var searchAssembly in assemblies)
                 newSet = newSet.Add(searchAssembly);
-            if (Interlocked.CompareExchange(ref _assemblies, newSet, oldSet) == oldSet)
+            if (Interlocked.CompareExchange(ref _scannedAssemblies, newSet, oldSet) == oldSet)
                 return;
             spinWait.SpinOnce();
         }
