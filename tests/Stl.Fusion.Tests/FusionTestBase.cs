@@ -102,6 +102,7 @@ public class FusionTestBase : TestBase, IAsyncLifetime
         catch {
             // Intended - somehow it fails on GitHub build agent
         }
+        Out.WriteLine("DB is recreated.");
         await Services.HostedServices().Start();
     }
 
