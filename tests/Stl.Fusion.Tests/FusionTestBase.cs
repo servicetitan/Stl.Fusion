@@ -280,18 +280,18 @@ public class FusionTestBase : TestBase, IAsyncLifetime
                 .RegisterFrom(testType.Assembly);
 
             // Fusion client
-            var fusionClient = fusion.AddRestEaseClient(
-                _ => new() {
-                    BaseUri = WebHost.ServerUri,
-                    MessageLogLevel = LogLevel.Information,
-                }).ConfigureHttpClientFactory(
-                (_, name, options) => {
-                    var baseUri = WebHost.ServerUri;
-                    var apiUri = new Uri($"{baseUri}api/");
-                    var isFusionService = !(name ?? "").Contains("Tests");
-                    var clientBaseUri = isFusionService ? baseUri : apiUri;
-                    options.HttpClientActions.Add(c => c.BaseAddress = clientBaseUri);
-                });
+            var fusionClient = fusion.AddRestEaseClient();
+            fusionClient.ConfigureHttpClient((_, name, options) => {
+                var baseUri = WebHost.ServerUri;
+                var apiUri = new Uri($"{baseUri}api/");
+                var isFusionService = !(name ?? "").Contains("Tests");
+                var clientBaseUri = isFusionService ? baseUri : apiUri;
+                options.HttpClientActions.Add(c => c.BaseAddress = clientBaseUri);
+            });
+            fusionClient.ConfigureWebSocketChannel(_ => new() {
+                BaseUri = WebHost.ServerUri,
+                MessageLogLevel = LogLevel.Information,
+            });
             fusion.AddAuthentication(fusionAuth => fusionAuth.AddRestEaseClient());
 
             // Custom computed state

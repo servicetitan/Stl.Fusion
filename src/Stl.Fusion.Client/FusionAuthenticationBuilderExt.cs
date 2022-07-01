@@ -5,7 +5,8 @@ namespace Stl.Fusion.Client;
 
 public static class FusionAuthenticationBuilderExt
 {
-    public static FusionAuthenticationBuilder AddRestEaseClient(this FusionAuthenticationBuilder fusionAuth)
+    public static FusionAuthenticationBuilder AddRestEaseClient(
+        this FusionAuthenticationBuilder fusionAuth)
     {
         var fusionClient = fusionAuth.Fusion.AddRestEaseClient();
         fusionClient.AddReplicaService<IAuth, IAuthClientDef>();

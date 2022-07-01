@@ -23,15 +23,16 @@ public static class StartupHelper
 
         // Fusion services
         var fusion = services.AddFusion();
-        var fusionClient = fusion.AddRestEaseClient(_ => new() {
+        var fusionClient = fusion.AddRestEaseClient();
+        fusionClient.ConfigureHttpClient((c, name, o) => {
+            var isFusionClient = (name ?? "").StartsWith("Stl.Fusion");
+            var clientBaseUri = isFusionClient ? baseUri : apiBaseUri;
+            o.HttpClientActions.Add(httpClient => httpClient.BaseAddress = clientBaseUri);
+        });
+        fusionClient.ConfigureWebSocketChannel(_ => new() {
             BaseUri = baseUri,
             LogLevel = LogLevel.Information,
             MessageLogLevel = LogLevel.None,
-        });
-        fusionClient.ConfigureHttpClientFactory((c, name, o) => {
-            var isFusionClient = (name ?? "").StartsWith("Stl.Fusion");
-            var clientBaseUri = isFusionClient ? baseUri : apiBaseUri;
-            o.HttpClientActions.Add(client => client.BaseAddress = clientBaseUri);
         });
         fusion.AddAuthentication().AddRestEaseClient().AddBlazor();
 

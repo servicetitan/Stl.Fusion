@@ -81,7 +81,7 @@ public class AppV4 : AppBase
         services.AddFusion(fusion => {
             fusion.AddRestEaseClient(client => {
                 client.ConfigureWebSocketChannel(_ => new() { BaseUri = baseUri });
-                client.ConfigureHttpClientFactory((_, name, options) => {
+                client.ConfigureHttpClient((_, name, options) => {
                     var apiBaseUri = new Uri($"{baseUri}api/");
                     options.HttpClientActions.Add(httpClient => httpClient.BaseAddress = apiBaseUri);
                 });

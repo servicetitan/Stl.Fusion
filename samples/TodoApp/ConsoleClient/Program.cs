@@ -34,7 +34,7 @@ IServiceProvider CreateServiceProvider()
     fusion.AddRestEaseClient(
         client => {
             client.ConfigureWebSocketChannel(_ => new() { BaseUri = baseUri });
-            client.ConfigureHttpClientFactory((_, name, o) => {
+            client.ConfigureHttpClient((_, name, o) => {
                 var isFusionClient = (name ?? "").StartsWith("Stl.Fusion");
                 var clientBaseUri = isFusionClient ? baseUri : apiBaseUri;
                 o.HttpClientActions.Add(httpClient => httpClient.BaseAddress = clientBaseUri);
