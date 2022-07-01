@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -42,11 +43,23 @@ public static class ServiceCollectionExt
         Type settingsType,
         string? sectionName = null)
     {
-        sectionName ??= settingsType.Name.TrimSuffix("Settings", "Cfg", "Config", "Configuration");
+        var altSectionName = (string?) null;
+        if (sectionName == null) {
+            sectionName = settingsType.Name;
+            var plusIndex = sectionName.IndexOf('+');
+            if (plusIndex >= 0)
+                sectionName = sectionName[(plusIndex + 1)..];
+            altSectionName = sectionName.TrimSuffix("Settings", "Cfg", "Config", "Configuration");
+        }
         services.TryAddSingleton(settingsType, c => {
             var settings = c.Activate(settingsType);
             var cfg = c.GetRequiredService<IConfiguration>();
-            cfg.GetSection(sectionName)?.Bind(settings);
+            var section = cfg.GetSection(sectionName);
+            if (!section.Exists() && altSectionName != null)
+                section = cfg.GetSection(altSectionName);
+            section.Bind(settings);
+            var validationContext = new ValidationContext(settings, c, null);
+            Validator.ValidateObject(settings, validationContext);
             return settings;
         });
         return services;

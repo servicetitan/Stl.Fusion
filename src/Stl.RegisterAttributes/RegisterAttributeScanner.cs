@@ -3,19 +3,13 @@ using Stl.RegisterAttributes.Internal;
 
 namespace Stl.RegisterAttributes;
 
-public record RegisterAttributeScanner
+public record RegisterAttributeScanner(
+    IServiceCollection Services,
+    Symbol Scope = default)
 {
-    public IServiceCollection Services { get; }
-    public Symbol Scope { get; init; }
     public Func<Type, bool> TypeFilter { get; init; } = _ => true;
 
-    public RegisterAttributeScanner(IServiceCollection services, Symbol scope = default)
-    {
-        Services = services;
-        Scope = scope;
-    }
-
-    // SetXxx, ResetXxx
+    // WithXxx
 
     public RegisterAttributeScanner WithScope(Symbol scope)
         => Scope == scope ? this : this with { Scope =  scope };
@@ -26,7 +20,7 @@ public record RegisterAttributeScanner
     public RegisterAttributeScanner WithTypeFilter(Regex fullNameRegex)
         => this with { TypeFilter = t => fullNameRegex.IsMatch(t.FullName ?? "") };
 
-    // AddService
+    // Register
 
     public RegisterAttributeScanner Register<TImplementation>()
         => Register(typeof(TImplementation));
@@ -46,14 +40,8 @@ public record RegisterAttributeScanner
         return this;
     }
 
-    // AddServices
-
     public RegisterAttributeScanner Register(params Type[] implementationTypes)
-    {
-        foreach (var implementationType in implementationTypes)
-            Register(implementationType);
-        return this;
-    }
+        => Register(implementationTypes.AsEnumerable());
 
     public RegisterAttributeScanner Register(IEnumerable<Type> implementationTypes)
     {
@@ -62,7 +50,7 @@ public record RegisterAttributeScanner
         return this;
     }
 
-    // AddServicesFrom
+    // RegisterFrom
 
     public RegisterAttributeScanner RegisterFrom(Assembly assembly)
         => Register(ServiceInfo.ForAll(assembly, Scope), false, true);

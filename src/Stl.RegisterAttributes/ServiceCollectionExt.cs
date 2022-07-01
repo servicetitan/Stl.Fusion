@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Stl.DependencyInjection.Internal;
@@ -26,25 +25,6 @@ public static class ServiceCollectionExt
         services.AddOptions();
         services.TryAddSingleton<IConfigureOptions<TOptions>>(
             c => new ConfigureAllNamedOptions<TOptions>(c, configureOptions));
-        return services;
-    }
-
-    public static IServiceCollection AddSettings<TSettings>(
-        this IServiceCollection services,
-        string? sectionName = null)
-        => services.AddSettings(typeof(TSettings), sectionName);
-    public static IServiceCollection AddSettings(
-        this IServiceCollection services,
-        Type settingsType,
-        string? sectionName = null)
-    {
-        sectionName ??= settingsType.Name.TrimSuffix("Settings", "Cfg", "Config", "Configuration");
-        services.TryAddSingleton(settingsType, c => {
-            var settings = c.Activate(settingsType);
-            var cfg = c.GetRequiredService<IConfiguration>();
-            cfg.GetSection(sectionName)?.Bind(settings);
-            return settings;
-        });
         return services;
     }
 

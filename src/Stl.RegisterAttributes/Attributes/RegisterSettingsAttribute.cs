@@ -2,8 +2,9 @@ namespace Stl.RegisterAttributes;
 
 public class RegisterSettingsAttribute : RegisterAttribute
 {
-    public string SectionName { get; set; }
+    public string? SectionName { get; set; }
 
+    public RegisterSettingsAttribute() { }
     public RegisterSettingsAttribute(string sectionName)
         => SectionName = sectionName;
 
