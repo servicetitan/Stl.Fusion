@@ -163,7 +163,6 @@ public class Publication<T> : IPublication<T>
         var oldState = Interlocked.CompareExchange(ref _state, newState, expectedState);
         if (oldState != expectedState)
             return oldState;
-        oldState.TryMarkOutdated();
         return oldState;
     }
 

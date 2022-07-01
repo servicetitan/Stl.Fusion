@@ -53,10 +53,6 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
         var state = Publication.State;
         var incomingChannelReader = IncomingChannel.Reader;
 
-        var currentCts = (CancellationTokenSource?) null;
-        // ReSharper disable once AccessToModifiedClosure
-        await using var registered = cancellationToken.Register(() => currentCts?.Cancel())
-            .ToAsyncDisposableAdapter().ConfigureAwait(false);
         try {
             var incomingMessageTask = incomingChannelReader.ReadAsync(cancellationToken).AsTask();
             while (true) {
@@ -68,31 +64,25 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
                     break; // Timeout
 
                 // Maybe sending an update
-                var isHardUpdateRequested = false;
-                var isSoftUpdateRequested = false;
-                if (incomingMessage is SubscribeRequest sm) {
-                    if (MessageIndex == 0)
-                        LastSentVersion = (sm.Version, sm.IsConsistent);
-                    isHardUpdateRequested |= sm.IsUpdateRequested;
-                    // Generally the version should match; if it's not the case, it could be due to
-                    // reconnect / lost message / something similar.
-                    isSoftUpdateRequested |= sm.Version != state.Computed.Version;
-                }
-                if (isHardUpdateRequested) {
+                if (incomingMessage is UnsubscribeRequest)
+                    return;
+                if (incomingMessage is not SubscribeRequest sm)
+                    continue;
+
+                if (MessageIndex == 0)
+                    LastSentVersion = (sm.Version, sm.IsConsistent);
+
+                if (sm.IsUpdateRequested) {
                     // We do only explicit state updates
-                    var cts = new CancellationTokenSource();
-                    currentCts = cts;
-                    try {
-                        await Publication.Update(cts.Token).ConfigureAwait(false);
-                        state = Publication.State;
-                    }
-                    finally {
-                        currentCts = null;
-                        cts.Dispose();
-                    }
+                    await Publication.Update(cancellationToken).ConfigureAwait(false);
+                    state = Publication.State;
                 }
-                await TrySendUpdate(state, isSoftUpdateRequested | isHardUpdateRequested, cancellationToken)
-                    .ConfigureAwait(false);
+
+                var computed = state.Computed;
+                var isUpdateNeeded = sm.IsUpdateRequested
+                    || sm.Version != computed.Version
+                    || sm.IsConsistent != computed.IsConsistent();
+                await TrySendUpdate(state, isUpdateNeeded, cancellationToken).ConfigureAwait(false);
 
                 incomingMessageTask = incomingChannelReader.ReadAsync(cancellationToken).AsTask();
                 // If we know for sure the last sent version is inconsistent,
@@ -101,14 +91,16 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
                 if (!LastSentVersion.IsConsistent)
                     continue;
 
-                // Awaiting for state change
-                var whenInvalidatedTask = state.WhenInvalidated();
-                var completedTask = await Task
-                    .WhenAny(whenInvalidatedTask, incomingMessageTask)
-                    .ConfigureAwait(false);
-                cancellationToken.ThrowIfCancellationRequested();
-                if (completedTask == incomingMessageTask)
-                    continue;
+                // Awaiting for the state change
+                using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken)) {
+                    var whenInvalidatedTask = computed.WhenInvalidated(cts.Token);
+                    var completedTask = await Task
+                        .WhenAny(whenInvalidatedTask, incomingMessageTask)
+                        .ConfigureAwait(false);
+                    cts.Cancel(); // This makes sure event handler for WhenInvalidate() is removed
+                    if (completedTask == incomingMessageTask)
+                        continue;
+                }
 
                 // And finally, sending the invalidation message
                 await TrySendUpdate(state, false, cancellationToken).ConfigureAwait(false);
@@ -125,7 +117,7 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
     }
 
     protected virtual async ValueTask TrySendUpdate(
-        PublicationState<T>? state, bool isUpdateRequested, CancellationToken cancellationToken)
+        PublicationState<T>? state, bool mustUpdate, CancellationToken cancellationToken)
     {
         if (state == null || state.IsDisposed) {
             var absentsMessage = new PublicationAbsentsReply();
@@ -137,7 +129,7 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
         var computed = state.Computed;
         var isConsistent = computed.IsConsistent(); // It may change, so we want to make a snapshot here
         var version = (computed.Version, isConsistent);
-        if ((!isUpdateRequested) && LastSentVersion == version)
+        if (!mustUpdate && LastSentVersion == version)
             return;
 
         var reply = isConsistent || LastSentVersion.Version != computed.Version

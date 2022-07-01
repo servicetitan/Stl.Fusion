@@ -93,7 +93,7 @@ public class PublisherChannelProcessor : WorkerBase
             }
             _ = subscriptionProcessor.Run()
                 .ContinueWith(_ => Unsubscribe(publication, default), TaskScheduler.Default);
-            
+
             subscriptionExists:
             try {
                 await subscriptionProcessor.IncomingChannel.Writer
