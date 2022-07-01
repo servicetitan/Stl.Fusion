@@ -3,18 +3,21 @@ using Errors = Stl.Internal.Errors;
 
 namespace Stl.Fusion.Bridge;
 
-public interface IPublication : IWorker
+public interface IPublication : IDisposable
 {
     IPublisher Publisher { get; }
     Symbol Id { get; }
     PublicationRef Ref { get; }
-    IPublicationState State { get; }
+    PublicationState State { get; }
     long UseCount { get; }
+    Moment LastUseTime { get; }
 
     Type GetResultType();
     Disposable<IPublication> Use();
-    bool Touch();
+    bool TryTouch();
+    void Touch();
     ValueTask Update(CancellationToken cancellationToken);
+    Task Expire();
 
     // Convenience helpers
     TResult Apply<TArg, TResult>(IPublicationApplyHandler<TArg, TResult> handler, TArg arg);
@@ -22,20 +25,21 @@ public interface IPublication : IWorker
 
 public interface IPublication<T> : IPublication
 {
-    new IPublicationState<T> State { get; }
+    new PublicationState<T> State { get; }
 }
 
-public class Publication<T> : WorkerBase, IPublication<T>
+public class Publication<T> : IPublication<T>
 {
+    private readonly IMomentClock _clock;
+    private volatile PublicationState<T> _state;
     private long _lastTouchTime;
     private long _useCount;
+    private CancellationTokenSource _disposeTokenSource;
+    private CancellationToken _disposeToken;
 
-    protected IMomentClock Clock { get; }
-    protected volatile IPublicationStateImpl<T> StateField;
-    protected IPublisherImpl PublisherImpl => (IPublisherImpl) Publisher;
-    protected Moment LastTouchTime {
+    private Moment LastTouchTime {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => new Moment(Volatile.Read(ref _lastTouchTime));
+        get => new(Volatile.Read(ref _lastTouchTime));
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         set => Volatile.Write(ref _lastTouchTime, value.EpochOffset.Ticks);
     }
@@ -45,106 +49,103 @@ public class Publication<T> : WorkerBase, IPublication<T>
     public IPublisher Publisher { get; }
     public Symbol Id { get; }
     public PublicationRef Ref => new(Publisher.Id, Id);
-    IPublicationState IPublication.State => State;
-    public IPublicationState<T> State => StateField;
-    public long UseCount => Volatile.Read(ref _useCount);
+    PublicationState IPublication.State => _state;
+    public PublicationState<T> State => _state;
+    public long UseCount => Interlocked.Read(ref _useCount);
+    public Moment LastUseTime => UseCount > 0 ? _clock.Now : LastTouchTime;
 
     public Publication(
         Type publicationType, IPublisher publisher,
         IComputed<T> computed, Symbol id,
         IMomentClock? clock)
     {
-        Clock = clock ??= MomentClockSet.Default.CoarseCpuClock;
         PublicationType = publicationType;
         Publisher = publisher;
         Id = id;
-        LastTouchTime = clock.Now;
+        _clock = clock ??= MomentClockSet.Default.CoarseCpuClock;
         // ReSharper disable once VirtualMemberCallInConstructor
-        StateField = CreatePublicationState(computed);
+        _state = new PublicationState<T>(this, computed, false);
+        _disposeTokenSource = new CancellationTokenSource();
+        _disposeToken = _disposeTokenSource.Token;
+        LastTouchTime = clock.Now;
+    }
+
+    public void Dispose()
+    {
+        // We override this method to make sure State is the first thing
+        // to reflect the disposal.
+        var state = State;
+        if (state.IsDisposed)
+            return;
+        var newState = new PublicationState<T>(this, state.Computed, true);
+        var spinWait = new SpinWait();
+        while (true) {
+            var currentState = ChangeState(newState, state);
+            if (currentState == state)
+                break;
+            state = currentState;
+            if (state.IsDisposed)
+                return;
+            spinWait.SpinOnce();
+        }
+        _disposeTokenSource.Cancel();
+        _disposeTokenSource.Dispose();
+        if (Publisher is IPublisherImpl pi)
+            pi.OnPublicationDisposed(this);
     }
 
     public Type GetResultType()
         => typeof(T);
 
-    public bool Touch()
+    public bool TryTouch()
     {
-        if (State.IsDisposed)
-            return false;
-        LastTouchTime = Clock.Now;
-        return true;
+        LastTouchTime = _clock.Now;
+        return !State.IsDisposed;
+    }
+
+    public void Touch()
+    {
+        if (!TryTouch())
+            throw Errors.AlreadyDisposed();
     }
 
     public Disposable<IPublication> Use()
     {
-        if (State.IsDisposed)
-            throw Errors.AlreadyDisposedOrDisposing();
         Interlocked.Increment(ref _useCount);
+        if (State.IsDisposed) {
+            Interlocked.Decrement(ref _useCount);
+            throw Errors.AlreadyDisposedOrDisposing();
+        }
         return new Disposable<IPublication>(this, p => {
             var self = (Publication<T>) p;
-            if (0 == Interlocked.Decrement(ref self._useCount))
-                Touch();
+            TryTouch();
+            Interlocked.Decrement(ref self._useCount);
         });
     }
 
     public async ValueTask Update(CancellationToken cancellationToken)
     {
         while (true) {
-            var state = StateField;
+            var state = _state;
             if (state.IsDisposed || state.Computed.IsConsistent())
                 return;
             var newComputed = await state.Computed.Update(cancellationToken).ConfigureAwait(false);
-            var newState = CreatePublicationState(newComputed);
-            if (ChangeState(newState, state))
+            var newState = new PublicationState<T>(this, newComputed, false);
+            if (ChangeState(newState, state) == state)
                 return;
         }
     }
 
-    public TResult Apply<TArg, TResult>(IPublicationApplyHandler<TArg, TResult> handler, TArg arg)
-        => handler.Apply(this, arg);
-
-    // Protected methods
-
-    protected virtual IPublicationStateImpl<T> CreatePublicationState(
-        IComputed<T> computed, bool isDisposed = false)
-        => new PublicationState<T>(this, computed, Clock.Now, isDisposed);
-
-    protected override async Task RunInternal(CancellationToken cancellationToken)
+    public async Task Expire()
     {
-        try {
-            await Expire(cancellationToken).ConfigureAwait(false);
-        }
-        finally {
-            // Awaiting for disposal here = cyclic task dependency;
-            // we should just ensure it starts right when this method
-            // completes.
-            _ = DisposeAsync();
-        }
-    }
-
-    protected virtual async Task Expire(CancellationToken cancellationToken)
-    {
-        var expirationTime = Publisher.Options.PublicationExpirationTime;
-
-        Moment GetLastUseTime()
-            => UseCount > 0 ? Clock.Now : LastTouchTime;
-        Moment GetNextCheckTime(Moment start, Moment lastUseTime)
-            => lastUseTime + expirationTime;
-
         // Uncomment for debugging:
         // await Task.Delay(TimeSpan.FromMinutes(10), cancellationToken).ConfigureAwait(false);
-
         try {
-            var start = Clock.Now;
-            var lastUseTime = GetLastUseTime();
             while (true) {
-                var nextCheckTime = GetNextCheckTime(start, lastUseTime);
-                var delay = TimeSpan.FromTicks(Math.Max(0, (nextCheckTime - Clock.Now).Ticks));
-                if (delay > TimeSpan.Zero)
-                    await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
-                var newLastUseTime = GetLastUseTime();
-                if (newLastUseTime == lastUseTime)
-                    break;
-                lastUseTime = newLastUseTime;
+                var delay = GetNextCheckTime(LastUseTime) - _clock.Now;
+                if (delay <= TimeSpan.Zero)
+                    break; // Expired
+                await _clock.Delay(delay, _disposeToken).ConfigureAwait(false);
             }
         }
         catch (OperationCanceledException) {
@@ -152,29 +153,20 @@ public class Publication<T> : WorkerBase, IPublication<T>
         }
     }
 
-    protected override Task DisposeAsyncCore()
-    {
-        // We override this method to make sure State is the first thing
-        // to reflect the disposal.
-        var state = StateField;
-        if (state.IsDisposed)
-            return Task.CompletedTask;
-        var newState = CreatePublicationState(state.Computed, true);
-        if (!ChangeState(newState, state))
-            return Task.CompletedTask;
-        if (Publisher is IPublisherImpl pi)
-            pi.OnPublicationDisposed(this);
-        return base.DisposeAsyncCore();
-    }
+    public TResult Apply<TArg, TResult>(IPublicationApplyHandler<TArg, TResult> handler, TArg arg)
+        => handler.Apply(this, arg);
 
     // State change & other low-level stuff
 
-    protected bool ChangeState(IPublicationStateImpl<T> newState, IPublicationStateImpl<T> expectedState)
+    private PublicationState<T> ChangeState(PublicationState<T> newState, PublicationState<T> expectedState)
     {
-        var oldState = Interlocked.CompareExchange(ref StateField, newState, expectedState);
+        var oldState = Interlocked.CompareExchange(ref _state, newState, expectedState);
         if (oldState != expectedState)
-            return false;
-        expectedState.TryMarkOutdated();
-        return true;
+            return oldState;
+        oldState.TryMarkOutdated();
+        return oldState;
     }
+
+    private Moment GetNextCheckTime(Moment lastUseTime)
+        => lastUseTime + Publisher.Options.PublicationExpirationTime;
 }

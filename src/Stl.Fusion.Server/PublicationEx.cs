@@ -7,11 +7,11 @@ namespace Stl.Fusion.Server;
 
 public static class HttpContextExt
 {
-    public static IPublicationState? GetPublicationState(this HttpContext httpContext)
+    public static PublicationState? GetPublicationState(this HttpContext httpContext)
     {
-        if (!httpContext.Items.TryGetValue(typeof(IPublicationState), out var v))
+        if (!httpContext.Items.TryGetValue(typeof(PublicationState), out var v))
             return null;
-        return (IPublicationState?) v;
+        return (PublicationState?) v;
     }
 
     public static PublicationStateInfo? GetPublicationStateInfo(this HttpContext httpContext)
@@ -25,14 +25,14 @@ public static class HttpContextExt
     {
         using var _ = publication.Use();
         var publicationState = publication.State;
-        var computed = publicationState.Computed;
+        var computed = publicationState.UntypedComputed;
         var isConsistent = computed.IsConsistent();
 
         var responseHeaders = httpContext.Response.Headers;
         if (responseHeaders.ContainsKey(FusionHeaders.Publication))
             throw Errors.AlreadyPublished();
         var psi = new PublicationStateInfo(publication.Ref, computed.Version, isConsistent);
-        httpContext.Items[typeof(IPublicationState)] = publicationState;
+        httpContext.Items[typeof(PublicationState)] = publicationState;
         httpContext.Items[typeof(PublicationStateInfo)] = psi;
         responseHeaders[FusionHeaders.Publication] = JsonConvert.SerializeObject(psi);
     }

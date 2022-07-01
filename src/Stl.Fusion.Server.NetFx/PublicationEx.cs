@@ -29,11 +29,11 @@ public static class HttpContextExt
         return appServices;
     }
 
-    public static IPublicationState? GetPublicationState(this HttpActionContext httpContext)
+    public static PublicationState? GetPublicationState(this HttpActionContext httpContext)
     {
-        if (!httpContext.GetItems().TryGetValue(typeof(IPublicationState), out var v))
+        if (!httpContext.GetItems().TryGetValue(typeof(PublicationState), out var v))
             return null;
-        return (IPublicationState?)v;
+        return (PublicationState?)v;
     }
 
     public static PublicationStateInfo? GetPublicationStateInfo(this HttpActionContext httpContext)
@@ -47,7 +47,7 @@ public static class HttpContextExt
     {
         using var _ = publication.Use();
         var publicationState = publication.State;
-        var computed = publicationState.Computed;
+        var computed = publicationState.UntypedComputed;
         var isConsistent = computed.IsConsistent();
 
         // If exception occurred, response is empty, and we can not assign publication header.
@@ -58,7 +58,7 @@ public static class HttpContextExt
         var psi = new PublicationStateInfo(publication.Ref, computed.Version, isConsistent);
 
         var items = httpContext.GetItems();
-        items[typeof(IPublicationState)] = publicationState;
+        items[typeof(PublicationState)] = publicationState;
         items[typeof(PublicationStateInfo)] = psi;
 
         if (responseHeaders!=null)

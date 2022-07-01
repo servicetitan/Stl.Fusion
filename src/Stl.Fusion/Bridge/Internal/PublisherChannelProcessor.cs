@@ -69,31 +69,41 @@ public class PublisherChannelProcessor : WorkerBase
             await OnUnsupportedRequest(request, cancellationToken).ConfigureAwait(false);
             return;
         }
-        var publicationId = request.PublicationId;
-        var publication = Publisher.Get(publicationId);
-        if (publication == null) {
-            await OnUnsupportedRequest(request, cancellationToken).ConfigureAwait(false);
-            return;
-        }
-        if (Subscriptions.TryGetValue(publicationId, out var subscriptionProcessor))
-            goto subscriptionExists;
-        lock (Lock) {
-            // Double check locking
-            if (Subscriptions.TryGetValue(publicationId, out subscriptionProcessor))
-                goto subscriptionExists;
 
-            var publisherOptions = Publisher.Options;
-            subscriptionProcessor = publisherOptions.SubscriptionProcessorFactory.Create(
-                publisherOptions.SubscriptionProcessorGeneric,
-                publication, Channel, publisherOptions.SubscriptionExpirationTime,
-                Publisher.Clocks, Services);
-            Subscriptions[publicationId] = subscriptionProcessor;
+        while (true) {
+            var publicationId = request.PublicationId;
+            var publication = Publisher.Get(publicationId);
+            if (publication == null || !publication.TryTouch()) {
+                await OnUnsupportedRequest(request, cancellationToken).ConfigureAwait(false);
+                return;
+            }
+            if (Subscriptions.TryGetValue(publicationId, out var subscriptionProcessor))
+                goto subscriptionExists;
+            lock (Lock) {
+                // Double check locking
+                if (Subscriptions.TryGetValue(publicationId, out subscriptionProcessor))
+                    goto subscriptionExists;
+
+                var publisherOptions = Publisher.Options;
+                subscriptionProcessor = publisherOptions.SubscriptionProcessorFactory.Create(
+                    publisherOptions.SubscriptionProcessorGeneric,
+                    publication, Channel, publisherOptions.SubscriptionExpirationTime,
+                    Publisher.Clocks, Services);
+                Subscriptions[publicationId] = subscriptionProcessor;
+            }
+            _ = subscriptionProcessor.Run()
+                .ContinueWith(_ => Unsubscribe(publication, default), TaskScheduler.Default);
+            
+            subscriptionExists:
+            try {
+                await subscriptionProcessor.IncomingChannel.Writer
+                    .WriteAsync(request, cancellationToken).ConfigureAwait(false);
+                return;
+            }
+            catch (ChannelClosedException) {
+                // Already disposed, let's retry
+            }
         }
-        _ = subscriptionProcessor.Run()
-            .ContinueWith(_ => Unsubscribe(publication, default), TaskScheduler.Default);
-    subscriptionExists:
-        await subscriptionProcessor.IncomingChannel.Writer
-            .WriteAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
     public virtual async ValueTask Unsubscribe(

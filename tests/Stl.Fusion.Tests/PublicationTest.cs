@@ -67,7 +67,7 @@ public class PublisherTest : FusionTestBase
         await cReader.AssertCannotRead();
 
         Debug.WriteLine("e1");
-        await p1.DisposeAsync();
+        p1.Dispose();
         Debug.WriteLine("e2");
         await cReader.AssertCannotRead();
 

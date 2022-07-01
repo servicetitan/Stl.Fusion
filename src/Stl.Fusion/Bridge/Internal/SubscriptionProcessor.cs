@@ -116,6 +116,7 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
         }
         finally {
             publicationUseScope.Dispose();
+            IncomingChannel.Writer.TryComplete();
             // Awaiting for disposal here = cyclic task dependency;
             // we should just ensure it starts right when this method
             // completes.
@@ -124,7 +125,7 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
     }
 
     protected virtual async ValueTask TrySendUpdate(
-        IPublicationState<T>? state, bool isUpdateRequested, CancellationToken cancellationToken)
+        PublicationState<T>? state, bool isUpdateRequested, CancellationToken cancellationToken)
     {
         if (state == null || state.IsDisposed) {
             var absentsMessage = new PublicationAbsentsReply();

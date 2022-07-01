@@ -15,17 +15,20 @@ public static class TaskExt
 
     static TaskExt()
     {
-        NeverEndingUnitTask = new TaskCompletionSource<Unit>().Task;
+        NeverEndingUnitTask = NeverEnding();
         NeverEndingTask = NeverEndingUnitTask;
         var unitTcs = new TaskCompletionSource<Unit>();
         unitTcs.SetResult(default);
         UnitTaskCompletionSource = unitTcs;
+
+        async Task<Unit> NeverEnding()
+            => await TaskSource.New<Unit>(true).Task.ConfigureAwait(false);
     }
 
     // ToXxx
 
-    public static ValueTask<T> ToValueTask<T>(this Task<T> source) => new ValueTask<T>(source);
-    public static ValueTask ToValueTask(this Task source) => new ValueTask(source);
+    public static ValueTask<T> ToValueTask<T>(this Task<T> source) => new(source);
+    public static ValueTask ToValueTask(this Task source) => new(source);
 
     // WithFakeCancellation
 

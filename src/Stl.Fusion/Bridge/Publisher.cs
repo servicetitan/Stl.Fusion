@@ -98,10 +98,10 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
                          this1.Options.PublicationGeneric, this1, computed1, id,
                          this1.Clocks.CoarseCpuClock);
                      this1.PublicationsById[id] = p1;
-                     p1.Run();
+                     p1.Expire();
                      return p1;
                  }, (this, computed));
-            if (p.Touch())
+            if (p.TryTouch())
                 return p;
             spinWait.SpinOnce();
         }
@@ -115,6 +115,7 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
         bool isUpdateRequested, CancellationToken cancellationToken = default)
     {
         this.ThrowIfDisposedOrDisposing();
+        publication.Touch();
         if (!ChannelProcessors.TryGetValue(channel, out var channelProcessor))
             throw Errors.UnknownChannel(channel);
         if (publication.Publisher != this)
@@ -144,7 +145,7 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
             throw new ArgumentOutOfRangeException(nameof(publication));
         if (!PublicationsById.TryGetValue(publication.Id, out var p))
             return;
-        Publications.TryRemove(publication.State.Computed.Input, p);
+        Publications.TryRemove(publication.State.UntypedComputed.Input, p);
         PublicationsById.TryRemove(p.Id, p);
     }
 
@@ -199,14 +200,8 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
         }
         var publications = PublicationsById;
         while (!publications.IsEmpty) {
-            var tasks = publications
-                .Take(HardwareInfo.GetProcessorCountFactor(4, 4))
-                .ToList()
-                .Select(p => {
-                    var (_, publication) = (p.Key, p.Value);
-                    return publication.DisposeAsync().AsTask();
-                });
-            await Task.WhenAll(tasks).ConfigureAwait(false);
+            foreach (var (_, p) in publications)
+                p.Dispose();
         }
         if (Options.OwnsChannelHub)
             await ChannelHub.DisposeAsync().ConfigureAwait(false);
