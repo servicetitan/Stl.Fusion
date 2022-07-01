@@ -25,5 +25,6 @@ public class ArgumentHandlerProviderTest : SimpleFusionTestBase
         ahp.GetArgumentHandler(method, parameters[4]).Should().BeOfType<IgnoreArgumentHandler>();
     }
 
-    public void TestMethod(object a, string b, bool c, Session d, CancellationToken ct) { }
+    public void TestMethod(object a, string b, bool c, Session d, CancellationToken ct) 
+    { }
 }
