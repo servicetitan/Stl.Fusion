@@ -7,7 +7,7 @@ public class KeepAliveTest : TestBase
 {
     public class Service
     {
-        public ThreadSafe<int> CallCount { get; }
+        public ThreadSafe<int> CallCount { get; } = 0;
 
         [ComputeMethod(KeepAliveTime = 0.5)]
         public virtual async Task<double> Sum(double a, double b)
@@ -39,7 +39,7 @@ public class KeepAliveTest : TestBase
         return services.BuildServiceProvider();
     }
 
-    [SkipOnGitHubFact]
+    [Fact]
     public async Task TestNoKeepAlive()
     {
         var services = CreateProviderFor<Service>();
@@ -56,7 +56,7 @@ public class KeepAliveTest : TestBase
         service.CallCount.Value.Should().Be(2);
     }
 
-    [SkipOnGitHubFact]
+    [Fact]
     public async Task TestKeepAlive()
     {
         var services = CreateProviderFor<Service>();
