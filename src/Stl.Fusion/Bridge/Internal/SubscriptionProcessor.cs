@@ -91,15 +91,23 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
                 if (!LastSentVersion.IsConsistent)
                     continue;
 
-                // Awaiting for invalidation or new message - whatever happens first
-                using (var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken)) {
+                // Awaiting for invalidation or new message - whatever happens first;
+                // CreateLinkedTokenSource is needed to make sure we truly cancel
+                // WhenInvalidated(...) & remove the OnInvalidated handler. 
+                var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                try {
                     var whenInvalidatedTask = computed.WhenInvalidated(cts.Token);
                     var completedTask = await Task
                         .WhenAny(whenInvalidatedTask, incomingMessageTask)
                         .ConfigureAwait(false);
-                    cts.Cancel(); // This makes sure event handler for WhenInvalidate() is removed
+                    // WhenAny doesn't throw, and we need to make sure
+                    // we exit right here in this task is cancelled. 
+                    cancellationToken.ThrowIfCancellationRequested();
                     if (completedTask == incomingMessageTask)
                         continue;
+                }
+                finally {
+                    cts.CancelAndDisposeSilently();
                 }
 
                 // And finally, sending the invalidation message
