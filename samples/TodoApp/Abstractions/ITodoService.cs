@@ -12,9 +12,17 @@ public record TodoSummary(int Count, int DoneCount)
     public TodoSummary() : this(0, 0) { }
 }
 
-public record AddOrUpdateTodoCommand(Session Session, Todo Item) : ISessionCommand<Todo>;
+public record AddOrUpdateTodoCommand(Session Session, Todo Item) : ISessionCommand<Todo>
+{
+    // Newtonsoft.Json needs this constructor to deserialize this record
+    public AddOrUpdateTodoCommand() : this(Session.Null, default!) { }
+}
 
-public record RemoveTodoCommand(Session Session, string Id) : ISessionCommand<Unit>;
+public record RemoveTodoCommand(Session Session, string Id) : ISessionCommand<Unit>
+{
+    // Newtonsoft.Json needs this constructor to deserialize this record
+    public RemoveTodoCommand() : this(Session.Null, "") { }
+}
 
 public interface ITodoService
 {
