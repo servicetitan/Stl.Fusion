@@ -1,6 +1,3 @@
-using Stl.Fusion.Bridge.Interception;
-using Stl.Fusion.Interception;
-
 namespace Stl.Fusion.Operations;
 
 public class InvalidationInfoProvider

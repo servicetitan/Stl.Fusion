@@ -1,5 +1,4 @@
 using Stl.Fusion.Extensions.Commands;
-using Stl.Fusion.Interception;
 
 namespace Stl.Fusion.Extensions;
 

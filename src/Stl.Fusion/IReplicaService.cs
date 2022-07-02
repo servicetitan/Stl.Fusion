@@ -1,6 +1,4 @@
-using Stl.Fusion.Interception;
-
-namespace Stl.Fusion.Bridge.Interception;
+namespace Stl.Fusion;
 
 // A tagging interface for replica services
 public interface IReplicaService : IComputeService

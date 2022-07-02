@@ -1,5 +1,4 @@
 using Stl.Fusion.Authentication.Commands;
-using Stl.Fusion.Interception;
 
 namespace Stl.Fusion.Authentication;
 
