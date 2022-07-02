@@ -1,4 +1,3 @@
-using Stl.CommandR.Interception;
 using Stl.Interception;
 
 namespace Stl.CommandR;
