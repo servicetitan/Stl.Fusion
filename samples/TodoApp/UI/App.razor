@@ -1,33 +1,29 @@
-@using Stl.Text
-@using Stl.OS
 @implements IDisposable
 @inject BlazorCircuitContext BlazorCircuitContext
 
 <CascadingAuthState SessionId="@SessionId">
-<ThemeProvider Theme="@Theme">
-    <Router AppAssembly="@typeof(Program).Assembly">
-        <Found Context="routeData">
-            <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
-        </Found>
-        <NotFound>
-            <LayoutView Layout="@typeof(MainLayout)">
-                <p>Sorry, there's nothing at this address.</p>
-            </LayoutView>
-        </NotFound>
-    </Router>
-</ThemeProvider>
+    <ThemeProvider Theme="@Theme">
+        <Router AppAssembly="@typeof(Program).Assembly">
+            <Found Context="routeData">
+                <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)"/>
+            </Found>
+            <NotFound>
+                <LayoutView Layout="@typeof(MainLayout)">
+                    <p>Sorry, there's nothing at this address.</p>
+                </LayoutView>
+            </NotFound>
+        </Router>
+    </ThemeProvider>
 </CascadingAuthState>
 
 @code {
     private Theme Theme { get; } = new() { IsGradient = true, IsRounded = false };
 
     [Parameter]
-    public string SessionId { get; set; } = Symbol.Empty;
+    public string SessionId { get; set; } = Session.Default.Id;
 
     protected override void OnInitialized()
     {
-        if (OSInfo.IsWebAssembly)
-            SessionId = Session.Default.Id; // We don't want to store it anywhere in WASM or JS
         if (!BlazorCircuitContext.IsPrerendering)
             BlazorCircuitContext.RootComponent = this;
     }
