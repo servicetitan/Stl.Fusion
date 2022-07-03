@@ -6,11 +6,11 @@
 @using Stl.OS
 @using Stl.Text
 @implements IDisposable
-@inject ISessionProvider _sessionProvider
-@inject AuthStateProvider _authStateProvider
-@inject PresenceService _presenceService
-@inject NavigationManager _nav
-@inject IJSRuntime _js
+@inject ISessionProvider SessionProvider
+@inject AuthStateProvider AuthStateProvider
+@inject PresenceService PresenceService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
 
 <CascadingAuthenticationState>
     <CascadingValue TValue="Task<AuthState>" Value="@GetAuthState()" ChildContent="@ChildContent"/>
@@ -21,13 +21,13 @@
     public RenderFragment ChildContent { get; set; } = _ => { };
     [Parameter]
     public string SessionId {
-        get => _sessionProvider.HasSession ? _sessionProvider.Session.Id : "";
+        get => SessionProvider.HasSession ? SessionProvider.Session.Id : "";
         set {
             if (string.IsNullOrEmpty(value))
                 return; // Blazor WASM component is created w/ empty SessionId
-            if (_sessionProvider.HasSession)
+            if (SessionProvider.HasSession)
                 return;
-            _sessionProvider.Session = new Session(value);
+            SessionProvider.Session = new Session(value);
         }
     }
     [Parameter]
@@ -38,14 +38,14 @@
         if (SessionId.IsNullOrEmpty())
             throw Errors.NoSessionId();
 
-        _authStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
-        OnAuthenticationStateChanged(_authStateProvider.GetAuthenticationStateAsync());
+        AuthStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+        OnAuthenticationStateChanged(AuthStateProvider.GetAuthenticationStateAsync());
         if (StartPresenceService)
-            _presenceService.Start();
+            PresenceService.Start();
     }
 
     void IDisposable.Dispose()
-        => _authStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+        => AuthStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
 
 
     private void OnAuthenticationStateChanged(Task<AuthenticationState> newAuthStateTask)
@@ -58,11 +58,11 @@
                 return;
             // Current Session is unusable due to forced sign-out.
             // The only way to get an usable one is to reload the page.
-            _ = InvokeAsync(() => _nav.NavigateTo(_nav.Uri, true));
+            _ = InvokeAsync(() => Nav.NavigateTo(Nav.Uri, true));
         }, TaskScheduler.Current);
     }
 
     private Task<AuthState> GetAuthState()
-        => _authStateProvider.GetAuthenticationStateAsync()
+        => AuthStateProvider.GetAuthenticationStateAsync()
             .ContinueWith(t => (AuthState) t.Result, TaskScheduler.Current);
 }
