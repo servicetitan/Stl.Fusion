@@ -49,6 +49,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
         }
     }
 
+    // Services
     protected IServiceProvider Services { get; }
     protected IMultitenantDbContextFactory<TDbContext> DbContextFactory { get; }
     protected IDbOperationLog<TDbContext> DbOperationLog { get; }
@@ -101,8 +102,10 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
     public virtual async Task<TDbContext> CreateDbContext(
         Tenant tenant, bool readWrite = true, CancellationToken cancellationToken = default)
     {
-        Tenant = tenant;
+        // This code must run in the same execution context to work, so
+        // we run it first
         using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
+        Tenant = tenant;
         if (IsClosed)
             throw Stl.Fusion.Operations.Internal.Errors.OperationScopeIsAlreadyClosed();
         if (MasterDbContext == null) {

@@ -51,6 +51,8 @@ public class DbHub<TDbContext>
         var commandContext = CommandContext.GetCurrent();
         var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>()
             ?? throw new KeyNotFoundException();
-        return operationScope.CreateDbContext(tenant, readWrite: true, cancellationToken);
+        var result = operationScope.CreateDbContext(tenant, readWrite: true, cancellationToken);
+        ExecutionStrategyExt.TrySetIsSuspended(true);
+        return result;
     }
 }

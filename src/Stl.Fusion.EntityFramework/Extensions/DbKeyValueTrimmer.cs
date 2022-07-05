@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.Extensions;
 using Stl.Multitenancy;
 

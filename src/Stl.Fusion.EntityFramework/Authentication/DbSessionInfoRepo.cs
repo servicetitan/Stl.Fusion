@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.Authentication;
+using Stl.Fusion.EntityFramework.Internal;
 using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework.Authentication;

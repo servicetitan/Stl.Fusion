@@ -195,7 +195,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
 
         var dbSessions = await Sessions.ListByUser(dbContext, dbUserId, cancellationToken).ConfigureAwait(false);
         var sessions = dbSessions
-            .Select(x => ((Symbol) x.Id, SessionConverter.ToModel(x)))
+            .Select(x => ((Symbol) x.Id, SessionConverter.ToModel(x)!))
             .ToImmutableArray();
         return sessions;
     }
