@@ -10,7 +10,7 @@
 @{
     var state = State.LatestNonErrorValue;
     var error = State.Error;
-    var user = state.User ?? new("");
+    var user = state.User;
     var sessions = state.Sessions ?? new();
     var usedAuthSchemas = user.Identities.Select(kv => kv.Key.Schema).ToHashSet();
     var unusedAuthSchemas = AuthSchemas.Where(p => !usedAuthSchemas.Contains(p.Name)).ToArray();
@@ -42,15 +42,14 @@
             </ul>
         </CardText>
 
-        <CardTitle>User properties:</CardTitle>
-        <CardText>
-            <ul>
-                <li><code>User.IsAuthenticated</code>: <b><code>@user.IsAuthenticated</code></b></li>
-                <li><code>User.Id</code>: <b><code>@user.Id</code></b></li>
-                <li><code>User.Name</code>: <b><code>@user.Name</code></b></li>
-                <li><code>User.Version</code>: <b><code>@user.Version</code></b></li>
-            </ul>
-            @if (user.IsAuthenticated) {
+        @if (user != null) {
+            <CardTitle>User properties:</CardTitle>
+            <CardText>
+                <ul>
+                    <li><code>User.Id</code>: <b><code>@user.Id</code></b></li>
+                    <li><code>User.Name</code>: <b><code>@user.Name</code></b></li>
+                    <li><code>User.Version</code>: <b><code>@user.Version</code></b></li>
+                </ul>
                 <div class="card-subtitle">Claims:</div>
                 <ul>
                     @foreach (var (key, value) in user.Claims) {
@@ -63,9 +62,10 @@
                         <li><code>@schema</code>: <b><code>@schemaBoundId</code></b></li>
                     }
                 </ul>
-            }
-        </CardText>
-        @if (user.IsAuthenticated && sessions.Count > 0) {
+                }
+            </CardText>
+        }
+        @if (sessions.Count > 0) {
             <CardTitle>Sessions:</CardTitle>
             <CardText>
                 <table class="table table-sm">
@@ -81,7 +81,7 @@
                     </thead>
                     <tbody>
                     @foreach (var session in sessions) {
-                        <tr @key="@session.Id">
+                        <tr @key="@session.SessionHash">
                             <td>@session.IPAddress</td>
                             <td>@session.UserAgent</td>
                             <td>@session.Created</td>
@@ -92,7 +92,7 @@
                                     <span>Current</span>
                                 } else {
                                     <button type="button" class="btn btn-sm btn-danger"
-                                            @onclick="_ => ClientAuthHelper.SignOut(session.Id)">Kick</button>
+                                            @onclick="_ => ClientAuthHelper.Kick(Session, session.SessionHash)">Kick</button>
                                 }
                             </td>
                         </tr>
@@ -131,7 +131,7 @@
 @code {
     public class SessionInfoModel
     {
-        public string Id { get; set; } = "";
+        public string SessionHash { get; set; } = "";
         public string IPAddress { get; set; } = "";
         public string UserAgent { get; set; } = "";
         public string Created { get; set; } = "";
@@ -157,19 +157,19 @@
     protected override async Task<(User?, List<SessionInfoModel>?)> ComputeState(CancellationToken cancellationToken)
     {
         var user = await Auth.GetUser(Session, cancellationToken);
-        var sessions = await Auth.GetUserSessions(Session, cancellationToken).ConfigureAwait(false);
+        var sessionInfos = await Auth.GetUserSessions(Session, cancellationToken).ConfigureAwait(false);
         var result = new List<SessionInfoModel>();
 
-        foreach (var session in sessions) {
-            var userAgent = UserAgentCache.GetOrAdd(session.UserAgent, ua => Parser.ParseUserAgent(ua));
+        foreach (var sessionInfo in sessionInfos) {
+            var userAgent = UserAgentCache.GetOrAdd(sessionInfo.UserAgent, ua => Parser.ParseUserAgent(ua));
             var model = new SessionInfoModel() {
-                Id = session.Id,
-                IsCurrent = Session.Id == session.Id,
-                IPAddress = session.IPAddress,
+                SessionHash = sessionInfo.SessionHash,
+                IsCurrent = sessionInfo.SessionHash == Session.Hash,
+                IPAddress = sessionInfo.IPAddress,
                 UserAgent = $"{userAgent.Family} {userAgent.Major}.{userAgent.Minor}",
-                Created = await FusionTime.GetMomentsAgo(session.CreatedAt),
-                LastSeen = await FusionTime.GetMomentsAgo(session.LastSeenAt),
-                Version = session.Version,
+                Created = await FusionTime.GetMomentsAgo(sessionInfo.CreatedAt),
+                LastSeen = await FusionTime.GetMomentsAgo(sessionInfo.LastSeenAt),
+                Version = sessionInfo.Version,
             };
             result.Add(model);
         }

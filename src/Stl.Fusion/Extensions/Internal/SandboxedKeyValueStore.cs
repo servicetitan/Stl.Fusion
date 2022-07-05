@@ -99,19 +99,18 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
     {
         if (session == Session.Null)
             throw Errors.KeyViolatesSandboxedKeyValueStoreConstraints();
+
         var user = await Auth.GetUser(session, cancellationToken).ConfigureAwait(false);
-        if (!user.IsAuthenticated)
-            return new KeyChecker() {
-                Clock = Clock,
-                Prefix = string.Format(CultureInfo.InvariantCulture, Settings.SessionKeyPrefixFormat, session.Id),
-                ExpirationTime = Settings.SessionKeyExpirationTime,
-            };
-        return new KeyChecker() {
+        var keyChecker = new KeyChecker() {
             Clock = Clock,
             Prefix = string.Format(CultureInfo.InvariantCulture, Settings.SessionKeyPrefixFormat, session.Id),
             ExpirationTime = Settings.SessionKeyExpirationTime,
-            SecondaryPrefix = string.Format(CultureInfo.InvariantCulture, Settings.UserKeyPrefixFormat, user.Id),
-            SecondaryExpirationTime = Settings.UserKeyExpirationTime,
         };
+        if (user != null)
+            keyChecker = keyChecker with {
+                SecondaryPrefix = string.Format(CultureInfo.InvariantCulture, Settings.UserKeyPrefixFormat, user.Id),
+                SecondaryExpirationTime = Settings.UserKeyExpirationTime,
+            };
+        return keyChecker;
     }
 }

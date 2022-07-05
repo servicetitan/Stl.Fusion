@@ -9,6 +9,8 @@ public static class MathExt
 
     public static double Clamp(this double value, double min, double max) => Math.Min(Math.Max(value, min), max);
     public static float Clamp(this float value, float min, float max) => Math.Min(Math.Max(value, min), max);
+    public static int Clamp(this int value, int min, int max) => Math.Min(Math.Max(value, min), max);
+    public static uint Clamp(this uint value, uint min, uint max) => Math.Min(Math.Max(value, min), max);
 
     public static long Min(long a, long b) => a <= b ? a : b;
     public static long Max(long a, long b) => a >= b ? a : b;

@@ -1,7 +1,10 @@
+@using Stl.DependencyInjection
 @implements IDisposable
 @inject BlazorCircuitContext BlazorCircuitContext
+@inject ISessionProvider SessionProvider
+@inject IServiceProvider Services
 
-<CascadingAuthState SessionId="@SessionId">
+<CascadingAuthState>
     <ThemeProvider Theme="@Theme">
         <Router AppAssembly="@typeof(Program).Assembly">
             <Found Context="routeData">
@@ -19,11 +22,11 @@
 @code {
     private Theme Theme { get; } = new() { IsGradient = true, IsRounded = false };
 
-    [Parameter]
-    public string SessionId { get; set; } = Session.Default.Id;
+    [Parameter] public string SessionId { get; set; } = Session.Default.Id;
 
     protected override void OnInitialized()
     {
+        SessionProvider.Session = new Session(SessionId);
         if (!BlazorCircuitContext.IsPrerendering)
             BlazorCircuitContext.RootComponent = this;
     }

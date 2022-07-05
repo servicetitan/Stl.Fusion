@@ -38,11 +38,17 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     public override async Task SignOut(
         SignOutCommand command, CancellationToken cancellationToken = default)
     {
-        var (session, force) = command;
+        var session = command.Session;
+        var otherSessionHash = command.OtherSessionHash;
+        var everywhere = command.Everywhere;
+        var force = command.Force;
+
         var context = CommandContext.GetCurrent();
         var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
 
         if (Computed.IsInvalidating()) {
+            if (everywhere || !otherSessionHash.IsNullOrEmpty())
+                return;
             _ = GetSessionInfo(session, default); // Must go first!
             _ = GetAuthInfo(session, default);
             if (force) {
@@ -57,12 +63,29 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
             return;
         }
 
+        // Let's handle special kinds of sign-out first, which only trigger "primary" sign-out version
+        if (everywhere || !otherSessionHash.IsNullOrEmpty()) {
+            var user = await GetUser(session, cancellationToken).ConfigureAwait(false);
+            if (user == null)
+                return;
+            var userSessions = await GetUserSessions(tenant, user.Id, cancellationToken).ConfigureAwait(false);
+            var signOutSessions = otherSessionHash.IsNullOrEmpty()
+                ? userSessions
+                : userSessions.Where(p => Equals(p.SessionInfo.SessionHash, otherSessionHash));
+            foreach (var (sessionId, _) in signOutSessions) {
+                var otherSessionSignOutCommand = new SignOutCommand(new Session(sessionId), force);
+                await Commander.Run(otherSessionSignOutCommand, isOutermost: true, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            return;
+        }
+
         var dbContext = await CreateCommandDbContext(tenant, cancellationToken).ConfigureAwait(false);
         await using var _1 = dbContext.ConfigureAwait(false);
 
         var dbSessionInfo = await Sessions.GetOrCreate(dbContext, session.Id, cancellationToken).ConfigureAwait(false);
         var sessionInfo = SessionConverter.ToModel(dbSessionInfo);
-        if (sessionInfo!.IsSignOutForced)
+        if (sessionInfo == null || sessionInfo.IsSignOutForced)
             return;
 
         context.Operation().Items.Set(sessionInfo);
@@ -72,7 +95,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
             UserId = "",
             IsSignOutForced = force,
         };
-        await Sessions.Upsert(dbContext, sessionInfo, cancellationToken).ConfigureAwait(false);
+        await Sessions.Upsert(dbContext, session.Id, sessionInfo, cancellationToken).ConfigureAwait(false);
     }
 
     // [CommandHandler] inherited
@@ -90,7 +113,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         }
 
         var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
-        sessionInfo = sessionInfo.MustBeAuthenticated();
+        sessionInfo = sessionInfo.AssertAuthenticated();
 
         var dbContext = await CreateCommandDbContext(tenant, cancellationToken).ConfigureAwait(false);
         await using var _1 = dbContext.ConfigureAwait(false);
@@ -132,7 +155,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     {
         using var _ = Computed.SuspendDependencyCapture();
         var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
-        return sessionInfo == null ? new(session.Id) : sessionInfo.ToAuthInfo();
+        return sessionInfo == null ? new(session) : sessionInfo.ToAuthInfo();
     }
 
     // [ComputeMethod] inherited
@@ -152,25 +175,26 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     }
 
     // [ComputeMethod] inherited
-    public override async Task<User> GetUser(
+    public override async Task<User?> GetUser(
         Session session, CancellationToken cancellationToken = default)
     {
         var sessionInfo = await GetAuthInfo(session, cancellationToken).ConfigureAwait(false);
         if (sessionInfo.IsSignOutForced || !sessionInfo.IsAuthenticated)
-            return new User(session.Id);
+            return null;
         var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);
         var user = await GetUser(tenant.Id, sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
-        return (user ?? new User(session.Id)).ToClientSideUser();
+        return user;
     }
 
     // [ComputeMethod] inherited
-    public override async Task<SessionInfo[]> GetUserSessions(
+    public override async Task<ImmutableArray<SessionInfo>> GetUserSessions(
         Session session, CancellationToken cancellationToken = default)
     {
         var user = await GetUser(session, cancellationToken).ConfigureAwait(false);
-        if (!user.IsAuthenticated)
-            return Array.Empty<SessionInfo>();
+        if (user == null)
+            return ImmutableArray<SessionInfo>.Empty;
         var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);
-        return await GetUserSessions(tenant.Id, user.Id, cancellationToken).ConfigureAwait(false);
+        var sessions = await GetUserSessions(tenant.Id, user.Id, cancellationToken).ConfigureAwait(false);
+        return sessions.Select(p => p.SessionInfo).ToImmutableArray();
     }
 }

@@ -21,9 +21,9 @@ public interface IAuth : IComputeService
     [ComputeMethod(KeepAliveTime = 10)]
     Task<ImmutableOptionSet> GetOptions(Session session, CancellationToken cancellationToken = default);
     [ComputeMethod(KeepAliveTime = 10)]
-    Task<User> GetUser(Session session, CancellationToken cancellationToken = default);
+    Task<User?> GetUser(Session session, CancellationToken cancellationToken = default);
     [ComputeMethod]
-    Task<SessionInfo[]> GetUserSessions(Session session, CancellationToken cancellationToken = default);
+    Task<ImmutableArray<SessionInfo>> GetUserSessions(Session session, CancellationToken cancellationToken = default);
 }
 
 public interface IAuthBackend : IComputeService

@@ -15,7 +15,7 @@ public interface IDbSessionInfoRepo<in TDbContext, TDbSessionInfo, in TDbUserId>
     Task<TDbSessionInfo> GetOrCreate(
         TDbContext dbContext, string sessionId, CancellationToken cancellationToken = default);
     Task<TDbSessionInfo> Upsert(
-        TDbContext dbContext, SessionInfo sessionInfo, CancellationToken cancellationToken = default);
+        TDbContext dbContext, string sessionId, SessionInfo sessionInfo, CancellationToken cancellationToken = default);
     Task<int> Trim(
         Tenant tenant, DateTime minLastSeenAt, int maxCount, CancellationToken cancellationToken = default);
 
@@ -59,10 +59,11 @@ public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId> : DbServic
     {
         var dbSessionInfo = await Get(dbContext, sessionId, true, cancellationToken).ConfigureAwait(false);
         if (dbSessionInfo == null) {
-            var sessionInfo = new SessionInfo(sessionId, Clocks.SystemClock.Now);
+            var session = new Session(sessionId);
+            var sessionInfo = new SessionInfo(session, Clocks.SystemClock.Now);
             dbSessionInfo = dbContext.Add(
                 new TDbSessionInfo() {
-                    Id = sessionInfo.Id,
+                    Id = sessionId,
                     CreatedAt = sessionInfo.CreatedAt,
                 }).Entity;
             SessionConverter.UpdateEntity(sessionInfo, dbSessionInfo);
@@ -72,14 +73,14 @@ public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId> : DbServic
     }
 
     public async Task<TDbSessionInfo> Upsert(
-        TDbContext dbContext, SessionInfo sessionInfo, CancellationToken cancellationToken = default)
+        TDbContext dbContext, string sessionId, SessionInfo sessionInfo, CancellationToken cancellationToken = default)
     {
         var dbSessionInfo = await dbContext.Set<TDbSessionInfo>()
-            .FindAsync(DbKey.Compose(sessionInfo.Id.Value), cancellationToken)
+            .FindAsync(DbKey.Compose(sessionId), cancellationToken)
             .ConfigureAwait(false);
         var isDbSessionInfoFound = dbSessionInfo != null;
         dbSessionInfo ??= new TDbSessionInfo() {
-            Id = sessionInfo.Id,
+            Id = sessionId,
             CreatedAt = sessionInfo.CreatedAt,
         };
         SessionConverter.UpdateEntity(sessionInfo, dbSessionInfo);

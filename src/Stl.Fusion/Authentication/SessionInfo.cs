@@ -12,14 +12,16 @@ public record SessionInfo : SessionAuthInfo, IHasVersion<long>
     public ImmutableOptionSet Options { get; init; } = ImmutableOptionSet.Empty;
 
     public SessionInfo() { }
-    public SessionInfo(Symbol id, Moment createdAt = default) : base(id)
+    public SessionInfo(Moment createdAt) : this(null, createdAt) { }
+    public SessionInfo(Session? session, Moment createdAt = default) : base(session)
     {
         CreatedAt = createdAt;
         LastSeenAt = createdAt;
     }
 
     public SessionAuthInfo ToAuthInfo()
-        => new (Id) {
+        => new () {
+            SessionHash = SessionHash,
             AuthenticatedIdentity = AuthenticatedIdentity,
             UserId = UserId,
             IsSignOutForced = IsSignOutForced,

@@ -14,8 +14,12 @@ public sealed class Session : IHasId<Symbol>, IEquatable<Session>,
     public static Session Null { get; } = null!; // To gracefully bypass some nullability checks
     public static Session Default { get; } = new("~");
 
+    private string? _hash;
+
     [DataMember(Order = 0)]
     public Symbol Id { get; }
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public string Hash => _hash ??= Id.Value.GetMD5HashCode();
 
     public Session(Symbol id)
     {

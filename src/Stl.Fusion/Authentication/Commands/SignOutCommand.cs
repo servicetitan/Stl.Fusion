@@ -1,10 +1,27 @@
 namespace Stl.Fusion.Authentication.Commands;
 
 [DataContract]
-public record SignOutCommand(
-    [property: DataMember] Session Session,
-    [property: DataMember] bool Force = false
-    ) : ISessionCommand<Unit>
+public record SignOutCommand: ISessionCommand<Unit>
 {
-    public SignOutCommand() : this(Session.Null) { }
+    [DataMember]
+    public Session Session { get; init; } = Session.Null;
+    [DataMember]
+    public string? OtherSessionHash { get; init; }
+    [DataMember]
+    public bool Everywhere { get; init; }
+    [DataMember]
+    public bool Force { get; init; }
+
+    public SignOutCommand() { }
+    public SignOutCommand(Session session, bool force = false)
+    {
+        Session = session;
+        Force = force;
+    }
+    public SignOutCommand(Session session, string otherSessionHash, bool force = false)
+    {
+        Session = session;
+        OtherSessionHash = otherSessionHash;
+        Force = force;
+    }
 }

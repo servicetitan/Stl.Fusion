@@ -25,25 +25,23 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
 
     // These properties are intentionally public -
     // e.g. State is quite handy to consume in other compute methods or states
-    public ISessionResolver SessionResolver { get; }
-    public IAuth Auth { get; }
-    public IUICommandTracker UICommandTracker { get; }
+    public Session Session { get; }
     public IComputedState<AuthState> State { get; }
 
-    public AuthStateProvider(
-        Options options,
-        ISessionResolver sessionResolver,
-        IAuth auth,
-        IUICommandTracker uiCommandTracker,
-        IStateFactory stateFactory)
-    {
-        SessionResolver = sessionResolver;
-        Auth = auth;
-        UICommandTracker = uiCommandTracker;
+    protected IServiceProvider Services { get; }
+    protected IAuth Auth { get; }
+    protected IUICommandTracker UICommandTracker { get; }
 
+    public AuthStateProvider(Options options, IServiceProvider services)
+    {
+        Services = services;
+        Auth = services.GetRequiredService<IAuth>();
+        UICommandTracker = services.UICommandTracker();
+
+        Session = services.GetRequiredService<Session>();
         // ReSharper disable once VirtualMemberCallInConstructor
         var stateOptions = GetStateOptions(options);
-        State = stateFactory.NewComputed(stateOptions, ComputeState);
+        State = services.StateFactory().NewComputed(stateOptions, ComputeState);
     }
 
     public void Dispose()
@@ -73,20 +71,19 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
 
     protected virtual ComputedState<AuthState>.Options GetStateOptions(Options options)
         => new() {
-            InitialValue = new(new User("none")),
+            InitialValue = new(null, Session.Default),
             UpdateDelayer = options.UpdateDelayer,
             EventConfigurator = state => state.AddEventHandler(StateEventKind.Updated, OnStateChanged),
         };
 
     protected virtual async Task<AuthState> ComputeState(IComputedState<AuthState> state, CancellationToken cancellationToken)
     {
-        var session = await SessionResolver.GetSession(cancellationToken).ConfigureAwait(false);
-        var user = await Auth.GetUser(session, cancellationToken).ConfigureAwait(false);
+        var user = await Auth.GetUser(Session, cancellationToken).ConfigureAwait(false);
         // AuthService.GetUser checks for forced sign-out as well, so
         // we should explicitly query its state for unauthenticated users only
-        var isSignOutForced = !user.IsAuthenticated
-            && await Auth.IsSignOutForced(session, cancellationToken).ConfigureAwait(false);
-        return new AuthState(user, isSignOutForced);
+        var isSignOutForced = user == null
+            && await Auth.IsSignOutForced(Session, cancellationToken).ConfigureAwait(false);
+        return new AuthState(user, Session, isSignOutForced);
     }
 
     protected virtual void OnStateChanged(IState<AuthState> state, StateEventKind eventKind)

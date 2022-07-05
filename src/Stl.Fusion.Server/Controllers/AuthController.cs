@@ -50,10 +50,10 @@ public class AuthController : ControllerBase, IAuth
         => Auth.GetOptions(session, cancellationToken);
 
     [HttpGet, Publish]
-    public Task<User> GetUser(Session session, CancellationToken cancellationToken = default)
+    public Task<User?> GetUser(Session session, CancellationToken cancellationToken = default)
         => Auth.GetUser(session, cancellationToken);
 
     [HttpGet, Publish]
-    public Task<SessionInfo[]> GetUserSessions(Session session, CancellationToken cancellationToken = default)
+    public Task<ImmutableArray<SessionInfo>> GetUserSessions(Session session, CancellationToken cancellationToken = default)
         => Auth.GetUserSessions(session, cancellationToken);
 }

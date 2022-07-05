@@ -16,11 +16,12 @@ public class DbSessionInfoConverter<TDbContext, TDbSessionInfo, TDbUserId>
         => DbUserIdHandler = services.GetRequiredService<IDbUserIdHandler<TDbUserId>>();
 
     public override TDbSessionInfo NewEntity() => new();
-    public override SessionInfo NewModel() => new(Symbol.Empty, Clocks.SystemClock.Now);
+    public override SessionInfo NewModel() => new(Clocks.SystemClock.Now);
 
     public override void UpdateEntity(SessionInfo source, TDbSessionInfo target)
     {
-        if (target.Id != source.Id)
+        var session = new Session(target.Id);
+        if (!Equals(session.Hash, source.SessionHash))
             throw new ArgumentOutOfRangeException(nameof(source));
         if (target.IsSignOutForced)
             throw Errors.ForcedSignOut();
@@ -38,12 +39,14 @@ public class DbSessionInfoConverter<TDbContext, TDbSessionInfo, TDbUserId>
 
     public override SessionInfo UpdateModel(TDbSessionInfo source, SessionInfo target)
     {
+        var session = new Session(source.Id);
         var result = source.IsSignOutForced
-            ? new (source.Id, Clocks.SystemClock.Now) {
+            ? new (session, Clocks.SystemClock.Now) {
+                SessionHash = session.Hash,
                 IsSignOutForced = true,
             }
             : target with {
-                Id = source.Id,
+                SessionHash = session.Hash,
                 Version = source.Version,
                 CreatedAt = source.CreatedAt,
                 LastSeenAt = source.LastSeenAt,

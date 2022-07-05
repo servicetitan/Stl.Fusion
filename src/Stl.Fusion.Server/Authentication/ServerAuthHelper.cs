@@ -70,7 +70,7 @@ public class ServerAuthHelper : IHasServices
     {
         var httpUser = httpContext.User;
         var httpAuthenticationSchema = httpUser.Identity?.AuthenticationType ?? "";
-        var isAuthenticated = !string.IsNullOrEmpty(httpAuthenticationSchema);
+        var httpIsAuthenticated = !string.IsNullOrEmpty(httpAuthenticationSchema);
 
         var session = SessionResolver.Session;
         var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "";
@@ -86,26 +86,19 @@ public class ServerAuthHelper : IHasServices
             || sessionInfo.LastSeenAt + Settings.SessionInfoUpdatePeriod < Clocks.SystemClock.Now;
         if (mustUpdateSessionInfo) {
             var setupSessionCommand = new SetupSessionCommand(session, ipAddress, userAgent);
-            sessionInfo = await Commander.Call(setupSessionCommand, cancellationToken).ConfigureAwait(false);
+            await Commander.Call(setupSessionCommand, cancellationToken).ConfigureAwait(false);
         }
 
-        var userId = sessionInfo!.UserId;
-        var userIsAuthenticated = sessionInfo.IsAuthenticated && !sessionInfo.IsSignOutForced;
-        var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);
-        var user = userIsAuthenticated
-            ? await AuthBackend.GetUser(tenant.Id, userId, cancellationToken).ConfigureAwait(false)
-                ?? throw new KeyNotFoundException()
-            : new User(session.Id); // Guest
-
+        var user = await Auth.GetUser(session, cancellationToken).ConfigureAwait(false);
         try {
-            if (isAuthenticated) {
-                if (userIsAuthenticated && IsSameUser(user, httpUser, httpAuthenticationSchema))
+            if (httpIsAuthenticated) {
+                if (IsSameUser(user, httpUser, httpAuthenticationSchema))
                     return;
-                var (newUser, authenticatedIdentity) = UpsertUser(user, httpUser, httpAuthenticationSchema);
+                var (newUser, authenticatedIdentity) = CreateOrUpdateUser(user, httpUser, httpAuthenticationSchema);
                 var signInCommand = new SignInCommand(session, newUser, authenticatedIdentity);
                 await Commander.Call(signInCommand, cancellationToken).ConfigureAwait(false);
             }
-            else if (userIsAuthenticated && !Settings.KeepSignedIn) {
+            else if (user != null && !Settings.KeepSignedIn) {
                 var signOutCommand = new SignOutCommand(session);
                 await Commander.Call(signOutCommand, cancellationToken).ConfigureAwait(false);
             }
@@ -128,8 +121,10 @@ public class ServerAuthHelper : IHasServices
 
     // Protected methods
 
-    protected virtual bool IsSameUser(User user, ClaimsPrincipal httpUser, string schema)
+    protected virtual bool IsSameUser(User? user, ClaimsPrincipal httpUser, string schema)
     {
+        if (user == null) return false;
+
         var httpUserIdentityName = httpUser.Identity?.Name ?? "";
         var claims = httpUser.Claims.ToImmutableDictionary(c => c.Type, c => c.Value);
         var id = FirstClaimOrDefault(claims, Settings.IdClaimKeys) ?? httpUserIdentityName;
@@ -137,8 +132,8 @@ public class ServerAuthHelper : IHasServices
         return user.Identities.ContainsKey(identity);
     }
 
-    protected virtual (User User, UserIdentity AuthenticatedIdentity) UpsertUser(
-        User user, ClaimsPrincipal httpUser, string schema)
+    protected virtual (User User, UserIdentity AuthenticatedIdentity) CreateOrUpdateUser(
+        User? user, ClaimsPrincipal httpUser, string schema)
     {
         var httpUserIdentityName = httpUser.Identity?.Name ?? "";
         var claims = httpUser.Claims.ToImmutableDictionary(c => c.Type, c => c.Value);
@@ -147,7 +142,7 @@ public class ServerAuthHelper : IHasServices
         var identity = new UserIdentity(schema, id);
         var identities = ImmutableDictionary<UserIdentity, string>.Empty.Add(identity, "");
 
-        if (!user.IsAuthenticated)
+        if (user == null)
             // Create
             user = new User("", name) {
                 Claims = claims,

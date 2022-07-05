@@ -17,7 +17,7 @@ public class DbSessionInfo<TDbUserId> : IHasId<string>, IHasVersion<long>
     private DateTime _createdAt;
     private DateTime _lastSeenAt;
 
-    [Key, StringLength(32)]
+    [Key, StringLength(256)]
     public string Id { get; set; } = "";
     [ConcurrencyCheck] public long Version { get; set; }
 

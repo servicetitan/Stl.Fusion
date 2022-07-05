@@ -21,8 +21,8 @@ public abstract class DbAuthService<TDbContext> : DbServiceBase<TDbContext>, IAu
     public abstract Task UpdatePresence(Session session, CancellationToken cancellationToken = default);
     public abstract Task<bool> IsSignOutForced(Session session, CancellationToken cancellationToken = default);
     public abstract Task<SessionAuthInfo> GetAuthInfo(Session session, CancellationToken cancellationToken = default);
-    public abstract Task<User> GetUser(Session session, CancellationToken cancellationToken = default);
-    public abstract Task<SessionInfo[]> GetUserSessions(Session session, CancellationToken cancellationToken = default);
+    public abstract Task<User?> GetUser(Session session, CancellationToken cancellationToken = default);
+    public abstract Task<ImmutableArray<SessionInfo>> GetUserSessions(Session session, CancellationToken cancellationToken = default);
 
     // IAuthBackend
     public abstract Task SignIn(SignInCommand command, CancellationToken cancellationToken = default);

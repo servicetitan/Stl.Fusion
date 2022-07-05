@@ -1,22 +1,26 @@
+@inherits ComputedStateComponent<User?>
+@inject Session Session
+@inject IAuth Auth
 @inject BlazorModeHelper BlazorModeHelper
 @inject ClientAuthHelper ClientAuthHelper
 
 @{
-    var usedAuthSchemas = User.Identities.Select(kv => kv.Key.Schema).ToHashSet();
+    var user = State.LatestNonErrorValue;
+    var usedAuthSchemas = user?.Identities.Select(kv => kv.Key.Schema).ToHashSet() ?? new();
     var unusedAuthSchemas = AuthSchemas.Where(p => !usedAuthSchemas.Contains(p.Name)).ToArray();
-    var signInOrAddFormat = User.IsAuthenticated ? "Add {0} account" : "Sign in with {0}";
-    var signInIconName = User.IsAuthenticated ? FontAwesomeIcons.Plus : FontAwesomeIcons.SignInAlt;
+    var signInOrAddFormat = user != null ? "Add {0} account" : "Sign in with {0}";
+    var signInIconName = user != null ? FontAwesomeIcons.Plus : FontAwesomeIcons.SignInAlt;
 }
 
 <BarDropdown Class="@CssClass">
     <BarDropdownToggle>
-        @if (User.IsAuthenticated) {
+        @if (user != null) {
             <Blazorise.Icon Name="FontAwesomeIcons.UserCircle" IconStyle="@IconStyle.Solid" />
         }
         else {
             <Blazorise.Icon Name="FontAwesomeIcons.UserCircle" />
         }
-        <span class="pl-1">@User.Name</span>
+        <span class="pl-1">@(user?.Name ?? User.GuestName)</span>
     </BarDropdownToggle>
     <BarDropdownMenu>
         @foreach (var (name, displayName) in unusedAuthSchemas) {
@@ -37,16 +41,13 @@
 </BarDropdown>
 
 @code {
-    [Parameter]
-    public string CssClass { get; set; } = "";
-    [CascadingParameter]
-    private Task<AuthState> AuthStateTask { get; set; } = null!;
-    private AuthState AuthState { get; set; } = new(new User("")); // For SSB pre-render
-    private User User => AuthState.User;
     private (string Name, string DisplayName)[] AuthSchemas { get; set; } = Array.Empty<(string, string)>();
 
-    protected override async Task OnParametersSetAsync()
-        => AuthState = await AuthStateTask;
+    [Parameter]
+    public string CssClass { get; set; } = "";
+
+    protected override Task<User?> ComputeState(CancellationToken cancellationToken) 
+        => Auth.GetUser(Session, cancellationToken);
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

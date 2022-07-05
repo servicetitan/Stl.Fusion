@@ -7,7 +7,7 @@ using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework.Authentication;
 
-public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbAuthService<TDbContext>
+public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId>
 {
     // Commands
 
@@ -74,7 +74,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         };
         context.Operation().Items.Set(sessionInfo);
         context.Operation().Items.Set(isNewUser);
-        await Sessions.Upsert(dbContext, sessionInfo, cancellationToken).ConfigureAwait(false);
+        await Sessions.Upsert(dbContext, session.Id, sessionInfo, cancellationToken).ConfigureAwait(false);
     }
 
     // [CommandHandler] inherited
@@ -107,14 +107,15 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         var isNew = dbSessionInfo == null;
         var now = Clocks.SystemClock.Now;
         var sessionInfo = SessionConverter.ToModel(dbSessionInfo)
-            ?? SessionConverter.NewModel() with { Id = session.Id };
+            ?? SessionConverter.NewModel() with { SessionHash = session.Hash };
         sessionInfo = sessionInfo with {
             LastSeenAt = now,
             IPAddress = string.IsNullOrEmpty(ipAddress) ? sessionInfo.IPAddress : ipAddress,
             UserAgent = string.IsNullOrEmpty(userAgent) ? sessionInfo.UserAgent : userAgent,
         };
         try {
-            dbSessionInfo = await Sessions.Upsert(dbContext, sessionInfo, cancellationToken).ConfigureAwait(false);
+            dbSessionInfo = await Sessions.Upsert(dbContext, session.Id, sessionInfo, cancellationToken)
+                .ConfigureAwait(false);
             sessionInfo = SessionConverter.ToModel(dbSessionInfo);
             context.Operation().Items.Set(sessionInfo); // invSessionInfo
             context.Operation().Items.Set(isNew); // invIsNew
@@ -163,7 +164,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
             LastSeenAt = Clocks.SystemClock.Now,
             Options = options,
         };
-        await Sessions.Upsert(dbContext, sessionInfo, cancellationToken).ConfigureAwait(false);
+        await Sessions.Upsert(dbContext, session.Id, sessionInfo, cancellationToken).ConfigureAwait(false);
     }
 
     // Compute methods
@@ -181,11 +182,11 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     // Protected methods
 
     [ComputeMethod]
-    protected virtual async Task<SessionInfo[]> GetUserSessions(
+    protected virtual async Task<ImmutableArray<(Symbol Id, SessionInfo SessionInfo)>> GetUserSessions(
         Symbol tenantId, string userId, CancellationToken cancellationToken = default)
     {
         if (!DbUserIdHandler.TryParse(userId).IsSome(out var dbUserId))
-            return Array.Empty<SessionInfo>();
+            return ImmutableArray<(Symbol Id, SessionInfo SessionInfo)>.Empty;
 
         var dbContext = CreateDbContext(tenantId);
         await using var _1 = dbContext.ConfigureAwait(false);
@@ -193,9 +194,9 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         await using var _2 = tx.ConfigureAwait(false);
 
         var dbSessions = await Sessions.ListByUser(dbContext, dbUserId, cancellationToken).ConfigureAwait(false);
-        var sessions = new SessionInfo[dbSessions.Length];
-        for (var i = 0; i < dbSessions.Length; i++)
-            sessions[i] = SessionConverter.ToModel(dbSessions[i])!;
+        var sessions = dbSessions
+            .Select(x => ((Symbol) x.Id, SessionConverter.ToModel(x)))
+            .ToImmutableArray();
         return sessions;
     }
 }

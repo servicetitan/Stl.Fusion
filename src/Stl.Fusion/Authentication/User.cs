@@ -9,8 +9,7 @@ namespace Stl.Fusion.Authentication;
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
 public record User : IPrincipal, IIdentity, IHasId<Symbol>, IHasVersion<long>
 {
-    public static string GuestIdPrefix { get; } = "@guest/";
-    public static string GuestName { get; } = "Guest";
+    public static string GuestName { get; set; } = "Guest";
 
     private readonly Lazy<ClaimsPrincipal> _claimsPrincipalLazy;
 
@@ -26,10 +25,6 @@ public record User : IPrincipal, IIdentity, IHasId<Symbol>, IHasVersion<long>
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public ImmutableDictionary<UserIdentity, string> Identities { get; init; }
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
-    public bool IsAuthenticated => !(Id.IsEmpty || Id.Value.StartsWith(GuestIdPrefix, StringComparison.Ordinal));
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
-    string IIdentity.AuthenticationType => IsAuthenticated ? UserIdentity.DefaultSchema : "";
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public ClaimsPrincipal ClaimsPrincipal => _claimsPrincipalLazy.Value;
 
     [DataMember(Name = nameof(Identities))]
@@ -41,10 +36,15 @@ public record User : IPrincipal, IIdentity, IHasId<Symbol>, IHasVersion<long>
 
     // Explicit interface implementations
     IIdentity IPrincipal.Identity => this;
+    bool IIdentity.IsAuthenticated => !Id.IsEmpty;
+    string IIdentity.AuthenticationType => UserIdentity.DefaultSchema;
 
-    // Guest user constructor
-    public User(string guestIdSuffix) : this(GuestIdPrefix + guestIdSuffix, GuestName) { }
-    // Primary constructor
+    public static User NewGuest(string? name = null)
+        => new(name ?? GuestName);
+    public static User NewGuest(Session session, string? name = null)
+        => new User(name ?? GuestName).WithIdentity(UserIdentity.SessionHashIdentity, session.Hash);
+
+    public User(string name) : this(Symbol.Empty, name) { }
     public User(Symbol id, string name)
     {
         Id = id;

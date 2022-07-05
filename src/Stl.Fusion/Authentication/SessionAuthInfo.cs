@@ -1,8 +1,8 @@
 namespace Stl.Fusion.Authentication;
 
-public record SessionAuthInfo : IHasId<Symbol>
+public record SessionAuthInfo
 {
-    public Symbol Id { get; init; } = Symbol.Empty;
+    public string SessionHash { get; init; } = "";
 
     // Authentication
     public UserIdentity AuthenticatedIdentity { get; init; }
@@ -12,5 +12,6 @@ public record SessionAuthInfo : IHasId<Symbol>
     public bool IsAuthenticated => !string.IsNullOrEmpty(UserId);
 
     public SessionAuthInfo() { }
-    public SessionAuthInfo(Symbol id) => Id = id;
+    public SessionAuthInfo(Session? session)
+        => SessionHash = session?.Hash ?? "";
 }

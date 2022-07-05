@@ -32,11 +32,17 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
     // [CommandHandler] inherited
     public virtual async Task SignOut(SignOutCommand command, CancellationToken cancellationToken = default)
     {
-        var (session, force) = command;
+        var session = command.Session;
+        var otherSessionHash = command.OtherSessionHash;
+        var everywhere = command.Everywhere;
+        var force = command.Force;
+
         var context = CommandContext.GetCurrent();
         var tenant = await TenantResolver.Resolve(session, context, cancellationToken).ConfigureAwait(false);
 
         if (Computed.IsInvalidating()) {
+            if (everywhere || !otherSessionHash.IsNullOrEmpty())
+                return;
             _ = GetSessionInfo(session, default); // Must go first!
             _ = GetAuthInfo(session, default);
             if (force) {
@@ -47,6 +53,23 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
             if (invSessionInfo != null) {
                 _ = GetUser(tenant.Id, invSessionInfo.UserId, default);
                 _ = GetUserSessions(tenant.Id, invSessionInfo.UserId, default);
+            }
+            return;
+        }
+
+        // Let's handle special kinds of sign-out first, which only trigger "primary" sign-out version
+        if (everywhere || !otherSessionHash.IsNullOrEmpty()) {
+            var user = await GetUser(session, cancellationToken).ConfigureAwait(false);
+            if (user == null)
+                return;
+            var userSessions = await GetUserSessions(tenant, user.Id, cancellationToken).ConfigureAwait(false);
+            var signOutSessions = otherSessionHash.IsNullOrEmpty()
+                ? userSessions
+                : userSessions.Where(p => Equals(p.SessionInfo.SessionHash, otherSessionHash));
+            foreach (var (sessionId, _) in signOutSessions) {
+                var otherSessionSignOutCommand = new SignOutCommand(new Session(sessionId), force);
+                await Commander.Run(otherSessionSignOutCommand, isOutermost: true, cancellationToken)
+                    .ConfigureAwait(false);
             }
             return;
         }
@@ -62,7 +85,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
             UserId = "",
             IsSignOutForced = force,
         };
-        UpsertSessionInfo(tenant, sessionInfo, null);
+        UpsertSessionInfo(tenant, session.Id, sessionInfo, null);
     }
 
     // [CommandHandler] inherited
@@ -80,10 +103,10 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
         }
 
         var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
-        sessionInfo = sessionInfo.MustBeAuthenticated();
+        sessionInfo = sessionInfo.AssertAuthenticated();
 
         var user = await GetUser(tenant.Id, sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
-        user = user.MustBeAuthenticated();
+        user = user.AssertNotNull();
 
         context.Operation().Items.Set(sessionInfo);
         if (command.Name != null) {
@@ -125,9 +148,12 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
     {
         var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);
         var sessionInfo = SessionInfos.GetValueOrDefault((tenant, session.Id));
-        var authInfo = sessionInfo?.ToAuthInfo() ?? new SessionAuthInfo(session.Id);
+        var authInfo = sessionInfo?.ToAuthInfo() ?? new SessionAuthInfo(session);
         if (authInfo.IsSignOutForced) // Let's return a clean SessionAuthInfo in this case
-            authInfo = new SessionAuthInfo(authInfo.Id) { IsSignOutForced = true };
+            authInfo = new SessionAuthInfo() {
+                SessionHash = authInfo.SessionHash,
+                IsSignOutForced = true,
+            };
         return authInfo;
     }
 
@@ -150,24 +176,25 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
     }
 
     // [ComputeMethod] inherited
-    public virtual async Task<User> GetUser(Session session, CancellationToken cancellationToken = default)
+    public virtual async Task<User?> GetUser(Session session, CancellationToken cancellationToken = default)
     {
         var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);
         var sessionInfo = await GetAuthInfo(session, cancellationToken).ConfigureAwait(false);
         if (sessionInfo.IsSignOutForced || !sessionInfo.IsAuthenticated)
-            return new User(session.Id);
+            return null;
         var user = await GetUser(tenant.Id, sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
-        return (user ?? new User(session.Id)).ToClientSideUser();
+        return user;
     }
 
     // [ComputeMethod] inherited
-    public virtual async Task<SessionInfo[]> GetUserSessions(
+    public virtual async Task<ImmutableArray<SessionInfo>> GetUserSessions(
         Session session, CancellationToken cancellationToken = default)
     {
         var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);
         var user = await GetUser(session, cancellationToken).ConfigureAwait(false);
-        if (!user.IsAuthenticated)
-            return Array.Empty<SessionInfo>();
-        return await GetUserSessions(tenant.Id, user.Id, cancellationToken).ConfigureAwait(false);
+        if (user == null)
+            return ImmutableArray<SessionInfo>.Empty;
+        var sessions = await GetUserSessions(tenant.Id, user.Id, cancellationToken).ConfigureAwait(false);
+        return sessions.Select(p => p.SessionInfo).ToImmutableArray();
     }
 }

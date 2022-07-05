@@ -4,7 +4,7 @@ using Stl.Versioning;
 
 namespace Stl.Fusion.Authentication.Internal;
 
-public partial class InMemoryAuthService : IAuth, IAuthBackend
+public partial class InMemoryAuthService
 {
     // Command handlers
 
@@ -14,7 +14,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
         var (session, user, authenticatedIdentity) = command;
         var context = CommandContext.GetCurrent();
         var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
-        
+
         if (Computed.IsInvalidating()) {
             _ = GetSessionInfo(session, default); // Must go first!
             _ = GetAuthInfo(session, default);
@@ -27,11 +27,13 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
         }
 
         if (!user.Identities.ContainsKey(authenticatedIdentity))
+#pragma warning disable MA0015
             throw new ArgumentOutOfRangeException(
                 $"{nameof(command)}.{nameof(SignInCommand.AuthenticatedIdentity)}");
+#pragma warning restore MA0015
 
         var sessionInfo = SessionInfos.GetValueOrDefault((tenant, session.Id));
-        sessionInfo ??= new SessionInfo(session.Id, Clocks.SystemClock.Now);
+        sessionInfo ??= new SessionInfo(session, Clocks.SystemClock.Now);
         if (sessionInfo.IsSignOutForced)
             throw Errors.ForcedSignOut();
 
@@ -68,7 +70,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
 
         // Persist changes
         Users[(tenant, user.Id)] = user;
-        sessionInfo = UpsertSessionInfo(tenant, sessionInfo, sessionInfo.Version);
+        sessionInfo = UpsertSessionInfo(tenant, session.Id, sessionInfo, sessionInfo.Version);
         context.Operation().Items.Set(sessionInfo);
         context.Operation().Items.Set(isNewUser);
     }
@@ -96,12 +98,12 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
 
         var sessionInfo = SessionInfos.GetValueOrDefault((tenant, session.Id));
         context.Operation().Items.Set(sessionInfo == null); // invIsNew
-        sessionInfo ??= new SessionInfo(session.Id, Clocks.SystemClock.Now);
+        sessionInfo ??= new SessionInfo(session, Clocks.SystemClock.Now);
         sessionInfo = sessionInfo with {
             IPAddress = string.IsNullOrEmpty(ipAddress) ? sessionInfo.IPAddress : ipAddress,
             UserAgent = string.IsNullOrEmpty(userAgent) ? sessionInfo.UserAgent : userAgent,
         };
-        sessionInfo = UpsertSessionInfo(tenant, sessionInfo, sessionInfo.Version);
+        sessionInfo = UpsertSessionInfo(tenant, session.Id, sessionInfo, sessionInfo.Version);
         context.Operation().Items.Set(sessionInfo); // invSessionInfo
         return sessionInfo;
     }
@@ -125,7 +127,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
         sessionInfo = sessionInfo with {
             Options = options
         };
-        UpsertSessionInfo(tenant, sessionInfo, baseVersion);
+        UpsertSessionInfo(tenant, session.Id, sessionInfo, baseVersion);
     }
 
     // Compute methods
@@ -136,20 +138,20 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
 
     // Protected methods
 
-    protected virtual Task<SessionInfo[]> GetUserSessions(
+    protected virtual Task<ImmutableArray<(Symbol Id, SessionInfo SessionInfo)>> GetUserSessions(
         Symbol tenantId, string userId, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(userId))
-            return Task.FromResult(Array.Empty<SessionInfo>());
+            return Task.FromResult(ImmutableArray<(Symbol Id, SessionInfo SessionInfo)>.Empty);
         var result = SessionInfos
             .Where(kv => kv.Key.TenantId == tenantId && StringComparer.Ordinal.Equals(kv.Value.UserId, userId))
-            .Select(kv => kv.Value)
-            .OrderByDescending(si => si.LastSeenAt)
-            .ToArray();
+            .OrderByDescending(kv => kv.Value.LastSeenAt)
+            .Select(kv => (kv.Key.SessionId, kv.Value))
+            .ToImmutableArray();
         return Task.FromResult(result);
     }
 
-    protected virtual SessionInfo UpsertSessionInfo(Symbol tenantId, SessionInfo sessionInfo, long? baseVersion)
+    protected virtual SessionInfo UpsertSessionInfo(Symbol tenantId, Symbol sessionId, SessionInfo sessionInfo, long? baseVersion)
     {
         sessionInfo = sessionInfo with {
             Version = VersionGenerator.NextVersion(baseVersion ?? sessionInfo.Version),
@@ -158,7 +160,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
 #if NETSTANDARD2_0
         var sessionInfo1 = sessionInfo;
         var baseVersion1 = baseVersion;
-        SessionInfos.AddOrUpdate((tenantId, sessionInfo.Id),
+        SessionInfos.AddOrUpdate((tenantId, sessionId),
             _ => {
                 if (baseVersion1.HasValue && baseVersion1.GetValueOrDefault() != 0)
                     throw new VersionMismatchException();
@@ -176,7 +178,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
                     };
             });
 #else
-        SessionInfos.AddOrUpdate((tenantId, sessionInfo.Id),
+        SessionInfos.AddOrUpdate((tenantId, sessionId),
             static (_, arg) => {
                 var (sessionInfo1, baseVersion1) = arg;
                 if (baseVersion1.HasValue && baseVersion1.GetValueOrDefault() != 0)
@@ -197,7 +199,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
             },
             (sessionInfo, baseVersion));
 #endif
-        return SessionInfos.GetValueOrDefault((tenantId, sessionInfo.Id)) ?? sessionInfo;
+        return SessionInfos.GetValueOrDefault((tenantId, sessionId)) ?? sessionInfo;
     }
 
     protected virtual User? GetByUserIdentity(Symbol tenantId, UserIdentity userIdentity)

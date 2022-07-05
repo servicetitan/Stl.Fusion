@@ -1,5 +1,4 @@
 using System.Security;
-using Stl.Versioning;
 
 namespace Stl.Fusion.Authentication.Internal;
 
@@ -15,5 +14,5 @@ public static class Errors
     public static Exception ForcedSignOut()
         => new SecurityException("The Session is unavailable.");
     public static Exception NotAuthenticated()
-        => new SecurityException("Authenticated user required.");
+        => new SecurityException("You must sign in to perform this action.");
 }

@@ -6,7 +6,7 @@
 @using Stl.OS
 @using Stl.Text
 @implements IDisposable
-@inject ISessionProvider SessionProvider
+@inject Session Session
 @inject AuthStateProvider AuthStateProvider
 @inject PresenceService PresenceService
 @inject NavigationManager Nav
@@ -17,25 +17,14 @@
 </CascadingAuthenticationState>
 
 @code {
-    [Parameter]
+    [Parameter] 
     public RenderFragment ChildContent { get; set; } = _ => { };
-    [Parameter]
-    public string SessionId {
-        get => SessionProvider.HasSession ? SessionProvider.Session.Id : "";
-        set {
-            if (string.IsNullOrEmpty(value))
-                return; // Blazor WASM component is created w/ empty SessionId
-            if (SessionProvider.HasSession)
-                return;
-            SessionProvider.Session = new Session(value);
-        }
-    }
-    [Parameter]
+    [Parameter] 
     public bool StartPresenceService { get; set; } = true;
 
     protected override void OnInitialized()
     {
-        if (SessionId.IsNullOrEmpty())
+        if (Session.Id.IsEmpty)
             throw Errors.NoSessionId();
 
         AuthStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
