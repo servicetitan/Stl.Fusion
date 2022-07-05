@@ -6,7 +6,7 @@
 
 @{
     var user = State.LatestNonErrorValue.OrGuest();
-    var isAuthenticated = !user.IsGuest();
+    var isAuthenticated = user.IsAuthenticated();
     var usedAuthSchemas = user.Identities.Select(kv => kv.Key.Schema).ToHashSet() ?? new();
     var unusedAuthSchemas = AuthSchemas.Where(p => !usedAuthSchemas.Contains(p.Name)).ToArray();
     var signInOrAddFormat = isAuthenticated ? "Add {0} account" : "Sign in with {0}";
