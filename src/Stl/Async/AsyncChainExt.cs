@@ -110,6 +110,7 @@ public static class AsyncChainExt
         => new($"{asyncChain.Name}.CycleForever()", async cancellationToken => {
             while (true) {
                 await asyncChain.Start(cancellationToken).ConfigureAwait(false);
+                cancellationToken.ThrowIfCancellationRequested();
             }
             // ReSharper disable once FunctionNeverReturns
         });

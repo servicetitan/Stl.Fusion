@@ -2,7 +2,6 @@
 @implements IDisposable
 @inject BlazorCircuitContext BlazorCircuitContext
 @inject ISessionProvider SessionProvider
-@inject IServiceProvider Services
 
 <CascadingAuthState>
     <ThemeProvider Theme="@Theme">
@@ -22,7 +21,8 @@
 @code {
     private Theme Theme { get; } = new() { IsGradient = true, IsRounded = false };
 
-    [Parameter] public string SessionId { get; set; } = Session.Default.Id;
+    [Parameter]
+    public string SessionId { get; set; } = Session.Default.Id;
 
     protected override void OnInitialized()
     {

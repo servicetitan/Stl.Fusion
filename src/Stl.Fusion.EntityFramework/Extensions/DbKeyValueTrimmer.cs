@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.Extensions;
 using Stl.Multitenancy;
 
@@ -68,7 +67,7 @@ public class DbKeyValueTrimmer<TDbContext, TDbKeyValue> : DbTenantWorkerBase<TDb
                 : Settings.CheckPeriod;
             return Clocks.CpuClock.Delay(delay.Next(), cancellationToken1);
         });
-        
+
         var chain = runChain
             .RetryForever(Settings.RetryDelays, Clocks.CpuClock, Log)
             .Append(sleepChain)

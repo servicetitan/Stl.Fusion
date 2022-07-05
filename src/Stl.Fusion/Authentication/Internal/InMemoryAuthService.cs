@@ -107,7 +107,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
         sessionInfo = sessionInfo.AssertAuthenticated();
 
         var user = await GetUser(tenant.Id, sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
-        user = user.AssertNotNull();
+        user = user.AssertAuthenticated();
 
         context.Operation().Items.Set(sessionInfo);
         if (command.Name != null) {

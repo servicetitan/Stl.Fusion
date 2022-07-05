@@ -5,22 +5,23 @@
 @inject ClientAuthHelper ClientAuthHelper
 
 @{
-    var user = State.LatestNonErrorValue;
-    var usedAuthSchemas = user?.Identities.Select(kv => kv.Key.Schema).ToHashSet() ?? new();
+    var user = State.LatestNonErrorValue.OrGuest();
+    var isAuthenticated = !user.IsGuest();
+    var usedAuthSchemas = user.Identities.Select(kv => kv.Key.Schema).ToHashSet() ?? new();
     var unusedAuthSchemas = AuthSchemas.Where(p => !usedAuthSchemas.Contains(p.Name)).ToArray();
-    var signInOrAddFormat = user != null ? "Add {0} account" : "Sign in with {0}";
-    var signInIconName = user != null ? FontAwesomeIcons.Plus : FontAwesomeIcons.SignInAlt;
+    var signInOrAddFormat = isAuthenticated ? "Add {0} account" : "Sign in with {0}";
+    var signInIconName = isAuthenticated ? FontAwesomeIcons.Plus : FontAwesomeIcons.SignInAlt;
 }
 
 <BarDropdown Class="@CssClass">
     <BarDropdownToggle>
-        @if (user != null) {
+        @if (isAuthenticated) {
             <Blazorise.Icon Name="FontAwesomeIcons.UserCircle" IconStyle="@IconStyle.Solid" />
         }
         else {
             <Blazorise.Icon Name="FontAwesomeIcons.UserCircle" />
         }
-        <span class="pl-1">@(user?.Name ?? User.GuestName)</span>
+        <span class="pl-1">@user.Name</span>
     </BarDropdownToggle>
     <BarDropdownMenu>
         @foreach (var (name, displayName) in unusedAuthSchemas) {

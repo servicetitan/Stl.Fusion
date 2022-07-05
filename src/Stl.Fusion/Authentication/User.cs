@@ -75,6 +75,8 @@ public record User : IHasId<Symbol>, IHasVersion<long>
     public User WithIdentity(UserIdentity identity, string secret = "")
         => this with { Identities = Identities.SetItem(identity, secret) };
 
+    public bool IsAuthenticated()
+        => !Id.IsEmpty;
     public bool IsGuest()
         => Id.IsEmpty;
     public virtual bool IsInRole(string role)

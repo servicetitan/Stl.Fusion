@@ -5,27 +5,23 @@
 @inject ClientAuthHelper ClientAuthHelper
 
 @{
-    var user = State.LatestNonErrorValue;
-    var usedAuthSchemas = user?.Identities.Select(kv => kv.Key.Schema).ToHashSet() ?? new();
+    var user = State.LatestNonErrorValue.OrGuest();
+    var usedAuthSchemas = user.Identities.Select(kv => kv.Key.Schema).ToHashSet();
     var unusedAuthSchemas = AuthSchemas.Where(p => !usedAuthSchemas.Contains(p.Name)).ToArray();
 }
 
-<AuthorizeView>
-    <NotAuthorized>
-        <Dropdown Class="@CssClass">
-            <DropdownToggle Color="Color.Success">
-                <Blazorise.Icon Name="FontAwesomeIcons.SignInAlt" /> Sign in @Why
-            </DropdownToggle>
-            <DropdownMenu>
-                @foreach (var (name, displayName) in unusedAuthSchemas) {
-                    <DropdownItem Color="Color.Primary" Clicked="@(_ => ClientAuthHelper.SignIn(name))">
-                        With @displayName
-                    </DropdownItem>
-                }
-            </DropdownMenu>
-        </Dropdown>
-    </NotAuthorized>
-</AuthorizeView>
+<Dropdown Class="@CssClass">
+    <DropdownToggle Color="Color.Success">
+        <Blazorise.Icon Name="FontAwesomeIcons.SignInAlt" /> Sign in @Why
+    </DropdownToggle>
+    <DropdownMenu>
+        @foreach (var (name, displayName) in unusedAuthSchemas) {
+            <DropdownItem Color="Color.Primary" Clicked="@(_ => ClientAuthHelper.SignIn(name))">
+                With @displayName
+            </DropdownItem>
+        }
+    </DropdownMenu>
+</Dropdown>
 
 @code {
     private (string Name, string DisplayName)[] AuthSchemas { get; set; } = Array.Empty<(string, string)>();
