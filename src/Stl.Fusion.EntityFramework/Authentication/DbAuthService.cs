@@ -39,15 +39,16 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         SignOutCommand command, CancellationToken cancellationToken = default)
     {
         var session = command.Session;
-        var otherSessionHash = command.OtherSessionHash;
-        var everywhere = command.Everywhere;
+        var kickedSessionHash = command.KickedSessionHash;
+        var kickEverySession = command.KickEverySession;
+        var isKickCommand = kickEverySession || !kickedSessionHash.IsNullOrEmpty();
         var force = command.Force;
 
         var context = CommandContext.GetCurrent();
         var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
 
         if (Computed.IsInvalidating()) {
-            if (everywhere || !otherSessionHash.IsNullOrEmpty())
+            if (isKickCommand)
                 return;
             _ = GetSessionInfo(session, default); // Must go first!
             _ = GetAuthInfo(session, default);
@@ -64,14 +65,14 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         }
 
         // Let's handle special kinds of sign-out first, which only trigger "primary" sign-out version
-        if (everywhere || !otherSessionHash.IsNullOrEmpty()) {
+        if (isKickCommand) {
             var user = await GetUser(session, cancellationToken).ConfigureAwait(false);
             if (user == null)
                 return;
             var userSessions = await GetUserSessions(tenant, user.Id, cancellationToken).ConfigureAwait(false);
-            var signOutSessions = otherSessionHash.IsNullOrEmpty()
+            var signOutSessions = kickedSessionHash.IsNullOrEmpty()
                 ? userSessions
-                : userSessions.Where(p => Equals(p.SessionInfo.SessionHash, otherSessionHash));
+                : userSessions.Where(p => Equals(p.SessionInfo.SessionHash, kickedSessionHash));
             foreach (var (sessionId, _) in signOutSessions) {
                 var otherSessionSignOutCommand = new SignOutCommand(new Session(sessionId), force);
                 await Commander.Run(otherSessionSignOutCommand, isOutermost: true, cancellationToken)

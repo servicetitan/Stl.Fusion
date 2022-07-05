@@ -51,7 +51,7 @@ public class ClientAuthHelper
     public virtual Task SignOut(Session session, bool force = false)
         => Commander.Call(new SignOutCommand(session, force));
     public virtual Task SignOutEverywhere(bool force = true)
-        => Commander.Call(new SignOutCommand(Session, force) { Everywhere = true });
+        => Commander.Call(new SignOutCommand(Session, force) { KickEverySession = true });
     public virtual Task Kick(Session session, string otherSessionHash, bool force = false)
         => Commander.Call(new SignOutCommand(session, otherSessionHash, force));
 }

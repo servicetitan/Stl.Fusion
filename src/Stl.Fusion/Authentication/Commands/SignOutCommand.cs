@@ -6,9 +6,9 @@ public record SignOutCommand: ISessionCommand<Unit>
     [DataMember]
     public Session Session { get; init; } = Session.Null;
     [DataMember]
-    public string? OtherSessionHash { get; init; }
+    public string? KickedSessionHash { get; init; }
     [DataMember]
-    public bool Everywhere { get; init; }
+    public bool KickEverySession { get; init; }
     [DataMember]
     public bool Force { get; init; }
 
@@ -18,10 +18,10 @@ public record SignOutCommand: ISessionCommand<Unit>
         Session = session;
         Force = force;
     }
-    public SignOutCommand(Session session, string otherSessionHash, bool force = false)
+    public SignOutCommand(Session session, string kickedSessionHash, bool force = false)
     {
         Session = session;
-        OtherSessionHash = otherSessionHash;
+        KickedSessionHash = kickedSessionHash;
         Force = force;
     }
 }
