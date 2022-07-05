@@ -2,7 +2,6 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Text;
-using Stl.Pooling;
 
 namespace Stl.Net;
 
