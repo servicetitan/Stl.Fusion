@@ -8,8 +8,6 @@ public readonly struct UserIdentity : IEquatable<UserIdentity>
 
     public static UserIdentity None { get; } = default;
     public static string DefaultSchema { get; } = "Default";
-    public static string FusionSchema { get; } = "Fusion";
-    public static UserIdentity SessionHashIdentity { get; } = new(FusionSchema, "Session.Hash");
 
     [DataMember(Order = 0)]
     public Symbol Id { get; }

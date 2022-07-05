@@ -1,4 +1,4 @@
-@using Stl.DependencyInjection
+@using Stl.OS
 @implements IDisposable
 @inject BlazorCircuitContext BlazorCircuitContext
 @inject ISessionProvider SessionProvider
@@ -26,7 +26,9 @@
 
     protected override void OnInitialized()
     {
-        SessionProvider.Session = new Session(SessionId);
+        SessionProvider.Session = OSInfo.IsWebAssembly 
+            ? Session.Default 
+            : new Session(SessionId);
         if (!BlazorCircuitContext.IsPrerendering)
             BlazorCircuitContext.RootComponent = this;
     }

@@ -9,6 +9,4 @@ public static class UserExt
 
     public static User OrGuest(this User? user, string? name = null)
         => user ?? User.NewGuest(name);
-    public static User OrGuest(this User? user, Session session, string? name = null)
-        => user ?? User.NewGuest(session, name);
 }

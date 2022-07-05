@@ -1,5 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using Microsoft.Toolkit.HighPerformance;
+using Stl.Internal;
+using Stl.OS;
 
 namespace Stl;
 

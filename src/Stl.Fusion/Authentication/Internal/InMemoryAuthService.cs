@@ -139,22 +139,16 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
     public virtual async Task<bool> IsSignOutForced(Session session, CancellationToken cancellationToken = default)
     {
         var sessionInfo = await GetAuthInfo(session, cancellationToken).ConfigureAwait(false);
-        return sessionInfo.IsSignOutForced;
+        return sessionInfo?.IsSignOutForced ?? false;
     }
 
     // [ComputeMethod] inherited
-    public virtual async Task<SessionAuthInfo> GetAuthInfo(
+    public virtual async Task<SessionAuthInfo?> GetAuthInfo(
         Session session, CancellationToken cancellationToken = default)
     {
         var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);
         var sessionInfo = SessionInfos.GetValueOrDefault((tenant, session.Id));
-        var authInfo = sessionInfo?.ToAuthInfo() ?? new SessionAuthInfo(session);
-        if (authInfo.IsSignOutForced) // Let's return a clean SessionAuthInfo in this case
-            authInfo = new SessionAuthInfo() {
-                SessionHash = authInfo.SessionHash,
-                IsSignOutForced = true,
-            };
-        return authInfo;
+        return sessionInfo.ToAuthInfo();
     }
 
     // [ComputeMethod] inherited
@@ -179,10 +173,11 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
     public virtual async Task<User?> GetUser(Session session, CancellationToken cancellationToken = default)
     {
         var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);
-        var sessionInfo = await GetAuthInfo(session, cancellationToken).ConfigureAwait(false);
-        if (sessionInfo.IsSignOutForced || !sessionInfo.IsAuthenticated)
+        var authInfo = await GetAuthInfo(session, cancellationToken).ConfigureAwait(false);
+        if (!authInfo.IsAuthenticated())
             return null;
-        var user = await GetUser(tenant.Id, sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
+
+        var user = await GetUser(tenant.Id, authInfo!.UserId, cancellationToken).ConfigureAwait(false);
         return user;
     }
 

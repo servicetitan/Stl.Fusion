@@ -91,8 +91,8 @@ public partial class InMemoryAuthService
                 _ = GetOptions(session, default);
             }
             var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
-            if (invSessionInfo is { IsAuthenticated: true })
-                _ = GetUserSessions(tenant.Id, invSessionInfo.UserId, default);
+            if (invSessionInfo.IsAuthenticated())
+                _ = GetUserSessions(tenant.Id, invSessionInfo!.UserId, default);
             return null!;
         }
 

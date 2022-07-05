@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using System.Globalization;
+using Microsoft.Toolkit.HighPerformance;
 using Stl.Conversion;
 using Stl.Fusion.Authentication.Internal;
 
@@ -19,7 +21,7 @@ public sealed class Session : IHasId<Symbol>, IEquatable<Session>,
     [DataMember(Order = 0)]
     public Symbol Id { get; }
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
-    public string Hash => _hash ??= Id.Value.GetMD5HashCode();
+    public string Hash => _hash ??= ComputeHash();
 
     public Session(Symbol id)
     {
@@ -49,6 +51,13 @@ public sealed class Session : IHasId<Symbol>, IEquatable<Session>,
         var prefix = idValue[..atIndex];
         return new Session(tenantId.IsEmpty ? prefix :$"{prefix}@{tenantId.Value}");
     }
+
+    // We use non-cryptographic hash here because System.Security.Cryptography isn't supported in Blazor.
+    // The length of hash is much smaller than Session.Id, so it's still almost impossible to guess
+    // SessionId by knowing it; on the other hand, ~4B hash variants are enough to identify 
+    // a Session of a given user, and that's the only purpose of this hash.
+    private string ComputeHash()
+        => ((uint) Id.Value.GetDjb2HashCode()).ToString("x8", CultureInfo.InvariantCulture);
 
     // Conversion
 

@@ -106,8 +106,8 @@ public static class AsyncChainExt
             });
     }
 
-    public static AsyncChain Cycle(this AsyncChain asyncChain)
-        => new($"{asyncChain.Name}.Cycle()", async cancellationToken => {
+    public static AsyncChain CycleForever(this AsyncChain asyncChain)
+        => new($"{asyncChain.Name}.CycleForever()", async cancellationToken => {
             while (true) {
                 await asyncChain.Start(cancellationToken).ConfigureAwait(false);
             }

@@ -80,7 +80,7 @@ public class RadixHeapSetTest : TestBase
         }
         for (var i = 0; i < 95; i++) {
             var minSet = heap.ExtractMinSet(i);
-            var isFit = 0 == (i - 1) % 5;
+            var isFit = (i - 1) % 5 == 0;
             minSet.Count.Should().Be(isFit ? 1 : 0);
             if (isFit)
                 minSet.Single().Value.Should().Be(i);

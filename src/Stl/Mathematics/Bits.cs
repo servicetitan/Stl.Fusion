@@ -19,7 +19,7 @@ public static class Bits
     };
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsPowerOf2(ulong n) => 0 == (n & (n - 1));
+    public static bool IsPowerOf2(ulong n) => (n & (n - 1)) == 0;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ulong Lsb(ulong n) => n & (~n + 1);

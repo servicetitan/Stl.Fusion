@@ -6,14 +6,13 @@ namespace Stl.Fusion.Blazor;
 public class AuthState : AuthenticationState
 {
     public new User? User { get; }
-    public Session Session { get; }
     public bool IsSignOutForced { get; }
 
-    public AuthState(User? user, Session session, bool isSignOutForced = false)
-        : base(user.OrGuest(session).ClaimsPrincipal)
+    public AuthState() : this(null) { }
+    public AuthState(User? user, bool isSignOutForced = false)
+        : base(user.OrGuest().ToClaimsPrincipal())
     {
         User = user;
-        Session = session;
         IsSignOutForced = isSignOutForced;
     }
 }

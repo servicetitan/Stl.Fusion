@@ -72,12 +72,15 @@
     // Check your explanation on our Discord: https://discord.gg/EKEwv6d
     [CascadingParameter] protected Task<AuthState> AuthState { get; set; } = null!;
 
+    protected override Task OnInitializedAsync() 
+        => State.Update().AsTask();
+
     protected override async Task<Todo[]> ComputeState(CancellationToken cancellationToken)
     {
         var items = await Todos.List(Session, PageSize + 1, cancellationToken);
         HasMore = items.Length > PageSize;
         if (HasMore)
-            items = items[0..PageSize];
+            items = items[..PageSize];
         LastStateUpdateTime = DateTime.UtcNow;
         return items;
     }
@@ -85,7 +88,7 @@
     private void LoadMore()
     {
         PageSize *= 2;
-        State.Recompute();
+        _ = State.Recompute();
     }
 
     private void Create()

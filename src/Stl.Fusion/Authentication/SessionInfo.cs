@@ -18,12 +18,4 @@ public record SessionInfo : SessionAuthInfo, IHasVersion<long>
         CreatedAt = createdAt;
         LastSeenAt = createdAt;
     }
-
-    public SessionAuthInfo ToAuthInfo()
-        => new () {
-            SessionHash = SessionHash,
-            AuthenticatedIdentity = AuthenticatedIdentity,
-            UserId = UserId,
-            IsSignOutForced = IsSignOutForced,
-        };
 }

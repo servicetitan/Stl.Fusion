@@ -95,7 +95,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
                 _ = GetAuthInfo(session, default);
                 _ = GetOptions(session, default);
             }
-            if (invSessionInfo.IsAuthenticated)
+            if (invSessionInfo.IsAuthenticated())
                 _ = GetUserSessions(tenant.Id, invSessionInfo.UserId, default);
             return null!;
         }

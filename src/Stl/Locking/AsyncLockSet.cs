@@ -161,7 +161,7 @@ public class AsyncLockSet<TKey> : IAsyncLockSet<TKey>
         {
             var mustRelease = false;
             lock (this) {
-                if (_asyncLock != null && 0 == --_useCount) {
+                if (_asyncLock != null && --_useCount == 0) {
                     _asyncLock = null;
                     mustRelease = true;
                 }

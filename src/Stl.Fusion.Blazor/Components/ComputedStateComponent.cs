@@ -21,7 +21,7 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
     // State frequently depends on component parameters, so...
     protected override Task OnParametersSetAsync()
     {
-        if (0 == (Options & ComputedStateComponentOptions.RecomputeOnParametersSet))
+        if ((Options & ComputedStateComponentOptions.RecomputeOnParametersSet) == 0)
             return Task.CompletedTask;
         _ = State.Recompute();
         return Task.CompletedTask;

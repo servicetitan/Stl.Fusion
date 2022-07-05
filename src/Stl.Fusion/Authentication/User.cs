@@ -1,17 +1,16 @@
 using System.Globalization;
 using System.Security.Claims;
-using System.Security.Principal;
 using Stl.Versioning;
 
 namespace Stl.Fusion.Authentication;
 
 [DataContract]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
-public record User : IPrincipal, IIdentity, IHasId<Symbol>, IHasVersion<long>
+public record User : IHasId<Symbol>, IHasVersion<long>
 {
     public static string GuestName { get; set; } = "Guest";
 
-    private readonly Lazy<ClaimsPrincipal> _claimsPrincipalLazy;
+    private Lazy<ClaimsPrincipal>? _claimsPrincipalLazy;
 
     [DataMember]
     public Symbol Id { get; init; }
@@ -21,11 +20,8 @@ public record User : IPrincipal, IIdentity, IHasId<Symbol>, IHasVersion<long>
     public long Version { get; init; }
     [DataMember]
     public ImmutableDictionary<string, string> Claims { get; init; }
-
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public ImmutableDictionary<UserIdentity, string> Identities { get; init; }
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
-    public ClaimsPrincipal ClaimsPrincipal => _claimsPrincipalLazy.Value;
 
     [DataMember(Name = nameof(Identities))]
     [JsonPropertyName(nameof(Identities)),  Newtonsoft.Json.JsonProperty(nameof(Identities))]
@@ -34,15 +30,8 @@ public record User : IPrincipal, IIdentity, IHasId<Symbol>, IHasVersion<long>
         init => Identities = value.ToImmutableDictionary(p => new UserIdentity(p.Key), p => p.Value);
     }
 
-    // Explicit interface implementations
-    IIdentity IPrincipal.Identity => this;
-    bool IIdentity.IsAuthenticated => !Id.IsEmpty;
-    string IIdentity.AuthenticationType => UserIdentity.DefaultSchema;
-
     public static User NewGuest(string? name = null)
         => new(name ?? GuestName);
-    public static User NewGuest(Session session, string? name = null)
-        => new User(name ?? GuestName).WithIdentity(UserIdentity.SessionHashIdentity, session.Hash);
 
     public User(string name) : this(Symbol.Empty, name) { }
     public User(Symbol id, string name)
@@ -51,7 +40,6 @@ public record User : IPrincipal, IIdentity, IHasId<Symbol>, IHasVersion<long>
         Name = name;
         Claims = ImmutableDictionary<string, string>.Empty;
         Identities = ImmutableDictionary<UserIdentity, string>.Empty;
-        _claimsPrincipalLazy = new(ToClaimsPrincipal);
     }
 
     [JsonConstructor, Newtonsoft.Json.JsonConstructor]
@@ -68,7 +56,6 @@ public record User : IPrincipal, IIdentity, IHasId<Symbol>, IHasVersion<long>
         Claims = claims;
         Identities = ImmutableDictionary<UserIdentity, string>.Empty;
         JsonCompatibleIdentities = jsonCompatibleIdentities;
-        _claimsPrincipalLazy = new(ToClaimsPrincipal);
     }
 
     // Record copy constructor.
@@ -80,7 +67,7 @@ public record User : IPrincipal, IIdentity, IHasId<Symbol>, IHasVersion<long>
         Name = other.Name;
         Claims = other.Claims;
         Identities = other.Identities;
-        _claimsPrincipalLazy = new(ToClaimsPrincipal);
+        _claimsPrincipalLazy = new(CreateClaimsPrincipal);
     }
 
     public User WithClaim(string name, string value)
@@ -88,6 +75,8 @@ public record User : IPrincipal, IIdentity, IHasId<Symbol>, IHasVersion<long>
     public User WithIdentity(UserIdentity identity, string secret = "")
         => this with { Identities = Identities.SetItem(identity, secret) };
 
+    public bool IsGuest()
+        => Id.IsEmpty;
     public virtual bool IsInRole(string role)
         => Claims.ContainsKey($"{ClaimTypes.Role}/{role}");
 
@@ -101,6 +90,9 @@ public record User : IPrincipal, IIdentity, IHasId<Symbol>, IHasVersion<long>
         return this with { Identities = maskedIdentities };
     }
 
+    public ClaimsPrincipal ToClaimsPrincipal()
+        => (_claimsPrincipalLazy ??= new(CreateClaimsPrincipal)).Value;
+
     // Equality is changed back to reference-based
 
     public virtual bool Equals(User? other) => ReferenceEquals(this, other);
@@ -108,18 +100,28 @@ public record User : IPrincipal, IIdentity, IHasId<Symbol>, IHasVersion<long>
 
     // Protected methods
 
-    protected virtual ClaimsPrincipal ToClaimsPrincipal()
+    protected virtual ClaimsPrincipal CreateClaimsPrincipal()
     {
         var claims = new List<Claim>();
-        if (!Id.IsEmpty)
-            claims.Add(new(ClaimTypes.NameIdentifier, Id, ClaimValueTypes.String));
-        claims.Add(new(ClaimTypes.Version, Version.ToString(CultureInfo.InvariantCulture), ClaimValueTypes.String));
-        if (!string.IsNullOrEmpty(Name))
-            claims.Add(new(ClaimTypes.Name, Name, ClaimValueTypes.String));
-        foreach (var (key, value) in Claims)
-            claims.Add(new Claim(key, value));
-        var identity = (IIdentity) this;
-        var claimsIdentity = new ClaimsIdentity(claims, identity.AuthenticationType);
-        return new ClaimsPrincipal(claimsIdentity);
+        if (IsGuest()) {
+            // Guest (not authenticated)
+            if (!string.IsNullOrEmpty(Name))
+                claims.Add(new(ClaimTypes.Name, Name, ClaimValueTypes.String));
+            foreach (var (key, value) in Claims)
+                claims.Add(new Claim(key, value));
+            var claimsIdentity = new ClaimsIdentity(claims);
+            return new ClaimsPrincipal(claimsIdentity);
+        }
+        else {
+            // Authenticated
+            claims.Add(new Claim(ClaimTypes.NameIdentifier, Id, ClaimValueTypes.String));
+            claims.Add(new(ClaimTypes.Version, Version.ToString(CultureInfo.InvariantCulture), ClaimValueTypes.String));
+            if (!string.IsNullOrEmpty(Name))
+                claims.Add(new(ClaimTypes.Name, Name, ClaimValueTypes.String));
+            foreach (var (key, value) in Claims)
+                claims.Add(new Claim(key, value));
+            var claimsIdentity = new ClaimsIdentity(claims, UserIdentity.DefaultSchema);
+            return new ClaimsPrincipal(claimsIdentity);
+        }
     }
 }

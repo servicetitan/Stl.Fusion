@@ -65,7 +65,7 @@ public class DbSessionInfoTrimmer<TDbContext, TDbSessionInfo, TDbUserId> : DbSes
         var chain = runChain
             .RetryForever(Settings.RetryDelays, Clocks.CpuClock, Log)
             .Append(sleepChain)
-            .Cycle();
+            .CycleForever();
 
         return chain.Start(cancellationToken);
     }

@@ -73,7 +73,7 @@ public class ServerAuthHelper : IHasServices
         var httpIsAuthenticated = !string.IsNullOrEmpty(httpAuthenticationSchema);
 
         var session = SessionResolver.Session;
-        var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "";
+        var ipAddress = httpContext.GetRemoteIPAddress()?.ToString() ?? "";
         var userAgent = httpContext.Request.Headers.TryGetValue("User-Agent", out var userAgentValues)
             ? userAgentValues.FirstOrDefault() ?? ""
             : "";

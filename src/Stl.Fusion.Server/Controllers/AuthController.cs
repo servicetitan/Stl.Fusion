@@ -38,7 +38,7 @@ public class AuthController : ControllerBase, IAuth
         => Auth.IsSignOutForced(session, cancellationToken);
 
     [HttpGet, Publish]
-    public Task<SessionAuthInfo> GetAuthInfo(Session session, CancellationToken cancellationToken = default)
+    public Task<SessionAuthInfo?> GetAuthInfo(Session session, CancellationToken cancellationToken = default)
         => Auth.GetAuthInfo(session, cancellationToken);
 
     [HttpGet, Publish]

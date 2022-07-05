@@ -8,7 +8,7 @@ public interface IComputedState : IState, IDisposable, IHasWhenDisposed
     }
 
     IUpdateDelayer UpdateDelayer { get; set; }
-    Task UpdateTask { get; }
+    Task UpdateCycleTask { get; }
     CancellationToken DisposeToken { get; }
 }
 
@@ -34,7 +34,7 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
     }
 
     public CancellationToken DisposeToken { get; }
-    public Task UpdateTask { get; private set; } = null!;
+    public Task UpdateCycleTask { get; private set; } = null!;
     public Task? WhenDisposed => _whenDisposed;
 
     protected ComputedState(Options options, IServiceProvider services, bool initialize = true)
@@ -50,17 +50,17 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
 
     protected override void Initialize(State<T>.Options options)
     {
-        if (UpdateTask != null!)
+        if (UpdateCycleTask != null!)
             return;
         base.Initialize(options);
 
         // We must suppress execution context flow here, because
         // the Update is ~ a worker-style task
         if (ExecutionContext.IsFlowSuppressed())
-            UpdateTask = Task.Run(Update, CancellationToken.None);
+            UpdateCycleTask = Task.Run(UpdateCycle, CancellationToken.None);
         else {
             using var _ = ExecutionContext.SuppressFlow();
-            UpdateTask = Task.Run(Update, CancellationToken.None);
+            UpdateCycleTask = Task.Run(UpdateCycle, CancellationToken.None);
         }
     }
 
@@ -73,13 +73,13 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
         lock (Lock) {
             if (_whenDisposed != null)
                 return;
-            _whenDisposed = UpdateTask ?? Task.CompletedTask;
+            _whenDisposed = UpdateCycleTask ?? Task.CompletedTask;
             GC.SuppressFinalize(this);
             _disposeTokenSource.CancelAndDisposeSilently();
         }
     }
 
-    protected virtual async Task Update()
+    protected virtual async Task UpdateCycle()
     {
         var cancellationToken = DisposeToken;
         while (!cancellationToken.IsCancellationRequested) {
@@ -97,7 +97,7 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
                 // Will break from "while" loop later if it's due to cancellationToken cancellation
             }
             catch (Exception e) {
-                Log.LogError(e, "Failure inside Update()");
+                Log.LogError(e, "Failure inside UpdateCycle()");
             }
         }
     }

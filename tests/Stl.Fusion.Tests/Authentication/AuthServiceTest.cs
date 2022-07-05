@@ -116,12 +116,12 @@ public abstract class AuthServiceTestBase : FusionTestBase
         user = await authClient.GetUser(sessionA);
         user.Should().NotBeNull();
         user!.Id.Should().Be(bob.Id);
-        (user as IIdentity).IsAuthenticated.Should().BeTrue();
+        user.ToClaimsPrincipal().Identity!.IsAuthenticated.Should().BeTrue();
 
         user = await authClient.GetUser(session);
         user.Should().NotBeNull();
         user!.Id.Should().Be(bob.Id);
-        (user as IIdentity).IsAuthenticated.Should().BeTrue();
+        user.ToClaimsPrincipal().Identity!.IsAuthenticated.Should().BeTrue();
 
         // Checking if local service is able to see the same user & sessions
         if (!Options.UseInMemoryAuthService) {
@@ -129,7 +129,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
             user = await auth.GetUser(session);
             user.Should().NotBeNull();
             user!.Id.Should().Be(bob.Id);
-            (user as IIdentity).IsAuthenticated.Should().BeTrue();
+            user.ToClaimsPrincipal().Identity!.IsAuthenticated.Should().BeTrue();
         }
 
         // Checking guest session
@@ -197,7 +197,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         user = await authClient.GetUser(session);
         user.Should().NotBeNull();
         user!.Id.Should().Be(bob.Id);
-        (user as IIdentity).IsAuthenticated.Should().BeTrue();
+        user.ToClaimsPrincipal().Identity!.IsAuthenticated.Should().BeTrue();
         user.Claims.Count.Should().Be(2);
 
         // Checking if local service is able to see the same user & sessions
@@ -206,7 +206,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
             user = await auth.GetUser(session);
             user.Should().NotBeNull();
             user!.Id.Should().Be(bob.Id);
-            (user as IIdentity).IsAuthenticated.Should().BeTrue();
+            user.ToClaimsPrincipal().Identity!.IsAuthenticated.Should().BeTrue();
         }
 
         // Checking guest session
@@ -240,11 +240,10 @@ public abstract class AuthServiceTestBase : FusionTestBase
         var user = await auth.GetUser(session);
         user.Should().BeNull();
 
-        user = user.OrGuest(session);
+        user = user.OrGuest();
         user.Id.Value.Should().Be("");
-        (user as IIdentity).IsAuthenticated.Should().BeFalse();
-        user.Identities.Count.Should().Be(1);
-        user.Identities.Contains(KeyValuePair.Create(UserIdentity.SessionHashIdentity, session.Hash)).Should().BeTrue();
+        user.ToClaimsPrincipal().Identity!.IsAuthenticated.Should().BeFalse();
+        user.Identities.Count.Should().Be(0);
     }
 
     [Fact]
@@ -347,7 +346,6 @@ public abstract class AuthServiceTestBase : FusionTestBase
         (await auth.IsSignOutForced(sessionB)).Should().BeFalse();
         user = await auth.GetUser(sessionA);
         user.Should().BeNull();
-        (user.OrGuest() as IIdentity).IsAuthenticated.Should().BeFalse();
 
         sessions = await auth.GetUserSessions(sessionA);
         sessions.Length.Should().Be(0);
@@ -368,7 +366,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         signOutCmd = new SignOutCommand(sessionB, true);
         await auth.SignOut(signOutCmd);
         (await auth.IsSignOutForced(sessionB)).Should().BeTrue();
-        (await auth.GetAuthInfo(sessionB)).IsSignOutForced.Should().BeTrue();
+        (await auth.GetAuthInfo(sessionB))!.IsSignOutForced.Should().BeTrue();
         user = await auth.GetUser(sessionB);
         user.Should().BeNull();
 

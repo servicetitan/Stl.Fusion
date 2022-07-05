@@ -55,7 +55,7 @@ public class DbOperationLogTrimmer<TDbContext> : DbTenantWorkerBase<TDbContext>
         var chain = runChain
             .RetryForever(Settings.RetryDelays, Clocks.CpuClock, Log)
             .Append(sleepChain)
-            .Cycle();
+            .CycleForever();
 
         return chain.Start(cancellationToken);
     }

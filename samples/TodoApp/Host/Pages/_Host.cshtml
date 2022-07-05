@@ -46,7 +46,7 @@
             using var prerendering = BlazorCircuitContext.Prerendering();
             var prerenderedApp = await Html.RenderComponentAsync<App>(
                 isServerSideBlazor ? RenderMode.ServerPrerendered : RenderMode.WebAssemblyPrerendered,
-                isServerSideBlazor ? new { SessionId = sessionId } : null);
+                new { SessionId = sessionId });
         }
         @(prerenderedApp)
     </app>

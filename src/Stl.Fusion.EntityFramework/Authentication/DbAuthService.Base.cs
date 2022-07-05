@@ -20,7 +20,7 @@ public abstract class DbAuthService<TDbContext> : DbServiceBase<TDbContext>, IAu
     public abstract Task EditUser(EditUserCommand command, CancellationToken cancellationToken = default);
     public abstract Task UpdatePresence(Session session, CancellationToken cancellationToken = default);
     public abstract Task<bool> IsSignOutForced(Session session, CancellationToken cancellationToken = default);
-    public abstract Task<SessionAuthInfo> GetAuthInfo(Session session, CancellationToken cancellationToken = default);
+    public abstract Task<SessionAuthInfo?> GetAuthInfo(Session session, CancellationToken cancellationToken = default);
     public abstract Task<User?> GetUser(Session session, CancellationToken cancellationToken = default);
     public abstract Task<ImmutableArray<SessionInfo>> GetUserSessions(Session session, CancellationToken cancellationToken = default);
 

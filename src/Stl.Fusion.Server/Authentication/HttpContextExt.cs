@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication;
+﻿using System.Net;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 
 namespace Stl.Fusion.Server.Authentication;
@@ -28,5 +29,20 @@ public static class HttpContextExt
             where string.Equals(s.Name, scheme, StringComparison.OrdinalIgnoreCase)
             select s
             ).Any();
+    }
+
+    public static IPAddress? GetRemoteIPAddress(this HttpContext context, bool useForwardedForHeaders = true)
+    {
+        if (useForwardedForHeaders) {
+            var headers = context.Request.Headers;
+            // If you are allowing CloudFlare headers, you must ensure you are restricting
+            // your front-end servers to their IPs: https://www.cloudflare.com/ips/ ,
+            // otherwise it can be spoofed.
+            var forwardedForHeader = headers["CF-Connecting-IP"].FirstOrDefault()
+                ?? headers["X-Forwarded-For"].FirstOrDefault();
+            if (IPAddress.TryParse(forwardedForHeader, out var ipAddress))
+                return ipAddress;
+        }
+        return context.Connection.RemoteIpAddress;
     }
 }

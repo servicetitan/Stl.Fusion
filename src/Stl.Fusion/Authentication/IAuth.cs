@@ -15,7 +15,7 @@ public interface IAuth : IComputeService
     [ComputeMethod(KeepAliveTime = 10)]
     Task<bool> IsSignOutForced(Session session, CancellationToken cancellationToken = default);
     [ComputeMethod(KeepAliveTime = 10)]
-    Task<SessionAuthInfo> GetAuthInfo(Session session, CancellationToken cancellationToken = default);
+    Task<SessionAuthInfo?> GetAuthInfo(Session session, CancellationToken cancellationToken = default);
     [ComputeMethod(KeepAliveTime = 10)]
     Task<SessionInfo?> GetSessionInfo(Session session, CancellationToken cancellationToken = default);
     [ComputeMethod(KeepAliveTime = 10)]

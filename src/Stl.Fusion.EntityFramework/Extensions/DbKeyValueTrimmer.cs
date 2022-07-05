@@ -72,7 +72,7 @@ public class DbKeyValueTrimmer<TDbContext, TDbKeyValue> : DbTenantWorkerBase<TDb
         var chain = runChain
             .RetryForever(Settings.RetryDelays, Clocks.CpuClock, Log)
             .Append(sleepChain)
-            .Cycle();
+            .CycleForever();
 
         return chain.Start(cancellationToken);
     }

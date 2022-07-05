@@ -1,4 +1,4 @@
-using System.Security.Principal;
+using System.Security.Claims;
 using Stl.Fusion.Authentication;
 
 namespace Stl.Fusion.Tests.Authentication;
@@ -15,7 +15,7 @@ public class UserPropertiesTest : FusionTestBase
     public void BasicTest()
     {
         var user = new User("none", "none");
-        var cp = user.ClaimsPrincipal;
+        var cp = user.ToClaimsPrincipal();
         cp.Claims.Count().Should().Be(3);
         var ci = cp.Identities.Single();
         ci.IsAuthenticated.Should().BeTrue();
@@ -32,23 +32,26 @@ public class UserPropertiesTest : FusionTestBase
         userId.Should().Be("1");
         user.Identities[uid].Should().Be("Secret");
 
-        cp = user.ClaimsPrincipal;
+        cp = user.ToClaimsPrincipal();
         cp.Claims.Count().Should().Be(4);
         ci = cp.Identities.Single();
         ci.IsAuthenticated.Should().BeTrue();
+        cp.Identity.Should().BeSameAs(ci);
 
         user = User.NewGuest();
         user.Name.Should().Be(User.GuestName);
-        user.Id.IsEmpty.Should().BeTrue();
+        user.IsGuest().Should().BeTrue();
+        user.Claims.Count.Should().Be(0);
         user.Identities.Count.Should().Be(0);
-        (user as IIdentity).IsAuthenticated.Should().BeFalse();
+        cp = user.ToClaimsPrincipal();
+        var nameClaim = cp.Claims.Single();
+        nameClaim.Type.Should().Be(ClaimTypes.Name);
+        nameClaim.Value.Should().Be(user.Name);
+        ci = cp.Identities.Single();
+        ci.IsAuthenticated.Should().BeFalse();
+        cp.Identity.Should().BeSameAs(ci);
 
-        user = User.NewGuest(Session.Default);
-        user.Name.Should().Be(User.GuestName);
-        user.Id.IsEmpty.Should().BeTrue();
-        user.Identities.Count.Should().Be(1);
-        user.Identities.Contains(KeyValuePair.Create(UserIdentity.SessionHashIdentity, Session.Default.Hash)).Should().BeTrue();
-        (user as IIdentity).IsAuthenticated.Should().BeFalse();
+        cp.Identity!.IsAuthenticated.Should().BeFalse();
     }
 
     [Fact]

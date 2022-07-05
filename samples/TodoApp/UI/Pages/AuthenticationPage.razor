@@ -10,7 +10,7 @@
 @{
     var state = State.LatestNonErrorValue;
     var error = State.Error;
-    var user = state.User;
+    var user = state.User.OrGuest();
     var sessions = state.Sessions ?? new();
     var usedAuthSchemas = user.Identities.Select(kv => kv.Key.Schema).ToHashSet();
     var unusedAuthSchemas = AuthSchemas.Where(p => !usedAuthSchemas.Contains(p.Name)).ToArray();
@@ -42,35 +42,34 @@
             </ul>
         </CardText>
 
-        @if (user != null) {
-            <CardTitle>User properties:</CardTitle>
-            <CardText>
-                <ul>
-                    <li><code>User.Id</code>: <b><code>@user.Id</code></b></li>
-                    <li><code>User.Name</code>: <b><code>@user.Name</code></b></li>
-                    <li><code>User.Version</code>: <b><code>@user.Version</code></b></li>
-                </ul>
-                <div class="card-subtitle">Claims:</div>
-                <ul>
-                    @foreach (var (key, value) in user.Claims) {
-                        <li><code>@key</code>: <b><code>@value</code></b></li>
-                    }
-                </ul>
-                <div class="card-subtitle">Identities:</div>
-                <ul>
-                    @foreach (var ((schema, schemaBoundId), _) in user.Identities) {
-                        <li><code>@schema</code>: <b><code>@schemaBoundId</code></b></li>
-                    }
-                </ul>
+        <CardTitle>User properties:</CardTitle>
+        <CardText>
+            <ul>
+                <li><code>User.Id</code>: <b><code>@user.Id</code></b></li>
+                <li><code>User.Name</code>: <b><code>@user.Name</code></b></li>
+                <li><code>User.Version</code>: <b><code>@user.Version</code></b></li>
+            </ul>
+            <div class="card-subtitle">Claims:</div>
+            <ul>
+                @foreach (var (key, value) in user.Claims) {
+                    <li><code>@key</code>: <b><code>@value</code></b></li>
                 }
-            </CardText>
-        }
+            </ul>
+            <div class="card-subtitle">Identities:</div>
+            <ul>
+                @foreach (var ((schema, schemaBoundId), _) in user.Identities) {
+                    <li><code>@schema</code>: <b><code>@schemaBoundId</code></b></li>
+                }
+            </ul>
+        </CardText>
+
         @if (sessions.Count > 0) {
             <CardTitle>Sessions:</CardTitle>
             <CardText>
                 <table class="table table-sm">
                     <thead>
                     <tr>
+                        <th scope="col">Session Hash</th>
                         <th scope="col">IP</th>
                         <th scope="col">Browser</th>
                         <th scope="col">Created</th>
@@ -82,6 +81,7 @@
                     <tbody>
                     @foreach (var session in sessions) {
                         <tr @key="@session.SessionHash">
+                            <td>@session.SessionHash</td>
                             <td>@session.IPAddress</td>
                             <td>@session.UserAgent</td>
                             <td>@session.Created</td>
