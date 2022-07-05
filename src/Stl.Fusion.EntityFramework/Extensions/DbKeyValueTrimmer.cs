@@ -63,8 +63,8 @@ public class DbKeyValueTrimmer<TDbContext, TDbKeyValue> : DbTenantWorkerBase<TDb
 
         var sleepChain = new AsyncChain("Sleep", cancellationToken1 => {
             var delay = lastTrimCount < Settings.BatchSize
-                ? Settings.NextBatchDelay
-                : Settings.CheckPeriod;
+                ? Settings.CheckPeriod
+                : Settings.NextBatchDelay;
             return Clocks.CpuClock.Delay(delay.Next(), cancellationToken1);
         });
 
