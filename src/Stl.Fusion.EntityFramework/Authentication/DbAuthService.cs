@@ -39,9 +39,9 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         SignOutCommand command, CancellationToken cancellationToken = default)
     {
         var session = command.Session;
-        var kickedSessionHash = command.KickedSessionHash;
-        var kickEverySession = command.KickEverySession;
-        var isKickCommand = kickEverySession || !kickedSessionHash.IsNullOrEmpty();
+        var kickUserSessionHash = command.KickUserSessionHash;
+        var kickAllUserSessions = command.KickAllUserSessions;
+        var isKickCommand = kickAllUserSessions || !kickUserSessionHash.IsNullOrEmpty();
         var force = command.Force;
 
         var context = CommandContext.GetCurrent();
@@ -70,9 +70,9 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
             if (user == null)
                 return;
             var userSessions = await GetUserSessions(tenant, user.Id, cancellationToken).ConfigureAwait(false);
-            var signOutSessions = kickedSessionHash.IsNullOrEmpty()
+            var signOutSessions = kickUserSessionHash.IsNullOrEmpty()
                 ? userSessions
-                : userSessions.Where(p => Equals(p.SessionInfo.SessionHash, kickedSessionHash));
+                : userSessions.Where(p => Equals(p.SessionInfo.SessionHash, kickUserSessionHash));
             foreach (var (sessionId, _) in signOutSessions) {
                 var otherSessionSignOutCommand = new SignOutCommand(new Session(sessionId), force);
                 await Commander.Run(otherSessionSignOutCommand, isOutermost: true, cancellationToken)
