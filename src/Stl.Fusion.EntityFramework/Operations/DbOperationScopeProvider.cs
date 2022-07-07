@@ -45,9 +45,6 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
             if (!scope.IsClosed)
                 await scope.Commit(cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) {
-            throw;
-        }
         catch (Exception error) {
             // 1. Ensure everything is rolled back
             try {
@@ -56,6 +53,8 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
             catch {
                 // Intended
             }
+            if (error is OperationCanceledException)
+                throw;
 
             // 2. Check if operation reprocessor is there
             var operationReprocessor = context.Items.Get<IOperationReprocessor>();

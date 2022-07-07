@@ -47,15 +47,16 @@ public class TransientOperationScopeProvider : ICommandHandler<ICommand>
             await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
             if (!OperationCompletionNotifier.IsReady())
                 throw Errors.OperationCompletionNotifierIsNotReady();
-            await scope.Commit(cancellationToken).ConfigureAwait(false);
+            scope.Close(true);
         }
-        catch (OperationCanceledException) {
-            throw;
-        }
-        catch (Exception e) {
+        catch (Exception error) {
+            scope.Close(false);
+            if (error is OperationCanceledException)
+                throw;
+
+            // When this operation scope is used, no reprocessing is possible 
             if (scope.IsUsed)
-                Log.LogError(e, "Operation failed: {Command}", command);
-            await scope.Rollback().ConfigureAwait(false);
+                Log.LogError(error, "Operation failed: {Command}", command);
             throw;
         }
 

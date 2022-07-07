@@ -71,6 +71,15 @@ public readonly struct ImmutableOptionSet : IServiceProvider, IEquatable<Immutab
     public ImmutableOptionSet Set<T>(T value) => Set(typeof(T), value);
     public ImmutableOptionSet Remove<T>() => Set(typeof(T), null);
 
+    public ImmutableOptionSet Replace<T>(T expectedValue, T value)
+    {
+        var key = typeof(T).ToSymbol();
+        var currentValue = (T?) this[key];
+        if (EqualityComparer<T>.Default.Equals(currentValue!, expectedValue))
+            return this;
+        return Set(key, value);
+    }
+
     // Equality
 
     public bool Equals(ImmutableOptionSet other) => Equals(Items, other.Items);

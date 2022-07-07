@@ -1,5 +1,6 @@
+using Stl.Fusion.Operations.Internal;
 using Stl.Generators;
-using Stl.Internal;
+using Errors = Stl.Internal.Errors;
 
 namespace Stl.Fusion.Operations.Reprocessing;
 
@@ -87,7 +88,14 @@ public class OperationReprocessor : IOperationReprocessor
     }
 
     public virtual bool WillRetry(IEnumerable<Exception> allErrors)
-        => FailedTryCount <= Options.MaxRetryCount && IsTransientFailure(allErrors);
+    {
+        if (FailedTryCount > Options.MaxRetryCount)
+            return false;
+        var operationScope = CommandContext.Items.Get<IOperationScope>();
+        if (operationScope is TransientOperationScope)
+            return false;
+        return IsTransientFailure(allErrors);
+    }
 
     [CommandHandler(Priority = 100_000, IsFilter = true)]
     public virtual async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
@@ -114,9 +122,13 @@ public class OperationReprocessor : IOperationReprocessor
                 LastError = null;
                 break;
             }
+            catch (OperationCanceledException) {
+                throw;
+            }
             catch (Exception error) {
                 if (!this.WillRetry(error))
                     throw;
+
                 LastError = error;
                 FailedTryCount++;
                 context.ExecutionState = executionStateBackup;

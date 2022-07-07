@@ -4,17 +4,17 @@ namespace Stl.Fusion.Operations.Internal;
 /// This scope serves as the outermost, "catch-all" operation scope for
 /// commands that don't use any other scopes.
 /// </summary>
-public class TransientOperationScope : AsyncDisposableBase, IOperationScope
+public sealed class TransientOperationScope : AsyncDisposableBase, IOperationScope
 {
-    protected IServiceProvider Services { get; }
-    protected AgentInfo AgentInfo { get; }
-    protected MomentClockSet Clocks { get; }
-    protected ILogger Log { get; }
+    private IServiceProvider Services { get; }
+    private AgentInfo AgentInfo { get; }
+    private MomentClockSet Clocks { get; }
+    private ILogger Log { get; }
 
     IOperation IOperationScope.Operation => Operation;
     public TransientOperation Operation { get; }
     public CommandContext CommandContext { get; }
-    public bool IsUsed => !CommandContext.Items.Contains<ICompletion>();
+    public bool IsUsed { get; private set; }
     public bool IsClosed { get; private set; }
     public bool? IsConfirmed { get; private set; }
 
@@ -46,28 +46,27 @@ public class TransientOperationScope : AsyncDisposableBase, IOperationScope
         IsClosed = true;
     }
 
-    public virtual Task Commit(CancellationToken cancellationToken = default)
+    public Task Commit(CancellationToken cancellationToken = default)
     {
-        if (IsClosed) {
-            if (IsConfirmed == true)
-                return Task.CompletedTask;
-            throw Errors.OperationScopeIsAlreadyClosed();
-        }
-        Operation.CommitTime = Clocks.SystemClock.Now;
-        IsConfirmed = true;
-        IsClosed = true;
+        Close(true);
         return Task.CompletedTask;
     }
 
-    public virtual Task Rollback()
+    public Task Rollback()
     {
-        if (IsClosed) {
-            if (IsConfirmed == false)
-                return Task.CompletedTask;
-            throw Errors.OperationScopeIsAlreadyClosed();
-        }
-        IsConfirmed = false;
-        IsClosed = true;
+        Close(false);
         return Task.CompletedTask;
+    }
+
+    public void Close(bool isConfirmed)
+    {
+        if (IsClosed)
+            return;
+
+        if (isConfirmed)
+            Operation.CommitTime = Clocks.SystemClock.Now;
+        IsConfirmed = isConfirmed;
+        IsClosed = true;
+        IsUsed = CommandContext.Items.Replace<IOperationScope?>(null, this);
     }
 }

@@ -86,7 +86,18 @@ public class OptionSet : IServiceProvider
 
     // ReSharper disable once HeapView.PossibleBoxingAllocation
     public void Set<T>(T value) => this[typeof(T)] = value;
+
     public void Remove<T>() => this[typeof(T)] = null;
+
+    public bool Replace<T>(T expectedValue, T value)
+    {
+        var key = typeof(T).ToSymbol();
+        var currentValue = (T?) this[key];
+        if (EqualityComparer<T>.Default.Equals(currentValue!, expectedValue))
+            return false;
+        this[key] = value;
+        return true;
+    }
 
     public void Clear()
     {

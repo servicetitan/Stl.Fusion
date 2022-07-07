@@ -110,6 +110,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
             throw Stl.Fusion.Operations.Internal.Errors.OperationScopeIsAlreadyClosed();
         if (MasterDbContext == null) {
             // Creating MasterDbContext
+            CommandContext.Items.Replace<IOperationScope?>(null, this);
             var masterDbContext = DbContextFactory.CreateDbContext(Tenant).ReadWrite();
             masterDbContext.Database.AutoTransactionsEnabled = false;
 #if NET6_0_OR_GREATER
