@@ -6,6 +6,7 @@ using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.EntityFramework.Operations;
 using Stl.Multitenancy;
 using Stl.Locking;
+using Stl.Versioning;
 using AsyncLock = Stl.Locking.AsyncLock;
 
 namespace Stl.Fusion.EntityFramework;
@@ -19,6 +20,7 @@ public interface IDbOperationScope : IOperationScope
     Tenant Tenant { get; }
 
     Task<DbContext> CreateDbContext(Tenant tenant, bool readWrite = true, CancellationToken cancellationToken = default);
+    bool IsTransientFailure(Exception error);
 }
 
 public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperationScope
@@ -171,10 +173,11 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
                 // See https://docs.microsoft.com/en-us/ef/ef6/fundamentals/connection-resiliency/commit-failures
                 try {
                     // We need a new connection here, since the old one might be broken
-                    masterDbContext = DbContextFactory.CreateDbContext(Tenant);
-                    masterDbContext.Database.AutoTransactionsEnabled = true;
+                    var verifierDbContext = DbContextFactory.CreateDbContext(Tenant);
+                    await using var _1 = verifierDbContext.ConfigureAwait(false);
+                    verifierDbContext.Database.AutoTransactionsEnabled = true;
                     var committedOperation = await DbOperationLog
-                        .Get(masterDbContext, operation.Id, cancellationToken)
+                        .Get(verifierDbContext, operation.Id, cancellationToken)
                         .ConfigureAwait(false);
                     if (committedOperation != null)
                         IsConfirmed = true;
@@ -208,6 +211,36 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
         finally {
             IsConfirmed ??= false;
             IsClosed = true;
+        }
+    }
+
+    public virtual bool IsTransientFailure(Exception error)
+    {
+        if (error is VersionMismatchException)
+            return true;
+        if (error is DbUpdateConcurrencyException)
+            return true;
+        try {
+            var executionStrategy = MasterDbContext?.Database.CreateExecutionStrategy();
+            if (executionStrategy is not ExecutionStrategy retryingExecutionStrategy)
+                return false;
+            var isTransient = retryingExecutionStrategy.ShouldRetryOn(error);
+            return isTransient;
+        }
+        catch (ObjectDisposedException) {
+            // scope.MasterDbContext?.Database may throw this exception
+            try {
+                using var altDbContext = DbContextFactory.CreateDbContext(Tenant);
+                var executionStrategy = altDbContext.Database.CreateExecutionStrategy();
+                if (executionStrategy is not ExecutionStrategy retryingExecutionStrategy)
+                    return false;
+                var isTransient = retryingExecutionStrategy.ShouldRetryOn(error);
+                return isTransient;
+            }
+            catch {
+                // Intended
+            }
+            return false;
         }
     }
 

@@ -1,8 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.Operations.Reprocessing;
-using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework.Operations;
 
@@ -13,10 +11,14 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
     protected static MemberInfo ExecutionStrategyShouldRetryOnMethod { get; } = typeof(ExecutionStrategy)
         .GetMethod("ShouldRetryOn", BindingFlags.Instance | BindingFlags.NonPublic)!;
 
+    protected IMultitenantDbContextFactory<TDbContext> DbContextFactory { get; }
     protected IOperationCompletionNotifier OperationCompletionNotifier { get; }
 
     public DbOperationScopeProvider(IServiceProvider services) : base(services)
-        => OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
+    {
+        DbContextFactory = services.GetRequiredService<IMultitenantDbContextFactory<TDbContext>>();
+        OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
+    }
 
     [CommandHandler(Priority = 1000, IsFilter = true)]
     public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
@@ -46,51 +48,37 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
                 await scope.Commit(cancellationToken).ConfigureAwait(false);
         }
         catch (Exception error) {
-            // 1. Ensure everything is rolled back
             try {
-                await scope.Rollback().ConfigureAwait(false);
+                if (error is OperationCanceledException)
+                    throw;
+
+                var operationReprocessor = context.Items.Get<IOperationReprocessor>();
+                if (operationReprocessor == null)
+                    throw;
+
+                var allErrors = error.Flatten();
+                var transientError = allErrors.FirstOrDefault(scope.IsTransientFailure);
+                if (transientError == null)
+                    throw;
+
+                // It's a transient failure - let's tag it so that IOperationReprocessor retries on it 
+                operationReprocessor.AddTransientFailure(transientError);
+
+                // But if retry still won't happen (too many retries?) - let's log error here
+                if (!operationReprocessor.WillRetry(allErrors))
+                    Log.LogError(error, "Operation failed: {Command}", command);
+
+                throw;
             }
-            catch {
-                // Intended
+            finally {
+                // 7. Ensure everything is rolled back
+                try {
+                    await scope.Rollback().ConfigureAwait(false);
+                }
+                catch {
+                    // Intended
+                }
             }
-            if (error is OperationCanceledException)
-                throw;
-
-            // 2. Check if operation reprocessor is there
-            var operationReprocessor = context.Items.Get<IOperationReprocessor>();
-            if (operationReprocessor == null)
-                throw;
-
-            // 3. Check if it's a transient failure
-            var allErrors = error.Flatten();
-            var transientError = allErrors.FirstOrDefault(e => IsTransientFailure(scope, e));
-            if (transientError == null)
-                throw;
-
-            // 4. "Tag" error as transient in operation reprocessor
-            operationReprocessor.AddTransientFailure(transientError);
-
-            // 5. Log "Operation failed" if it's our last retry
-            if (!operationReprocessor.WillRetry(allErrors))
-                Log.LogError(error, "Operation failed: {Command}", command);
-
-            // 6. Throw
-            throw;
         }
-    }
-
-    protected virtual bool IsTransientFailure(
-        DbOperationScope<TDbContext> scope,
-        Exception error)
-    {
-        if (error is VersionMismatchException)
-            return true;
-        if (error is DbUpdateConcurrencyException)
-            return true;
-        var executionStrategy = scope.MasterDbContext?.Database.CreateExecutionStrategy();
-        if (executionStrategy is not ExecutionStrategy retryingExecutionStrategy)
-            return false;
-        var isTransient = retryingExecutionStrategy.ShouldRetryOn(error);
-        return isTransient;
     }
 }
