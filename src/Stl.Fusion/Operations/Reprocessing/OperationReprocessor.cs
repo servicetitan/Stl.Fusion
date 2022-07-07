@@ -14,9 +14,9 @@ public interface IOperationReprocessor : ICommandHandler<ICommand>
     int FailedTryCount { get; }
     Exception? LastError { get; }
 
-    bool IsTransientFailure(Exception error);
     void AddTransientFailure(Exception error);
-    bool WillRetry(Exception error);
+    bool IsTransientFailure(IEnumerable<Exception> allErrors);
+    bool WillRetry(IEnumerable<Exception> allErrors);
 }
 
 public record OperationReprocessorOptions
@@ -60,30 +60,34 @@ public class OperationReprocessor : IOperationReprocessor
         KnownTransientFailures = new();
     }
 
-    public virtual bool IsTransientFailure(Exception error)
-    {
-        lock (KnownTransientFailures) {
-            if (KnownTransientFailures.Contains(error))
-                return true;
-        }
-        foreach (var detector in TransientFailureDetectors) {
-            if (detector.IsTransient(error)) {
-                lock (KnownTransientFailures)
-                    KnownTransientFailures.Add(error);
-                return true;
-            }
-        }
-        return false;
-    }
-
     public void AddTransientFailure(Exception error)
     {
         lock (KnownTransientFailures)
             KnownTransientFailures.Add(error);
     }
 
-    public virtual bool WillRetry(Exception error)
-        => FailedTryCount <= Options.MaxRetryCount && IsTransientFailure(error);
+    public virtual bool IsTransientFailure(IEnumerable<Exception> allErrors)
+    {
+        lock (KnownTransientFailures) {
+            // ReSharper disable once PossibleMultipleEnumeration
+            if (allErrors.Any(KnownTransientFailures.Contains))
+                return true;
+        }
+        foreach (var detector in TransientFailureDetectors) {
+            // ReSharper disable once PossibleMultipleEnumeration
+            foreach (var e in allErrors) {
+                if (detector.IsTransient(e)) {
+                    lock (KnownTransientFailures)
+                        KnownTransientFailures.Add(e);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public virtual bool WillRetry(IEnumerable<Exception> allErrors)
+        => FailedTryCount <= Options.MaxRetryCount && IsTransientFailure(allErrors);
 
     [CommandHandler(Priority = 100_000, IsFilter = true)]
     public virtual async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
@@ -111,7 +115,7 @@ public class OperationReprocessor : IOperationReprocessor
                 break;
             }
             catch (Exception error) {
-                if (!WillRetry(error))
+                if (!this.WillRetry(error))
                     throw;
                 LastError = error;
                 FailedTryCount++;

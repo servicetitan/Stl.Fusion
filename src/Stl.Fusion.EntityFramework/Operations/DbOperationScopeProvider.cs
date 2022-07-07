@@ -63,16 +63,19 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
                 throw;
 
             // 3. Check if it's a transient failure
-            if (!IsTransientFailure(scope, error))
+            var allErrors = error.Flatten();
+            var transientError = allErrors.FirstOrDefault(e => IsTransientFailure(scope, e));
+            if (transientError == null)
                 throw;
 
             // 4. "Tag" error as transient in operation reprocessor
-            operationReprocessor.AddTransientFailure(error);
+            operationReprocessor.AddTransientFailure(transientError);
 
             // 5. Log "Operation failed" if it's our last retry
-            if (!operationReprocessor.WillRetry(error))
+            if (!operationReprocessor.WillRetry(allErrors))
                 Log.LogError(error, "Operation failed: {Command}", command);
 
+            // 6. Throw
             throw;
         }
     }
