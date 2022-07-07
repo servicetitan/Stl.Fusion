@@ -45,7 +45,7 @@ public class KeyValueService<TValue> : IKeyValueService<TValue>
 #pragma warning restore 1998
     {
         if (key.EndsWith("error"))
-            throw new ApplicationException("Error!");
+            throw new ArgumentException("Error!", nameof(key));
         return _values.GetValueOrDefault(key)!;
     }
 

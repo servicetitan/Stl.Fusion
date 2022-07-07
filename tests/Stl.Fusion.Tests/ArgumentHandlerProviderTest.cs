@@ -1,3 +1,4 @@
+using System.Reflection;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Interception;
 
@@ -16,7 +17,7 @@ public class ArgumentHandlerProviderTest : SimpleFusionTestBase
         var services = CreateServiceProvider();
         var ahp = services.GetRequiredService<IArgumentHandlerProvider>();
 
-        var method = GetType().GetMethod(nameof(TestMethod))!;
+        var method = GetType().GetMethod(nameof(TestMethod), BindingFlags.Instance | BindingFlags.NonPublic)!;
         var parameters = method.GetParameters();
         ahp.GetArgumentHandler(method, parameters[0]).Should().BeOfType<ArgumentHandler>();
         ahp.GetArgumentHandler(method, parameters[1]).Should().BeOfType<EquatableArgumentHandler<string>>();
@@ -25,6 +26,6 @@ public class ArgumentHandlerProviderTest : SimpleFusionTestBase
         ahp.GetArgumentHandler(method, parameters[4]).Should().BeOfType<IgnoreArgumentHandler>();
     }
 
-    public void TestMethod(object a, string b, bool c, Session d, CancellationToken ct) 
+    private void TestMethod(object a, string b, bool c, Session d, CancellationToken ct) 
     { }
 }

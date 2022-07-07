@@ -76,7 +76,9 @@ public class RedisStreamerTest : RedisTestBase
 #pragma warning restore CS1998
     {
         throw e;
+#pragma warning disable CS0162
         yield break;
+#pragma warning restore CS0162
     }
 
     async IAsyncEnumerable<int> Delays(

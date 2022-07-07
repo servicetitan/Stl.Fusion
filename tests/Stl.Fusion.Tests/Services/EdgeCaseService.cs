@@ -21,7 +21,7 @@ public class EdgeCaseService : IEdgeCaseService
     {
         await Task.Delay(100, cancellationToken);
         return source.ToLowerInvariant().Contains("error")
-            ? throw new ArgumentException("!")
+            ? throw new ArgumentException("Error!", nameof(source))
             : source + await SuffixState.Use(cancellationToken).ConfigureAwait(false);
     }
 
@@ -29,7 +29,7 @@ public class EdgeCaseService : IEdgeCaseService
     {
         await Task.Delay(100, cancellationToken);
         return source.ToLowerInvariant().Contains("error")
-            ? throw new ArgumentException("!")
+            ? throw new ArgumentException("Error!", nameof(source))
             : source + await SuffixState.Use(cancellationToken).ConfigureAwait(false);
     }
 
@@ -37,7 +37,7 @@ public class EdgeCaseService : IEdgeCaseService
     {
         await Task.Delay(100, cancellationToken);
         return source.ToLowerInvariant().Contains("error")
-            ? throw new ArgumentException("!")
+            ? throw new ArgumentException("Error!", nameof(source))
             : source + SuffixState.Value;
     }
 }

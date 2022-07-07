@@ -1,5 +1,3 @@
-using Stl.Mathematics;
-
 namespace Stl.Tests.Mathematics;
 
 public class ArithmeticsTest
@@ -22,7 +20,7 @@ public class ArithmeticsTest
         }
     }
 
-    public void Test<T>(Arithmetics<T> a)
+    private void Test<T>(Arithmetics<T> a)
         where T : notnull
     {
         var one = a.One;

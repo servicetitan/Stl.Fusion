@@ -21,7 +21,7 @@ public class EdgeCaseController : ControllerBase, IEdgeCaseService
 
     [HttpPost]
 #if NETCOREAPP
-    public Task SetSuffix([FromQuery] string? suffix, CancellationToken cancellationToken)
+    public Task SetSuffix([FromQuery] string? suffix, CancellationToken cancellationToken = default)
 #else
     // TODO: add tests for RestEase calls with different options FromQuery, FromBody, from path segment;
     public Task SetSuffix(string? suffix, CancellationToken cancellationToken = default)

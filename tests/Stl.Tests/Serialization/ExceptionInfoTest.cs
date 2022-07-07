@@ -2,7 +2,9 @@ namespace Stl.Tests.Serialization;
 
 public class ExceptionInfoTest : TestBase
 {
+#pragma warning disable RCS1194
     public class WeirdException : Exception
+#pragma warning restore RCS1194
     {
         public WeirdException() : base("") { }
     }
@@ -18,7 +20,9 @@ public class ExceptionInfoTest : TestBase
             .Which.Message.Should().Be("1");
 
         // ReSharper disable once NotResolvedInText
+#pragma warning disable MA0015
         i = new ExceptionInfo(new ArgumentNullException("none", "2"));
+#pragma warning restore MA0015
         i.Message.Should().Be("2 (Parameter 'none')");
         i.ToException().Should().BeOfType<ArgumentNullException>()
             .Which.Message.Should().Be("2 (Parameter 'none')");

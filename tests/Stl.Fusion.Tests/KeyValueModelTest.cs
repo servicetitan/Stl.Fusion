@@ -93,7 +93,7 @@ public class KeyValueModelTest : FusionTestBase
         try {
             await kv.Get("error");
         }
-        catch (ApplicationException ae) {
+        catch (ArgumentException ae) {
             ae.Message.Should().Be("Error!");
         }
 
@@ -101,7 +101,7 @@ public class KeyValueModelTest : FusionTestBase
         try {
             await kvc.Get("error");
         }
-        catch (ApplicationException ae) {
+        catch (ArgumentException ae) {
             ae.Message.Should().Be("Error!");
         }
     }

@@ -65,7 +65,7 @@ public class MemberExtTest
     public void TaskPropertyTest()
     {
         var type = GetType();
-        var propertyName = new Symbol(nameof(TaskProperty));
+        Test(type.GetProperty(nameof(TaskProperty))!);
 
         void Test(MemberInfo mi)
         {
@@ -83,7 +83,8 @@ public class MemberExtTest
             action = () => mi.GetSetter<MemberExtTest, Task>();
             action.Should().Throw<InvalidCastException>();
 
-            _ = mi.GetSetter<MemberExtTest, Task>();
+            var action1 = () => mi.GetSetter<MemberExtTest, Task>();
+            action1.Should().Throw<InvalidCastException>();
             _ = mi.GetSetter<MemberExtTest, Task<bool>>();
             _ = mi.GetSetter<MemberExtTest, object>(true);
             _ = mi.GetSetter<MemberExtTest, Task>(true);
