@@ -59,8 +59,8 @@ public class Startup
                 logging.AddFilter(typeof(App).Namespace, LogLevel.Information);
                 logging.AddFilter("Microsoft", LogLevel.Warning);
                 logging.AddFilter("Microsoft.AspNetCore.Hosting", LogLevel.Information);
-                // logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Information);
-                // logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Transaction", LogLevel.Debug);
+                logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Information);
+                logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Transaction", LogLevel.Debug);
                 logging.AddFilter("Stl.Fusion.Operations", LogLevel.Information);
             }
         });
@@ -93,8 +93,6 @@ public class Startup
                 multitenancy.SetupMultitenantRegistry(
                     Enumerable.Range(0, 3).Select(i => new Tenant($"tenant{i}")));
                 multitenancy.SetupMultitenantDbContextFactory((c, tenant, db) => {
-                    var loggerFactory = c.GetRequiredService<ILoggerFactory>();
-                    db.UseLoggerFactory(loggerFactory);
                     if (!string.IsNullOrEmpty(HostSettings.UseSqlServer))
                         db.UseSqlServer(HostSettings.UseSqlServer.Interpolate(tenant));
                     else if (!string.IsNullOrEmpty(HostSettings.UsePostgreSql)) {

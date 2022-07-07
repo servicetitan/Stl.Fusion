@@ -70,7 +70,14 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
     {
         SetupMultitenantDbContextFactory((c, tenant, services) => {
             services.AddPooledDbContextFactory<TDbContext>(
-                db => dbContextOptionsBuilder.Invoke(c, tenant, db));
+                db => {
+                    // This ensures logging settings from the main container
+                    // are applied to tenant DbContexts 
+                    var loggerFactory = c.GetService<ILoggerFactory>();
+                    if (loggerFactory != null)
+                        db.UseLoggerFactory(loggerFactory);
+                    dbContextOptionsBuilder.Invoke(c, tenant, db);
+                });
         });
         return this;
     }
