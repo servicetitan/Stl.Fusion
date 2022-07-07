@@ -74,7 +74,7 @@ public class EdgeCaseServiceTest : FusionTestBase
         var c2 = await Computed.Capture(
             ct => service.ThrowIfContainsError("error", ct));
         c2.Error!.GetType().Should().Be(ThrowIfContainsErrorExceptionType);
-        c2.Error.Message.Should().Be("!");
+        c2.Error.Message.Should().Be("Error!");
 
         await service.SetSuffix("z");
         c1 = await Update(c1);
@@ -82,7 +82,7 @@ public class EdgeCaseServiceTest : FusionTestBase
 
         c2 = await Update(c2);
         c2.Error!.GetType().Should().Be(ThrowIfContainsErrorExceptionType);
-        c2.Error.Message.Should().Be("!");
+        c2.Error.Message.Should().Be("Error!");
         await service.SetSuffix("");
 
         // ThrowIfContainsErrorRewriteErrors method test
@@ -93,7 +93,7 @@ public class EdgeCaseServiceTest : FusionTestBase
         c2 = await Computed.Capture(
             ct => service.ThrowIfContainsErrorRewriteErrors("error", ct));
         c2.Error!.GetType().Should().Be(ThrowIfContainsErrorRewriteErrorsExceptionType);
-        c2.Error.Message.Should().Be("!");
+        c2.Error.Message.Should().Be("Error!");
 
         await service.SetSuffix("z");
         c1 = await Update(c1);
@@ -101,7 +101,7 @@ public class EdgeCaseServiceTest : FusionTestBase
 
         c2 = await Update(c2);
         c2.Error!.GetType().Should().Be(ThrowIfContainsErrorRewriteErrorsExceptionType);
-        c2.Error.Message.Should().Be("!");
+        c2.Error.Message.Should().Be("Error!");
         await service.SetSuffix("");
 
         // ThrowIfContainsErrorRewriteErrors method test
@@ -110,7 +110,7 @@ public class EdgeCaseServiceTest : FusionTestBase
             await service.ThrowIfContainsErrorNonCompute("error");
         } catch (Exception e) { error = e; }
         error!.GetType().Should().Be(ThrowIfContainsErrorNonComputeExceptionType);
-        error.Message.Should().Be("!");
+        error.Message.Should().Be("Error!");
 
         await service.SetSuffix("z");
         (await service.ThrowIfContainsErrorNonCompute("a")).Should().Be("az");
@@ -118,7 +118,7 @@ public class EdgeCaseServiceTest : FusionTestBase
             await service.ThrowIfContainsErrorNonCompute("error");
         } catch (Exception e) { error = e; }
         error!.GetType().Should().Be(ThrowIfContainsErrorNonComputeExceptionType);
-        error.Message.Should().Be("!");
+        error.Message.Should().Be("Error!");
         await service.SetSuffix("");
     }
 
