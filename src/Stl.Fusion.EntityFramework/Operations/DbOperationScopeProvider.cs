@@ -86,6 +86,8 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
     {
         if (error is VersionMismatchException)
             return true;
+        if (error is DbUpdateConcurrencyException)
+            return true;
         var executionStrategy = scope.MasterDbContext?.Database.CreateExecutionStrategy();
         if (executionStrategy is not ExecutionStrategy retryingExecutionStrategy)
             return false;
