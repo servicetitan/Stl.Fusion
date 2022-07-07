@@ -94,7 +94,7 @@ public class KeyValueModelTest : FusionTestBase
             await kv.Get("error");
         }
         catch (ArgumentException ae) {
-            ae.Message.Should().Be("Error!");
+            ae.Message.Should().StartWith("Error!");
         }
 
         var kvc = ClientServices.GetRequiredService<IKeyValueServiceClient<string>>();
@@ -102,7 +102,7 @@ public class KeyValueModelTest : FusionTestBase
             await kvc.Get("error");
         }
         catch (ArgumentException ae) {
-            ae.Message.Should().Be("Error!");
+            ae.Message.Should().StartWith("Error!");
         }
     }
 }
