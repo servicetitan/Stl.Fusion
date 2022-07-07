@@ -11,14 +11,19 @@ public static class MemberInfoExt
     public static Func<TType, TValue> GetGetter<TType, TValue>(
         this MemberInfo propertyOrFieldInfo, bool isValueUntyped = false)
         => (Func<TType, TValue>) GetGetter(propertyOrFieldInfo, typeof(TType), isValueUntyped);
+    public static Func<object, TValue> GetGetter<TValue>(
+        this MemberInfo propertyOrFieldInfo, bool isValueUntyped = false)
+        => (Func<object, TValue>) GetGetter(propertyOrFieldInfo, typeof(object), isValueUntyped);
     public static Func<object, object> GetGetter(this MemberInfo propertyOrFieldInfo)
         => (Func<object, object>) GetGetter(propertyOrFieldInfo, typeof(object), true);
 
     public static Action<TType, TValue> GetSetter<TType, TValue>(
         this MemberInfo propertyOrFieldInfo, bool isValueUntyped = false)
         => (Action<TType, TValue>) GetSetter(propertyOrFieldInfo, typeof(TType), isValueUntyped);
-    public static Action<object, object> GetSetter(
+    public static Action<object, TValue> GetSetter<TValue>(
         this MemberInfo propertyOrFieldInfo, bool isValueUntyped = false)
+        => (Action<object, TValue>) GetSetter(propertyOrFieldInfo, typeof(object), isValueUntyped);
+    public static Action<object, object> GetSetter(this MemberInfo propertyOrFieldInfo)
         => (Action<object, object>) GetSetter(propertyOrFieldInfo, typeof(object), true);
 
     public static Delegate GetGetter(this MemberInfo propertyOrFieldInfo, Type sourceType, bool isValueUntyped = false)
