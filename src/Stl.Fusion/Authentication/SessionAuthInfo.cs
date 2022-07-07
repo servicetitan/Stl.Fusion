@@ -12,4 +12,7 @@ public record SessionAuthInfo
     public SessionAuthInfo() { }
     public SessionAuthInfo(Session? session)
         => SessionHash = session?.Hash ?? "";
+
+    public bool IsAuthenticated()
+        => !(IsSignOutForced || UserId.IsNullOrEmpty());
 }

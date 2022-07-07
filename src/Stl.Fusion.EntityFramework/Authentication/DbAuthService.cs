@@ -156,7 +156,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     {
         using var _ = Computed.SuspendDependencyCapture();
         var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
-        return sessionInfo.ToAuthInfo();
+        return sessionInfo?.ToAuthInfo();
     }
 
     // [ComputeMethod] inherited
@@ -180,7 +180,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         Session session, CancellationToken cancellationToken = default)
     {
         var authInfo = await GetAuthInfo(session, cancellationToken).ConfigureAwait(false);
-        if (!authInfo.IsAuthenticated())
+        if (!(authInfo?.IsAuthenticated() ?? false))
             return null;
 
         var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);

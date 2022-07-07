@@ -149,7 +149,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
     {
         var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);
         var sessionInfo = SessionInfos.GetValueOrDefault((tenant, session.Id));
-        return sessionInfo.ToAuthInfo();
+        return sessionInfo?.ToAuthInfo();
     }
 
     // [ComputeMethod] inherited
@@ -175,7 +175,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
     {
         var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);
         var authInfo = await GetAuthInfo(session, cancellationToken).ConfigureAwait(false);
-        if (!authInfo.IsAuthenticated())
+        if (!(authInfo?.IsAuthenticated() ?? false))
             return null;
 
         var user = await GetUser(tenant.Id, authInfo!.UserId, cancellationToken).ConfigureAwait(false);
