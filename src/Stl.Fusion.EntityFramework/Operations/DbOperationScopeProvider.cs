@@ -11,14 +11,10 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
     protected static MemberInfo ExecutionStrategyShouldRetryOnMethod { get; } = typeof(ExecutionStrategy)
         .GetMethod("ShouldRetryOn", BindingFlags.Instance | BindingFlags.NonPublic)!;
 
-    protected IMultitenantDbContextFactory<TDbContext> DbContextFactory { get; }
     protected IOperationCompletionNotifier OperationCompletionNotifier { get; }
 
-    public DbOperationScopeProvider(IServiceProvider services) : base(services)
-    {
-        DbContextFactory = services.GetRequiredService<IMultitenantDbContextFactory<TDbContext>>();
-        OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
-    }
+    public DbOperationScopeProvider(IServiceProvider services) : base(services) 
+        => OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
 
     [CommandHandler(Priority = 1000, IsFilter = true)]
     public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)

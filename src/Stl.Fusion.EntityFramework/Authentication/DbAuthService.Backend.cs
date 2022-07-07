@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Authentication.Commands;
@@ -35,15 +36,19 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
             throw new ArgumentOutOfRangeException(
                 $"{nameof(command)}.{nameof(SignInCommand.AuthenticatedIdentity)}");
 #pragma warning restore MA0015
-        if (await IsSignOutForced(session, cancellationToken).ConfigureAwait(false))
-            throw Errors.ForcedSignOut();
 
+        CommandIsolationLevel = IsolationLevel.ReadCommitted;
         var dbContext = await CreateCommandDbContext(tenant, cancellationToken).ConfigureAwait(false);
         await using var _1 = dbContext.ConfigureAwait(false);
 
+        var dbSessionInfo = await Sessions.GetOrCreate(dbContext, session.Id, cancellationToken).ConfigureAwait(false);
+        var sessionInfo = SessionConverter.ToModel(dbSessionInfo);
+        if (sessionInfo!.IsSignOutForced)
+            throw Errors.ForcedSignOut();
+
         var isNewUser = false;
         var dbUser = await Users
-            .GetByUserIdentity(dbContext, authenticatedIdentity, cancellationToken)
+            .GetByUserIdentity(dbContext, authenticatedIdentity, true, cancellationToken)
             .ConfigureAwait(false);
         if (dbUser == null) {
             (dbUser, isNewUser) = await Users
@@ -62,19 +67,15 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        var dbSessionInfo = await Sessions.GetOrCreate(dbContext, session.Id, cancellationToken).ConfigureAwait(false);
-        var sessionInfo = SessionConverter.ToModel(dbSessionInfo);
-        if (sessionInfo!.IsSignOutForced)
-            throw Errors.ForcedSignOut();
-
         sessionInfo = sessionInfo with {
             LastSeenAt = Clocks.SystemClock.Now,
             AuthenticatedIdentity = authenticatedIdentity,
             UserId = DbUserIdHandler.Format(dbUser.Id)
         };
+        await Sessions.Upsert(dbContext, session.Id, sessionInfo, cancellationToken).ConfigureAwait(false);
+
         context.Operation().Items.Set(sessionInfo);
         context.Operation().Items.Set(isNewUser);
-        await Sessions.Upsert(dbContext, session.Id, sessionInfo, cancellationToken).ConfigureAwait(false);
     }
 
     // [CommandHandler] inherited
@@ -100,6 +101,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
             return null!;
         }
 
+        CommandIsolationLevel = IsolationLevel.ReadCommitted;
         var dbContext = await CreateCommandDbContext(tenant, cancellationToken).ConfigureAwait(false);
         await using var _1 = dbContext.ConfigureAwait(false);
 
@@ -150,6 +152,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         }
 
         var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
+        CommandIsolationLevel = IsolationLevel.ReadCommitted;
         var dbContext = await CreateCommandDbContext(tenant, cancellationToken).ConfigureAwait(false);
         await using var _1 = dbContext.ConfigureAwait(false);
 

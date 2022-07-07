@@ -122,8 +122,8 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
     }
 
     protected virtual async Task ProcessBatch(
-        Tenant tenant, 
-        List<BatchItem<TKey, TDbEntity?>> batch, 
+        Tenant tenant,
+        List<BatchItem<TKey, TDbEntity?>> batch,
         CancellationToken cancellationToken)
     {
         using var activity = StartProcessBatchActivity(tenant, batch.Count);

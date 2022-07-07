@@ -17,7 +17,7 @@ public static class DbContextExt
     {
         dbContext.EnableChangeTracking(readWrite);
         dbContext.EnableSaveChanges(readWrite);
-        ExecutionStrategyExt.TrySetIsSuspended(true);
+        ExecutionStrategyExt.Suspend(dbContext);
         return dbContext;
     }
 

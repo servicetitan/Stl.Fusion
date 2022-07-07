@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Stl.Multitenancy;
 using Stl.Versioning;
@@ -14,6 +15,10 @@ public abstract class DbServiceBase<TDbContext>
     protected DbHub<TDbContext> DbHub => _dbHub ??= Services.DbHub<TDbContext>();
     protected ITenantRegistry<TDbContext> TenantRegistry => DbHub.TenantRegistry;
     protected VersionGenerator<long> VersionGenerator => DbHub.VersionGenerator;
+    protected IsolationLevel CommandIsolationLevel {
+        get => DbHub.CommandIsolationLevel;
+        set => DbHub.CommandIsolationLevel = value;
+    }
     protected MomentClockSet Clocks => DbHub.Clocks;
     protected ICommander Commander => DbHub.Commander;
     protected ILogger Log => _log ??= Services.LogFor(GetType());

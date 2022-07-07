@@ -76,8 +76,8 @@ public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId> : DbServic
     public async Task<TDbSessionInfo> Upsert(
         TDbContext dbContext, string sessionId, SessionInfo sessionInfo, CancellationToken cancellationToken = default)
     {
-        var dbSessionInfo = await dbContext.Set<TDbSessionInfo>()
-            .FindAsync(DbKey.Compose(sessionId), cancellationToken)
+        var dbSessionInfo = await dbContext.Set<TDbSessionInfo>().ForUpdate()
+            .SingleOrDefaultAsync(s => s.Id == sessionId, cancellationToken)
             .ConfigureAwait(false);
         var isDbSessionInfoFound = dbSessionInfo != null;
         dbSessionInfo ??= new TDbSessionInfo() {
@@ -121,7 +121,9 @@ public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId> : DbServic
     public virtual async Task<TDbSessionInfo?> Get(
         TDbContext dbContext, string sessionId, bool forUpdate, CancellationToken cancellationToken = default)
     {
-        var dbSessionInfos = forUpdate ? dbContext.Set<TDbSessionInfo>().ForUpdate() : dbContext.Set<TDbSessionInfo>();
+        var dbSessionInfos = forUpdate 
+            ? dbContext.Set<TDbSessionInfo>().ForUpdate()
+            : dbContext.Set<TDbSessionInfo>();
         return await dbSessionInfos
             .SingleOrDefaultAsync(s => s.Id == sessionId, cancellationToken)
             .ConfigureAwait(false);

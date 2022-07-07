@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework.Internal;
 using Stl.Multitenancy;
@@ -24,6 +25,22 @@ public class DbHub<TDbContext>
         => _dbContextFactory ??= Services.GetRequiredService<IMultitenantDbContextFactory<TDbContext>>();
     public VersionGenerator<long> VersionGenerator
         => _versionGenerator ??= Services.VersionGenerator<long>();
+
+    public IsolationLevel CommandIsolationLevel {
+        get {
+            var commandContext = CommandContext.GetCurrent();
+            var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>()
+                ?? throw new KeyNotFoundException();
+            return operationScope.IsolationLevel;
+        }
+        set {
+            var commandContext = CommandContext.GetCurrent();
+            var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>()
+                ?? throw new KeyNotFoundException();
+            operationScope.IsolationLevel = value;
+        }
+    }
+
     public MomentClockSet Clocks
         => _clocks ??= Services.Clocks();
     public ICommander Commander
@@ -51,8 +68,24 @@ public class DbHub<TDbContext>
         var commandContext = CommandContext.GetCurrent();
         var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>()
             ?? throw new KeyNotFoundException();
-        var result = operationScope.CreateDbContext(tenant, readWrite: true, cancellationToken);
-        ExecutionStrategyExt.TrySetIsSuspended(true);
-        return result;
+        var dbContext = CreateDbContext(tenant, readWrite: true);
+        ExecutionStrategyExt.Suspend(dbContext);
+        return InitializeDbContext();
+
+        async Task<TDbContext> InitializeDbContext()
+        {
+            try {
+                return await operationScope.InitializeDbContext(dbContext, tenant, cancellationToken).ConfigureAwait(false);
+            }
+            catch {
+                try {
+                    await dbContext.DisposeAsync().ConfigureAwait(false);
+                }
+                catch {
+                    // Intended
+                }
+                throw;
+            }
+        }
     }
 }

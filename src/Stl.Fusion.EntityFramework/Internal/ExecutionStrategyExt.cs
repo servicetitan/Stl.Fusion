@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Stl.Fusion.EntityFramework.Internal;
@@ -8,6 +9,8 @@ public static class ExecutionStrategyExt
     private static readonly Func<ExecutionStrategy, Exception, bool>? ShouldRetryOnCached;
 #if !NET6_0_OR_GREATER
     private static readonly AsyncLocal<bool?>? SuspendedCached;
+#else
+    private static readonly AsyncLocal<ExecutionStrategy?>? CurrentCached;
 #endif
 
     static ExecutionStrategyExt()
@@ -30,6 +33,11 @@ public static class ExecutionStrategyExt
             "_suspended", BindingFlags.Static | BindingFlags.NonPublic);
         if (fSuspended?.GetValue(null) is AsyncLocal<bool?> value)
             SuspendedCached = value;
+#else
+        var fCurrent = tStrategy.GetField(
+            "_current", BindingFlags.Static | BindingFlags.NonPublic);
+        if (fCurrent?.GetValue(null) is AsyncLocal<ExecutionStrategy?> value)
+            CurrentCached = value;
 #endif
     }
 
@@ -42,37 +50,27 @@ public static class ExecutionStrategyExt
         return shouldRetryOn.Invoke(strategy, exception);
     }
 
-#if NET6_0_OR_GREATER
-    public static ClosedDisposable<Unit> TrySuspend()
-        => default;
-
-    public static bool? TryGetIsSuspended()
-        => null;
-
-    public static bool TrySetIsSuspended(bool value)
-        => false;
-#else
-    public static ClosedDisposable<Unit> TrySuspend()
-    {
-        if (TryGetIsSuspended() is not false)
-            return default;
-        TrySetIsSuspended(true);
-        return new ClosedDisposable<Unit>(default, _ => TrySetIsSuspended(false));
-    }
-
-    public static bool? TryGetIsSuspended()
-    {
-        if (SuspendedCached is not { } suspended)
-            return null;
-        return suspended.Value ?? false;
-    }
-
-    public static bool TrySetIsSuspended(bool value)
+#if !NET6_0_OR_GREATER
+    public static bool Suspend(DbContext dbContext)
     {
         if (SuspendedCached is not { } suspended)
             return false;
-        suspended.Value = value;
+        suspended.Value = true;
         return true;
+    }
+#else
+    public static bool Suspend(DbContext dbContext)
+    {
+        if (CurrentCached is not { } current)
+            return false;
+        if (ExecutionStrategy.Current == null) {
+            var executionStrategy = dbContext.Database.CreateExecutionStrategy();
+            if (executionStrategy is ExecutionStrategy es) {
+                current.Value = es;
+                return true;
+            }
+        }
+        return false;
     }
 #endif
 }

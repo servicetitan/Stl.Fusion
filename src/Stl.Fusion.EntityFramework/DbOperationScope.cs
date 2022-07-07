@@ -16,10 +16,10 @@ public interface IDbOperationScope : IOperationScope
     DbContext? MasterDbContext { get; }
     DbConnection? Connection { get; }
     IDbContextTransaction? Transaction { get; }
-    IsolationLevel IsolationLevel { get; }
+    IsolationLevel IsolationLevel { get; set; }
     Tenant Tenant { get; }
 
-    Task<DbContext> CreateDbContext(Tenant tenant, bool readWrite = true, CancellationToken cancellationToken = default);
+    Task<DbContext> InitializeDbContext(DbContext preCreatedDbContext, Tenant tenant, CancellationToken cancellationToken = default);
     bool IsTransientFailure(Exception error);
 }
 
@@ -33,7 +33,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
     public TDbContext? MasterDbContext { get; protected set; }
     public DbConnection? Connection { get; protected set; }
     public IDbContextTransaction? Transaction { get; protected set; }
-    public IsolationLevel IsolationLevel { get; init; } = IsolationLevel.Unspecified;
+    public IsolationLevel IsolationLevel { get; set; } = IsolationLevel.Unspecified;
 
     IOperation IOperationScope.Operation => Operation;
     public DbOperation Operation { get; protected init; }
@@ -53,6 +53,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
 
     // Services
     protected IServiceProvider Services { get; }
+    protected ITenantRegistry<TDbContext> TenantRegistry { get; }
     protected IMultitenantDbContextFactory<TDbContext> DbContextFactory { get; }
     protected IDbOperationLog<TDbContext> DbOperationLog { get; }
     protected MomentClockSet Clocks { get; }
@@ -64,6 +65,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
         Services = services;
         Log = Services.LogFor(GetType());
         Clocks = Services.Clocks();
+        TenantRegistry = Services.GetRequiredService<ITenantRegistry<TDbContext>>();
         DbContextFactory = Services.GetRequiredService<IMultitenantDbContextFactory<TDbContext>>();
         DbOperationLog = Services.GetRequiredService<IDbOperationLog<TDbContext>>();
         AsyncLock = new AsyncLock(ReentryMode.CheckedPass);
@@ -99,10 +101,11 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
         }
     }
 
-    async Task<DbContext> IDbOperationScope.CreateDbContext(Tenant tenant, bool readWrite, CancellationToken cancellationToken)
-        => await CreateDbContext(tenant, readWrite, cancellationToken).ConfigureAwait(false);
-    public virtual async Task<TDbContext> CreateDbContext(
-        Tenant tenant, bool readWrite = true, CancellationToken cancellationToken = default)
+    async Task<DbContext> IDbOperationScope.InitializeDbContext(
+        DbContext dbContext, Tenant tenant, CancellationToken cancellationToken)
+        => await InitializeDbContext((TDbContext) dbContext, tenant, cancellationToken).ConfigureAwait(false);
+    public virtual async Task<TDbContext> InitializeDbContext(
+        TDbContext dbContext, Tenant tenant, CancellationToken cancellationToken = default)
     {
         // This code must run in the same execution context to work, so
         // we run it first
@@ -128,8 +131,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
             }
             MasterDbContext = masterDbContext;
         }
-        // Creating requested DbContext, which is going to share MasterDbContext's transaction
-        var dbContext = DbContextFactory.CreateDbContext(Tenant).ReadWrite(readWrite);
+        // Initializing DbContext, which is going to share MasterDbContext's transaction
         dbContext.Database.AutoTransactionsEnabled = false;
 #if NET6_0_OR_GREATER
         dbContext.Database.AutoSavepointsEnabled = false;
@@ -227,17 +229,20 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
             var isTransient = retryingExecutionStrategy.ShouldRetryOn(error);
             return isTransient;
         }
-        catch (ObjectDisposedException) {
+        catch (ObjectDisposedException e) {
             // scope.MasterDbContext?.Database may throw this exception
+            Log.LogWarning(e, "IsTransientFailure resorts to temporary {DbContext}", typeof(TDbContext).Name);
             try {
-                using var altDbContext = DbContextFactory.CreateDbContext(Tenant);
-                var executionStrategy = altDbContext.Database.CreateExecutionStrategy();
+                var tenantId = TenantRegistry.IsSingleTenant ? Tenant.Default.Id : Tenant.Dummy.Id;
+                using var tmpDbContext = DbContextFactory.CreateDbContext(tenantId);
+                var executionStrategy = tmpDbContext.Database.CreateExecutionStrategy();
                 if (executionStrategy is not ExecutionStrategy retryingExecutionStrategy)
                     return false;
                 var isTransient = retryingExecutionStrategy.ShouldRetryOn(error);
                 return isTransient;
             }
-            catch {
+            catch (Exception e2) {
+                Log.LogWarning(e2, "IsTransientFailure fails for temporary {DbContext}", typeof(TDbContext).Name);
                 // Intended
             }
             return false;

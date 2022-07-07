@@ -23,8 +23,7 @@ public interface IOperationReprocessor : ICommandHandler<ICommand>
 public record OperationReprocessorOptions
 {
     public int MaxRetryCount { get; init; } = 3;
-    public RetryDelaySeq RetryDelays { get; init; } =
-        new RetryDelaySeq(0.053, 3, 0.5) with { Multiplier = Math.Sqrt(Math.Sqrt(2)) };
+    public RetryDelaySeq RetryDelays { get; init; } = new(0.50, 3, 0.33) { Multiplier = Math.Sqrt(2) };
     public IMomentClock? DelayClock { get; init; }
 }
 
@@ -131,8 +130,8 @@ public class OperationReprocessor : IOperationReprocessor
 
                 LastError = error;
                 FailedTryCount++;
-                context.ExecutionState = executionStateBackup;
                 context.Items.Items = itemsBackup;
+                context.ExecutionState = executionStateBackup;
                 var delay = Options.RetryDelays[FailedTryCount];
                 Log.LogWarning(
                     "Retry #{FailedTryCount}/{MaxTryCount} on {Error}: {Command} with {Delay} delay",
