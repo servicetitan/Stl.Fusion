@@ -27,7 +27,10 @@
     <Using Include="Stl.Serialization" />
     <Using Include="Stl.Text" />
     <Using Include="Stl.Time" />
+    <Using Include="Microsoft.AspNetCore.Builder" />
+    <Using Include="Microsoft.AspNetCore.Hosting" />
     <Using Include="Microsoft.Extensions.DependencyInjection" />
+    <Using Include="Microsoft.Extensions.Hosting" />
     <Using Include="Microsoft.Extensions.Logging" />
     <Using Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>

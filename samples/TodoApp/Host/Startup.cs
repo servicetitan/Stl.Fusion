@@ -75,20 +75,20 @@ public class Startup
         // DbContext & related services
         var appTempDir = FilePath.GetApplicationTempDirectory("", true);
         services.AddTransient(_ => new DbOperationScope<AppDbContext>.Options() {
-            DefaultIsolationLevel = IsolationLevel.Snapshot,
+            DefaultIsolationLevel = IsolationLevel.RepeatableRead,
         });
         services.AddDbContextServices<AppDbContext>(db => {
-            // This is the best way to add DbContext-related services from Stl.Fusion.EntityFramework
+            // Uncomment if you'll be using AddRedisOperationLogChangeTracking 
+            // db.AddRedisDb("localhost", "Fusion.Samples.TodoApp");
             db.AddOperations(operations => {
                 operations.ConfigureOperationLogReader(_ => new() {
-                    // We use FileBasedDbOperationLogChangeMonitor, so unconditional wake up period
+                    // We use FileBasedDbOperationLogChangeTracking, so unconditional wake up period
                     // can be arbitrary long - all depends on the reliability of Notifier-Monitor chain.
                     UnconditionalCheckPeriod = TimeSpan.FromSeconds(Env.IsDevelopment() ? 60 : 5),
                 });
                 operations.AddFileBasedOperationLogChangeTracking();
+                // db.AddRedisOperationLogChangeTracking();
             });
-            // dbContext.AddRedisDb("localhost", "Fusion.Samples.TodoApp");
-            // dbContext.AddRedisOperationLogChangeTracking();
             if (!HostSettings.UseInMemoryAuthService)
                 db.AddAuthentication<string>();
             db.AddKeyValueStore();

@@ -3,7 +3,6 @@ using Microsoft.Extensions.Configuration.Memory;
 using Samples.HelloCart.V2;
 using Stl.Fusion.Client;
 using Stl.Fusion.EntityFramework;
-using Stl.Fusion.EntityFramework.Operations;
 using Stl.Fusion.EntityFramework.Redis;
 using Stl.Fusion.Server;
 using Stl.IO;
@@ -28,7 +27,7 @@ public class AppV4 : AppBase
                 // Looks like there is no better way to set _default_ URL
                 cfg.Sources.Insert(0, new MemoryConfigurationSource() {
                     InitialData = new Dictionary<string, string>() {
-                        {WebHostDefaults.ServerUrlsKey, baseUri.ToString()},
+                        { WebHostDefaults.ServerUrlsKey, baseUri.ToString() },
                     }
                 });
             })
