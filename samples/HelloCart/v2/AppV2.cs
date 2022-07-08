@@ -26,15 +26,17 @@ public class AppV2 : AppBase
         // Add AppDbContext & related services
         var appTempDir = FilePath.GetApplicationTempDirectory("", true);
         var dbPath = appTempDir & "HelloCart_v01.db";
-        services.AddDbContextFactory<AppDbContext>(dbContext => {
-            dbContext.UseSqlite($"Data Source={dbPath}");
-            dbContext.EnableSensitiveDataLogging();
+        services.AddDbContextFactory<AppDbContext>(db => {
+            db.UseSqlite($"Data Source={dbPath}");
+            db.EnableSensitiveDataLogging();
         });
-        services.AddDbContextServices<AppDbContext>(dbContext => {
-            dbContext.AddOperations(_ => new() {
-                UnconditionalCheckPeriod = TimeSpan.FromSeconds(5),
+        services.AddDbContextServices<AppDbContext>(db => {
+            db.AddOperations(operations => {
+                operations.ConfigureOperationLogReader(_ => new() {
+                    UnconditionalCheckPeriod = TimeSpan.FromSeconds(5),
+                });
+                operations.AddFileBasedOperationLogChangeTracking();
             });
-            dbContext.AddFileBasedOperationLogChangeTracking();
         });
         ClientServices = HostServices = services.BuildServiceProvider();
     }

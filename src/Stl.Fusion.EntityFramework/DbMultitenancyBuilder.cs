@@ -11,15 +11,23 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
     public DbContextBuilder<TDbContext> DbContext { get; }
     public IServiceCollection Services => DbContext.Services;
 
-    internal DbMultitenancyBuilder(DbContextBuilder<TDbContext> dbContext)
+    internal DbMultitenancyBuilder(
+        DbContextBuilder<TDbContext> dbContext,
+        Action<DbMultitenancyBuilder<TDbContext>>? configure)
     {
         DbContext = dbContext;
+        if (Services.HasService<IMultitenantDbContextFactory<TDbContext>>()) {
+            configure?.Invoke(this);
+            return;
+        }
 
         // Core multitenancy services
         Services.TryAddSingleton<DefaultTenantResolver<TDbContext>.Options>();
         Services.TryAddSingleton<ITenantResolver<TDbContext>, DefaultTenantResolver<TDbContext>>();
         Services.TryAddSingleton<ITenantRegistry<TDbContext>, SingleTenantRegistry<TDbContext>>();
         Services.TryAddSingleton<IMultitenantDbContextFactory<TDbContext>, SingleTenantDbContextFactory<TDbContext>>();
+
+        configure?.Invoke(this);
     }
 
     // Mode

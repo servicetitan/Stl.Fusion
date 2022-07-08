@@ -15,7 +15,7 @@ public static class FusionAuthenticationBuilderExt
     {
         var fusion = fusionAuth.Fusion;
         var services = fusionAuth.Services;
-        fusionAuth.AddAuthBackend();
+        fusionAuth.AddBackend();
 
         services.TryAddSingleton(c => sessionMiddlewareOptionsFactory?.Invoke(c) ?? new());
         services.TryAddScoped<SessionMiddleware>();

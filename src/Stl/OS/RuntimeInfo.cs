@@ -6,9 +6,9 @@ public static class RuntimeInfo
     {
         public static readonly Guid Guid = Guid.NewGuid();
         public static readonly Symbol Id =
-            Convert.ToBase64String(Guid.ToByteArray()).TrimEnd('=');
+            Convert.ToBase64String(Guid.ToByteArray()).TrimEnd('=').Replace('/', '_');
         public static readonly Symbol MachinePrefixedId =
-            $"{Environment.MachineName}:{Id.Value}";
+            $"{Environment.MachineName}-{Id.Value}";
     }
 
     public static class DotNetCore

@@ -8,6 +8,6 @@ public record AgentInfo(Symbol Id)
     private static long GetNextId() => Interlocked.Increment(ref _nextId);
 
     public AgentInfo()
-        : this($"{RuntimeInfo.Process.MachinePrefixedId}:{GetNextId()}")
+        : this($"{RuntimeInfo.Process.MachinePrefixedId}-{GetNextId()}")
     { }
 }

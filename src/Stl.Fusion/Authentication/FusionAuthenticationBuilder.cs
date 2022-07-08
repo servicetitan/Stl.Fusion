@@ -9,24 +9,32 @@ public readonly struct FusionAuthenticationBuilder
     public FusionBuilder Fusion { get; }
     public IServiceCollection Services => Fusion.Services;
 
-    internal FusionAuthenticationBuilder(FusionBuilder fusion)
+    internal FusionAuthenticationBuilder(
+        FusionBuilder fusion,
+        Action<FusionAuthenticationBuilder>? configure)
     {
         Fusion = fusion;
+        if (Services.HasService<ISessionFactory>()) {
+            configure?.Invoke(this);
+            return;
+        }
 
-        Services.TryAddSingleton<ISessionFactory, SessionFactory>();
         Services.TryAddScoped<ISessionProvider, SessionProvider>();
         Services.TryAddTransient(c => (ISessionResolver) c.GetRequiredService<ISessionProvider>());
         Services.TryAddTransient(c => c.GetRequiredService<ISessionProvider>().Session);
+        Services.TryAddSingleton<ISessionFactory, SessionFactory>();
 
         Services.TryAddSingleton<PresenceService.Options>();
         Services.TryAddScoped<PresenceService>();
+
+        configure?.Invoke(this);
     }
 
-    public FusionAuthenticationBuilder AddAuthBackend<TAuthService>()
+    public FusionAuthenticationBuilder AddBackend<TAuthService>()
         where TAuthService : class, IAuthBackend
-        => AddAuthBackend(typeof(TAuthService));
+        => AddBackend(typeof(TAuthService));
 
-    public FusionAuthenticationBuilder AddAuthBackend(Type? implementationType = null)
+    public FusionAuthenticationBuilder AddBackend(Type? implementationType = null)
     {
         if (Services.Any(d => d.ServiceType == typeof(IAuthBackend)))
             return this;

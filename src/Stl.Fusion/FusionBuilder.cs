@@ -28,11 +28,16 @@ public readonly struct FusionBuilder
 
     public IServiceCollection Services { get; }
 
-    internal FusionBuilder(IServiceCollection services)
+    internal FusionBuilder(
+        IServiceCollection services, 
+        Action<FusionBuilder>? configure)
     {
         Services = services;
-        if (Services.Contains(AddedTagDescriptor))
+        if (Services.Contains(AddedTagDescriptor)) {
+            configure?.Invoke(this);
             return;
+        }
+
         // We want above Contains call to run in O(1), so...
         Services.Insert(0, AddedTagDescriptor);
         Services.AddCommander();
@@ -108,6 +113,8 @@ public readonly struct FusionBuilder
         // And make it default
         Services.TryAddTransient<ITenantRegistry>(c => c.GetRequiredService<ITenantRegistry<Unit>>());
         Services.TryAddTransient<ITenantResolver>(c => c.GetRequiredService<ITenantResolver<Unit>>());
+
+        configure?.Invoke(this);
     }
 
     static FusionBuilder()
@@ -126,8 +133,11 @@ public readonly struct FusionBuilder
     public FusionBuilder AddPublisher(
         Func<IServiceProvider, PublisherOptions>? optionsFactory = null)
     {
-        // Publisher
-        Services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
+        if (optionsFactory != null)
+            Services.AddSingleton(optionsFactory);
+        else 
+            Services.TryAddSingleton<PublisherOptions>();
+        
         Services.TryAddSingleton<IPublisher, Publisher>();
         return this;
     }
@@ -135,6 +145,13 @@ public readonly struct FusionBuilder
     public FusionBuilder AddReplicator(
         Func<IServiceProvider, ReplicatorOptions>? optionsFactory = null)
     {
+        if (optionsFactory != null)
+            Services.AddSingleton(optionsFactory);
+        else 
+            Services.TryAddSingleton<ReplicatorOptions>();
+        if (Services.HasService<IReplicator>())
+            return this;
+
         // ReplicaServiceProxyGenerator
         Services.TryAddSingleton(ReplicaServiceProxyGenerator.Default);
         Services.TryAddSingleton(new ReplicaMethodInterceptor.Options());
@@ -142,7 +159,6 @@ public readonly struct FusionBuilder
         Services.TryAddSingleton(new ReplicaServiceInterceptor.Options());
         Services.TryAddSingleton<ReplicaServiceInterceptor>();
         // Replicator
-        Services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
         Services.TryAddSingleton<IReplicator, Replicator>();
         return this;
     }
@@ -193,13 +209,10 @@ public readonly struct FusionBuilder
     // AddAuthentication
 
     public FusionAuthenticationBuilder AddAuthentication()
-        => new(this);
-    public FusionBuilder AddAuthentication(Action<FusionAuthenticationBuilder> configureFusionAuthentication)
-    {
-        var fusionAuth = AddAuthentication();
-        configureFusionAuthentication(fusionAuth);
-        return this;
-    }
+        => new(this, null);
+    
+    public FusionBuilder AddAuthentication(Action<FusionAuthenticationBuilder> configure) 
+        => new FusionAuthenticationBuilder(this, configure).Fusion;
 
     // AddOperationReprocessor
 
@@ -211,7 +224,11 @@ public readonly struct FusionBuilder
         Func<IServiceProvider, OperationReprocessorOptions>? optionsFactory = null)
         where TOperationReprocessor : class, IOperationReprocessor
     {
-        Services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
+        if (optionsFactory != null)
+            Services.AddSingleton(optionsFactory);
+        else 
+            Services.TryAddSingleton<OperationReprocessorOptions>();
+
         if (!Services.HasService<IOperationReprocessor>()) {
             Services.AddTransient<TOperationReprocessor>();
             Services.AddTransient<IOperationReprocessor>(c => c.GetRequiredService<TOperationReprocessor>());

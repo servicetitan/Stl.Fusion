@@ -16,6 +16,7 @@ public interface IDbOperationScope : IOperationScope
     DbContext? MasterDbContext { get; }
     DbConnection? Connection { get; }
     IDbContextTransaction? Transaction { get; }
+    string? TransactionId { get; }
     IsolationLevel IsolationLevel { get; set; }
     Tenant Tenant { get; }
 
@@ -26,13 +27,20 @@ public interface IDbOperationScope : IOperationScope
 public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperationScope
     where TDbContext : DbContext
 {
+    public record Options
+    {
+        public IsolationLevel DefaultIsolationLevel { get; init; } = IsolationLevel.Unspecified;
+    }
+
     private bool _isInMemoryProvider;
     private Tenant _tenant = Tenant.Default;
 
+    public Options Settings { get; protected init; }
     DbContext? IDbOperationScope.MasterDbContext => MasterDbContext;
     public TDbContext? MasterDbContext { get; protected set; }
     public DbConnection? Connection { get; protected set; }
     public IDbContextTransaction? Transaction { get; protected set; }
+    public string? TransactionId { get; protected set; }
     public IsolationLevel IsolationLevel { get; set; } = IsolationLevel.Unspecified;
 
     IOperation IOperationScope.Operation => Operation;
@@ -56,18 +64,21 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
     protected ITenantRegistry<TDbContext> TenantRegistry { get; }
     protected IMultitenantDbContextFactory<TDbContext> DbContextFactory { get; }
     protected IDbOperationLog<TDbContext> DbOperationLog { get; }
+    protected TransactionIdGenerator<TDbContext> TransactionIdGenerator { get; }
     protected MomentClockSet Clocks { get; }
     protected AsyncLock AsyncLock { get; }
     protected ILogger Log { get; }
 
-    public DbOperationScope(IServiceProvider services)
+    public DbOperationScope(Options settings, IServiceProvider services)
     {
+        Settings = settings;
         Services = services;
         Log = Services.LogFor(GetType());
         Clocks = Services.Clocks();
         TenantRegistry = Services.GetRequiredService<ITenantRegistry<TDbContext>>();
         DbContextFactory = Services.GetRequiredService<IMultitenantDbContextFactory<TDbContext>>();
         DbOperationLog = Services.GetRequiredService<IDbOperationLog<TDbContext>>();
+        TransactionIdGenerator = Services.GetRequiredService<TransactionIdGenerator<TDbContext>>();
         AsyncLock = new AsyncLock(ReentryMode.CheckedPass);
         Operation = DbOperationLog.New();
         CommandContext = Services.GetRequiredService<CommandContext>();
@@ -121,7 +132,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
 #if NET6_0_OR_GREATER
             masterDbContext.Database.AutoSavepointsEnabled = false;
 #endif
-            Transaction = await BeginTransaction(cancellationToken, masterDbContext).ConfigureAwait(false);
+            await BeginTransaction(masterDbContext, cancellationToken).ConfigureAwait(false);
             _isInMemoryProvider = (masterDbContext.Database.ProviderName ?? "")
                 .EndsWith(".InMemory", StringComparison.Ordinal);
             if (!_isInMemoryProvider) {
@@ -170,6 +181,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
             try {
                 await Transaction!.CommitAsync(cancellationToken).ConfigureAwait(false);
                 IsConfirmed = true;
+                Log.LogDebug("Transaction #{TransactionId}: committed", TransactionId);
             }
             catch (Exception) {
                 // See https://docs.microsoft.com/en-us/ef/ef6/fundamentals/connection-resiliency/commit-failures
@@ -211,6 +223,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
             await Transaction!.RollbackAsync().ConfigureAwait(false);
         }
         finally {
+            Log.LogDebug("Transaction #{TransactionId}: rolled back", TransactionId);
             IsConfirmed ??= false;
             IsClosed = true;
         }
@@ -251,7 +264,40 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
 
     // Protected methods
 
-    protected virtual Task<IDbContextTransaction> BeginTransaction(
-        CancellationToken cancellationToken, TDbContext dbContext)
-        => dbContext.Database.BeginTransactionAsync(IsolationLevel, cancellationToken);
+    protected virtual async Task BeginTransaction(TDbContext dbContext, CancellationToken cancellationToken)
+    {
+        var commandContext = CommandContext;
+        // 1. If IsolationLevel is set explicitly, we honor it 
+        var isolationLevel = IsolationLevel;
+        if (isolationLevel != IsolationLevel.Unspecified)
+            goto ready;
+
+        // 2. Try to query DbContext-specific DbIsolationLevelSelectors
+        var selectors = Services.GetRequiredService<IEnumerable<DbIsolationLevelSelector<TDbContext>>>();
+        isolationLevel = selectors
+            .Select(s => s.GetCommandIsolationLevel(commandContext))
+            .Aggregate(IsolationLevel.Unspecified, (x, y) => x.Max(y));
+        if (isolationLevel != IsolationLevel.Unspecified)
+            goto ready;
+
+        // 3. Try to query GlobalIsolationLevelSelectors  
+        var globalSelectors = Services.GetRequiredService<IEnumerable<GlobalIsolationLevelSelector>>();
+        isolationLevel = globalSelectors
+            .Select(s => s.GetCommandIsolationLevel(commandContext))
+            .Aggregate(IsolationLevel.Unspecified, (x, y) => x.Max(y));
+        if (isolationLevel != IsolationLevel.Unspecified)
+            goto ready;
+
+        // 4. Use Settings.DefaultIsolationLevel  
+        isolationLevel = Settings.DefaultIsolationLevel;
+
+        ready:
+        IsolationLevel = isolationLevel;
+        Transaction = await dbContext.Database
+            .BeginTransactionAsync(isolationLevel, cancellationToken)
+            .ConfigureAwait(false);
+        TransactionId = TransactionIdGenerator.Next();
+        Log.LogDebug("Transaction #{TransactionId}: started @ IsolationLevel = {IsolationLevel}",
+            TransactionId, isolationLevel);
+    }
 }

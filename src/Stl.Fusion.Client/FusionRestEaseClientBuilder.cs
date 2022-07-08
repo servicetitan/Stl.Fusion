@@ -20,11 +20,16 @@ public readonly struct FusionRestEaseClientBuilder
     public FusionBuilder Fusion { get; }
     public IServiceCollection Services => Fusion.Services;
 
-    internal FusionRestEaseClientBuilder(FusionBuilder fusion)
+    internal FusionRestEaseClientBuilder(
+        FusionBuilder fusion, 
+        Action<FusionRestEaseClientBuilder>? configure)
     {
         Fusion = fusion;
-        if (Services.Contains(AddedTagDescriptor))
+        if (Services.Contains(AddedTagDescriptor)) {
+            configure?.Invoke(this);
             return;
+        }
+
         // We want above Contains call to run in O(1), so...
         Services.Insert(0, AddedTagDescriptor);
 
@@ -47,6 +52,8 @@ public readonly struct FusionRestEaseClientBuilder
         var commander = Services.AddCommander();
         Services.TryAddSingleton<BackendUnreachableCommandHandler>();
         commander.AddHandlers<BackendUnreachableCommandHandler>();
+
+        configure?.Invoke(this);
     }
 
     // ConfigureXxx

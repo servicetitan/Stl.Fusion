@@ -5,17 +5,23 @@ using Stl.Fusion.EntityFramework.Operations;
 
 namespace Stl.Fusion.EntityFramework.Npgsql;
 
-public static class DbContextBuilderExt
+public static class DbOperationsBuilderExt
 {
-    public static DbContextBuilder<TDbContext> AddNpgsqlOperationLogChangeTracking<TDbContext>(
-        this DbContextBuilder<TDbContext> dbContextBuilder,
+    public static DbOperationsBuilder<TDbContext> AddNpgsqlOperationLogChangeTracking<TDbContext>(
+        this DbOperationsBuilder<TDbContext> dbOperations,
         Func<IServiceProvider, NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>>? optionsFactory = null)
         where TDbContext : DbContext
     {
-        var services = dbContextBuilder.Services;
-        services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
+        var services = dbOperations.Services;
+        var isConfigured = services.HasService<NpgsqlDbOperationLogChangeTracker<TDbContext>>();
+
+        if (optionsFactory != null)
+            services.AddSingleton(optionsFactory);
+        if (isConfigured)
+            return dbOperations;
 
         // NpgsqlDbOperationLogChangeTracker<TDbContext>
+        services.TryAddSingleton<NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>>();
         services.TryAddSingleton<NpgsqlDbOperationLogChangeTracker<TDbContext>>();
         services.AddHostedService(c =>
             c.GetRequiredService<NpgsqlDbOperationLogChangeTracker<TDbContext>>());
@@ -27,6 +33,6 @@ public static class DbContextBuilderExt
             ServiceDescriptor.Singleton<
                 IOperationCompletionListener,
                 NpgsqlDbOperationLogChangeNotifier<TDbContext>>());
-        return dbContextBuilder;
+        return dbOperations;
     }
 }

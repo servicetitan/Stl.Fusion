@@ -1,8 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using StackExchange.Redis;
-using Stl.Fusion.EntityFramework.Redis.Operations;
-using Stl.Fusion.EntityFramework.Operations;
 using Stl.Redis;
 
 namespace Stl.Fusion.EntityFramework.Redis;
@@ -38,29 +35,4 @@ public static class DbContextBuilderExt
         string? keyPrefix = null)
         where TDbContext : DbContext
         => dbContextBuilder.Services.AddRedisDb<TDbContext>(connectionMultiplexer, keyPrefix);
-
-    // AddRedisOperationLogChangeTracking
-
-    public static DbContextBuilder<TDbContext> AddRedisOperationLogChangeTracking<TDbContext>(
-        this DbContextBuilder<TDbContext> dbContextBuilder,
-        Func<IServiceProvider, RedisOperationLogChangeTrackingOptions<TDbContext>>? optionsFactory = null)
-        where TDbContext : DbContext
-    {
-        var services = dbContextBuilder.Services;
-        services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
-
-        // RedisOperationLogChangeTracker<TDbContext>
-        services.TryAddSingleton<RedisOperationLogChangeTracker<TDbContext>>();
-        services.AddHostedService(c =>
-            c.GetRequiredService<RedisOperationLogChangeTracker<TDbContext>>());
-        services.TryAddSingleton<IDbOperationLogChangeTracker<TDbContext>>(c =>
-            c.GetRequiredService<RedisOperationLogChangeTracker<TDbContext>>());
-
-        // RedisOperationLogChangeNotifier<TDbContext>
-        services.TryAddEnumerable(
-            ServiceDescriptor.Singleton<
-                IOperationCompletionListener,
-                RedisOperationLogChangeNotifier<TDbContext>>());
-        return dbContextBuilder;
-    }
 }

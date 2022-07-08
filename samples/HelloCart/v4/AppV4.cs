@@ -44,18 +44,20 @@ public class AppV4 : AppBase
                     // Add AppDbContext & related services
                     var appTempDir = FilePath.GetApplicationTempDirectory("", true);
                     var dbPath = appTempDir & "HelloCart_v01.db";
-                    services.AddDbContextFactory<AppDbContext>(dbContext => {
-                        dbContext.UseSqlite($"Data Source={dbPath}");
-                        dbContext.EnableSensitiveDataLogging();
+                    services.AddDbContextFactory<AppDbContext>(db => {
+                        db.UseSqlite($"Data Source={dbPath}");
+                        db.EnableSensitiveDataLogging();
                     });
-                    services.AddDbContextServices<AppDbContext>(dbContext => {
-                        dbContext.AddOperations(_ => new() {
-                            UnconditionalCheckPeriod = TimeSpan.FromSeconds(5),
+                    services.AddDbContextServices<AppDbContext>(db => {
+                        db.AddOperations(operations => {
+                            operations.ConfigureOperationLogReader(_ => new() {
+                                UnconditionalCheckPeriod = TimeSpan.FromSeconds(5),
+                            });
+                            operations.AddRedisOperationLogChangeTracking();
                         });
-                        dbContext.AddRedisDb("localhost", "Fusion.Samples.HelloCart");
-                        dbContext.AddRedisOperationLogChangeTracking();
-                        dbContext.AddEntityResolver<string, DbProduct>();
-                        dbContext.AddEntityResolver<string, DbCart>(_ => new() {
+                        db.AddRedisDb("localhost", "Fusion.Samples.HelloCart");
+                        db.AddEntityResolver<string, DbProduct>();
+                        db.AddEntityResolver<string, DbCart>(_ => new() {
                             // Cart is always loaded together with items
                             QueryTransformer = carts => carts.Include(c => c.Items),
                         });

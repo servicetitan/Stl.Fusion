@@ -14,12 +14,16 @@ public readonly struct CommanderBuilder
     public IServiceCollection Services { get; }
     public ICommandHandlerRegistry Handlers { get; }
 
-    internal CommanderBuilder(IServiceCollection services, CommanderOptions? options = null)
+    internal CommanderBuilder(
+        IServiceCollection services, 
+        Action<CommanderBuilder>? configure)
     {
         Services = services;
         if (Services.Contains(AddedTagDescriptor)) {
+            // Already configured
             Handlers = GetCommandHandlerRegistry(services)
                 ?? throw Errors.CommandHandlerRegistryInstanceIsNotRegistered();
+            configure?.Invoke(this);
             return;
         }
 
@@ -27,7 +31,7 @@ public readonly struct CommanderBuilder
         Services.Insert(0, AddedTagDescriptor);
 
         // Common services
-        Services.TryAddSingleton(options ?? new());
+        Services.TryAddSingleton<CommanderOptions>();
         Services.TryAddSingleton<ICommander, Commander>();
         Services.TryAddSingleton<ICommandHandlerRegistry>(new CommandHandlerRegistry());
         Services.TryAddSingleton<ICommandHandlerResolver, CommandHandlerResolver>();
@@ -48,6 +52,8 @@ public readonly struct CommanderBuilder
         AddHandlers<TracingCommandHandler>();
         Services.AddSingleton<LocalCommandHandler>();
         AddHandlers<LocalCommandHandler>();
+
+        configure?.Invoke(this);
     }
 
     private static ICommandHandlerRegistry? GetCommandHandlerRegistry(IServiceCollection services)
@@ -70,14 +76,14 @@ public readonly struct CommanderBuilder
 
     // Options
 
-    public CommanderBuilder SetOptions(CommanderOptions options)
+    public CommanderBuilder Configure(CommanderOptions options)
     {
         Services.RemoveAll<CommanderOptions>();
         Services.AddSingleton(options);
         return this;
     }
 
-    public CommanderBuilder SetOptions(Func<IServiceProvider, CommanderOptions> optionsFactory)
+    public CommanderBuilder Configure(Func<IServiceProvider, CommanderOptions> optionsFactory)
     {
         Services.RemoveAll<CommanderOptions>();
         Services.AddSingleton(optionsFactory);

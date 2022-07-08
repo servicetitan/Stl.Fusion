@@ -82,7 +82,6 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
             return;
         }
 
-        CommandIsolationLevel = IsolationLevel.ReadCommitted;
         var dbContext = await CreateCommandDbContext(tenant, cancellationToken).ConfigureAwait(false);
         await using var _1 = dbContext.ConfigureAwait(false);
 

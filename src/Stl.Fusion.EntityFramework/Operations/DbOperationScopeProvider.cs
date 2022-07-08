@@ -63,6 +63,9 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
                 // But if retry still won't happen (too many retries?) - let's log error here
                 if (!operationReprocessor.WillRetry(allErrors))
                     Log.LogError(error, "Operation failed: {Command}", command);
+                else 
+                    Log.LogInformation("Transient failure on {Command}: {TransientError}", 
+                        command, transientError.ToExceptionInfo());
 
                 throw;
             }

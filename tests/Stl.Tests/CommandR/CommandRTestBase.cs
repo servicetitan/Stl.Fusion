@@ -52,7 +52,7 @@ public class CommandRTestBase : TestBase
                 LogFilter));
         });
 
-        var commander = services.AddCommander(new CommanderOptions() {
+        var commander = services.AddCommander().Configure(new CommanderOptions() {
             AllowDirectCommandHandlerCalls = AllowDirectCommandHandlerCalls,
         });
         if (CommandHandlerFilter != null)
@@ -64,12 +64,12 @@ public class CommandRTestBase : TestBase
             var testType = GetType();
             var appTempDir = FilePath.GetApplicationTempDirectory("", true);
             var dbPath = appTempDir & FilePath.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
-            services.AddPooledDbContextFactory<TestDbContext>(builder => {
-                builder.UseSqlite($"Data Source={dbPath}", sqlite => { });
+            services.AddPooledDbContextFactory<TestDbContext>(db => {
+                db.UseSqlite($"Data Source={dbPath}", sqlite => { });
             }, 256);
-            services.AddDbContextServices<TestDbContext>(dbServices => {
-                dbServices.AddOperations();
-                dbServices.AddEntityResolver<string, User>();
+            services.AddDbContextServices<TestDbContext>(db => {
+                db.AddOperations();
+                db.AddEntityResolver<string, User>();
             });
         }
 

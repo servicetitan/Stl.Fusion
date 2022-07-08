@@ -2,16 +2,9 @@ namespace Stl.Fusion.Server;
 
 public static class FusionBuilderExt
 {
-    public static FusionWebServerBuilder AddWebServer(this FusionBuilder fusion,
-        Func<IServiceProvider, WebSocketServer.Options>? optionsFactory = null)
-        => new(fusion, optionsFactory);
+    public static FusionWebServerBuilder AddWebServer(this FusionBuilder fusion)
+        => new(fusion, null);
 
-    public static FusionBuilder AddWebServer(this FusionBuilder fusion,
-        Action<FusionWebServerBuilder> configureWebServer,
-        Func<IServiceProvider, WebSocketServer.Options>? optionsFactory = null)
-    {
-        var fusionWebServer = fusion.AddWebServer(optionsFactory);
-        configureWebServer(fusionWebServer);
-        return fusion;
-    }
+    public static FusionBuilder AddWebServer(this FusionBuilder fusion, Action<FusionWebServerBuilder> configure)
+        => new FusionWebServerBuilder(fusion, configure).Fusion;
 }

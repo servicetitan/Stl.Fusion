@@ -37,7 +37,6 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
                 $"{nameof(command)}.{nameof(SignInCommand.AuthenticatedIdentity)}");
 #pragma warning restore MA0015
 
-        CommandIsolationLevel = IsolationLevel.ReadCommitted;
         var dbContext = await CreateCommandDbContext(tenant, cancellationToken).ConfigureAwait(false);
         await using var _1 = dbContext.ConfigureAwait(false);
 
@@ -101,7 +100,6 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
             return null!;
         }
 
-        CommandIsolationLevel = IsolationLevel.ReadCommitted;
         var dbContext = await CreateCommandDbContext(tenant, cancellationToken).ConfigureAwait(false);
         await using var _1 = dbContext.ConfigureAwait(false);
 
@@ -152,7 +150,6 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         }
 
         var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
-        CommandIsolationLevel = IsolationLevel.ReadCommitted;
         var dbContext = await CreateCommandDbContext(tenant, cancellationToken).ConfigureAwait(false);
         await using var _1 = dbContext.ConfigureAwait(false);
 

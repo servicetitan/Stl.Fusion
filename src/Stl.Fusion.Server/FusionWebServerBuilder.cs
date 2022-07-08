@@ -9,24 +9,21 @@ namespace Stl.Fusion.Server;
 
 public readonly struct FusionWebServerBuilder
 {
-    private class AddedTag { }
-    private static readonly ServiceDescriptor AddedTagDescriptor =
-        new(typeof(AddedTag), new AddedTag());
-
     public FusionBuilder Fusion { get; }
     public IServiceCollection Services => Fusion.Services;
 
-    internal FusionWebServerBuilder(FusionBuilder fusion,
-        Func<IServiceProvider, WebSocketServer.Options>? webSocketServerOptionsFactory)
+    internal FusionWebServerBuilder(
+        FusionBuilder fusion, 
+        Action<FusionWebServerBuilder>? configure)
     {
         Fusion = fusion;
-        if (Services.Contains(AddedTagDescriptor))
+        if (Services.HasService<WebSocketServer>()) {
+            configure?.Invoke(this);
             return;
-        // We want above Contains call to run in O(1), so...
-        Services.Insert(0, AddedTagDescriptor);
+        }
 
         Fusion.AddPublisher();
-        Services.TryAddSingleton(c => webSocketServerOptionsFactory?.Invoke(c) ?? new());
+        Services.TryAddSingleton<WebSocketServer.Options>();
         Services.TryAddSingleton<WebSocketServer>();
         Services.TryAddSingleton<SessionMiddleware.Options>();
         Services.TryAddScoped<SessionMiddleware>();
@@ -56,9 +53,17 @@ public readonly struct FusionWebServerBuilder
                 });
         });
         */
+
+        configure?.Invoke(this);
     }
 
-    public FusionWebServerBuilder SetupSessionMiddleware(
+    public FusionWebServerBuilder ConfigureWebSocketServer(Func<IServiceProvider, WebSocketServer.Options> webSocketServerOptionsFactory)
+    {
+        Services.AddSingleton(webSocketServerOptionsFactory);
+        return this;
+    }
+
+    public FusionWebServerBuilder ConfigureSessionMiddleware(
         Func<IServiceProvider, SessionMiddleware.Options> sessionMiddlewareOptionsFactory)
     {
         Services.AddSingleton(sessionMiddlewareOptionsFactory);

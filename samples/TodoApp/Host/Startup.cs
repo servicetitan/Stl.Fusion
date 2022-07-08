@@ -60,8 +60,10 @@ public class Startup
                 logging.AddFilter("Microsoft", LogLevel.Warning);
                 logging.AddFilter("Microsoft.AspNetCore.Hosting", LogLevel.Information);
                 logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.Information);
-                logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Transaction", LogLevel.Debug);
+                // logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Transaction", LogLevel.Debug);
                 logging.AddFilter("Stl.Fusion.Operations", LogLevel.Information);
+                logging.AddFilter("Stl.Fusion.EntityFramework", LogLevel.Debug);
+                logging.AddFilter("Stl.Fusion.EntityFramework.Operations", LogLevel.Debug);
             }
         });
 
@@ -72,23 +74,25 @@ public class Startup
 
         // DbContext & related services
         var appTempDir = FilePath.GetApplicationTempDirectory("", true);
-        services.AddTransient(c => new DbOperationScope<AppDbContext>(c) {
-            IsolationLevel = IsolationLevel.Snapshot,
+        services.AddTransient(_ => new DbOperationScope<AppDbContext>.Options() {
+            DefaultIsolationLevel = IsolationLevel.Snapshot,
         });
-        services.AddDbContextServices<AppDbContext>(dbContext => {
+        services.AddDbContextServices<AppDbContext>(db => {
             // This is the best way to add DbContext-related services from Stl.Fusion.EntityFramework
-            dbContext.AddOperations(_ => new() {
-                // We use FileBasedDbOperationLogChangeMonitor, so unconditional wake up period
-                // can be arbitrary long - all depends on the reliability of Notifier-Monitor chain.
-                UnconditionalCheckPeriod = TimeSpan.FromSeconds(Env.IsDevelopment() ? 60 : 5),
+            db.AddOperations(operations => {
+                operations.ConfigureOperationLogReader(_ => new() {
+                    // We use FileBasedDbOperationLogChangeMonitor, so unconditional wake up period
+                    // can be arbitrary long - all depends on the reliability of Notifier-Monitor chain.
+                    UnconditionalCheckPeriod = TimeSpan.FromSeconds(Env.IsDevelopment() ? 60 : 5),
+                });
+                operations.AddFileBasedOperationLogChangeTracking();
             });
-            dbContext.AddFileBasedOperationLogChangeTracking();
             // dbContext.AddRedisDb("localhost", "Fusion.Samples.TodoApp");
             // dbContext.AddRedisOperationLogChangeTracking();
             if (!HostSettings.UseInMemoryAuthService)
-                dbContext.AddAuthentication<string>();
-            dbContext.AddKeyValueStore();
-            dbContext.AddMultitenancy(multitenancy => {
+                db.AddAuthentication<string>();
+            db.AddKeyValueStore();
+            db.AddMultitenancy(multitenancy => {
                 multitenancy.MultitenantMode();
                 multitenancy.SetupMultitenantRegistry(
                     Enumerable.Range(0, 3).Select(i => new Tenant($"tenant{i}")));
@@ -116,7 +120,7 @@ public class Startup
         services.AddSingleton(new PublisherOptions() { Id = HostSettings.PublisherId });
         var fusion = services.AddFusion();
         var fusionServer = fusion.AddWebServer();
-        fusionServer.SetupSessionMiddleware(_ => new() {
+        fusionServer.ConfigureSessionMiddleware(_ => new() {
             TenantIdExtractor = TenantIdExtractors.FromSubdomain(".localhost")
                 .Or(TenantIdExtractors.FromPort((5005, 5010)))
                 .WithValidator(tenantId => tenantId.Value.StartsWith("tenant")),

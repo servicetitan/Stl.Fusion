@@ -6,15 +6,11 @@ public static class ServiceCollectionExt
 {
     public static DbContextBuilder<TDbContext> AddDbContextServices<TDbContext>(this IServiceCollection services)
         where TDbContext : DbContext
-        => new(services);
+        => new(services, null);
 
     public static IServiceCollection AddDbContextServices<TDbContext>(
         this IServiceCollection services,
-        Action<DbContextBuilder<TDbContext>> configureDbContext)
-        where TDbContext : DbContext
-    {
-        var dbContextServices = services.AddDbContextServices<TDbContext>();
-        configureDbContext(dbContextServices);
-        return services;
-    }
+        Action<DbContextBuilder<TDbContext>> configure)
+        where TDbContext : DbContext 
+        => new DbContextBuilder<TDbContext>(services, configure).Services;
 }

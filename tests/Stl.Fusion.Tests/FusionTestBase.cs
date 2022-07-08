@@ -235,31 +235,33 @@ public class FusionTestBase : TestBase, IAsyncLifetime
 #endif
                 builder.EnableSensitiveDataLogging();
             }, 256);
-            services.AddDbContextServices<TestDbContext>(b => {
-                b.AddOperations(_ => new() {
-                    UnconditionalCheckPeriod = TimeSpan.FromSeconds(5),
-                    // Enable this if you debug multi-host invalidation
-                    // MaxCommitDuration = TimeSpan.FromMinutes(5), 
+            services.AddDbContextServices<TestDbContext>(db => {
+                if (Options.UseRedisOperationLogChangeTracking)
+                    db.AddRedisDb("localhost", "Fusion.Tests");
+                db.AddOperations(operations => {
+                    operations.ConfigureOperationLogReader(_ => new() {
+                        UnconditionalCheckPeriod = TimeSpan.FromSeconds(5),
+                        // Enable this if you debug multi-host invalidation
+                        // MaxCommitDuration = TimeSpan.FromMinutes(5), 
+                    });
+                    if (Options.UseRedisOperationLogChangeTracking)
+                        operations.AddRedisOperationLogChangeTracking();
+                    else if (Options.DbType == FusionTestDbType.PostgreSql)
+                        operations.AddNpgsqlOperationLogChangeTracking();
+                    else
+                        operations.AddFileBasedOperationLogChangeTracking();
                 });
-                if (Options.UseRedisOperationLogChangeTracking) {
-                    b.AddRedisDb("localhost", "Fusion.Tests");
-                    b.AddRedisOperationLogChangeTracking();
-                }
-                else if (Options.DbType == FusionTestDbType.PostgreSql)
-                    b.AddNpgsqlOperationLogChangeTracking();
-                else
-                    b.AddFileBasedOperationLogChangeTracking();
 
                 if (!Options.UseInMemoryAuthService)
-                    b.AddAuthentication<DbAuthSessionInfo, DbAuthUser, long>();
+                    db.AddAuthentication<DbAuthSessionInfo, DbAuthUser, long>();
                 if (!Options.UseInMemoryKeyValueStore)
-                    b.AddKeyValueStore();
-                b.AddEntityResolver<long, User>();
+                    db.AddKeyValueStore();
+                db.AddEntityResolver<long, User>();
             });
             if (Options.UseInMemoryKeyValueStore)
                 fusion.AddInMemoryKeyValueStore();
             if (Options.UseInMemoryAuthService)
-                fusion.AddAuthentication().AddAuthBackend();
+                fusion.AddAuthentication().AddBackend();
 
             // WebHost
             var webHost = (FusionTestWebHost?) WebHost;
