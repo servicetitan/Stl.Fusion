@@ -38,7 +38,7 @@
   <PropertyGroup>
     <MessagePackVersion>2.4.*</MessagePackVersion>
     <MicrosoftExtensionsVersion>6.0.*</MicrosoftExtensionsVersion>
-    <StlFusionVersion>3.1.*</StlFusionVersion>
+    <StlFusionVersion>3.2.*</StlFusionVersion>
   </PropertyGroup>
 
   <ItemGroup Label="Package Versions">
