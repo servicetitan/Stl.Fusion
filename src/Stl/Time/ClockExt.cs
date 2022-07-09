@@ -5,7 +5,7 @@ namespace Stl.Time;
 public static class ClockExt
 {
     public static Task Delay(this IMomentClock clock, Moment dueAt, CancellationToken cancellationToken = default)
-        => clock.Delay((dueAt - clock.Now).NonNegative(), cancellationToken);
+        => clock.Delay((dueAt - clock.Now).Positive(), cancellationToken);
     public static Task Delay(this IMomentClock clock, long dueInMilliseconds, CancellationToken cancellationToken = default)
     {
         if (dueInMilliseconds == Timeout.Infinite)

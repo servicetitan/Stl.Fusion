@@ -27,7 +27,7 @@ public class RedisStreamerTest : RedisTestBase
         var stream2 = streamerCopy.Read();
 
         (await stream1.ToArrayAsync()).Should().Equal(0, 1, 2, 3);
-        (await writeTask.WithTimeout(TimeSpan.FromSeconds(0.05))).Should().BeTrue();
+        await writeTask.WaitAsync(TimeSpan.FromSeconds(0.05));
 
         (await stream2.ToArrayAsync()).Should().Equal(0, 1, 2, 3);
     }

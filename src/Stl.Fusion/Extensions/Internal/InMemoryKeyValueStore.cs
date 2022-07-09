@@ -7,7 +7,7 @@ public class InMemoryKeyValueStore : WorkerBase, IKeyValueStore
 {
     public record Options
     {
-        public TimeSpan CleanupPeriod { get; init; } = TimeSpan.FromMinutes(1);
+        public RandomTimeSpan CleanupPeriod { get; init; } = TimeSpan.FromMinutes(1).ToRandom(0.05);
         public IMomentClock? Clock { get; init; } = null;
     }
 
@@ -135,7 +135,7 @@ public class InMemoryKeyValueStore : WorkerBase, IKeyValueStore
     protected override async Task RunInternal(CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested) {
-            await Clock.Delay(Settings.CleanupPeriod, cancellationToken).ConfigureAwait(false);
+            await Clock.Delay(Settings.CleanupPeriod.Next(), cancellationToken).ConfigureAwait(false);
             await Cleanup(cancellationToken).ConfigureAwait(false);
         }
     }

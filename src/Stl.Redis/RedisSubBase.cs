@@ -70,7 +70,7 @@ public abstract class RedisSubBase : ProcessorBase
                 try {
                     await Subscriber
                         .SubscribeAsync(RedisChannel, _onMessage)
-                        .WithFakeCancellation(cancellationToken)
+                        .WaitAsync(cancellationToken)
                         .ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) {

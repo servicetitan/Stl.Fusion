@@ -104,15 +104,15 @@ public class Replica<T> : IReplicaImpl<T>
     {
         var updateRequestTask = UpdateRequestTask;
         if (updateRequestTask != null)
-            return updateRequestTask.WithFakeCancellation(cancellationToken);
+            return updateRequestTask.WaitAsync(cancellationToken);
         // Double check locking
         lock (Lock) {
             updateRequestTask = UpdateRequestTask;
             if (updateRequestTask != null)
-                return updateRequestTask.WithFakeCancellation(cancellationToken);
+                return updateRequestTask.WaitAsync(cancellationToken);
             UpdateRequestTask = updateRequestTask = CreateUpdateRequestTask();
             Input.ReplicatorImpl.Subscribe(this);
-            return updateRequestTask.WithFakeCancellation(cancellationToken);
+            return updateRequestTask.WaitAsync(cancellationToken);
         }
     }
 

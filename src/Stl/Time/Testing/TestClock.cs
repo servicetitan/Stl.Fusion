@@ -40,8 +40,11 @@ public sealed class TestClock : ITestClock, IDisposable
 
     public async Task Delay(TimeSpan dueIn, CancellationToken cancellationToken = default)
     {
-        var isInfinite = dueIn == Timeout.InfiniteTimeSpan;
-        if (dueIn < TimeSpan.Zero && !isInfinite)
+        if (dueIn == Timeout.InfiniteTimeSpan) {
+            await Task.Delay(dueIn, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+        if (dueIn < TimeSpan.Zero)
             throw new ArgumentOutOfRangeException(nameof(dueIn));
 
         TestClockSettings? settings = Settings;
@@ -49,22 +52,20 @@ public sealed class TestClock : ITestClock, IDisposable
         while (true) {
             settings ??= Settings;
             var settingsChangedToken = settings.ChangedToken;
-            var delta = settings.ToRealTime(dueAt) - CpuClock.Now;
-            if (delta < TimeSpan.Zero)
-                delta = TimeSpan.Zero;
-            if (isInfinite)
-                delta = Timeout.InfiniteTimeSpan;
-            if (cancellationToken == default) {
-                await Task.Delay(delta, settingsChangedToken).SuppressCancellation().ConfigureAwait(false);
-                if (!settingsChangedToken.IsCancellationRequested)
-                    break;
+            var delta = (settings.ToRealTime(dueAt) - CpuClock.Now).Positive();
+            try {
+                if (!cancellationToken.CanBeCanceled) {
+                    await Task.Delay(delta, settingsChangedToken).ConfigureAwait(false);
+                }
+                else {
+                    using var cts = cancellationToken.LinkWith(settingsChangedToken);
+                    await Task.Delay(delta, cts.Token).ConfigureAwait(false);
+                }
+                return;
             }
-            else {
-                using var lts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, settingsChangedToken);
-                await Task.Delay(delta, lts.Token).SuppressCancellation().ConfigureAwait(false);
-                cancellationToken.ThrowIfCancellationRequested();
+            catch (OperationCanceledException) {
                 if (!settingsChangedToken.IsCancellationRequested)
-                    break;
+                    throw;
             }
             settings = null;
         }

@@ -170,7 +170,7 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
             // so "subscribing" to Run completion is the
             // same as subscribing to its disposal.
             ChannelProcessors.TryRemove(channel, channelProcessor);
-        }, TaskScheduler.Default);
+        }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
     }
 
     protected virtual void OnChannelDetachedAsync(

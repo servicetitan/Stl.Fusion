@@ -62,7 +62,7 @@ public record UpdateDelayer : IUpdateDelayer
             if (!commandCompletedTask.IsCompleted) {
                 var waitDuration = TimeSpanExt.Min(updateDelay, UICommandRecencyDelta);
                 await Task.WhenAny(whenUpdatedTask, commandCompletedTask)
-                    .WithTimeout(Clocks.UIClock, waitDuration, cancellationToken)
+                    .WaitResultAsync(Clocks.UIClock, waitDuration, cancellationToken)
                     .ConfigureAwait(false);
                 if (whenUpdatedTask.IsCompleted)
                     return;
@@ -76,7 +76,7 @@ public record UpdateDelayer : IUpdateDelayer
         if (remainingDelay < TimeSpan.Zero)
             return;
         await whenUpdatedTask
-            .WithTimeout(Clocks.UIClock, remainingDelay, cancellationToken)
+            .WaitResultAsync(Clocks.UIClock, remainingDelay, cancellationToken)
             .ConfigureAwait(false);
     }
 

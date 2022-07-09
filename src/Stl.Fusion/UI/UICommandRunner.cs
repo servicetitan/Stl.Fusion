@@ -47,7 +47,7 @@ public record UICommandRunner
                 .Run(command, isOutermost: true, cancellationToken)
                 .ConfigureAwait(false);
             await context.UntypedResultTask.ConfigureAwait(false);
-            result = Result.FromTypedTask(context.UntypedResultTask);
+            result = context.UntypedResultTask.ToTypedResultSynchronously();
         }
         catch (Exception e) {
             result = Result.Error(command.GetResultType(), e);

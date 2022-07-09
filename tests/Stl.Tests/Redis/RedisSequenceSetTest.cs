@@ -21,8 +21,8 @@ public class RedisSequenceSetTest : RedisTestBase
         (await set.Next("a", 200)).Should().Be(201);
         (await set.Next("a")).Should().Be(202);
 
-        (await set.Next("a", 1000_000_000).WithTimeout(TimeSpan.FromMilliseconds(100)))
-            .Should().Be(Option.Some(1000_000_001L)); // Auto-reset test
+        (await set.Next("a", 1000_000_000).WaitAsync(TimeSpan.FromMilliseconds(100)))
+            .Should().Be(1000_000_001L); // Auto-reset test
 
         await set.Reset("a", 10);
         (await set.Next("a", 5)).Should().Be(11);

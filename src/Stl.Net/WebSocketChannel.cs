@@ -75,7 +75,7 @@ public class WebSocketChannel : Channel<string>, IAsyncDisposable
     }
 
     public Task WhenCompleted(CancellationToken cancellationToken = default)
-        => Task.WhenAll(ReaderTask, WriterTask).WithFakeCancellation(cancellationToken);
+        => Task.WhenAll(ReaderTask, WriterTask).WaitAsync(cancellationToken);
 
     protected virtual async Task TryCloseWebSocket(CancellationToken cancellationToken)
     {

@@ -8,6 +8,8 @@ public readonly record struct RandomTimeSpan
 {
     [DataMember(Order = 0)] public TimeSpan Origin { get; init; }
     [DataMember(Order = 1)] public TimeSpan MaxDelta { get; init; }
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore] TimeSpan Min => (Origin - MaxDelta).Positive(); 
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore] TimeSpan Max => (Origin + MaxDelta).Positive(); 
 
     [JsonConstructor, Newtonsoft.Json.JsonConstructor]
     public RandomTimeSpan(TimeSpan origin, TimeSpan maxDelta = default)
@@ -48,6 +50,6 @@ public readonly record struct RandomTimeSpan
         if (MaxDelta <= TimeSpan.Zero)
             return Origin;
         var deltaSeconds = MaxDelta.TotalSeconds * 2 * (ConcurrentRandomDoubleGenerator.Default.Next() - 0.5);
-        return Origin + TimeSpan.FromSeconds(deltaSeconds);
+        return (Origin + TimeSpan.FromSeconds(deltaSeconds)).Positive();
     }
 }

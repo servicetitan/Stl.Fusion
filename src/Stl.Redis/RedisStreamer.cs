@@ -47,10 +47,10 @@ public sealed class RedisStreamer<T>
             cancellationToken.ThrowIfCancellationRequested(); // Redis doesn't support cancellation
             var entries = await RedisDb.Database.StreamReadAsync(Key, position, 10).ConfigureAwait(false);
             if (entries == null || entries.Length == 0) {
-                var appendOpt = await appendNotificationTask
-                    .WithTimeout(Settings.Clock, Settings.AppendCheckPeriod, cancellationToken)
+                var appendResult = await appendNotificationTask
+                    .WaitResultAsync(Settings.Clock, Settings.AppendCheckPeriod, cancellationToken)
                     .ConfigureAwait(false);
-                if (appendOpt.HasValue)
+                if (appendResult.HasValue)
                     appendNotificationTask = null;
                 appendNotificationTask = appendSub.NextMessage(appendNotificationTask);
                 continue;

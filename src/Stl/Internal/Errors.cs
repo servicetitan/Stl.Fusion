@@ -40,7 +40,7 @@ public static class Errors
 
     public static Exception TaskIsNotCompleted()
         => new InvalidOperationException("Task is expected to be completed at this point, but it's not.");
-    public static Exception TaskHasNotCompletedSuccessfullyButNoException()
+    public static Exception TaskIsFaultedButNoExceptionAvailable()
         => new InvalidOperationException("Task hasn't completed successfully but has no Exception.");
 
     public static Exception PathIsRelative(string? paramName)

@@ -116,7 +116,7 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
                 .ContinueWith(async _ => {
                     await Task.Delay(1000, default).ConfigureAwait(false);
                     await wsChannel.DisposeAsync().ConfigureAwait(false);
-                }, TaskScheduler.Default);
+                }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
             return resultChannel;
         }
         catch (OperationCanceledException) {

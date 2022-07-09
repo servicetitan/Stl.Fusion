@@ -62,7 +62,7 @@ public class ChannelHub<T> : SafeAsyncDisposableBase, IChannelHub<T>
     {
         channel.Reader.Completion.ContinueWith(async _ => {
             await Detach(channel).ConfigureAwait(false);
-        }, TaskScheduler.Default);
+        }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
         Attached?.Invoke(channel);
     }
 

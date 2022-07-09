@@ -45,7 +45,7 @@ public static class FileSystemWatcherExt
             watcher.Changed += handler;
             watcher.Created += handler;
             watcher.Deleted += handler;
-            return await ts.Task.WithFakeCancellation(cancellationToken).ConfigureAwait(false);
+            return await ts.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
         }
         finally {
             watcher.Changed -= handler;

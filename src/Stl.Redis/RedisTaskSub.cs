@@ -21,14 +21,14 @@ public sealed class RedisTaskSub : RedisSubBase
             TaskSource.For(_nextMessageTask).TrySetCanceled();
     }
 
-    public Task<RedisValue> NextMessage(Task<RedisValue>? unresolvedMessageTask = null)
+    public Task<RedisValue> NextMessage(Task<RedisValue>? unprocessedMessageTask = null)
     {
-        // We assume here that unresolvedMessageTask was unresolved
+        // We assume here that unprocessedMessageTask was unresolved
         // last time it was awaited, so if it's the case,
         // we should return it here, because in fact the message
         // we were waiting for earlier is here now.
-        if (unresolvedMessageTask != null)
-            return unresolvedMessageTask;
+        if (unprocessedMessageTask != null)
+            return unprocessedMessageTask;
         var nextMessageTask = _nextMessageTask;
         if (!nextMessageTask.IsCompleted)
             return nextMessageTask;

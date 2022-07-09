@@ -52,7 +52,7 @@ public class ReplicatorChannelProcessor : WorkerBase
                 try {
                     var channelTask = ChannelTask;
                     if (channelTask != lastChannelTask)
-                        channel = await ChannelTask.WithFakeCancellation(cancellationToken).ConfigureAwait(false);
+                        channel = await ChannelTask.WaitAsync(cancellationToken).ConfigureAwait(false);
                     var reply = await channel.Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
                     await OnReply(reply, cancellationToken).ConfigureAwait(false);
                 }
@@ -223,7 +223,7 @@ public class ReplicatorChannelProcessor : WorkerBase
             channelTaskSource.SetFromTask(connectTask1, CancellationToken.None);
             if (connectTask1.IsCompletedSuccessfully())
                 IsConnected.Value = true;
-        }, TaskScheduler.Default);
+        }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
 
         // Copy task
         Task.Run(async () => {

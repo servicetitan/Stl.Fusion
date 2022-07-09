@@ -1,10 +1,17 @@
+using System.Linq.Expressions;
 using System.Runtime.ExceptionServices;
 using Stl.Internal;
 
 namespace Stl.Async;
 
+#pragma warning disable MA0004
+
 public static class TaskExt
 {
+    private static readonly MethodInfo FromTypedTaskInternalMethod =
+        typeof(Result).GetMethod(nameof(FromTypedTaskInternal), BindingFlags.Static | BindingFlags.NonPublic)!;
+    private static readonly ConcurrentDictionary<Type, Func<Task, IResult>> ToTypedResultCache = new();
+
     public static readonly Task NeverEndingTask;
     public static readonly Task<Unit> NeverEndingUnitTask;
     public static readonly Task<Unit> UnitTask = Task.FromResult(Unit.Default);
@@ -25,125 +32,322 @@ public static class TaskExt
             => await TaskSource.New<Unit>(true).Task.ConfigureAwait(false);
     }
 
-    // ToXxx
+    // ToValueTask
 
     public static ValueTask<T> ToValueTask<T>(this Task<T> source) => new(source);
     public static ValueTask ToValueTask(this Task source) => new(source);
 
-    // WithFakeCancellation
+    // GetUnwrappedException
 
-    public static Task<T> WithFakeCancellation<T>(
-        this Task<T> task,
-        CancellationToken cancellationToken)
+    public static Exception GetBaseException(this Task task)
+        => task.AssertCompleted().Exception?.GetBaseException()
+            ?? (task.IsCanceled
+                ? new TaskCanceledException(task)
+                : throw Errors.TaskIsFaultedButNoExceptionAvailable());
+
+    // ToResultSynchronously
+
+    public static Result<Unit> ToResultSynchronously(this Task task)
+        => task.AssertCompleted().IsCompletedSuccessfully()
+            ? default
+            : new Result<Unit>(default, task.GetBaseException());
+
+    public static Result<T> ToResultSynchronously<T>(this Task<T> task)
+        => task.AssertCompleted().IsCompletedSuccessfully()
+            ? task.Result
+            : new Result<T>(default!, task.GetBaseException());
+
+    // ToResultAsync
+
+    public static async Task<Result<Unit>> ToResultAsync(this Task task)
     {
-        if (cancellationToken == default)
-            return task;
-
-        async Task<T> TaskOrCancellationTokenTask() {
-            using var dTask = cancellationToken.ToTask<T>(task.CreationOptions);
-            var winnerTask = await Task.WhenAny(task, dTask.Resource).ConfigureAwait(false);
-#pragma warning disable MA0004
-            return await winnerTask;
-#pragma warning restore MA0004
+        try {
+            await task.ConfigureAwait(false);
+            return default;
         }
-
-        return TaskOrCancellationTokenTask();
+        catch (Exception e) {
+            return new Result<Unit>(default, e);
+        }
     }
 
-    public static Task WithFakeCancellation(
+    public static async Task<Result<T>> ToResultAsync<T>(this Task<T> task)
+    {
+        try {
+            return await task.ConfigureAwait(false);
+        }
+        catch (Exception e) {
+            return new Result<T>(default!, e);
+        }
+    }
+
+    // ToTypedResultSynchronously
+
+    public static IResult ToTypedResultSynchronously(this Task task)
+    {
+        var tValue = task.AssertCompleted().GetType().GetTaskOrValueTaskArgument();
+        if (tValue == null) {
+            // ReSharper disable once HeapView.BoxingAllocation
+            return task.IsCompletedSuccessfully()
+                ? new Result<Unit>()
+                : new Result<Unit>(default, task.GetBaseException());
+        }
+
+        return ToTypedResultCache.GetOrAdd(tValue, static tValue1 => {
+            var mFromUntypedTaskInternal = FromTypedTaskInternalMethod.MakeGenericMethod(tValue1);
+            var pTask = Expression.Parameter(typeof(Task));
+            var fn = Expression.Lambda<Func<Task, IResult>>(
+                Expression.Call(mFromUntypedTaskInternal, pTask),
+                pTask
+            ).Compile();
+            return fn;
+        }).Invoke(task);
+    }
+
+    // ToTypedResultSynchronously
+
+    public static Task<IResult> ToTypedResultAsync(this Task task)
+        => task.ContinueWith(
+            t => t.ToTypedResultSynchronously(), 
+            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+
+    // WaitAsync
+
+#if !NET6_0_OR_GREATER
+    public static Task WaitAsync(
         this Task task,
-        CancellationToken cancellationToken)
-    {
-        if (cancellationToken == default)
-            return task;
+        CancellationToken cancellationToken = default)
+        => task.WaitAsync(MomentClockSet.Default.CpuClock, Timeout.InfiniteTimeSpan, cancellationToken);
 
-        async Task TaskOrCancellationTokenTask() {
-            using var dTask = cancellationToken.ToTask(task.CreationOptions);
-            var winnerTask = await Task.WhenAny(task, dTask.Resource).ConfigureAwait(false);
-#pragma warning disable MA0004
-            await winnerTask;
-#pragma warning restore MA0004
-        }
-
-        return TaskOrCancellationTokenTask();
-    }
-
-    // WithTimeout
-
-    public static Task<bool> WithTimeout(
+    public static Task WaitAsync(
         this Task task,
         TimeSpan timeout,
         CancellationToken cancellationToken = default)
-        => task.WithTimeout(MomentClockSet.Default.CpuClock, timeout, cancellationToken);
+        => task.WaitAsync(MomentClockSet.Default.CpuClock, timeout, cancellationToken);
+#endif
 
-    public static async Task<bool> WithTimeout(
+    public static Task WaitAsync(
+        this Task task,
+        IMomentClock clock,
+        CancellationToken cancellationToken = default)
+        => task.WaitAsync(clock, Timeout.InfiniteTimeSpan, cancellationToken);
+
+    public static Task WaitAsync(
         this Task task,
         IMomentClock clock,
         TimeSpan timeout,
         CancellationToken cancellationToken = default)
     {
-        if (task.IsCompleted) {
-#pragma warning disable MA0004
-            await task;
-#pragma warning restore MA0004
-            return true;
+        if (task.IsCompleted)
+            return task;
+        if (cancellationToken.IsCancellationRequested)
+            return Task.FromCanceled(cancellationToken);
+
+        return timeout == Timeout.InfiniteTimeSpan
+            ? cancellationToken.CanBeCanceled ? WaitForCancellation() : task
+            : WaitForTimeout();
+
+        async Task WaitForCancellation() {
+            using var dTask = cancellationToken.ToTask();
+            var winnerTask = await Task.WhenAny(task, dTask.Resource).ConfigureAwait(false);
+            await winnerTask;
         }
 
-        using var cts = new CancellationTokenSource();
-        var ctsToken = cts.Token;
-
-        await using var _ = cancellationToken
-            .Register(state => ((CancellationTokenSource) state!).Cancel(), cts)
-            .ToAsyncDisposableAdapter().ConfigureAwait(false);
-
-        var delayTask = clock.Delay(timeout, ctsToken);
-        var winnerTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
-        if (winnerTask != task) {
-            ctsToken.ThrowIfCancellationRequested();
-            return false;
+        async Task WaitForTimeout()
+        {
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            try {
+                var timeoutTask = clock.Delay(timeout, cts.Token);
+                var winnerTask = await Task.WhenAny(task, timeoutTask).ConfigureAwait(false);
+                if (winnerTask != task) {
+                    await timeoutTask;
+                    throw new TimeoutException();
+                }
+                await task;
+            }
+            finally {
+                cts.Cancel(); // Ensures delayTask is cancelled to avoid memory leak
+            }
         }
-
-        cts.Cancel(); // Ensures delayTask is cancelled to avoid memory leak
-#pragma warning disable MA0004
-        await task;
-#pragma warning restore MA0004
-        return true;
     }
 
-    public static Task<Option<T>> WithTimeout<T>(
+#if !NET6_0_OR_GREATER
+    public static Task<T> WaitAsync<T>(
+        this Task<T> task,
+        CancellationToken cancellationToken = default)
+        => task.WaitAsync(MomentClockSet.Default.CpuClock, Timeout.InfiniteTimeSpan, cancellationToken);
+
+    public static Task<T> WaitAsync<T>(
         this Task<T> task,
         TimeSpan timeout,
         CancellationToken cancellationToken = default)
-        => task.WithTimeout(MomentClockSet.Default.CpuClock, timeout, cancellationToken);
+        => task.WaitAsync(MomentClockSet.Default.CpuClock, timeout, cancellationToken);
+#endif
 
-    public static async Task<Option<T>> WithTimeout<T>(
+    public static Task<T> WaitAsync<T>(
+        this Task<T> task,
+        IMomentClock clock,
+        CancellationToken cancellationToken = default)
+        => task.WaitAsync(clock, Timeout.InfiniteTimeSpan, cancellationToken);
+
+    public static Task<T> WaitAsync<T>(
         this Task<T> task,
         IMomentClock clock,
         TimeSpan timeout,
         CancellationToken cancellationToken = default)
     {
         if (task.IsCompleted)
-#pragma warning disable MA0004
+            return task;
+        if (cancellationToken.IsCancellationRequested)
+            return Task.FromCanceled<T>(cancellationToken);
+
+        return timeout == Timeout.InfiniteTimeSpan
+            ? cancellationToken.CanBeCanceled ? WaitForCancellation() : task
+            : WaitForTimeout();
+
+        async Task<T> WaitForCancellation() {
+            using var dTask = cancellationToken.ToTask();
+            var winnerTask = await Task.WhenAny(task, dTask.Resource).ConfigureAwait(false);
+            if (winnerTask != task) {
+                cancellationToken.ThrowIfCancellationRequested();
+                throw Errors.InternalError("This method can't get here.");
+            }
             return await task;
-#pragma warning restore MA0004
-
-        using var cts = new CancellationTokenSource();
-        var ctsToken = cts.Token;
-        await using var _ = cancellationToken
-            .Register(state => ((CancellationTokenSource) state!).Cancel(), cts)
-            .ToAsyncDisposableAdapter().ConfigureAwait(false);
-
-        var delayTask = clock.Delay(timeout, ctsToken);
-        var winnerTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
-        if (winnerTask != task) {
-            ctsToken.ThrowIfCancellationRequested();
-            return Option<T>.None;
         }
 
-        cts.Cancel(); // Ensures delayTask is cancelled to avoid memory leak
-#pragma warning disable MA0004
-        return await task;
-#pragma warning restore MA0004
+        async Task<T> WaitForTimeout()
+        {
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            try {
+                var timeoutTask = clock.Delay(timeout, cts.Token);
+                var winnerTask = await Task.WhenAny(task, timeoutTask).ConfigureAwait(false);
+                if (winnerTask != task) {
+                    await timeoutTask;
+                    throw new TimeoutException();
+                }
+                return await task;
+            }
+            finally {
+                cts.Cancel(); // Ensures delayTask is cancelled to avoid memory leak
+            }
+        }
+    }
+
+    // WaitResultAsync
+
+    public static Task<Result<Unit>> WaitResultAsync(
+        this Task task,
+        CancellationToken cancellationToken = default)
+        => task.WaitResultAsync(MomentClockSet.Default.CpuClock, Timeout.InfiniteTimeSpan, cancellationToken);
+
+    public static Task<Result<Unit>> WaitResultAsync(
+        this Task task,
+        TimeSpan timeout,
+        CancellationToken cancellationToken = default)
+        => task.WaitResultAsync(MomentClockSet.Default.CpuClock, timeout, cancellationToken);
+
+    public static Task<Result<Unit>> WaitResultAsync(
+        this Task task,
+        IMomentClock clock,
+        CancellationToken cancellationToken = default)
+        => task.WaitResultAsync(clock, Timeout.InfiniteTimeSpan, cancellationToken);
+
+    public static Task<Result<Unit>> WaitResultAsync(
+        this Task task,
+        IMomentClock clock,
+        TimeSpan timeout,
+        CancellationToken cancellationToken = default)
+    {
+        if (task.IsCompleted)
+            return task.ToResultAsync();
+        if (cancellationToken.IsCancellationRequested)
+            return Task.FromResult(new Result<Unit>(default!, new OperationCanceledException(cancellationToken)));
+
+        return timeout == Timeout.InfiniteTimeSpan
+            ? cancellationToken.CanBeCanceled ? WaitForCancellation() : task.ToResultAsync()
+            : WaitForTimeout();
+
+        async Task<Result<Unit>> WaitForCancellation() {
+            using var dTask = cancellationToken.ToTask();
+            var winnerTask = await Task.WhenAny(task, dTask.Resource).ConfigureAwait(false);
+            return winnerTask.ToResultSynchronously();
+        }
+
+        async Task<Result<Unit>> WaitForTimeout()
+        {
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            try {
+                var timeoutTask = clock.Delay(timeout, cts.Token);
+                var winnerTask = await Task.WhenAny(task, timeoutTask).ConfigureAwait(false);
+                if (winnerTask != task) {
+                    if (cancellationToken.IsCancellationRequested)
+                        return new Result<Unit>(default!, new OperationCanceledException(cancellationToken));
+                    return new Result<Unit>(default!, new TimeoutException());
+                }
+                return task.ToResultSynchronously();
+            }
+            finally {
+                cts.Cancel(); // Ensures delayTask is cancelled to avoid memory leak
+            }
+        }
+    }
+
+    public static Task<Result<T>> WaitResultAsync<T>(
+        this Task<T> task,
+        CancellationToken cancellationToken = default)
+        => task.WaitResultAsync(MomentClockSet.Default.CpuClock, Timeout.InfiniteTimeSpan, cancellationToken);
+
+    public static Task<Result<T>> WaitResultAsync<T>(
+        this Task<T> task,
+        TimeSpan timeout,
+        CancellationToken cancellationToken = default)
+        => task.WaitResultAsync(MomentClockSet.Default.CpuClock, timeout, cancellationToken);
+
+    public static Task<Result<T>> WaitResultAsync<T>(
+        this Task<T> task,
+        IMomentClock clock,
+        CancellationToken cancellationToken = default)
+        => task.WaitResultAsync(clock, Timeout.InfiniteTimeSpan, cancellationToken);
+
+    public static Task<Result<T>> WaitResultAsync<T>(
+        this Task<T> task,
+        IMomentClock clock,
+        TimeSpan timeout,
+        CancellationToken cancellationToken = default)
+    {
+        if (task.IsCompleted)
+            return task.ToResultAsync();
+        if (cancellationToken.IsCancellationRequested)
+            return Task.FromResult(new Result<T>(default!, new OperationCanceledException(cancellationToken)));
+
+        return timeout == Timeout.InfiniteTimeSpan
+            ? cancellationToken.CanBeCanceled ? WaitForCancellation() : task.ToResultAsync()
+            : WaitForTimeout();
+
+        async Task<Result<T>> WaitForCancellation() {
+            using var dTask = cancellationToken.ToTask();
+            var winnerTask = await Task.WhenAny(task, dTask.Resource).ConfigureAwait(false);
+            if (winnerTask != task)
+                return new Result<T>(default!, new OperationCanceledException(cancellationToken));
+            return task.ToResultSynchronously();
+        }
+
+        async Task<Result<T>> WaitForTimeout()
+        {
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            try {
+                var timeoutTask = clock.Delay(timeout, cts.Token);
+                var winnerTask = await Task.WhenAny(task, timeoutTask).ConfigureAwait(false);
+                if (winnerTask != task) {
+                    if (cancellationToken.IsCancellationRequested)
+                        return new Result<T>(default!, new OperationCanceledException(cancellationToken));
+                    return new Result<T>(default!, new TimeoutException());
+                }
+                return task.ToResultSynchronously();
+            }
+            finally {
+                cts.Cancel(); // Ensures delayTask is cancelled to avoid memory leak
+            }
+        }
     }
 
     /// <summary>
@@ -163,21 +367,43 @@ public static class TaskExt
 
     // SuppressXxx
 
-    public static Task SuppressExceptions(this Task task)
-        => task.ContinueWith(_ => { }, TaskScheduler.Default);
+    public static async Task SuppressExceptions(this Task task, Func<Exception, bool>? filter = null)
+    {
+        try {
+            await task.ConfigureAwait(false);
+        }
+        catch (Exception e) {
+            if (filter?.Invoke(e) ?? true)
+                return;
+            throw;
+        }
+    }
 
-    public static Task<T> SuppressExceptions<T>(this Task<T> task)
-        => task.ContinueWith(t => t.IsCompletedSuccessfully() ? t.Result : default!, TaskScheduler.Default);
+    public static async Task<T> SuppressExceptions<T>(this Task<T> task, Func<Exception, bool>? filter = null)
+    {
+        try {
+            return await task.ConfigureAwait(false);
+        }
+        catch (Exception e) {
+            if (filter?.Invoke(e) ?? true)
+                return default!;
+            throw;
+        }
+    }
 
     public static Task SuppressCancellation(this Task task)
-        => task.ContinueWith(t => {
-            if (t.IsCompletedSuccessfully() || t.IsCanceled)
-                return;
-            ExceptionDispatchInfo.Capture(t.Exception!).Throw();
-        }, TaskScheduler.Default);
+        => task.ContinueWith(
+            t => {
+                if (t.IsCompletedSuccessfully() || t.IsCanceled)
+                    return;
+                ExceptionDispatchInfo.Capture(t.Exception!.GetBaseException()).Throw();
+            }, 
+            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
 
     public static Task<T> SuppressCancellation<T>(this Task<T> task)
-        => task.ContinueWith(t => !t.IsCanceled ? t.Result : default!, TaskScheduler.Default);
+        => task.ContinueWith(
+            t => t.IsCanceled ? default! : t.Result,
+            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
 
     // Join
 
@@ -219,45 +445,21 @@ public static class TaskExt
         return (r1, r2, r3, r4, r5);
     }
 
-    // WhileRunning
-
-    public static async Task WhileRunning(this Task dependency, Func<CancellationToken, Task> dependentTaskFactory)
-    {
-        using var cts = new CancellationTokenSource();
-        var dependentTask = dependentTaskFactory(cts.Token);
-        try {
-            await dependency.ConfigureAwait(false);
-        }
-        finally {
-            cts.Cancel();
-            await dependentTask.SuppressCancellation().ConfigureAwait(false);
-        }
-    }
-
-    public static async Task<T> WhileRunning<T>(this Task<T> dependency, Func<CancellationToken, Task> dependentTaskFactory)
-    {
-        using var cts = new CancellationTokenSource();
-        var dependentTask = dependentTaskFactory(cts.Token);
-        try {
-            return await dependency.ConfigureAwait(false);
-        }
-        finally {
-            cts.Cancel();
-            await dependentTask.SuppressCancellation().ConfigureAwait(false);
-        }
-    }
-
     // AssertXxx
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Task AssertCompleted(this Task task)
         => !task.IsCompleted ? throw Errors.TaskIsNotCompleted() : task;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Task<T> AssertCompleted<T>(this Task<T> task)
         => !task.IsCompleted ? throw Errors.TaskIsNotCompleted() : task;
 
-    public static ValueTask AssertCompleted(this ValueTask task)
-        => !task.IsCompleted ? throw Errors.TaskIsNotCompleted() : task;
+    // Private methods
 
-    public static ValueTask<T> AssertCompleted<T>(this ValueTask<T> task)
-        => !task.IsCompleted ? throw Errors.TaskIsNotCompleted() : task;
+    private static IResult FromTypedTaskInternal<T>(Task task)
+        // ReSharper disable once HeapView.BoxingAllocation
+        => task.IsCompletedSuccessfully()
+            ? Result.Value(((Task<T>) task).Result)
+            : Result.Error<T>(task.GetBaseException());
 }

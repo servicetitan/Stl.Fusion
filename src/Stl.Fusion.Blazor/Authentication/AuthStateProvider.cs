@@ -65,7 +65,7 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
             var snapshot = t.Result.Snapshot;
             _cachedStateSnapshot = snapshot;
             return (AuthenticationState) snapshot.LatestNonErrorComputed.Value;
-        }, TaskScheduler.Current);
+        }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
         return _cachedStateValueTask;
     }
 

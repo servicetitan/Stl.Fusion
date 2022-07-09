@@ -48,10 +48,12 @@
             // Current Session is unusable due to forced sign-out.
             // The only way to get an usable one is to reload the page.
             _ = InvokeAsync(() => Nav.NavigateTo(Nav.Uri, true));
-        }, TaskScheduler.Current);
+        }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
     }
 
     private Task<AuthState> GetAuthState()
         => AuthStateProvider.GetAuthenticationStateAsync()
-            .ContinueWith(t => (AuthState) t.Result, TaskScheduler.Current);
+            .ContinueWith(
+                t => (AuthState) t.Result, 
+                CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
 }

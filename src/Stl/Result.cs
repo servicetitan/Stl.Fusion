@@ -3,7 +3,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Runtime.ExceptionServices;
 using Stl.Conversion;
-using Stl.Internal;
 
 namespace Stl;
 
@@ -223,10 +222,7 @@ public readonly struct Result<T> : IResult<T>, IEquatable<Result<T>>
 /// </summary>
 public static class Result
 {
-    private static readonly ConcurrentDictionary<Type, Func<Task, IResult>> FromUntypedTaskCache = new();
     private static readonly ConcurrentDictionary<Type, Func<Exception, IResult>> ErrorCache = new();
-    private static readonly MethodInfo FromTypedTaskInternalMethod =
-        typeof(Result).GetMethod(nameof(FromTypedTaskInternal), BindingFlags.Static | BindingFlags.NonPublic)!;
     private static readonly MethodInfo ErrorInternalMethod =
         typeof(Result).GetMethod(nameof(ErrorInternal), BindingFlags.Static | BindingFlags.NonPublic)!;
 
@@ -238,7 +234,7 @@ public static class Result
     public static Result<T> Error<T>(Exception error) => new(default!, error);
 
     public static IResult Error(Type resultType, Exception error)
-        => ErrorCache.GetOrAdd(resultType, tResult => {
+        => ErrorCache.GetOrAdd(resultType, static tResult => {
             var mErrorInternal = ErrorInternalMethod.MakeGenericMethod(tResult);
             var pError = Expression.Parameter(typeof(Exception));
             var fn = Expression.Lambda<Func<Exception, IResult>>(
@@ -247,42 +243,6 @@ public static class Result
             ).Compile();
             return fn;
         }).Invoke(error);
-
-    public static IResult FromTypedTask(Task task)
-    {
-        if (!task.IsCompleted)
-            throw Errors.TaskIsNotCompleted();
-
-        var tValue = task.GetType().GetTaskOrValueTaskArgument();
-        if (tValue == null) {
-            if (task.IsCompletedSuccessfully())
-                // ReSharper disable once HeapView.BoxingAllocation
-                return Value(default(Unit));
-            // ReSharper disable once HeapView.BoxingAllocation
-            return Error<Unit>(task.Exception
-                ?? Errors.TaskHasNotCompletedSuccessfullyButNoException());
-        }
-
-        return FromUntypedTaskCache.GetOrAdd(tValue, tValue1 => {
-            var mFromUntypedTaskInternal = FromTypedTaskInternalMethod.MakeGenericMethod(tValue1);
-            var pTask = Expression.Parameter(typeof(Task));
-            var fn = Expression.Lambda<Func<Task, IResult>>(
-                Expression.Call(mFromUntypedTaskInternal, pTask),
-                pTask
-            ).Compile();
-            return fn;
-        }).Invoke(task);
-    }
-
-    public static Result<T> FromTask<T>(Task<T> task)
-    {
-        if (!task.IsCompleted)
-            throw Errors.TaskIsNotCompleted();
-        if (task.IsCompletedSuccessfully())
-            return Value(task.Result);
-        return Error<T>(task.Exception
-            ?? Errors.TaskHasNotCompletedSuccessfullyButNoException());
-    }
 
     public static Result<T> FromFunc<T, TState>(TState state, Func<TState, T> func)
     {
@@ -305,16 +265,6 @@ public static class Result
     }
 
     // Private methods
-
-    private static IResult FromTypedTaskInternal<T>(Task task)
-    {
-        if (task.IsCompletedSuccessfully())
-            // ReSharper disable once HeapView.BoxingAllocation
-            return Value(((Task<T>) task).Result);
-        // ReSharper disable once HeapView.BoxingAllocation
-        return Error<T>(task.Exception
-            ?? Errors.TaskHasNotCompletedSuccessfullyButNoException());
-    }
 
     private static IResult ErrorInternal<T>(Exception error)
         // ReSharper disable once HeapView.BoxingAllocation

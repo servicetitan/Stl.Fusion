@@ -4,7 +4,7 @@ public class PresenceService : WorkerBase
 {
     public record Options
     {
-        public TimeSpan UpdatePeriod { get; set; } = TimeSpan.FromMinutes(3);
+        public RandomTimeSpan UpdatePeriod { get; set; } = TimeSpan.FromMinutes(3).ToRandom(0.05);
         public MomentClockSet? Clocks { get; set; }
     }
 
@@ -30,7 +30,8 @@ public class PresenceService : WorkerBase
         var session = await SessionResolver.GetSession(cancellationToken).ConfigureAwait(false);
         var retryCount = 0;
         while (!cancellationToken.IsCancellationRequested) {
-            await Clocks.CoarseCpuClock.Delay(Settings.UpdatePeriod, cancellationToken).ConfigureAwait(false);
+            var updatePeriod = Settings.UpdatePeriod.Next();
+            await Clocks.CpuClock.Delay(updatePeriod, cancellationToken).ConfigureAwait(false);
             var success = await UpdatePresence(session, cancellationToken).ConfigureAwait(false);
             retryCount = success ? 0 : 1 + retryCount;
         }

@@ -48,10 +48,10 @@ public sealed class RedisQueue : IAsyncDisposable
             var redisValue = await RedisDb.Database.ListRightPopAsync(Key).ConfigureAwait(false);
             if (!redisValue.IsNullOrEmpty)
                 return redisValue;
-            var notificationOpt = await nextMessageTask
-                .WithTimeout(Settings.Clock, Settings.EnqueueCheckPeriod, cancellationToken)
+            var notificationResult = await nextMessageTask
+                .WaitResultAsync(Settings.Clock, Settings.EnqueueCheckPeriod, cancellationToken)
                 .ConfigureAwait(false);
-            if (notificationOpt.HasValue)
+            if (notificationResult.HasValue)
                 nextMessageTask = null;
             nextMessageTask = EnqueueSub.NextMessage(nextMessageTask);
         }
@@ -109,10 +109,10 @@ public sealed class RedisQueue<T> : IAsyncDisposable
             var value = await RedisDb.Database.ListRightPopAsync(Key).ConfigureAwait(false);
             if (!value.IsNullOrEmpty)
                 return Settings.Serializer.Read(value);
-            var notificationOpt = await nextMessageTask
-                .WithTimeout(Settings.Clock, Settings.EnqueueCheckPeriod, cancellationToken)
+            var notificationResult = await nextMessageTask
+                .WaitResultAsync(Settings.Clock, Settings.EnqueueCheckPeriod, cancellationToken)
                 .ConfigureAwait(false);
-            if (notificationOpt.HasValue)
+            if (notificationResult.HasValue)
                 nextMessageTask = null;
             nextMessageTask = EnqueueSub.NextMessage(nextMessageTask);
         }

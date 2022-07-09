@@ -46,7 +46,7 @@ public abstract class TenantWorkerBase<TContext> : WorkerBase
                     tasks.Remove(tenantId);
 
                 // Waiting for changes
-                await whenChanged.WithFakeCancellation(cancellationToken).ConfigureAwait(false);
+                await whenChanged.WaitAsync(cancellationToken).ConfigureAwait(false);
             }
         }
         finally {

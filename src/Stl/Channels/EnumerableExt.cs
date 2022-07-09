@@ -37,27 +37,27 @@ public static class EnumerableExt
 
     // WithTimeout
 
-    public static IAsyncEnumerable<T> WithTimeout<T>(
+    public static IAsyncEnumerable<T> WithItemTimeout<T>(
         this IAsyncEnumerable<T> source,
         TimeSpan itemTimeout,
         CancellationToken cancellationToken = default)
-        => source.WithTimeout(itemTimeout, itemTimeout, MomentClockSet.Default.CpuClock, cancellationToken);
+        => source.WithItemTimeout(itemTimeout, itemTimeout, MomentClockSet.Default.CpuClock, cancellationToken);
 
-    public static IAsyncEnumerable<T> WithTimeout<T>(
+    public static IAsyncEnumerable<T> WithItemTimeout<T>(
         this IAsyncEnumerable<T> source,
         TimeSpan firstItemTimeout,
         TimeSpan itemTimeout,
         CancellationToken cancellationToken = default)
-        => source.WithTimeout(firstItemTimeout, itemTimeout, MomentClockSet.Default.CpuClock, cancellationToken);
+        => source.WithItemTimeout(firstItemTimeout, itemTimeout, MomentClockSet.Default.CpuClock, cancellationToken);
 
-    public static IAsyncEnumerable<T> WithTimeout<T>(
+    public static IAsyncEnumerable<T> WithItemTimeout<T>(
         this IAsyncEnumerable<T> source,
         TimeSpan itemTimeout,
         IMomentClock clock,
         CancellationToken cancellationToken = default)
-        => source.WithTimeout(itemTimeout, itemTimeout, clock, cancellationToken);
+        => source.WithItemTimeout(itemTimeout, itemTimeout, clock, cancellationToken);
 
-    public static async IAsyncEnumerable<T> WithTimeout<T>(
+    public static async IAsyncEnumerable<T> WithItemTimeout<T>(
         this IAsyncEnumerable<T> source,
         TimeSpan firstItemTimeout,
         TimeSpan itemTimeout,
@@ -70,16 +70,11 @@ public static class EnumerableExt
         var nextTimeout = firstItemTimeout;
         while (true) {
             var hasMoreTask = e.MoveNextAsync(cancellationToken);
-            bool hasMore;
-            if (!hasMoreTask.IsCompleted) {
-                var hasMoreOpt = await hasMoreTask.AsTask()
-                    .WithTimeout(clock, nextTimeout, cancellationToken)
+            var hasMore = hasMoreTask.IsCompleted
+                ? await hasMoreTask.ConfigureAwait(false)
+                : await hasMoreTask.AsTask()
+                    .WaitAsync(clock, nextTimeout, cancellationToken)
                     .ConfigureAwait(false);
-                if (!hasMoreOpt.IsSome(out hasMore))
-                    throw new TimeoutException();
-            }
-            else
-                hasMore = await hasMoreTask.ConfigureAwait(false);
             if (hasMore)
                 yield return e.Current;
             else

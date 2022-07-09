@@ -48,7 +48,7 @@ public abstract class WorkerBase : ProcessorBase, IWorker
                         catch {
                             // Intended
                         }
-                    }, TaskScheduler.Default);
+                    }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
             }
         }
         return _whenRunning;

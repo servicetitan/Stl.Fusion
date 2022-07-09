@@ -26,5 +26,5 @@ public class SessionProvider : ISessionProvider
     }
 
     public virtual Task<Session> GetSession(CancellationToken cancellationToken = default)
-        => SessionTask.WithFakeCancellation(cancellationToken);
+        => SessionTask.WaitAsync(cancellationToken);
 }

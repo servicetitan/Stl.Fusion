@@ -92,7 +92,9 @@ public class PublisherChannelProcessor : WorkerBase
                 Subscriptions[publicationId] = subscriptionProcessor;
             }
             _ = subscriptionProcessor.Run()
-                .ContinueWith(_ => Unsubscribe(publication, default), TaskScheduler.Default);
+                .ContinueWith(
+                    _ => Unsubscribe(publication, default), 
+                    CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
 
             subscriptionExists:
             try {

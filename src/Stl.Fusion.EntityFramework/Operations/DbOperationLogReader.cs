@@ -75,7 +75,8 @@ public class DbOperationLogReader<TDbContext> : DbTenantWorkerBase<TDbContext>
                 return Clocks.CpuClock.Delay(Settings.UnconditionalCheckPeriod.Next(), cancellationToken1);
             return OperationLogChangeTracker
                 .WaitForChanges(tenant.Id, cancellationToken1)
-                .WithTimeout(Clocks.CpuClock, Settings.UnconditionalCheckPeriod.Next(), cancellationToken1);
+                .WaitAsync(Clocks.CpuClock, Settings.UnconditionalCheckPeriod.Next(), cancellationToken1)
+                .SuppressExceptions(e => e is TimeoutException);
         });
 
         var chain = runChain

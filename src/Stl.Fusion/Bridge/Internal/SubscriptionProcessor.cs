@@ -57,11 +57,9 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
             var incomingMessageTask = incomingChannelReader.ReadAsync(cancellationToken).AsTask();
             while (true) {
                 // Awaiting for new SubscribeMessage
-                var messageOpt = await incomingMessageTask
-                    .WithTimeout(Clocks.CoarseCpuClock, ExpirationTime, cancellationToken)
+                var incomingMessage = await incomingMessageTask
+                    .WaitAsync(ExpirationTime, cancellationToken)
                     .ConfigureAwait(false);
-                if (!messageOpt.IsSome(out var incomingMessage))
-                    break; // Timeout
 
                 // Maybe sending an update
                 if (incomingMessage is UnsubscribeRequest)
@@ -113,6 +111,13 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
                 // And finally, sending the invalidation message
                 await TrySendUpdate(state, false, cancellationToken).ConfigureAwait(false);
             }
+        }
+        catch (Exception e) {
+            var log = Services.LogFor(GetType());
+            if (e is TimeoutException)
+                log.LogWarning(e, "No incoming messages");
+            else 
+                log.LogError(e, "Subscription processing failed");
         }
         finally {
             publicationUseScope.Dispose();

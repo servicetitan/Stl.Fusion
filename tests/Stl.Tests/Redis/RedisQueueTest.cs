@@ -56,10 +56,10 @@ public class RedisQueueTest : RedisTestBase
             var rnd = new Random();
             var list = new List<int>();
             while (true) {
-                var valueOpt = await q.Dequeue()
-                    .WithTimeout(TimeSpan.FromSeconds(1))
+                var valueResult = await q.Dequeue()
+                    .WaitResultAsync(TimeSpan.FromSeconds(1))
                     .ConfigureAwait(false);
-                if (!valueOpt.IsSome(out var value)) {
+                if (!valueResult.IsValue(out var value)) {
                     writeTask.IsCompleted.Should().BeTrue();
                     break;
                 }

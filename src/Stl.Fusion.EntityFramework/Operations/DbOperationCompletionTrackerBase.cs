@@ -17,7 +17,7 @@ public abstract class DbOperationCompletionTrackerBase : WorkerBase
     }
 
     protected override Task RunInternal(CancellationToken cancellationToken) 
-        => TaskExt.NeverEndingTask.WithFakeCancellation(cancellationToken);
+        => TaskExt.NeverEndingTask.WaitAsync(cancellationToken);
 
     protected override async Task OnStopping()
     {
@@ -52,7 +52,7 @@ public abstract class DbOperationCompletionTrackerBase : WorkerBase
                 var task = _nextEventTask;
                 if (_nextEventTask.IsCompleted)
                     ReplaceNextEventTask();
-                return task.WithFakeCancellation(cancellationToken);
+                return task.WaitAsync(cancellationToken);
             }
         }
 

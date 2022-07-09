@@ -2,7 +2,7 @@ namespace Stl.Time;
 
 public static class TimeSpanExt
 {
-    public static TimeSpan NonNegative(this TimeSpan value)
+    public static TimeSpan Positive(this TimeSpan value)
         => Max(default, value);
     public static TimeSpan Clamp(this TimeSpan value, TimeSpan min, TimeSpan max)
         => Min(max, Max(min, value));
