@@ -66,13 +66,18 @@ public class ServerAuthHelper : IHasServices
         return schemas;
     }
 
-    public virtual async Task UpdateAuthState(HttpContext httpContext, CancellationToken cancellationToken = default)
+    public Task UpdateAuthState(HttpContext httpContext, CancellationToken cancellationToken = default)
+        => UpdateAuthState(SessionResolver.Session, httpContext, cancellationToken);
+
+    public virtual async Task UpdateAuthState(
+        Session session,
+        HttpContext httpContext,
+        CancellationToken cancellationToken = default)
     {
         var httpUser = httpContext.User;
         var httpAuthenticationSchema = httpUser.Identity?.AuthenticationType ?? "";
         var httpIsAuthenticated = !string.IsNullOrEmpty(httpAuthenticationSchema);
 
-        var session = SessionResolver.Session;
         var ipAddress = httpContext.GetRemoteIPAddress()?.ToString() ?? "";
         var userAgent = httpContext.Request.Headers.TryGetValue("User-Agent", out var userAgentValues)
             ? userAgentValues.FirstOrDefault() ?? ""
