@@ -9,7 +9,7 @@ namespace Stl.Async;
 public static class TaskExt
 {
     private static readonly MethodInfo FromTypedTaskInternalMethod =
-        typeof(Result).GetMethod(nameof(FromTypedTaskInternal), BindingFlags.Static | BindingFlags.NonPublic)!;
+        typeof(TaskExt).GetMethod(nameof(FromTypedTaskInternal), BindingFlags.Static | BindingFlags.NonPublic)!;
     private static readonly ConcurrentDictionary<Type, Func<Task, IResult>> ToTypedResultCache = new();
 
     public static readonly Task NeverEndingTask;
