@@ -4,7 +4,7 @@ namespace Stl.Fusion.Authentication;
 
 public static class SessionExt
 {
-    public static Session AssertNotNull(this Session? session)
+    public static Session Required(this Session? session)
         => session ?? throw Errors.NoSessionProvided();
 
     public static bool IsDefault(this Session? session)

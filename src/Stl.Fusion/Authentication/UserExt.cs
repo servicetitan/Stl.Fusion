@@ -4,7 +4,7 @@ namespace Stl.Fusion.Authentication;
 
 public static class UserExt
 {
-    public static User AssertNotNull(this User? user)
+    public static User Required(this User? user)
         => user ?? throw new ArgumentNullException(nameof(user));
 
     public static User AssertAuthenticated(this User? user)

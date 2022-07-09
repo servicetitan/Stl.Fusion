@@ -22,7 +22,7 @@ public class SessionProvider : ISessionProvider
     public bool HasSession => SessionTask.IsCompleted;
     public Session Session {
         get => HasSession ? SessionTask.Result : throw Errors.NoSessionProvided();
-        set => SessionTaskSource.TrySetResult(value.AssertNotNull());
+        set => SessionTaskSource.TrySetResult(value.Required());
     }
 
     public virtual Task<Session> GetSession(CancellationToken cancellationToken = default)
