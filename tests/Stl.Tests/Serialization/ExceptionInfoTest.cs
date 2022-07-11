@@ -14,22 +14,52 @@ public class ExceptionInfoTest : TestBase
     [Fact]
     public void BasicTest()
     {
-        var i = new ExceptionInfo(new Exception("1"));
+        var e = new Exception("1");
+        var i = e.ToExceptionInfo();
         i.Message.Should().Be("1");
         i.ToException().Should().BeOfType<Exception>()
             .Which.Message.Should().Be("1");
 
         // ReSharper disable once NotResolvedInText
 #pragma warning disable MA0015
-        i = new ExceptionInfo(new ArgumentNullException("none", "2"));
+        e = new ArgumentNullException("none", "2");
 #pragma warning restore MA0015
-        i.Message.Should().Be("2 (Parameter 'none')");
+        i = e.ToExceptionInfo();
+        i.Message.Should().Be(e.Message);
         i.ToException().Should().BeOfType<ArgumentNullException>()
-            .Which.Message.Should().Be("2 (Parameter 'none')");
+            .Which.Message.Should().Be(e.Message);
 
         // ReSharper disable once NotResolvedInText
-        i = new ExceptionInfo(new WeirdException());
+        i = new WeirdException().ToExceptionInfo();
         i.Message.Should().Be("");
         ((RemoteException) i.ToException()!).ExceptionInfo.Should().Be(i);
+    }
+
+    [Fact]
+    public void ResultExceptionTest()
+    {
+        var e = new Exception("1").ToResult();
+        var i = e.ToExceptionInfo();
+        i.Message.Should().Be("1");
+        var r = (ResultException) i.ToException()!;
+        r.Message.Should().Be("1");
+        r.Unwrap().Should().BeOfType<Exception>().Which.Message.Should().Be("1");
+
+        // ReSharper disable once NotResolvedInText
+#pragma warning disable MA0015
+        e = new ArgumentNullException("none", "2").ToResult();
+#pragma warning restore MA0015
+        i = e.ToExceptionInfo();
+        r = (ResultException) i.ToException()!;
+        r.Message.Should().Be(e.Message);
+        r.Unwrap().Should().BeOfType<ArgumentNullException>()
+            .Which.Message.Should().Be(e.Message);
+
+        // ReSharper disable once NotResolvedInText
+        e = new WeirdException().ToResult();
+        i = e.ToExceptionInfo();
+        var re = (RemoteException) i.ToException()!;
+        re.ExceptionInfo.Should().Be(i);
+        Out.WriteLine(re.Message);
     }
 }

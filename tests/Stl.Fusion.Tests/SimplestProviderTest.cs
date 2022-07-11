@@ -118,6 +118,25 @@ public class SimplestProviderTest : FusionTestBase
     }
 
     [Fact]
+    public async Task FailTest()
+    {
+        var d = ComputedOptions.Default;
+        var p = Services.GetRequiredService<ISimplestProvider>();
+        p.SetValue("");
+
+        var c1 = await Computed.Capture(_ => p.Fail(typeof(NullReferenceException), false));
+        c1.Error.Should().BeOfType<NullReferenceException>();
+        await c1.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(1));
+
+        c1 = await Computed.Capture(_ => p.Fail(typeof(NullReferenceException), true));
+        c1.Error.Should().BeOfType<ResultException>()
+            .Which.InnerException.Should().BeOfType<NullReferenceException>();
+        await Delay(1);
+        var c2 = await c1.Update();
+        c2.Should().BeSameAs(c1);
+    }
+
+    [Fact]
     public async Task CommandTest()
     {
         var p = Services.GetRequiredService<ISimplestProvider>();

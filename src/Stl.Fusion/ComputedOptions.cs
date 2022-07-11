@@ -6,13 +6,13 @@ namespace Stl.Fusion;
 public class ComputedOptions
 {
     public static readonly ComputedOptions Default =
-        new ComputedOptions(
+        new(
             keepAliveTime: TimeSpan.Zero,
             errorAutoInvalidateTime: TimeSpan.FromSeconds(1),
             autoInvalidateTime: TimeSpan.MaxValue,
             swappingOptions: SwappingOptions.NoSwapping);
     public static readonly ComputedOptions NoAutoInvalidateOnError =
-        new ComputedOptions(
+        new(
             keepAliveTime: Default.KeepAliveTime,
             errorAutoInvalidateTime: TimeSpan.MaxValue,
             autoInvalidateTime: Default.AutoInvalidateTime,

@@ -167,7 +167,8 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
             Invalidate();
             return;
         }
-        var timeout = output.HasError
+        var hasError = output.HasError && output.Error is not ResultException;
+        var timeout = hasError
             ? _options.ErrorAutoInvalidateTime
             : _options.AutoInvalidateTime;
         if (timeout != TimeSpan.MaxValue)
