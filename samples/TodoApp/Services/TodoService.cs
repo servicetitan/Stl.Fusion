@@ -22,8 +22,7 @@ public class TodoService : ITodoService
     {
         if (Computed.IsInvalidating()) return default!;
         var (session, todo) = command;
-        var user = await _auth.GetUser(session, cancellationToken);
-        user = user.AssertAuthenticated();
+        var user = await _auth.RequireUser(session, cancellationToken);
 
         Todo? oldTodo = null;
         if (string.IsNullOrEmpty(todo.Id))
