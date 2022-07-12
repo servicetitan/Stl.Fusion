@@ -19,11 +19,11 @@ public abstract record Requirement<T> : Requirement
         => IsSatisfied((T?) value);
     public override object RequireUntyped(object? value)
 #pragma warning disable CS8603
-        => Require((T?) value);
+        => Check((T?) value);
 #pragma warning restore CS8603
 
     public abstract bool IsSatisfied(T? value);
-    public abstract T Require(T? value);
+    public abstract T Check(T? value);
 
     public Requirement<T> And(Requirement<T> secondary)
         => new JointRequirement<T>(this, secondary);

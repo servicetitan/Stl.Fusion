@@ -9,10 +9,10 @@ public record ResultExceptionRequirement<T>(Requirement<T> BaseRequirement) : Re
     public override bool IsSatisfied(T? value) 
         => BaseRequirement.IsSatisfied(value);
 
-    public override T Require(T? value)
+    public override T Check(T? value)
     {
         try {
-            return BaseRequirement.Require(value);
+            return BaseRequirement.Check(value);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             throw new ResultException(e.Message, e);

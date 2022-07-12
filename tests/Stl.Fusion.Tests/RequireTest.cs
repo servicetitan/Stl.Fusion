@@ -12,7 +12,7 @@ public class RequireTest : TestBase
     public void SimpleTest()
     {
         var requirement = Requirement.New<int>(i => i != 1).With("Invalid {0}: {1}!", "int");
-        Assert.ThrowsAny<ValidationException>(() => requirement.Require(1))
+        Assert.ThrowsAny<ValidationException>(() => requirement.Check(1))
             .Message.Should().Be("Invalid int: 1!");
     }
 

@@ -11,7 +11,7 @@ public static class RequirementTargetExt
     {
         try {
             requirement ??= NotNullOrDefaultRequirement<T>.Default;
-            return requirement.Require(target);
+            return requirement.Check(target);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             throw new ResultException(e.Message, e);
@@ -24,7 +24,7 @@ public static class RequirementTargetExt
         try {
             var target = await targetSource.ConfigureAwait(false);
             requirement ??= NotNullOrDefaultRequirement<T>.Default;
-            return requirement.Require(target);
+            return requirement.Check(target);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             throw new ResultException(e.Message, e);
@@ -37,7 +37,7 @@ public static class RequirementTargetExt
         try {
             var target = await targetSource.ConfigureAwait(false);
             requirement ??= NotNullOrDefaultRequirement<T>.Default;
-            return requirement.Require(target);
+            return requirement.Check(target);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             throw new ResultException(e.Message, e);
@@ -51,7 +51,7 @@ public static class RequirementTargetExt
     {
         try {
             var requirement = requirementBuilder.Invoke();
-            return requirement.Require(target);
+            return requirement.Check(target);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             throw new ResultException(e.Message, e);
@@ -64,7 +64,7 @@ public static class RequirementTargetExt
         try {
             var target = await targetSource.ConfigureAwait(false);
             var requirement = requirementBuilder.Invoke();
-            return requirement.Require(target);
+            return requirement.Check(target);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             throw new ResultException(e.Message, e);
@@ -77,7 +77,7 @@ public static class RequirementTargetExt
         try {
             var target = await targetSource.ConfigureAwait(false);
             var requirement = requirementBuilder.Invoke();
-            return requirement.Require(target);
+            return requirement.Check(target);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             throw new ResultException(e.Message, e);

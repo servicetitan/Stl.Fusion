@@ -10,7 +10,7 @@ public static class RequirementTargetExt
         where T : IRequirementTarget
     {
         requirement ??= NotNullOrDefaultRequirement<T>.Default; 
-        return requirement.Require(target);
+        return requirement.Check(target);
     }
 
     public static async Task<T> Require<T>(this Task<T?> targetSource, Requirement<T>? requirement = null)
@@ -18,7 +18,7 @@ public static class RequirementTargetExt
     {
         var target = await targetSource.ConfigureAwait(false);
         requirement ??= NotNullOrDefaultRequirement<T>.Default;
-        return requirement.Require(target);
+        return requirement.Check(target);
     }
 
     public static async ValueTask<T> Require<T>(this ValueTask<T?> targetSource, Requirement<T>? requirement = null)
@@ -26,26 +26,26 @@ public static class RequirementTargetExt
     {
         var target = await targetSource.ConfigureAwait(false);
         requirement ??= NotNullOrDefaultRequirement<T>.Default; 
-        return requirement.Require(target);
+        return requirement.Check(target);
     }
 
     // Overloads accepting requirement builder
 
     public static T Require<T>(this T? target, Func<Requirement<T>> requirementBuilder)
         where T : IRequirementTarget 
-        => requirementBuilder.Invoke().Require(target);
+        => requirementBuilder.Invoke().Check(target);
 
     public static async Task<T> Require<T>(this Task<T?> targetSource, Func<Requirement<T>> requirementBuilder)
         where T : IRequirementTarget
     {
         var target = await targetSource.ConfigureAwait(false);
-        return requirementBuilder.Invoke().Require(target);
+        return requirementBuilder.Invoke().Check(target);
     }
 
     public static async ValueTask<T> Require<T>(this ValueTask<T?> targetSource, Func<Requirement<T>> requirementBuilder)
         where T : IRequirementTarget
     {
         var target = await targetSource.ConfigureAwait(false);
-        return requirementBuilder.Invoke().Require(target);
+        return requirementBuilder.Invoke().Check(target);
     }
 }
