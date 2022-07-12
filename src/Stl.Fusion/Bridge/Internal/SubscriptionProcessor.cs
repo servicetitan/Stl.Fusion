@@ -112,7 +112,7 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
                 await TrySendUpdate(state, false, cancellationToken).ConfigureAwait(false);
             }
         }
-        catch (Exception e) {
+        catch (Exception e) when (e is not OperationCanceledException) {
             var log = Services.LogFor(GetType());
             if (e is TimeoutException)
                 log.LogWarning(e, "No incoming messages");
