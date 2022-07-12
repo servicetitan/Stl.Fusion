@@ -1,9 +1,15 @@
+using System.Security;
+using Stl.Requirements;
 using Stl.Versioning;
 
 namespace Stl.Fusion.Authentication;
 
 public record SessionInfo : SessionAuthInfo, IHasVersion<long>
 {
+    public new static FuncRequirement<SessionInfo> MustBeAuthenticated { get; } = FuncRequirement.New(
+        new ExceptionBuilder(m => new SecurityException(m), "Session is not authenticated."),
+        (SessionInfo? i) => i?.IsAuthenticated() ?? false);
+
     public long Version { get; init; }
     public Moment CreatedAt { get; init; }
     public Moment LastSeenAt { get; init; }

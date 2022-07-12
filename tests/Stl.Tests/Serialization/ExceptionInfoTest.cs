@@ -38,7 +38,7 @@ public class ExceptionInfoTest : TestBase
     [Fact]
     public void ResultExceptionTest()
     {
-        var e = new Exception("1").ToResult();
+        var e = new Exception("1").ToResultException();
         var i = e.ToExceptionInfo();
         i.Message.Should().Be("1");
         var r = (ResultException) i.ToException()!;
@@ -47,7 +47,7 @@ public class ExceptionInfoTest : TestBase
 
         // ReSharper disable once NotResolvedInText
 #pragma warning disable MA0015
-        e = new ArgumentNullException("none", "2").ToResult();
+        e = new ArgumentNullException("none", "2").ToResultException();
 #pragma warning restore MA0015
         i = e.ToExceptionInfo();
         r = (ResultException) i.ToException()!;
@@ -56,7 +56,7 @@ public class ExceptionInfoTest : TestBase
             .Which.Message.Should().Be(e.Message);
 
         // ReSharper disable once NotResolvedInText
-        e = new WeirdException().ToResult();
+        e = new WeirdException().ToResultException();
         i = e.ToExceptionInfo();
         var re = (RemoteException) i.ToException()!;
         re.ExceptionInfo.Should().Be(i);

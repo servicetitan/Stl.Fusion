@@ -2,9 +2,11 @@ namespace Stl.Fusion;
 
 public static class ExceptionExt
 {
-    public static ResultException ToResult(this Exception wrappedException)
-        => new(wrappedException.Message, wrappedException);
+    public static Exception ToResultException(this Exception wrappedException) 
+        => wrappedException is OperationCanceledException 
+            ? wrappedException 
+            : new(wrappedException.Message, wrappedException);
 
-    public static Exception MaybeToResult(this Exception sourceException, bool wrapToResultException)
-        => wrapToResultException ? sourceException.ToResult() : sourceException;
+    public static Exception MaybeToResultException(this Exception sourceException, bool wrapToResultException)
+        => wrapToResultException ? sourceException.ToResultException() : sourceException;
 }

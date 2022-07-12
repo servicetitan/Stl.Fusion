@@ -37,7 +37,7 @@ public static class TaskExt
     public static ValueTask<T> ToValueTask<T>(this Task<T> source) => new(source);
     public static ValueTask ToValueTask(this Task source) => new(source);
 
-    // GetUnwrappedException
+    // GetBaseException
 
     public static Exception GetBaseException(this Task task)
         => task.AssertCompleted().Exception?.GetBaseException()

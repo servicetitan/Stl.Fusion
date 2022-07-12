@@ -1,7 +1,14 @@
+using System.Security;
+using Stl.Requirements;
+
 namespace Stl.Fusion.Authentication;
 
-public record SessionAuthInfo
+public record SessionAuthInfo : IRequireTarget
 {
+    public static FuncRequirement<SessionAuthInfo> MustBeAuthenticated { get; } = FuncRequirement.New(
+        new ExceptionBuilder(m => new SecurityException(m), "Session is not authenticated."),
+        (SessionAuthInfo? i) => i?.IsAuthenticated() ?? false);
+
     public string SessionHash { get; init; } = "";
 
     // Authentication

@@ -323,7 +323,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         var user = await auth.GetUser(sessionA);
         user.Should().NotBeNull();
         user!.Name.Should().Be(bob.Name);
-        bob = (await authBackend.GetUser("", user.Id)).AssertAuthenticated();
+        bob = (await authBackend.GetUser("", user.Id)).Require(User.MustBeAuthenticated);
 
         sessions = await auth.GetUserSessions(sessionA);
         sessions.Select(s => s.SessionHash).Should().BeEquivalentTo(sessionA.Hash);

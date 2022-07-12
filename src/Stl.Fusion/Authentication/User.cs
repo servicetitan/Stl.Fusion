@@ -1,14 +1,19 @@
 using System.Globalization;
+using System.Security;
 using System.Security.Claims;
+using Stl.Requirements;
 using Stl.Versioning;
 
 namespace Stl.Fusion.Authentication;
 
 [DataContract]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
-public record User : IHasId<Symbol>, IHasVersion<long>
+public record User : IHasId<Symbol>, IHasVersion<long>, IRequireTarget
 {
     public static string GuestName { get; set; } = "Guest";
+    public static FuncRequirement<User> MustBeAuthenticated { get; } = FuncRequirement.New(
+        new ExceptionBuilder(m => new SecurityException(m), "User is not authenticated."),
+        (User? u) => u?.IsAuthenticated() ?? false);
 
     private Lazy<ClaimsPrincipal>? _claimsPrincipalLazy;
 

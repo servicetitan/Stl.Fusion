@@ -22,7 +22,7 @@ public class TodoService : ITodoService
     {
         if (Computed.IsInvalidating()) return default!;
         var (session, todo) = command;
-        var user = await _auth.RequireUser(session, cancellationToken);
+        var user = await _auth.GetUser(session, cancellationToken).Require();
 
         Todo? oldTodo = null;
         if (string.IsNullOrEmpty(todo.Id))
@@ -55,7 +55,7 @@ public class TodoService : ITodoService
     {
         if (Computed.IsInvalidating()) return;
         var (session, id) = command;
-        var user = await _auth.RequireUser(session, cancellationToken);
+        var user = await _auth.GetUser(session, cancellationToken).Require();
 
         var key = GetTodoKey(user, id);
         var doneKey = GetDoneKey(user, id);
@@ -67,16 +67,14 @@ public class TodoService : ITodoService
 
     public virtual async Task<Todo?> Get(Session session, string id, CancellationToken cancellationToken = default)
     {
-        var user = await _auth.RequireUser(session, true, cancellationToken);
-
+        var user = await _auth.GetUser(session, cancellationToken).RequireResult();
         var key = GetTodoKey(user, id);
         return await _store.Get<Todo>(session, key, cancellationToken);
     }
 
     public virtual async Task<Todo[]> List(Session session, PageRef<string> pageRef, CancellationToken cancellationToken = default)
     {
-        var user = await _auth.RequireUser(session, true, cancellationToken);
-
+        var user = await _auth.GetUser(session, cancellationToken).RequireResult();
         var keyPrefix = GetTodoKeyPrefix(user);
         var keySuffixes = await _store.ListKeySuffixes(session, keyPrefix, pageRef, cancellationToken);
         var tasks = keySuffixes.Select(suffix => _store.Get<Todo>(session, keyPrefix + suffix, cancellationToken).AsTask());
@@ -86,8 +84,7 @@ public class TodoService : ITodoService
 
     public virtual async Task<TodoSummary> GetSummary(Session session, CancellationToken cancellationToken = default)
     {
-        var user = await _auth.RequireUser(session, true, cancellationToken);
-
+        var user = await _auth.GetUser(session, cancellationToken).RequireResult();
         var count = await _store.Count(session, GetTodoKeyPrefix(user), cancellationToken);
         var doneCount = await _store.Count(session, GetDoneKeyPrefix(user), cancellationToken);
         return new TodoSummary(count, doneCount);

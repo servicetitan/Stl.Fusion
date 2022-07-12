@@ -1,16 +1,11 @@
-using Stl.Fusion.Authentication.Internal;
-
 namespace Stl.Fusion.Authentication;
 
 public static class SessionExt
 {
-    public static Session Required(this Session? session, bool throwResultException = false)
-        => session ?? throw Errors.NoSessionProvided().MaybeToResult(throwResultException);
-
     public static bool IsDefault(this Session? session)
         => session == null || session == Session.Default;
 
-    public static Session ResolveDefault(this Session? session, ISessionResolver sessionResolver) 
+    public static Session ResolveDefault(this Session? session, ISessionResolver sessionResolver)
         => session.IsDefault() ? sessionResolver.Session : session!;
 
     public static Session ResolveDefault(this Session? session, IServiceProvider services)

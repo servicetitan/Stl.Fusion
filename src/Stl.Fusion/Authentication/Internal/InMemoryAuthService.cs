@@ -103,11 +103,12 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
             return;
         }
 
-        var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
-        sessionInfo = sessionInfo.AssertAuthenticated();
-
-        var user = await GetUser(tenant.Id, sessionInfo.UserId, cancellationToken).ConfigureAwait(false);
-        user = user.AssertAuthenticated();
+        var sessionInfo = await GetSessionInfo(session, cancellationToken)
+            .Require(SessionInfo.MustBeAuthenticated)
+            .ConfigureAwait(false);
+        var user = await GetUser(tenant.Id, sessionInfo.UserId, cancellationToken)
+            .Require()
+            .ConfigureAwait(false);
 
         context.Operation().Items.Set(sessionInfo);
         if (command.Name != null) {

@@ -61,7 +61,7 @@ public class SimplestProvider : ISimplestProvider, IHasId<Type>
     {
         var e = ExceptionInfo.ToExceptionConverter.Invoke(
             new ExceptionInfo(exceptionType, "Fail!"))!;
-        throw e.MaybeToResult(wrapToResultException);
+        throw e.MaybeToResultException(wrapToResultException);
     }
 
     public virtual Task SetValue(SetValueCommand command, CancellationToken cancellationToken = default)

@@ -114,8 +114,9 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
             return;
         }
 
-        var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
-        sessionInfo = sessionInfo.AssertAuthenticated();
+        var sessionInfo = await GetSessionInfo(session, cancellationToken)
+            .Require(SessionInfo.MustBeAuthenticated)
+            .ConfigureAwait(false);
 
         var dbContext = await CreateCommandDbContext(tenant, cancellationToken).ConfigureAwait(false);
         await using var _1 = dbContext.ConfigureAwait(false);
