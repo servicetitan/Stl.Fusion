@@ -1,13 +1,11 @@
 namespace Stl.Requirements;
 
-public abstract record CustomizableRequirement<T> : Requirement<T>
+public record CustomizableRequirement<T>(Requirement<T> BaseRequirement) : CustomizableRequirementBase<T>
 {
-    public ExceptionBuilder ExceptionBuilder { get; init; }
+    public CustomizableRequirement(Requirement<T> baseRequirement, ExceptionBuilder exceptionBuilder)
+        : this(baseRequirement)
+        => ExceptionBuilder = exceptionBuilder;
 
-    public override T Require(T? value)
-    {
-        if (!IsSatisfied(value))
-            throw ExceptionBuilder.Build(value);
-        return value!;
-    }
+    public override bool IsSatisfied(T? value)
+        => BaseRequirement.IsSatisfied(value);
 }

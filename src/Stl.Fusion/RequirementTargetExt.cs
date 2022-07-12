@@ -2,12 +2,12 @@ using Stl.Requirements;
 
 namespace Stl.Fusion;
 
-public static class RequireTargetExt
+public static class RequirementTargetExt
 {
     // Normal overloads
 
     public static T RequireResult<T>(this T? target, Requirement<T>? requirement = null)
-        where T : IRequireTarget
+        where T : IRequirementTarget
     {
         try {
             requirement ??= NotNullOrDefaultRequirement<T>.Default;
@@ -19,7 +19,7 @@ public static class RequireTargetExt
     }
 
     public static async Task<T> RequireResult<T>(this Task<T?> targetSource, Requirement<T>? requirement = null)
-        where T : IRequireTarget
+        where T : IRequirementTarget
     {
         try {
             var target = await targetSource.ConfigureAwait(false);
@@ -32,7 +32,7 @@ public static class RequireTargetExt
     }
 
     public static async ValueTask<T> RequireResult<T>(this ValueTask<T?> targetSource, Requirement<T>? requirement = null)
-        where T : IRequireTarget
+        where T : IRequirementTarget
     {
         try {
             var target = await targetSource.ConfigureAwait(false);
@@ -47,7 +47,7 @@ public static class RequireTargetExt
     // Overloads accepting requirement builder
 
     public static T RequireResult<T>(this T? target, Func<Requirement<T>> requirementBuilder)
-        where T : IRequireTarget
+        where T : IRequirementTarget
     {
         try {
             var requirement = requirementBuilder.Invoke();
@@ -59,7 +59,7 @@ public static class RequireTargetExt
     }
 
     public static async Task<T> RequireResult<T>(this Task<T?> targetSource, Func<Requirement<T>> requirementBuilder)
-        where T : IRequireTarget
+        where T : IRequirementTarget
     {
         try {
             var target = await targetSource.ConfigureAwait(false);
@@ -72,7 +72,7 @@ public static class RequireTargetExt
     }
 
     public static async ValueTask<T> RequireResult<T>(this ValueTask<T?> targetSource, Func<Requirement<T>> requirementBuilder)
-        where T : IRequireTarget
+        where T : IRequirementTarget
     {
         try {
             var target = await targetSource.ConfigureAwait(false);

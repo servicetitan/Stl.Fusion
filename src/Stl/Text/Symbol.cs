@@ -8,7 +8,7 @@ namespace Stl.Text;
 [JsonConverter(typeof(SymbolJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(SymbolNewtonsoftJsonConverter))]
 [TypeConverter(typeof(SymbolTypeConverter))]
-public readonly struct Symbol : IRequireTarget,
+public readonly struct Symbol : IRequirementTarget,
     IEquatable<Symbol>, IComparable<Symbol>, IConvertibleTo<string>,
     ISerializable
 {

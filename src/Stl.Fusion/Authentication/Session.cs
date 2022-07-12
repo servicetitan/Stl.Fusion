@@ -10,7 +10,7 @@ namespace Stl.Fusion.Authentication;
 [JsonConverter(typeof(SessionJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(SessionNewtonsoftJsonConverter))]
 [TypeConverter(typeof(SessionTypeConverter))]
-public sealed class Session : IHasId<Symbol>, IRequireTarget,
+public sealed class Session : IHasId<Symbol>, IRequirementTarget,
     IEquatable<Session>, IConvertibleTo<string>, IConvertibleTo<Symbol>
 {
     public static Session Null { get; } = null!; // To gracefully bypass some nullability checks

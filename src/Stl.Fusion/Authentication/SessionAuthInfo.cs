@@ -3,10 +3,10 @@ using Stl.Requirements;
 
 namespace Stl.Fusion.Authentication;
 
-public record SessionAuthInfo : IRequireTarget
+public record SessionAuthInfo : IRequirementTarget
 {
-    public static FuncRequirement<SessionAuthInfo> MustBeAuthenticated { get; } = FuncRequirement.New(
-        new ExceptionBuilder(m => new SecurityException(m), "Session is not authenticated."),
+    public static FuncRequirement<SessionAuthInfo> MustBeAuthenticated { get; } = Requirement.New(
+        new("Session is not authenticated.", m => new SecurityException(m)),
         (SessionAuthInfo? i) => i?.IsAuthenticated() ?? false);
 
     public string SessionHash { get; init; } = "";

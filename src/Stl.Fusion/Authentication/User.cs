@@ -8,11 +8,11 @@ namespace Stl.Fusion.Authentication;
 
 [DataContract]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
-public record User : IHasId<Symbol>, IHasVersion<long>, IRequireTarget
+public record User : IHasId<Symbol>, IHasVersion<long>, IRequirementTarget
 {
     public static string GuestName { get; set; } = "Guest";
-    public static FuncRequirement<User> MustBeAuthenticated { get; } = FuncRequirement.New(
-        new ExceptionBuilder(m => new SecurityException(m), "User is not authenticated."),
+    public static FuncRequirement<User> MustBeAuthenticated { get; } = Requirement.New(
+        new("User is not authenticated.", m => new SecurityException(m)),
         (User? u) => u?.IsAuthenticated() ?? false);
 
     private Lazy<ClaimsPrincipal>? _claimsPrincipalLazy;

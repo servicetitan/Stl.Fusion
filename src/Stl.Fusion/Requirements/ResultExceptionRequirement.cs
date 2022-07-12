@@ -2,9 +2,9 @@ using Stl.Requirements;
 
 namespace Stl.Fusion.Requirements;
 
-public record ToResultExceptionRequirement<T>(Requirement<T> BaseRequirement) : Requirement<T>
+public record ResultExceptionRequirement<T>(Requirement<T> BaseRequirement) : Requirement<T>
 {
-    public static ToResultExceptionRequirement<T> Default { get; } = new(NotNullOrDefaultRequirement<T>.Default);
+    public static ResultExceptionRequirement<T> Default { get; } = new(NotNullOrDefaultRequirement<T>.Default);
 
     public override bool IsSatisfied(T? value) 
         => BaseRequirement.IsSatisfied(value);

@@ -1,21 +1,20 @@
-using System.Diagnostics.CodeAnalysis;
 using Stl.Requirements;
 
 namespace Stl;
 
-public static class RequireTargetExt
+public static class RequirementTargetExt
 {
     // Normal overloads
 
     public static T Require<T>(this T? target, Requirement<T>? requirement = null)
-        where T : IRequireTarget
+        where T : IRequirementTarget
     {
         requirement ??= NotNullOrDefaultRequirement<T>.Default; 
         return requirement.Require(target);
     }
 
     public static async Task<T> Require<T>(this Task<T?> targetSource, Requirement<T>? requirement = null)
-        where T : IRequireTarget
+        where T : IRequirementTarget
     {
         var target = await targetSource.ConfigureAwait(false);
         requirement ??= NotNullOrDefaultRequirement<T>.Default;
@@ -23,7 +22,7 @@ public static class RequireTargetExt
     }
 
     public static async ValueTask<T> Require<T>(this ValueTask<T?> targetSource, Requirement<T>? requirement = null)
-        where T : IRequireTarget
+        where T : IRequirementTarget
     {
         var target = await targetSource.ConfigureAwait(false);
         requirement ??= NotNullOrDefaultRequirement<T>.Default; 
@@ -33,18 +32,18 @@ public static class RequireTargetExt
     // Overloads accepting requirement builder
 
     public static T Require<T>(this T? target, Func<Requirement<T>> requirementBuilder)
-        where T : IRequireTarget 
+        where T : IRequirementTarget 
         => requirementBuilder.Invoke().Require(target);
 
     public static async Task<T> Require<T>(this Task<T?> targetSource, Func<Requirement<T>> requirementBuilder)
-        where T : IRequireTarget
+        where T : IRequirementTarget
     {
         var target = await targetSource.ConfigureAwait(false);
         return requirementBuilder.Invoke().Require(target);
     }
 
     public static async ValueTask<T> Require<T>(this ValueTask<T?> targetSource, Func<Requirement<T>> requirementBuilder)
-        where T : IRequireTarget
+        where T : IRequirementTarget
     {
         var target = await targetSource.ConfigureAwait(false);
         return requirementBuilder.Invoke().Require(target);

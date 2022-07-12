@@ -1,7 +1,7 @@
 namespace Stl.Requirements;
 
 public record JointRequirement<T>(
-    Requirement<T> Primary, 
+    Requirement<T> Primary,
     Requirement<T> Secondary
     ) : Requirement<T>
 {

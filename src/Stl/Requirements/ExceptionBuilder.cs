@@ -3,40 +3,46 @@ using System.Globalization;
 
 namespace Stl.Requirements;
 
-public record struct ExceptionBuilder
+public readonly record struct ExceptionBuilder
 {
     public static Func<string, Exception> DefaultExceptionFactory { get; } = message => new ValidationException(message);
-
-    private readonly Func<string, Exception>? _exceptionFactory;
-
-    public Func<string, Exception> ExceptionFactory {
-        get => _exceptionFactory ?? DefaultExceptionFactory;
-        init => _exceptionFactory = value;
-    }
+    public static string DefaultMessageTemplate { get; } = "{0}: validation failed.";
 
     public string? MessageTemplate { get; init; }
     public string? TargetName { get; init; }
+    public Delegate? ExceptionFactory { get; init; }
 
-    public ExceptionBuilder(Func<string, Exception> exceptionFactory, string? messageTemplate = null, string? targetName = null)
+    public ExceptionBuilder(Func<Exception>? exceptionFactory = null)
+        : this(null!, null!, null!)
     {
-        _exceptionFactory = exceptionFactory;
+        ExceptionFactory = exceptionFactory;
+    }
+
+    public ExceptionBuilder(string messageTemplate, Func<string, Exception>? exceptionFactory = null)
+        : this(messageTemplate, null!, exceptionFactory) { }
+    public ExceptionBuilder(string messageTemplate, string targetName, Func<string, Exception>? exceptionFactory = null)
+    {
         MessageTemplate = messageTemplate;
         TargetName = targetName;
+        ExceptionFactory = exceptionFactory;
     }
 
     public static implicit operator ExceptionBuilder(string messageTemplate)
-        => new(null!, messageTemplate);
-    public static implicit operator ExceptionBuilder((string MessageTemplate, Func<string, Exception> ExceptionFactory) args)
-        => new(args.ExceptionFactory, args.MessageTemplate);
-    public static implicit operator ExceptionBuilder(Func<string, Exception> exceptionFactory)
-        => new(exceptionFactory);
+        => new(messageTemplate);
     public static implicit operator ExceptionBuilder(Func<Exception> exceptionFactory)
-        => new(_ => exceptionFactory.Invoke());
+        => new(null!, _ => exceptionFactory.Invoke());
 
     public Exception Build<TValue>(TValue? value)
     {
-        var targetName = TargetName ?? typeof(TValue?).GetName();
-        var message = MessageTemplate ?? "{0}: validation failed.";
-        return ExceptionFactory.Invoke(string.Format(CultureInfo.InvariantCulture, message, targetName, value));
+        var targetName = TargetName.NullIfEmpty() ?? typeof(TValue?).GetName();
+        var message = MessageTemplate.NullIfEmpty() ?? DefaultMessageTemplate;
+        var exception = ExceptionFactory switch {
+            Func<string, Exception> messageBased => messageBased.Invoke(
+                string.Format(CultureInfo.InvariantCulture, message, targetName, value)),
+            Func<Exception> simple => simple.Invoke(),
+            _ => DefaultExceptionFactory.Invoke(
+                string.Format(CultureInfo.InvariantCulture, message, targetName, value)), 
+        };
+        return exception;
     }
 }
