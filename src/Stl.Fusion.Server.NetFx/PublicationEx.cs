@@ -53,7 +53,7 @@ public static class HttpContextExt
         // If exception occurred, response is empty, and we can not assign publication header.
         // If JsonifyAttribute is used, it will do it.
         var responseHeaders = httpContext.Response?.Headers;
-        if (responseHeaders!=null && responseHeaders.Contains(FusionHeaders.Publication))
+        if (responseHeaders != null && responseHeaders.Contains(FusionHeaders.Publication))
             throw Errors.AlreadyPublished();
         var psi = new PublicationStateInfo(publication.Ref, computed.Version, isConsistent);
 
@@ -61,7 +61,7 @@ public static class HttpContextExt
         items[typeof(PublicationState)] = publicationState;
         items[typeof(PublicationStateInfo)] = psi;
 
-        if (responseHeaders!=null)
+        if (responseHeaders != null)
             responseHeaders.AddPublicationStateInfoHeader(psi);
     }
 

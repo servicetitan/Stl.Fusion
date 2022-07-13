@@ -17,7 +17,7 @@ public interface IPublication : IDisposable
     bool TryTouch();
     void Touch();
     ValueTask Update(CancellationToken cancellationToken);
-    Task Expire();
+    Task ExpireAndDispose();
 
     // Convenience helpers
     TResult Apply<TArg, TResult>(IPublicationApplyHandler<TArg, TResult> handler, TArg arg);
@@ -88,8 +88,7 @@ public class Publication<T> : IPublication<T>
                 return;
             spinWait.SpinOnce();
         }
-        _disposeTokenSource.Cancel();
-        _disposeTokenSource.Dispose();
+        _disposeTokenSource.CancelAndDisposeSilently();
         if (Publisher is IPublisherImpl pi)
             pi.OnPublicationDisposed(this);
     }
@@ -136,7 +135,7 @@ public class Publication<T> : IPublication<T>
         }
     }
 
-    public async Task Expire()
+    public async Task ExpireAndDispose()
     {
         // Uncomment for debugging:
         // await Task.Delay(TimeSpan.FromMinutes(10), cancellationToken).ConfigureAwait(false);
@@ -150,6 +149,10 @@ public class Publication<T> : IPublication<T>
         }
         catch (OperationCanceledException) {
             // Intended
+        }
+        finally {
+            if (!_disposeToken.IsCancellationRequested)
+                Dispose();
         }
     }
 

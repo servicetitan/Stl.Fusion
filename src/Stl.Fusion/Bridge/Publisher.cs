@@ -87,6 +87,7 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
     public virtual IPublication Publish(IComputed computed)
     {
         this.ThrowIfDisposedOrDisposing();
+        ExecutionContextExt.SuppressFlow();
         var spinWait = new SpinWait();
         while (true) {
              var p = Publications.GetOrAddChecked(
@@ -98,7 +99,7 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
                          this1.Options.PublicationGeneric, this1, computed1, id,
                          this1.Clocks.CoarseCpuClock);
                      this1.PublicationsById[id] = p1;
-                     p1.Expire();
+                     _ = Task.Run(p1.ExpireAndDispose, CancellationToken.None);
                      return p1;
                  }, (this, computed));
             if (p.TryTouch())

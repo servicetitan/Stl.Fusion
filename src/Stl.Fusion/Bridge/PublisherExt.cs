@@ -63,7 +63,7 @@ public static class PublisherExt
         IComputed computed,
         CancellationToken cancellationToken = default)
     {
-        if (computed==null)
+        if (computed == null)
             throw new ArgumentNullException(nameof(computed));
 
         var publication = publisher.Publish(computed);

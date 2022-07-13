@@ -45,7 +45,7 @@ public class FusionTestWebHost : TestWebHostBase
             });
 
 #if NETFRAMEWORK
-            if (Options.ControllerTypes!=null)
+            if (Options.ControllerTypes != null)
                 services.AddControllersAsServices(Options.ControllerTypes);
 #else
             // Web
