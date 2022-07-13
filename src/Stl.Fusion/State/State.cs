@@ -283,10 +283,7 @@ public abstract class State<T> : ComputedInput,
             var value = await Compute(cancellationToken).ConfigureAwait(false);
             computed.TrySetOutput(Result.New(value));
         }
-        catch (OperationCanceledException) {
-            throw;
-        }
-        catch (Exception e) {
+        catch (Exception e) when (e is not OperationCanceledException) {
             computed.TrySetOutput(Result.Error<T>(e));
         }
 

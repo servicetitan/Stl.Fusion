@@ -43,11 +43,8 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
             if (!scope.IsClosed)
                 await scope.Commit(cancellationToken).ConfigureAwait(false);
         }
-        catch (Exception error) {
+        catch (Exception error) when (error is not OperationCanceledException) {
             try {
-                if (error is OperationCanceledException)
-                    throw;
-
                 var operationReprocessor = context.Items.Get<IOperationReprocessor>();
                 if (operationReprocessor == null)
                     throw;

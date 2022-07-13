@@ -25,12 +25,13 @@ public abstract class TenantWorkerBase<TContext> : WorkerBase
                 foreach (var (tenantId, tenant) in tenants) {
                     if (tasks.ContainsKey(tenantId))
                         continue;
-                    var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
+                    using var cts = cancellationToken.CreateLinkedTokenSource();
                     var task = RunInternal(tenant, cancellationToken);
                     tasks.Add(tenantId, (cts, task));
                     tasksToStop.TryAdd(task, default);
                     _ = task.ContinueWith(
-                        t => tasksToStop.TryRemove(t, out _), 
+                        t => tasksToStop.TryRemove(t, out _),
                         CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
                 }
 

@@ -92,7 +92,7 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
                 // Awaiting for invalidation or new message - whatever happens first;
                 // CreateLinkedTokenSource is needed to make sure we truly cancel
                 // WhenInvalidated(...) & remove the OnInvalidated handler. 
-                var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                var cts = cancellationToken.CreateLinkedTokenSource();
                 try {
                     var whenInvalidatedTask = computed.WhenInvalidated(cts.Token);
                     var completedTask = await Task

@@ -23,8 +23,9 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
             DefaultClientWebSocketFactory;
         public Func<WebSocketChannelProvider, Symbol, Uri> ConnectionUrlResolver { get; init; } =
             DefaultConnectionUrlResolver;
-        public LogLevel LogLevel { get; set; } = LogLevel.Information;
-        public LogLevel MessageLogLevel { get; set; } = LogLevel.None;
+        public IMomentClock? Clock { get; init; } = null;
+        public LogLevel LogLevel { get; init; } = LogLevel.Information;
+        public LogLevel MessageLogLevel { get; init; } = LogLevel.None;
 
         public static ITextSerializer<BridgeMessage> DefaultSerializerFactory(IServiceProvider services)
             => TextSerializer.NewAsymmetric(
@@ -37,7 +38,7 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
             )).ToTyped<BridgeMessage>();
 
         public static ClientWebSocket DefaultClientWebSocketFactory(IServiceProvider services)
-            => services?.GetService<ClientWebSocket>() ?? new ClientWebSocket();
+            => services.GetService<ClientWebSocket>() ?? new ClientWebSocket();
 
         public static Uri DefaultConnectionUrlResolver(
             WebSocketChannelProvider channelProvider,
@@ -68,6 +69,7 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
     protected bool IsLoggingEnabled { get; set; }
     protected bool IsMessageLoggingEnabled { get; set; }
 
+    protected IMomentClock Clock { get; }
     protected Lazy<IReplicator>? ReplicatorLazy { get; }
     protected Symbol ClientId => ReplicatorLazy?.Value.Id ?? Symbol.Empty;
 
@@ -85,6 +87,7 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
         IsMessageLoggingEnabled = Log.IsLogging(settings.MessageLogLevel);
 
         Services = services;
+        Clock = settings.Clock ?? services.Clocks().CpuClock;
         ReplicatorLazy = new Lazy<IReplicator>(services.GetRequiredService<IReplicator>);
     }
 
@@ -92,18 +95,24 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
         Symbol publisherId, CancellationToken cancellationToken)
     {
         var clientId = ClientId.Value;
+        var cts = cancellationToken.CreateLinkedTokenSource();
         try {
             var connectionUri = Settings.ConnectionUrlResolver(this, publisherId);
             if (IsLoggingEnabled)
                 Log.Log(Settings.LogLevel,
                     "{ClientId}: connecting to {ConnectionUri}...", clientId, connectionUri);
             var ws = Settings.ClientWebSocketFactory(Services);
-            using var cts = new CancellationTokenSource(Settings.ConnectTimeout);
-            using var lts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
-            await ws.ConnectAsync(connectionUri, lts.Token).ConfigureAwait(false);
+
+            try {
+                await ws.ConnectAsync(connectionUri, cts.Token)
+                    .WaitAsync(Clock, Settings.ConnectTimeout, cts.Token)
+                    .ConfigureAwait(false);
+            }
+            catch (TimeoutException) {
+                throw Errors.WebSocketConnectTimeout();
+            }
             if (IsLoggingEnabled)
-                Log.Log(Settings.LogLevel,
-                    "{ClientId}: connected", clientId);
+                Log.Log(Settings.LogLevel, "{ClientId}: connected", clientId);
 
             var wsChannel = new WebSocketChannel(ws);
             Channel<string> stringChannel = wsChannel;
@@ -112,21 +121,16 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
                     clientId, Log, Settings.MessageLogLevel, Settings.MessageMaxLength);
             var serializers = Settings.SerializerFactory(Services);
             var resultChannel = stringChannel.WithTextSerializer(serializers);
-            _ = wsChannel.WhenCompleted(CancellationToken.None)
-                .ContinueWith(async _ => {
-                    await Task.Delay(1000, default).ConfigureAwait(false);
-                    await wsChannel.DisposeAsync().ConfigureAwait(false);
-                }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+            _ = wsChannel.WhenClosed.ContinueWith(_ => wsChannel.DisposeAsync(),
+                CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
             return resultChannel;
         }
-        catch (OperationCanceledException) {
-            if (cancellationToken.IsCancellationRequested)
-                throw;
-            throw Errors.WebSocketConnectTimeout();
-        }
-        catch (Exception e) {
+        catch (Exception e) when (e is not OperationCanceledException) {
             Log.LogError(e, "{ClientId}: error", clientId);
             throw;
+        }
+        finally {
+            cts.CancelAndDisposeSilently();
         }
     }
 }

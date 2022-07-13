@@ -154,7 +154,7 @@ public static class TaskExt
 
         async Task WaitForTimeout()
         {
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            using var cts = cancellationToken.CreateLinkedTokenSource();
             try {
                 var timeoutTask = clock.Delay(timeout, cts.Token);
                 var winnerTask = await Task.WhenAny(task, timeoutTask).ConfigureAwait(false);
@@ -216,7 +216,7 @@ public static class TaskExt
 
         async Task<T> WaitForTimeout()
         {
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            using var cts = cancellationToken.CreateLinkedTokenSource();
             try {
                 var timeoutTask = clock.Delay(timeout, cts.Token);
                 var winnerTask = await Task.WhenAny(task, timeoutTask).ConfigureAwait(false);
@@ -274,7 +274,7 @@ public static class TaskExt
 
         async Task<Result<Unit>> WaitForTimeout()
         {
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            using var cts = cancellationToken.CreateLinkedTokenSource();
             try {
                 var timeoutTask = clock.Delay(timeout, cts.Token);
                 var winnerTask = await Task.WhenAny(task, timeoutTask).ConfigureAwait(false);
@@ -333,7 +333,7 @@ public static class TaskExt
 
         async Task<Result<T>> WaitForTimeout()
         {
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            using var cts = cancellationToken.CreateLinkedTokenSource();
             try {
                 var timeoutTask = clock.Delay(timeout, cts.Token);
                 var winnerTask = await Task.WhenAny(task, timeoutTask).ConfigureAwait(false);
@@ -363,6 +363,21 @@ public static class TaskExt
 #else
         return task.IsCompletedSuccessfully;
 #endif
+    }
+
+    // WaitErrorAsync
+
+    public static async Task<Exception?> WaitErrorAsync(this Task task, bool throwOperationCancelledException = false)
+    {
+        try {
+            await task.ConfigureAwait(false);
+            return null;
+        }
+        catch (Exception error) {
+            if (throwOperationCancelledException && error is OperationCanceledException)
+                throw;
+            return error;
+        }
     }
 
     // SuppressXxx

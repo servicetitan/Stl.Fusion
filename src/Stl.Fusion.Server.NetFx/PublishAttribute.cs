@@ -38,10 +38,7 @@ public class PublishAttribute : ActionFilterAttribute
             try {
                 await publication.Update(cancellationToken).ConfigureAwait(false);
             }
-            catch (OperationCanceledException) {
-                throw;
-            }
-            catch {
+            catch (Exception e) when (e is not OperationCanceledException) {
                 // Intended, it's fine to publish a computed w/ an error
             }
             actionContext.Publish(publication);

@@ -2,8 +2,13 @@ namespace Stl.Async;
 
 public static class CancellationTokenExt
 {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static CancellationTokenSource LinkWith(this CancellationToken token1, CancellationToken token2)
         => CancellationTokenSource.CreateLinkedTokenSource(token1, token2);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static CancellationTokenSource CreateLinkedTokenSource(this CancellationToken cancellationToken)
+        => CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
     // ToTask
 

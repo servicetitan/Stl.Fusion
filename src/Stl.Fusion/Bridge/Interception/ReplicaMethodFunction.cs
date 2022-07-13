@@ -44,10 +44,7 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
                 ComputeContext.Current.TryCapture(result);
                 return result;
             }
-            catch (OperationCanceledException) {
-                throw;
-            }
-            catch (Exception e) {
+            catch (Exception e) when (e is not OperationCanceledException) {
                 DebugLog?.LogError(e, "ComputeAsync: error on Replica update");
             }
         }
@@ -67,10 +64,7 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
                     output = Result.Value(await task.ConfigureAwait(false));
                 }
             }
-            catch (OperationCanceledException) {
-                throw;
-            }
-            catch (Exception e) {
+            catch (Exception e) when (e is not OperationCanceledException) {
                 DebugLog?.LogError(e, "ComputeAsync: error on update");
                 if (e is AggregateException ae)
                     e = ae.GetFirstInnerException();

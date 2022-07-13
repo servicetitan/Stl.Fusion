@@ -26,10 +26,7 @@ public static class PublisherExt
         try {
             await publication.Update(cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) {
-            throw;
-        }
-        catch {
+        catch (Exception e) when (e is not OperationCanceledException) {
             // Intended, it's fine to publish a computed w/ an error
         }
         return publication;
@@ -53,10 +50,7 @@ public static class PublisherExt
         try {
             await publication.Update(cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) {
-            throw;
-        }
-        catch {
+        catch (Exception e) when (e is not OperationCanceledException) {
             // Intended, it's fine to publish a computed w/ an error
         }
         return publication;
@@ -79,10 +73,7 @@ public static class PublisherExt
         try {
             await publication.Update(cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) {
-            throw;
-        }
-        catch {
+        catch (Exception e) when (e is not OperationCanceledException) {
             // Intended, it's fine to publish a computed w/ an error
         }
         return publication;
@@ -108,10 +99,7 @@ public static class PublisherExt
         try {
             await publication.Update(cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) {
-            throw;
-        }
-        catch {
+        catch (Exception e) when (e is not OperationCanceledException) {
             // Intended, it's fine to publish a computed w/ an error
         }
         return publication;
@@ -133,10 +121,7 @@ public static class PublisherExt
         try {
             await publication.Update(cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) {
-            throw;
-        }
-        catch {
+        catch (Exception e) when (e is not OperationCanceledException) {
             // Intended, it's fine to publish a computed w/ an error
         }
         return publication;

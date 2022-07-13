@@ -61,10 +61,7 @@ public static class Computed
         try {
             await producer(cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) {
-            throw;
-        }
-        catch (Exception) {
+        catch (Exception e) when (e is not OperationCanceledException) {
             if (ccs.Context.TryGetCaptured(out result!) && result.HasError)
                 return Option.Some(result); // Return the original error, if possible
             throw;
@@ -81,10 +78,7 @@ public static class Computed
         try {
             await producer(cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) {
-            throw;
-        }
-        catch (Exception) {
+        catch (Exception e) when (e is not OperationCanceledException) {
             if (ccs.Context.TryGetCaptured(out result!) && result.HasError)
                 return Option.Some(result); // Return the original error, if possible
             throw;
@@ -101,10 +95,7 @@ public static class Computed
         try {
             await producer(cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) {
-            throw;
-        }
-        catch (Exception) {
+        catch (Exception e) when (e is not OperationCanceledException) {
             if (ccs.Context.TryGetCaptured(out result!) && result.HasError)
                 return Option.Some(result); // Return the original error, if possible
             throw;
@@ -121,10 +112,7 @@ public static class Computed
         try {
             await producer(cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) {
-            throw;
-        }
-        catch (Exception) {
+        catch (Exception e) when (e is not OperationCanceledException) {
             if (ccs.Context.TryGetCaptured(out result!) && result.HasError)
                 return Option.Some(result); // Return the original error, if possible
             throw;
@@ -140,10 +128,7 @@ public static class Computed
         try {
             await producer(cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) {
-            throw;
-        }
-        catch (Exception) {
+        catch (Exception e) when (e is not OperationCanceledException) {
             if (ccs.Context.TryGetCaptured(out var result) && result.HasError)
                 return result; // Return the original error, if possible
             throw;
@@ -157,10 +142,7 @@ public static class Computed
         try {
             await producer(cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) {
-            throw;
-        }
-        catch (Exception) {
+        catch (Exception e) when (e is not OperationCanceledException) {
             if (ccs.Context.TryGetCaptured<T>(out var result) && result.HasError)
                 return result; // Return the original error, if possible
             throw;
@@ -174,10 +156,7 @@ public static class Computed
         try {
             await producer(cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) {
-            throw;
-        }
-        catch (Exception) {
+        catch (Exception e) when (e is not OperationCanceledException) {
             if (ccs.Context.TryGetCaptured(out var result) && result.HasError)
                 return result; // Return the original error, if possible
             throw;
@@ -191,10 +170,7 @@ public static class Computed
         try {
             await producer(cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) {
-            throw;
-        }
-        catch (Exception) {
+        catch (Exception e) when (e is not OperationCanceledException) {
             if (ccs.Context.TryGetCaptured<T>(out var result) && result.HasError)
                 return result; // Return the original error, if possible
             throw;

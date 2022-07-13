@@ -121,10 +121,7 @@ public class OperationReprocessor : IOperationReprocessor
                 LastError = null;
                 break;
             }
-            catch (OperationCanceledException) {
-                throw;
-            }
-            catch (Exception error) {
+            catch (Exception error) when (error is not OperationCanceledException) {
                 if (!this.WillRetry(error))
                     throw;
 

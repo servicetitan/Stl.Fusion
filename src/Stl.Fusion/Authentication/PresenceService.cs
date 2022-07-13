@@ -43,10 +43,7 @@ public class PresenceService : WorkerBase
             await Auth.UpdatePresence(session, cancellationToken).ConfigureAwait(false);
             return true;
         }
-        catch (OperationCanceledException) {
-            throw;
-        }
-        catch (Exception e) {
+        catch (Exception e) when (e is not OperationCanceledException) {
             Log.LogError(e, "UpdatePresenceAsync error");
             return false;
         }

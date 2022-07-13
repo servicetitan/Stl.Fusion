@@ -1,6 +1,7 @@
 using System.Buffers;
 using System.Diagnostics;
 using System.Net.WebSockets;
+using System.Runtime.ExceptionServices;
 using System.Text;
 using Stl.Pooling;
 
@@ -8,53 +9,68 @@ namespace Stl.Net;
 
 public class WebSocketChannel : Channel<string>, IAsyncDisposable
 {
-    public const int DefaultReadBufferSize = 16_384;
-    public const int DefaultWriteBufferSize = 16_384;
-
-    protected int ReadBufferSize { get; }
-    protected int WriteBufferSize { get; }
-    protected Channel<string> ReadChannel { get; }
-    protected Channel<string> WriteChannel { get; }
-    protected volatile CancellationTokenSource? StopCts;
-    protected readonly CancellationToken StopToken;
-
-    public WebSocket WebSocket { get; }
-    public bool OwnsWebSocket { get; }
-    public Task ReaderTask { get; }
-    public Task WriterTask { get; }
-    public Exception? ReaderError { get; protected set; }
-    public Exception? WriterError { get; protected set; }
-
-    public WebSocketChannel(WebSocket webSocket,
-        int readBufferSize = DefaultReadBufferSize,
-        int writeBufferSize = DefaultWriteBufferSize,
-        Channel<string>? readChannel = null,
-        Channel<string>? writeChannel = null,
-        bool ownsWebSocket = true,
-        BoundedChannelOptions? channelOptions = null
-    )
+    public record Options
     {
-        ReadBufferSize = readBufferSize;
-        WriteBufferSize = writeBufferSize;
-        channelOptions ??= new BoundedChannelOptions(16) {
+        public static Options Default { get; } = new();
+
+        public bool OwnsWebSocket { get; init; } = true;
+        public int ReadBufferSize { get; init; } = 16_384;
+        public int WriteBufferSize { get; init; } = 16_384;
+        public TimeSpan CloseTimeout { get; init; } = TimeSpan.FromSeconds(5);
+        public Func<Channel<string>> ReadChannelFactory { get; init; }
+        public Func<Channel<string>> WriteChannelFactory { get; init; }
+        public BoundedChannelOptions ChannelOptions { get; init; } = new(16) {
             FullMode = BoundedChannelFullMode.Wait,
             SingleReader = true,
             SingleWriter = true,
             AllowSynchronousContinuations = true,
         };
-        readChannel ??= Channel.CreateBounded<string>(channelOptions);
-        writeChannel ??= Channel.CreateBounded<string>(channelOptions);
+
+        public Options()
+        {
+            ReadChannelFactory = DefaultChannelFactory;
+            WriteChannelFactory = DefaultChannelFactory;
+        }
+
+        public Channel<string> DefaultChannelFactory()
+            => Channel.CreateBounded<string>(ChannelOptions);
+    }
+
+    protected volatile CancellationTokenSource? StopCts;
+    protected Channel<string> ReadChannel { get; }
+    protected Channel<string> WriteChannel { get; }
+
+    public Options Settings { get; }
+    public WebSocket WebSocket { get; }
+    public Task WhenReadCompleted { get; protected set; }
+    public Task WhenWriteCompleted { get; protected set; }
+    public Task WhenClosed { get; protected set; }
+    public CancellationToken StopToken { get; }
+
+    public WebSocketChannel(WebSocket webSocket) : this(Options.Default, webSocket) { }
+    public WebSocketChannel(Options settings, WebSocket webSocket)
+    {
+        Settings = settings;
         WebSocket = webSocket;
-        ReadChannel = readChannel;
-        WriteChannel = writeChannel;
-        Reader = readChannel.Reader;
-        Writer = writeChannel.Writer;
-        OwnsWebSocket = ownsWebSocket;
+        ReadChannel = Settings.ReadChannelFactory.Invoke();
+        WriteChannel = Settings.WriteChannelFactory.Invoke();
+        Reader = ReadChannel.Reader;
+        Writer = WriteChannel.Writer;
 
         StopCts = new CancellationTokenSource();
-        var cancellationToken = StopToken = StopCts.Token;
-        ReaderTask = Task.Run(() => RunReader(cancellationToken));
-        WriterTask = Task.Run(() => RunWriter(cancellationToken));
+        StopToken = StopCts.Token;
+
+        using var _ = ExecutionContextExt.SuppressFlow();
+        WhenReadCompleted = Task.Run(() => RunReader(StopToken), CancellationToken.None);
+        WhenWriteCompleted = Task.Run(() => RunWriter(StopToken), CancellationToken.None);
+        WhenClosed = Task.Run(async () => {
+            var readError = await WhenReadCompleted.WaitErrorAsync().ConfigureAwait(false);
+            var writeError = await WhenWriteCompleted.WaitErrorAsync().ConfigureAwait(false);
+            var error = readError ?? writeError;
+            await Close(error).ConfigureAwait(false);
+            if (readError != null)
+                ExceptionDispatchInfo.Capture(readError).Throw();
+        }, CancellationToken.None);
     }
 
     public async ValueTask DisposeAsync()
@@ -65,71 +81,59 @@ public class WebSocketChannel : Channel<string>, IAsyncDisposable
 
         stopCts.CancelAndDisposeSilently();
         try {
-            await WhenCompleted(default).ConfigureAwait(false);
+            await WhenClosed.ConfigureAwait(false);
         }
         catch {
             // Dispose shouldn't throw exceptions
         }
-        if (OwnsWebSocket)
+        if (Settings.OwnsWebSocket)
             WebSocket.Dispose();
     }
 
-    public Task WhenCompleted(CancellationToken cancellationToken = default)
-        => Task.WhenAll(ReaderTask, WriterTask).WaitAsync(cancellationToken);
-
-    protected virtual async Task TryCloseWebSocket(CancellationToken cancellationToken)
+    protected virtual async Task Close(Exception? error = null)
     {
+        if (error is OperationCanceledException)
+            error = null;
+
         var status = WebSocketCloseStatus.NormalClosure;
         var message = "Ok.";
-
-        var error = ReaderError ?? WriterError;
         if (error != null) {
             status = WebSocketCloseStatus.InternalServerError;
             message = "Internal Server Error.";
         }
 
-        await WebSocket.CloseAsync(status, message, cancellationToken).ConfigureAwait(false);
+        using var cts = new CancellationTokenSource(Settings.CloseTimeout);
+        try {
+            await WebSocket.CloseAsync(status, message, cts.Token).ConfigureAwait(false);
+        }
+        catch {
+            // Intended
+        }
     }
 
     protected async Task RunReader(CancellationToken cancellationToken)
     {
-        var error = (Exception?) null;
         try {
             await RunReaderUnsafe(cancellationToken).ConfigureAwait(false);
+            ReadChannel.Writer.TryComplete();
         }
         catch (Exception e) {
-            error = e;
-            if (!(e is OperationCanceledException))
-                ReaderError = e;
+            ReadChannel.Writer.TryComplete(e);
             throw;
-        }
-        finally {
-            ReadChannel.Writer.TryComplete(error);
         }
     }
 
     protected async Task RunWriter(CancellationToken cancellationToken)
     {
-        try {
-            await RunWriterUnsafe(cancellationToken).ConfigureAwait(false);
-        }
-        catch (Exception e) {
-            if (!(e is OperationCanceledException))
-                WriterError = e;
-            throw;
-        }
-        finally {
-            if (OwnsWebSocket)
-                await TryCloseWebSocket(cancellationToken).ConfigureAwait(false);
-        }
+        await RunWriterUnsafe(cancellationToken).ConfigureAwait(false);
     }
 
 #if !NETSTANDARD2_0
 
     protected virtual async Task RunReaderUnsafe(CancellationToken cancellationToken)
     {
-        using var bytesOwner = MemoryPool<byte>.Shared.Rent(ReadBufferSize);
-        using var charsOwner = MemoryPool<char>.Shared.Rent(ReadBufferSize);
+        using var bytesOwner = MemoryPool<byte>.Shared.Rent(Settings.ReadBufferSize);
+        using var charsOwner = MemoryPool<char>.Shared.Rent(Settings.ReadBufferSize);
 
         var decoder = Encoding.UTF8.GetDecoder();
         var writer = ReadChannel.Writer;
@@ -195,7 +199,7 @@ public class WebSocketChannel : Channel<string>, IAsyncDisposable
 
     protected virtual async Task RunWriterUnsafe(CancellationToken cancellationToken)
     {
-        using var bytesOwner = MemoryPool<byte>.Shared.Rent(WriteBufferSize);
+        using var bytesOwner = MemoryPool<byte>.Shared.Rent(Settings.WriteBufferSize);
 
         var encoder = Encoding.UTF8.GetEncoder();
         var reader = WriteChannel.Reader;
@@ -230,8 +234,8 @@ public class WebSocketChannel : Channel<string>, IAsyncDisposable
 
     protected virtual async Task RunReaderUnsafe(CancellationToken cancellationToken)
     {
-        using var bytesOwner = ArrayPool<byte>.Shared.Lease(ReadBufferSize);
-        using var charsOwner = ArrayPool<char>.Shared.Lease(ReadBufferSize);
+        using var bytesOwner = ArrayPool<byte>.Shared.Lease(Settings.ReadBufferSize);
+        using var charsOwner = ArrayPool<char>.Shared.Lease(Settings.ReadBufferSize);
 
         var decoder = Encoding.UTF8.GetDecoder();
         var writer = ReadChannel.Writer;
@@ -302,7 +306,7 @@ public class WebSocketChannel : Channel<string>, IAsyncDisposable
 
     protected virtual async Task RunWriterUnsafe(CancellationToken cancellationToken)
     {
-        using var bytesOwner = ArrayPool<byte>.Shared.Lease(WriteBufferSize);
+        using var bytesOwner = ArrayPool<byte>.Shared.Lease(Settings.WriteBufferSize);
 
         var encoder = Encoding.UTF8.GetEncoder();
         var reader = WriteChannel.Reader;
@@ -338,5 +342,6 @@ public class WebSocketChannel : Channel<string>, IAsyncDisposable
         }
 
     }
+
 #endif
 }
