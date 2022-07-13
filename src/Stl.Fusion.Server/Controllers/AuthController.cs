@@ -5,7 +5,7 @@ using Stl.Fusion.Authentication.Commands;
 namespace Stl.Fusion.Server.Controllers;
 
 [Route("fusion/auth/[action]")]
-[ApiController, JsonifyErrors(RewriteErrors = true), UseDefaultSession]
+[ApiController, JsonifyErrors, UseDefaultSession]
 public class AuthController : ControllerBase, IAuth
 {
     private IAuth Auth { get; }

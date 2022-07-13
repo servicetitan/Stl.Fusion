@@ -41,7 +41,7 @@ public class ExceptionInfoTest : TestBase
         var e = new Exception("1").ToResultException();
         var i = e.ToExceptionInfo();
         i.Message.Should().Be("1");
-        var r = (ResultException) i.ToException()!;
+        var r = (ServiceException) i.ToException()!;
         r.Message.Should().Be("1");
         r.Unwrap().Should().BeOfType<Exception>().Which.Message.Should().Be("1");
 
@@ -50,7 +50,7 @@ public class ExceptionInfoTest : TestBase
         e = new ArgumentNullException("none", "2").ToResultException();
 #pragma warning restore MA0015
         i = e.ToExceptionInfo();
-        r = (ResultException) i.ToException()!;
+        r = (ServiceException) i.ToException()!;
         r.Message.Should().Be(e.Message);
         r.Unwrap().Should().BeOfType<ArgumentNullException>()
             .Which.Message.Should().Be(e.Message);

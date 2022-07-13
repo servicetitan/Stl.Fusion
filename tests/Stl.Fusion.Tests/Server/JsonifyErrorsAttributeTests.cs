@@ -15,17 +15,13 @@ public class JsonifyErrorsAttributeTests
         exceptionContextFixture.VerifyLogError(expectedMessage);
     }
 
-    [Theory]
-    [InlineData(true)]
-    [InlineData(false)]
-    public void OnException_Should_RewriteErrorsIfSet(bool rewriteErrors)
+    [Fact]
+    public void OnException_Should_RewriteErrorsIfSet()
     {
         var exceptionContextFixture = new ExceptionContextFixture();
         var exceptionContext = exceptionContextFixture.Create();
-        var jsonifyErrorsFixture = new JsonifyErrorsAttributeFixture().WithRewriteErrors(rewriteErrors);
+        var jsonifyErrorsFixture = new JsonifyErrorsAttributeFixture();
 
         jsonifyErrorsFixture.OnExceptionAsync(exceptionContext);
-
-        exceptionContextFixture.VerifyErrorRewrite(rewriteErrors);
     }
 }

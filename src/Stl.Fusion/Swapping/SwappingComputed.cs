@@ -31,10 +31,6 @@ public class SwappingComputed<T> : Computed<T>, IAsyncComputed<T>, ISwappable
 
     public override bool TrySetOutput(Result<T> output)
     {
-        if (Options.RewriteErrors && !output.IsValue(out _, out var error)) {
-            var errorRewriter = Function.Services.GetRequiredService<IErrorRewriter>();
-            output = Result.Error<T>(errorRewriter.Rewrite(this, error));
-        }
         if (ConsistencyState != ConsistencyState.Computing)
             return false;
         lock (Lock) {

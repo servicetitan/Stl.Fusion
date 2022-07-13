@@ -9,7 +9,9 @@ public static class ComputedExt
 
     public static void Invalidate(this IComputed computed, TimeSpan delay, bool? usePreciseTimer = null)
     {
-        if (delay <= TimeSpan.Zero) {
+        if (delay == TimeSpan.MaxValue) // No invalidation
+            return;
+        if (delay <= TimeSpan.Zero) { // Instant invalidation
             computed.Invalidate();
             return;
         }

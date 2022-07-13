@@ -11,19 +11,6 @@ namespace Stl.Fusion.Tests.Server;
 
 public class JsonifyErrorsAttributeFixture : BaseFixture<JsonifyErrorsAttribute>
 {
-    private bool _rewriteErrors = true;
-
-    public JsonifyErrorsAttributeFixture()
-    {
-        Fixture.Register(() => new JsonifyErrorsAttribute {RewriteErrors = _rewriteErrors});
-    }
-
-    public JsonifyErrorsAttributeFixture WithRewriteErrors(bool value)
-    {
-        _rewriteErrors = value;
-        return this;
-    }
-
     public Task OnExceptionAsync(
 #if NETFRAMEWORK
         HttpActionExecutedContext

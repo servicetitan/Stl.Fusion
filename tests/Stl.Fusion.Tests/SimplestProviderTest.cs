@@ -129,7 +129,7 @@ public class SimplestProviderTest : FusionTestBase
         await c1.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(1));
 
         c1 = await Computed.Capture(_ => p.Fail(typeof(NullReferenceException), true));
-        c1.Error.Should().BeOfType<ResultException>()
+        c1.Error.Should().BeOfType<ServiceException>()
             .Which.InnerException.Should().BeOfType<NullReferenceException>();
         await Delay(1);
         var c2 = await c1.Update();

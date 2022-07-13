@@ -7,7 +7,5 @@ public interface IEdgeCaseService
 
     [ComputeMethod(KeepAliveTime = 10)]
     Task<string> ThrowIfContainsError(string source, CancellationToken cancellationToken = default);
-    [ComputeMethod(RewriteErrors = true, KeepAliveTime = 10)]
-    Task<string> ThrowIfContainsErrorRewriteErrors(string source, CancellationToken cancellationToken = default);
     Task<string> ThrowIfContainsErrorNonCompute(string source, CancellationToken cancellationToken = default);
 }

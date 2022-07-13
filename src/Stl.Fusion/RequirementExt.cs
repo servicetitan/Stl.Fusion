@@ -5,8 +5,8 @@ namespace Stl.Fusion;
 
 public static class RequirementExt
 {
-    public static ResultExceptionRequirement<T> UseResultException<T>(this Requirement<T> requirement)
+    public static UseServiceExceptionRequirement<T> UseServiceException<T>(this Requirement<T> requirement)
         => ReferenceEquals(requirement, NotNullOrDefaultRequirement<T>.Default)
-            ? ResultExceptionRequirement<T>.Default
-            : new ResultExceptionRequirement<T>(requirement);
+            ? UseServiceExceptionRequirement<T>.Default
+            : new UseServiceExceptionRequirement<T>(requirement);
 }

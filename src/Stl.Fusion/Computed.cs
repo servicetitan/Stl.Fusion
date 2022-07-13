@@ -145,10 +145,6 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
 
     public virtual bool TrySetOutput(Result<TOut> output)
     {
-        if (Options.RewriteErrors && !output.IsValue(out _, out var error)) {
-            var errorRewriter = Function.Services.GetRequiredService<IErrorRewriter>();
-            output = Result.Error<TOut>(errorRewriter.Rewrite(this, error));
-        }
         if (ConsistencyState != ConsistencyState.Computing)
             return false;
         lock (Lock) {
@@ -167,7 +163,7 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
             Invalidate();
             return;
         }
-        var hasError = output.HasError && output.Error is not ResultException;
+        var hasError = output.HasError && output.Error is not ServiceException;
         var timeout = hasError
             ? _options.ErrorAutoInvalidateTime
             : _options.AutoInvalidateTime;

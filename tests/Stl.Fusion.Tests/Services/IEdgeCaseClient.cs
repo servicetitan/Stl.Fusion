@@ -14,12 +14,6 @@ public interface IEdgeCaseClient
 
     [Get("ThrowIfContainsError"), ComputeMethod(KeepAliveTime = 10)]
     Task<string> ThrowIfContainsError(string source, CancellationToken cancellationToken = default);
-    [Get("ThrowIfContainsErrorRewriteErrors"), ComputeMethod(KeepAliveTime = 10)]
-    Task<string> ThrowIfContainsErrorRewriteErrors(string source, CancellationToken cancellationToken = default);
     [Get("ThrowIfContainsErrorNonCompute")]
     Task<string> ThrowIfContainsErrorNonCompute(string source, CancellationToken cancellationToken = default);
 }
-
-[RegisterRestEaseReplicaService]
-[BasePath("EdgeCaseRewrite")]
-public interface IEdgeCaseRewriteClient : IEdgeCaseClient { }

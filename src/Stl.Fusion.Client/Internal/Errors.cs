@@ -11,7 +11,7 @@ public static class Errors
     }
 
     public static Exception UnknownServerSideError()
-        => new ServiceException("Unknown server-side error.");
+        => new RemoteException("Unknown server-side error.");
 
     public static Exception BackendIsUnreachable(Exception innerException)
         => new HttpRequestException("Backend is unreachable.", innerException);

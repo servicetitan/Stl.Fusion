@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Stl.Fusion.Internal;
 using Errors = Stl.Internal.Errors;
 

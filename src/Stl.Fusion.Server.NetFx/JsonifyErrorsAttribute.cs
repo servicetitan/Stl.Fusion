@@ -5,8 +5,6 @@ namespace Stl.Fusion.Server;
 
 public class JsonifyErrorsAttribute : ExceptionFilterAttribute
 {
-    public bool RewriteErrors { get; set; }
-
     public override void OnException(HttpActionExecutedContext actionExecutedContext)
     {
         var exception = actionExecutedContext.Exception;
@@ -15,11 +13,6 @@ public class JsonifyErrorsAttribute : ExceptionFilterAttribute
 
         if (actionExecutedContext.Response != null)
             return; // response already setup, log, do nothing
-
-        if (RewriteErrors) {
-            var rewriter = services.GetRequiredService<IErrorRewriter>();
-            exception = rewriter.Rewrite(actionContext, exception, true);
-        }
 
         var log = services.GetRequiredService<ILogger<JsonifyErrorsAttribute>>();
         log.LogError(exception, "Error message: {Message}", exception.Message);

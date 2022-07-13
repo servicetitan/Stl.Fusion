@@ -59,7 +59,6 @@ public readonly struct FusionBuilder
         Services.TryAddSingleton<ComputeMethodInterceptor>();
         Services.TryAddSingleton(new ComputeServiceInterceptor.Options());
         Services.TryAddSingleton<ComputeServiceInterceptor>();
-        Services.TryAddSingleton<IErrorRewriter, ErrorRewriter>();
 
         // States & their dependencies
         Services.TryAddTransient<IStateFactory, StateFactory>();

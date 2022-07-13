@@ -6,7 +6,7 @@ using Stl.Fusion.Extensions.Commands;
 namespace Stl.Fusion.Server.Controllers;
 
 [Route("fusion/kvs/[action]")]
-[ApiController, JsonifyErrors(RewriteErrors = true), UseDefaultSession]
+[ApiController, JsonifyErrors, UseDefaultSession]
 public class SandboxedKeyValueStoreController : ControllerBase, ISandboxedKeyValueStore
 {
     private ISandboxedKeyValueStore Store { get; }

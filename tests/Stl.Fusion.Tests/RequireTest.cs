@@ -30,7 +30,7 @@ public class RequireTest : TestBase
 
         user = User.NewGuest();
         Assert.ThrowsAny<SecurityException>(() => user.Require(User.MustBeAuthenticated));
-        Assert.ThrowsAny<ResultException>(() => user.RequireResult(User.MustBeAuthenticated));
+        Assert.ThrowsAny<ServiceException>(() => user.RequireResult(User.MustBeAuthenticated));
         Assert.ThrowsAny<ValidationException>(() => user.Require(Requirement.New<User>(u => u?.Name == "Bob")));
         Assert.ThrowsAny<ValidationException>(() => user.Require(User.MustBeAuthenticated.With("Invalid!")))
             .Message.Should().Be("Invalid!");
@@ -42,17 +42,17 @@ public class RequireTest : TestBase
             .Message.Should().Be("!");
 
         await Assert.ThrowsAnyAsync<SecurityException>(() => Task.FromResult(user)!.Require(User.MustBeAuthenticated));
-        await Assert.ThrowsAnyAsync<ResultException>(() => Task.FromResult(user)!.RequireResult(User.MustBeAuthenticated));
+        await Assert.ThrowsAnyAsync<ServiceException>(() => Task.FromResult(user)!.RequireResult(User.MustBeAuthenticated));
         await Assert.ThrowsAnyAsync<SecurityException>(async () => await ValueTaskExt.FromResult(user)!.Require(User.MustBeAuthenticated));
-        await Assert.ThrowsAnyAsync<ResultException>(async () => await ValueTaskExt.FromResult(user)!.RequireResult(User.MustBeAuthenticated));
+        await Assert.ThrowsAnyAsync<ServiceException>(async () => await ValueTaskExt.FromResult(user)!.RequireResult(User.MustBeAuthenticated));
 
         user = null;
         Assert.ThrowsAny<SecurityException>(() => user.Require(User.MustBeAuthenticated));
-        Assert.ThrowsAny<ResultException>(() => user.RequireResult(User.MustBeAuthenticated));
+        Assert.ThrowsAny<ServiceException>(() => user.RequireResult(User.MustBeAuthenticated));
         await Assert.ThrowsAnyAsync<SecurityException>(() => Task.FromResult(user)!.Require(User.MustBeAuthenticated));
-        await Assert.ThrowsAnyAsync<ResultException>(() => Task.FromResult(user)!.RequireResult(User.MustBeAuthenticated));
+        await Assert.ThrowsAnyAsync<ServiceException>(() => Task.FromResult(user)!.RequireResult(User.MustBeAuthenticated));
         await Assert.ThrowsAnyAsync<SecurityException>(async () => await ValueTaskExt.FromResult(user)!.Require(User.MustBeAuthenticated));
-        await Assert.ThrowsAnyAsync<ResultException>(async () => await ValueTaskExt.FromResult(user)!.RequireResult(User.MustBeAuthenticated));
+        await Assert.ThrowsAnyAsync<ServiceException>(async () => await ValueTaskExt.FromResult(user)!.RequireResult(User.MustBeAuthenticated));
     }
 
     [Fact]
@@ -67,27 +67,27 @@ public class RequireTest : TestBase
         await ValueTaskExt.FromResult(authInfo)!.Require(SessionAuthInfo.MustBeAuthenticated);
         await ValueTaskExt.FromResult(authInfo)!.RequireResult(SessionAuthInfo.MustBeAuthenticated);
 
-        authInfo.Require(SessionAuthInfo.MustBeAuthenticated.UseResultException);
-        authInfo.Require(SessionAuthInfo.MustBeAuthenticated.UseResultException());
+        authInfo.Require(SessionAuthInfo.MustBeAuthenticated.UseServiceException);
+        authInfo.Require(SessionAuthInfo.MustBeAuthenticated.UseServiceException());
 
         authInfo = new SessionInfo(session);
         Assert.ThrowsAny<SecurityException>(() => authInfo.Require(SessionAuthInfo.MustBeAuthenticated));
-        Assert.ThrowsAny<ResultException>(() => authInfo.RequireResult(SessionAuthInfo.MustBeAuthenticated));
+        Assert.ThrowsAny<ServiceException>(() => authInfo.RequireResult(SessionAuthInfo.MustBeAuthenticated));
         await Assert.ThrowsAnyAsync<SecurityException>(() => Task.FromResult(authInfo)!.Require(SessionAuthInfo.MustBeAuthenticated));
-        await Assert.ThrowsAnyAsync<ResultException>(() => Task.FromResult(authInfo)!.RequireResult(SessionAuthInfo.MustBeAuthenticated));
+        await Assert.ThrowsAnyAsync<ServiceException>(() => Task.FromResult(authInfo)!.RequireResult(SessionAuthInfo.MustBeAuthenticated));
         await Assert.ThrowsAnyAsync<SecurityException>(async () => await ValueTaskExt.FromResult(authInfo)!.Require(SessionAuthInfo.MustBeAuthenticated));
-        await Assert.ThrowsAnyAsync<ResultException>(async () => await ValueTaskExt.FromResult(authInfo)!.RequireResult(SessionAuthInfo.MustBeAuthenticated));
+        await Assert.ThrowsAnyAsync<ServiceException>(async () => await ValueTaskExt.FromResult(authInfo)!.RequireResult(SessionAuthInfo.MustBeAuthenticated));
 
-        await Assert.ThrowsAnyAsync<ResultException>(async () => await ValueTaskExt.FromResult(authInfo)!.Require(SessionAuthInfo.MustBeAuthenticated.UseResultException));
-        await Assert.ThrowsAnyAsync<ResultException>(async () => await ValueTaskExt.FromResult(authInfo)!.Require(SessionAuthInfo.MustBeAuthenticated.UseResultException()));
+        await Assert.ThrowsAnyAsync<ServiceException>(async () => await ValueTaskExt.FromResult(authInfo)!.Require(SessionAuthInfo.MustBeAuthenticated.UseServiceException));
+        await Assert.ThrowsAnyAsync<ServiceException>(async () => await ValueTaskExt.FromResult(authInfo)!.Require(SessionAuthInfo.MustBeAuthenticated.UseServiceException()));
 
         authInfo = null;
         Assert.ThrowsAny<SecurityException>(() => authInfo.Require(SessionAuthInfo.MustBeAuthenticated));
-        Assert.ThrowsAny<ResultException>(() => authInfo.RequireResult(SessionAuthInfo.MustBeAuthenticated));
+        Assert.ThrowsAny<ServiceException>(() => authInfo.RequireResult(SessionAuthInfo.MustBeAuthenticated));
         await Assert.ThrowsAnyAsync<SecurityException>(() => Task.FromResult(authInfo)!.Require(SessionAuthInfo.MustBeAuthenticated));
-        await Assert.ThrowsAnyAsync<ResultException>(() => Task.FromResult(authInfo)!.RequireResult(SessionAuthInfo.MustBeAuthenticated));
+        await Assert.ThrowsAnyAsync<ServiceException>(() => Task.FromResult(authInfo)!.RequireResult(SessionAuthInfo.MustBeAuthenticated));
         await Assert.ThrowsAnyAsync<SecurityException>(async () => await ValueTaskExt.FromResult(authInfo)!.Require(SessionAuthInfo.MustBeAuthenticated));
-        await Assert.ThrowsAnyAsync<ResultException>(async () => await ValueTaskExt.FromResult(authInfo)!.RequireResult(SessionAuthInfo.MustBeAuthenticated));
+        await Assert.ThrowsAnyAsync<ServiceException>(async () => await ValueTaskExt.FromResult(authInfo)!.RequireResult(SessionAuthInfo.MustBeAuthenticated));
     }
 
     [Fact]
@@ -104,18 +104,18 @@ public class RequireTest : TestBase
 
         sessionInfo = new SessionInfo(session);
         Assert.ThrowsAny<SecurityException>(() => sessionInfo.Require(SessionInfo.MustBeAuthenticated));
-        Assert.ThrowsAny<ResultException>(() => sessionInfo.RequireResult(SessionInfo.MustBeAuthenticated));
+        Assert.ThrowsAny<ServiceException>(() => sessionInfo.RequireResult(SessionInfo.MustBeAuthenticated));
         await Assert.ThrowsAnyAsync<SecurityException>(() => Task.FromResult(sessionInfo)!.Require(SessionInfo.MustBeAuthenticated));
-        await Assert.ThrowsAnyAsync<ResultException>(() => Task.FromResult(sessionInfo)!.RequireResult(SessionInfo.MustBeAuthenticated));
+        await Assert.ThrowsAnyAsync<ServiceException>(() => Task.FromResult(sessionInfo)!.RequireResult(SessionInfo.MustBeAuthenticated));
         await Assert.ThrowsAnyAsync<SecurityException>(async () => await ValueTaskExt.FromResult(sessionInfo)!.Require(SessionInfo.MustBeAuthenticated));
-        await Assert.ThrowsAnyAsync<ResultException>(async () => await ValueTaskExt.FromResult(sessionInfo)!.RequireResult(SessionInfo.MustBeAuthenticated));
+        await Assert.ThrowsAnyAsync<ServiceException>(async () => await ValueTaskExt.FromResult(sessionInfo)!.RequireResult(SessionInfo.MustBeAuthenticated));
 
         sessionInfo = null;
         Assert.ThrowsAny<SecurityException>(() => sessionInfo.Require(SessionInfo.MustBeAuthenticated));
-        Assert.ThrowsAny<ResultException>(() => sessionInfo.RequireResult(SessionInfo.MustBeAuthenticated));
+        Assert.ThrowsAny<ServiceException>(() => sessionInfo.RequireResult(SessionInfo.MustBeAuthenticated));
         await Assert.ThrowsAnyAsync<SecurityException>(() => Task.FromResult(sessionInfo)!.Require(SessionInfo.MustBeAuthenticated));
-        await Assert.ThrowsAnyAsync<ResultException>(() => Task.FromResult(sessionInfo)!.RequireResult(SessionInfo.MustBeAuthenticated));
+        await Assert.ThrowsAnyAsync<ServiceException>(() => Task.FromResult(sessionInfo)!.RequireResult(SessionInfo.MustBeAuthenticated));
         await Assert.ThrowsAnyAsync<SecurityException>(async () => await ValueTaskExt.FromResult(sessionInfo)!.Require(SessionInfo.MustBeAuthenticated));
-        await Assert.ThrowsAnyAsync<ResultException>(async () => await ValueTaskExt.FromResult(sessionInfo)!.RequireResult(SessionInfo.MustBeAuthenticated));
+        await Assert.ThrowsAnyAsync<ServiceException>(async () => await ValueTaskExt.FromResult(sessionInfo)!.RequireResult(SessionInfo.MustBeAuthenticated));
     }
 }

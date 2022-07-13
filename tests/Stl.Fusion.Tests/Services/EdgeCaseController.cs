@@ -33,19 +33,15 @@ public class EdgeCaseController : ControllerBase, IEdgeCaseService
         => Service.ThrowIfContainsError(source ?? "", cancellationToken);
 
     [HttpGet, Publish]
-    public Task<string> ThrowIfContainsErrorRewriteErrors(string? source, CancellationToken cancellationToken = default)
-        => Service.ThrowIfContainsErrorRewriteErrors(source ?? "", cancellationToken);
-
-    [HttpGet, Publish]
     public Task<string> ThrowIfContainsErrorNonCompute(string? source, CancellationToken cancellationToken = default)
         => Service.ThrowIfContainsErrorNonCompute(source ?? "", cancellationToken);
 }
 
 #if NETCOREAPP
-[JsonifyErrors(RewriteErrors = true, Order = 1), UseDefaultSession]
+[JsonifyErrors(Order = 1), UseDefaultSession]
 #else
 // It seems there is no concept of filter ordering. Let see what we will get.
-[JsonifyErrors(RewriteErrors = true)]
+[JsonifyErrors]
 #endif
 public class EdgeCaseRewriteController : EdgeCaseController
 {

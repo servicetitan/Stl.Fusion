@@ -3,7 +3,7 @@ using Stl.Fusion.Swapping;
 
 namespace Stl.Fusion;
 
-public class ComputedOptions
+public record ComputedOptions
 {
     public static readonly ComputedOptions Default =
         new(
@@ -22,7 +22,6 @@ public class ComputedOptions
     public TimeSpan ErrorAutoInvalidateTime { get; }
     public TimeSpan AutoInvalidateTime { get; }
     public SwappingOptions SwappingOptions { get; }
-    public bool RewriteErrors { get; }
     public Type ComputeMethodDefType { get; }
     public bool IsAsyncComputed { get; }
 
@@ -31,7 +30,6 @@ public class ComputedOptions
         TimeSpan errorAutoInvalidateTime,
         TimeSpan autoInvalidateTime,
         SwappingOptions swappingOptions,
-        bool rewriteErrors = false,
         Type? computeMethodDefType = null)
     {
         KeepAliveTime = keepAliveTime;
@@ -41,7 +39,6 @@ public class ComputedOptions
             // It just doesn't make sense to keep it higher
             ErrorAutoInvalidateTime = autoInvalidateTime;
         SwappingOptions = swappingOptions.IsEnabled ? swappingOptions : SwappingOptions.NoSwapping;
-        RewriteErrors = rewriteErrors;
         ComputeMethodDefType = computeMethodDefType ?? typeof(ComputeMethodDef);
         IsAsyncComputed = swappingOptions.IsEnabled;
     }
@@ -56,7 +53,6 @@ public class ComputedOptions
             ToTimeSpan(attribute.ErrorAutoInvalidateTime) ?? Default.ErrorAutoInvalidateTime,
             ToTimeSpan(attribute.AutoInvalidateTime) ?? Default.AutoInvalidateTime,
             swappingOptions,
-            attribute.RewriteErrors,
             attribute.ComputeMethodDefType);
         return options.IsDefault() ? Default : options;
     }
@@ -79,7 +75,6 @@ public class ComputedOptions
         =>  KeepAliveTime == Default.KeepAliveTime
             && ErrorAutoInvalidateTime == Default.ErrorAutoInvalidateTime
             && AutoInvalidateTime == Default.AutoInvalidateTime
-            && RewriteErrors == Default.RewriteErrors
             && ComputeMethodDefType == Default.ComputeMethodDefType
             && SwappingOptions == Default.SwappingOptions
             && IsAsyncComputed == Default.IsAsyncComputed

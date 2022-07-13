@@ -14,7 +14,7 @@ public static class RequirementTargetExt
             return requirement.Check(target);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
-            throw new ResultException(e.Message, e);
+            throw new ServiceException(e.Message, e);
         }
     }
 
@@ -27,7 +27,7 @@ public static class RequirementTargetExt
             return requirement.Check(target);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
-            throw new ResultException(e.Message, e);
+            throw new ServiceException(e.Message, e);
         }
     }
 
@@ -40,7 +40,7 @@ public static class RequirementTargetExt
             return requirement.Check(target);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
-            throw new ResultException(e.Message, e);
+            throw new ServiceException(e.Message, e);
         }
     }
 
@@ -54,7 +54,7 @@ public static class RequirementTargetExt
             return requirement.Check(target);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
-            throw new ResultException(e.Message, e);
+            throw new ServiceException(e.Message, e);
         }
     }
 
@@ -67,7 +67,7 @@ public static class RequirementTargetExt
             return requirement.Check(target);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
-            throw new ResultException(e.Message, e);
+            throw new ServiceException(e.Message, e);
         }
     }
 
@@ -80,7 +80,7 @@ public static class RequirementTargetExt
             return requirement.Check(target);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
-            throw new ResultException(e.Message, e);
+            throw new ServiceException(e.Message, e);
         }
     }
 }
