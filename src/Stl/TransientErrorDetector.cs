@@ -23,6 +23,12 @@ public interface ITransientErrorDetector<TContext> : ITransientErrorDetector
 /// </summary>
 public abstract record TransientErrorDetector : ITransientErrorDetector
 {
+    /// <summary>
+    /// This detector is used by Fusion's IComputed by default, see
+    /// FusionBuilder's constructor to understand how to replace it in
+    /// the DI container, or simply set this property to whatever you prefer
+    /// before calling .AddFusion() for the first time.
+    /// </summary>
     public static TransientErrorDetector DefaultPreferTransient { get; set; } = New(error => {
         return error switch {
             ValidationException => false,
@@ -32,6 +38,13 @@ public abstract record TransientErrorDetector : ITransientErrorDetector
             _ => true,
         };
     });
+
+    /// <summary>
+    /// This detector is used by Fusion's OperationReprocessor by default, see
+    /// FusionBuilder.AddOperationReprocessor to understand how to replace it in
+    /// the DI container, or simply set this property to whatever you prefer
+    /// before calling .AddFusion() for the first time.
+    /// </summary>
     public static TransientErrorDetector DefaultPreferNonTransient { get; set; } = New(error => {
         return error switch {
             ITransientException => true,
