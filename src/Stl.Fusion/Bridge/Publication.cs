@@ -34,8 +34,8 @@ public class Publication<T> : IPublication<T>
     private volatile PublicationState<T> _state;
     private long _lastTouchTime;
     private long _useCount;
-    private CancellationTokenSource _disposeTokenSource;
-    private CancellationToken _disposeToken;
+    private readonly CancellationTokenSource _disposeTokenSource;
+    private readonly CancellationToken _disposeToken;
 
     private Moment LastTouchTime {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -140,9 +140,12 @@ public class Publication<T> : IPublication<T>
         // Uncomment for debugging:
         // await Task.Delay(TimeSpan.FromMinutes(10), cancellationToken).ConfigureAwait(false);
         try {
+            var minSleepDelay = TimeSpan.FromMilliseconds(50);
             while (true) {
                 var delay = GetNextCheckTime(LastUseTime) - _clock.Now;
-                if (delay <= TimeSpan.Zero)
+                // We shouldn't torture _clock.Delay if we're anyway
+                // quite close to the expiration.
+                if (delay <= minSleepDelay)
                     break; // Expired
                 await _clock.Delay(delay, _disposeToken).ConfigureAwait(false);
             }
