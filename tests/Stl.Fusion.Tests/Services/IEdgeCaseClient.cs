@@ -12,7 +12,7 @@ public interface IEdgeCaseClient
     [Post("SetSuffix")]
     Task SetSuffix(string suffix, CancellationToken cancellationToken = default);
 
-    [Get("ThrowIfContainsError"), ComputeMethod(KeepAliveTime = 10)]
+    [Get("ThrowIfContainsError"), ComputeMethod(MinCacheDuration = 10)]
     Task<string> ThrowIfContainsError(string source, CancellationToken cancellationToken = default);
     [Get("ThrowIfContainsErrorNonCompute")]
     Task<string> ThrowIfContainsErrorNonCompute(string source, CancellationToken cancellationToken = default);

@@ -4,17 +4,14 @@ namespace Stl.Fusion.Interception;
 
 public abstract class ComputeMethodFunctionBase<T> : ComputeFunctionBase<T>
 {
-    protected readonly ILogger Log;
     protected readonly VersionGenerator<LTag> VersionGenerator;
 
     protected ComputeMethodFunctionBase(
-        ComputeMethodDef method,
-        VersionGenerator<LTag> versionGenerator,
+        ComputeMethodDef methodDef,
         IServiceProvider services,
-        ILogger<ComputeMethodFunction<T>>? log = null)
-        : base(method, services)
+        VersionGenerator<LTag> versionGenerator)
+        : base(methodDef, services)
     {
-        Log = log ?? NullLogger<ComputeMethodFunction<T>>.Instance;
         VersionGenerator = versionGenerator;
     }
 
@@ -27,7 +24,7 @@ public abstract class ComputeMethodFunctionBase<T> : ComputeFunctionBase<T>
         try {
             using var _ = Computed.ChangeCurrent(computed);
             var result = input.InvokeOriginalFunction(cancellationToken);
-            if (input.Method.ReturnsValueTask) {
+            if (input.MethodDef.ReturnsValueTask) {
                 var output = await ((ValueTask<T>) result).ConfigureAwait(false);
                 computed.TrySetOutput(output);
             }

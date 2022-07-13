@@ -8,14 +8,11 @@ public class Commander : ICommander
     public CommanderOptions Options { get; }
     public IServiceProvider Services { get; }
 
-    public Commander(
-        CommanderOptions options,
-        IServiceProvider services,
-        ILogger<Commander>? log = null)
+    public Commander(CommanderOptions options, IServiceProvider services)
     {
-        Log = log ?? NullLogger<Commander>.Instance;
         Options = options;
         Services = services;
+        Log = Services.LogFor(GetType());
         HandlerResolver = services.GetRequiredService<ICommandHandlerResolver>();
     }
 

@@ -7,15 +7,14 @@ namespace Stl.Fusion.Interception;
 public class AsyncComputeMethodFunction<T> : ComputeMethodFunctionBase<T>
 {
     public AsyncComputeMethodFunction(
-        ComputeMethodDef method,
-        VersionGenerator<LTag> versionGenerator,
+        ComputeMethodDef methodDef,
         IServiceProvider services,
-        ILogger<ComputeMethodFunction<T>>? log = null)
-        : base(method, versionGenerator, services, log)
+        VersionGenerator<LTag> versionGenerator)
+        : base(methodDef, services, versionGenerator)
     {
-        if (!method.Options.IsAsyncComputed)
+        if (!methodDef.ComputedOptions.IsAsyncComputed)
             throw Stl.Internal.Errors.InternalError(
-                $"This type shouldn't be used with {nameof(ComputedOptions)}.{nameof(ComputedOptions.IsAsyncComputed)} == false option.");
+                $"This type shouldn't be used with {nameof(Fusion.ComputedOptions)}.{nameof(Fusion.ComputedOptions.IsAsyncComputed)} == false option.");
     }
 
     public override async Task<T> InvokeAndStrip(
@@ -53,7 +52,7 @@ public class AsyncComputeMethodFunction<T> : ComputeMethodFunctionBase<T>
     }
 
     protected override IComputed<T> CreateComputed(ComputeMethodInput input, LTag tag)
-        => new SwappingComputed<T>(Options, input, tag);
+        => new SwappingComputed<T>(ComputedOptions, input, tag);
 
     protected new IAsyncComputed<T>? GetExisting(ComputeMethodInput input)
     {

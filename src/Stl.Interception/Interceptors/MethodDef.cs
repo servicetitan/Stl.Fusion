@@ -2,16 +2,16 @@ using Castle.DynamicProxy;
 
 namespace Stl.Interception.Interceptors;
 
-public abstract class MethodDef
+public abstract record MethodDef
 {
-    public IInterceptor Interceptor { get; }
-    public MethodInfo MethodInfo { get; }
-    public bool IsAsyncMethod { get; protected init; }
-    public bool IsAsyncVoidMethod { get; protected init; }
-    public bool ReturnsTask { get; protected init; }
-    public bool ReturnsValueTask { get; protected init; }
-    public Type UnwrappedReturnType { get; protected init; } = null!;
-    public bool IsValid { get; protected init; }
+    public IInterceptor Interceptor { get; init; }
+    public MethodInfo MethodInfo { get; init; }
+    public bool IsAsyncMethod { get; init; }
+    public bool IsAsyncVoidMethod { get; init; }
+    public bool ReturnsTask { get; init; }
+    public bool ReturnsValueTask { get; init; }
+    public Type UnwrappedReturnType { get; init; } = null!;
+    public bool IsValid { get; init; }
 
     protected MethodDef(
         IInterceptor interceptor,
@@ -36,4 +36,7 @@ public abstract class MethodDef
             ? returnType.GetGenericArguments()[0]
             : returnType;
     }
+
+    public virtual MethodDef ToReplicaMethodDef()
+        => this;
 }

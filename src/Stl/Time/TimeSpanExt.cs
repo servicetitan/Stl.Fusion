@@ -2,6 +2,9 @@ namespace Stl.Time;
 
 public static class TimeSpanExt
 {
+    public static readonly TimeSpan Infinite = TimeSpan.MaxValue;
+    public static readonly double InfiniteInSeconds = Infinite.TotalSeconds;
+
     public static TimeSpan Positive(this TimeSpan value)
         => Max(default, value);
     public static TimeSpan Clamp(this TimeSpan value, TimeSpan min, TimeSpan max)

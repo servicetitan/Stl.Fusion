@@ -31,21 +31,21 @@ public static class Errors
         => new InvalidOperationException($"No {nameof(IComputed)} was captured.");
 
     public static Exception WrongPublisher(IPublisher expected, Symbol providedPublisherId)
-        => new InvalidOperationException($"Wrong publisher: {expected.Id} (expected) != {providedPublisherId} (provided).");
+        => new PublisherException($"Wrong publisher: {expected.Id} (expected) != {providedPublisherId} (provided).");
     public static Exception UnknownChannel(Channel<BridgeMessage> channel)
-        => new InvalidOperationException("Unknown channel.");
+        => new PublisherException("Unknown channel.");
 
     public static Exception PublicationAbsents()
-        => new InvalidOperationException("The Publication absents on the server.");
+        => new ReplicaException("The Publication absents on the server.");
     public static Exception NoPublicationStateInfo()
-        => new InvalidOperationException(
+        => new ReplicaException(
             "No publication state info was found. " +
             "Typically this indicates you're hitting a wrong endpoint " +
             "(check your client definition interface) " +
             "or forgot to add [Publish] attribute to the controller's method.");
 
     public static Exception ReplicaHasNeverBeenUpdated()
-        => new InvalidOperationException("The Replica has never been updated.");
+        => new ReplicaException("The Replica has never been updated.");
 
     public static Exception WebSocketConnectTimeout()
         => new WebSocketException("Connection timeout.");

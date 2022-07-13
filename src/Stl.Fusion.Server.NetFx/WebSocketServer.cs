@@ -14,7 +14,7 @@ using WebSocketAccept = System.Action<
 
 namespace Stl.Fusion.Server;
 
-public class WebSocketServer
+public class WebSocketServer : IHasServices
 {
     public record Options
     {
@@ -39,12 +39,14 @@ public class WebSocketServer
     protected ILogger Log { get; }
 
     public Options Settings { get; }
+    public IServiceProvider Services { get; }
 
-    public WebSocketServer(Options settings, IPublisher publisher, ILogger<WebSocketServer>? log = null)
+    public WebSocketServer(Options settings, IPublisher publisher)
     {
         Settings = settings;
-        Log = log ?? NullLogger<WebSocketServer>.Instance;
         Publisher = publisher;
+        Services = Publisher.Services;
+        Log = Services.LogFor(GetType());
     }
 
     public HttpStatusCode HandleRequest(IOwinContext owinContext)

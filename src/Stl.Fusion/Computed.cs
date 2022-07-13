@@ -163,10 +163,10 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
             Invalidate();
             return;
         }
-        var hasError = output.HasError && output.Error is not ServiceException;
-        var timeout = hasError
-            ? _options.ErrorAutoInvalidateTime
-            : _options.AutoInvalidateTime;
+        var hasTransientError = output.Error is { } error && IsTransientError(error);
+        var timeout = hasTransientError
+            ? _options.TransientErrorInvalidationDelay
+            : _options.AutoInvalidationDelay;
         if (timeout != TimeSpan.MaxValue)
             this.Invalidate(timeout);
     }
@@ -201,8 +201,8 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
         catch (Exception e) {
             // We should never throw errors during the invalidation
             try {
-                var log = Input.Function.Services.GetService<ILogger<Computed<TIn, TOut>>>();
-                log?.LogError(e, "Error on invalidation");
+                var log = Input.Function.Services.LogFor(GetType());
+                log.LogError(e, "Error on invalidation");
             }
             catch {
                 // Intended
@@ -336,6 +336,12 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected void SetStateUnsafe(ConsistencyState newState)
         => _state = (int) newState;
+
+    protected bool IsTransientError(Exception error)
+    {
+        var transientErrorDetector = Input.Function.Services.GetRequiredService<ITransientErrorDetector<IComputed>>();
+        return transientErrorDetector.IsTransient(error);
+    }
 }
 
 public class Computed<T> : Computed<ComputeMethodInput, T>

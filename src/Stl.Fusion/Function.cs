@@ -33,11 +33,16 @@ public abstract class FunctionBase<TIn, TOut> : IFunction<TIn, TOut>
 {
     protected IAsyncLockSet<ComputedInput> Locks { get; }
     protected object Lock => Locks;
+    protected readonly ILogger Log;
+    protected readonly ILogger? DebugLog;
+
     public IServiceProvider Services { get; }
 
     protected FunctionBase(IServiceProvider services)
     {
         Services = services;
+        Log = Services.LogFor(GetType());
+        DebugLog = Log.IsLogging(LogLevel.Debug) ? Log : null;
         Locks = ComputedRegistry.Instance.GetLocksFor(this);
     }
 

@@ -231,7 +231,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
 
     public virtual bool IsTransientFailure(Exception error)
     {
-        if (error is VersionMismatchException)
+        if (error is ITransientException)
             return true;
         if (error is DbUpdateConcurrencyException)
             return true;

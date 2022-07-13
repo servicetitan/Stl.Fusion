@@ -9,21 +9,19 @@ public class CompletionProducer : IOperationCompletionListener
 
     protected Options Settings { get; }
     protected ICommander Commander { get; }
+    protected IServiceProvider Services => Commander.Services; 
     protected AgentInfo AgentInfo { get; }
     protected ILogger Log { get; }
     protected bool IsLoggingEnabled { get; }
 
-    public CompletionProducer(Options settings,
-        ICommander commander,
-        AgentInfo agentInfo,
-        ILogger<CompletionProducer>? log = null)
+    public CompletionProducer(Options settings, ICommander commander, AgentInfo agentInfo)
     {
         Settings = settings;
-        Log = log ?? NullLogger<CompletionProducer>.Instance;
-        IsLoggingEnabled = Log.IsLogging(settings.LogLevel);
-
-        AgentInfo = agentInfo;
         Commander = commander;
+        AgentInfo = agentInfo;
+
+        Log = Services.LogFor(GetType());
+        IsLoggingEnabled = Log.IsLogging(settings.LogLevel);
     }
 
     public bool IsReady()

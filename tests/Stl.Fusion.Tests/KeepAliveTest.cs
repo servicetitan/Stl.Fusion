@@ -9,7 +9,7 @@ public class KeepAliveTest : TestBase
     {
         public ThreadSafe<int> CallCount { get; } = 0;
 
-        [ComputeMethod(KeepAliveTime = 0.5)]
+        [ComputeMethod(MinCacheDuration = 0.5)]
         public virtual async Task<double> Sum(double a, double b)
         {
             await Task.Yield();

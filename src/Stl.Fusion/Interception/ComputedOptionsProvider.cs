@@ -7,7 +7,7 @@ public interface IComputedOptionsProvider
     SwapAttribute? GetSwapAttribute(MethodInfo methodInfo);
 }
 
-public class ComputedOptionsProvider : IComputedOptionsProvider
+public record ComputedOptionsProvider : IComputedOptionsProvider
 {
     public virtual ComputedOptions? GetComputedOptions(MethodInfo methodInfo)
     {
@@ -15,7 +15,7 @@ public class ComputedOptionsProvider : IComputedOptionsProvider
         if (attribute == null)
             return null;
         var swapAttribute = GetSwapAttribute(methodInfo);
-        return ComputedOptions.FromAttribute(attribute, swapAttribute);
+        return ComputedOptions.FromAttribute(ComputedOptions.Default, attribute, swapAttribute);
     }
 
     public virtual ComputeMethodAttribute? GetComputeMethodAttribute(MethodInfo methodInfo)

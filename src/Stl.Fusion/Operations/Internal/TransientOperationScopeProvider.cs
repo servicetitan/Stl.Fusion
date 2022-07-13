@@ -14,12 +14,10 @@ public class TransientOperationScopeProvider : ICommandHandler<ICommand>
     protected IServiceProvider Services { get; }
     protected ILogger Log { get; }
 
-    public TransientOperationScopeProvider(
-        IServiceProvider services,
-        ILogger<TransientOperationScopeProvider>? log = null)
+    public TransientOperationScopeProvider(IServiceProvider services)
     {
-        Log = log ?? NullLogger<TransientOperationScopeProvider>.Instance;
         Services = services;
+        Log = Services.LogFor(GetType());
         OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
     }
 

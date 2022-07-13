@@ -65,30 +65,30 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
         }
     }
 
-    protected ILogger Log { get; init; }
+    private IReplicator? _replicator;
+
+    protected ILogger Log { get; }
     protected bool IsLoggingEnabled { get; set; }
     protected bool IsMessageLoggingEnabled { get; set; }
 
+    protected IReplicator Replicator => _replicator ??= Services.GetRequiredService<IReplicator>();
+    protected Symbol ClientId => Replicator.Id;
     protected IMomentClock Clock { get; }
-    protected Lazy<IReplicator>? ReplicatorLazy { get; }
-    protected Symbol ClientId => ReplicatorLazy?.Value.Id ?? Symbol.Empty;
 
     public Options Settings { get; }
     public IServiceProvider Services { get; }
 
-    public WebSocketChannelProvider(
-        Options settings,
+    public WebSocketChannelProvider(Options settings,
         IServiceProvider services,
         ILogger<WebSocketChannelProvider>? log = null)
     {
         Settings = settings;
-        Log = log ?? NullLogger<WebSocketChannelProvider>.Instance;
+        Services = services;
+        Log = Services.LogFor(GetType());
         IsLoggingEnabled = Log.IsLogging(settings.LogLevel);
         IsMessageLoggingEnabled = Log.IsLogging(settings.MessageLogLevel);
 
-        Services = services;
-        Clock = settings.Clock ?? services.Clocks().CpuClock;
-        ReplicatorLazy = new Lazy<IReplicator>(services.GetRequiredService<IReplicator>);
+        Clock = settings.Clock ?? Services.Clocks().CpuClock;
     }
 
     public async Task<Channel<BridgeMessage>> CreateChannel(

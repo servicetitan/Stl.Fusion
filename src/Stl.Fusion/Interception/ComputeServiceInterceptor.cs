@@ -5,12 +5,12 @@ namespace Stl.Fusion.Interception;
 
 public class ComputeServiceInterceptor : SelectingInterceptorBase
 {
-    public new class Options : SelectingInterceptorBase.Options
+    public new record Options : SelectingInterceptorBase.Options
     {
-        public Options() => InterceptorTypes =
-            new[] { typeof(ComputeMethodInterceptor), typeof(CommandServiceInterceptor) };
+        public Options()
+            => InterceptorTypes = new[] { typeof(ComputeMethodInterceptor), typeof(CommandServiceInterceptor) };
     }
 
-    public ComputeServiceInterceptor(Options options, IServiceProvider services, ILoggerFactory? loggerFactory = null)
-        : base(options, services, loggerFactory) { }
+    public ComputeServiceInterceptor(Options options, IServiceProvider services)
+        : base(options, services) { }
 }

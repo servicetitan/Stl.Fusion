@@ -1,47 +1,25 @@
 namespace Stl.Fusion.Swapping;
 
-public class SwappingOptions
+public record SwappingOptions
 {
-    public static readonly SwappingOptions Default =
-        new(
-            isEnabled: true,
-            swapServiceType: typeof(ISwapService),
-            swapTime: TimeSpan.FromSeconds(10));
-    public static readonly SwappingOptions NoSwapping =
-        new(
-            isEnabled: false,
-            swapServiceType: Default.SwapServiceType,
-            swapTime: Default.SwapTime);
+    public static SwappingOptions NoSwapping { get; } = new() { IsEnabled = false };
 
-    public bool IsEnabled { get; }
-    public Type SwapServiceType { get; }
-    public TimeSpan SwapTime { get; }
+    public bool IsEnabled { get; init; } = true;
+    public Type SwapServiceType { get; init; } = typeof(ISwapService);
+    public TimeSpan SwapDelay { get; init; } = TimeSpan.FromSeconds(10);
 
-    public SwappingOptions(
-        bool isEnabled,
-        Type swapServiceType,
-        TimeSpan swapTime)
+    public static SwappingOptions FromAttribute(SwappingOptions defaultOptions, SwapAttribute? attribute)
     {
-        IsEnabled = isEnabled;
-        SwapServiceType = swapServiceType;
-        SwapTime = swapTime;
-    }
-
-    public static SwappingOptions FromAttribute(SwapAttribute? attribute)
-    {
-        if (attribute == null || !attribute.IsEnabled)
+        if (attribute is not { IsEnabled: true })
             return NoSwapping;
-        var cacheType = attribute.SwapServiceType ?? Default.SwapServiceType;
-        var swapTime = ToTimeSpan(attribute.SwapTime) ?? Default.SwapTime;
-        var options = new SwappingOptions(true, cacheType, swapTime);
-        return options.IsDefault() ? Default : options;
+        var options = new SwappingOptions() {
+            IsEnabled = true,
+            SwapServiceType = attribute.SwapServiceType ?? defaultOptions.SwapServiceType,
+            SwapDelay = ToTimeSpan(attribute.SwapDelay) ?? defaultOptions.SwapDelay,
+        };
+        return options == defaultOptions ? defaultOptions : options;
     }
 
     private static TimeSpan? ToTimeSpan(double value)
         => ComputedOptions.ToTimeSpan(value);
-
-    private bool IsDefault()
-        =>  Default.IsEnabled
-            && SwapTime == Default.SwapTime
-            && SwapServiceType == Default.SwapServiceType;
 }

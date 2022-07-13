@@ -14,11 +14,11 @@ public interface ISimplestProvider
     int GetCharCountCallCount { get; }
 
     void SetValue(string value);
-    [ComputeMethod(KeepAliveTime = 10)]
+    [ComputeMethod(MinCacheDuration = 10)]
     Task<string> GetValue();
-    [ComputeMethod(KeepAliveTime = 0.5, ErrorAutoInvalidateTime = 0.5)]
+    [ComputeMethod(MinCacheDuration = 0.5, TransientErrorInvalidationDelay = 0.5)]
     Task<int> GetCharCount();
-    [ComputeMethod(ErrorAutoInvalidateTime = 0.5)]
+    [ComputeMethod(TransientErrorInvalidationDelay = 0.5)]
     Task<int> Fail(Type exceptionType, bool wrapToResultException);
 
     [CommandHandler]

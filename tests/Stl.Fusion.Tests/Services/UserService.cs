@@ -39,9 +39,9 @@ public interface IUserService
     [CommandHandler]
     Task<bool> Delete(DeleteCommand command, CancellationToken cancellationToken = default);
 
-    [ComputeMethod(KeepAliveTime = 1)]
+    [ComputeMethod(MinCacheDuration = 1)]
     Task<User?> Get(long userId, CancellationToken cancellationToken = default);
-    [ComputeMethod(KeepAliveTime = 1)]
+    [ComputeMethod(MinCacheDuration = 1)]
     Task<long> Count(CancellationToken cancellationToken = default);
     void Invalidate();
 }

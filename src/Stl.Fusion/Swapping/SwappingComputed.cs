@@ -104,8 +104,8 @@ public class SwappingComputed<T> : Computed<T>, IAsyncComputed<T>, ISwappable
             return;
         if (MaybeOutput != null) {
             var swappingOptions = Options.SwappingOptions;
-            if (swappingOptions.IsEnabled && swappingOptions.SwapTime > TimeSpan.Zero) {
-                Timeouts.Swap.AddOrUpdateToLater(this, Timeouts.Clock.Now + swappingOptions.SwapTime);
+            if (swappingOptions.IsEnabled && swappingOptions.SwapDelay > TimeSpan.Zero) {
+                Timeouts.Swap.AddOrUpdateToLater(this, Timeouts.Clock.Now + swappingOptions.SwapDelay);
                 return;
             }
         }
@@ -115,7 +115,7 @@ public class SwappingComputed<T> : Computed<T>, IAsyncComputed<T>, ISwappable
     public override void CancelTimeouts()
     {
         var swappingOptions = Options.SwappingOptions;
-        if (swappingOptions.IsEnabled && swappingOptions.SwapTime > TimeSpan.Zero)
+        if (swappingOptions.IsEnabled && swappingOptions.SwapDelay > TimeSpan.Zero)
             Timeouts.Swap.Remove(this);
         base.CancelTimeouts();
     }

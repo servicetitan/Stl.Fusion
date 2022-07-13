@@ -55,6 +55,7 @@ public readonly struct FusionBuilder
         Services.TryAddSingleton<IComputedOptionsProvider, ComputedOptionsProvider>();
         Services.TryAddSingleton<IMatchingTypeFinder>(_ => new MatchingTypeFinder());
         Services.TryAddSingleton<IArgumentHandlerProvider, ArgumentHandlerProvider>();
+        Services.TryAddSingleton(TransientErrorDetector.DefaultPreferTransient.For<IComputed>());
         Services.TryAddSingleton(new ComputeMethodInterceptor.Options());
         Services.TryAddSingleton<ComputeMethodInterceptor>();
         Services.TryAddSingleton(new ComputeServiceInterceptor.Options());
@@ -229,6 +230,7 @@ public readonly struct FusionBuilder
             Services.TryAddSingleton<OperationReprocessorOptions>();
 
         if (!Services.HasService<IOperationReprocessor>()) {
+            Services.AddSingleton(TransientErrorDetector.DefaultPreferNonTransient.For<IOperationReprocessor>());
             Services.AddTransient<TOperationReprocessor>();
             Services.AddTransient<IOperationReprocessor>(c => c.GetRequiredService<TOperationReprocessor>());
             Services.AddCommander().AddHandlers<TOperationReprocessor>();

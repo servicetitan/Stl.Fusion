@@ -108,13 +108,13 @@ public class SimplestProviderTest : FusionTestBase
 
         var c1 = await Computed.Capture(_ => p.GetValue());
         c1.Options.KeepAliveTime.Should().Be(TimeSpan.FromSeconds(10));
-        c1.Options.ErrorAutoInvalidateTime.Should().Be(d.ErrorAutoInvalidateTime);
-        c1.Options.AutoInvalidateTime.Should().Be(d.AutoInvalidateTime);
+        c1.Options.TransientErrorInvalidationDelay.Should().Be(d.TransientErrorInvalidationDelay);
+        c1.Options.AutoInvalidationDelay.Should().Be(d.AutoInvalidationDelay);
 
         var c2 = await Computed.Capture(_ => p.GetCharCount());
         c2.Options.KeepAliveTime.Should().Be(TimeSpan.FromSeconds(0.5));
-        c2.Options.ErrorAutoInvalidateTime.Should().Be(TimeSpan.FromSeconds(0.5));
-        c2.Options.AutoInvalidateTime.Should().Be(d.AutoInvalidateTime);
+        c2.Options.TransientErrorInvalidationDelay.Should().Be(TimeSpan.FromSeconds(0.5));
+        c2.Options.AutoInvalidationDelay.Should().Be(d.AutoInvalidationDelay);
     }
 
     [Fact]

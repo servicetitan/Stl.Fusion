@@ -145,7 +145,7 @@ public class Startup
         // DbOperationScopeProvider<TDbContext> (it uses DbContext's
         // IExecutionStrategy to do this).
         services.TryAddEnumerable(ServiceDescriptor.Singleton(
-            TransientFailureDetector.New(e => e is DbUpdateConcurrencyException)));
+            TransientErrorDetector.New(e => e is DbUpdateConcurrencyException)));
 
         // Compute service(s)
         fusion.AddComputeService<ITodoService, TodoService>();

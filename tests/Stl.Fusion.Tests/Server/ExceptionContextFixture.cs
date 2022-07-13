@@ -27,8 +27,8 @@ public class ExceptionContextFixture : BaseFixture<
 #if NETFRAMEWORK
     private readonly Mock<IDependencyResolver> _serviceProviderMock = new();
 #else
-    private Mock<IServiceProvider> _serviceProviderMock = new();
-    private Mock<IActionResultExecutor<ContentResult>> _actionResultExecutorMock = new();
+    private readonly Mock<IServiceProvider> _serviceProviderMock = new();
+    private readonly Mock<IActionResultExecutor<ContentResult>> _actionResultExecutorMock = new();
 #endif
 
     public ExceptionContextFixture()

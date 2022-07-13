@@ -8,20 +8,17 @@ public abstract class ComputeMethodInterceptorBase : InterceptorBase
     // ReSharper disable once HeapView.BoxingAllocation
     private static readonly object NoCancellationTokenBoxed = CancellationToken.None;
 
-    public new class Options : InterceptorBase.Options
+    public new record Options : InterceptorBase.Options
     {
-        public IComputedOptionsProvider? ComputedOptionsProvider { get; set; } = null!;
-        public IArgumentHandlerProvider? ArgumentHandlerProvider { get; set; } = null!;
+        public IComputedOptionsProvider? ComputedOptionsProvider { get; init; }
+        public IArgumentHandlerProvider? ArgumentHandlerProvider { get; init; }
     }
 
     public IComputedOptionsProvider ComputedOptionsProvider { get; }
     public IArgumentHandlerProvider ArgumentHandlerProvider { get; }
 
-    protected ComputeMethodInterceptorBase(
-        Options options,
-        IServiceProvider services,
-        ILoggerFactory? loggerFactory = null)
-        : base(options, services, loggerFactory)
+    protected ComputeMethodInterceptorBase(Options options, IServiceProvider services)
+        : base(options, services)
     {
         ComputedOptionsProvider = options.ComputedOptionsProvider
             ?? services.GetRequiredService<IComputedOptionsProvider>();

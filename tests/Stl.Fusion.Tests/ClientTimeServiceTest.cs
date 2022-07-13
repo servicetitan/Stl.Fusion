@@ -25,7 +25,7 @@ public class ClientTimeServiceTest : FusionTestBase
         var client = ClientServices.GetRequiredService<IClientTimeService>();
         var cTime = await Computed.Capture(_ => client.GetTime(default));
 
-        cTime.Options.AutoInvalidateTime.Should().Be(ComputedOptions.Default.AutoInvalidateTime);
+        cTime.Options.AutoInvalidationDelay.Should().Be(ComputedOptions.Default.AutoInvalidationDelay);
         if (!cTime.IsConsistent()) {
             cTime = await cTime.Update();
             cTime.IsConsistent().Should().BeTrue();

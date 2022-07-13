@@ -10,7 +10,7 @@ public class CounterService
     public CounterService(IMutableState<int> offset)
         => _offset = offset;
 
-    [ComputeMethod(KeepAliveTime = 0.3)]
+    [ComputeMethod(MinCacheDuration = 0.3)]
     public virtual async Task<int> Get(string key, CancellationToken cancellationToken = default)
     {
         var offset = await _offset.Use(cancellationToken).ConfigureAwait(false);

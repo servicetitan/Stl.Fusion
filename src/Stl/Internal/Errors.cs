@@ -80,15 +80,6 @@ public static class Errors
             ? "Not initialized."
             : $"Property {propertyName} is not initialized.");
 
-    public static Exception ObjectNotFound(Type? type = null)
-        => type != null
-            ? new ObjectNotFoundException($"'{type.GetName()}' is not found.")
-            : new ObjectNotFoundException();
-    public static Exception ObjectNotFound(string? objectName)
-        => !objectName.IsNullOrEmpty()
-            ? new ObjectNotFoundException($"{objectName} is not found.")
-            : new ObjectNotFoundException();
-
     public static Exception InternalError(string message)
         => new SystemException(message);
 

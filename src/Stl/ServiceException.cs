@@ -1,4 +1,4 @@
-namespace Stl.Fusion;
+namespace Stl;
 
 public class ServiceException : Exception, IWrappedException
 {

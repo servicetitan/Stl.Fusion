@@ -4,9 +4,9 @@ namespace Stl.Fusion.Bridge;
 
 public interface IReplica : IDisposable
 {
-    IReplicator Replicator { get; }
+    ComputedOptions ComputedOptions { get; }
     PublicationRef PublicationRef { get; }
-    ComputedOptions ComputedOptions { get; set; }
+    IReplicator Replicator { get; }
     IReplicaComputed Computed { get; }
     bool IsUpdateRequested { get; }
     Exception? UpdateError { get; }
@@ -32,8 +32,6 @@ public interface IReplicaImpl<T> : IReplica<T>, IFunction<ReplicaInput, T>, IRep
 
 public class Replica<T> : IReplicaImpl<T>
 {
-    private volatile ComputedOptions _computedOptions = ComputedOptions.Default;
-
     protected readonly ReplicaInput Input;
     protected volatile IReplicaComputed<T> ComputedField = null!;
     protected volatile Exception? UpdateErrorField;
@@ -41,17 +39,9 @@ public class Replica<T> : IReplicaImpl<T>
     protected IReplicatorImpl ReplicatorImpl => (IReplicatorImpl) Replicator;
     protected readonly object Lock = new();
 
-    public IReplicator Replicator { get; }
+    public ComputedOptions ComputedOptions { get; }
     public PublicationRef PublicationRef => Input.PublicationRef;
-    public ComputedOptions ComputedOptions {
-        get => _computedOptions;
-        set {
-            if (value.SwappingOptions.IsEnabled)
-                throw Errors.UnsupportedComputedOptions(GetType());
-            _computedOptions = value;
-        }
-    }
-
+    public IReplicator Replicator { get; }
     public IReplicaComputed<T> Computed => ComputedField;
     public bool IsUpdateRequested => UpdateRequestTask != null;
     public Exception? UpdateError => UpdateErrorField;
@@ -60,8 +50,15 @@ public class Replica<T> : IReplicaImpl<T>
     IServiceProvider IHasServices.Services => ReplicatorImpl.Services;
     IReplicaComputed IReplica.Computed => ComputedField;
 
-    public Replica(IReplicator replicator, PublicationStateInfo<T> info, bool isUpdateRequested = false)
+    public Replica(
+        ComputedOptions computedOptions,
+        PublicationStateInfo<T> info,
+        IReplicator replicator,
+        bool isUpdateRequested = false)
     {
+        if (computedOptions.SwappingOptions.IsEnabled)
+            throw Errors.UnsupportedComputedOptions(GetType());
+        ComputedOptions = computedOptions;
         Replicator = replicator;
         Input = new ReplicaInput(this, info.PublicationRef);
         // ReSharper disable once VirtualMemberCallInConstructor

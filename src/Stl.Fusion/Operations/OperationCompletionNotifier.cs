@@ -16,6 +16,7 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
     }
 
     protected Options Settings { get; }
+    protected IServiceProvider Services { get; }
     protected AgentInfo AgentInfo { get; }
     protected IOperationCompletionListener[] OperationCompletionListeners { get; }
     protected BinaryHeap<Moment, Symbol> KnownOperationHeap { get; } = new();
@@ -24,16 +25,15 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
     protected IMomentClock Clock { get; }
     protected ILogger Log { get; }
 
-    public OperationCompletionNotifier(Options settings,
-        IServiceProvider services,
-        ILogger<OperationCompletionNotifier>? log = null)
+    public OperationCompletionNotifier(Options settings, IServiceProvider services)
     {
         Settings = settings;
-        Log = log ?? NullLogger<OperationCompletionNotifier>.Instance;
-        Clock = settings.Clock ?? services.SystemClock();
+        Services = services;
+        Log = Services.LogFor(GetType());
+        Clock = Settings.Clock ?? Services.SystemClock();
 
-        AgentInfo = services.GetRequiredService<AgentInfo>();
-        OperationCompletionListeners = services.GetServices<IOperationCompletionListener>().ToArray();
+        AgentInfo = Services.GetRequiredService<AgentInfo>();
+        OperationCompletionListeners = Services.GetServices<IOperationCompletionListener>().ToArray();
     }
 
     public bool IsReady() 

@@ -6,27 +6,21 @@ namespace Stl.Fusion.Interception;
 
 public class ComputeMethodInterceptor : ComputeMethodInterceptorBase
 {
-    public new class Options : ComputeMethodInterceptorBase.Options
+    public new record Options : ComputeMethodInterceptorBase.Options
     {
-        public VersionGenerator<LTag>? VersionGenerator { get; set; }
+        public VersionGenerator<LTag>? VersionGenerator { get; init; }
     }
 
     protected readonly VersionGenerator<LTag> VersionGenerator;
 
-    public ComputeMethodInterceptor(
-        Options options,
-        IServiceProvider services,
-        ILoggerFactory? loggerFactory = null)
-        : base(options, services, loggerFactory)
+    public ComputeMethodInterceptor(Options options, IServiceProvider services)
+        : base(options, services)
         => VersionGenerator = options.VersionGenerator ?? services.VersionGenerator<LTag>();
 
     protected override ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method)
-    {
-        var log = LoggerFactory.CreateLogger<ComputeMethodFunction<T>>();
-        if (method.Options.IsAsyncComputed)
-            return new AsyncComputeMethodFunction<T>(method, VersionGenerator, Services, log);
-        return new ComputeMethodFunction<T>(method, VersionGenerator, Services, log);
-    }
+        => method.ComputedOptions.IsAsyncComputed
+            ? new AsyncComputeMethodFunction<T>(method, Services, VersionGenerator)
+            : new ComputeMethodFunction<T>(method, Services, VersionGenerator);
 
     protected override void ValidateTypeInternal(Type type)
     {
@@ -64,12 +58,12 @@ public class ComputeMethodInterceptor : ComputeMethodInterceptorBase
                     $"- {{Method}}: has [{attributeName}(false)]", method.ToString());
             else {
                 var properties = new List<string>();
-                if (!double.IsNaN(attr.KeepAliveTime))
-                    properties.Add($"{nameof(attr.KeepAliveTime)} = {Format(attr.KeepAliveTime)}");
-                if (!double.IsNaN(attr.AutoInvalidateTime))
-                    properties.Add($"{nameof(attr.AutoInvalidateTime)} = {Format(attr.AutoInvalidateTime)}");
-                if (!double.IsNaN(attr.ErrorAutoInvalidateTime))
-                    properties.Add($"{nameof(attr.ErrorAutoInvalidateTime)} = {Format(attr.ErrorAutoInvalidateTime)}");
+                if (!double.IsNaN(attr.MinCacheDuration))
+                    properties.Add($"{nameof(attr.MinCacheDuration)} = {Format(attr.MinCacheDuration)}");
+                if (!double.IsNaN(attr.AutoInvalidationDelay))
+                    properties.Add($"{nameof(attr.AutoInvalidationDelay)} = {Format(attr.AutoInvalidationDelay)}");
+                if (!double.IsNaN(attr.TransientErrorInvalidationDelay))
+                    properties.Add($"{nameof(attr.TransientErrorInvalidationDelay)} = {Format(attr.TransientErrorInvalidationDelay)}");
                 Log.Log(ValidationLogLevel,
                     // ReSharper disable once TemplateIsNotCompileTimeConstantProblem
                     $"+ {{Method}}: [{attributeName}({properties.ToDelimitedString(", ")})]", method.ToString());

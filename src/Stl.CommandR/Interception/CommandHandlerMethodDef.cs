@@ -4,7 +4,7 @@ using Stl.Interception.Interceptors;
 
 namespace Stl.CommandR.Interception;
 
-public class CommandHandlerMethodDef : MethodDef
+public record CommandHandlerMethodDef : MethodDef
 {
     public CommandHandlerMethodDef(IInterceptor interceptor, MethodInfo methodInfo)
         : base(interceptor, methodInfo)

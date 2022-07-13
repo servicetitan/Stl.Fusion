@@ -1,7 +1,7 @@
 namespace Stl.Serialization;
 
 [Serializable]
-public class RemoteException : Exception
+public class RemoteException : Exception, ITransientException
 {
     public ExceptionInfo ExceptionInfo { get; }
 

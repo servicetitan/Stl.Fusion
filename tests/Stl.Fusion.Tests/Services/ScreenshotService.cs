@@ -16,7 +16,7 @@ public record Screenshot
 
 public interface IScreenshotService
 {
-    [ComputeMethod(KeepAliveTime = 0.3)]
+    [ComputeMethod(MinCacheDuration = 0.3)]
     Task<Screenshot> GetScreenshot(int width, CancellationToken cancellationToken = default);
 }
 
@@ -66,7 +66,7 @@ public class ScreenshotService : IScreenshotService
         };
     }
 
-    [ComputeMethod(AutoInvalidateTime = 0.01)]
+    [ComputeMethod(AutoInvalidationDelay = 0.01)]
     protected virtual Task<Bitmap> GetScreenshot(CancellationToken cancellationToken = default)
     {
         // This method takes a full-resolution screenshot

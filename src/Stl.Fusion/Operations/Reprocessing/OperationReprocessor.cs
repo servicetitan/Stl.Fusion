@@ -35,10 +35,10 @@ public class OperationReprocessor : IOperationReprocessor
 {
     public static Generator<long> Random { get; } = new RandomInt64Generator();
 
-    protected ILogger Log { get; }
     protected IServiceProvider Services { get; }
-    protected IEnumerable<ITransientFailureDetector> TransientFailureDetectors { get; init; }
-    protected HashSet<Exception> KnownTransientFailures { get; init; }
+    protected ITransientErrorDetector<IOperationReprocessor> TransientErrorDetector { get; }
+    protected HashSet<Exception> KnownTransientFailures { get; }
+    protected ILogger Log { get; }
 
     public OperationReprocessorOptions Options { get; }
     public IMomentClock DelayClock { get; }
@@ -46,17 +46,14 @@ public class OperationReprocessor : IOperationReprocessor
     public Exception? LastError { get; protected set; }
     public CommandContext CommandContext { get; protected set; } = null!;
 
-    public OperationReprocessor(
-        OperationReprocessorOptions options,
-        IServiceProvider services,
-        ILogger<OperationReprocessor>? log = null)
+    public OperationReprocessor(OperationReprocessorOptions options, IServiceProvider services)
     {
         Options = options;
-        Log = log ?? NullLogger<OperationReprocessor>.Instance;
         Services = services;
-        DelayClock = options.DelayClock ?? services.Clocks().CpuClock;
+        Log = Services.LogFor(GetType());
+        DelayClock = options.DelayClock ?? Services.Clocks().CpuClock;
 
-        TransientFailureDetectors = services.GetServices<ITransientFailureDetector>();
+        TransientErrorDetector = Services.GetRequiredService<ITransientErrorDetector<IOperationReprocessor>>();
         KnownTransientFailures = new();
     }
 
@@ -73,14 +70,12 @@ public class OperationReprocessor : IOperationReprocessor
             if (allErrors.Any(KnownTransientFailures.Contains))
                 return true;
         }
-        foreach (var detector in TransientFailureDetectors) {
-            // ReSharper disable once PossibleMultipleEnumeration
-            foreach (var e in allErrors) {
-                if (detector.IsTransient(e)) {
-                    lock (KnownTransientFailures)
-                        KnownTransientFailures.Add(e);
-                    return true;
-                }
+        // ReSharper disable once PossibleMultipleEnumeration
+        foreach (var error in allErrors) {
+            if (TransientErrorDetector.IsTransient(error)) {
+                lock (KnownTransientFailures)
+                    KnownTransientFailures.Add(error);
+                return true;
             }
         }
         return false;

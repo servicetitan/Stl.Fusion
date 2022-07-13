@@ -10,7 +10,8 @@ public interface IReplicator : IHasId<Symbol>, IHasServices
     ReplicatorOptions Options { get; }
 
     IReplica? Get(PublicationRef publicationRef);
-    IReplica<T> GetOrAdd<T>(PublicationStateInfo<T> publicationStateInfo, bool requestUpdate = false);
+    IReplica<T> GetOrAdd<T>(
+        ComputedOptions computedOptions, PublicationStateInfo<T> publicationStateInfo, bool requestUpdate = false);
 
     IState<bool> GetPublisherConnectionState(Symbol publisherId);
 }
@@ -56,10 +57,11 @@ public class Replicator : SafeAsyncDisposableBase, IReplicatorImpl
     public IReplica? Get(PublicationRef publicationRef)
         => ReplicaRegistry.Instance.Get(publicationRef);
 
-    public IReplica<T> GetOrAdd<T>(PublicationStateInfo<T> publicationStateInfo, bool requestUpdate = false)
+    public IReplica<T> GetOrAdd<T>(
+        ComputedOptions computedOptions, PublicationStateInfo<T> publicationStateInfo, bool requestUpdate = false)
     {
         var (replica, isNew) = ReplicaRegistry.Instance.GetOrRegister(publicationStateInfo.PublicationRef,
-            () => new Replica<T>(this, publicationStateInfo, requestUpdate));
+            () => new Replica<T>(computedOptions, publicationStateInfo, this, requestUpdate));
         if (isNew)
             Subscribe(replica);
         return (IReplica<T>) replica;

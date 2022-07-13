@@ -6,17 +6,16 @@ namespace Stl.Fusion.Interception;
 public class ComputeMethodFunction<T> : ComputeMethodFunctionBase<T>
 {
     public ComputeMethodFunction(
-        ComputeMethodDef method,
-        VersionGenerator<LTag> versionGenerator,
+        ComputeMethodDef methodDef,
         IServiceProvider services,
-        ILogger<ComputeMethodFunction<T>>? log = null)
-        : base(method, versionGenerator, services, log)
+        VersionGenerator<LTag> versionGenerator)
+        : base(methodDef, services, versionGenerator)
     {
-        if (method.Options.IsAsyncComputed)
+        if (methodDef.ComputedOptions.IsAsyncComputed)
             throw Errors.InternalError(
-                $"This type can't be used with {nameof(ComputedOptions)}.{nameof(ComputedOptions.IsAsyncComputed)} == true option.");
+                $"This type can't be used with {nameof(Fusion.ComputedOptions)}.{nameof(Fusion.ComputedOptions.IsAsyncComputed)} == true option.");
     }
 
     protected override IComputed<T> CreateComputed(ComputeMethodInput input, LTag tag)
-        => new Computed<T>(Options, input, tag);
+        => new Computed<T>(ComputedOptions, input, tag);
 }

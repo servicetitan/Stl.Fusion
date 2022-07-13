@@ -5,19 +5,18 @@ namespace Stl.Interception.Interceptors;
 
 public abstract class InterceptorBase : IOptionalInterceptor, IHasServices
 {
-    public class Options
+    public record Options
     {
-        public bool IsLoggingEnabled { get; set; } = true;
+        public bool IsLoggingEnabled { get; init; } = true;
     }
 
     private readonly MethodInfo _createTypedHandlerMethod;
     private readonly Func<MethodInfo, IInvocation, Action<IInvocation>?> _createHandlerUntyped;
-    private readonly Func<MethodInfo, IInvocation, MethodDef?> _createInterceptedMethod;
-    private readonly ConcurrentDictionary<MethodInfo, MethodDef?> _interceptedMethodCache = new();
+    private readonly Func<MethodInfo, IInvocation, MethodDef?> _createMethodDef;
+    private readonly ConcurrentDictionary<MethodInfo, MethodDef?> _methodDefCache = new();
     private readonly ConcurrentDictionary<MethodInfo, Action<IInvocation>?> _handlerCache = new();
     private readonly ConcurrentDictionary<Type, Unit> _validateTypeCache = new();
 
-    protected ILoggerFactory LoggerFactory { get; }
     protected ILogger Log { get; }
     protected bool IsLoggingEnabled { get; set; }
     protected LogLevel LogLevel { get; set; } = LogLevel.Debug;
@@ -25,18 +24,14 @@ public abstract class InterceptorBase : IOptionalInterceptor, IHasServices
 
     public IServiceProvider Services { get; }
 
-    protected InterceptorBase(
-        Options options,
-        IServiceProvider services,
-        ILoggerFactory? loggerFactory = null)
+    protected InterceptorBase(Options options, IServiceProvider services)
     {
-        LoggerFactory = loggerFactory ??= NullLoggerFactory.Instance;
-        Log = LoggerFactory.CreateLogger(GetType());
+        Services = services;
+        Log = Services.LogFor(GetType());
         IsLoggingEnabled = options.IsLoggingEnabled && Log.IsLogging(LogLevel);
 
-        Services = services;
         _createHandlerUntyped = CreateHandlerUntyped;
-        _createInterceptedMethod = CreateMethodDef;
+        _createMethodDef = CreateMethodDef;
         _createTypedHandlerMethod = GetType()
             .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
             .Single(m => StringComparer.Ordinal.Equals(m.Name, nameof(CreateHandler)));
@@ -72,13 +67,13 @@ public abstract class InterceptorBase : IOptionalInterceptor, IHasServices
     protected virtual Action<IInvocation>? CreateHandlerUntyped(MethodInfo methodInfo, IInvocation initialInvocation)
     {
         var proxyMethodInfo = initialInvocation.Method;
-        var method = _interceptedMethodCache.GetOrAddChecked(proxyMethodInfo, _createInterceptedMethod, initialInvocation);
-        if (method == null)
+        var methodDef = _methodDefCache.GetOrAddChecked(proxyMethodInfo, _createMethodDef, initialInvocation);
+        if (methodDef == null)
             return null;
 
         return (Action<IInvocation>) _createTypedHandlerMethod
-            .MakeGenericMethod(method.UnwrappedReturnType)
-            .Invoke(this, new object[] {initialInvocation, method})!;
+            .MakeGenericMethod(methodDef.UnwrappedReturnType)
+            .Invoke(this, new object[] { initialInvocation, methodDef })!;
     }
 
     // Abstract methods

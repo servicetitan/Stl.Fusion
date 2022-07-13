@@ -1,10 +1,8 @@
-using Stl.Requirements;
+namespace Stl.Requirements;
 
-namespace Stl.Fusion.Requirements;
-
-public record UseServiceExceptionRequirement<T>(Requirement<T> BaseRequirement) : Requirement<T>
+public record ServiceExceptionWrapper<T>(Requirement<T> BaseRequirement) : Requirement<T>
 {
-    public static UseServiceExceptionRequirement<T> Default { get; } = new(NotNullOrDefaultRequirement<T>.Default);
+    public static ServiceExceptionWrapper<T> Default { get; } = new(NotNullOrDefaultRequirement<T>.Default);
 
     public override bool IsSatisfied(T? value)
         => BaseRequirement.IsSatisfied(value);

@@ -5,15 +5,15 @@ namespace Stl.Interception.Interceptors;
 
 public abstract class SelectingInterceptorBase : InterceptorBase
 {
-    public new class Options : InterceptorBase.Options
+    public new record Options : InterceptorBase.Options
     {
-        public Type[] InterceptorTypes { get; set; } = Array.Empty<Type>();
+        public Type[] InterceptorTypes { get; init; } = Array.Empty<Type>();
     }
 
     protected IOptionalInterceptor[] Interceptors { get; }
 
-    protected SelectingInterceptorBase(Options options, IServiceProvider services, ILoggerFactory? loggerFactory = null)
-        : base(options, services, loggerFactory)
+    protected SelectingInterceptorBase(Options options, IServiceProvider services)
+        : base(options, services)
     {
         Interceptors = new IOptionalInterceptor[options.InterceptorTypes.Length];
         for (var i = 0; i < options.InterceptorTypes.Length; i++)

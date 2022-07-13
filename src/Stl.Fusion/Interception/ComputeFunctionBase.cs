@@ -2,19 +2,19 @@ namespace Stl.Fusion.Interception;
 
 public abstract class ComputeFunctionBase<TOut> : FunctionBase<ComputeMethodInput, TOut>
 {
-    public ComputeMethodDef Method { get; }
-    protected ComputedOptions Options { get; }
+    public ComputeMethodDef MethodDef { get; }
+    public ComputedOptions ComputedOptions { get; }
 
-    protected ComputeFunctionBase(ComputeMethodDef method, IServiceProvider services)
+    protected ComputeFunctionBase(ComputeMethodDef methodDef, IServiceProvider services)
         : base(services)
     {
-        Method = method;
-        Options = method.Options;
+        MethodDef = methodDef;
+        ComputedOptions = methodDef.ComputedOptions;
     }
 
     public override string ToString()
     {
-        var mi = Method.MethodInfo;
+        var mi = MethodDef.MethodInfo;
         return $"Intercepted:{mi.DeclaringType!.Name}.{mi.Name}";
     }
 
@@ -22,7 +22,7 @@ public abstract class ComputeFunctionBase<TOut> : FunctionBase<ComputeMethodInpu
 
     protected static void SetReturnValue(ComputeMethodInput input, Result<TOut> output)
     {
-        if (input.Method.ReturnsValueTask)
+        if (input.MethodDef.ReturnsValueTask)
             input.Invocation.ReturnValue =
                 // ReSharper disable once HeapView.BoxingAllocation
                 output.IsValue(out var v)

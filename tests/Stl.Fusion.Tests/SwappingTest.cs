@@ -10,7 +10,7 @@ public class SwappingTest : SimpleFusionTestBase
     {
         public ThreadSafe<int> CallCount { get; } = 0;
 
-        [ComputeMethod(KeepAliveTime = 0.5)]
+        [ComputeMethod(MinCacheDuration = 0.5)]
         [Swap(1)]
         public virtual async Task<object> SameValue(object x)
         {
@@ -94,7 +94,7 @@ public class SwappingTest : SimpleFusionTestBase
         swapService.StoreCallCount.Value.Should().Be(1);
 
         // We accessed the value, so we need to wait for
-        // SwapTime + KeepAliveTime to make sure it's
+        // SwapDelay + KeepAliveTime to make sure it's
         // available for GC
         await Delay(1.9);
         swapService.LoadCallCount.Value.Should().Be(1);

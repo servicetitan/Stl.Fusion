@@ -5,78 +5,44 @@ namespace Stl.Fusion;
 
 public record ComputedOptions
 {
-    public static readonly ComputedOptions Default =
-        new(
-            keepAliveTime: TimeSpan.Zero,
-            errorAutoInvalidateTime: TimeSpan.FromSeconds(1),
-            autoInvalidateTime: TimeSpan.MaxValue,
-            swappingOptions: SwappingOptions.NoSwapping);
-    public static readonly ComputedOptions NoAutoInvalidateOnError =
-        new(
-            keepAliveTime: Default.KeepAliveTime,
-            errorAutoInvalidateTime: TimeSpan.MaxValue,
-            autoInvalidateTime: Default.AutoInvalidateTime,
-            swappingOptions: Default.SwappingOptions);
+    public static ComputedOptions Default { get; set; } = new();
+    public static ComputedOptions MutableStateDefault { get; set; } = new() {
+        TransientErrorInvalidationDelay = TimeSpan.MaxValue,
+    };
+    public static ComputedOptions ReplicaDefault { get; set; } = new();
 
-    public TimeSpan KeepAliveTime { get; }
-    public TimeSpan ErrorAutoInvalidateTime { get; }
-    public TimeSpan AutoInvalidateTime { get; }
-    public SwappingOptions SwappingOptions { get; }
-    public Type ComputeMethodDefType { get; }
-    public bool IsAsyncComputed { get; }
+    public TimeSpan KeepAliveTime { get; init; }
+    public TimeSpan TransientErrorInvalidationDelay { get; init; } = TimeSpan.FromSeconds(1);
+    public TimeSpan AutoInvalidationDelay { get; init; } = TimeSpan.MaxValue; // No auto invalidation
+    public SwappingOptions SwappingOptions { get; init; } = SwappingOptions.NoSwapping;
+    public Type ComputeMethodDefType { get; init; } = typeof(ComputeMethodDef);
+    public bool IsAsyncComputed => SwappingOptions.IsEnabled;
 
-    public ComputedOptions(
-        TimeSpan keepAliveTime,
-        TimeSpan errorAutoInvalidateTime,
-        TimeSpan autoInvalidateTime,
-        SwappingOptions swappingOptions,
-        Type? computeMethodDefType = null)
+    public static ComputedOptions? FromAttribute(
+        ComputedOptions defaultOptions,
+        ComputeMethodAttribute? attribute,
+        SwapAttribute? swapAttribute)
     {
-        KeepAliveTime = keepAliveTime;
-        ErrorAutoInvalidateTime = errorAutoInvalidateTime;
-        AutoInvalidateTime = autoInvalidateTime;
-        if (ErrorAutoInvalidateTime > autoInvalidateTime)
-            // It just doesn't make sense to keep it higher
-            ErrorAutoInvalidateTime = autoInvalidateTime;
-        SwappingOptions = swappingOptions.IsEnabled ? swappingOptions : SwappingOptions.NoSwapping;
-        ComputeMethodDefType = computeMethodDefType ?? typeof(ComputeMethodDef);
-        IsAsyncComputed = swappingOptions.IsEnabled;
+        if (attribute is not { IsEnabled: true })
+            return null;
+        var options = new ComputedOptions() {
+            KeepAliveTime = ToTimeSpan(attribute.MinCacheDuration) ?? defaultOptions.KeepAliveTime,
+            TransientErrorInvalidationDelay = ToTimeSpan(attribute.TransientErrorInvalidationDelay) ?? defaultOptions.TransientErrorInvalidationDelay,
+            AutoInvalidationDelay = ToTimeSpan(attribute.AutoInvalidationDelay) ?? defaultOptions.AutoInvalidationDelay,
+            SwappingOptions = SwappingOptions.FromAttribute(defaultOptions.SwappingOptions, swapAttribute),
+            ComputeMethodDefType = attribute.ComputeMethodDefType ?? defaultOptions.ComputeMethodDefType,
+        };
+        return options == defaultOptions ? defaultOptions : options;
     }
 
-    public static ComputedOptions? FromAttribute(ComputeMethodAttribute? attribute, SwapAttribute? swapAttribute)
+    internal static TimeSpan? ToTimeSpan(double value)
     {
-        if (attribute == null || !attribute.IsEnabled)
+        if (double.IsNaN(value))
             return null;
-        var swappingOptions = SwappingOptions.FromAttribute(swapAttribute);
-        var options = new ComputedOptions(
-            ToTimeSpan(attribute.KeepAliveTime) ?? Default.KeepAliveTime,
-            ToTimeSpan(attribute.ErrorAutoInvalidateTime) ?? Default.ErrorAutoInvalidateTime,
-            ToTimeSpan(attribute.AutoInvalidateTime) ?? Default.AutoInvalidateTime,
-            swappingOptions,
-            attribute.ComputeMethodDefType);
-        return options.IsDefault() ? Default : options;
-    }
-
-    internal static TimeSpan? ToTimeSpan(double? value)
-    {
-        if (!value.HasValue)
-            return null;
-        var v = value.GetValueOrDefault();
-        if (double.IsNaN(v))
-            return null;
-        if (double.IsPositiveInfinity(v))
+        if (value >= TimeSpanExt.InfiniteInSeconds)
             return TimeSpan.MaxValue;
         if (value < 0)
             throw new ArgumentOutOfRangeException(nameof(value));
-        return TimeSpan.FromSeconds(v);
+        return TimeSpan.FromSeconds(value);
     }
-
-    private bool IsDefault()
-        =>  KeepAliveTime == Default.KeepAliveTime
-            && ErrorAutoInvalidateTime == Default.ErrorAutoInvalidateTime
-            && AutoInvalidateTime == Default.AutoInvalidateTime
-            && ComputeMethodDefType == Default.ComputeMethodDefType
-            && SwappingOptions == Default.SwappingOptions
-            && IsAsyncComputed == Default.IsAsyncComputed
-            ;
 }

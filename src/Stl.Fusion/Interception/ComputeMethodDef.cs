@@ -1,15 +1,16 @@
 using Castle.DynamicProxy;
+using Stl.Fusion.Swapping;
 using Stl.Interception.Interceptors;
 
 namespace Stl.Fusion.Interception;
 
-public class ComputeMethodDef : MethodDef
+public record ComputeMethodDef : MethodDef
 {
-    public ComputedOptions Options { get; protected init; } = ComputedOptions.Default;
-    public ArgumentHandler InvocationTargetHandler { get; protected init; } = null!;
-    public ArgumentHandler[] ArgumentHandlers { get; protected init; } = null!;
-    public (ArgumentHandler Handler, int Index)[]? PreprocessingArgumentHandlers { get; protected init; }
-    public int CancellationTokenArgumentIndex { get; protected init; } = -1;
+    public ComputedOptions ComputedOptions { get; init; } = ComputedOptions.Default;
+    public ArgumentHandler InvocationTargetHandler { get; init; } = null!;
+    public ArgumentHandler[] ArgumentHandlers { get; init; } = null!;
+    public (ArgumentHandler Handler, int Index)[]? PreprocessingArgumentHandlers { get; init; }
+    public int CancellationTokenArgumentIndex { get; init; } = -1;
 
     public ComputeMethodDef(
         ComputeMethodInterceptorBase interceptor,
@@ -19,11 +20,11 @@ public class ComputeMethodDef : MethodDef
         if (!IsAsyncMethod)
             return;
 
-        var options = interceptor.ComputedOptionsProvider.GetComputedOptions(methodInfo);
-        if (options == null)
+        var computedOptions = interceptor.ComputedOptionsProvider.GetComputedOptions(methodInfo);
+        if (computedOptions == null)
             return;
 
-        Options = options;
+        ComputedOptions = computedOptions;
         var invocationTargetType = methodInfo.ReflectedType;
         var parameters = methodInfo.GetParameters();
         var argumentHandlerProvider = interceptor.ArgumentHandlerProvider;
@@ -45,6 +46,15 @@ public class ComputeMethodDef : MethodDef
 
         IsValid = true;
     }
+
+    public override MethodDef ToReplicaMethodDef() =>
+        ReferenceEquals(ComputedOptions.SwappingOptions, SwappingOptions.NoSwapping)
+            ? this
+            : this with {
+                ComputedOptions = ComputedOptions with {
+                    SwappingOptions = SwappingOptions.NoSwapping
+                }
+            };
 
     public virtual ComputeMethodInput CreateInput(IFunction function, AbstractInvocation invocation)
         => new(function, this, invocation);

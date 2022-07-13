@@ -34,11 +34,11 @@ public class TimeService : ITimeService
         }
     }
 
-    [ComputeMethod(AutoInvalidateTime = 0.25)]
+    [ComputeMethod(AutoInvalidationDelay = 0.25)]
     public virtual Task<DateTime> GetTime(CancellationToken cancellationToken = default)
         => Task.FromResult(Time);
 
-    [ComputeMethod(AutoInvalidateTime = 0.25)]
+    [ComputeMethod(AutoInvalidationDelay = 0.25)]
     public virtual async Task<DateTime> GetTimeWithDelay(CancellationToken cancellationToken = default)
     {
         await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken).ConfigureAwait(false);

@@ -9,7 +9,7 @@ public static class RequirementTargetExt
     public static T Require<T>(this T? target, Requirement<T>? requirement = null)
         where T : IRequirementTarget
     {
-        requirement ??= NotNullOrDefaultRequirement<T>.Default; 
+        requirement ??= NotNullOrDefaultRequirement<T>.Default;
         return requirement.Check(target);
     }
 
@@ -25,7 +25,7 @@ public static class RequirementTargetExt
         where T : IRequirementTarget
     {
         var target = await targetSource.ConfigureAwait(false);
-        requirement ??= NotNullOrDefaultRequirement<T>.Default; 
+        requirement ??= NotNullOrDefaultRequirement<T>.Default;
         return requirement.Check(target);
     }
 

@@ -6,16 +6,13 @@ namespace Stl.CommandR.Interception;
 
 public class CommandServiceInterceptor : InterceptorBase
 {
-    public new class Options : InterceptorBase.Options
+    public new record Options : InterceptorBase.Options
     { }
 
     protected ICommander Commander { get; }
 
-    public CommandServiceInterceptor(
-        Options options,
-        IServiceProvider services,
-        ILoggerFactory? loggerFactory = null)
-        : base(options, services, loggerFactory)
+    public CommandServiceInterceptor(Options options, IServiceProvider services)
+        : base(options, services)
         => Commander = services.GetRequiredService<ICommander>();
 
     protected override Action<IInvocation> CreateHandler<T>(

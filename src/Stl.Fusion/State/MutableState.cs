@@ -16,7 +16,7 @@ public class MutableState<T> : State<T>, IMutableState<T>
     public new record Options : State<T>.Options, IMutableState.IOptions
     {
         public Options()
-            => ComputedOptions = ComputedOptions.NoAutoInvalidateOnError;
+            => ComputedOptions = ComputedOptions.MutableStateDefault;
     }
 
     private Result<T> _output;

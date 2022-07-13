@@ -12,15 +12,15 @@ public interface IAuth : IComputeService
     Task UpdatePresence(Session session, CancellationToken cancellationToken = default);
 
     // Queries
-    [ComputeMethod(KeepAliveTime = 10)]
+    [ComputeMethod(MinCacheDuration = 10)]
     Task<bool> IsSignOutForced(Session session, CancellationToken cancellationToken = default);
-    [ComputeMethod(KeepAliveTime = 10)]
+    [ComputeMethod(MinCacheDuration = 10)]
     Task<SessionAuthInfo?> GetAuthInfo(Session session, CancellationToken cancellationToken = default);
-    [ComputeMethod(KeepAliveTime = 10)]
+    [ComputeMethod(MinCacheDuration = 10)]
     Task<SessionInfo?> GetSessionInfo(Session session, CancellationToken cancellationToken = default);
-    [ComputeMethod(KeepAliveTime = 10)]
+    [ComputeMethod(MinCacheDuration = 10)]
     Task<ImmutableOptionSet> GetOptions(Session session, CancellationToken cancellationToken = default);
-    [ComputeMethod(KeepAliveTime = 10)]
+    [ComputeMethod(MinCacheDuration = 10)]
     Task<User?> GetUser(Session session, CancellationToken cancellationToken = default);
     [ComputeMethod]
     Task<ImmutableArray<SessionInfo>> GetUserSessions(Session session, CancellationToken cancellationToken = default);
@@ -28,13 +28,15 @@ public interface IAuth : IComputeService
 
 public interface IAuthBackend : IComputeService
 {
-    [ComputeMethod(KeepAliveTime = 10)]
-    Task<User?> GetUser(Symbol tenantId, string userId, CancellationToken cancellationToken = default);
-
+    // Commands
     [CommandHandler]
     Task SignIn(SignInCommand command, CancellationToken cancellationToken = default);
     [CommandHandler]
     Task<SessionInfo> SetupSession(SetupSessionCommand command, CancellationToken cancellationToken = default);
     [CommandHandler]
     Task SetOptions(SetSessionOptionsCommand command, CancellationToken cancellationToken = default);
+
+    // Queries
+    [ComputeMethod(MinCacheDuration = 10)]
+    Task<User?> GetUser(Symbol tenantId, string userId, CancellationToken cancellationToken = default);
 }
