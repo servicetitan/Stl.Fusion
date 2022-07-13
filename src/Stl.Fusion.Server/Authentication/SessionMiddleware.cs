@@ -1,4 +1,3 @@
-using System.Globalization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
@@ -52,30 +51,39 @@ public class SessionMiddleware : IMiddleware, IHasServices
 
     public async Task InvokeAsync(HttpContext httpContext, RequestDelegate next)
     {
-        var cancellationToken = httpContext.RequestAborted;
+        SessionProvider.Session = await GetOrCreateSession(httpContext).ConfigureAwait(false);
+        await next(httpContext).ConfigureAwait(false);
+    }
+
+    public virtual Session? GetSession(HttpContext httpContext) 
+    {
         var cookies = httpContext.Request.Cookies;
-        var responseCookies = httpContext.Response.Cookies;
         var cookieName = Settings.Cookie.Name ?? "";
         cookies.TryGetValue(cookieName, out var sessionId);
+        return string.IsNullOrEmpty(sessionId) ? null : new Session(sessionId);
+    }
 
+    public virtual async Task<Session> GetOrCreateSession(HttpContext httpContext) 
+    {
+        var cancellationToken = httpContext.RequestAborted;
+        var originalSession = GetSession(httpContext);
         var tenantId = Settings.TenantIdExtractor(httpContext);
-        var originalSession = string.IsNullOrEmpty(sessionId) ? null : new Session(sessionId);
         var session = originalSession?.WithTenantId(tenantId);
-
-        if (session != null) {
-            if (Auth != null) {
-                var isSignOutForced = await Auth.IsSignOutForced(session, cancellationToken).ConfigureAwait(false);
-                if (isSignOutForced) {
-                    await Settings.ForcedSignOutHandler(this, httpContext).ConfigureAwait(false);
-                    session = null;
-                }
+        
+        if (session != null && Auth != null) {
+            var isSignOutForced = await Auth.IsSignOutForced(session, cancellationToken).ConfigureAwait(false);
+            if (isSignOutForced) {
+                await Settings.ForcedSignOutHandler(this, httpContext).ConfigureAwait(false);
+                session = null;
             }
         }
-        if (session == null)
-            session = SessionFactory.CreateSession().WithTenantId(tenantId);
-        if (session != originalSession)
+        session ??= SessionFactory.CreateSession().WithTenantId(tenantId);
+        
+        if (session != originalSession) {
+            var cookieName = Settings.Cookie.Name ?? "";
+            var responseCookies = httpContext.Response.Cookies;
             responseCookies.Append(cookieName, session.Id, Settings.Cookie.Build(httpContext));
-        SessionProvider.Session = session;
-        await next(httpContext).ConfigureAwait(false);
+        }
+        return session;
     }
 }
