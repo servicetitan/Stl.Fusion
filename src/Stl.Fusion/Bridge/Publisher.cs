@@ -92,7 +92,7 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
         while (true) {
              var p = Publications.GetOrAddChecked(
                  computed.Input,
-                 (key, arg) => {
+                 static (key, arg) => {
                      var (this1, computed1) = arg;
                      var id = this1.Options.PublicationIdGenerator.Next();
                      var p1 = this1.Options.PublicationFactory.Create(
