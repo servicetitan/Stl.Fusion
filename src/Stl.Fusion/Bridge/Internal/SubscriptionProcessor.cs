@@ -115,8 +115,8 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
         catch (Exception e) when (e is not OperationCanceledException) {
             var log = Services.LogFor(GetType());
             if (e is TimeoutException)
-                log.LogWarning(e, "No incoming messages");
-            else 
+                log.LogDebug(e, "No incoming messages");
+            else
                 log.LogError(e, "Subscription processing failed");
         }
         finally {
