@@ -146,7 +146,7 @@
     <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
     <PackageReference Update="Microsoft.EntityFrameworkCore.Design" Version="$(EntityFrameworkCoreVersion)" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers;" />
     <PackageReference Update="Microsoft.EntityFrameworkCore.Tools" Version="$(EntityFrameworkCoreVersion)" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers;" />
-    <PackageReference Update="Nerdbank.GitVersioning" Version="3.5.107" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
+    <PackageReference Update="Nerdbank.GitVersioning" Version="3.5.108" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
 
     <!-- Analyzers -->
     <PackageReference Update="Moq.Analyzers" Version="0.0.9" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers"/>
