@@ -32,7 +32,7 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
 
     // Mode
 
-    public DbMultitenancyBuilder<TDbContext> SingleTenantMode()
+    public DbMultitenancyBuilder<TDbContext> UseSingleTenantMode()
     {
         Clear();
         AddTenantRegistry<SingleTenantRegistry<TDbContext>>();
@@ -42,7 +42,7 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
         return this;
     }
 
-    public DbMultitenancyBuilder<TDbContext> MultitenantMode()
+    public DbMultitenancyBuilder<TDbContext> UseMultitenantMode()
     {
         Clear();
         AddTenantRegistry<MultitenantRegistry<TDbContext>>();
@@ -52,31 +52,31 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
         return this;
     }
 
-    // SetupMultitenantRegistry
+    // AddMultitenantRegistry
 
-    public DbMultitenancyBuilder<TDbContext> SetupMultitenantRegistry(params Tenant[] tenants)
-        => SetupMultitenantRegistry(tenants.AsEnumerable());
+    public DbMultitenancyBuilder<TDbContext> AddMultitenantRegistry(params Tenant[] tenants)
+        => AddMultitenantRegistry(tenants.AsEnumerable());
 
-    public DbMultitenancyBuilder<TDbContext> SetupMultitenantRegistry(IEnumerable<Tenant> tenants)
+    public DbMultitenancyBuilder<TDbContext> AddMultitenantRegistry(IEnumerable<Tenant> tenants)
     {
         var allTenants = tenants.ToImmutableDictionary(t => t.Id);
-        SetupMultitenantRegistry(_ => new () {
+        AddMultitenantRegistry(_ => new () {
             AllTenantsFetcher = () => allTenants,
         });
         return this;
     }
 
-    public DbMultitenancyBuilder<TDbContext> SetupMultitenantRegistry(
+    public DbMultitenancyBuilder<TDbContext> AddMultitenantRegistry(
         Func<IServiceProvider, MultitenantRegistry<TDbContext>.Options> optionsFactory)
     {
         Services.AddSingleton(optionsFactory);
         return this;
     }
 
-    public DbMultitenancyBuilder<TDbContext> SetupMultitenantDbContextFactory(
+    public DbMultitenancyBuilder<TDbContext> AddMultitenantDbContextFactory(
         Action<IServiceProvider, Tenant, DbContextOptionsBuilder> dbContextOptionsBuilder)
     {
-        SetupMultitenantDbContextFactory((c, tenant, services) => {
+        AddMultitenantDbContextFactory((c, tenant, services) => {
             services.AddPooledDbContextFactory<TDbContext>(
                 db => {
                     // This ensures logging settings from the main container
@@ -90,18 +90,18 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
         return this;
     }
 
-    // SetupMultitenantDbContextFactory
+    // AddMultitenantDbContextFactory
 
-    public DbMultitenancyBuilder<TDbContext> SetupMultitenantDbContextFactory(
+    public DbMultitenancyBuilder<TDbContext> AddMultitenantDbContextFactory(
         Action<IServiceProvider, Tenant, ServiceCollection> dbServiceCollectionBuilder)
     {
-        SetupMultitenantDbContextFactory(_ => new() {
+        AddMultitenantDbContextFactory(_ => new() {
             DbServiceCollectionBuilder = dbServiceCollectionBuilder,
         });
         return this;
     }
 
-    public DbMultitenancyBuilder<TDbContext> SetupMultitenantDbContextFactory(
+    public DbMultitenancyBuilder<TDbContext> AddMultitenantDbContextFactory(
         Func<IServiceProvider, MultitenantDbContextFactory<TDbContext>.Options> optionsFactory)
     {
         Services.AddSingleton(optionsFactory);
