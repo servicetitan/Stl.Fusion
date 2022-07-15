@@ -100,7 +100,7 @@ public class Startup
                     multitenancy.AddMultitenantDbContextFactory(ConfigureTenantDbContext);
                     // This call allows similar blocks for DbContext-s to call "UseDefault"
                     // to make them re-use the same multitenancy settings (registry, resolver, etc.)
-                    multitenancy.MakeDefault(); 
+                    multitenancy.MakeDefault();
                 });
             }
             else {
