@@ -75,9 +75,9 @@ public class FusionTestWebHost : TestWebHostBase
         });
     }
 #else
-    protected override void SetupHttpConfiguration(IServiceProvider svp, HttpConfiguration config)
+    protected override void ConfigureHttp(IServiceProvider svp, HttpConfiguration config)
     {
-        base.SetupHttpConfiguration(svp, config);
+        base.ConfigureHttp(svp, config);
 
         config.Formatters.Insert(0, new TextMediaTypeFormatter());
     }

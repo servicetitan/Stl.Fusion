@@ -17,7 +17,7 @@ public class OwinWebApiServerOptions
 {
     public string Urls { get; set; } = null!;
     public Action<IServiceProvider,IAppBuilder> ConfigureBuilder { get; set; } = null!;
-    public Action<IServiceProvider,HttpConfiguration> SetupHttpConfiguration { get; set; } = null!;
+    public Action<IServiceProvider,HttpConfiguration> ConfigureHttp { get; set; } = null!;
 }
 
 internal class OwinWebApiServer : IServer
@@ -45,7 +45,7 @@ internal class OwinWebApiServer : IServer
 
         string baseAddress = options.Urls;
         Action<IAppBuilder> configureBuilder = (appBuilder) => options.ConfigureBuilder(_serviceProvider, appBuilder);
-        Action<HttpConfiguration> setupConfiguration = (config) => options.SetupHttpConfiguration(_serviceProvider, config);
+        Action<HttpConfiguration> setupConfiguration = (config) => options.ConfigureHttp(_serviceProvider, config);
         _application = WebApp.Start(baseAddress, new WebApiStartup(_serviceProvider, setupConfiguration, configureBuilder).Configuration);
         return Task.CompletedTask;
     }

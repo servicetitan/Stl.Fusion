@@ -105,7 +105,7 @@ public abstract class TestWebHostBase : ITestWebHost
                 services.Configure<OwinWebApiServerOptions>(c => {
                     c.Urls = ServerUri.ToString();
                     c.ConfigureBuilder = ConfigureAppBuilder;
-                    c.SetupHttpConfiguration = SetupHttpConfiguration;
+                    c.ConfigureHttp = ConfigureHttp;
                 });
                 services.AddHostedService<GenericWebHostService>();
                 services.AddSingleton<IServer, OwinWebApiServer>();
@@ -124,7 +124,7 @@ public abstract class TestWebHostBase : ITestWebHost
 #endif
 
 #if NETFRAMEWORK
-    protected virtual void SetupHttpConfiguration(IServiceProvider svp, HttpConfiguration config) { }
+    protected virtual void ConfigureHttp(IServiceProvider svp, HttpConfiguration config) { }
 
     protected virtual void ConfigureAppBuilder(IServiceProvider svp, IAppBuilder builder) { }
 #endif
