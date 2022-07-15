@@ -2,6 +2,7 @@ namespace Templates.TodoApp.Host;
 
 public class HostSettings
 {
+    public bool UseMultitenancy { get; set; } = true;
     public bool UseInMemoryAuthService { get; set; } = false;
     public string PublisherId { get; set; } = "p";
 
