@@ -55,7 +55,7 @@ public class SessionMiddleware : IMiddleware, IHasServices
         await next(httpContext).ConfigureAwait(false);
     }
 
-    public virtual Session? GetSession(HttpContext httpContext) 
+    public virtual Session? GetSession(HttpContext httpContext)
     {
         var cookies = httpContext.Request.Cookies;
         var cookieName = Settings.Cookie.Name ?? "";
@@ -63,13 +63,13 @@ public class SessionMiddleware : IMiddleware, IHasServices
         return string.IsNullOrEmpty(sessionId) ? null : new Session(sessionId);
     }
 
-    public virtual async Task<Session> GetOrCreateSession(HttpContext httpContext) 
+    public virtual async Task<Session> GetOrCreateSession(HttpContext httpContext)
     {
         var cancellationToken = httpContext.RequestAborted;
         var originalSession = GetSession(httpContext);
         var tenantId = Settings.TenantIdExtractor(httpContext);
         var session = originalSession?.WithTenantId(tenantId);
-        
+
         if (session != null && Auth != null) {
             var isSignOutForced = await Auth.IsSignOutForced(session, cancellationToken).ConfigureAwait(false);
             if (isSignOutForced) {
@@ -78,7 +78,7 @@ public class SessionMiddleware : IMiddleware, IHasServices
             }
         }
         session ??= SessionFactory.CreateSession().WithTenantId(tenantId);
-        
+
         if (session != originalSession) {
             var cookieName = Settings.Cookie.Name ?? "";
             var responseCookies = httpContext.Response.Cookies;
