@@ -19,7 +19,7 @@ public interface IResult
     /// <summary>
     /// Retrieves result's value. Throws an <see cref="Error"/> when <see cref="HasError"/>.
     /// </summary>
-    object? Value { get; }
+    object? UntypedValue { get; }
 
     /// <summary>
     /// Indicates whether the result is error (its <see cref="Error"/> is not <code>null</code>).
@@ -47,7 +47,7 @@ public interface IMutableResult : IResult
     /// <summary>
     /// <see cref="Object"/>-typed version of <see cref="IMutableResult{T}.Value"/>.
     /// </summary>
-    object? UntypedValue { get; set; }
+    new object? UntypedValue { get; set; }
     /// <summary>
     /// Retrieves or sets mutable result's error.
     /// </summary>
@@ -107,6 +107,17 @@ public interface IMutableResult<T> : IResult<T>, IMutableResult
     /// </summary>
     /// <param name="result">The result to set value and error from.</param>
     void Set(Result<T> result);
+    /// <summary>
+    /// Atomically sets mutable result's value and error by invoking the provided <paramref name="updater"/>.
+    /// </summary>
+    /// <param name="updater">The update function.</param>
+    void Set(Func<Result<T>, Result<T>> updater);
+    /// <summary>
+    /// Atomically sets mutable result's value and error by invoking the provided <paramref name="updater"/>.
+    /// </summary>
+    /// <param name="state">State argument to pass to the updater.</param>
+    /// <param name="updater">The update function.</param>
+    void Set<TState>(TState state, Func<TState, Result<T>, Result<T>> updater);
 }
 
 /// <summary>
@@ -147,7 +158,7 @@ public readonly struct Result<T> : IResult<T>, IEquatable<Result<T>>
 
     /// <inheritdoc />
     // ReSharper disable once HeapView.BoxingAllocation
-    object? IResult.Value => Value;
+    object? IResult.UntypedValue => Value;
 
     /// <summary>
     /// Constructor.
@@ -184,7 +195,7 @@ public readonly struct Result<T> : IResult<T>, IEquatable<Result<T>>
     {
         error = Error!;
         // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-        var hasValue = error == null;
+        var hasValue = error == null!;
         value = hasValue ? ValueOrDefault : default!;
         return hasValue;
     }

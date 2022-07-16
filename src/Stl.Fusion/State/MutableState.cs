@@ -51,6 +51,8 @@ public class MutableState<T> : State<T>, IMutableState<T>
     protected override void Initialize(State<T>.Options options)
         => CreateComputed();
 
+    // Set overloads
+
     void IMutableResult.Set(IResult result)
         => Set(result.Cast<T>());
     public void Set(Result<T> result)
@@ -69,6 +71,38 @@ public class MutableState<T> : State<T>, IMutableState<T>
             // 3. If all the updates are synchronous, we don't
             //    need async lock that's used by regular
             //    IComputed instances.
+            snapshot.Computed.Invalidate();
+        }
+    }
+
+    public void Set(Func<Result<T>, Result<T>> updater)
+    {
+        lock (Lock) {
+            var snapshot = Snapshot;
+            T result;
+            try {
+                result = updater.Invoke(snapshot.Computed.Output);
+            }
+            catch (Exception e) {
+                result = Result.Error<T>(e);
+            }
+            _output = result;
+            snapshot.Computed.Invalidate();
+        }
+    }
+
+    public void Set<TState>(TState state, Func<TState, Result<T>, Result<T>> updater)
+    {
+        lock (Lock) {
+            var snapshot = Snapshot;
+            T result;
+            try {
+                result = updater.Invoke(state, snapshot.Computed.Output);
+            }
+            catch (Exception e) {
+                result = Result.Error<T>(e);
+            }
+            _output = result;
             snapshot.Computed.Invalidate();
         }
     }

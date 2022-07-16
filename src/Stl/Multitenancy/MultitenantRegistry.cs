@@ -51,7 +51,7 @@ public class MultitenantRegistry<TContext> : ITenantRegistry<TContext>
             }
 
             // Ok, we have to resort to fetch
-            if (AllTenants.SetItems(FetchAllTenants()) && AllTenants.TryGetValue(tenantId, out tenant)) {
+            if (AllTenants.Update(FetchAllTenants()) && AllTenants.TryGetValue(tenantId, out tenant)) {
                 AccessedTenants.Items = AccessedTenants.Items.Add(tenantId, tenant);
                 return true;
             }

@@ -17,31 +17,31 @@ public record UpdateDelayer : IUpdateDelayer
         public static TimeSpan UICommandRecencyDelta { get; set; } =  TimeSpan.FromMilliseconds(100);
     }
 
-    public static UpdateDelayer ZeroDelay { get; } = new(UI.UICommandTracker.None, 0, 0);
-    public static UpdateDelayer MinDelay { get; } = new(UI.UICommandTracker.None, Defaults.UICommandUpdateDelay);
+    public static UpdateDelayer ZeroDelay { get; } = new(UIActionTracker.None, 0, 0);
+    public static UpdateDelayer MinDelay { get; } = new(UIActionTracker.None, Defaults.UICommandUpdateDelay);
 
-    public IUICommandTracker UICommandTracker { get; init; }
-    public MomentClockSet Clocks => UICommandTracker.Clocks;
+    public UIActionTracker UIActionTracker { get; init; }
+    public MomentClockSet Clocks => UIActionTracker.Clocks;
     public RandomTimeSpan UpdateDelay { get; init; } = Defaults.UpdateDelay;
-    public RetryDelaySeq RetryDelays { get; set; } = Defaults.RetryDelays;
+    public RetryDelaySeq RetryDelays { get; init; } = Defaults.RetryDelays;
     public RandomTimeSpan UICommandUpdateDelay { get; init; } = Defaults.UICommandUpdateDelay;
     public TimeSpan UICommandRecencyDelta { get; init; } = Defaults.UICommandRecencyDelta;
 
-    public UpdateDelayer(IUICommandTracker uiCommandTracker)
-        => UICommandTracker = uiCommandTracker;
+    public UpdateDelayer(UIActionTracker uiActionTracker)
+        => UIActionTracker = uiActionTracker;
 
-    public UpdateDelayer(IUICommandTracker uiCommandTracker, RandomTimeSpan updateDelay)
+    public UpdateDelayer(UIActionTracker uiActionTracker, RandomTimeSpan updateDelay)
     {
-        UICommandTracker = uiCommandTracker;
+        UIActionTracker = uiActionTracker;
         UpdateDelay = updateDelay;
     }
 
     public UpdateDelayer(
-        IUICommandTracker uiCommandTracker,
+        UIActionTracker uiActionTracker,
         RandomTimeSpan updateDelay,
         RandomTimeSpan uiCommandUpdateDelay)
     {
-        UICommandTracker = uiCommandTracker;
+        UIActionTracker = uiActionTracker;
         UpdateDelay = updateDelay;
         UICommandUpdateDelay = uiCommandUpdateDelay;
     }
@@ -56,7 +56,7 @@ public record UpdateDelayer : IUpdateDelayer
 
         // 2. Wait a bit to see if the invalidation is caused by a UI command
         var delayStart = Clocks.UIClock.Now;
-        var commandCompletedTask = UICommandTracker.LastOrWhenCommandCompleted(UICommandRecencyDelta);
+        var commandCompletedTask = UIActionTracker.WhenNextOrRecentResult(UICommandRecencyDelta);
         var updateDelay = UpdateDelay.Next();
         if (updateDelay > TimeSpan.Zero) {
             if (!commandCompletedTask.IsCompleted) {

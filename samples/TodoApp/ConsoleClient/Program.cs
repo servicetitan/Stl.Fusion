@@ -43,8 +43,8 @@ IServiceProvider CreateServiceProvider()
         });
     fusion.AddAuthentication().AddRestEaseClient();
 
-    // Default update delay is 0.1s
-    services.AddTransient<IUpdateDelayer>(c => new UpdateDelayer(c.UICommandTracker(), 0.1));
+    // Default update delay is 0.2s
+    services.AddTransient<IUpdateDelayer>(c => new UpdateDelayer(c.UIActionTracker(), 0.2));
 
     return services.BuildServiceProvider();
 }

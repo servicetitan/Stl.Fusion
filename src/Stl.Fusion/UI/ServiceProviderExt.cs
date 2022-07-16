@@ -2,9 +2,9 @@ namespace Stl.Fusion.UI;
 
 public static class ServiceProviderExt
 {
-    public static IUICommandTracker UICommandTracker(this IServiceProvider services)
-        => services.GetService<IUICommandTracker>() ?? UI.UICommandTracker.None;
+    public static UIActionTracker UIActionTracker(this IServiceProvider services)
+        => services.GetService<UIActionTracker>() ?? UI.UIActionTracker.None;
 
-    public static UICommandRunner UICommandRunner(this IServiceProvider services)
-        => services.GetRequiredService<UICommandRunner>();
+    public static UICommander UICommander(this IServiceProvider services)
+        => services.GetRequiredService<UICommander>();
 }

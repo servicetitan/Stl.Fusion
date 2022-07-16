@@ -36,15 +36,17 @@ public class WebSocketChannel : Channel<string>, IAsyncDisposable
             => Channel.CreateBounded<string>(ChannelOptions);
     }
 
+    private Task _whenReadCompletedTask;
+    private Task _whenWriteCompletedTask;
+    private Task _whenClosedTask;
+
     protected volatile CancellationTokenSource? StopCts;
+
     protected Channel<string> ReadChannel { get; }
     protected Channel<string> WriteChannel { get; }
 
     public Options Settings { get; }
     public WebSocket WebSocket { get; }
-    public Task WhenReadCompleted { get; protected set; }
-    public Task WhenWriteCompleted { get; protected set; }
-    public Task WhenClosed { get; protected set; }
     public CancellationToken StopToken { get; }
 
     public WebSocketChannel(WebSocket webSocket) : this(Options.Default, webSocket) { }
@@ -61,11 +63,11 @@ public class WebSocketChannel : Channel<string>, IAsyncDisposable
         StopToken = StopCts.Token;
 
         using var _ = ExecutionContextExt.SuppressFlow();
-        WhenReadCompleted = Task.Run(() => RunReader(StopToken), CancellationToken.None);
-        WhenWriteCompleted = Task.Run(() => RunWriter(StopToken), CancellationToken.None);
-        WhenClosed = Task.Run(async () => {
-            var readError = await WhenReadCompleted.WaitErrorAsync().ConfigureAwait(false);
-            var writeError = await WhenWriteCompleted.WaitErrorAsync().ConfigureAwait(false);
+        _whenReadCompletedTask = Task.Run(() => RunReader(StopToken), CancellationToken.None);
+        _whenWriteCompletedTask = Task.Run(() => RunWriter(StopToken), CancellationToken.None);
+        _whenClosedTask = Task.Run(async () => {
+            var readError = await _whenReadCompletedTask.WaitErrorAsync().ConfigureAwait(false);
+            var writeError = await _whenWriteCompletedTask.WaitErrorAsync().ConfigureAwait(false);
             var error = readError ?? writeError;
             await Close(error).ConfigureAwait(false);
             if (readError != null)
@@ -81,7 +83,7 @@ public class WebSocketChannel : Channel<string>, IAsyncDisposable
 
         stopCts.CancelAndDisposeSilently();
         try {
-            await WhenClosed.ConfigureAwait(false);
+            await _whenClosedTask.ConfigureAwait(false);
         }
         catch {
             // Dispose shouldn't throw exceptions
@@ -89,6 +91,12 @@ public class WebSocketChannel : Channel<string>, IAsyncDisposable
         if (Settings.OwnsWebSocket)
             WebSocket.Dispose();
     }
+
+    public Task WhenReadCompleted() => _whenReadCompletedTask;
+    public Task WhenWriteCompleted() => _whenWriteCompletedTask;
+    public Task WhenClosed() => _whenClosedTask;
+
+    // Protected methods
 
     protected virtual async Task Close(Exception? error = null)
     {
@@ -123,10 +131,8 @@ public class WebSocketChannel : Channel<string>, IAsyncDisposable
         }
     }
 
-    protected async Task RunWriter(CancellationToken cancellationToken)
-    {
-        await RunWriterUnsafe(cancellationToken).ConfigureAwait(false);
-    }
+    protected Task RunWriter(CancellationToken cancellationToken)
+        => RunWriterUnsafe(cancellationToken);
 
 #if !NETSTANDARD2_0
 

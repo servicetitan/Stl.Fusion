@@ -96,7 +96,7 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
     // ReSharper disable once HeapView.BoxingAllocation
     IResult IComputed.Output => Output;
     // ReSharper disable once HeapView.BoxingAllocation
-    object? IResult.Value => Output.Value;
+    object? IResult.UntypedValue => Output.Value;
 
     public event Action<IComputed> Invalidated {
         add {

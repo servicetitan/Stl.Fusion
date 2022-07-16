@@ -65,6 +65,6 @@ public static class StartupHelper
         fusion.AddBackendStatus();
 
         // Default update delay is 0.5s
-        services.AddTransient<IUpdateDelayer>(c => new UpdateDelayer(c.UICommandTracker(), 0.5));
+        services.AddTransient<IUpdateDelayer>(c => new UpdateDelayer(c.UIActionTracker(), 0.5));
     }
 }

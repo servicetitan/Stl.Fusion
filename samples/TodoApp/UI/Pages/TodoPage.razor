@@ -2,7 +2,7 @@
 @inherits ComputedStateComponent<Todo[]>
 @inject ITodoService Todos
 @inject Session Session
-@inject UICommandRunner CommandRunner
+@inject UICommander UICommander
 @inject ILogger<TodoPage> Log
 
 @{
@@ -95,6 +95,6 @@
     {
         var todo = new Todo("", NewTodoTitle);
         NewTodoTitle = "";
-        CommandRunner.Run(new AddOrUpdateTodoCommand(Session, todo));
+        UICommander.Run(new AddOrUpdateTodoCommand(Session, todo));
     }
 }

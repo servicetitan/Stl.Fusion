@@ -11,7 +11,7 @@ namespace Stl;
 /// </summary>
 /// <typeparam name="T">The type of <see cref="Value"/>.</typeparam>
 [DebuggerDisplay("({" + nameof(ValueOrDefault) + "}, Error = {" + nameof(Error) + "})")]
-public sealed class ResultBox<T> : IResult<T>
+public class ResultBox<T> : IResult<T>
 {
     public static readonly ResultBox<T> Default = new(default!, null);
 
@@ -48,7 +48,7 @@ public sealed class ResultBox<T> : IResult<T>
 
     /// <inheritdoc />
     // ReSharper disable once HeapView.BoxingAllocation
-    object? IResult.Value => Value;
+    object? IResult.UntypedValue => Value;
 
     /// <summary>
     /// Constructor.
@@ -92,7 +92,7 @@ public sealed class ResultBox<T> : IResult<T>
     {
         error = Error!;
         // ReSharper disable once ConditionIsAlwaysTrueOrFalse
-        var hasValue = error == null;
+        var hasValue = error == null!;
         value = hasValue ? ValueOrDefault! : default!;
         return hasValue;
     }

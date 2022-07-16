@@ -22,7 +22,7 @@ public class StringKeyValueModelState : ComputedState<KeyValueModel<string>>
     public StringKeyValueModelState(IServiceProvider services)
         : base(
             new Options() {
-                UpdateDelayer = new UpdateDelayer(services.UICommandTracker(), 0.5)
+                UpdateDelayer = new UpdateDelayer(services.UIActionTracker(), 0.5)
             },
             services)
     {

@@ -28,16 +28,16 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
     public IComputedState<AuthState> State { get; }
 
     protected IServiceProvider Services { get; }
-    protected ISessionResolver SessionResolver { get; }
     protected IAuth Auth { get; }
-    protected IUICommandTracker UICommandTracker { get; }
+    protected ISessionResolver SessionResolver { get; }
+    protected UIActionTracker UIActionTracker { get; }
 
     public AuthStateProvider(Options options, IServiceProvider services)
     {
         Services = services;
         SessionResolver = services.GetRequiredService<ISessionResolver>();
         Auth = services.GetRequiredService<IAuth>();
-        UICommandTracker = services.UICommandTracker();
+        UIActionTracker = services.UIActionTracker();
 
         // ReSharper disable once VirtualMemberCallInConstructor
         var stateOptions = GetStateOptions(options);
@@ -93,12 +93,13 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
     {
         using var _ = ExecutionContextExt.SuppressFlow();
         Task.Run(() => {
-            var authStateTask = Task.FromResult((AuthenticationState) state.LatestNonErrorValue);
-            NotifyAuthenticationStateChanged(authStateTask);
-            var startedEvent = new UICommandEvent(new ChangeAuthStateUICommand());
-            UICommandTracker.ProcessEvent(startedEvent);
-            var completedEvent = new UICommandEvent(startedEvent.Command, Result.New(state));
-            UICommandTracker.ProcessEvent(completedEvent);
+            var authenticationStateTask = Task.FromResult((AuthenticationState) state.LatestNonErrorValue);
+            NotifyAuthenticationStateChanged(authenticationStateTask);
+
+            var authStateTask = Task.FromResult(state.LatestNonErrorValue);
+            var uiClock = UIActionTracker.Clocks.UIClock;
+            var action = new UIAction<AuthState>(new ChangeAuthStateUICommand(), uiClock, authStateTask, CancellationToken.None);
+            UIActionTracker.Register(action);
         });
     }
 }

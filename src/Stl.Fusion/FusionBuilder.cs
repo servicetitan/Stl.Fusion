@@ -64,8 +64,8 @@ public readonly struct FusionBuilder
         // States & their dependencies
         Services.TryAddTransient<IStateFactory, StateFactory>();
         Services.TryAddTransient(typeof(IMutableState<>), typeof(MutableState<>));
-        Services.TryAddScoped<IUICommandTracker, UICommandTracker>();
-        Services.TryAddTransient<IUpdateDelayer>(c => new UpdateDelayer(c.UICommandTracker()));
+        Services.TryAddTransient<IUpdateDelayer>(c => new UpdateDelayer(c.UIActionTracker()));
+        Services.TryAddScoped<UIActionTracker, UIActionTracker>();
 
         // CommandR, command completion and invalidation
         var commander = Services.AddCommander();

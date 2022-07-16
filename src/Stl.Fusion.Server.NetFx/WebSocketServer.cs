@@ -94,7 +94,7 @@ public class WebSocketServer : IHasServices
             .WithId(clientId);
         Publisher.ChannelHub.Attach(channel);
         try {
-            await wsChannel.WhenClosed.ConfigureAwait(false);
+            await wsChannel.WhenClosed().ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             Log.LogWarning(e, "WebSocket connection was closed with an error");
