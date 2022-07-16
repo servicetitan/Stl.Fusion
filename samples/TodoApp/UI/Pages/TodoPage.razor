@@ -95,6 +95,6 @@
     {
         var todo = new Todo("", NewTodoTitle);
         NewTodoTitle = "";
-        UICommander.Run(new AddOrUpdateTodoCommand(Session, todo));
+        _ = UICommander.Run(new AddOrUpdateTodoCommand(Session, todo));
     }
 }
