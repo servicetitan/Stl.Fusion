@@ -62,7 +62,7 @@ public class UICommander : IHasServices
     // Protected methods
 
     protected virtual UIAction<TResult> CreateUIAction<TResult>(
-        ICommand command, 
+        ICommand command,
         CancellationToken cancellationToken)
     {
         var typedCommand = (ICommand<TResult>) command;
@@ -81,7 +81,7 @@ public class UICommander : IHasServices
                     .GetType()
                     .GetMethod(nameof(CreateUIAction), BindingFlags.Instance | BindingFlags.NonPublic)!
                     .MakeGenericMethod(tCommand);
-                
+
                 var pCommander = Expression.Parameter(typeof(UICommander), "commander");
                 var pCommand = Expression.Parameter(typeof(ICommand), "command");
                 var pCancellationToken = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
