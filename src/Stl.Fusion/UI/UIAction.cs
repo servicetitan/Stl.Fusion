@@ -1,10 +1,10 @@
 namespace Stl.Fusion.UI;
 
-public abstract class UIAction : IHasId<long>
+public abstract class UIAction
 {
-    private static long _nextId;
+    private static long _nextActionId;
 
-    public long Id { get; } = Interlocked.Increment(ref _nextId);
+    public long ActionId { get; } = Interlocked.Increment(ref _nextActionId);
     public ICommand Command { get; }
     public Moment StartedAt { get; }
     public CancellationToken CancellationToken { get; }
@@ -20,7 +20,7 @@ public abstract class UIAction : IHasId<long>
     }
 
     public override string ToString()
-        => $"{GetType().Name}(#{Id}: {Command}, {UntypedResult?.ToString() ?? "still running"})";
+        => $"{GetType().Name}(#{ActionId}: {Command}, {UntypedResult?.ToString() ?? "still running"})";
 }
 
 public class UIAction<TResult> : UIAction

@@ -73,7 +73,7 @@ public interface IResult<T> : IResult, IConvertibleTo<T>, IConvertibleTo<Result<
     /// <summary>
     /// Retrieves result's value. Throws an <see cref="Error"/> when <see cref="IResult.HasError"/>.
     /// </summary>
-    new T Value { get; }
+    T Value { get; }
 
     /// <summary>
     /// Deconstructs the result.

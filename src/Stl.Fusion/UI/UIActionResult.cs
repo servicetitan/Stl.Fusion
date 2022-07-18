@@ -1,7 +1,8 @@
 namespace Stl.Fusion.UI;
 
-public interface IUIActionResult : IResult, IHasId<long>
+public interface IUIActionResult : IResult
 {
+    long ActionId { get; }
     UIAction UntypedAction { get; }
     ICommand Command { get; }
     Moment StartedAt { get; }
@@ -16,8 +17,8 @@ public class UIActionResult<TResult> : ResultBox<TResult>, IUIActionResult
     public Moment CompletedAt { get; }
 
     // Computed properties
+    public long ActionId => Action.ActionId;
     public UIAction UntypedAction => Action;
-    public long Id => Action.Id;
     public ICommand Command => Action.Command;
     public Moment StartedAt => Action.StartedAt;
     public TimeSpan Duration => CompletedAt - StartedAt;
@@ -33,5 +34,5 @@ public class UIActionResult<TResult> : ResultBox<TResult>, IUIActionResult
     // Conversion
 
     public override string ToString()
-        => $"{GetType().Name}(#{Id}: {AsResult()}, Duration = {Duration.ToShortString()})";
+        => $"{GetType().Name}(#{ActionId}: {AsResult()}, Duration = {Duration.ToShortString()})";
 }
