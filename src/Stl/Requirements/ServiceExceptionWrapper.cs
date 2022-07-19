@@ -2,8 +2,8 @@ namespace Stl.Requirements;
 
 public record ServiceExceptionWrapper<T>(Requirement<T> BaseRequirement) : Requirement<T>
 {
-    public static ServiceExceptionWrapper<T> Instance { get; } =
-        new(MustExistRequirement<T>.Instance);
+    public static ServiceExceptionWrapper<T> Default { get; } =
+        new(MustExistRequirement<T>.Default);
 
     public override bool IsSatisfied(T? value)
         => BaseRequirement.IsSatisfied(value);

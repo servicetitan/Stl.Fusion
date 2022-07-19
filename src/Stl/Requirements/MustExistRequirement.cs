@@ -4,7 +4,7 @@ namespace Stl.Requirements;
 
 public record MustExistRequirement<T> : CustomizableRequirementBase<T>
 {
-    public static MustExistRequirement<T> Instance { get; } = new();
+    public static MustExistRequirement<T> Default { get; } = new();
 
     public MustExistRequirement()
         => ExceptionBuilder = new("'{0}' is not found.", message => new ValidationException(message));

@@ -7,7 +7,7 @@ public static class RequirementTargetExt
     public static T Require<T>(this T? target, Requirement<T>? requirement = null)
         where T : IRequirementTarget
     {
-        requirement ??= Requirement<T>.Default;
+        requirement ??= Requirement<T>.MustExist;
         return requirement.Check(target);
     }
 
@@ -15,7 +15,7 @@ public static class RequirementTargetExt
         where T : IRequirementTarget
     {
         var target = await targetSource.ConfigureAwait(false);
-        requirement ??= Requirement<T>.Default;
+        requirement ??= Requirement<T>.MustExist;
         return requirement.Check(target);
     }
 
@@ -23,7 +23,7 @@ public static class RequirementTargetExt
         where T : IRequirementTarget
     {
         var target = await targetSource.ConfigureAwait(false);
-        requirement ??= Requirement<T>.Default;
+        requirement ??= Requirement<T>.MustExist;
         return requirement.Check(target);
     }
 
