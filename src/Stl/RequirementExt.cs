@@ -8,7 +8,7 @@ public static class RequirementExt
     {
         if (requirement is ServiceExceptionWrapper<T>)
             return requirement;
-        return ReferenceEquals(requirement, NotNullOrDefaultRequirement<T>.Instance)
+        return ReferenceEquals(requirement, MustExistRequirement<T>.Instance)
             ? ServiceExceptionWrapper<T>.Instance
             : new ServiceExceptionWrapper<T>(requirement);
     }

@@ -10,7 +10,7 @@ namespace Stl.Fusion.Authentication;
 public record User : IHasId<Symbol>, IHasVersion<long>, IRequirementTarget
 {
     public static string GuestName { get; set; } = "Guest";
-    public static Requirement<User> DefaultRequirement { get; set; } = Requirement.New(
+    public static Requirement<User> MustExist { get; set; } = Requirement.New(
         new("You must sign-in to perform this action.", m => new SecurityException(m)),
         (User? u) => u != null);
     public static Requirement<User> MustBeAuthenticated { get; set; } = Requirement.New(

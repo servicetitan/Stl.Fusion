@@ -15,7 +15,7 @@ public abstract record Requirement
 
 public abstract record Requirement<T> : Requirement
 {
-    private const string DefaultRequirementPropertyName = "DefaultRequirement";
+    private const string MustExistPropertyName = "MustExist";
     // ReSharper disable once StaticMemberInGenericType
     private static readonly object DefaultLock = new();
     private static volatile Requirement<T>? _default;
@@ -30,12 +30,12 @@ public abstract record Requirement<T> : Requirement
 
                 var type = typeof(T);
                 var result = type
-                    .GetProperty(DefaultRequirementPropertyName, BindingFlags.Public | BindingFlags.Static)
+                    .GetProperty(MustExistPropertyName, BindingFlags.Public | BindingFlags.Static)
                     ?.GetValue(null) as Requirement<T>;
                 result ??= type
-                    .GetField(DefaultRequirementPropertyName, BindingFlags.Public | BindingFlags.Static)
+                    .GetField(MustExistPropertyName, BindingFlags.Public | BindingFlags.Static)
                     ?.GetValue(null) as Requirement<T>;
-                result ??= NotNullOrDefaultRequirement<T>.Instance;
+                result ??= MustExistRequirement<T>.Instance;
                 return _default = result;
             }
         }

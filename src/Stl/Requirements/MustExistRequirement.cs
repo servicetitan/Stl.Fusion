@@ -2,11 +2,11 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Stl.Requirements;
 
-public record NotNullOrDefaultRequirement<T> : CustomizableRequirementBase<T>
+public record MustExistRequirement<T> : CustomizableRequirementBase<T>
 {
-    public static NotNullOrDefaultRequirement<T> Instance { get; } = new();
+    public static MustExistRequirement<T> Instance { get; } = new();
 
-    public NotNullOrDefaultRequirement()
+    public MustExistRequirement()
         => ExceptionBuilder = new("'{0}' is not found.", message => new ValidationException(message));
 
     public override bool IsSatisfied(T? value)
