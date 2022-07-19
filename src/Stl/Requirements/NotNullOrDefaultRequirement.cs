@@ -4,7 +4,7 @@ namespace Stl.Requirements;
 
 public record NotNullOrDefaultRequirement<T> : CustomizableRequirementBase<T>
 {
-    public static NotNullOrDefaultRequirement<T> Default { get; } = new();
+    public static NotNullOrDefaultRequirement<T> Instance { get; } = new();
 
     public NotNullOrDefaultRequirement()
         => ExceptionBuilder = new("'{0}' is not found.", message => new ValidationException(message));

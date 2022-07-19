@@ -1,3 +1,4 @@
+using System.Security;
 using System.Security.Claims;
 using Stl.Fusion.Authentication;
 
@@ -65,5 +66,12 @@ public class UserPropertiesTest : FusionTestBase
         Parse("1").Should().Be((UserIdentity.DefaultSchema, "1"));
         Parse("1/2").Should().Be(("1", "2"));
         Parse("1\\/2").Should().Be((UserIdentity.DefaultSchema, "1/2"));
+    }
+
+    [Fact]
+    public void DefaultRequirementTest()
+    {
+        Assert.Throws<SecurityException>(() => ((User?) null).Require())
+            .Message.Should().Contain("sign-in");
     }
 }

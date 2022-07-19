@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Security;
 using System.Security.Claims;
-using Stl.Requirements;
 using Stl.Versioning;
 
 namespace Stl.Fusion.Authentication;
@@ -11,7 +10,10 @@ namespace Stl.Fusion.Authentication;
 public record User : IHasId<Symbol>, IHasVersion<long>, IRequirementTarget
 {
     public static string GuestName { get; set; } = "Guest";
-    public static FuncRequirement<User> MustBeAuthenticated { get; } = Requirement.New(
+    public static Requirement<User> DefaultRequirement { get; set; } = Requirement.New(
+        new("You must sign-in to perform this action.", m => new SecurityException(m)),
+        (User? u) => u != null);
+    public static Requirement<User> MustBeAuthenticated { get; set; } = Requirement.New(
         new("User is not authenticated.", m => new SecurityException(m)),
         (User? u) => u?.IsAuthenticated() ?? false);
 

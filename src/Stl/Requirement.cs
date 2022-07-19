@@ -15,6 +15,32 @@ public abstract record Requirement
 
 public abstract record Requirement<T> : Requirement
 {
+    private const string DefaultRequirementPropertyName = "DefaultRequirement";
+    // ReSharper disable once StaticMemberInGenericType
+    private static readonly object DefaultLock = new();
+    private static volatile Requirement<T>? _default;
+
+    public static Requirement<T> Default {
+        get {
+            if (_default != null)
+                return _default;
+            lock (DefaultLock) {
+                if (_default != null)
+                    return _default;
+
+                var type = typeof(T);
+                var result = type
+                    .GetProperty(DefaultRequirementPropertyName, BindingFlags.Public | BindingFlags.Static)
+                    ?.GetValue(null) as Requirement<T>;
+                result ??= type
+                    .GetField(DefaultRequirementPropertyName, BindingFlags.Public | BindingFlags.Static)
+                    ?.GetValue(null) as Requirement<T>;
+                result ??= NotNullOrDefaultRequirement<T>.Instance;
+                return _default = result;
+            }
+        }
+    }
+
     public override bool IsSatisfiedUntyped(object? value)
         => IsSatisfied((T?) value);
     public override object RequireUntyped(object? value)
@@ -27,7 +53,7 @@ public abstract record Requirement<T> : Requirement
 
     public Requirement<T> And(Requirement<T> secondary)
         => new JointRequirement<T>(this, secondary);
-    
+
     public Requirement<T> With(ExceptionBuilder exceptionBuilder)
         => this is CustomizableRequirementBase<T> customizableRequirement
             ? customizableRequirement with { ExceptionBuilder = exceptionBuilder }
