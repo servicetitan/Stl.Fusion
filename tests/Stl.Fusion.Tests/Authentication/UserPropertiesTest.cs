@@ -69,7 +69,7 @@ public class UserPropertiesTest : FusionTestBase
     }
 
     [Fact]
-    public void DefaultRequirementTest()
+    public void MustExistRequirementTest()
     {
         Assert.Throws<SecurityException>(() => ((User?) null).Require())
             .Message.Should().Contain("sign-in");
