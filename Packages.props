@@ -97,7 +97,7 @@
     <PackageReference Update="Pomelo.EntityFrameworkCore.MySql" Version="$(EntityFrameworkCoreMySqlVersion)" />
     <PackageReference Update="RestEase" Version="1.5.*" />
     <PackageReference Update="StackExchange.Redis" Version="2.6.*" />
-    <PackageReference Update="Swashbuckle.AspNetCore" Version="6.3.2" />
+    <PackageReference Update="Swashbuckle.AspNetCore" Version="6.4.0" />
     <PackageReference Update="System.Collections.Immutable" Version="6.0.*" />
     <PackageReference Update="System.Configuration.ConfigurationManager" Version="6.0.*" />
     <PackageReference Update="System.CommandLine" Version="2.0.0-beta4.22272.1" />
