@@ -72,18 +72,18 @@ public class SimplestProviderTest : FusionTestBase
         p.GetValueCallCount.Should().Be(++gv);
         p.GetCharCountCallCount.Should().Be(gcc);
 
-        await Assert.ThrowsAsync<NullReferenceException>(() => p.GetCharCount());
+        await Assert.ThrowsAsync<TransientException>(() => p.GetCharCount());
         p.GetValueCallCount.Should().Be(gv);
         p.GetCharCountCallCount.Should().Be(++gcc);
 
         // Exceptions are also cached, so counts shouldn't change here
-        await Assert.ThrowsAsync<NullReferenceException>(() => p.GetCharCount());
+        await Assert.ThrowsAsync<TransientException>(() => p.GetCharCount());
         p.GetValueCallCount.Should().Be(gv);
         p.GetCharCountCallCount.Should().Be(gcc);
 
         // But if we wait for 0.3s+, it should recompute again
         await Task.Delay(1100);
-        await Assert.ThrowsAsync<NullReferenceException>(() => p.GetCharCount());
+        await Assert.ThrowsAsync<TransientException>(() => p.GetCharCount());
         p.GetValueCallCount.Should().Be(gv);
         p.GetCharCountCallCount.Should().Be(++gcc);
     }
@@ -95,7 +95,7 @@ public class SimplestProviderTest : FusionTestBase
         p.SetValue(null!); // Will cause an exception in GetCharCount
         var c1Opt = await Computed.TryCapture(_ => p.GetCharCount());
         var c2 = await Computed.Capture(_ => p.GetCharCount());
-        c1Opt.Value.Error!.GetType().Should().Be(typeof(NullReferenceException));
+        c1Opt.Value.Error!.GetType().Should().Be(typeof(TransientException));
         c2.Should().BeSameAs(c1Opt.Value);
     }
 
@@ -124,13 +124,13 @@ public class SimplestProviderTest : FusionTestBase
         var p = Services.GetRequiredService<ISimplestProvider>();
         p.SetValue("");
 
-        var c1 = await Computed.Capture(_ => p.Fail(typeof(NullReferenceException), false));
-        c1.Error.Should().BeOfType<NullReferenceException>();
+        var c1 = await Computed.Capture(_ => p.Fail(typeof(TransientException), false));
+        c1.Error.Should().BeOfType<TransientException>();
         await c1.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(1));
 
-        c1 = await Computed.Capture(_ => p.Fail(typeof(NullReferenceException), true));
+        c1 = await Computed.Capture(_ => p.Fail(typeof(TransientException), true));
         c1.Error.Should().BeOfType<ServiceException>()
-            .Which.InnerException.Should().BeOfType<NullReferenceException>();
+            .Which.InnerException.Should().BeOfType<TransientException>();
         await Delay(1);
         var c2 = await c1.Update();
         c2.Should().BeSameAs(c1);

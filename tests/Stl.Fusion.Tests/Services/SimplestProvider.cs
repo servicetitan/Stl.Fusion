@@ -53,8 +53,13 @@ public class SimplestProvider : ISimplestProvider, IHasId<Type>
     public virtual async Task<int> GetCharCount()
     {
         GetCharCountCallCount++;
-        var value = await GetValue().ConfigureAwait(false);
-        return value.Length;
+        try {
+            var value = await GetValue().ConfigureAwait(false);
+            return value.Length;
+        }
+        catch (NullReferenceException e) {
+            throw new TransientException(null, e);
+        }
     }
 
     public virtual Task<int> Fail(Type exceptionType, bool wrapToResultException)
