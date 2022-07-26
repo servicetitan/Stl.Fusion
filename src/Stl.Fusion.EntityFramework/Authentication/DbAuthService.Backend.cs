@@ -141,7 +141,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     public override async Task SetOptions(
         SetSessionOptionsCommand command, CancellationToken cancellationToken = default)
     {
-        var (session, options, baseVersion) = command;
+        var (session, options, expectedVersion) = command;
         var context = CommandContext.GetCurrent();
         if (Computed.IsInvalidating()) {
             _ = GetSessionInfo(session, default); // Must go first!
@@ -157,8 +157,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         var sessionInfo = SessionConverter.ToModel(dbSessionInfo);
         if (sessionInfo == null)
             throw new KeyNotFoundException();
-        if (baseVersion.HasValue && sessionInfo.Version != baseVersion.GetValueOrDefault())
-            throw new VersionMismatchException();
+        VersionChecker.RequireExpected(sessionInfo.Version, expectedVersion);
 
         sessionInfo = sessionInfo with {
             LastSeenAt = Clocks.SystemClock.Now,

@@ -4,7 +4,7 @@ namespace Stl.Fusion.Authentication.Commands;
 public record SetSessionOptionsCommand(
     [property: DataMember] Session Session,
     [property: DataMember] ImmutableOptionSet Options,
-    [property: DataMember] long? BaseVersion = null
+    [property: DataMember] long? ExpectedVersion = null
     ) : ISessionCommand<Unit>
 {
     public SetSessionOptionsCommand() : this(Session.Null, ImmutableOptionSet.Empty) { }

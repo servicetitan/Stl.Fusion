@@ -151,26 +151,24 @@ public partial class InMemoryAuthService
         return Task.FromResult(result);
     }
 
-    protected virtual SessionInfo UpsertSessionInfo(Symbol tenantId, Symbol sessionId, SessionInfo sessionInfo, long? baseVersion)
+    protected virtual SessionInfo UpsertSessionInfo(Symbol tenantId, Symbol sessionId, SessionInfo sessionInfo, long? expectedVersion)
     {
         sessionInfo = sessionInfo with {
-            Version = VersionGenerator.NextVersion(baseVersion ?? sessionInfo.Version),
+            Version = VersionGenerator.NextVersion(expectedVersion ?? sessionInfo.Version),
             LastSeenAt = Clocks.SystemClock.Now,
         };
 #if NETSTANDARD2_0
         var sessionInfo1 = sessionInfo;
-        var baseVersion1 = baseVersion;
+        var expectedVersion1 = expectedVersion;
         SessionInfos.AddOrUpdate((tenantId, sessionId),
             _ => {
-                if (baseVersion1.HasValue && baseVersion1.GetValueOrDefault() != 0)
-                    throw new VersionMismatchException();
+                VersionChecker.RequireExpected(0L, expectedVersion1);
                 return sessionInfo1;
             },
             (_, oldSessionInfo) => {
                 if (oldSessionInfo.IsSignOutForced)
                     throw Errors.ForcedSignOut();
-                if (baseVersion1.HasValue && baseVersion1.GetValueOrDefault() != oldSessionInfo.Version)
-                    throw new VersionMismatchException();
+                VersionChecker.RequireExpected(oldSessionInfo.Version, expectedVersion1);
                 return sessionInfo1.CreatedAt == oldSessionInfo.CreatedAt
                     ? sessionInfo1
                     : sessionInfo1 with {
@@ -180,24 +178,22 @@ public partial class InMemoryAuthService
 #else
         SessionInfos.AddOrUpdate((tenantId, sessionId),
             static (_, arg) => {
-                var (sessionInfo1, baseVersion1) = arg;
-                if (baseVersion1.HasValue && baseVersion1.GetValueOrDefault() != 0)
-                    throw new VersionMismatchException();
+                var (sessionInfo1, expectedVersion1) = arg;
+                VersionChecker.RequireExpected(0L, expectedVersion1);
                 return sessionInfo1;
             },
             static (_, oldSessionInfo, arg) => {
-                var (sessionInfo1, baseVersion1) = arg;
+                var (sessionInfo1, expectedVersion1) = arg;
                 if (oldSessionInfo.IsSignOutForced)
                     throw Errors.ForcedSignOut();
-                if (baseVersion1.HasValue && baseVersion1.GetValueOrDefault() != oldSessionInfo.Version)
-                    throw new VersionMismatchException();
+                VersionChecker.RequireExpected(oldSessionInfo.Version, expectedVersion1);
                 return sessionInfo1.CreatedAt == oldSessionInfo.CreatedAt
                     ? sessionInfo1
                     : sessionInfo1 with {
                         CreatedAt = oldSessionInfo.CreatedAt
                     };
             },
-            (sessionInfo, baseVersion));
+            (sessionInfo, baseVersion: expectedVersion));
 #endif
         return SessionInfos.GetValueOrDefault((tenantId, sessionId)) ?? sessionInfo;
     }

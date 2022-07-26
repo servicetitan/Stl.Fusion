@@ -50,7 +50,7 @@ public class SerializationTest : TestBase
         new SetupSessionCommand(session, "a", "b").PassThroughAllSerializers().Session.Should().Be(session);
         var sso = new SetSessionOptionsCommand(session, ImmutableOptionSet.Empty.Set(true), 1);
         sso.Options.Get<bool>().Should().BeTrue();
-        sso.BaseVersion.Should().Be(1);
+        sso.ExpectedVersion.Should().Be(1);
     }
 
     [Fact]

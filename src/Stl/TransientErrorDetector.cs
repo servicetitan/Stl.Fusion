@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Security;
+using System.Security.Authentication;
+using Stl.Versioning;
 
 namespace Stl;
 
@@ -31,10 +33,32 @@ public abstract record TransientErrorDetector : ITransientErrorDetector
     /// </summary>
     public static TransientErrorDetector DefaultPreferTransient { get; set; } = New(error => {
         return error switch {
-            ValidationException => false,
-            SecurityException => false,
-            ServiceException => false,
+            // Most common errors
+            NullReferenceException => false,
             ArgumentException => false,
+            InvalidOperationException => false, // .Single, etc.
+            ValidationException => false,
+            ServiceException => false,
+            VersionMismatchException => false,
+            InvalidCastException => false,
+            NotSupportedException => false,
+            NotImplementedException => false,
+            FormatException => false,
+            JsonException => false,
+            SerializationException => false,
+            // Security-related
+            SecurityException => false,
+            AuthenticationException => false,
+            UnauthorizedAccessException => false,
+            // Misc. "not found" errors
+            KeyNotFoundException => false,
+            FileNotFoundException => false,
+            DirectoryNotFoundException => false,
+            MissingMethodException => false,
+            MissingFieldException => false,
+            MissingMemberException => false,
+            // Math
+            ArithmeticException => false,
             _ => true,
         };
     });

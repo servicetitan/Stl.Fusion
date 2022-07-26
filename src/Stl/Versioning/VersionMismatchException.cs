@@ -1,7 +1,7 @@
 namespace Stl.Versioning;
 
 [Serializable]
-public class VersionMismatchException : Exception, ITransientException
+public class VersionMismatchException : Exception
 {
     public VersionMismatchException()
         : this(message: null, innerException: null) { }
