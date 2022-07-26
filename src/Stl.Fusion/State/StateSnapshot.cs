@@ -55,17 +55,29 @@ public class StateSnapshot<T> : IStateSnapshot<T>
         Computed = computed;
         WhenUpdatingSource = TaskSource.New<Unit>(true);
         WhenUpdatedSource = TaskSource.New<Unit>(true);
-        if (computed.HasValue) {
+        var error = computed.Error;
+        if (error == null) {
             LatestNonErrorComputed = computed;
             UpdateCount = 1 + prevSnapshot.UpdateCount;
             ErrorCount = prevSnapshot.ErrorCount;
             RetryCount = 0;
         }
         else {
-            LatestNonErrorComputed = prevSnapshot.LatestNonErrorComputed;
-            UpdateCount = 1 + prevSnapshot.UpdateCount;
-            ErrorCount = 1 + prevSnapshot.ErrorCount;
-            RetryCount = 1 + prevSnapshot.RetryCount;
+            var transientErrorDetector = State.Services.GetRequiredService<ITransientErrorDetector<IComputed>>();
+            if (!transientErrorDetector.IsTransient(error)) {
+                // Non-transient error
+                LatestNonErrorComputed = prevSnapshot.LatestNonErrorComputed;
+                UpdateCount = 1 + prevSnapshot.UpdateCount;
+                ErrorCount = 1 + prevSnapshot.ErrorCount;
+                RetryCount = 0;
+            }
+            else {
+                // Transient error
+                LatestNonErrorComputed = prevSnapshot.LatestNonErrorComputed;
+                UpdateCount = 1 + prevSnapshot.UpdateCount;
+                ErrorCount = 1 + prevSnapshot.ErrorCount;
+                RetryCount = 1 + prevSnapshot.RetryCount;
+            }
         }
     }
 
