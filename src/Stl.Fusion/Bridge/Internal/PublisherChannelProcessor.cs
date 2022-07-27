@@ -1,5 +1,6 @@
 using Stl.Fusion.Bridge.Messages;
-using Stl.OS;
+using Stl.Internal;
+using Stl.Locking;
 
 namespace Stl.Fusion.Bridge.Internal;
 
@@ -9,7 +10,8 @@ public class PublisherChannelProcessor : WorkerBase
 
     protected readonly IServiceProvider Services;
     protected IPublisherImpl PublisherImpl => (IPublisherImpl) Publisher;
-    protected readonly ConcurrentDictionary<Symbol, SubscriptionProcessor> Subscriptions;
+    protected readonly Dictionary<Symbol, SubscriptionProcessor> Subscriptions = new();
+    protected readonly AsyncLock ReplyLock = new(ReentryMode.UncheckedDeadlock);
     protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     public readonly IPublisher Publisher;
@@ -23,7 +25,6 @@ public class PublisherChannelProcessor : WorkerBase
         Services = services;
         Publisher = publisher;
         Channel = channel;
-        Subscriptions = new ConcurrentDictionary<Symbol, SubscriptionProcessor>();
     }
 
     protected override async Task RunInternal(CancellationToken cancellationToken)
@@ -52,15 +53,14 @@ public class PublisherChannelProcessor : WorkerBase
 
     protected virtual async ValueTask OnUnsupportedRequest(BridgeMessage request, CancellationToken cancellationToken)
     {
-        if (request is ReplicaRequest rr) {
-            var reply = new PublicationAbsentsReply() {
-                PublisherId = rr.PublisherId,
-                PublicationId = rr.PublicationId,
-            };
-            await Channel.Writer
-                .WriteAsync(reply, cancellationToken)
-                .ConfigureAwait(false);
-        }
+        if (request is not ReplicaRequest rr)
+            return;
+
+        var reply = new PublicationAbsentsReply() {
+            PublisherId = rr.PublisherId,
+            PublicationId = rr.PublicationId,
+        };
+        await Reply(reply, cancellationToken).ConfigureAwait(false);
     }
 
     public virtual async ValueTask OnReplicaRequest(ReplicaRequest request, CancellationToken cancellationToken)
@@ -70,34 +70,31 @@ public class PublisherChannelProcessor : WorkerBase
             return;
         }
 
-        while (true) {
-            var publicationId = request.PublicationId;
-            var publication = Publisher.Get(publicationId);
-            if (publication == null || !publication.TryTouch()) {
-                await OnUnsupportedRequest(request, cancellationToken).ConfigureAwait(false);
-                return;
-            }
-            if (Subscriptions.TryGetValue(publicationId, out var subscriptionProcessor))
-                goto subscriptionExists;
-            lock (Lock) {
-                // Double check locking
-                if (Subscriptions.TryGetValue(publicationId, out subscriptionProcessor))
-                    goto subscriptionExists;
+        var publicationId = request.PublicationId;
+        var publication = Publisher.Get(publicationId);
+        while (publication?.TryTouch() == true) {
+            SubscriptionProcessor? subscriptionProcessor;
+            lock (Subscriptions) {
+                subscriptionProcessor = Subscriptions.GetValueOrDefault(publicationId);
+                if (subscriptionProcessor == null) {
+                    if (StopToken.IsCancellationRequested) // No new sub. processors on disposal!
+                        throw Errors.AlreadyDisposedOrDisposing();
 
-                var publisherOptions = Publisher.Options;
-                subscriptionProcessor = publisherOptions.SubscriptionProcessorFactory.Create(
-                    publisherOptions.SubscriptionProcessorGeneric,
-                    publication, Channel, publisherOptions.SubscriptionExpirationTime,
-                    Publisher.Clocks, Services);
-                Subscriptions[publicationId] = subscriptionProcessor;
+                    var publisherOptions = Publisher.Options;
+                    subscriptionProcessor = publisherOptions.SubscriptionProcessorFactory.Create(
+                        publisherOptions.SubscriptionProcessorGeneric,
+                        publication, this, publisherOptions.SubscriptionExpirationTime,
+                        Publisher.Clocks, Services);
+                    Subscriptions[publicationId] = subscriptionProcessor;
+                    _ = subscriptionProcessor.Run()
+                        .ContinueWith(
+                            _ => Unsubscribe(publication, default),
+                            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+                }
             }
-            _ = subscriptionProcessor.Run()
-                .ContinueWith(
-                    _ => Unsubscribe(publication, default), 
-                    CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
 
-            subscriptionExists:
             try {
+                // Forwarding the message to sub. processor
                 await subscriptionProcessor.IncomingChannel.Writer
                     .WriteAsync(request, cancellationToken).ConfigureAwait(false);
                 return;
@@ -106,46 +103,50 @@ public class PublisherChannelProcessor : WorkerBase
                 // Already disposed, let's retry
             }
         }
+
+        // Couldn't find or touch the publication
+        await OnUnsupportedRequest(request, cancellationToken).ConfigureAwait(false);
     }
 
     public virtual async ValueTask Unsubscribe(
         IPublication publication, CancellationToken cancellationToken)
     {
+        if (StopToken.IsCancellationRequested) 
+            return; // DisposeAsyncCore is running, it will unsubscribe everything anyway
         var publicationId = publication.Id;
-        if (!Subscriptions.TryRemove(publicationId, out var subscriptionProcessor))
-            return;
+        SubscriptionProcessor subscriptionProcessor;
+        lock (Subscriptions) {
+            if (!Subscriptions.Remove(publicationId, out subscriptionProcessor))
+                return;
+        }
         await subscriptionProcessor.DisposeAsync().ConfigureAwait(false);
     }
 
-    protected virtual async Task RemoveSubscriptions()
+    public async ValueTask Reply(PublicationReply reply, CancellationToken cancellationToken)
     {
-        // We can unsubscribe in parallel
-        var subscriptions = Subscriptions;
-        for (var i = 0; i < 2; i++) {
-            while (!subscriptions.IsEmpty) {
-                var tasks = subscriptions
-                    .Take(HardwareInfo.GetProcessorCountFactor(4, 4))
-                    .ToList()
-                    .Select(p => Task.Run(async () => {
-                        var (publicationId, _) = (p.Key, p.Value);
-                        var publication = Publisher.Get(publicationId);
-                        if (publication != null)
-                            await Unsubscribe(publication, default).ConfigureAwait(false);
-                    }));
-                await Task.WhenAll(tasks).ConfigureAwait(false);
-            }
-            // We repeat this twice in case some new subscriptions
-            // were still in process while we were unsubscribing.
-            // Since we don't know for sure how long it might take,
-            // we optimistically assume 10 seconds is enough for this.
-            await Task.Delay(TimeSpan.FromSeconds(10)).ConfigureAwait(false);
-        }
+        using var _ = await ReplyLock.Lock(cancellationToken).ConfigureAwait(false);
+        await Channel.Writer.WriteAsync(reply, cancellationToken).ConfigureAwait(false);
     }
 
     protected override async Task DisposeAsyncCore()
     {
         await base.DisposeAsyncCore().ConfigureAwait(false);
-        await RemoveSubscriptions().ConfigureAwait(false);
+
+        // Disposing subscriptions
+        while (true) {
+            List<SubscriptionProcessor> subscriptionProcessors;
+            lock (Subscriptions) {
+                subscriptionProcessors = Subscriptions.Values.ToList();
+                Subscriptions.Clear();
+            }
+            if (subscriptionProcessors.Count == 0)
+                break;
+            await subscriptionProcessors
+                .Select(sp => sp.DisposeAsync().AsTask())
+                .Collect()
+                .ConfigureAwait(false);
+        }
+
         PublisherImpl.OnChannelProcessorDisposed(this);
     }
 }

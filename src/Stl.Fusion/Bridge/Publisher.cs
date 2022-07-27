@@ -164,9 +164,9 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
     {
         var channelProcessor = CreateChannelProcessor(channel);
         if (!ChannelProcessors.TryAdd(channel, channelProcessor))
-            return;
+            return; // Parallel attempt to add channel processor for the same channel?
         channelProcessor.Run().ContinueWith(_ => {
-            // Since ChannelProcessor is AsyncProcessorBase desc.,
+            // Since ChannelProcessor is WorkerBase desc.,
             // its disposal will shut down Run as well,
             // so "subscribing" to Run completion is the
             // same as subscribing to its disposal.
@@ -190,14 +190,13 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
         ChannelHub.Detached -= OnChannelDetachedHandler;
         var channelProcessors = ChannelProcessors;
         while (!channelProcessors.IsEmpty) {
-            var tasks = channelProcessors
-                .Take(HardwareInfo.GetProcessorCountFactor(4, 4))
-                .ToList()
+            await channelProcessors
                 .Select(p => {
                     var (_, channelProcessor) = (p.Key, p.Value);
                     return channelProcessor.DisposeAsync().AsTask();
-                });
-            await Task.WhenAll(tasks).ConfigureAwait(false);
+                })
+                .Collect()
+                .ConfigureAwait(false);
         }
         var publications = PublicationsById;
         while (!publications.IsEmpty) {

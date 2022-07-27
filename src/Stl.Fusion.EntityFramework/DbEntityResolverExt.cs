@@ -28,8 +28,11 @@ public static class DbEntityResolverExt
         where TKey : notnull
         where TDbEntity : class
     {
-        var tasks = keys.Distinct().Select(key => resolver.Get(tenant.Id, key, cancellationToken)).ToArray();
-        var entities = await Task.WhenAll(tasks).ConfigureAwait(false);
+        var entities = await keys
+            .Distinct()
+            .Select(key => resolver.Get(tenant.Id, key, cancellationToken))
+            .Collect(0)
+            .ConfigureAwait(false);
         var result = new Dictionary<TKey, TDbEntity>();
         foreach (var entity in entities)
             if (entity != null!)

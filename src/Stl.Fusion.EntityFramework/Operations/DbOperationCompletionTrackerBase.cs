@@ -25,8 +25,11 @@ public abstract class DbOperationCompletionTrackerBase : WorkerBase
             return;
         var tenantWatchers = TenantWatchers;
         TenantWatchers = null;
-        await Task.WhenAll(tenantWatchers.Values.Select(v => v.DisposeAsync().AsTask())).ConfigureAwait(false);
-    } 
+        await tenantWatchers.Values
+            .Select(v => v.DisposeAsync().AsTask())
+            .Collect()
+            .ConfigureAwait(false);
+    }
 
     // Protected methods
 

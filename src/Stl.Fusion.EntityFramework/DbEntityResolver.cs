@@ -77,7 +77,9 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
         var batchProcessors = Interlocked.Exchange(ref _batchProcessors, null);
         if (batchProcessors == null)
             return;
-        await Task.WhenAll(batchProcessors.Values.Select(p => p.DisposeAsync().AsTask()))
+        await batchProcessors.Values
+            .Select(p => p.DisposeAsync().AsTask())
+            .Collect()
             .ConfigureAwait(false);
     }
 

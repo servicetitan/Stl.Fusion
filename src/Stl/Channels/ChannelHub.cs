@@ -100,9 +100,7 @@ public class ChannelHub<T> : SafeAsyncDisposableBase, IChannelHub<T>
         if (!disposing) return;
 
         while (!Channels.IsEmpty) {
-            var tasks = Channels
-                .Take(HardwareInfo.GetProcessorCountFactor(4, 4))
-                .ToList()
+            await Channels
                 .Select(p => Task.Run(async () => {
                     var channel = p.Key;
                     if (!Channels.TryRemove(channel, out _))
@@ -113,8 +111,9 @@ public class ChannelHub<T> : SafeAsyncDisposableBase, IChannelHub<T>
                     catch {
                         // Ignore: we did what we could, Dispose shouldn't throw anything
                     }
-                }));
-            await Task.WhenAll(tasks).ConfigureAwait(false);
+                }))
+                .Collect()
+                .ConfigureAwait(false);
         }
     }
 }

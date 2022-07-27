@@ -1,4 +1,5 @@
 using Stl.Internal;
+using Stl.OS;
 
 namespace Stl.Collections;
 
@@ -72,26 +73,42 @@ public static class EnumerableExt
 
     // Collect - a bit more user-friendly Task.WhenAll
 
-    public static Task<List<T>> Collect<T>(
-        this IEnumerable<Task<T>> tasks,
-        CancellationToken cancellationToken = default)
-        => tasks.Collect(64, cancellationToken);
-
-    public static async Task<List<T>> Collect<T>(
-        this IEnumerable<Task<T>> tasks,
-        int chunkSize,
-        CancellationToken cancellationToken = default)
+    public static async Task<List<T>> Collect<T>(this IEnumerable<Task<T>> tasks, int chunkSize = -1)
     {
+        if (chunkSize == 0) // No chunks
+            return (await Task.WhenAll(tasks).ConfigureAwait(false)).ToList();
+
+        if (chunkSize < 0) // Auto chunk size
+            chunkSize = HardwareInfo.GetProcessorCountFactor(16, 16);
         var results = new List<T>();
+        var lastChunk = Array.Empty<Task<T>>();
         foreach (var chunk in tasks.Chunk(chunkSize)) {
-            var chunkResults = await Task.WhenAll(chunk).ConfigureAwait(false);
-            results.AddRange(chunkResults);
+            if (lastChunk.Length > 0)
+                results.AddRange(await Task.WhenAll(lastChunk).ConfigureAwait(false));
+            lastChunk = chunk;
         }
+        if (lastChunk.Length > 0)
+            results.AddRange(await Task.WhenAll(lastChunk).ConfigureAwait(false));
         return results;
     }
 
-    public static Task Collect(
-        this IEnumerable<Task> tasks,
-        CancellationToken cancellationToken = default)
-        => Task.WhenAll(tasks);
+    public static async Task Collect(this IEnumerable<Task> tasks, int chunkSize = -1)
+    {
+        if (chunkSize == 0) {
+            // No chunks
+            await Task.WhenAll(tasks).ConfigureAwait(false);
+            return;
+        }
+
+        if (chunkSize < 0) // Auto chunk size
+            chunkSize = HardwareInfo.GetProcessorCountFactor(16, 16);
+        var lastChunk = Array.Empty<Task>();
+        foreach (var chunk in tasks.Chunk(chunkSize)) {
+            if (lastChunk.Length > 0)
+                await Task.WhenAll(lastChunk).ConfigureAwait(false);
+            lastChunk = chunk;
+        }
+        if (lastChunk.Length > 0)
+            await Task.WhenAll(lastChunk).ConfigureAwait(false);
+    }
 }

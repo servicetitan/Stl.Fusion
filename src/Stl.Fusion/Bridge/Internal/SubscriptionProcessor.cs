@@ -15,12 +15,12 @@ public abstract class SubscriptionProcessor : WorkerBase
 
     public IPublisher Publisher => Publication.Publisher;
     public readonly IPublication Publication;
-    public readonly Channel<BridgeMessage> OutgoingChannel;
+    public readonly PublisherChannelProcessor PublisherChannelProcessor;
     public readonly Channel<ReplicaRequest> IncomingChannel;
 
     protected SubscriptionProcessor(
         IPublication publication,
-        Channel<BridgeMessage> outgoingChannel,
+        PublisherChannelProcessor publisherChannelProcessor,
         TimeSpan expirationTime,
         MomentClockSet clocks,
         IServiceProvider services)
@@ -28,7 +28,7 @@ public abstract class SubscriptionProcessor : WorkerBase
         Services = services;
         Clocks = clocks;
         Publication = publication;
-        OutgoingChannel = outgoingChannel;
+        PublisherChannelProcessor = publisherChannelProcessor;
         IncomingChannel = Channel.CreateBounded<ReplicaRequest>(new BoundedChannelOptions(16));
         ExpirationTime = expirationTime;
     }
@@ -40,11 +40,11 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
 
     public SubscriptionProcessor(
         IPublication<T> publication,
-        Channel<BridgeMessage> outgoingChannel,
+        PublisherChannelProcessor publisherChannelProcessor,
         TimeSpan expirationTime,
         MomentClockSet clocks,
         IServiceProvider services)
-        : base(publication, outgoingChannel, expirationTime, clocks, services)
+        : base(publication, publisherChannelProcessor, expirationTime, clocks, services)
         => Publication = publication;
 
     protected override async Task RunInternal(CancellationToken cancellationToken)
@@ -134,7 +134,7 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
     {
         if (state == null || state.IsDisposed) {
             var absentsMessage = new PublicationAbsentsReply();
-            await Send(absentsMessage, cancellationToken).ConfigureAwait(false);
+            await Reply(absentsMessage, cancellationToken).ConfigureAwait(false);
             LastSentVersion = default;
             return;
         }
@@ -151,16 +151,15 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
         reply.Version = computed.Version;
         reply.IsConsistent = isConsistent;
 
-        await Send(reply, cancellationToken).ConfigureAwait(false);
+        await Reply(reply, cancellationToken).ConfigureAwait(false);
         LastSentVersion = version;
     }
 
-    protected virtual async ValueTask Send(PublicationReply reply, CancellationToken cancellationToken)
+    protected virtual async ValueTask Reply(PublicationReply reply, CancellationToken cancellationToken)
     {
         reply.MessageIndex = ++MessageIndex;
         reply.PublisherId = Publisher.Id;
         reply.PublicationId = Publication.Id;
-
-        await OutgoingChannel.Writer.WriteAsync(reply, cancellationToken).ConfigureAwait(false);
+        await PublisherChannelProcessor.Reply(reply, cancellationToken).ConfigureAwait(false);
     }
 }

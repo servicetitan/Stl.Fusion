@@ -1,5 +1,4 @@
 using Stl.Concurrency;
-using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Internal;
 
 namespace Stl.Fusion.Bridge.Internal;
@@ -7,7 +6,7 @@ namespace Stl.Fusion.Bridge.Internal;
 public interface ISubscriptionProcessorFactory
 {
     public SubscriptionProcessor Create(Type genericType,
-        IPublication publication, Channel<BridgeMessage> outgoingMessages,
+        IPublication publication, PublisherChannelProcessor publisherChannelProcessor,
         TimeSpan subscriptionExpirationTime, MomentClockSet clocks,
         IServiceProvider services);
 }
@@ -15,7 +14,7 @@ public interface ISubscriptionProcessorFactory
 public sealed class SubscriptionProcessorFactory : ISubscriptionProcessorFactory
 {
     private delegate SubscriptionProcessor Constructor(
-        IPublication publication, Channel<BridgeMessage> outgoingMessages,
+        IPublication publication, PublisherChannelProcessor publisherChannelProcessor,
         TimeSpan subscriptionExpirationTime, MomentClockSet clocks,
         IServiceProvider services);
 
@@ -27,12 +26,12 @@ public sealed class SubscriptionProcessorFactory : ISubscriptionProcessorFactory
     private SubscriptionProcessorFactory() { }
 
     public SubscriptionProcessor Create(Type genericType,
-        IPublication publication, Channel<BridgeMessage> outgoingMessages,
+        IPublication publication, PublisherChannelProcessor publisherChannelProcessor,
         TimeSpan subscriptionExpirationTime, MomentClockSet clocks,
         IServiceProvider services)
         => ConstructorCache
             .GetOrAddChecked(genericType, CreateCache)
-            .Invoke(publication, outgoingMessages, subscriptionExpirationTime, clocks, services);
+            .Invoke(publication, publisherChannelProcessor, subscriptionExpirationTime, clocks, services);
 
     private static Constructor Create(Type genericType)
     {
@@ -42,15 +41,15 @@ public sealed class SubscriptionProcessorFactory : ISubscriptionProcessorFactory
         var handler = new FactoryApplyHandler(genericType);
 
         SubscriptionProcessor Factory(
-            IPublication publication, Channel<BridgeMessage> outgoingMessages,
+            IPublication publication, PublisherChannelProcessor publisherChannelProcessor,
             TimeSpan subscribeTimeout, MomentClockSet clocks, IServiceProvider services)
-            => publication.Apply(handler, (outgoingMessages, subscribeTimeout, clocks, services));
+            => publication.Apply(handler, (publisherChannelProcessor, subscribeTimeout, clocks, services));
 
         return Factory;
     }
 
     private class FactoryApplyHandler : IPublicationApplyHandler<
-        (Channel<BridgeMessage> OutgoingMessages,
+        (PublisherChannelProcessor PublisherChannelProcessor,
         TimeSpan SubscriptionExpirationTime,
         MomentClockSet Clocks,
         IServiceProvider Services),
@@ -64,7 +63,7 @@ public sealed class SubscriptionProcessorFactory : ISubscriptionProcessorFactory
 
         public SubscriptionProcessor Apply<T>(
             IPublication<T> publication,
-            (Channel<BridgeMessage> OutgoingMessages,
+            (PublisherChannelProcessor PublisherChannelProcessor,
                 TimeSpan SubscriptionExpirationTime,
                 MomentClockSet Clocks,
                 IServiceProvider Services) arg)
@@ -75,7 +74,7 @@ public sealed class SubscriptionProcessorFactory : ISubscriptionProcessorFactory
                 _genericType);
             return (SubscriptionProcessor) closedType.CreateInstance(
                 publication,
-                arg.OutgoingMessages,
+                arg.PublisherChannelProcessor,
                 arg.SubscriptionExpirationTime,
                 arg.Clocks,
                 arg.Services);
