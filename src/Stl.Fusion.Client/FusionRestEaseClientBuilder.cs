@@ -42,7 +42,6 @@ public readonly struct FusionRestEaseClientBuilder
         Services.TryAddEnumerable(ServiceDescriptor.Singleton<
             IHttpMessageHandlerBuilderFilter,
             FusionHttpMessageHandlerBuilderFilter>());
-        Services.TryAddTransient<FusionHttpMessageHandler>();
 
         // ResponseDeserializer & RequestBodySerializer
         Services.TryAddTransient<ResponseDeserializer, FusionResponseDeserializer>();

@@ -21,7 +21,7 @@ public static class FusionAuthenticationBuilderExt
         services.RemoveAll(typeof(AuthenticationStateProvider));
         services.TryAddSingleton<AuthStateProvider.Options>();
         services.TryAddScoped<AuthenticationStateProvider, AuthStateProvider>();
-        services.TryAddTransient(c => (AuthStateProvider) c.GetRequiredService<AuthenticationStateProvider>());
+        services.TryAddScoped(c => (AuthStateProvider) c.GetRequiredService<AuthenticationStateProvider>());
         services.TryAddScoped<ClientAuthHelper>();
         return fusionAuth;
     }

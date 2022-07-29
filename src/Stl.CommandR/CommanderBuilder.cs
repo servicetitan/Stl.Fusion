@@ -35,7 +35,6 @@ public readonly struct CommanderBuilder
         Services.TryAddSingleton<ICommander, Commander>();
         Services.TryAddSingleton<ICommandHandlerRegistry>(new CommandHandlerRegistry());
         Services.TryAddSingleton<ICommandHandlerResolver, CommandHandlerResolver>();
-        Services.TryAddTransient(_ => CommandContext.Current!);
 
         // Command services & their dependencies
         Services.TryAddSingleton(CommandServiceProxyGenerator.Default);

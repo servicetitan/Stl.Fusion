@@ -112,8 +112,8 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
 
     public DbMultitenancyBuilder<TDbContext> MakeDefault()
     {
-        Services.AddTransient<ITenantRegistry>(c => c.GetRequiredService<ITenantRegistry<TDbContext>>());
-        Services.AddTransient<ITenantResolver>(c => c.GetRequiredService<ITenantResolver<TDbContext>>());
+        Services.AddSingleton<ITenantRegistry>(c => c.GetRequiredService<ITenantRegistry<TDbContext>>());
+        Services.AddSingleton<ITenantResolver>(c => c.GetRequiredService<ITenantResolver<TDbContext>>());
         return this;
     }
 

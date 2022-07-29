@@ -28,7 +28,6 @@ public readonly struct DbOperationsBuilder<TDbContext>
         // DbOperationScope & its CommandR handler
         Services.TryAddSingleton<TransactionIdGenerator<TDbContext>>();
         Services.TryAddSingleton<DbOperationScope<TDbContext>.Options>();
-        Services.TryAddTransient<DbOperationScope<TDbContext>>();
         if (!Services.HasService<DbOperationScopeProvider<TDbContext>>()) {
             Services.AddSingleton<DbOperationScopeProvider<TDbContext>>();
             Services.AddCommander().AddHandlers<DbOperationScopeProvider<TDbContext>>();

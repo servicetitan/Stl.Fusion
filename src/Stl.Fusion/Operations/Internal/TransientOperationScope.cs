@@ -29,7 +29,7 @@ public sealed class TransientOperationScope : AsyncDisposableBase, IOperationSco
             AgentId = AgentInfo.Id,
             StartTime = Clocks.SystemClock.Now,
         };
-        CommandContext = services.GetRequiredService<CommandContext>();
+        CommandContext = CommandContext.GetCurrent();
     }
 
     protected override ValueTask DisposeAsyncCore()

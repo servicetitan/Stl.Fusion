@@ -81,7 +81,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
         TransactionIdGenerator = Services.GetRequiredService<TransactionIdGenerator<TDbContext>>();
         AsyncLock = new AsyncLock(ReentryMode.CheckedPass);
         Operation = DbOperationLog.New();
-        CommandContext = Services.GetRequiredService<CommandContext>();
+        CommandContext = CommandContext.GetCurrent();
     }
 
     protected override async Task DisposeAsync(bool disposing)

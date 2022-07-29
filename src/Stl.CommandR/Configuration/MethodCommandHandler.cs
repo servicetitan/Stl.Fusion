@@ -32,9 +32,7 @@ public record MethodCommandHandler<TCommand> : CommandHandler<TCommand>
         arguments[^1] = cancellationToken;
         for (var i = 1; i < parameters.Length - 1; i++) {
             var p = parameters[i];
-            var value = p.HasDefaultValue
-                ? (services.GetService(p.ParameterType) ?? p.DefaultValue!)
-                : services.GetRequiredService(p.ParameterType);
+            var value = GetParameterValue(p, context, services);
             arguments[i] = value;
         }
         try {
@@ -45,6 +43,15 @@ public record MethodCommandHandler<TCommand> : CommandHandler<TCommand>
                 throw tie.InnerException;
             throw;
         }
+    }
+
+    private static object GetParameterValue(ParameterInfo parameter, ICommandContext context, IServiceProvider services)
+    {
+        if (parameter.ParameterType == typeof(CommandContext))
+            return context;
+        if (parameter.HasDefaultValue)
+            return services.GetService(parameter.ParameterType) ?? parameter.DefaultValue!;
+        return services.GetRequiredService(parameter.ParameterType);
     }
 }
 

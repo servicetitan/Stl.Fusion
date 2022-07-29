@@ -20,8 +20,8 @@ public readonly struct FusionAuthenticationBuilder
         }
 
         Services.TryAddScoped<ISessionProvider, SessionProvider>();
-        Services.TryAddTransient(c => (ISessionResolver) c.GetRequiredService<ISessionProvider>());
-        Services.TryAddTransient(c => c.GetRequiredService<ISessionProvider>().Session);
+        Services.TryAddScoped(c => (ISessionResolver) c.GetRequiredService<ISessionProvider>());
+        Services.TryAddScoped(c => c.GetRequiredService<ISessionProvider>().Session);
         Services.TryAddSingleton<ISessionFactory, SessionFactory>();
 
         Services.TryAddSingleton<PresenceService.Options>();
@@ -45,8 +45,8 @@ public readonly struct FusionAuthenticationBuilder
             throw Errors.MustImplement(implementationType, serverSideServiceType, nameof(implementationType));
 
         Fusion.AddComputeService(implementationType);
-        Services.TryAddTransient(c => (IAuthBackend) c.GetRequiredService(implementationType));
-        Services.TryAddTransient(c => (IAuth) c.GetRequiredService(implementationType));
+        Services.AddSingleton(c => (IAuthBackend) c.GetRequiredService(implementationType));
+        Services.AddSingleton(c => (IAuth) c.GetRequiredService(implementationType));
         return this;
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.EntityFramework.Authentication;
 using Stl.Fusion.EntityFramework.Internal;
+using Stl.Fusion.EntityFramework.Operations;
 
 namespace Stl.Fusion.EntityFramework;
 
@@ -20,7 +21,7 @@ public readonly struct DbAuthenticationBuilder<TDbContext, TDbSessionInfo, TDbUs
         Action<DbAuthenticationBuilder<TDbContext, TDbSessionInfo, TDbUser, TDbUserId>>? configure)
     {
         DbContext = dbContext;
-        if (!Services.HasService<DbOperationScope<TDbContext>>())
+        if (!Services.HasService<DbOperationScopeProvider<TDbContext>>())
             throw Errors.NoOperationsFrameworkServices();
         if (Services.HasService<DbSessionInfoTrimmer<TDbContext>>()) {
             configure?.Invoke(this);

@@ -73,7 +73,6 @@ public readonly struct FusionBuilder
         Services.TryAddSingleton<InvalidationInfoProvider>();
 
         // Transient operation scope & its provider
-        Services.TryAddTransient<TransientOperationScope>();
         if (!Services.HasService<TransientOperationScopeProvider>()) {
             Services.AddSingleton<TransientOperationScopeProvider>();
             commander.AddHandlers<TransientOperationScopeProvider>();
@@ -111,8 +110,8 @@ public readonly struct FusionBuilder
         Services.TryAddSingleton<DefaultTenantResolver<Unit>.Options>();
         Services.TryAddSingleton<ITenantResolver<Unit>, DefaultTenantResolver<Unit>>();
         // And make it default
-        Services.TryAddTransient<ITenantRegistry>(c => c.GetRequiredService<ITenantRegistry<Unit>>());
-        Services.TryAddTransient<ITenantResolver>(c => c.GetRequiredService<ITenantResolver<Unit>>());
+        Services.TryAddSingleton<ITenantRegistry>(c => c.GetRequiredService<ITenantRegistry<Unit>>());
+        Services.TryAddSingleton<ITenantResolver>(c => c.GetRequiredService<ITenantResolver<Unit>>());
 
         configure?.Invoke(this);
     }
@@ -226,7 +225,7 @@ public readonly struct FusionBuilder
     {
         if (optionsFactory != null)
             Services.AddSingleton(optionsFactory);
-        else 
+        else
             Services.TryAddSingleton<OperationReprocessorOptions>();
 
         if (!Services.HasService<IOperationReprocessor>()) {

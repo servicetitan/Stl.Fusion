@@ -73,7 +73,7 @@ public class Startup
 #pragma warning restore ASP0000
 
         // DbContext & related services
-        services.AddTransient(_ => new DbOperationScope<AppDbContext>.Options() {
+        services.AddSingleton(_ => new DbOperationScope<AppDbContext>.Options() {
             DefaultIsolationLevel = IsolationLevel.RepeatableRead,
         });
         services.AddDbContextServices<AppDbContext>(db => {

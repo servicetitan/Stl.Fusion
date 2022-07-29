@@ -33,7 +33,7 @@ public class TransientOperationScopeProvider : ICommandHandler<ICommand>
             return;
         }
 
-        var scope = Services.GetRequiredService<TransientOperationScope>();
+        var scope = Services.Activate<TransientOperationScope>();
         await using var _ = scope.ConfigureAwait(false);
 
         var operation = scope.Operation;
