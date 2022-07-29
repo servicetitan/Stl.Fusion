@@ -25,7 +25,7 @@ public sealed class ComputedRegistry : IDisposable
 
         static Options()
         {
-            DefaultInitialConcurrency = HardwareInfo.GetProcessorCountPo2Factor(16);
+            DefaultInitialConcurrency = HardwareInfo.GetProcessorCountPo2Factor(4);
             var capacity = HardwareInfo.GetProcessorCountPo2Factor(128, 128);
             CapacityPrimeSieve = new PrimeSieve(capacity + 1024);
             while (!CapacityPrimeSieve.IsPrime(capacity))

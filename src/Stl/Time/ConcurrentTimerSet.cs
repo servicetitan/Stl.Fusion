@@ -6,7 +6,7 @@ public record ConcurrentTimerSetOptions : TimerSetOptions
 {
     public new static ConcurrentTimerSetOptions Default { get; } = new();
 
-    public int ConcurrencyLevel { get; init; } = HardwareInfo.GetProcessorCountPo2Factor(5);
+    public int ConcurrencyLevel { get; init; } = HardwareInfo.GetProcessorCountPo2Factor();
 }
 
 public sealed class ConcurrentTimerSet<TTimer> : SafeAsyncDisposableBase

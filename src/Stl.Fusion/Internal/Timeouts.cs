@@ -13,24 +13,23 @@ public static class Timeouts
     static Timeouts()
     {
         Clock = MomentClockSet.Default.CpuClock;
-        var concurrencyLevel = HardwareInfo.GetProcessorCountPo2Factor(8);
         KeepAlive = new ConcurrentTimerSet<object>(
             new() {
                 Quanta = TimeSpan.FromMilliseconds(250),
-                ConcurrencyLevel = concurrencyLevel,
+                ConcurrencyLevel = HardwareInfo.GetProcessorCountPo2Factor(2),
                 Clock = Clock,
             });
         Swap = new ConcurrentTimerSet<ISwappable>(
             new() {
                 Quanta = TimeSpan.FromMilliseconds(250),
-                ConcurrencyLevel = concurrencyLevel,
+                ConcurrencyLevel = HardwareInfo.GetProcessorCountPo2Factor(),
                 Clock = Clock,
             },
             t => t.Swap());
         Invalidate = new ConcurrentTimerSet<IComputed>(
             new() {
                 Quanta = TimeSpan.FromMilliseconds(250),
-                ConcurrencyLevel = concurrencyLevel,
+                ConcurrencyLevel = HardwareInfo.GetProcessorCountPo2Factor(),
                 Clock = Clock,
             },
             t => t.Invalidate());

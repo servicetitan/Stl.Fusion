@@ -5,7 +5,7 @@ namespace Stl.Concurrency;
 
 public class ConcurrentPool<T> : IPool<T>
 {
-    public static int DefaultCapacity => HardwareInfo.GetProcessorCountPo2Factor(32);
+    public static int DefaultCapacity => Math.Min(64, HardwareInfo.GetProcessorCountPo2Factor(32));
 
     private readonly StochasticCounter _count;
     private readonly ConcurrentQueue<T> _queue;
