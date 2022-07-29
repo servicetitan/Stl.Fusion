@@ -119,7 +119,7 @@ public class MutableState<T> : State<T>, IMutableState<T>
             throw Errors.InternalError("Update() task must complete synchronously here.");
     }
 
-    protected override Task<IComputed<T>> Invoke(
+    protected override ValueTask<IComputed<T>> Invoke(
         State<T> input, IComputed? usedBy, ComputeContext? context,
         CancellationToken cancellationToken)
     {
@@ -132,19 +132,19 @@ public class MutableState<T> : State<T>, IMutableState<T>
 
         var result = Computed;
         if (result.TryUseExisting(context, usedBy))
-            return Task.FromResult(result);
+            return ValueTaskExt.FromResult(result);
 
         // Double-check locking
         lock (Lock) {
             result = Computed;
             if (result.TryUseExisting(context, usedBy))
-                return Task.FromResult(result);
+                return ValueTaskExt.FromResult(result);
 
             OnUpdating(result);
             result = CreateComputed();
             result.UseNew(context, usedBy);
             context.TryCapture(result);
-            return Task.FromResult(result);
+            return ValueTaskExt.FromResult(result);
         }
     }
 

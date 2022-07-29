@@ -5,7 +5,7 @@ namespace Stl.Fusion;
 
 public interface IFunction : IHasServices
 {
-    Task<IComputed> Invoke(ComputedInput input,
+    ValueTask<IComputed> Invoke(ComputedInput input,
         IComputed? usedBy,
         ComputeContext? context,
         CancellationToken cancellationToken = default);
@@ -18,7 +18,7 @@ public interface IFunction : IHasServices
 public interface IFunction<in TIn, TOut> : IFunction
     where TIn : ComputedInput
 {
-    Task<IComputed<TOut>> Invoke(TIn input,
+    ValueTask<IComputed<TOut>> Invoke(TIn input,
         IComputed? usedBy,
         ComputeContext? context,
         CancellationToken cancellationToken = default);
@@ -46,13 +46,13 @@ public abstract class FunctionBase<TIn, TOut> : IFunction<TIn, TOut>
         Locks = ComputedRegistry.Instance.GetLocksFor(this);
     }
 
-    async Task<IComputed> IFunction.Invoke(ComputedInput input,
+    async ValueTask<IComputed> IFunction.Invoke(ComputedInput input,
         IComputed? usedBy,
         ComputeContext? context,
         CancellationToken cancellationToken)
         => await Invoke((TIn) input, usedBy, context, cancellationToken).ConfigureAwait(false);
 
-    public virtual async Task<IComputed<TOut>> Invoke(TIn input,
+    public virtual async ValueTask<IComputed<TOut>> Invoke(TIn input,
         IComputed? usedBy,
         ComputeContext? context,
         CancellationToken cancellationToken = default)
@@ -65,7 +65,7 @@ public abstract class FunctionBase<TIn, TOut> : IFunction<TIn, TOut>
         if (result.TryUseExisting(context, usedBy))
             return result!;
 
-        using var @lock = await Locks.Lock(input, cancellationToken).ConfigureAwait(false);
+        using var _ = await Locks.Lock(input, cancellationToken).ConfigureAwait(false);
 
         result = GetExisting(input);
         if (result.TryUseExisting(context, usedBy))
@@ -83,33 +83,33 @@ public abstract class FunctionBase<TIn, TOut> : IFunction<TIn, TOut>
         => InvokeAndStrip((TIn) input, usedBy, context, cancellationToken);
 
     public virtual Task<TOut> InvokeAndStrip(TIn input,
-        IComputed? usedBy,
+        IComputed? usedBy, 
         ComputeContext? context,
         CancellationToken cancellationToken = default)
     {
         context ??= ComputeContext.Current;
-        Result<TOut> output;
-
-        // Read-Lock-RetryRead-Compute-Store pattern
 
         var result = GetExisting(input);
         return result.TryUseExisting(context, usedBy)
             ? result.StripToTask(context)
-            : Recompute();
+            : TryRecompute(input, usedBy, context, cancellationToken);
+    }
 
-        async Task<TOut> Recompute()
-        {
-            using var _ = await Locks.Lock(input, cancellationToken).ConfigureAwait(false);
+    protected async Task<TOut> TryRecompute(TIn input,
+        IComputed? usedBy,
+        ComputeContext context,
+        CancellationToken cancellationToken = default)
+    {
+        using var _ = await Locks.Lock(input, cancellationToken).ConfigureAwait(false);
 
-            result = GetExisting(input);
-            if (result.TryUseExisting(context, usedBy))
-                return result.Strip(context);
+        var result = GetExisting(input);
+        if (result.TryUseExisting(context, usedBy))
+            return result.Strip(context);
 
-            result = await Compute(input, result, cancellationToken).ConfigureAwait(false);
-            output = result.Output; // It can't be gone here b/c KeepAlive isn't called yet
-            result.UseNew(context, usedBy);
-            return output.Value;
-        }
+        result = await Compute(input, result, cancellationToken).ConfigureAwait(false);
+        var output = result.Output; // It can't be gone here b/c KeepAlive isn't called yet
+        result.UseNew(context, usedBy);
+        return output.Value;
     }
 
     protected IComputed<TOut>? GetExisting(TIn input)

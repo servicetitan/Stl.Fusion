@@ -185,13 +185,15 @@ public class Replica<T> : IReplicaImpl<T>
         }
     }
 
-    protected async Task<IComputed<T>> Invoke(
+    protected async ValueTask<IComputed<T>> Invoke(
         ReplicaInput input, IComputed? usedBy, ComputeContext? context,
         CancellationToken cancellationToken)
     {
+#if DEBUG
         if (input != Input)
             // This "Function" supports just a single input == Input
             throw new ArgumentOutOfRangeException(nameof(input));
+#endif
 
         context ??= ComputeContext.Current;
 
@@ -210,30 +212,33 @@ public class Replica<T> : IReplicaImpl<T>
         ReplicaInput input, IComputed? usedBy, ComputeContext? context,
         CancellationToken cancellationToken)
     {
+#if DEBUG
         if (input != Input)
             // This "Function" supports just a single input == Input
             throw new ArgumentOutOfRangeException(nameof(input));
+#endif
 
         context ??= ComputeContext.Current;
 
         var result = Computed;
         return result.TryUseExisting(context, usedBy)
             ? result.StripToTask(context)
-            : Recompute();
+            : TryRecompute(usedBy, context, cancellationToken);
+    }
 
-        async Task<T> Recompute()
-        {
-            // No async locking here b/c RequestUpdate is, in fact, doing this
-            await RequestUpdate(cancellationToken).ConfigureAwait(false);
-            result = Computed;
-            result.UseNew(context, usedBy);
-            return result.Value;
-        }
+    protected async Task<T> TryRecompute(IComputed? usedBy, ComputeContext context,
+        CancellationToken cancellationToken)
+    {
+        // No async locking here b/c RequestUpdate is, in fact, doing this
+        await RequestUpdate(cancellationToken).ConfigureAwait(false);
+        var result = Computed;
+        result.UseNew(context, usedBy);
+        return result.Value;
     }
 
     #region Explicit impl. of IFunction & IFunction<...>
 
-    async Task<IComputed> IFunction.Invoke(ComputedInput input, IComputed? usedBy, ComputeContext? context,
+    async ValueTask<IComputed> IFunction.Invoke(ComputedInput input, IComputed? usedBy, ComputeContext? context,
         CancellationToken cancellationToken)
         => await Invoke((ReplicaInput) input, usedBy, context, cancellationToken).ConfigureAwait(false);
 
@@ -241,7 +246,7 @@ public class Replica<T> : IReplicaImpl<T>
         CancellationToken cancellationToken)
         => InvokeAndStrip((ReplicaInput) input, usedBy, context, cancellationToken);
 
-    Task<IComputed<T>> IFunction<ReplicaInput, T>.Invoke(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
+    ValueTask<IComputed<T>> IFunction<ReplicaInput, T>.Invoke(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
         CancellationToken cancellationToken)
         => Invoke(input, usedBy, context, cancellationToken);
 

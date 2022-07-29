@@ -207,20 +207,22 @@ public abstract class State<T> : ComputedInput,
 
     // IFunction<T> & IFunction
 
-    Task<IComputed<T>> IFunction<State<T>, T>.Invoke(State<T> input, IComputed? usedBy, ComputeContext? context,
+    ValueTask<IComputed<T>> IFunction<State<T>, T>.Invoke(State<T> input, IComputed? usedBy, ComputeContext? context,
         CancellationToken cancellationToken)
         => Invoke(input, usedBy, context, cancellationToken);
-    async Task<IComputed> IFunction.Invoke(ComputedInput input, IComputed? usedBy, ComputeContext? context,
+    async ValueTask<IComputed> IFunction.Invoke(ComputedInput input, IComputed? usedBy, ComputeContext? context,
         CancellationToken cancellationToken)
         => await Invoke((State<T>) input, usedBy, context, cancellationToken).ConfigureAwait(false);
 
-    protected virtual async Task<IComputed<T>> Invoke(
+    protected virtual async ValueTask<IComputed<T>> Invoke(
         State<T> input, IComputed? usedBy, ComputeContext? context,
         CancellationToken cancellationToken)
     {
+#if DEBUG
         if (input != this)
             // This "Function" supports just a single input == this
             throw new ArgumentOutOfRangeException(nameof(input));
+#endif
 
         context ??= ComputeContext.Current;
 
@@ -252,30 +254,33 @@ public abstract class State<T> : ComputedInput,
         State<T> input, IComputed? usedBy, ComputeContext? context,
         CancellationToken cancellationToken)
     {
+#if DEBUG
         if (input != this)
             // This "Function" supports just a single input == this
             throw new ArgumentOutOfRangeException(nameof(input));
+#endif
 
         context ??= ComputeContext.Current;
 
         var result = Computed;
         return result.TryUseExisting(context, usedBy)
             ? result.StripToTask(context)
-            : Recompute();
+            : TryRecompute(usedBy, context, cancellationToken);
+    }
 
-        async Task<T> Recompute()
-        {
-            using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
+    protected async Task<T> TryRecompute(IComputed? usedBy, ComputeContext context,
+        CancellationToken cancellationToken)
+    {
+        using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
 
-            result = Computed;
-            if (result.TryUseExisting(context, usedBy))
-                return result.Strip(context);
+        var result = Computed;
+        if (result.TryUseExisting(context, usedBy))
+            return result.Strip(context);
 
-            OnUpdating(result);
-            result = await GetComputed(cancellationToken).ConfigureAwait(false);
-            result.UseNew(context, usedBy);
-            return result.Value;
-        }
+        OnUpdating(result);
+        result = await GetComputed(cancellationToken).ConfigureAwait(false);
+        result.UseNew(context, usedBy);
+        return result.Value;
     }
 
     protected async ValueTask<StateBoundComputed<T>> GetComputed(CancellationToken cancellationToken)
