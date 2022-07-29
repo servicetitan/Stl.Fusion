@@ -13,6 +13,7 @@ public interface IComputed : IHasConsistencyState, IResult, IHasVersion<LTag>
     ComputedInput Input { get; }
     Type OutputType { get; }
     IResult Output { get; }
+    Task OutputAsTask { get; }
     event Action<IComputed> Invalidated;
 
     bool Invalidate();
@@ -25,6 +26,7 @@ public interface IComputed : IHasConsistencyState, IResult, IHasVersion<LTag>
 public interface IComputed<TOut> : IComputed, IResult<TOut>
 {
     new Result<TOut> Output { get; }
+    new Task<TOut> OutputAsTask { get; }
     bool TrySetOutput(Result<TOut> output);
 
     new ValueTask<IComputed<TOut>> Update(CancellationToken cancellationToken = default);
@@ -59,6 +61,7 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
     private readonly ComputedOptions _options;
     private volatile int _state;
     private Result<TOut> _output;
+    private Task<TOut>? _outputAsTask;
     private RefHashSetSlim3<IComputedImpl> _used;
     private HashSetSlim3<(ComputedInput Input, LTag Version)> _usedBy;
     // ReSharper disable once InconsistentNaming
@@ -83,6 +86,17 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
         }
     }
 
+    public Task<TOut> OutputAsTask {
+        get {
+            if (_outputAsTask != null)
+                return _outputAsTask;
+            lock (Lock) {
+                this.AssertConsistencyStateIsNot(ConsistencyState.Computing);
+                return _outputAsTask ??= _output.AsTask();
+            }
+        }
+    }
+
     // IResult<T> properties
     [MaybeNull]
     public TOut ValueOrDefault => Output.ValueOrDefault;
@@ -97,6 +111,7 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
     IResult IComputed.Output => Output;
     // ReSharper disable once HeapView.BoxingAllocation
     object? IResult.UntypedValue => Output.Value;
+    Task IComputed.OutputAsTask => OutputAsTask;
 
     public event Action<IComputed> Invalidated {
         add {

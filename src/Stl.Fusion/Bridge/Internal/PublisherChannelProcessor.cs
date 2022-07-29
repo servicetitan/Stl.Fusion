@@ -111,15 +111,17 @@ public class PublisherChannelProcessor : WorkerBase
     public virtual async ValueTask Unsubscribe(
         IPublication publication, CancellationToken cancellationToken)
     {
-        if (StopToken.IsCancellationRequested) 
+        if (StopToken.IsCancellationRequested)
             return; // DisposeAsyncCore is running, it will unsubscribe everything anyway
+        
         var publicationId = publication.Id;
-        SubscriptionProcessor subscriptionProcessor;
+        SubscriptionProcessor? subscriptionProcessor;
         lock (Subscriptions) {
             if (!Subscriptions.Remove(publicationId, out subscriptionProcessor))
                 return;
         }
-        await subscriptionProcessor.DisposeAsync().ConfigureAwait(false);
+        if (subscriptionProcessor != null)
+            await subscriptionProcessor.DisposeAsync().ConfigureAwait(false);
     }
 
     public async ValueTask Reply(PublicationReply reply, CancellationToken cancellationToken)

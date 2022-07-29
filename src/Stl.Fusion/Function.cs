@@ -82,7 +82,7 @@ public abstract class FunctionBase<TIn, TOut> : IFunction<TIn, TOut>
         CancellationToken cancellationToken)
         => InvokeAndStrip((TIn) input, usedBy, context, cancellationToken);
 
-    public virtual async Task<TOut> InvokeAndStrip(TIn input,
+    public virtual Task<TOut> InvokeAndStrip(TIn input,
         IComputed? usedBy,
         ComputeContext? context,
         CancellationToken cancellationToken = default)
@@ -93,19 +93,23 @@ public abstract class FunctionBase<TIn, TOut> : IFunction<TIn, TOut>
         // Read-Lock-RetryRead-Compute-Store pattern
 
         var result = GetExisting(input);
-        if (result.TryUseExisting(context, usedBy))
-            return result.Strip(context);
+        return result.TryUseExisting(context, usedBy)
+            ? result.StripToTask(context)
+            : Recompute();
 
-        using var @lock = await Locks.Lock(input, cancellationToken).ConfigureAwait(false);
+        async Task<TOut> Recompute()
+        {
+            using var _ = await Locks.Lock(input, cancellationToken).ConfigureAwait(false);
 
-        result = GetExisting(input);
-        if (result.TryUseExisting(context, usedBy))
-            return result.Strip(context);
+            result = GetExisting(input);
+            if (result.TryUseExisting(context, usedBy))
+                return result.Strip(context);
 
-        result = await Compute(input, result, cancellationToken).ConfigureAwait(false);
-        output = result.Output; // It can't be gone here b/c KeepAlive isn't called yet
-        result.UseNew(context, usedBy);
-        return output.Value;
+            result = await Compute(input, result, cancellationToken).ConfigureAwait(false);
+            output = result.Output; // It can't be gone here b/c KeepAlive isn't called yet
+            result.UseNew(context, usedBy);
+            return output.Value;
+        }
     }
 
     protected IComputed<TOut>? GetExisting(TIn input)

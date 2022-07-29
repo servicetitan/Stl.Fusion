@@ -248,7 +248,7 @@ public abstract class State<T> : ComputedInput,
         CancellationToken cancellationToken)
         => InvokeAndStrip(input, usedBy, context, cancellationToken);
 
-    protected virtual async Task<T> InvokeAndStrip(
+    protected virtual Task<T> InvokeAndStrip(
         State<T> input, IComputed? usedBy, ComputeContext? context,
         CancellationToken cancellationToken)
     {
@@ -259,19 +259,23 @@ public abstract class State<T> : ComputedInput,
         context ??= ComputeContext.Current;
 
         var result = Computed;
-        if (result.TryUseExisting(context, usedBy))
-            return result.Strip(context);
+        return result.TryUseExisting(context, usedBy)
+            ? result.StripToTask(context)
+            : Recompute();
 
-        using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
+        async Task<T> Recompute()
+        {
+            using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
 
-        result = Computed;
-        if (result.TryUseExisting(context, usedBy))
-            return result.Strip(context);
+            result = Computed;
+            if (result.TryUseExisting(context, usedBy))
+                return result.Strip(context);
 
-        OnUpdating(result);
-        result = await GetComputed(cancellationToken).ConfigureAwait(false);
-        result.UseNew(context, usedBy);
-        return result.Value;
+            OnUpdating(result);
+            result = await GetComputed(cancellationToken).ConfigureAwait(false);
+            result.UseNew(context, usedBy);
+            return result.Value;
+        }
     }
 
     protected async ValueTask<StateBoundComputed<T>> GetComputed(CancellationToken cancellationToken)

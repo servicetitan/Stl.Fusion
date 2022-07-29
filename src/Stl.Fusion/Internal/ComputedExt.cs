@@ -117,6 +117,6 @@ public static class ComputedExt
             return TaskCache<T>.DefaultResultTask;
         if (CallOptions.Invalidate == (context.CallOptions & CallOptions.Invalidate))
             return TaskCache<T>.DefaultResultTask;
-        return computed.Output.AsTask();
+        return computed.OutputAsTask;
     }
 }

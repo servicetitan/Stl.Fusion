@@ -206,7 +206,7 @@ public class Replica<T> : IReplicaImpl<T>
         return result;
     }
 
-    protected async Task<T> InvokeAndStrip(
+    protected Task<T> InvokeAndStrip(
         ReplicaInput input, IComputed? usedBy, ComputeContext? context,
         CancellationToken cancellationToken)
     {
@@ -217,14 +217,18 @@ public class Replica<T> : IReplicaImpl<T>
         context ??= ComputeContext.Current;
 
         var result = Computed;
-        if (result.TryUseExisting(context, usedBy))
-            return result.Strip(context);
+        return result.TryUseExisting(context, usedBy)
+            ? result.StripToTask(context)
+            : Recompute();
 
-        // No async locking here b/c RequestUpdate is, in fact, doing this
-        await RequestUpdate(cancellationToken).ConfigureAwait(false);
-        result = Computed;
-        result.UseNew(context, usedBy);
-        return result.Value;
+        async Task<T> Recompute()
+        {
+            // No async locking here b/c RequestUpdate is, in fact, doing this
+            await RequestUpdate(cancellationToken).ConfigureAwait(false);
+            result = Computed;
+            result.UseNew(context, usedBy);
+            return result.Value;
+        }
     }
 
     #region Explicit impl. of IFunction & IFunction<...>
