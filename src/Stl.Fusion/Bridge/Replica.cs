@@ -226,7 +226,8 @@ public class Replica<T> : IReplicaImpl<T>
             : TryRecompute(usedBy, context, cancellationToken);
     }
 
-    protected async Task<T> TryRecompute(IComputed? usedBy, ComputeContext context,
+    protected async Task<T> TryRecompute(
+        IComputed? usedBy, ComputeContext context,
         CancellationToken cancellationToken)
     {
         // No async locking here b/c RequestUpdate is, in fact, doing this

@@ -268,7 +268,8 @@ public abstract class State<T> : ComputedInput,
             : TryRecompute(usedBy, context, cancellationToken);
     }
 
-    protected async Task<T> TryRecompute(IComputed? usedBy, ComputeContext context,
+    protected async Task<T> TryRecompute(
+        IComputed? usedBy, ComputeContext context,
         CancellationToken cancellationToken)
     {
         using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);

@@ -83,7 +83,7 @@ public abstract class FunctionBase<TIn, TOut> : IFunction<TIn, TOut>
         => InvokeAndStrip((TIn) input, usedBy, context, cancellationToken);
 
     public virtual Task<TOut> InvokeAndStrip(TIn input,
-        IComputed? usedBy, 
+        IComputed? usedBy,
         ComputeContext? context,
         CancellationToken cancellationToken = default)
     {
