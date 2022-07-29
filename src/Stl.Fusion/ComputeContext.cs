@@ -33,7 +33,7 @@ public class ComputeContext
 
     static ComputeContext()
     {
-        var allCallOptions = CallOptions.GetExisting |  CallOptions.Invalidate;
+        var allCallOptions = CallOptions.GetExisting | CallOptions.Invalidate;
         var cache = new ComputeContext[1 + (int) allCallOptions];
         for (var i = 0; i <= (int) allCallOptions; i++) {
             var action = (CallOptions) i;

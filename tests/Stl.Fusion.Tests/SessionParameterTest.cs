@@ -34,6 +34,11 @@ public class SessionParameterTest : SimpleFusionTestBase
         var sessionA = sessionFactory.CreateSession();
         var sessionB = sessionFactory.CreateSession();
 
+        var x1 = await counters.Get("x", sessionA);
+        await counters.Increment("x", sessionA);
+        var x2 = await counters.Get("x", sessionA);
+        x2.Should().Be(x1 + 1);
+
         var session = sessionA;
         var aaComputed = await Computed.Capture(_ => counters.Get("a", session));
         _ = Task.Run(() => Watch(nameof(aaComputed), aaComputed));
