@@ -8,20 +8,13 @@ public class ConcurrentTimerSetTest : TestBase
 {
     public class Timer
     {
-        private readonly object _lock = new();
-        private Moment _firedAt;
+        private readonly ThreadSafe<Moment> _firedAt = new();
 
-        public Moment DueAt { get; set; }
+        public Moment DueAt { get; init; }
 
         public Moment FiredAt {
-            get {
-                lock (_lock)
-                    return _firedAt;
-            }
-            set {
-                lock (_lock)
-                    _firedAt = value;
-            }
+            get => _firedAt.Value;
+            set => _firedAt.Value = value;
         }
     }
 
@@ -75,6 +68,26 @@ public class ConcurrentTimerSetTest : TestBase
     }
 
     [Fact]
+    public async Task RemoveTest()
+    {
+        var clock = MomentClockSet.Default.CpuClock;
+        await using var timerSet = new ConcurrentTimerSet<Timer>(
+            new() {
+                Quanta = TimeSpan.FromMilliseconds(10),
+                Clock = clock,
+            },
+            timer => timer.FiredAt = clock.Now);
+
+        var t = new Timer();
+        timerSet.Remove(t).Should().BeFalse();
+        timerSet.AddOrUpdate(t, clock.Now + TimeSpan.FromMilliseconds(100));
+        timerSet.Remove(t).Should().BeTrue();
+        t.FiredAt.Should().Be(default);
+        await clock.Delay(200);
+        t.FiredAt.Should().Be(default);
+    }
+
+    [Fact]
     public async Task RandomTimerTest()
     {
         var taskCount = TestRunnerInfo.IsBuildAgent() ? 1 : HardwareInfo.GetProcessorCountFactor(10);
@@ -99,9 +112,7 @@ public class ConcurrentTimerSetTest : TestBase
             new() {
                 Quanta = TimeSpan.FromMilliseconds(100),
             },
-            timer => {
-                timer.FiredAt = clock.Now;
-            });
+            timer => timer.FiredAt = clock.Now);
         await using (timerSet) {
             var tasks = Enumerable.Range(0, HardwareInfo.GetProcessorCountFactor())
                 .Select(_ => Task.Run(() => OneRandomTest(timerSet, 100_000, 5000, 1000)))

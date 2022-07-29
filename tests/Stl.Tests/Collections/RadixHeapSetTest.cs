@@ -18,16 +18,25 @@ public class RadixHeapSetTest : TestBase
     public void RandomHeapTest()
     {
         var rnd = new Random(10);
-        for (var count = 1; count < 100; count++) {
-            for (var iteration = 0; iteration < 1000; iteration++) {
+        for (var count = 1; count < 150; count++) {
+            for (var iteration = 0; iteration < 500; iteration++) {
                 var items = Enumerable
                     .Range(0, count)
-                    .Select(i => rnd.Next(1000))
+                    .Select(_ => rnd.Next(1000))
                     .Distinct()
                     .ToList();
                 var heap = new RadixHeapSet<int>();
                 foreach (var item in items)
                     heap.Add(item, item);
+
+                var itemsToRemove = new HashSet<int>(
+                    items.Where(_ => rnd.NextDouble() < 0.33));
+                foreach (var item in itemsToRemove)
+                    heap.Remove(item, out _);
+                items = items
+                    .Where(i => !itemsToRemove.Contains(i))
+                    .ToList();
+
                 var sortedItems = items.OrderBy(i => i).ToList();
                 var heapPriorities = heap.Select(i => i.Priority).ToList();
                 var heapValues = heap.Select(i => i.Value).ToList();
@@ -40,13 +49,18 @@ public class RadixHeapSetTest : TestBase
                     heapValues[i].Should().Be(sortedItems[i]);
                 }
                 var min = heap.PeekMin();
-                min.Value.Priority.Should().Be(sortedItems[0]);
-                min.Value.Value.Should().Be(sortedItems[0]);
                 var minSet = heap.PeekMinSet();
-                minSet.Should().NotBeNullOrEmpty();
-                foreach (var (value, priority) in minSet) {
-                    priority.Should().Be(sortedItems[0]);
-                    value.Should().Be(sortedItems[0]);
+                if (sortedItems.Count == 0) {
+                    min.IsNone().Should().BeTrue();
+                    minSet.Count.Should().Be(0);
+                } else {
+                    min.Value.Priority.Should().Be(sortedItems[0]);
+                    min.Value.Value.Should().Be(sortedItems[0]);
+                    minSet.Should().NotBeNullOrEmpty();
+                    foreach (var (value, priority) in minSet) {
+                        priority.Should().Be(sortedItems[0]);
+                        value.Should().Be(sortedItems[0]);
+                    }
                 }
             }
         }
