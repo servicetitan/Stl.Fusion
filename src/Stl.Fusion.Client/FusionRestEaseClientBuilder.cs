@@ -1,3 +1,4 @@
+using System.Globalization;
 using Castle.DynamicProxy;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
@@ -97,6 +98,7 @@ public readonly struct FusionRestEaseClientBuilder
             var httpClientFactory = c.GetRequiredService<IHttpClientFactory>();
             var httpClient = httpClientFactory.CreateClient(clientName);
             var client = new RestClient(httpClient) {
+                FormatProvider = CultureInfo.InvariantCulture,
                 RequestBodySerializer = c.GetRequiredService<RequestBodySerializer>(),
                 ResponseDeserializer = c.GetRequiredService<ResponseDeserializer>(),
             }.For(clientType);
@@ -149,6 +151,7 @@ public readonly struct FusionRestEaseClientBuilder
             var httpClientFactory = c.GetRequiredService<IHttpClientFactory>();
             var httpClient = httpClientFactory.CreateClient(clientName);
             var client = new RestClient(httpClient) {
+                FormatProvider = CultureInfo.InvariantCulture,
                 RequestBodySerializer = c.GetRequiredService<RequestBodySerializer>(),
                 ResponseDeserializer = c.GetRequiredService<ResponseDeserializer>()
             }.For(clientType);
