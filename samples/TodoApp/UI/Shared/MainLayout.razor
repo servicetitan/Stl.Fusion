@@ -33,18 +33,18 @@
     protected override void OnInitialized()
     {
         Nav.LocationChanged += OnLocationChanged;
-        UIActionFailureTracker.Changed += OnCommandFailureListChanged;
+        UIActionFailureTracker.Changed += OnUIActionFailureTrackerChanged;
     }
 
     public void Dispose()
     {
         Nav.LocationChanged -= OnLocationChanged;
-        UIActionFailureTracker.Changed -= OnCommandFailureListChanged;
+        UIActionFailureTracker.Changed -= OnUIActionFailureTrackerChanged;
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
         => UIActionFailureTracker.Clear();
 
-    private void OnCommandFailureListChanged()
+    private void OnUIActionFailureTrackerChanged()
         => this.StateHasChangedAsync();
 }
