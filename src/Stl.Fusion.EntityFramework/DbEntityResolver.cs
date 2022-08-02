@@ -4,7 +4,6 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Stl.Internal;
 using Stl.Multitenancy;
-using Stl.OS;
 
 namespace Stl.Fusion.EntityFramework;
 
@@ -96,17 +95,16 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
         var batchProcessors = _batchProcessors;
         if (batchProcessors == null)
             throw Errors.AlreadyDisposed();
-        return batchProcessors.GetOrAdd(tenantId, 
+        return batchProcessors.GetOrAdd(tenantId,
             static (tenantId1, self) => self.CreateBatchProcessor(tenantId1), this);
     }
-    
+
     protected virtual BatchProcessor<TKey, TDbEntity?> CreateBatchProcessor(Symbol tenantId)
     {
-        var tenant = TenantRegistry.Get(tenantId); 
+        var tenant = TenantRegistry.Get(tenantId);
         var batchProcessor = new BatchProcessor<TKey, TDbEntity?> {
             MaxBatchSize = 16,
-            ConcurrencyLevel = Math.Min(HardwareInfo.ProcessorCount, 4),
-            BatchingDelayTaskFactory = cancellationToken => Task.Delay(1, cancellationToken),
+            ConcurrencyLevel = 1,
             Implementation = (batch, cancellationToken) => ProcessBatch(tenant, batch, cancellationToken),
         };
         Settings.ConfigureBatchProcessor?.Invoke(batchProcessor);
