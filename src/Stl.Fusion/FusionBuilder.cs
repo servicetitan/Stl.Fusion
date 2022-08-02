@@ -20,11 +20,6 @@ public readonly struct FusionBuilder
 {
     private class AddedTag { }
     private static readonly ServiceDescriptor AddedTagDescriptor = new(typeof(AddedTag), new AddedTag());
-    private static readonly HashSet<Type> GenericStateInterfaces = new() {
-        typeof(IState<>),
-        typeof(IMutableState<>),
-        typeof(IComputedState<>),
-    };
 
     public IServiceCollection Services { get; }
 
