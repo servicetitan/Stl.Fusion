@@ -63,6 +63,7 @@ public readonly struct FusionBuilder
 
         // States & their dependencies
         Services.TryAddTransient<IStateFactory, StateFactory>();
+        Services.TryAddSingleton(typeof(MutableState<>.Options));
         Services.TryAddTransient(typeof(IMutableState<>), typeof(MutableState<>));
         Services.TryAddTransient<IUpdateDelayer>(c => new UpdateDelayer(c.UIActionTracker()));
         Services.TryAddScoped<UIActionTracker, UIActionTracker>();
