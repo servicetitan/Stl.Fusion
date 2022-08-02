@@ -18,7 +18,7 @@ public class NestedCommandLogger : ICommandHandler<ICommand>
         InvalidationInfoProvider = invalidationInfoProvider;
     }
 
-    [CommandHandler(Priority = 11_000, IsFilter = true)]
+    [CommandHandler(Priority = FusionOperationsCommandHandlerPriority.NestedCommandLogger, IsFilter = true)]
     public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
     {
         var operation = context.OuterContext != null ? context.Items.Get<IOperation>() : null;

@@ -1,18 +1,10 @@
 namespace Stl.CommandR.Configuration;
 
-public abstract record CommandHandler
+public abstract record CommandHandler(
+    Type CommandType,
+    bool IsFilter = false,
+    double Priority = 0)
 {
-    public Type CommandType { get; }
-    public bool IsFilter { get; }
-    public double Priority { get; }
-
-    protected CommandHandler(Type commandType, bool isFilter = false, double priority = 0)
-    {
-        CommandType = commandType;
-        IsFilter = isFilter;
-        Priority = priority;
-    }
-
     public abstract object GetHandlerService(
         ICommand command, CommandContext context);
 

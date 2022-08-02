@@ -93,16 +93,16 @@ public readonly struct FusionBuilder
             typeof(CompletionProducer)));
 
         // Command completion handler performing invalidations
-        Services.TryAddSingleton<InvalidateOnCompletionCommandHandler.Options>();
-        if (!Services.HasService<InvalidateOnCompletionCommandHandler>()) {
-            Services.AddSingleton<InvalidateOnCompletionCommandHandler>();
-            commander.AddHandlers<InvalidateOnCompletionCommandHandler>();
+        Services.TryAddSingleton<PostCompletionInvalidator.Options>();
+        if (!Services.HasService<PostCompletionInvalidator>()) {
+            Services.AddSingleton<PostCompletionInvalidator>();
+            commander.AddHandlers<PostCompletionInvalidator>();
         }
 
-        // Catch-all completion handler
-        if (!Services.HasService<CatchAllCompletionHandler>()) {
-            Services.AddSingleton<CatchAllCompletionHandler>();
-            commander.AddHandlers<CatchAllCompletionHandler>();
+        // Completion terminator
+        if (!Services.HasService<CompletionTerminator>()) {
+            Services.AddSingleton<CompletionTerminator>();
+            commander.AddHandlers<CompletionTerminator>();
         }
 
         // Core multitenancy services

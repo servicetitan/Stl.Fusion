@@ -1,8 +1,9 @@
 using System.Diagnostics;
+using Stl.CommandR.Internal;
 
 namespace Stl.CommandR.Diagnostics;
 
-public class TracingCommandHandler : ICommandHandler<ICommand>
+public class CommandTracer : ICommandHandler<ICommand>
 {
     private ActivitySource? _activitySource;
 
@@ -13,15 +14,15 @@ public class TracingCommandHandler : ICommandHandler<ICommand>
         init => _activitySource = value;
     }
 
-    public TracingCommandHandler(
+    public CommandTracer(
         IServiceProvider services,
-        ILogger<TracingCommandHandler>? log = null)
+        ILogger<CommandTracer>? log = null)
     {
-        Log = log ?? NullLogger<TracingCommandHandler>.Instance;
+        Log = log ?? NullLogger<CommandTracer>.Instance;
         Services = services;
     }
 
-    [CommandHandler(Priority = 998_000_000, IsFilter = true)]
+    [CommandHandler(Priority = CommanderCommandHandlerPriority.CommandTracer, IsFilter = true)]
     public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
     {
         using var activity = StartActivity(command, context);

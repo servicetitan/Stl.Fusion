@@ -47,10 +47,10 @@ public readonly struct CommanderBuilder
         // Default handlers
         Services.AddSingleton<PreparedCommandHandler>();
         AddHandlers<PreparedCommandHandler>();
-        Services.AddSingleton<TracingCommandHandler>();
-        AddHandlers<TracingCommandHandler>();
-        Services.AddSingleton<LocalCommandHandler>();
-        AddHandlers<LocalCommandHandler>();
+        Services.AddSingleton<CommandTracer>();
+        AddHandlers<CommandTracer>();
+        Services.AddSingleton<LocalCommandRunner>();
+        AddHandlers<LocalCommandRunner>();
 
         configure?.Invoke(this);
     }

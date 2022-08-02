@@ -5,9 +5,9 @@ namespace Stl.Fusion.Client.Internal;
 /// <summary>
 /// This handler just makes "TypeError: Failed to fetch" errors more descriptive.
 /// </summary>
-public class BackendUnreachableCommandHandler : ICommandHandler<ICommand>
+public class BackendUnreachableDetector : ICommandHandler<ICommand>
 {
-    [CommandHandler(Priority = 999_000_000, IsFilter = true)]
+    [CommandHandler(Priority = FusionClientCommandHandlerPriority.BackendUnreachableDetector, IsFilter = true)]
     public async Task OnCommand(
         ICommand command, CommandContext context,
         CancellationToken cancellationToken)

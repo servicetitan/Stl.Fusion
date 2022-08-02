@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 namespace Stl.Fusion.Operations.Internal;
 
-public class InvalidateOnCompletionCommandHandler : ICommandHandler<ICompletion>
+public class PostCompletionInvalidator : ICommandHandler<ICompletion>
 {
     public record Options
     {
@@ -15,19 +15,19 @@ public class InvalidateOnCompletionCommandHandler : ICommandHandler<ICompletion>
     protected ILogger Log { get; }
     protected bool IsLoggingEnabled { get; }
 
-    public InvalidateOnCompletionCommandHandler(Options settings,
+    public PostCompletionInvalidator(Options settings,
         InvalidationInfoProvider invalidationInfoProvider,
-        ILogger<InvalidateOnCompletionCommandHandler>? log = null)
+        ILogger<PostCompletionInvalidator>? log = null)
     {
         Settings = settings;
-        Log = log ?? NullLogger<InvalidateOnCompletionCommandHandler>.Instance;
+        Log = log ?? NullLogger<PostCompletionInvalidator>.Instance;
         IsLoggingEnabled = Log.IsLogging(settings.LogLevel);
 
         ActivitySource = GetType().GetActivitySource();
         InvalidationInfoProvider = invalidationInfoProvider;
     }
 
-    [CommandHandler(Priority = 100, IsFilter = true)]
+    [CommandHandler(Priority = FusionOperationsCommandHandlerPriority.PostCompletionInvalidator, IsFilter = true)]
     public async Task OnCommand(ICompletion command, CommandContext context, CancellationToken cancellationToken)
     {
         var originalCommand = command.UntypedCommand;
@@ -47,7 +47,7 @@ public class InvalidateOnCompletionCommandHandler : ICommandHandler<ICompletion>
             using var activity = StartActivity(originalCommand);
             var finalHandler = context.ExecutionState.FindFinalHandler();
             var useOriginalCommandHandler = finalHandler == null
-                || finalHandler.GetHandlerService(command, context) is CatchAllCompletionHandler;
+                || finalHandler.GetHandlerService(command, context) is CompletionTerminator;
             if (useOriginalCommandHandler) {
                 if (InvalidationInfoProvider.IsReplicaServiceCommand(originalCommand)) {
                     if (IsLoggingEnabled)

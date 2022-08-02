@@ -21,7 +21,7 @@ public class TransientOperationScopeProvider : ICommandHandler<ICommand>
         OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
     }
 
-    [CommandHandler(Priority = 10_000, IsFilter = true)]
+    [CommandHandler(Priority = FusionOperationsCommandHandlerPriority.TransientOperationScopeProvider, IsFilter = true)]
     public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
     {
         var operationRequired =

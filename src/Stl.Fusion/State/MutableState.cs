@@ -35,8 +35,6 @@ public class MutableState<T> : State<T>, IMutableState<T>
         set => Set(Result.Value((T) value!));
     }
 
-    public MutableState(IServiceProvider services)
-        : this(new(), services) { }
     public MutableState(
         Options options,
         IServiceProvider services,

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.Operations.Reprocessing;
 
 namespace Stl.Fusion.EntityFramework.Operations;
@@ -16,7 +17,7 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
     public DbOperationScopeProvider(IServiceProvider services) : base(services) 
         => OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
 
-    [CommandHandler(Priority = 1000, IsFilter = true)]
+    [CommandHandler(Priority = FusionEntityFrameworkCommandHandlerPriority.DbOperationScopeProvider, IsFilter = true)]
     public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
     {
         var operationRequired =

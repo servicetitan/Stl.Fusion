@@ -1,8 +1,8 @@
 namespace Stl.Fusion.Operations.Internal;
 
-public class CatchAllCompletionHandler : ICommandHandler<ICompletion>
+public class CompletionTerminator : ICommandHandler<ICompletion>
 {
-    [CommandHandler(Priority = -1000_000_000, IsFilter = false)]
+    [CommandHandler(Priority = FusionOperationsCommandHandlerPriority.CompletionTerminator, IsFilter = false)]
     public Task OnCommand(ICompletion command, CommandContext context, CancellationToken cancellationToken)
         => Task.CompletedTask;
 }
