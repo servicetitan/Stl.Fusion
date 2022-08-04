@@ -1,3 +1,5 @@
+using Stl.Fusion.Internal;
+
 namespace Stl.Fusion;
 
 public interface IStateSnapshot
@@ -63,8 +65,8 @@ public class StateSnapshot<T> : IStateSnapshot<T>
             RetryCount = 0;
         }
         else {
-            var transientErrorDetector = State.Services.GetRequiredService<ITransientErrorDetector<IComputed>>();
-            if (!transientErrorDetector.IsTransient(error)) {
+            var computedImpl = (IComputedImpl) computed;
+            if (!computedImpl.IsTransientError(error)) {
                 // Non-transient error
                 LatestNonErrorComputed = prevSnapshot.LatestNonErrorComputed;
                 UpdateCount = 1 + prevSnapshot.UpdateCount;

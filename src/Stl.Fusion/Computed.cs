@@ -352,9 +352,18 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
     protected void SetStateUnsafe(ConsistencyState newState)
         => _state = (int) newState;
 
+    bool IComputedImpl.IsTransientError(Exception error) => IsTransientError(error);
     protected bool IsTransientError(Exception error)
     {
-        var transientErrorDetector = Input.Function.Services.GetRequiredService<ITransientErrorDetector<IComputed>>();
+        ITransientErrorDetector? transientErrorDetector = null;
+        try {
+            var services = Input.Function.Services;
+            transientErrorDetector = services.GetService<ITransientErrorDetector<IComputed>>();
+        }
+        catch (ObjectDisposedException) {
+            // We want to handle IServiceProvider disposal gracefully
+        }
+        transientErrorDetector ??= TransientErrorDetector.DefaultPreferTransient;
         return transientErrorDetector.IsTransient(error);
     }
 }

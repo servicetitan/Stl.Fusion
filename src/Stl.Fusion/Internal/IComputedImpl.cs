@@ -8,4 +8,6 @@ public interface IComputedImpl : IComputed
 
     void RenewTimeouts();
     void CancelTimeouts();
+
+    bool IsTransientError(Exception error);
 }
