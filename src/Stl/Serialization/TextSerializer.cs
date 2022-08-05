@@ -18,6 +18,8 @@ public static class TextSerializer<T>
     public static ITextSerializer<T> None { get; } = NoneTextSerializer<T>.Instance;
     public static ITextSerializer<T> Null { get; } = NullTextSerializer<T>.Instance;
 
+    public static ITextSerializer<T> New(Func<string, T> reader, Func<T, string> writer)
+        => new FuncTextSerializer<T>(reader, writer);
     public static ITextSerializer<T> NewAsymmetric(ITextSerializer<T> reader, ITextSerializer<T> writer, bool? preferStringApi = null)
         => new AsymmetricTextSerializer<T>(reader, writer, preferStringApi);
 }

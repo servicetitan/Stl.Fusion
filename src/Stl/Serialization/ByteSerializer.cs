@@ -18,6 +18,8 @@ public static class ByteSerializer<T>
     public static IByteSerializer<T> None { get; } = NoneByteSerializer<T>.Instance;
     public static IByteSerializer<T> Null { get; } = NullByteSerializer<T>.Instance;
 
+    public static IByteSerializer<T> New(Func<byte[], T> reader, Func<T, byte[]> writer)
+        => new FuncByteSerializer<T>(reader, writer);
     public static IByteSerializer<T> NewAsymmetric(IByteSerializer<T> reader, IByteSerializer<T> writer)
         => new AsymmetricByteSerializer<T>(reader, writer);
 }
