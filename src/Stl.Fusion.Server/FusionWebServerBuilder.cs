@@ -13,7 +13,7 @@ public readonly struct FusionWebServerBuilder
     public IServiceCollection Services => Fusion.Services;
 
     internal FusionWebServerBuilder(
-        FusionBuilder fusion, 
+        FusionBuilder fusion,
         Action<FusionWebServerBuilder>? configure)
     {
         Fusion = fusion;
@@ -34,6 +34,7 @@ public readonly struct FusionWebServerBuilder
                 new SimpleModelBinderProvider<Moment, MomentModelBinder>(),
                 new SimpleModelBinderProvider<Symbol, SymbolModelBinder>(),
                 new SimpleModelBinderProvider<Session, SessionModelBinder>(),
+                new SimpleModelBinderProvider<TypeRef, TypeRefModelBinder>(),
                 new PageRefModelBinderProvider(),
                 new RangeModelBinderProvider(),
             };

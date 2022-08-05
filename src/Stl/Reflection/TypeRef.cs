@@ -13,14 +13,14 @@ public readonly struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRef>, ISer
 
     [DataMember(Order = 0)]
     public Symbol AssemblyQualifiedName { get; }
-    public string Name => AssemblyQualifiedName.Value.Substring(0, AssemblyQualifiedName.Value.IndexOf(','));
+    public string TypeName => AssemblyQualifiedName.Value.Substring(0, AssemblyQualifiedName.Value.IndexOf(','));
 
     public TypeRef(Type type) : this(type.AssemblyQualifiedName!) { }
     [JsonConstructor, Newtonsoft.Json.JsonConstructor]
     public TypeRef(Symbol assemblyQualifiedName) => AssemblyQualifiedName = assemblyQualifiedName;
     public TypeRef(string assemblyQualifiedName) => AssemblyQualifiedName = assemblyQualifiedName;
 
-    public override string ToString() => $"{Name}";
+    public override string ToString() => AssemblyQualifiedName.Value;
 
     public Type? TryResolve() => Resolve(AssemblyQualifiedName);
     public Type Resolve() => Resolve(AssemblyQualifiedName)
