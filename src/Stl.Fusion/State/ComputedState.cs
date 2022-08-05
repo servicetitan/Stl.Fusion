@@ -25,8 +25,9 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
     private volatile IUpdateDelayer _updateDelayer;
     private volatile Task? _whenDisposed;
     private readonly CancellationTokenSource _disposeTokenSource;
+    private ILogger? _log;
 
-    protected ILogger Log { get; }
+    protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     public IUpdateDelayer UpdateDelayer {
         get => _updateDelayer;
@@ -40,7 +41,6 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
     protected ComputedState(Options options, IServiceProvider services, bool initialize = true)
         : base(options, services, false)
     {
-        Log = Services.GetService<ILoggerFactory>()?.CreateLogger(GetType()) ?? NullLogger.Instance;
         _disposeTokenSource = new CancellationTokenSource();
         DisposeToken = _disposeTokenSource.Token;
         _updateDelayer = options.UpdateDelayer ?? Services.GetRequiredService<IUpdateDelayer>();
@@ -56,12 +56,8 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
 
         // We must suppress execution context flow here, because
         // the Update is ~ a worker-style task
-        if (ExecutionContext.IsFlowSuppressed())
-            UpdateCycleTask = Task.Run(UpdateCycle, CancellationToken.None);
-        else {
-            using var _ = ExecutionContext.SuppressFlow();
-            UpdateCycleTask = Task.Run(UpdateCycle, CancellationToken.None);
-        }
+        using var _ = ExecutionContextExt.SuppressFlow();
+        UpdateCycleTask = Task.Run(UpdateCycle, CancellationToken.None);
     }
 
     // ~ComputedState() => Dispose();
