@@ -22,8 +22,8 @@ public readonly struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRef>, ISer
 
     public override string ToString() => $"{Name}";
 
-    public Type? TryResolve() => Type.GetType(AssemblyQualifiedName, false, false);
-    public Type Resolve() => Type.GetType(AssemblyQualifiedName, true, false)!;
+    public Type? TryResolve() => Resolve(AssemblyQualifiedName);
+    public Type Resolve() => Resolve(AssemblyQualifiedName) ?? throw Errors.TypeNotFound(AssemblyQualifiedName);
 
     // Conversion
 
@@ -42,12 +42,37 @@ public readonly struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRef>, ISer
     public static bool operator ==(TypeRef left, TypeRef right) => left.Equals(right);
     public static bool operator !=(TypeRef left, TypeRef right) => !left.Equals(right);
 
+    // Private methods
+
+    public static Type? Resolve(string assemblyQualifiedName)
+    {
+        var type = Type.GetType(assemblyQualifiedName, false, false);
+        if (type != null)
+            return type;
+
+        var parts = assemblyQualifiedName.Split('+');
+        if (parts.Length < 2)
+            return null;
+
+        foreach (var part in parts) {
+            if (type == null) {
+                type = Type.GetType(assemblyQualifiedName, false, false);
+                if (type == null)
+                    return null;
+            }
+            else {
+                type = type.GetNestedType(part);
+                if (type == null)
+                    return null;
+            }
+        }
+        return type;
+    }
+
     // Serialization
 
     private TypeRef(SerializationInfo info, StreamingContext context)
-    {
-        AssemblyQualifiedName = info.GetString(nameof(AssemblyQualifiedName)) ?? "";
-    }
+        => AssemblyQualifiedName = info.GetString(nameof(AssemblyQualifiedName)) ?? "";
 
     void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
         => info.AddValue(nameof(AssemblyQualifiedName), AssemblyQualifiedName);
