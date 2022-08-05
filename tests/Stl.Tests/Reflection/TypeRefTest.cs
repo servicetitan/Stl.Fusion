@@ -41,6 +41,15 @@ public class TypeRefTest : TestBase
         r.Resolve().Should().Be(typeof(StaticType.Nested));
     }
 
+    [Fact]
+    public void TrimAssemblyVersionTest()
+    {
+        var r = (TypeRef) typeof(TypeRefTest);
+        var r1 = r.TrimAssemblyVersion();
+        r1.AssemblyQualifiedName.Should().Be("Stl.Tests.Reflection.TypeRefTest, Stl.Tests");
+        r1.Resolve().Should().Be(typeof(TypeRefTest));
+    }
+
     public class Nested
     {
         public class SubNested { }
