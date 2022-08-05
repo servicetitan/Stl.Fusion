@@ -33,6 +33,12 @@ public class TypeRefTest : TestBase
         r = new TypeRef("NoSuchAssembly.NoSuchType");
         r.TryResolve().Should().BeNull();
         Assert.ThrowsAny<KeyNotFoundException>(() => r.Resolve());
+
+        r = typeof(StaticType);
+        r.Resolve().Should().Be(typeof(StaticType));
+
+        r = typeof(StaticType.Nested);
+        r.Resolve().Should().Be(typeof(StaticType.Nested));
     }
 
     public class Nested
@@ -43,4 +49,9 @@ public class TypeRefTest : TestBase
     private class PrivateNested { }
     internal class InternalNested { }
     protected class ProtectedNested { }
+}
+
+public static class StaticType
+{
+    public class Nested { }
 }

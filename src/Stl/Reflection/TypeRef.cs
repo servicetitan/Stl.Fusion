@@ -23,7 +23,8 @@ public readonly struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRef>, ISer
     public override string ToString() => $"{Name}";
 
     public Type? TryResolve() => Resolve(AssemblyQualifiedName);
-    public Type Resolve() => Resolve(AssemblyQualifiedName) ?? throw Errors.TypeNotFound(AssemblyQualifiedName);
+    public Type Resolve() => Resolve(AssemblyQualifiedName)
+        ?? throw Errors.TypeNotFound(AssemblyQualifiedName);
 
     // Conversion
 
@@ -45,29 +46,7 @@ public readonly struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRef>, ISer
     // Private methods
 
     public static Type? Resolve(string assemblyQualifiedName)
-    {
-        var type = Type.GetType(assemblyQualifiedName, false, false);
-        if (type != null)
-            return type;
-
-        var parts = assemblyQualifiedName.Split('+');
-        if (parts.Length < 2)
-            return null;
-
-        foreach (var part in parts) {
-            if (type == null) {
-                type = Type.GetType(assemblyQualifiedName, false, false);
-                if (type == null)
-                    return null;
-            }
-            else {
-                type = type.GetNestedType(part);
-                if (type == null)
-                    return null;
-            }
-        }
-        return type;
-    }
+        => Type.GetType(assemblyQualifiedName, false, false);
 
     // Serialization
 
