@@ -87,9 +87,9 @@ public readonly struct FusionRestEaseClientBuilder
     public FusionRestEaseClientBuilder AddClientService(Type serviceType, Type clientType, string? clientName = null)
     {
         if (!(serviceType.IsInterface && serviceType.IsVisible))
-            throw Internal.Errors.InterfaceTypeExpected(serviceType, true, nameof(serviceType));
+            throw Errors.InterfaceTypeExpected(serviceType, true, nameof(serviceType));
         if (!(clientType.IsInterface && clientType.IsVisible))
-            throw Internal.Errors.InterfaceTypeExpected(clientType, true, nameof(clientType));
+            throw Errors.InterfaceTypeExpected(clientType, true, nameof(clientType));
         clientName ??= clientType.FullName ?? "";
 
         object Factory(IServiceProvider c)
@@ -131,9 +131,9 @@ public readonly struct FusionRestEaseClientBuilder
         string? clientName = null)
     {
         if (!(serviceType.IsInterface && serviceType.IsVisible))
-            throw Internal.Errors.InterfaceTypeExpected(serviceType, true, nameof(serviceType));
+            throw Errors.InterfaceTypeExpected(serviceType, true, nameof(serviceType));
         if (!(clientType.IsInterface && clientType.IsVisible))
-            throw Internal.Errors.InterfaceTypeExpected(clientType, true, nameof(clientType));
+            throw Errors.InterfaceTypeExpected(clientType, true, nameof(clientType));
         clientName ??= clientType.FullName ?? "";
         if (Services.Any(d => d.ServiceType == serviceType))
             return this;

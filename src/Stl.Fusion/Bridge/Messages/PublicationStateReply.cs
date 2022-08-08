@@ -20,6 +20,8 @@ public class PublicationStateReply<T> : PublicationStateReply
         new();
     private static readonly MethodInfo NewInternalMethod =
         typeof(PublicationStateReply<T>).GetMethod(nameof(NewInternal), BindingFlags.Static | BindingFlags.NonPublic)!;
+    private static readonly bool IsNullable =
+        typeof(T).IsConstructedGenericType && typeof(T).GetGenericTypeDefinition() == typeof(Nullable<>);
 
     [IgnoreDataMember, JsonIgnore]
     public virtual Result<T>? Output => new Result<T>(default!, null);
@@ -28,12 +30,12 @@ public class PublicationStateReply<T> : PublicationStateReply
 
     public static PublicationStateReply<T> New(Result<T> output)
     {
-        var valueOrDefault = output.ValueOrDefault;
-        var resultType = valueOrDefault is null ? typeof(T) : valueOrDefault.GetType();
+        var tType = typeof(T);
+        var tActual = tType.IsValueType ? tType : output.ValueOrDefault?.GetType() ?? tType;
         return NewInstanceCache.GetOrAdd(
-            resultType,
-            tActual => {
-                var mNewInternal = NewInternalMethod.MakeGenericMethod(tActual);
+            tActual,
+            tActual1 => {
+                var mNewInternal = NewInternalMethod.MakeGenericMethod(tActual1);
                 var pOutput = Expression.Parameter(typeof(Result<T>));
                 var fnNewInternal = Expression.Lambda<Func<Result<T>, PublicationStateReply<T>>>(
                     Expression.Call(mNewInternal, pOutput),
@@ -43,12 +45,12 @@ public class PublicationStateReply<T> : PublicationStateReply
             }).Invoke(output);
     }
 
-    private static PublicationStateReply<T> NewInternal<TActual>(Result<T> output)
-        where TActual : T
-    => new PublicationStateReply<T,TActual>() {
-        Value = (TActual?) output.ValueOrDefault,
-        Error = output.Error!,
-    };
+    private static PublicationStateReply<T?> NewInternal<TActual>(Result<T> output)
+        where TActual : T?
+        => new PublicationStateReply<T?,TActual?>() {
+            Value = (TActual?) output.ValueOrDefault,
+            Error = output.Error!,
+        };
 }
 
 [DataContract]

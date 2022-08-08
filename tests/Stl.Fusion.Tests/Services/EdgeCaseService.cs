@@ -8,7 +8,7 @@ public class EdgeCaseService : IEdgeCaseService
     public EdgeCaseService(IStateFactory stateFactory)
         => SuffixState = stateFactory.NewMutable<string>();
 
-    public Task<string> GetSuffix(CancellationToken cancellationToken = default)
+    public virtual Task<string> GetSuffix(CancellationToken cancellationToken = default)
         => Task.FromResult(SuffixState.Value);
 
     public Task SetSuffix(string suffix, CancellationToken cancellationToken = default)
@@ -17,7 +17,7 @@ public class EdgeCaseService : IEdgeCaseService
         return Task.CompletedTask;
     }
 
-    public Task<long?> GetNullable(long source, CancellationToken cancellationToken = default) 
+    public virtual Task<long?> GetNullable(long source, CancellationToken cancellationToken = default)
         => Task.FromResult(source != 0 ? (long?) source : null);
 
     public virtual async Task<string> ThrowIfContainsError(string source, CancellationToken cancellationToken = default)

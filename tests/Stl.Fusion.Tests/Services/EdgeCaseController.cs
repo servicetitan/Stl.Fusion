@@ -15,7 +15,7 @@ public class EdgeCaseController : ControllerBase, IEdgeCaseService
 
     public EdgeCaseController(IEdgeCaseService service) => Service = service;
 
-    [HttpGet]
+    [HttpGet, Publish]
     public Task<string> GetSuffix(CancellationToken cancellationToken = default)
         => Service.GetSuffix(cancellationToken);
 
@@ -28,7 +28,7 @@ public class EdgeCaseController : ControllerBase, IEdgeCaseService
 #endif
         => Service.SetSuffix(suffix ?? "", cancellationToken);
 
-    [HttpGet]
+    [HttpGet, Publish]
     public Task<long?> GetNullable(long source, CancellationToken cancellationToken = default) 
         => Service.GetNullable(source, cancellationToken);
 

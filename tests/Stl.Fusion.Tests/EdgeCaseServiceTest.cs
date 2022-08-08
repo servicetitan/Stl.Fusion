@@ -26,16 +26,31 @@ public class EdgeCaseServiceTest : FusionTestBase
         await ActualTest(service);
     }
 
-    [Fact(Timeout = 30_000)]
+    [Fact(Timeout = 300_000)]
     public async Task TestNullable()
     {
         await using var serving = await WebHost.Serve();
         var client = ClientServices.GetRequiredService<IEdgeCaseClient>();
         var tfv = ClientServices.TypeViewFactory<IEdgeCaseService>();
         var service = tfv.CreateView(client);
+        var actualService = WebServices.GetRequiredService<IEdgeCaseService>();
 
-        (await service.GetNullable(0, CancellationToken.None)).Should().Be(null);
-        (await service.GetNullable(1, CancellationToken.None)).Should().Be((long?) 1);
+        (await service.GetNullable(1)).Should().Be((long?) 1);
+        using (Computed.Invalidate())
+            _ = actualService.GetNullable(1);
+        await Delay(0.2);
+        (await service.GetNullable(1)).Should().Be((long?) 1);
+
+        var c = await Computed.Capture(_ => service.GetNullable(0));
+        c.Value.Should().Be(null);
+        using (Computed.Invalidate())
+            _ = actualService.GetNullable(0);
+        await Delay(0.2);
+        c.IsConsistent().Should().BeFalse();
+        using var cts = new CancellationTokenSource(1000);
+        var c1 = await c.Update(cts.Token);
+        c1.Version.Should().NotBe(c.Version);
+        c1.Value.Should().Be(null);
     }
 
     private async Task ActualTest(IEdgeCaseService service)
