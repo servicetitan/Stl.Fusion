@@ -7,13 +7,16 @@ namespace Stl.Fusion.Tests.Services;
 [BasePath("EdgeCase")]
 public interface IEdgeCaseClient
 {
-    [Get("GetSuffix")]
+    [Get(nameof(GetSuffix))]
     Task<string> GetSuffix(CancellationToken cancellationToken = default);
-    [Post("SetSuffix")]
+    [Post(nameof(SetSuffix))]
     Task SetSuffix(string suffix, CancellationToken cancellationToken = default);
 
-    [Get("ThrowIfContainsError"), ComputeMethod(MinCacheDuration = 10)]
+    [Get(nameof(GetNullable))]
+    Task<long?> GetNullable(long source, CancellationToken cancellationToken = default);
+
+    [Get(nameof(ThrowIfContainsError)), ComputeMethod(MinCacheDuration = 10)]
     Task<string> ThrowIfContainsError(string source, CancellationToken cancellationToken = default);
-    [Get("ThrowIfContainsErrorNonCompute")]
+    [Get(nameof(ThrowIfContainsErrorNonCompute))]
     Task<string> ThrowIfContainsErrorNonCompute(string source, CancellationToken cancellationToken = default);
 }

@@ -17,6 +17,9 @@ public class EdgeCaseService : IEdgeCaseService
         return Task.CompletedTask;
     }
 
+    public Task<long?> GetNullable(long source, CancellationToken cancellationToken = default) 
+        => Task.FromResult(source != 0 ? (long?) source : null);
+
     public virtual async Task<string> ThrowIfContainsError(string source, CancellationToken cancellationToken = default)
     {
         await Task.Delay(100, cancellationToken);

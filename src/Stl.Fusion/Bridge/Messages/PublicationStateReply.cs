@@ -27,8 +27,11 @@ public class PublicationStateReply<T> : PublicationStateReply
     public override Type GetResultType() => typeof(T);
 
     public static PublicationStateReply<T> New(Result<T> output)
-        => NewInstanceCache.GetOrAdd(
-            output.ValueOrDefault?.GetType() ?? typeof(T),
+    {
+        var valueOrDefault = output.ValueOrDefault;
+        var resultType = valueOrDefault is null ? typeof(T) : valueOrDefault.GetType();
+        return NewInstanceCache.GetOrAdd(
+            resultType,
             tActual => {
                 var mNewInternal = NewInternalMethod.MakeGenericMethod(tActual);
                 var pOutput = Expression.Parameter(typeof(Result<T>));
@@ -38,6 +41,7 @@ public class PublicationStateReply<T> : PublicationStateReply
                 ).Compile();
                 return fnNewInternal;
             }).Invoke(output);
+    }
 
     private static PublicationStateReply<T> NewInternal<TActual>(Result<T> output)
         where TActual : T

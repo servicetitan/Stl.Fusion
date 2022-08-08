@@ -28,6 +28,10 @@ public class EdgeCaseController : ControllerBase, IEdgeCaseService
 #endif
         => Service.SetSuffix(suffix ?? "", cancellationToken);
 
+    [HttpGet]
+    public Task<long?> GetNullable(long source, CancellationToken cancellationToken = default) 
+        => Service.GetNullable(source, cancellationToken);
+
     [HttpGet, Publish]
     public Task<string> ThrowIfContainsError(string? source, CancellationToken cancellationToken = default)
         => Service.ThrowIfContainsError(source ?? "", cancellationToken);
