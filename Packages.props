@@ -133,7 +133,7 @@
     <PackageReference Update="FluentAssertions" Version="6.7.*" />
     <PackageReference Update="ILogger.Moq" Version="1.1.*" />
     <PackageReference Update="Microsoft.AspNetCore.Mvc.Testing" Version="$(AspNetCoreVersion)" />
-    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.2.0" />
+    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.3.0" />
     <PackageReference Update="Moq" Version="4.18.*" />
     <PackageReference Update="xunit" Version="2.4.2" />
     <PackageReference Update="Xunit.DependencyInjection.Logging" Version="8.0.*" />
