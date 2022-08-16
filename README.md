@@ -295,7 +295,7 @@ You'll be surprised, but it's as simple as it could be:
 `"N [seconds/minutes/...] ago"` string. It is used in a few samples,
 including [Board Games].
 The code above is *almost identical* to its 
-[actual code](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/templates/Blazorise/UI/Shared/MomentsAgoBadge.razor), 
+[actual code](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/templates/TodoApp/UI/Shared/MomentsAgoBadge.razor), 
 which is a bit more complex due to `null` handling.
 
 You see it uses `IFusionTime` - one of built-in compute services that 
