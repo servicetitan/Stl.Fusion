@@ -23,7 +23,7 @@ public class FusionRequestQueryParamSerializer : RequestQueryParamSerializer
             if (value == null)
                 yield break;
 
-            foreach (var p in GetPropertyMap(value, name)) {
+            foreach (var p in BuildPropertyMap(value, name)) {
                 var sValue = p.Value switch {
                     null => "",
                     DateTime dateTime => dateTime.ToString(info.Format ?? "o", CultureInfo.InvariantCulture),
@@ -33,7 +33,7 @@ public class FusionRequestQueryParamSerializer : RequestQueryParamSerializer
             }
         }
 
-        private Dictionary<string, object?> GetPropertyMap(
+        private Dictionary<string, object?> BuildPropertyMap(
             object? source, string name, 
             Dictionary<string, object?>? map = null)
         {
@@ -46,12 +46,12 @@ public class FusionRequestQueryParamSerializer : RequestQueryParamSerializer
             else if (source is IEnumerable sequence) {
                 var i = 0;
                 foreach (var item in sequence)
-                    GetPropertyMap(item, $"{name}[{i++}]", map);
+                    BuildPropertyMap(item, $"{name}[{i++}]", map);
             }
             else {
                 var prefix = name.IsNullOrEmpty() ? "" : $"{name}.";
                 foreach (var p in source.GetType().GetProperties())
-                    GetPropertyMap(p.GetValue(source, null), $"{prefix}{p.Name}");
+                    BuildPropertyMap(p.GetValue(source, null), $"{prefix}{p.Name}", map);
             }
             return map;
         }
