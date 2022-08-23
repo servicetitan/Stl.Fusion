@@ -50,6 +50,7 @@ public class TypeRefTest : TestBase
         r1.Resolve().Should().Be(typeof(TypeRefTest));
     }
 
+#pragma warning disable RCS1102
     public class Nested
     {
         public class SubNested { }
@@ -58,6 +59,7 @@ public class TypeRefTest : TestBase
     private class PrivateNested { }
     internal class InternalNested { }
     protected class ProtectedNested { }
+#pragma warning restore RCS1102
 }
 
 public static class StaticType
