@@ -47,6 +47,7 @@ public readonly struct FusionRestEaseClientBuilder
         // ResponseDeserializer & RequestBodySerializer
         Services.TryAddTransient<ResponseDeserializer, FusionResponseDeserializer>();
         Services.TryAddTransient<RequestBodySerializer, FusionRequestBodySerializer>();
+        Services.TryAddTransient<RequestQueryParamSerializer, FusionRequestQueryParamSerializer>();
 
         // BackendUnreachableDetector - makes "TypeError: Failed to fetch" errors more descriptive
         var commander = Services.AddCommander();
@@ -101,6 +102,7 @@ public readonly struct FusionRestEaseClientBuilder
                 FormatProvider = CultureInfo.InvariantCulture,
                 RequestBodySerializer = c.GetRequiredService<RequestBodySerializer>(),
                 ResponseDeserializer = c.GetRequiredService<ResponseDeserializer>(),
+                RequestQueryParamSerializer = c.GetRequiredService<RequestQueryParamSerializer>()
             }.For(clientType);
 
             // 2. Create view mapping clientType to serviceType
