@@ -12,7 +12,7 @@ public class FusionRequestQueryParamSerializer : RequestQueryParamSerializer
 {
         public override IEnumerable<KeyValuePair<string, string?>> SerializeQueryParam<T>(
             string name, T value, RequestQueryParamSerializerInfo info)
-           => Serialize(name, value, info);
+            => Serialize(name, value, info);
 
         public override IEnumerable<KeyValuePair<string, string?>> SerializeQueryCollectionParam<T>(
             string name, IEnumerable<T> values, RequestQueryParamSerializerInfo info)
