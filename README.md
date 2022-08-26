@@ -304,7 +304,7 @@ the results of these methods are invalidated automatically;
 check out [`FusionTime` service](https://github.com/servicetitan/Stl.Fusion/blob/master/src/Stl.Fusion/Extensions/Internal/FusionTime.cs#L46) to see how it works.
 
 But what's important here is that `MomentsAgoBadge` is inherited from 
-[ComputedStateComponent<T>](https://github.com/servicetitan/Stl.Fusion/blob/master/src/Stl.Fusion.Blazor/ComputedStateComponent.cs) - 
+[ComputedStateComponent<T>](https://github.com/servicetitan/Stl.Fusion/blob/master/src/Stl.Fusion.Blazor/Components/ComputedStateComponent.cs) - 
 an abstract type which provides `ComputeState` method.
 As you might guess, this method is a [Compute Method] too,
 so captures its dependencies & its result gets invalidated once 
