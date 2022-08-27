@@ -22,7 +22,7 @@ public readonly struct FusionRestEaseClientBuilder
     public IServiceCollection Services => Fusion.Services;
 
     internal FusionRestEaseClientBuilder(
-        FusionBuilder fusion, 
+        FusionBuilder fusion,
         Action<FusionRestEaseClientBuilder>? configure)
     {
         Fusion = fusion;
@@ -77,6 +77,13 @@ public readonly struct FusionRestEaseClientBuilder
         return this;
     }
 
+    public static RestClient CreateRestClient(IServiceProvider c, HttpClient httpClient) => new RestClient(httpClient) {
+        FormatProvider = CultureInfo.InvariantCulture,
+        RequestBodySerializer = c.GetRequiredService<RequestBodySerializer>(),
+        ResponseDeserializer = c.GetRequiredService<ResponseDeserializer>(),
+        RequestQueryParamSerializer = c.GetRequiredService<RequestQueryParamSerializer>()
+    };
+
     // User-defined client-side services
 
     public FusionRestEaseClientBuilder AddClientService<TClient>(string? clientName = null)
@@ -98,12 +105,7 @@ public readonly struct FusionRestEaseClientBuilder
             // 1. Create REST client (of clientType)
             var httpClientFactory = c.GetRequiredService<IHttpClientFactory>();
             var httpClient = httpClientFactory.CreateClient(clientName);
-            var client = new RestClient(httpClient) {
-                FormatProvider = CultureInfo.InvariantCulture,
-                RequestBodySerializer = c.GetRequiredService<RequestBodySerializer>(),
-                ResponseDeserializer = c.GetRequiredService<ResponseDeserializer>(),
-                RequestQueryParamSerializer = c.GetRequiredService<RequestQueryParamSerializer>()
-            }.For(clientType);
+            var client = CreateRestClient(c, httpClient).For(clientType);
 
             // 2. Create view mapping clientType to serviceType
             if (clientType != serviceType)
@@ -152,11 +154,7 @@ public readonly struct FusionRestEaseClientBuilder
             // 2. Create REST client (of clientType)
             var httpClientFactory = c.GetRequiredService<IHttpClientFactory>();
             var httpClient = httpClientFactory.CreateClient(clientName);
-            var client = new RestClient(httpClient) {
-                FormatProvider = CultureInfo.InvariantCulture,
-                RequestBodySerializer = c.GetRequiredService<RequestBodySerializer>(),
-                ResponseDeserializer = c.GetRequiredService<ResponseDeserializer>()
-            }.For(clientType);
+            var client = CreateRestClient(c, httpClient).For(clientType);
 
             // 3. Create view mapping clientType to serviceType
             if (clientType != serviceType)

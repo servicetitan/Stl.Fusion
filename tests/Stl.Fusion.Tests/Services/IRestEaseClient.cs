@@ -1,16 +1,20 @@
 using RestEase;
 using Stl.Fusion.Client;
+using Stl.Fusion.Tests.UIModels;
 
 namespace Stl.Fusion.Tests.Services;
 
 [RegisterRestEaseReplicaService(Scope = ServiceScope.ClientServices)]
 [BasePath("RestEase")]
+[SerializationMethods(Query = QuerySerializationMethod.Serialized)]
 public interface IRestEaseClient
 {
     [Get("getFromQueryImplicit")]
     Task<string> GetFromQueryImplicit(string str, CancellationToken cancellationToken = default);
     [Get("getFromQuery")]
     Task<string> GetFromQuery(string str, CancellationToken cancellationToken = default);
+    [Get("getFromQueryComplex")]
+    Task<QueryParamModel> GetFromQueryComplex(QueryParamModel str, CancellationToken cancellationToken = default);
     [Get("getJsonString")]
     Task<JsonString> GetJsonString(string str, CancellationToken cancellationToken = default);
     [Get("getFromPath/{str}")]
