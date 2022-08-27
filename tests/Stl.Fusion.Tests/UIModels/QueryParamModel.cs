@@ -1,6 +1,6 @@
 namespace Stl.Fusion.Tests.UIModels;
 
-public class QueryParamModel
+public record QueryParamModel
 {
     public string? Name { get; set; }
     public string? Description { get; set; }
