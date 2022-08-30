@@ -62,6 +62,16 @@ public class RestEaseTest : FusionTestBase
         var jsonString = (await service.PostFromQuery("abcD"));
         jsonString.Value.Should().Be("abcD");
     }
+
+     [Fact]
+    public async Task GetFromQueryComplex()
+    {
+        await using var serving = await WebHost.Serve();
+        var service = ClientServices.GetRequiredService<IRestEaseClient>();
+        var model = new UIModels.QueryParamModel { Name = "alex", Description = "mercer" };
+        (await service.GetFromQueryComplex(model)).Should().Be(model);
+    }
+
     
     [Fact]
     public async Task PostFromPath()

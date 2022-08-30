@@ -1,5 +1,6 @@
 #if NETCOREAPP
 using Microsoft.AspNetCore.Mvc;
+using Stl.Fusion.Tests.UIModels;
 #else
 using System.Web.Http;
 using ControllerBase = System.Web.Http.ApiController;
@@ -22,6 +23,18 @@ public class RestEaseController : ControllerBase
 #else
     [HttpGet]
     public Task<string> GetFromQuery([FromUri]string str, CancellationToken cancellationToken)
+#endif
+    {
+        return Task.FromResult(str);
+    }
+
+
+    #if NETCOREAPP
+    [HttpGet]
+    public Task<QueryParamModel> GetFromQueryComplex([FromQuery] QueryParamModel str, CancellationToken cancellationToken)
+#else
+    [HttpGet]
+    public Task<Stl.Fusion.Tests.UIModels.QueryParamModel> GetFromQueryComplex ([FromUri] Stl.Fusion.Tests.UIModels.QueryParamModel str, CancellationToken cancellationToken)
 #endif
     {
         return Task.FromResult(str);
