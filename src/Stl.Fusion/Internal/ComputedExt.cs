@@ -105,7 +105,7 @@ public static class ComputedExt
     {
         if (computed == null)
             return default!;
-        if (CallOptions.Invalidate == (context.CallOptions & CallOptions.Invalidate))
+        if (CallOptions.GetExisting == (context.CallOptions & CallOptions.GetExisting))
             return default!;
         return computed.Value;
     }
@@ -115,7 +115,7 @@ public static class ComputedExt
     {
         if (computed == null)
             return TaskCache<T>.DefaultResultTask;
-        if (CallOptions.Invalidate == (context.CallOptions & CallOptions.Invalidate))
+        if (CallOptions.GetExisting == (context.CallOptions & CallOptions.GetExisting))
             return TaskCache<T>.DefaultResultTask;
         return computed.OutputAsTask;
     }
