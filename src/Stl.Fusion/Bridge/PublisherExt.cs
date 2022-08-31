@@ -16,7 +16,7 @@ public static class PublisherExt
         var computed = await Computed
             .Capture(producer, cancellationToken)
             .ConfigureAwait(false);
-        if (computed == null)
+        if (computed == null!)
             return null;
 
         var publication = publisher.Publish(computed);
@@ -40,7 +40,7 @@ public static class PublisherExt
         var computed = await Computed
             .Capture(producer, cancellationToken)
             .ConfigureAwait(false);
-        if (computed == null)
+        if (computed == null!)
             return null;
 
         var publication = (IPublication<T>) publisher.Publish(computed);
