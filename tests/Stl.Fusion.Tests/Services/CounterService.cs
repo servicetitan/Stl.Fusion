@@ -13,6 +13,8 @@ public class CounterService
     [ComputeMethod(MinCacheDuration = 0.3)]
     public virtual async Task<int> Get(string key, CancellationToken cancellationToken = default)
     {
+        if (key.EndsWith("wait"))
+            await Task.Delay(500).ConfigureAwait(false);
         var offset = await _offset.Use(cancellationToken).ConfigureAwait(false);
         return offset + (_counters.TryGetValue(key, out var value) ? value : 0);
     }
