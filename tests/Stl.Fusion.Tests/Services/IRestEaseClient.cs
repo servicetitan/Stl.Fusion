@@ -18,18 +18,18 @@ public interface IRestEaseClient
     [Get("getJsonString")]
     Task<JsonString> GetJsonString(string str, CancellationToken cancellationToken = default);
     [Get("getFromPath/{str}")]
-    Task<string> GetFromPath([Path]string str, CancellationToken cancellationToken = default);
+    Task<string> GetFromPath([Path] string str, CancellationToken cancellationToken = default);
 
     [Post("postFromQueryImplicit")]
     Task<JsonString> PostFromQueryImplicit(string str, CancellationToken cancellationToken = default);
     [Post("postFromQuery")]
     Task<JsonString> PostFromQuery(string str, CancellationToken cancellationToken = default);
     [Post("postFromPath/{str}")]
-    Task<JsonString> PostFromPath([Path]string str, CancellationToken cancellationToken = default);
+    Task<JsonString> PostFromPath([Path] string str, CancellationToken cancellationToken = default);
     [Post("postWithBody")]
-    Task<JsonString> PostWithBody([Body]StringWrapper str, CancellationToken cancellationToken = default);
+    Task<JsonString> PostWithBody([Body] StringWrapper str, CancellationToken cancellationToken = default);
     [Post("concatQueryAndPath/{b}")]
-    Task<JsonString> ConcatQueryAndPath(string a, [Path]string b, CancellationToken cancellationToken = default);
+    Task<JsonString> ConcatQueryAndPath(string a, [Path] string b, CancellationToken cancellationToken = default);
     [Post("concatPathAndBody/{a}")]
-    Task<JsonString> ConcatPathAndBody([Path]string a, [Body]string b, CancellationToken cancellationToken = default);
+    Task<JsonString> ConcatPathAndBody([Path] string a, [Body] string b, CancellationToken cancellationToken = default);
 }

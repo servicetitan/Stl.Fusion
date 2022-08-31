@@ -2,11 +2,11 @@ using Stl.Fusion.Tests.Services;
 
 namespace Stl.Fusion.Tests;
 
-// checks different request patterns with RestEase
+// Checks different request patterns with RestEase
 public class RestEaseTest : FusionTestBase
 {
     public RestEaseTest(ITestOutputHelper @out) : base(@out) { }
-    
+
     [Fact]
     public async Task GetFromQueryImplicit()
     {
@@ -15,7 +15,7 @@ public class RestEaseTest : FusionTestBase
 
         (await service.GetFromQueryImplicit("abcD")).Should().Be("abcD");
     }
-    
+
     [Fact]
     public async Task GetFromQuery()
     {
@@ -24,7 +24,7 @@ public class RestEaseTest : FusionTestBase
 
         (await service.GetFromQuery("abcD")).Should().Be("abcD");
     }
-    
+
     [Fact]
     public async Task GetJsonString()
     {
@@ -33,7 +33,7 @@ public class RestEaseTest : FusionTestBase
 
         (await service.GetJsonString("abcD")).Value.Should().Be("abcD");
     }
-    
+
     [Fact]
     public async Task GetFromPath()
     {
@@ -42,7 +42,7 @@ public class RestEaseTest : FusionTestBase
 
         (await service.GetFromPath("abcD")).Should().Be("abcD");
     }
-    
+
     [Fact]
     public async Task PostFromQueryImplicit()
     {
@@ -52,7 +52,7 @@ public class RestEaseTest : FusionTestBase
         var jsonString = (await service.PostFromQueryImplicit("abcD"));
         jsonString.Value.Should().Be("abcD");
     }
-    
+
     [Fact]
     public async Task PostFromQuery()
     {
@@ -63,16 +63,18 @@ public class RestEaseTest : FusionTestBase
         jsonString.Value.Should().Be("abcD");
     }
 
-     [Fact]
+    [Fact]
     public async Task GetFromQueryComplex()
     {
         await using var serving = await WebHost.Serve();
         var service = ClientServices.GetRequiredService<IRestEaseClient>();
+
         var model = new UIModels.QueryParamModel { Name = "alex", Description = "mercer" };
-        (await service.GetFromQueryComplex(model)).Should().Be(model);
+        var result = await service.GetFromQueryComplex(model);
+        result.Name.Should().Be(model.Name);
+        result.Description.Should().Be(model.Description);
     }
 
-    
     [Fact]
     public async Task PostFromPath()
     {
@@ -82,7 +84,7 @@ public class RestEaseTest : FusionTestBase
         var jsonString = (await service.PostFromPath("abcD"));
         jsonString.Value.Should().Be("abcD");
     }
-    
+
     [Fact]
     public async Task PostWithBody()
     {
@@ -92,7 +94,7 @@ public class RestEaseTest : FusionTestBase
         var jsonString = await service.PostWithBody(new StringWrapper("abcD"));
         jsonString.Value.Should().Be("abcD");
     }
-    
+
     [Fact]
     public async Task ConcatQueryAndPath()
     {
@@ -102,7 +104,7 @@ public class RestEaseTest : FusionTestBase
         var jsonString = (await service.ConcatQueryAndPath("ab", "cD"));
         jsonString.Value.Should().Be("abcD");
     }
-    
+
     [Fact]
     public async Task ConcatPathAndBody()
     {

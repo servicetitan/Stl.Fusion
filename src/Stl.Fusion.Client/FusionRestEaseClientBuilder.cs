@@ -77,12 +77,13 @@ public readonly struct FusionRestEaseClientBuilder
         return this;
     }
 
-    public static RestClient CreateRestClient(IServiceProvider c, HttpClient httpClient) => new RestClient(httpClient) {
-        FormatProvider = CultureInfo.InvariantCulture,
-        RequestBodySerializer = c.GetRequiredService<RequestBodySerializer>(),
-        ResponseDeserializer = c.GetRequiredService<ResponseDeserializer>(),
-        RequestQueryParamSerializer = c.GetRequiredService<RequestQueryParamSerializer>()
-    };
+    public static RestClient CreateRestClient(IServiceProvider c, HttpClient httpClient)
+        => new(httpClient) {
+            FormatProvider = CultureInfo.InvariantCulture,
+            RequestBodySerializer = c.GetRequiredService<RequestBodySerializer>(),
+            ResponseDeserializer = c.GetRequiredService<ResponseDeserializer>(),
+            RequestQueryParamSerializer = c.GetRequiredService<RequestQueryParamSerializer>(),
+        };
 
     // User-defined client-side services
 

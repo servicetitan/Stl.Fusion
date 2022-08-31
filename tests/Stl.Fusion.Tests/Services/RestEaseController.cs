@@ -12,10 +12,8 @@ namespace Stl.Fusion.Tests.Services;
 public class RestEaseController : ControllerBase
 {
     [HttpGet]
-    public Task<string> GetFromQueryImplicit(string str, CancellationToken cancellationToken)
-    {
-        return Task.FromResult(str);
-    }
+    public Task<string> GetFromQueryImplicit(string str, CancellationToken cancellationToken) 
+        => Task.FromResult(str);
 
 #if NETCOREAPP
     [HttpGet]
@@ -28,8 +26,7 @@ public class RestEaseController : ControllerBase
         return Task.FromResult(str);
     }
 
-
-    #if NETCOREAPP
+#if NETCOREAPP
     [HttpGet]
     public Task<QueryParamModel> GetFromQueryComplex([FromQuery] QueryParamModel str, CancellationToken cancellationToken)
 #else
@@ -85,7 +82,6 @@ public class RestEaseController : ControllerBase
     [Route("api/restease/postFromPath/{str}")]
 #endif
     public Task<JsonString> PostFromPath(string str, CancellationToken cancellationToken)
-
     {
         var jsonString = new JsonString(str);
         return Task.FromResult(jsonString);
