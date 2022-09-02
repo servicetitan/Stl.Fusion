@@ -50,7 +50,8 @@ public class DefaultParameterComparer : ParameterComparer
             || type == typeof(string)
             || type == typeof(DateTime)
             || type == typeof(Type)
-            || type == typeof(decimal);
+            || type == typeof(decimal)
+            || type.IsEnum; // NOTE(AY): Blazor's IsKnownImmutableType doesn't have this 
 }
 
 public class ByValueParameterComparer : ParameterComparer
