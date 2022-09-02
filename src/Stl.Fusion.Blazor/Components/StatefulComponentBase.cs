@@ -29,7 +29,7 @@ public abstract class StatefulComponentBase : ComponentBase, IAsyncDisposable, I
 
     public virtual ValueTask DisposeAsync()
     {
-        UntypedState.RemoveEventHandler(StateEventKind.All, StateChanged);
+        UntypedState?.RemoveEventHandler(StateEventKind.All, StateChanged);
         if (OwnsState && UntypedState is IDisposable d)
             d.Dispose();
         return ValueTaskExt.CompletedTask;
