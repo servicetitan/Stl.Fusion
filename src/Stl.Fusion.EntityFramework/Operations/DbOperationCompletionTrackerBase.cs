@@ -91,8 +91,8 @@ public abstract class DbOperationCompletionTrackerBase<TDbContext, TOptions>
         var tenantWatchers = TenantWatchers;
         if (tenantWatchers == null)
             return TaskExt.NeverEndingTask;
-        var tenantWatcher = tenantWatchers.GetOrAdd(tenantId, 
-            static (tenantId1, self) => self.CreateTenantWatcher(tenantId1), 
+        var tenantWatcher = tenantWatchers.GetOrAdd(tenantId,
+            static (tenantId1, self) => self.CreateTenantWatcher(tenantId1),
             this);
         return tenantWatcher.WaitForChanges(cancellationToken);
     }
