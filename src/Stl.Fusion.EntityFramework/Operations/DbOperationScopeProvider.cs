@@ -20,11 +20,11 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
     [CommandHandler(Priority = FusionEntityFrameworkCommandHandlerPriority.DbOperationScopeProvider, IsFilter = true)]
     public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
     {
-        var operationRequired =
-            context.OuterContext == null // Should be a top-level command
-            && !(command is IMetaCommand) // No operations for meta commands
+        var isOperationRequired =
+            context.IsOutermost // Should be a top-level command
+            && command is not IMetaCommand // No operations for meta commands
             && !Computed.IsInvalidating();
-        if (!operationRequired) {
+        if (!isOperationRequired) {
             await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
             return;
         }

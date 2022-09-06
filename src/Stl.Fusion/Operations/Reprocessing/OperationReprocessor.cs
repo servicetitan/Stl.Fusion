@@ -94,11 +94,11 @@ public class OperationReprocessor : IOperationReprocessor
     [CommandHandler(Priority = FusionOperationsCommandHandlerPriority.OperationReprocessor, IsFilter = true)]
     public virtual async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
     {
-        var reprocessingAllowed =
-            context.OuterContext == null // Should be a top-level command
-            && !(command is IMetaCommand) // No reprocessing for meta commands
+        var isReprocessingAllowed =
+            context.IsOutermost // Should be a top-level command
+            && command is not IMetaCommand // No reprocessing for meta commands
             && !Computed.IsInvalidating();
-        if (!reprocessingAllowed) {
+        if (!isReprocessingAllowed) {
             await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
             return;
         }

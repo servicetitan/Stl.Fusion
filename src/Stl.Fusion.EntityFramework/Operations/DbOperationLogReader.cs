@@ -56,7 +56,7 @@ public class DbOperationLogReader<TDbContext> : DbTenantWorkerBase<TDbContext>
                 // prior to its invalidation logic completion.
                 tasks[i] = isLocal
                     ? Task.CompletedTask // Skips local operation!
-                    : OperationCompletionNotifier.NotifyCompleted(operation);
+                    : OperationCompletionNotifier.NotifyCompleted(operation, null);
                 var commitTime = operation.CommitTime.ToMoment();
                 if (maxKnownCommitTime < commitTime)
                     maxKnownCommitTime = commitTime;

@@ -24,11 +24,11 @@ public class TransientOperationScopeProvider : ICommandHandler<ICommand>
     [CommandHandler(Priority = FusionOperationsCommandHandlerPriority.TransientOperationScopeProvider, IsFilter = true)]
     public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
     {
-        var operationRequired =
-            context.OuterContext == null // Should be a top-level command
-            && !(command is IMetaCommand) // No operations for meta commands
+        var isOperationRequired =
+            context.IsOutermost // Should be a top-level command
+            && command is not IMetaCommand // No operations for meta commands
             && !Computed.IsInvalidating();
-        if (!operationRequired) {
+        if (!isOperationRequired) {
             await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
             return;
         }
@@ -61,6 +61,6 @@ public class TransientOperationScopeProvider : ICommandHandler<ICommand>
         // Since this is the outermost scope handler, it's reasonable to
         // call OperationCompletionNotifier.NotifyCompleted from it
         var actualOperation = context.Items.GetOrDefault<IOperation>(operation);
-        await OperationCompletionNotifier.NotifyCompleted(actualOperation).ConfigureAwait(false);
+        await OperationCompletionNotifier.NotifyCompleted(actualOperation, context).ConfigureAwait(false);
     }
 }

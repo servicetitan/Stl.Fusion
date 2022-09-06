@@ -3,7 +3,7 @@ namespace Stl.Fusion.Operations;
 public interface IOperationCompletionNotifier
 {
     bool IsReady();
-    Task<bool> NotifyCompleted(IOperation operation);
+    Task<bool> NotifyCompleted(IOperation operation, CommandContext? commandContext);
 }
 
 public class OperationCompletionNotifier : IOperationCompletionNotifier
@@ -36,10 +36,10 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
         OperationCompletionListeners = Services.GetServices<IOperationCompletionListener>().ToArray();
     }
 
-    public bool IsReady() 
+    public bool IsReady()
         => OperationCompletionListeners.All(x => x.IsReady());
 
-    public Task<bool> NotifyCompleted(IOperation operation)
+    public Task<bool> NotifyCompleted(IOperation operation, CommandContext? commandContext)
     {
         var now = Clock.Now;
         var minOperationStartTime = now - Settings.MaxKnownOperationAge;
@@ -67,11 +67,22 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
 
         using var _ = ExecutionContextExt.SuppressFlow();
         return Task.Run(async () => {
+            // An important assertion
+            var isLocal = commandContext != null;
+            var isFromLocalAgent = StringComparer.Ordinal.Equals(operation.AgentId, AgentInfo.Id.Value);
+            if (isLocal != isFromLocalAgent) {
+                if (isFromLocalAgent)
+                    Log.LogError("Assertion failed: operation w/o CommandContext originates from local agent");
+                else
+                    Log.LogError("Assertion failed: operation with CommandContext originates from another agent");
+            }
+            
+            // Notification
             var tasks = new Task[OperationCompletionListeners.Length];
             for (var i = 0; i < OperationCompletionListeners.Length; i++) {
                 var handler = OperationCompletionListeners[i];
                 try {
-                    tasks[i] = handler.OnOperationCompleted(operation);
+                    tasks[i] = handler.OnOperationCompleted(operation, commandContext);
                 }
                 catch (Exception e) {
                     Log.LogError(e, "Error in operation completion handler of type '{HandlerType}'",

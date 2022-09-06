@@ -9,7 +9,7 @@ public abstract class DbOperationCompletionNotifierBase<TDbContext, TOptions> : 
     where TOptions : DbOperationCompletionTrackingOptions, new()
 {
     private volatile Task? _disposeTask = null;
-    
+
     protected TOptions Options { get; init; }
     protected AgentInfo AgentInfo { get; }
     protected ConcurrentDictionary<Task, Unit> NotifyTasks { get; }
@@ -55,23 +55,19 @@ public abstract class DbOperationCompletionNotifierBase<TDbContext, TOptions> : 
         await Task.WhenAll(NotifyTasks.Keys).ConfigureAwait(false);
     }
 
-    public bool IsReady() 
+    public bool IsReady()
         => WhenDisposed == null;
 
-    public Task OnOperationCompleted(IOperation operation)
+    public Task OnOperationCompleted(IOperation operation, CommandContext? commandContext)
     {
-        if (!StringComparer.Ordinal.Equals(operation.AgentId, AgentInfo.Id.Value)) // Only local commands require notification
-            return Task.CompletedTask;
-        
-        var commandContext = CommandContext.Current;
-        var tenant = Tenant.Default;
-        if (commandContext != null) { // It's a command
-            var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>();
-            if (operationScope == null || !operationScope.IsUsed) // But it didn't change anything related to TDbContext
-                return Task.CompletedTask;
-            tenant = operationScope.Tenant;
-        }
-        
+        if (commandContext == null)
+            return Task.CompletedTask; // Not a local command
+
+        var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>();
+        if (operationScope is not { IsConfirmed: true })
+            return Task.CompletedTask; // Nothing is committed to TDbContext
+
+        var tenant = operationScope.Tenant;
         var notifyChain = new AsyncChain($"Notify({tenant.Id})", _ => Notify(tenant))
             .Retry(Options.NotifyRetryDelays, Options.NotifyRetryCount, Clocks.CpuClock, Log);
         notifyChain.RunIsolated(CancellationToken.None);

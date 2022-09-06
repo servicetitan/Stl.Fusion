@@ -27,12 +27,12 @@ public class CompletionProducer : IOperationCompletionListener
     public bool IsReady()
         => true;
 
-    public virtual Task OnOperationCompleted(IOperation operation)
+    public virtual Task OnOperationCompleted(IOperation operation, CommandContext? commandContext)
     {
         if (operation.Command is not ICommand command)
             return Task.CompletedTask; // We can't complete non-commands
         return Task.Run(async () => {
-            var isLocal = StringComparer.Ordinal.Equals(operation.AgentId, AgentInfo.Id.Value);
+            var isLocal = commandContext != null;
             var operationType = isLocal ? "Local" : "External";
             try {
                 // if (command is IBackendCommand backendCommand)

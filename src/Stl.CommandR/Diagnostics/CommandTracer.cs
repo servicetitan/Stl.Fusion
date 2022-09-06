@@ -46,7 +46,7 @@ public class CommandTracer : ICommandHandler<ICommand>
     protected virtual bool ShouldTrace(ICommand command, CommandContext context)
     {
         // Always trace top-level commands
-        if (context.OuterContext == null)
+        if (context.IsOutermost)
             return true;
 
         // Do not trace meta commands & any nested command they run

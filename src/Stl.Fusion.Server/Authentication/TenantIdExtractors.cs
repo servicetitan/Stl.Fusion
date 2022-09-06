@@ -25,11 +25,13 @@ public static class TenantIdExtractors
         };
 
     public static Func<HttpContext, Symbol> FromPort(Range<int> portRange, string idFormat = "tenant{0}")
+        => FromPort(portRange, 65536, idFormat);
+    public static Func<HttpContext, Symbol> FromPort(Range<int> portRange, int tenantCount, string idFormat = "tenant{0}")
         => httpContext => {
             var port = httpContext.Connection.LocalPort;
             if (!portRange.Contains(port))
                 return default;
-            var tenantIndex = port - portRange.Start;
+            var tenantIndex = (port - portRange.Start) % tenantCount;
             return string.Format(CultureInfo.InvariantCulture, idFormat, tenantIndex);
         };
 

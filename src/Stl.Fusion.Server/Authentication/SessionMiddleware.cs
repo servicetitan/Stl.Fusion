@@ -67,7 +67,7 @@ public class SessionMiddleware : IMiddleware, IHasServices
     {
         var cancellationToken = httpContext.RequestAborted;
         var originalSession = GetSession(httpContext);
-        var tenantId = Settings.TenantIdExtractor(httpContext);
+        var tenantId = Settings.TenantIdExtractor.Invoke(httpContext);
         var session = originalSession?.WithTenantId(tenantId);
 
         if (session != null && Auth != null) {
