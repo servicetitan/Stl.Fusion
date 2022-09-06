@@ -34,12 +34,12 @@ public class DbOperationLogReader<TDbContext> : DbTenantWorkerBase<TDbContext>
     protected override Task RunInternal(Tenant tenant, CancellationToken cancellationToken)
     {
         var maxKnownCommitTime = Clocks.SystemClock.Now;
-        var minCommitTime = (maxKnownCommitTime - Settings.MaxCommitDuration).ToDateTime();
         var lastCount = 0L;
 
         var activitySource = GetType().GetActivitySource();
         var runChain = new AsyncChain($"Read({tenant.Id})", async cancellationToken1 => {
             // Fetching potentially new operations
+            var minCommitTime = (maxKnownCommitTime - Settings.MaxCommitDuration).ToDateTime();
             var operations = await DbOperationLog
                 .ListNewlyCommitted(tenant, minCommitTime, Settings.BatchSize, cancellationToken1)
                 .ConfigureAwait(false);
@@ -55,8 +55,9 @@ public class DbOperationLogReader<TDbContext> : DbTenantWorkerBase<TDbContext>
                 // pipeline, which makes it possible to see command completing
                 // prior to its invalidation logic completion.
                 tasks[i] = isLocal
-                    ? Task.CompletedTask // Skips local operation!
+                    ? Task.CompletedTask // Skip local operation!
                     : OperationCompletionNotifier.NotifyCompleted(operation, null);
+
                 var commitTime = operation.CommitTime.ToMoment();
                 if (maxKnownCommitTime < commitTime)
                     maxKnownCommitTime = commitTime;
@@ -68,15 +69,27 @@ public class DbOperationLogReader<TDbContext> : DbTenantWorkerBase<TDbContext>
             lastCount = operations.Count;
         }).Trace(() => activitySource.StartActivity("Read").AddTenantTags(tenant), Log);
 
-        var sleepChain = new AsyncChain("Sleep", cancellationToken1 => {
+        var sleepChain = new AsyncChain("Sleep", async cancellationToken1 => {
             if (lastCount == Settings.BatchSize)
-                return Task.CompletedTask;
-            if (OperationLogChangeTracker == null)
-                return Clocks.CpuClock.Delay(Settings.UnconditionalCheckPeriod.Next(), cancellationToken1);
-            return OperationLogChangeTracker
-                .WaitForChanges(tenant.Id, cancellationToken1)
-                .WaitAsync(Clocks.CpuClock, Settings.UnconditionalCheckPeriod.Next(), cancellationToken1)
-                .SuppressExceptions(e => e is TimeoutException);
+                return;
+
+            var unconditionalCheckPeriod = Settings.UnconditionalCheckPeriod.Next();
+            if (OperationLogChangeTracker == null) {
+                var delayTask = Clocks.CpuClock.Delay(unconditionalCheckPeriod, cancellationToken1);
+                await delayTask.ConfigureAwait(false);
+                return;
+            }
+
+            var cts = cancellationToken1.CreateLinkedTokenSource();
+            try {
+                var notificationTask = OperationLogChangeTracker.WaitForChanges(tenant.Id, cts.Token);
+                var delayTask = Clocks.CpuClock.Delay(unconditionalCheckPeriod, cts.Token);
+                var completedTask = await Task.WhenAny(notificationTask, delayTask).ConfigureAwait(false);
+                await completedTask.ConfigureAwait(false);
+            }
+            finally {
+                cts.CancelAndDisposeSilently();
+            }
         });
 
         var chain = runChain
