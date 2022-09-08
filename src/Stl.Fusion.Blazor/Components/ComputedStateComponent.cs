@@ -56,23 +56,22 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
         }
         return StateFactory.NewComputed(GetStateOptions(), computeState);
 
-        async Task<TState> UnsynchronizedComputeState(
+        Task<TState> UnsynchronizedComputeState(
             IComputedState<TState> state, CancellationToken cancellationToken)
-            => await ComputeState(cancellationToken);
+            => ComputeState(cancellationToken);
 
-        async Task<TState> SynchronizedComputeState(
+        Task<TState> SynchronizedComputeState(
             IComputedState<TState> state, CancellationToken cancellationToken)
         {
             var ts = TaskSource.New<TState>(false);
             _ = InvokeAsync(() => {
                 var computeStateTask = ComputeState(cancellationToken);
-                ts.TrySetFromTaskAsync(computeStateTask, cancellationToken);
-                return Task.CompletedTask;
+                return ts.TrySetFromTaskAsync(computeStateTask, cancellationToken);
             });
-            return await ts.Task.ConfigureAwait(false);
+            return ts.Task;
         }
 
-        async Task<TState> SynchronizedComputeStateWithExecutionContextFlow(
+        Task<TState> SynchronizedComputeStateWithExecutionContextFlow(
             IComputedState<TState> state, CancellationToken cancellationToken)
         {
             var ts = TaskSource.New<TState>(false);
@@ -81,8 +80,9 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
                     var computeStateTask = ComputeState(cancellationToken);
                     ts.TrySetFromTaskAsync(computeStateTask, cancellationToken);
                 }, null);
+                return ts.Task;
             });
-            return await ts.Task.ConfigureAwait(false);
+            return ts.Task;
         }
     }
 
