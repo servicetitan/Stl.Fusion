@@ -287,16 +287,20 @@ public abstract class State<T> : ComputedInput,
     protected async ValueTask<StateBoundComputed<T>> GetComputed(CancellationToken cancellationToken)
     {
         var computed = CreateComputed();
-        using var _ = Fusion.Computed.ChangeCurrent(computed);
-
-        try {
-            var value = await Compute(cancellationToken).ConfigureAwait(false);
-            computed.TrySetOutput(Result.New(value));
+        using (Fusion.Computed.ChangeCurrent(computed)) {
+            try {
+                var value = await Compute(cancellationToken).ConfigureAwait(false);
+                computed.TrySetOutput(Result.New(value));
+            }
+            catch (Exception e) when (e is not OperationCanceledException) {
+                computed.TrySetOutput(Result.Error<T>(e));
+            }
         }
-        catch (Exception e) when (e is not OperationCanceledException) {
-            computed.TrySetOutput(Result.Error<T>(e));
-        }
 
+        // It's super important to make "Computed = computed" assignment after "using" block -
+        // otherwise all State events will be triggered while Computed.Current still points on
+        // computed (which is already computed), so if any compute method runs inside
+        // the event handler, it will fail on attempt to add a dependency.
         Computed = computed;
         return computed;
     }

@@ -31,17 +31,12 @@ public abstract class StatefulComponentBase : ComponentBase, IAsyncDisposable, I
     // It's typically more natural for stateful components to recompute State
     // and trigger StateHasChanged only as a result state (re)computation or parameter changes.
     protected bool MustCallStateHasChangedAfterEvent { get; set; } = false;
-    protected internal bool IsDisposed { get; private set; }
 
     protected StatefulComponentBase()
         => StateChanged = (_, _) => this.StateHasChangedAsync();
 
     public virtual ValueTask DisposeAsync()
     {
-        if (IsDisposed)
-            return ValueTaskExt.CompletedTask;
-
-        IsDisposed = true;
         if (UntypedState is IDisposable d)
             d.Dispose();
         return ValueTaskExt.CompletedTask;
