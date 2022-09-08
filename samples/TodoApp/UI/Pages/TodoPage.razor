@@ -1,4 +1,5 @@
 @page "/todo"
+@using System.Globalization
 @inherits ComputedStateComponent<Todo[]>
 @inject ITodoService Todos
 @inject Session Session
@@ -16,6 +17,9 @@
 <StateOfStateBadge State="@State" />
 <Div Margin="Margin.Is1.OnY">
     Updated: <b><MomentsAgoBadge Value="LastStateUpdateTime" /></b>
+</Div>
+<Div Margin="Margin.Is1.OnY">
+    Current culture: <b>@(CultureInfo.CurrentUICulture.Name)</b> @@ @LastStateUpdateTime.ToString("D")
 </Div>
 <Div Margin="Margin.Is1.OnY">
     Call:

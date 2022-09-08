@@ -5,8 +5,8 @@
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
     <RootNamespace>Templates.TodoApp.UI</RootNamespace>
     <AssemblyName>Templates.TodoApp.UI</AssemblyName>
-    <InvariantGlobalization>true</InvariantGlobalization>
-    <BlazorEnableTimeZoneSupport>false</BlazorEnableTimeZoneSupport>
+<!--    <InvariantGlobalization>true</InvariantGlobalization>-->
+<!--    <BlazorEnableTimeZoneSupport>false</BlazorEnableTimeZoneSupport>-->
     <!-- AOT causes GitHub builds to fail at random with "file is being used by another process" -->
     <!--
     <RunAOTCompilation>true</RunAOTCompilation>

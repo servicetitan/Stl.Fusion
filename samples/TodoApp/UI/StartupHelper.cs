@@ -1,3 +1,4 @@
+using System.Globalization;
 using Blazorise;
 using Blazorise.Bootstrap;
 using Blazorise.Icons.FontAwesome;
@@ -56,6 +57,8 @@ public static class StartupHelper
 
     public static void ConfigureSharedServices(IServiceCollection services)
     {
+        ComputedStateComponent.DefaultStateOptions.PassExecutionContextToUpdateCycle = true;
+
         // Blazorise
         services.AddBlazorise().AddBootstrapProviders().AddFontAwesomeIcons();
 

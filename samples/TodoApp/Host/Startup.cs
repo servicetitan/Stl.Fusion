@@ -1,4 +1,5 @@
 using System.Data;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -241,6 +242,14 @@ public class Startup
         });
         app.UseFusionSession();
 
+        // Change Blazor Server culture
+        app.Use(async (_, next) => {
+            var culture = CultureInfo.CreateSpecificCulture("fr-FR");
+            CultureInfo.CurrentCulture = culture;
+            CultureInfo.CurrentUICulture = culture;
+            await next().ConfigureAwait(false);
+        });
+        
         // Static + Swagger
         app.UseBlazorFrameworkFiles();
         app.UseStaticFiles();

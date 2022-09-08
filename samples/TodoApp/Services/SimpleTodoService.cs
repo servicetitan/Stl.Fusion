@@ -25,7 +25,7 @@ public class SimpleTodoService : ITodoService
         _store = _store.RemoveAll(i => i.Id == todo.Id).Add(todo);
 
         using var invalidating = Computed.Invalidate();
-        _ = Get(session, todo.Id, CancellationToken.None);
+        _ = Get(session, todo.Id, default);
         _ = PseudoGetAllItems(session);
         return todo;
     }
@@ -38,7 +38,7 @@ public class SimpleTodoService : ITodoService
         _store = _store.RemoveAll(i => i.Id == todoId);
 
         using var invalidating = Computed.Invalidate();
-        _ = Get(session, todoId, CancellationToken.None);
+        _ = Get(session, todoId, default);
         _ = PseudoGetAllItems(session);
     }
 #pragma warning restore 1998

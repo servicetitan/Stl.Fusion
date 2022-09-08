@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Stl.DependencyInjection;
 
@@ -7,6 +8,10 @@ public class Program
 {
     public static Task Main(string[] args)
     {
+        var culture = CultureInfo.CreateSpecificCulture("fr-FR");
+        CultureInfo.DefaultThreadCurrentCulture = culture;
+        CultureInfo.DefaultThreadCurrentUICulture = culture;
+
         var builder = WebAssemblyHostBuilder.CreateDefault(args);
         StartupHelper.ConfigureServices(builder.Services, builder);
         var host = builder.Build();
