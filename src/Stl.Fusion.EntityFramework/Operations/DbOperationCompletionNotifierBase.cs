@@ -51,7 +51,7 @@ public abstract class DbOperationCompletionNotifierBase<TDbContext, TOptions> : 
 
     protected virtual async Task DisposeAsyncCore()
     {
-        await CpuClock.Delay(Options.MaxCommitDuration, CancellationToken.None).ConfigureAwait(false);
+        await CpuClock.Delay(Options.MaxCommitDuration, default).ConfigureAwait(false);
         await Task.WhenAll(NotifyTasks.Keys).ConfigureAwait(false);
     }
 
@@ -70,7 +70,7 @@ public abstract class DbOperationCompletionNotifierBase<TDbContext, TOptions> : 
         var tenant = operationScope.Tenant;
         var notifyChain = new AsyncChain($"Notify({tenant.Id})", _ => Notify(tenant))
             .Retry(Options.NotifyRetryDelays, Options.NotifyRetryCount, Clocks.CpuClock, Log);
-        notifyChain.RunIsolated(CancellationToken.None);
+        notifyChain.RunIsolated(default);
         return Task.CompletedTask;
     }
 

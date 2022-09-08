@@ -35,11 +35,10 @@ public abstract class WorkerBase : ProcessorBase, IWorker
                     : default;
             using (flowSuppressor) {
                 var startingTask = OnStarting(StopToken);
-                _whenRunning = Task
-                    .Run(async () => {
+                _whenRunning = Task.Run(async () => {
                         await startingTask.ConfigureAwait(false);
                         await RunInternal(StopToken).ConfigureAwait(false);
-                    }, CancellationToken.None)
+                    }, default)
                     .ContinueWith(async _ => {
                         StopTokenSource.CancelAndDisposeSilently();
                         try {
@@ -48,7 +47,7 @@ public abstract class WorkerBase : ProcessorBase, IWorker
                         catch {
                             // Intended
                         }
-                    }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+                    }, default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
             }
         }
         return _whenRunning;

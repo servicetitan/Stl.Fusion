@@ -99,7 +99,7 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
                          this1.Options.PublicationGeneric, this1, computed1, id,
                          this1.Clocks.CoarseCpuClock);
                      this1.PublicationsById[id] = p1;
-                     _ = Task.Run(p1.ExpireAndDispose, CancellationToken.None);
+                     _ = Task.Run(p1.ExpireAndDispose, default);
                      return p1;
                  }, (this, computed));
             if (p.TryTouch())
@@ -171,7 +171,7 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
             // so "subscribing" to Run completion is the
             // same as subscribing to its disposal.
             ChannelProcessors.TryRemove(channel, channelProcessor);
-        }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+        }, default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
     }
 
     protected virtual void OnChannelDetachedAsync(

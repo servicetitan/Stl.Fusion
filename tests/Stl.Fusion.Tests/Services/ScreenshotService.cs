@@ -75,7 +75,7 @@ public class ScreenshotService : IScreenshotService
         using var gScreen = Graphics.FromImage(bScreen);
         gScreen.CopyFromScreen(0, 0, 0, 0, bScreen.Size);
         Computed.GetCurrent()!.Invalidated += c => {
-            Task.Delay(2000, CancellationToken.None).ContinueWith(_ => {
+            Task.Delay(2000, default).ContinueWith(_ => {
                 // Let's dispose these values in 2 seconds
                 var computed = (IComputed<Bitmap>) c;
                 if (computed.HasValue)

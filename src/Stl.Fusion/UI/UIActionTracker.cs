@@ -77,7 +77,7 @@ public class UIActionTracker : IDisposable
                 foreach (var channel in ResultChannels)
                     channel.Writer.TryWrite(result);
             }
-        }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+        }, default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
     }
 
     // Protected methods

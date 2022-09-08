@@ -5,6 +5,7 @@ public interface IComputedState : IState, IDisposable, IHasWhenDisposed
     public new interface IOptions : IState.IOptions
     {
         IUpdateDelayer? UpdateDelayer { get; init; }
+        public bool PassExecutionContextToUpdateCycle { get; init; }
     }
 
     IUpdateDelayer UpdateDelayer { get; set; }
@@ -20,6 +21,7 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
     public new record Options : State<T>.Options, IComputedState.IOptions
     {
         public IUpdateDelayer? UpdateDelayer { get; init; }
+        public bool PassExecutionContextToUpdateCycle { get; init; }
     }
 
     private volatile IUpdateDelayer _updateDelayer;
@@ -54,10 +56,16 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
             return;
         base.Initialize(options);
 
-        // We must suppress execution context flow here, because
-        // the Update is ~ a worker-style task
-        using var _ = ExecutionContextExt.SuppressFlow();
-        UpdateCycleTask = Task.Run(UpdateCycle, CancellationToken.None);
+        // Ideally we want to suppress execution context flow here,
+        // because the Update is ~ a worker-style task.
+        var o = (Options) options;
+        if (o.PassExecutionContextToUpdateCycle) {
+            UpdateCycleTask = Task.Run(UpdateCycle, default);
+        }
+        else {
+            using var _ = ExecutionContextExt.SuppressFlow();
+            UpdateCycleTask = Task.Run(UpdateCycle, default);
+        }
     }
 
     // ~ComputedState() => Dispose();

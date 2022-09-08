@@ -17,8 +17,8 @@ public record UpdateDelayer : IUpdateDelayer
         public static TimeSpan UICommandRecencyDelta { get; set; } =  TimeSpan.FromMilliseconds(100);
     }
 
-    public static UpdateDelayer ZeroDelay { get; } = new(UIActionTracker.None, 0, 0);
-    public static UpdateDelayer MinDelay { get; } = new(UIActionTracker.None, Defaults.UICommandUpdateDelay);
+    public static UpdateDelayer ZeroDelay { get; set; } = new(UIActionTracker.None, 0, 0);
+    public static UpdateDelayer MinDelay { get; set; } = new(UIActionTracker.None, Defaults.UICommandUpdateDelay);
 
     public UIActionTracker UIActionTracker { get; init; }
     public MomentClockSet Clocks => UIActionTracker.Clocks;

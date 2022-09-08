@@ -20,7 +20,7 @@ public class JsonifyErrorsAttributeFixture : BaseFixture<JsonifyErrorsAttribute>
             context)
     {
 #if NETFRAMEWORK
-        return Create().OnExceptionAsync(context, CancellationToken.None);
+        return Create().OnExceptionAsync(context, default);
 #else
         return Create().OnExceptionAsync(context);
 #endif

@@ -7,7 +7,7 @@ public static class TaskSourceExt
     public static void SetFromTask<T>(this TaskSource<T> target, Task<T> source, CancellationToken candidateToken)
     {
         if (source.IsCanceled)
-            target.SetCanceled(candidateToken.IsCancellationRequested ? candidateToken : CancellationToken.None);
+            target.SetCanceled(candidateToken.IsCancellationRequested ? candidateToken : default);
         else if (source.Exception != null)
             target.SetException(source.Exception.GetBaseException());
         else
@@ -16,7 +16,7 @@ public static class TaskSourceExt
 
     public static bool TrySetFromTask<T>(this TaskSource<T> target, Task<T> source, CancellationToken candidateToken)
         => source.IsCanceled
-            ? target.TrySetCanceled(candidateToken.IsCancellationRequested ? candidateToken : CancellationToken.None)
+            ? target.TrySetCanceled(candidateToken.IsCancellationRequested ? candidateToken : default)
             : source.Exception != null
                 ? target.TrySetException(source.Exception.GetBaseException())
                 : target.TrySetResult(source.Result);
@@ -25,18 +25,18 @@ public static class TaskSourceExt
 
     public static Task TrySetFromTaskAsync<T>(this TaskSource<T> target, Task<T> source, CancellationToken cancellationToken = default)
         => source.ContinueWith(
-            s => target.TrySetFromTask(s, cancellationToken), 
-            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+            s => target.TrySetFromTask(s, cancellationToken),
+            default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
 
     public static Task TrySetFromTaskAsync(this TaskSource<Unit> target, Task source, CancellationToken cancellationToken = default)
         => source.ContinueWith(_ => {
             if (source.IsCanceled)
-                target.SetCanceled(cancellationToken.IsCancellationRequested ? cancellationToken : CancellationToken.None);
+                target.SetCanceled(cancellationToken.IsCancellationRequested ? cancellationToken : default);
             else if (source.Exception != null)
                 target.SetException(source.Exception.GetBaseException());
             else
                 target.SetResult(default);
-        }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+        }, default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
 
     // (Try)SetFromResult
 

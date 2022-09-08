@@ -191,7 +191,7 @@ public class ReplicatorChannelProcessor : WorkerBase
 
         // Connect task
         var connectTask = Task.Run(async () => {
-            var cancellationToken = CancellationToken.None;
+            CancellationToken cancellationToken = default;
             if (error != null) {
                 Log.LogError(error, "{ClientId}: error", ClientId);
                 await Task.Delay(Replicator.Options.ReconnectDelay, cancellationToken).ConfigureAwait(false);
@@ -220,14 +220,14 @@ public class ReplicatorChannelProcessor : WorkerBase
             return channel;
         });
         connectTask.ContinueWith(connectTask1 => {
-            channelTaskSource.SetFromTask(connectTask1, CancellationToken.None);
+            channelTaskSource.SetFromTask(connectTask1, default);
             if (connectTask1.IsCompletedSuccessfully())
                 IsConnected.Value = true;
-        }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+        }, default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
 
         // Copy task
         Task.Run(async () => {
-            var cancellationToken = CancellationToken.None;
+            CancellationToken cancellationToken = default;
             try {
                 var sendChannelReader = sendChannel.Reader;
                 var channel = (Channel<BridgeMessage>?) null;

@@ -5,32 +5,44 @@ namespace Stl.Fusion.Blazor;
 
 public abstract class StatefulComponentBase : ComponentBase, IAsyncDisposable, IHandleEvent
 {
+    private StateEventKind _stateHasChangedTriggers = StateEventKind.Updated;
+
     [Inject] protected IServiceProvider Services { get; init; } = null!;
     [Inject] protected BlazorCircuitContext BlazorCircuitContext { get; init; } = null!;
 
     protected IStateFactory StateFactory => Services.StateFactory();
-    protected bool OwnsState { get; set; } = true;
-    protected internal abstract IState UntypedState { get; }
+    protected abstract IState UntypedState { get; }
     protected Action<IState, StateEventKind> StateChanged { get; set; }
-    protected StateEventKind StateHasChangedTriggers { get; set; } = StateEventKind.Updated;
-    // It's typically much more natural for stateful components to recompute State
-    // and trigger StateHasChanged only as a result of this or parameter changes.
-    protected bool EnableStateHasChangedCallAfterEvent { get; set; } = false;
+
+    protected StateEventKind StateHasChangedTriggers {
+        get => _stateHasChangedTriggers;
+        set {
+            var state = UntypedState;
+            if (state == null!) {
+                _stateHasChangedTriggers = value;
+                return;
+            }
+            state.RemoveEventHandler(_stateHasChangedTriggers, StateChanged);
+            _stateHasChangedTriggers = value;
+            state.AddEventHandler(_stateHasChangedTriggers, StateChanged);
+        }
+    }
+
+    // It's typically more natural for stateful components to recompute State
+    // and trigger StateHasChanged only as a result state (re)computation or parameter changes.
+    protected bool MustCallStateHasChangedAfterEvent { get; set; } = false;
+    protected internal bool IsDisposed { get; private set; }
 
     protected StatefulComponentBase()
-    {
-        StateChanged = (_, eventKind) => {
-            if ((eventKind & StateHasChangedTriggers) == 0)
-                return;
-            using var suppressing = ExecutionContextExt.SuppressFlow();
-            Task.Run(() => this.StateHasChangedAsync(BlazorCircuitContext));
-        };
-    }
+        => StateChanged = (_, _) => this.StateHasChangedAsync();
 
     public virtual ValueTask DisposeAsync()
     {
-        UntypedState?.RemoveEventHandler(StateEventKind.All, StateChanged);
-        if (OwnsState && UntypedState is IDisposable d)
+        if (IsDisposed)
+            return ValueTaskExt.CompletedTask;
+
+        IsDisposed = true;
+        if (UntypedState is IDisposable d)
             d.Dispose();
         return ValueTaskExt.CompletedTask;
     }
@@ -46,8 +58,12 @@ public abstract class StatefulComponentBase : ComponentBase, IAsyncDisposable, I
         if (shouldAwaitTask)
             return CallStateHasChangedOnAsyncCompletion(task);
 
-        if (EnableStateHasChangedCallAfterEvent)
+#pragma warning disable VSTHRD103
+#pragma warning disable MA0042
+        if (MustCallStateHasChangedAfterEvent)
             StateHasChanged();
+#pragma warning restore MA0042
+#pragma warning restore VSTHRD103
         return Task.CompletedTask;
     }
 
@@ -63,8 +79,12 @@ public abstract class StatefulComponentBase : ComponentBase, IAsyncDisposable, I
                 return;
             throw;
         }
-        if (EnableStateHasChangedCallAfterEvent)
+#pragma warning disable VSTHRD103
+#pragma warning disable MA0042
+        if (MustCallStateHasChangedAfterEvent)
             StateHasChanged();
+#pragma warning restore MA0042
+#pragma warning restore VSTHRD103
     }
 }
 
@@ -73,15 +93,13 @@ public abstract class StatefulComponentBase<TState> : StatefulComponentBase
 {
     private TState? _state;
 
-    protected internal override IState UntypedState => State;
+    protected override IState UntypedState => State;
 
     protected internal TState State {
         get => _state!;
         set {
-            if (value == null)
+            if (value == null!)
                 throw new ArgumentNullException(nameof(value));
-            if (_state == value)
-                return;
             if (_state != null)
                 throw Errors.AlreadyInitialized(nameof(State));
             _state = value;
@@ -90,9 +108,8 @@ public abstract class StatefulComponentBase<TState> : StatefulComponentBase
 
     protected override void OnInitialized()
     {
-        // ReSharper disable once ConstantNullCoalescingCondition
-        State ??= CreateState();
-        UntypedState.AddEventHandler(StateEventKind.All, StateChanged);
+        var state = _state ??= CreateState();
+        state.AddEventHandler(StateHasChangedTriggers, StateChanged);
     }
 
     protected virtual TState CreateState()

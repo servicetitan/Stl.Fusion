@@ -80,7 +80,7 @@ public abstract class RedisSubBase : ProcessorBase
                         throw new TimeoutException();
                     throw;
                 }
-            }, CancellationToken.None);
+            }, default);
         }
         return WhenSubscribed;
     }

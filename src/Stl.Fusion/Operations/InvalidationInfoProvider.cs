@@ -53,7 +53,7 @@ public class InvalidationInfoProvider
                 return finalHandlerServiceType;
             }
             finally {
-                _ = Task.Run(() => context.DisposeAsync(), CancellationToken.None);
+                _ = Task.Run(() => context.DisposeAsync(), default);
             }
         }, (this, command));
     }

@@ -107,8 +107,8 @@ public static class TaskExt
 
     public static Task<IResult> ToTypedResultAsync(this Task task)
         => task.ContinueWith(
-            t => t.ToTypedResultSynchronously(), 
-            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+            t => t.ToTypedResultSynchronously(),
+            default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
 
     // WaitAsync
 
@@ -412,13 +412,13 @@ public static class TaskExt
                 if (t.IsCompletedSuccessfully() || t.IsCanceled)
                     return;
                 ExceptionDispatchInfo.Capture(t.Exception!.GetBaseException()).Throw();
-            }, 
-            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+            },
+            default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
 
     public static Task<T> SuppressCancellation<T>(this Task<T> task)
         => task.ContinueWith(
             t => t.IsCanceled ? default! : t.Result,
-            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+            default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
 
     // Join
 

@@ -75,39 +75,26 @@ public static class ComponentExt
     public static bool IsDisposed(this ComponentBase component)
         => component.GetRenderHandle().IsDisposed();
 
-    public static bool IsDisposedOrDisposing(this ComponentBase component, BlazorCircuitContext? blazorCircuitContext = null)
-    {
-        if (blazorCircuitContext?.IsDisposing ?? false)
-            return true;
-        if (component is StatefulComponentBase {
-                UntypedState: IComputedState {
-                    DisposeToken: { IsCancellationRequested: true }
-                }
-            })
-            return true;
-        return component.IsDisposed();
-    }
-
     /// <summary>
     /// Calls <see cref="ComponentBase.StateHasChanged"/> in the Blazor synchronization context
     /// of the component, therefore it works even when called from another synchronization context
     /// (e.g. a thread-pool thread).
     /// </summary>
-    public static Task StateHasChangedAsync(this ComponentBase component, BlazorCircuitContext? blazorCircuitContext = null)
+    public static Task StateHasChangedAsync(this ComponentBase component)
     {
-        if (component.IsDisposedOrDisposing())
+        try {
+            return component.GetDispatcher().InvokeAsync(Invoker);
+        }
+        catch (ObjectDisposedException) {
             return Task.CompletedTask;
-        return component.GetDispatcher().InvokeAsync(Invoker);
+        }
 
-        void Invoker()
-        {
-            if (component.IsDisposedOrDisposing())
-                return;
+        void Invoker() {
             try {
                 CompiledStateHasChanged(component);
             }
             catch (ObjectDisposedException) {
-                // Intended: it might still happen
+                // Intended
             }
         }
     }

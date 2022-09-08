@@ -32,7 +32,7 @@ public abstract class TenantWorkerBase<TContext> : WorkerBase
                     tasksToStop.TryAdd(task, default);
                     _ = task.ContinueWith(
                         t => tasksToStop.TryRemove(t, out _),
-                        CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+                        default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
                 }
 
                 // Stopping old tasks

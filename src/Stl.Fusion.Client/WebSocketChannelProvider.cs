@@ -121,8 +121,7 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
                     clientId, Log, Settings.MessageLogLevel, Settings.MessageMaxLength);
             var serializers = Settings.SerializerFactory(Services);
             var resultChannel = stringChannel.WithTextSerializer(serializers);
-            _ = wsChannel.WhenClosed().ContinueWith(_ => wsChannel.DisposeAsync(),
-                CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+            _ = wsChannel.WhenClosed().ContinueWith(_ => wsChannel.DisposeAsync(), TaskScheduler.Default);
             return resultChannel;
         }
         catch (Exception e) when (e is not OperationCanceledException) {

@@ -63,8 +63,8 @@ public class WebSocketChannel : Channel<string>, IAsyncDisposable
         StopToken = StopCts.Token;
 
         using var _ = ExecutionContextExt.SuppressFlow();
-        _whenReadCompletedTask = Task.Run(() => RunReader(StopToken), CancellationToken.None);
-        _whenWriteCompletedTask = Task.Run(() => RunWriter(StopToken), CancellationToken.None);
+        _whenReadCompletedTask = Task.Run(() => RunReader(StopToken), default);
+        _whenWriteCompletedTask = Task.Run(() => RunWriter(StopToken), default);
         _whenClosedTask = Task.Run(async () => {
             var readError = await _whenReadCompletedTask.WaitErrorAsync().ConfigureAwait(false);
             var writeError = await _whenWriteCompletedTask.WaitErrorAsync().ConfigureAwait(false);
@@ -72,7 +72,7 @@ public class WebSocketChannel : Channel<string>, IAsyncDisposable
             await Close(error).ConfigureAwait(false);
             if (readError != null)
                 ExceptionDispatchInfo.Capture(readError).Throw();
-        }, CancellationToken.None);
+        }, default);
     }
 
     public async ValueTask DisposeAsync()

@@ -53,7 +53,7 @@ public static class ComputedExt
         if (computed.ConsistencyState == ConsistencyState.Invalidated)
             return Task.CompletedTask;
         var taskSource = TaskSource.New<Unit>(true);
-        if (cancellationToken != CancellationToken.None)
+        if (cancellationToken != default)
             return new WhenInvalidatedClosure(taskSource, computed, cancellationToken).Task;
         // No way to cancel / unregister the handler here
         computed.Invalidated += _ => taskSource.TrySetResult(default);

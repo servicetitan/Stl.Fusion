@@ -21,7 +21,7 @@ public abstract class AsyncLockTestBase : TestBase
             durationMs = Math.Max(0, durationMs);
             cancelMs = Math.Max(0, cancelMs);
 
-            var cancellationToken = CancellationToken.None;
+            CancellationToken cancellationToken = default;
             var cts = (CancellationTokenSource) null!;
             if (cancelMs <= durationMs) {
                 cts = new CancellationTokenSource();

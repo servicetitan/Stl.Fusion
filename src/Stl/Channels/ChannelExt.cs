@@ -43,9 +43,9 @@ public static partial class ChannelExt
         CancellationToken cancellationToken = default)
         => Task.WhenAll(
             Task.Run(() => channel1.Reader.Copy(
-                channel2, channelCompletionMode, cancellationToken), CancellationToken.None),
+                channel2, channelCompletionMode, cancellationToken), default),
             Task.Run(() => channel2.Reader.Copy(
-                channel1, channelCompletionMode, cancellationToken), CancellationToken.None)
+                channel1, channelCompletionMode, cancellationToken), default)
         );
 
     public static Task Connect<T1, T2>(
@@ -55,9 +55,9 @@ public static partial class ChannelExt
         CancellationToken cancellationToken = default)
         => Task.WhenAll(
             Task.Run(() => channel1.Reader.Transform(
-                channel2, adapter12, channelCompletionMode, cancellationToken), CancellationToken.None),
+                channel2, adapter12, channelCompletionMode, cancellationToken), default),
             Task.Run(() => channel2.Reader.Transform(
-                channel1, adapter21, channelCompletionMode, cancellationToken), CancellationToken.None)
+                channel1, adapter21, channelCompletionMode, cancellationToken), default)
         );
 
     public static async Task Consume<T>(

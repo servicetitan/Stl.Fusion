@@ -1,3 +1,5 @@
+using Stl.Fusion.Blazor.Internal;
+
 namespace Stl.Fusion.Blazor;
 
 public static class ComputedStateComponent
@@ -6,16 +8,18 @@ public static class ComputedStateComponent
         ComputedStateComponentOptions.SynchronizeComputeState
         | ComputedStateComponentOptions.RecomputeOnParametersSet;
 
-    // MAUI's Blazor doesn't flow ExecutionContext into InvokeAsync,
-    // so we have to explicitly pass whatever makes sense to pass there.
-    // ComputedStateComponent passes Computed.GetCurrent() value to
-    // make sure the dependencies are captured when ComputeState runs
-    // inside InvokeAsync (w/ SynchronizeComputeState option). 
-    public static bool MustPassComputedIntoSynchronizedComputeState { get; set; } = true; 
+    public static class DefaultStateOptions
+    {
+        public static bool PassExecutionContextToUpdateCycle { get; set; } = false;
+    }
 }
 
 public abstract class ComputedStateComponent<TState> : StatefulComponentBase<IComputedState<TState>>
 {
+    public static ComputedState<TState>.Options DefaultStateOptions { get; set; } = new() {
+        PassExecutionContextToUpdateCycle = ComputedStateComponent.DefaultStateOptions.PassExecutionContextToUpdateCycle
+    };
+
     protected ComputedStateComponentOptions Options { get; init; } = ComputedStateComponent.DefaultOptions;
 
     // State frequently depends on component parameters, so...
@@ -28,40 +32,65 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
     }
 
     protected virtual ComputedState<TState>.Options GetStateOptions()
-        => new();
+        => DefaultStateOptions;
 
     protected override IComputedState<TState> CreateState()
     {
-        async Task<TState> SynchronizedComputeState(IComputedState<TState> _, CancellationToken cancellationToken)
+        // Synchronizes ComputeState call as per:
+        // https://github.com/servicetitan/Stl.Fusion/issues/202
+        Func<IComputedState<TState>, CancellationToken, Task<TState>> computeState = 
+            0 == (Options & ComputedStateComponentOptions.SynchronizeComputeState)
+                ? UnsynchronizedComputeState
+                : DispatcherInfo.FlowsExecutionContext(this)
+                    ? SynchronizedComputeState
+                    : SynchronizedComputeStateWithExecutionContextFlow;
+        return StateFactory.NewComputed(GetStateOptions(), computeState);
+
+        async Task<TState> UnsynchronizedComputeState(
+            IComputedState<TState> state, CancellationToken cancellationToken)
+            => await ComputeState(cancellationToken);
+
+        async Task<TState> SynchronizedComputeState(
+            IComputedState<TState> state, CancellationToken cancellationToken)
         {
-            // Synchronizes ComputeState call as per:
-            // https://github.com/servicetitan/Stl.Fusion/issues/202
             var ts = TaskSource.New<TState>(false);
-            var computed = (IComputed?) null;
-            if (ComputedStateComponent.MustPassComputedIntoSynchronizedComputeState)
-                computed = Computed.GetCurrent();
-            await InvokeAsync(async () => {
-                var disposable = computed != null ? Computed.ChangeCurrent(computed) : default;
-                try {
-                    ts.TrySetResult(await ComputeState(cancellationToken));
-                }
-                catch (OperationCanceledException) {
-                    ts.TrySetCanceled();
-                }
-                catch (Exception e) {
-                    ts.TrySetException(e);
-                }
-                finally {
-                    disposable.Dispose();
-                }
+            _ = InvokeAsync(() => {
+                var computeStateTask = ComputeState(cancellationToken);
+                ts.TrySetFromTaskAsync(computeStateTask, cancellationToken);
             });
             return await ts.Task.ConfigureAwait(false);
         }
 
-        return StateFactory.NewComputed(GetStateOptions(),
-            0 != (Options & ComputedStateComponentOptions.SynchronizeComputeState)
-            ? SynchronizedComputeState
-            : (_, ct) => ComputeState(ct));
+        async Task<TState> SynchronizedComputeStateWithExecutionContextFlow(
+            IComputedState<TState> state, CancellationToken cancellationToken)
+        {
+            var ts = TaskSource.New<TState>(false);
+            var executionContext = ExecutionContext.Capture();
+            if (executionContext == null) {
+                // Nothing to restore
+                _ = InvokeAsync(() => {
+                    var computeStateTask = ComputeState(cancellationToken);
+                    ts.TrySetFromTaskAsync(computeStateTask, cancellationToken);
+                });
+            }
+            else {
+#if NET5_0_OR_GREATER
+                _ = InvokeAsync(() => {
+                    ExecutionContext.Restore(executionContext);
+                    var computeStateTask = ComputeState(cancellationToken);
+                    ts.TrySetFromTaskAsync(computeStateTask, cancellationToken);
+                });
+#else
+                _ = InvokeAsync(() => {
+                    ExecutionContext.Run(executionContext, _ => {
+                        var computeStateTask = ComputeState(cancellationToken);
+                        ts.TrySetFromTaskAsync(computeStateTask, cancellationToken);
+                    }, null);
+                });
+#endif
+            }
+            return await ts.Task.ConfigureAwait(false);
+        }
     }
 
     protected abstract Task<TState> ComputeState(CancellationToken cancellationToken);

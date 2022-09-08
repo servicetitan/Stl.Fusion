@@ -65,7 +65,7 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
             var snapshot = t.Result.Snapshot;
             _cachedStateSnapshot = snapshot;
             return (AuthenticationState) snapshot.LatestNonErrorComputed.Value;
-        }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
+        }, default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
         return _cachedStateValueTask;
     }
 
@@ -98,7 +98,7 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
 
             var authStateTask = Task.FromResult(state.LatestNonErrorValue);
             var uiClock = UIActionTracker.Clocks.UIClock;
-            var action = new UIAction<AuthState>(new ChangeAuthStateUICommand(), uiClock, authStateTask, CancellationToken.None);
+            var action = new UIAction<AuthState>(new ChangeAuthStateUICommand(), uiClock, authStateTask, default);
             UIActionTracker.Register(action);
         });
     }

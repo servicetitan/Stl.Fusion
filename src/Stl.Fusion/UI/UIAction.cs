@@ -43,7 +43,7 @@ public class UIAction<TResult> : UIAction
                 var result = t.ToResultSynchronously();
                 var completedAt = clock.Now;
                 return new UIActionResult<TResult>(this, result, completedAt);
-            }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+            }, default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
     }
 
     public override Task WhenCompleted()

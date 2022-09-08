@@ -87,9 +87,7 @@ public class PublisherChannelProcessor : WorkerBase
                         Publisher.Clocks, Services);
                     Subscriptions[publicationId] = subscriptionProcessor;
                     _ = subscriptionProcessor.Run()
-                        .ContinueWith(
-                            _ => Unsubscribe(publication, default),
-                            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+                        .ContinueWith(_ => Unsubscribe(publication, default), TaskScheduler.Default);
                 }
             }
 
@@ -113,7 +111,7 @@ public class PublisherChannelProcessor : WorkerBase
     {
         if (StopToken.IsCancellationRequested)
             return; // DisposeAsyncCore is running, it will unsubscribe everything anyway
-        
+
         var publicationId = publication.Id;
         SubscriptionProcessor? subscriptionProcessor;
         lock (Subscriptions) {

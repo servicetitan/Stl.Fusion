@@ -79,9 +79,7 @@ public sealed class TimerSet<TTimer> : WorkerBase
                 // We intentionally don't pass CancellationToken here:
                 // the delay is supposed to be short & we want to save on
                 // CancellationToken registration/de-registration.
-                await Clock
-                    .Delay(dueAt, CancellationToken.None)
-                    .ConfigureAwait(false);
+                await Clock.Delay(dueAt, default).ConfigureAwait(false);
             IReadOnlyDictionary<TTimer, long> minSet;
             lock (_lock) {
                 minSet = _timers.ExtractMinSet(_minPriority);
