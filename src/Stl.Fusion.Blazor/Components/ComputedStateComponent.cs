@@ -57,6 +57,7 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
             _ = InvokeAsync(() => {
                 var computeStateTask = ComputeState(cancellationToken);
                 ts.TrySetFromTaskAsync(computeStateTask, cancellationToken);
+                return Task.CompletedTask;
             });
             return await ts.Task.ConfigureAwait(false);
         }
@@ -71,23 +72,16 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
                 _ = InvokeAsync(() => {
                     var computeStateTask = ComputeState(cancellationToken);
                     ts.TrySetFromTaskAsync(computeStateTask, cancellationToken);
+                    return Task.CompletedTask;
                 });
             }
             else {
-#if NET5_0_OR_GREATER
-                _ = InvokeAsync(() => {
-                    ExecutionContext.Restore(executionContext);
-                    var computeStateTask = ComputeState(cancellationToken);
-                    ts.TrySetFromTaskAsync(computeStateTask, cancellationToken);
-                });
-#else
                 _ = InvokeAsync(() => {
                     ExecutionContext.Run(executionContext, _ => {
                         var computeStateTask = ComputeState(cancellationToken);
                         ts.TrySetFromTaskAsync(computeStateTask, cancellationToken);
                     }, null);
                 });
-#endif
             }
             return await ts.Task.ConfigureAwait(false);
         }
