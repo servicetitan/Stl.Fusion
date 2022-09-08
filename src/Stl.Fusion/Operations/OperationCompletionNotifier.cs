@@ -76,7 +76,7 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
                 else
                     Log.LogError("Assertion failed: operation with CommandContext originates from another agent");
             }
-            
+
             // Notification
             var tasks = new Task[OperationCompletionListeners.Length];
             for (var i = 0; i < OperationCompletionListeners.Length; i++) {

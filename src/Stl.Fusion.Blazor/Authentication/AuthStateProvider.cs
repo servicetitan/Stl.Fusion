@@ -74,6 +74,7 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
             InitialValue = new(),
             UpdateDelayer = options.UpdateDelayer,
             EventConfigurator = state => state.AddEventHandler(StateEventKind.Updated, OnStateChanged),
+            MustFlowExecutionContext = true,
         };
 
     protected virtual async Task<AuthState> ComputeState(IComputedState<AuthState> state, CancellationToken cancellationToken)
@@ -90,9 +91,7 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
     }
 
     protected virtual void OnStateChanged(IState<AuthState> state, StateEventKind eventKind)
-    {
-        using var _ = ExecutionContextExt.SuppressFlow();
-        Task.Run(() => {
+        => Task.Run(() => {
             var authenticationStateTask = Task.FromResult((AuthenticationState) state.LatestNonErrorValue);
             NotifyAuthenticationStateChanged(authenticationStateTask);
 
@@ -101,5 +100,4 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
             var action = new UIAction<AuthState>(new ChangeAuthStateUICommand(), uiClock, authStateTask, default);
             UIActionTracker.Register(action);
         });
-    }
 }

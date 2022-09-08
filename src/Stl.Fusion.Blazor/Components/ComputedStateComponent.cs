@@ -10,14 +10,14 @@ public static class ComputedStateComponent
 
     public static class DefaultStateOptions
     {
-        public static bool PassExecutionContextToUpdateCycle { get; set; } = false;
+        public static bool MustFlowExecutionContext { get; set; } = false;
     }
 }
 
 public abstract class ComputedStateComponent<TState> : StatefulComponentBase<IComputedState<TState>>
 {
     public static ComputedState<TState>.Options DefaultStateOptions { get; set; } = new() {
-        PassExecutionContextToUpdateCycle = ComputedStateComponent.DefaultStateOptions.PassExecutionContextToUpdateCycle
+        MustFlowExecutionContext = ComputedStateComponent.DefaultStateOptions.MustFlowExecutionContext
     };
 
     protected ComputedStateComponentOptions Options { get; init; } = ComputedStateComponent.DefaultOptions;

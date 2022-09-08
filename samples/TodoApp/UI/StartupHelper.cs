@@ -57,7 +57,7 @@ public static class StartupHelper
 
     public static void ConfigureSharedServices(IServiceCollection services)
     {
-        ComputedStateComponent.DefaultStateOptions.PassExecutionContextToUpdateCycle = true;
+        ComputedStateComponent.DefaultStateOptions.MustFlowExecutionContext = true;
 
         // Blazorise
         services.AddBlazorise().AddBootstrapProviders().AddFontAwesomeIcons();
