@@ -38,17 +38,12 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
     {
         // Synchronizes ComputeState call as per:
         // https://github.com/servicetitan/Stl.Fusion/issues/202
-        Func<IComputedState<TState>, CancellationToken, Task<TState>> computeState;
-        if (0 == (Options & ComputedStateComponentOptions.SynchronizeComputeState)) {
-            computeState = UnsynchronizedComputeState;
-        }
-        else {
-            if (DispatcherInfo.FlowsExecutionContext(this))
-                computeState = SynchronizedComputeState;
-            else {
-                computeState = SynchronizedComputeStateWithExecutionContextFlow;
-            }
-        }
+        Func<IComputedState<TState>, CancellationToken, Task<TState>> computeState =
+            (Options & ComputedStateComponentOptions.SynchronizeComputeState) == 0
+                ? UnsynchronizedComputeState
+                : DispatcherInfo.FlowsExecutionContext(this)
+                    ? SynchronizedComputeState
+                    : SynchronizedComputeStateWithExecutionContextFlow;
         return StateFactory.NewComputed(GetStateOptions(), computeState);
 
         Task<TState> UnsynchronizedComputeState(
@@ -58,7 +53,7 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
         Task<TState> SynchronizedComputeState(
             IComputedState<TState> state, CancellationToken cancellationToken)
         {
-            var ts = TaskSource.New<TState>(false);
+            var ts = TaskSource.New<TState>(true);
             _ = InvokeAsync(() => {
                 var computeStateTask = ComputeState(cancellationToken);
                 return ts.TrySetFromTaskAsync(computeStateTask, cancellationToken);
@@ -69,7 +64,7 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
         Task<TState> SynchronizedComputeStateWithExecutionContextFlow(
             IComputedState<TState> state, CancellationToken cancellationToken)
         {
-            var ts = TaskSource.New<TState>(false);
+            var ts = TaskSource.New<TState>(true);
             var executionContext = ExecutionContext.Capture();
             if (executionContext == null) {
                 // Nothing to restore
