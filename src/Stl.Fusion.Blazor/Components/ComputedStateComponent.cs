@@ -38,12 +38,22 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
     {
         // Synchronizes ComputeState call as per:
         // https://github.com/servicetitan/Stl.Fusion/issues/202
-        Func<IComputedState<TState>, CancellationToken, Task<TState>> computeState = 
-            0 == (Options & ComputedStateComponentOptions.SynchronizeComputeState)
-                ? UnsynchronizedComputeState
-                : DispatcherInfo.FlowsExecutionContext(this)
-                    ? SynchronizedComputeState
-                    : SynchronizedComputeStateWithExecutionContextFlow;
+        ExecutionContext? executionContext;
+        Func<IComputedState<TState>, CancellationToken, Task<TState>> computeState;
+        if (0 == (Options & ComputedStateComponentOptions.SynchronizeComputeState)) {
+            computeState = UnsynchronizedComputeState;
+        }
+        else {
+            if (DispatcherInfo.FlowsExecutionContext(this))
+                computeState = SynchronizedComputeState;
+            else {
+                executionContext = ExecutionContext.Capture();
+                if (executionContext == null)
+                    computeState = SynchronizedComputeState;
+                else
+                    computeState = SynchronizedComputeStateWithExecutionContextFlow;
+            }
+        }
         return StateFactory.NewComputed(GetStateOptions(), computeState);
 
         async Task<TState> UnsynchronizedComputeState(
@@ -66,23 +76,12 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
             IComputedState<TState> state, CancellationToken cancellationToken)
         {
             var ts = TaskSource.New<TState>(false);
-            var executionContext = ExecutionContext.Capture();
-            if (executionContext == null) {
-                // Nothing to restore
-                _ = InvokeAsync(() => {
+            _ = InvokeAsync(() => {
+                ExecutionContext.Run(executionContext, _ => {
                     var computeStateTask = ComputeState(cancellationToken);
                     ts.TrySetFromTaskAsync(computeStateTask, cancellationToken);
-                    return Task.CompletedTask;
-                });
-            }
-            else {
-                _ = InvokeAsync(() => {
-                    ExecutionContext.Run(executionContext, _ => {
-                        var computeStateTask = ComputeState(cancellationToken);
-                        ts.TrySetFromTaskAsync(computeStateTask, cancellationToken);
-                    }, null);
-                });
-            }
+                }, null);
+            });
             return await ts.Task.ConfigureAwait(false);
         }
     }
