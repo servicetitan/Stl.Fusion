@@ -10,14 +10,14 @@ public static class Computed
 
     public static IComputed? GetCurrent() => CurrentLocal.Value;
 
-    public static IComputed<T> GetCurrent<T>()
+    public static Computed<T> GetCurrent<T>()
     {
         var untypedCurrent = GetCurrent();
-        if (untypedCurrent is IComputed<T> c)
+        if (untypedCurrent is Computed<T> c)
             return c;
         if (untypedCurrent == null)
             throw Errors.ComputedCurrentIsNull();
-        throw Errors.ComputedCurrentIsOfIncompatibleType(typeof(IComputed<T>));
+        throw Errors.ComputedCurrentIsOfIncompatibleType(typeof(Computed<T>));
     }
 
     public static ClosedDisposable<IComputed?> ChangeCurrent(IComputed? newCurrent)
@@ -69,12 +69,12 @@ public static class Computed
         return ccs.Context.TryGetCaptured(out result!) ? Option.Some(result) : default;
     }
 
-    public static async ValueTask<Option<IComputed<T>>> TryCapture<T>(
+    public static async ValueTask<Option<Computed<T>>> TryCapture<T>(
         Func<CancellationToken, Task<T>> producer,
         CancellationToken cancellationToken = default)
     {
         using var ccs = BeginCapture();
-        IComputed<T> result;
+        Computed<T> result;
         try {
             await producer(cancellationToken).ConfigureAwait(false);
         }
@@ -103,12 +103,12 @@ public static class Computed
         return ccs.Context.TryGetCaptured(out result!) ? Option.Some(result) : default;
     }
 
-    public static async ValueTask<Option<IComputed<T>>> TryCapture<T>(
+    public static async ValueTask<Option<Computed<T>>> TryCapture<T>(
         Func<CancellationToken, ValueTask<T>> producer,
         CancellationToken cancellationToken = default)
     {
         using var ccs = BeginCapture();
-        IComputed<T> result;
+        Computed<T> result;
         try {
             await producer(cancellationToken).ConfigureAwait(false);
         }
@@ -136,7 +136,7 @@ public static class Computed
         return ccs.Context.GetCaptured();
     }
 
-    public static async ValueTask<IComputed<T>> Capture<T>(Func<CancellationToken, Task<T>> producer, CancellationToken cancellationToken = default)
+    public static async ValueTask<Computed<T>> Capture<T>(Func<CancellationToken, Task<T>> producer, CancellationToken cancellationToken = default)
     {
         using var ccs = BeginCapture();
         try {
@@ -164,7 +164,7 @@ public static class Computed
         return ccs.Context.GetCaptured();
     }
 
-    public static async ValueTask<IComputed<T>> Capture<T>(Func<CancellationToken, ValueTask<T>> producer, CancellationToken cancellationToken = default)
+    public static async ValueTask<Computed<T>> Capture<T>(Func<CancellationToken, ValueTask<T>> producer, CancellationToken cancellationToken = default)
     {
         using var ccs = BeginCapture();
         try {
@@ -180,7 +180,7 @@ public static class Computed
 
     // GetExisting
 
-    public static IComputed<T>? GetExisting<T>(Func<Task<T>> producer)
+    public static Computed<T>? GetExisting<T>(Func<Task<T>> producer)
     {
         using var ccs = ComputeContext.New(CallOptions.GetExisting | CallOptions.Capture).Activate();
         var task = producer();
@@ -188,7 +188,7 @@ public static class Computed
         return ccs.Context.TryGetCaptured<T>(out var result) ? result : default;
     }
 
-    public static IComputed<T>? GetExisting<T>(Func<ValueTask<T>> producer)
+    public static Computed<T>? GetExisting<T>(Func<ValueTask<T>> producer)
     {
         using var ccs = ComputeContext.New(CallOptions.GetExisting | CallOptions.Capture).Activate();
         var task = producer();

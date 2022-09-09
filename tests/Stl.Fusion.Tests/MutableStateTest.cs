@@ -86,7 +86,7 @@ public class MutableStateTest : SimpleFusionTestBase
         using var stopCts = new CancellationTokenSource();
         var cancellationToken = stopCts.Token;
 
-        async Task Watch<T>(string name, IComputed<T> computed)
+        async Task Watch<T>(string name, Computed<T> computed)
         {
             while (true) {
                 Out.WriteLine($"{name}: {computed.Value}, {computed}");

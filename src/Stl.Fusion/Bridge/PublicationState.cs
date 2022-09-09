@@ -15,11 +15,11 @@ public abstract class PublicationState
 public class PublicationState<T> : PublicationState
 {
     public IPublication<T> Publication { get; }
-    public IComputed<T> Computed { get; }
+    public Computed<T> Computed { get; }
     public override IPublication UntypedPublication => Publication;
     public override IComputed UntypedComputed => Computed;
 
-    public PublicationState(IPublication<T> publication, IComputed<T> computed, bool isDisposed)
+    public PublicationState(IPublication<T> publication, Computed<T> computed, bool isDisposed)
         : base(isDisposed)
     {
         Publication = publication;

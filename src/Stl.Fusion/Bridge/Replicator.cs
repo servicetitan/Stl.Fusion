@@ -8,8 +8,8 @@ public interface IReplicator : IHasId<Symbol>, IHasServices
 {
     ReplicatorOptions Options { get; }
 
-    IReplica? Get(PublicationRef publicationRef);
-    IReplica<T> GetOrAdd<T>(
+    Replica? Get(PublicationRef publicationRef);
+    Replica<T> GetOrAdd<T>(
         ComputedOptions computedOptions, PublicationStateInfo<T> publicationStateInfo, bool requestUpdate = false);
 
     IState<bool> GetPublisherConnectionState(Symbol publisherId);
@@ -19,8 +19,8 @@ public interface IReplicatorImpl : IReplicator
 {
     IChannelProvider ChannelProvider { get; }
 
-    void Subscribe(IReplica replica);
-    void OnReplicaDisposed(IReplica replica);
+    void Subscribe(Replica replica);
+    void OnReplicaDisposed(Replica replica);
 }
 
 public record ReplicatorOptions
@@ -53,17 +53,17 @@ public class Replicator : SafeAsyncDisposableBase, IReplicatorImpl
         CreateChannelProcessorHandler = CreateChannelProcessor;
     }
 
-    public IReplica? Get(PublicationRef publicationRef)
+    public Replica? Get(PublicationRef publicationRef)
         => ReplicaRegistry.Instance.Get(publicationRef);
 
-    public IReplica<T> GetOrAdd<T>(
+    public Replica<T> GetOrAdd<T>(
         ComputedOptions computedOptions, PublicationStateInfo<T> publicationStateInfo, bool requestUpdate = false)
     {
         var (replica, isNew) = ReplicaRegistry.Instance.GetOrRegister(publicationStateInfo.PublicationRef,
             () => new Replica<T>(computedOptions, publicationStateInfo, this, requestUpdate));
         if (isNew)
             Subscribe(replica);
-        return (IReplica<T>) replica;
+        return (Replica<T>) replica;
     }
 
     public IState<bool> GetPublisherConnectionState(Symbol publisherId)
@@ -86,18 +86,18 @@ public class Replicator : SafeAsyncDisposableBase, IReplicatorImpl
         return channelProcessor;
     }
 
-    void IReplicatorImpl.Subscribe(IReplica replica)
+    void IReplicatorImpl.Subscribe(Replica replica)
         => Subscribe(replica);
-    protected virtual void Subscribe(IReplica replica)
+    protected virtual void Subscribe(Replica replica)
     {
         if (replica.Replicator != this)
             throw new ArgumentOutOfRangeException(nameof(replica));
         GetChannelProcessor(replica.PublicationRef.PublisherId).Subscribe(replica);
     }
 
-    void IReplicatorImpl.OnReplicaDisposed(IReplica replica)
+    void IReplicatorImpl.OnReplicaDisposed(Replica replica)
         => OnReplicaDisposed(replica);
-    protected virtual void OnReplicaDisposed(IReplica replica)
+    protected virtual void OnReplicaDisposed(Replica replica)
     {
         if (WhenDisposed != null)
             return;

@@ -28,7 +28,7 @@ public interface IPublication<T> : IPublication
     new PublicationState<T> State { get; }
 }
 
-public class Publication<T> : IPublication<T>
+public sealed class Publication<T> : IPublication<T>
 {
     private readonly IMomentClock _clock;
     private volatile PublicationState<T> _state;
@@ -56,7 +56,7 @@ public class Publication<T> : IPublication<T>
 
     public Publication(
         Type publicationType, IPublisher publisher,
-        IComputed<T> computed, Symbol id,
+        Computed<T> computed, Symbol id,
         IMomentClock? clock)
     {
         PublicationType = publicationType;

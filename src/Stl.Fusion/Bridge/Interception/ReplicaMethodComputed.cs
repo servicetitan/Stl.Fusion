@@ -5,21 +5,16 @@ namespace Stl.Fusion.Bridge.Interception;
 
 public interface IReplicaMethodComputed : IComputed
 {
-    IReplica? Replica { get; }
+    Replica? Replica { get; }
 }
 
-public interface IReplicaMethodComputed<T> : IComputed<ComputeMethodInput, T>, IReplicaMethodComputed
+public class ReplicaMethodComputed<T> : ComputeMethodComputed<T>, IReplicaMethodComputed
 {
-    new IReplica<T>? Replica { get; }
-}
-
-public class ReplicaMethodComputed<T> : Computed<ComputeMethodInput, T>, IReplicaMethodComputed<T>
-{
-    IReplica? IReplicaMethodComputed.Replica => Replica;
-    public IReplica<T>? Replica { get; }
+    Replica? IReplicaMethodComputed.Replica => Replica;
+    public Replica<T>? Replica { get; }
 
     // Two primary constructors
-    public ReplicaMethodComputed(ComputedOptions options, ComputeMethodInput input, IReplicaComputed<T> source)
+    public ReplicaMethodComputed(ComputedOptions options, ComputeMethodInput input, ReplicaComputed<T> source)
         : this(source.Replica, options, input, source.Version)
     {
         ((IComputedImpl) this).AddUsed((IComputedImpl) source);
@@ -33,12 +28,12 @@ public class ReplicaMethodComputed<T> : Computed<ComputeMethodInput, T>, IReplic
         : this(null, options, input, new Result<T>(default!, error), version, false) { }
 
     // And the "inherited" ones allowing to configure this computed as you wish
-    protected ReplicaMethodComputed(IReplica<T>? replica,
+    protected ReplicaMethodComputed(Replica<T>? replica,
         ComputedOptions options, ComputeMethodInput input, LTag version)
         : base(options, input, version)
         => Replica = replica;
 
-    protected ReplicaMethodComputed(IReplica<T>? replica,
+    protected ReplicaMethodComputed(Replica<T>? replica,
         ComputedOptions options, ComputeMethodInput input,
         Result<T> output, LTag version, bool isConsistent)
         : base(options, input, output, version, isConsistent)
@@ -47,7 +42,7 @@ public class ReplicaMethodComputed<T> : Computed<ComputeMethodInput, T>, IReplic
     protected override void OnInvalidated()
     {
         // We intentionally suppress ComputedRegistry.Unregister here,
-        // otherwise it won't be possible to find IReplica using
+        // otherwise it won't be possible to find Replica using
         // old IComputed.
         CancelTimeouts();
     }

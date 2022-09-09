@@ -15,21 +15,19 @@ public interface IFunction : IHasServices
         CancellationToken cancellationToken = default);
 }
 
-public interface IFunction<in TIn, TOut> : IFunction
-    where TIn : ComputedInput
+public interface IFunction<T> : IFunction
 {
-    ValueTask<IComputed<TOut>> Invoke(TIn input,
+    new ValueTask<Computed<T>> Invoke(ComputedInput input,
         IComputed? usedBy,
         ComputeContext? context,
         CancellationToken cancellationToken = default);
-    Task<TOut> InvokeAndStrip(TIn input,
+    new Task<T> InvokeAndStrip(ComputedInput input,
         IComputed? usedBy,
         ComputeContext? context,
         CancellationToken cancellationToken = default);
 }
 
-public abstract class FunctionBase<TIn, TOut> : IFunction<TIn, TOut>
-    where TIn : ComputedInput
+public abstract class FunctionBase<T> : IFunction<T>
 {
     protected IAsyncLockSet<ComputedInput> Locks { get; }
     protected object Lock => Locks;
@@ -50,9 +48,9 @@ public abstract class FunctionBase<TIn, TOut> : IFunction<TIn, TOut>
         IComputed? usedBy,
         ComputeContext? context,
         CancellationToken cancellationToken)
-        => await Invoke((TIn) input, usedBy, context, cancellationToken).ConfigureAwait(false);
+        => await Invoke(input, usedBy, context, cancellationToken).ConfigureAwait(false);
 
-    public virtual async ValueTask<IComputed<TOut>> Invoke(TIn input,
+    public virtual async ValueTask<Computed<T>> Invoke(ComputedInput input,
         IComputed? usedBy,
         ComputeContext? context,
         CancellationToken cancellationToken = default)
@@ -80,9 +78,9 @@ public abstract class FunctionBase<TIn, TOut> : IFunction<TIn, TOut>
         IComputed? usedBy,
         ComputeContext? context,
         CancellationToken cancellationToken)
-        => InvokeAndStrip((TIn) input, usedBy, context, cancellationToken);
+        => InvokeAndStrip(input, usedBy, context, cancellationToken);
 
-    public virtual Task<TOut> InvokeAndStrip(TIn input,
+    public virtual Task<T> InvokeAndStrip(ComputedInput input,
         IComputed? usedBy,
         ComputeContext? context,
         CancellationToken cancellationToken = default)
@@ -95,7 +93,7 @@ public abstract class FunctionBase<TIn, TOut> : IFunction<TIn, TOut>
             : TryRecompute(input, usedBy, context, cancellationToken);
     }
 
-    protected async Task<TOut> TryRecompute(TIn input,
+    protected async Task<T> TryRecompute(ComputedInput input,
         IComputed? usedBy,
         ComputeContext context,
         CancellationToken cancellationToken = default)
@@ -112,14 +110,14 @@ public abstract class FunctionBase<TIn, TOut> : IFunction<TIn, TOut>
         return output.Value;
     }
 
-    protected IComputed<TOut>? GetExisting(TIn input)
+    protected Computed<T>? GetExisting(ComputedInput input)
     {
         var computed = ComputedRegistry.Instance.Get(input);
-        return computed as IComputed<TIn, TOut>;
+        return computed as Computed<T>;
     }
 
     // Protected & private
 
-    protected abstract ValueTask<IComputed<TOut>> Compute(
-        TIn input, IComputed<TOut>? existing, CancellationToken cancellationToken);
+    protected abstract ValueTask<Computed<T>> Compute(
+        ComputedInput input, Computed<T>? existing, CancellationToken cancellationToken);
 }

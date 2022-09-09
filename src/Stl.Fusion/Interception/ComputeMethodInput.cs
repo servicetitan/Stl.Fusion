@@ -3,7 +3,7 @@ using Stl.Fusion.Interception.Internal;
 
 namespace Stl.Fusion.Interception;
 
-public class ComputeMethodInput : ComputedInput, IEquatable<ComputeMethodInput>
+public sealed class ComputeMethodInput : ComputedInput, IEquatable<ComputeMethodInput>
 {
     // ReSharper disable once HeapView.BoxingAllocation
     private static readonly object BoxedDefaultCancellationToken = default(CancellationToken);
@@ -16,7 +16,6 @@ public class ComputeMethodInput : ComputedInput, IEquatable<ComputeMethodInput>
     public object[] Arguments => Invocation.Arguments;
 
     public ComputeMethodInput(IFunction function, ComputeMethodDef methodDef, AbstractInvocation invocation)
-        : base(function)
     {
         MethodDef = methodDef;
         Invocation = invocation;
@@ -35,7 +34,7 @@ public class ComputeMethodInput : ComputedInput, IEquatable<ComputeMethodInput>
             methodDef.InvocationTargetHandler.GetHashCodeFunc(invocation.InvocationTarget));
         for (var i = 0; i < arguments.Length; i++)
             hashCode ^= argumentHandlers[i].GetHashCodeFunc(arguments[i]);
-        HashCode = hashCode;
+        Initialize(function, hashCode);
     }
 
     public override string ToString()

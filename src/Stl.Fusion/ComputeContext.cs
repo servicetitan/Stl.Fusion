@@ -64,7 +64,7 @@ public class ComputeContext
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public IComputed GetCaptured() => _captured ?? throw Errors.NoComputedCaptured();
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public IComputed<T> GetCaptured<T>() => (IComputed<T>) GetCaptured();
+    public Computed<T> GetCaptured<T>() => (Computed<T>) GetCaptured();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool TryGetCaptured([MaybeNullWhen(false)] out IComputed computed)
@@ -74,9 +74,9 @@ public class ComputeContext
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool TryGetCaptured<T>([MaybeNullWhen(false)] out IComputed<T> computed)
+    public bool TryGetCaptured<T>([MaybeNullWhen(false)] out Computed<T> computed)
     {
-        computed = _captured as IComputed<T>;
+        computed = _captured as Computed<T>;
         return computed != null;
     }
 }

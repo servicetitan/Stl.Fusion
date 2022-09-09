@@ -23,6 +23,8 @@ public interface IComputed : IHasConsistencyState, IResult, IHasVersion<LTag>
     ValueTask<object> Use(CancellationToken cancellationToken = default);
 }
 
+// Removed: use Computed<TOut> instead
+/* 
 public interface IComputed<TOut> : IComputed, IResult<TOut>
 {
     new Result<TOut> Output { get; }
@@ -32,6 +34,7 @@ public interface IComputed<TOut> : IComputed, IResult<TOut>
     new ValueTask<IComputed<TOut>> Update(CancellationToken cancellationToken = default);
     new ValueTask<TOut> Use(CancellationToken cancellationToken = default);
 }
+*/
 
 public interface IAsyncComputed : IComputed
 {
@@ -39,29 +42,34 @@ public interface IAsyncComputed : IComputed
     ValueTask<IResult?> GetOutput(CancellationToken cancellationToken = default);
 }
 
-public interface IAsyncComputed<T> : IAsyncComputed, IComputed<T>
+public interface IAsyncComputed<T> : IAsyncComputed, IComputed, IResult<T>
 {
     new ResultBox<T>? MaybeOutput { get; }
     new ValueTask<ResultBox<T>?> GetOutput(CancellationToken cancellationToken = default);
 }
 
+// Removed: use Computed<TOut> instead
+/* 
 public interface IComputedWithTypedInput<out TIn> : IComputed
     where TIn : ComputedInput
 {
     new TIn Input { get; }
 }
+*/
 
-public interface IComputed<out TIn, TOut> : IComputed<TOut>, IComputedWithTypedInput<TIn>
+// Removed: use Computed<TOut> instead
+/* 
+public interface IComputed<out TIn, TOut> : IComputed<TOut>
     where TIn : ComputedInput
 { }
+*/
 
-public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
-    where TIn : ComputedInput
+public abstract class Computed<T> : IComputed, IComputedImpl, IResult<T>
 {
     private readonly ComputedOptions _options;
     private volatile int _state;
-    private Result<TOut> _output;
-    private Task<TOut>? _outputAsTask;
+    private Result<T> _output;
+    private Task<T>? _outputAsTask;
     private RefHashSetSlim3<IComputedImpl> _used;
     private HashSetSlim3<(ComputedInput Input, LTag Version)> _usedBy;
     // ReSharper disable once InconsistentNaming
@@ -72,21 +80,21 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
     protected object Lock => this;
 
     public ComputedOptions Options => _options;
-    public TIn Input { get; }
+    public ComputedInput Input { get; }
     public ConsistencyState ConsistencyState => (ConsistencyState) _state;
     public bool IsConsistent() => ConsistencyState == ConsistencyState.Consistent;
-    public IFunction<TIn, TOut> Function => (IFunction<TIn, TOut>) Input.Function;
+    public IFunction<T> Function => (IFunction<T>) Input.Function;
     public LTag Version { get; }
-    public Type OutputType => typeof(TOut);
+    public Type OutputType => typeof(T);
 
-    public virtual Result<TOut> Output {
+    public virtual Result<T> Output {
         get {
             this.AssertConsistencyStateIsNot(ConsistencyState.Computing);
             return _output;
         }
     }
 
-    public Task<TOut> OutputAsTask {
+    public Task<T> OutputAsTask {
         get {
             if (_outputAsTask != null)
                 return _outputAsTask;
@@ -99,8 +107,8 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
 
     // IResult<T> properties
     [MaybeNull]
-    public TOut ValueOrDefault => Output.ValueOrDefault;
-    public TOut Value => Output.Value;
+    public T ValueOrDefault => Output.ValueOrDefault;
+    public T Value => Output.Value;
     public Exception? Error => Output.Error;
     public bool HasValue => Output.HasValue;
     public bool HasError => Output.HasError;
@@ -136,7 +144,7 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
         }
     }
 
-    protected Computed(ComputedOptions options, TIn input, LTag version)
+    protected Computed(ComputedOptions options, ComputedInput input, LTag version)
     {
         _options = options;
         Input = input;
@@ -144,7 +152,7 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
         ComputedRegistry.Instance.Register(this);
     }
 
-    protected Computed(ComputedOptions options, TIn input, Result<TOut> output, LTag version, bool isConsistent)
+    protected Computed(ComputedOptions options, ComputedInput input, Result<T> output, LTag version, bool isConsistent)
     {
         _options = options;
         Input = input;
@@ -158,7 +166,7 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
     public override string ToString()
         => $"{GetType().Name}({Input} {Version}, State: {ConsistencyState})";
 
-    public virtual bool TrySetOutput(Result<TOut> output)
+    public virtual bool TrySetOutput(Result<T> output)
     {
         if (ConsistencyState != ConsistencyState.Computing)
             return false;
@@ -172,7 +180,7 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
         return true;
     }
 
-    protected void OnOutputSet(Result<TOut> output)
+    protected void OnOutputSet(Result<T> output)
     {
         if (InvalidateOnSetOutput) {
             Invalidate();
@@ -237,7 +245,7 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
 
     async ValueTask<IComputed> IComputed.Update(CancellationToken cancellationToken)
         => await Update(cancellationToken).ConfigureAwait(false);
-    public async ValueTask<IComputed<TOut>> Update(CancellationToken cancellationToken = default)
+    public async ValueTask<Computed<T>> Update(CancellationToken cancellationToken = default)
     {
         if (IsConsistent())
             return this;
@@ -251,7 +259,7 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
 
     async ValueTask<object> IComputed.Use(CancellationToken cancellationToken)
         => (await Use(cancellationToken).ConfigureAwait(false))!;
-    public virtual async ValueTask<TOut> Use(CancellationToken cancellationToken = default)
+    public virtual async ValueTask<T> Use(CancellationToken cancellationToken = default)
     {
         var usedBy = Computed.GetCurrent();
         var context = ComputeContext.Current;
@@ -272,18 +280,18 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
 
     // IResult<T> methods
 
-    public void Deconstruct(out TOut value, out Exception? error)
+    public void Deconstruct(out T value, out Exception? error)
         => Output.Deconstruct(out value, out error);
-    public bool IsValue([MaybeNullWhen(false)] out TOut value)
+    public bool IsValue([MaybeNullWhen(false)] out T value)
         => Output.IsValue(out value);
-    public bool IsValue([MaybeNullWhen(false)] out TOut value, [MaybeNullWhen(true)] out Exception error)
+    public bool IsValue([MaybeNullWhen(false)] out T value, [MaybeNullWhen(true)] out Exception error)
         => Output.IsValue(out value, out error!);
-    public Result<TOut> AsResult()
+    public Result<T> AsResult()
         => Output.AsResult();
     public Result<TOther> Cast<TOther>()
         => Output.Cast<TOther>();
-    TOut IConvertibleTo<TOut>.Convert() => Value;
-    Result<TOut> IConvertibleTo<Result<TOut>>.Convert() => AsResult();
+    T IConvertibleTo<T>.Convert() => Value;
+    Result<T> IConvertibleTo<Result<T>>.Convert() => AsResult();
 
     // IComputedImpl methods
 
@@ -368,11 +376,11 @@ public class Computed<TIn, TOut> : IComputed<TIn, TOut>, IComputedImpl
     }
 }
 
-public class Computed<T> : Computed<ComputeMethodInput, T>
+public class ComputeMethodComputed<T> : Computed<T>
 {
-    public Computed(ComputedOptions options, ComputeMethodInput input, LTag version)
+    public ComputeMethodComputed(ComputedOptions options, ComputeMethodInput input, LTag version)
         : base(options, input, version) { }
 
-    protected Computed(ComputedOptions options, ComputeMethodInput input, Result<T> output, LTag version, bool isConsistent = true)
+    protected ComputeMethodComputed(ComputedOptions options, ComputeMethodInput input, Result<T> output, LTag version, bool isConsistent = true)
         : base(options, input, output, version, isConsistent) { }
 }

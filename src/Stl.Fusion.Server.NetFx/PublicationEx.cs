@@ -65,7 +65,7 @@ public static class HttpContextExt
             responseHeaders.AddPublicationStateInfoHeader(psi);
     }
 
-    public static async Task<IComputed<T>> Publish<T>(
+    public static async Task<Computed<T>> Publish<T>(
         this HttpActionContext httpActionContext,
         IPublisher publisher,
         Func<CancellationToken, Task<T>> producer,

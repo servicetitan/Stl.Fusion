@@ -78,14 +78,14 @@ public static class StateExt
 
     // When
 
-    public static Task<IComputed<T>> When<T>(this IState<T> state,
+    public static Task<Computed<T>> When<T>(this IState<T> state,
         Func<T, bool> predicate,
         CancellationToken cancellationToken = default)
         => state.Computed.When(predicate, cancellationToken);
 
     // Changes
 
-    public static IAsyncEnumerable<IComputed<T>> Changes<T>(
+    public static IAsyncEnumerable<Computed<T>> Changes<T>(
         this IState<T> state,
         CancellationToken cancellationToken = default)
         => state.Computed.Changes(cancellationToken);

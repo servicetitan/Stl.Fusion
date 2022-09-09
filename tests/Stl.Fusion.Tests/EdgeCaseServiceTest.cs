@@ -96,7 +96,7 @@ public class EdgeCaseServiceTest : FusionTestBase
         await service.SetSuffix("");
     }
 
-    private async Task<IComputed<T>> Update<T>(IComputed<T> computed, CancellationToken cancellationToken = default)
+    private async Task<Computed<T>> Update<T>(Computed<T> computed, CancellationToken cancellationToken = default)
     {
         if (computed is IReplicaMethodComputed rc)
             await rc.Replica!.RequestUpdate(cancellationToken);

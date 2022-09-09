@@ -24,7 +24,7 @@ public class ScreenshotServiceTest : FusionTestBase
         }
     }
 
-    private async Task<IComputed<Screenshot>> GetScreenshotComputed()
+    private async Task<Computed<Screenshot>> GetScreenshotComputed()
     {
         var screenshots = Services.GetRequiredService<IScreenshotService>();
         var computed = await Computed.Capture(_ => screenshots.GetScreenshot(1280));

@@ -1,14 +1,13 @@
 using Stl.Collections.Slim;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Bridge.Interception;
-using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
 
 namespace Stl.Fusion.Extensions;
 
 public class BackendStatus : IBackendStatus
 {
-    private static FieldInfo UsedField { get; } = typeof(Computed<ComputeMethodInput, Unit>)
+    private static FieldInfo UsedField { get; } = typeof(Computed<Unit>)
         .GetField("_used", BindingFlags.Instance | BindingFlags.NonPublic)!;
     protected IAuth Auth { get; }
 

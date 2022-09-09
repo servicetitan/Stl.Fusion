@@ -55,18 +55,16 @@ public sealed class PublicationFactory : IPublicationFactory
         public FactoryApplyHandler(Type genericType)
             => _genericType = genericType;
 
-        public IPublication Apply<TIn, TOut>(
-            IComputed<TIn, TOut> computed,
+        public IPublication Apply<T>(
+            Computed<T> computed,
             (IPublisher Publisher, Symbol PublicationId, IMomentClock Clock) arg)
-            where TIn : ComputedInput
         {
             var closedType = _closedTypeCache.GetOrAddChecked(
-                typeof(TOut),
+                typeof(T),
                 (tArg, tGeneric) => tGeneric.MakeGenericType(tArg),
                 _genericType);
             return (IPublication) closedType.CreateInstance(
-                _genericType, arg.Publisher,
-                (IComputed<TOut>) computed, arg.PublicationId, arg.Clock);
+                _genericType, arg.Publisher, computed, arg.PublicationId, arg.Clock);
         }
     }
 }

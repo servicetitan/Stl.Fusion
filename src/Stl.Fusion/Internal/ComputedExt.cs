@@ -7,7 +7,7 @@ public static class ComputedExt
         public static readonly Task<T> DefaultResultTask = Task.FromResult(default(T)!);
     }
 
-    internal static bool TryUseExisting<T>(this IComputed<T>? existing, ComputeContext context, IComputed? usedBy)
+    internal static bool TryUseExisting<T>(this Computed<T>? existing, ComputeContext context, IComputed? usedBy)
     {
         var callOptions = context.CallOptions;
         var mustUseExisting = (callOptions & CallOptions.GetExisting) != 0;
@@ -25,7 +25,7 @@ public static class ComputedExt
             return true;
         }
         if (!mustUseExisting)
-            ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) existing!);
+            ((IComputedImpl?) usedBy)?.AddUsed(existing!);
         ((IComputedImpl?) existing)?.RenewTimeouts();
         return true;
     }
@@ -63,7 +63,7 @@ public static class ComputedExt
         return result;
     }
 
-    internal static bool TryUseExistingFromUse<T>(this IComputed<T>? existing, ComputeContext context, IComputed? usedBy)
+    internal static bool TryUseExistingFromUse<T>(this Computed<T>? existing, ComputeContext context, IComputed? usedBy)
     {
         if (existing == null || !existing.IsConsistent())
             return false;
@@ -94,14 +94,14 @@ public static class ComputedExt
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static void UseNew<T>(this IComputed<T> computed, ComputeContext context, IComputed? usedBy)
+    internal static void UseNew<T>(this Computed<T> computed, ComputeContext context, IComputed? usedBy)
     {
         ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) computed);
         ((IComputedImpl?) computed)?.RenewTimeouts();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static T Strip<T>(this IComputed<T>? computed, ComputeContext context)
+    internal static T Strip<T>(this Computed<T>? computed, ComputeContext context)
     {
         if (computed == null)
             return default!;
@@ -111,7 +111,7 @@ public static class ComputedExt
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static Task<T> StripToTask<T>(this IComputed<T>? computed, ComputeContext context)
+    internal static Task<T> StripToTask<T>(this Computed<T>? computed, ComputeContext context)
     {
         if (computed == null)
             return TaskCache<T>.DefaultResultTask;

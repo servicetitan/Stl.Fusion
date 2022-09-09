@@ -19,8 +19,8 @@ public interface IStateSnapshot
 public interface IStateSnapshot<T> : IStateSnapshot
 {
     new IState<T> State { get; }
-    new IComputed<T> Computed { get; }
-    new IComputed<T> LatestNonErrorComputed { get; }
+    new Computed<T> Computed { get; }
+    new Computed<T> LatestNonErrorComputed { get; }
 }
 
 public class StateSnapshot<T> : IStateSnapshot<T>
@@ -29,8 +29,8 @@ public class StateSnapshot<T> : IStateSnapshot<T>
     private TaskSource<Unit> WhenUpdatedSource { get; }
 
     public IState<T> State { get; }
-    public IComputed<T> Computed { get; }
-    public IComputed<T> LatestNonErrorComputed { get; }
+    public Computed<T> Computed { get; }
+    public Computed<T> LatestNonErrorComputed { get; }
     public int UpdateCount { get; }
     public int ErrorCount { get; }
     public int RetryCount { get; }
@@ -39,7 +39,7 @@ public class StateSnapshot<T> : IStateSnapshot<T>
     IComputed IStateSnapshot.Computed => Computed;
     IComputed IStateSnapshot.LatestNonErrorComputed => LatestNonErrorComputed;
 
-    public StateSnapshot(IState<T> state, IComputed<T> computed)
+    public StateSnapshot(IState<T> state, Computed<T> computed)
     {
         State = state;
         Computed = computed;
@@ -51,7 +51,7 @@ public class StateSnapshot<T> : IStateSnapshot<T>
         RetryCount = 0;
     }
 
-    public StateSnapshot(StateSnapshot<T> prevSnapshot, IComputed<T> computed)
+    public StateSnapshot(StateSnapshot<T> prevSnapshot, Computed<T> computed)
     {
         State = prevSnapshot.State;
         Computed = computed;

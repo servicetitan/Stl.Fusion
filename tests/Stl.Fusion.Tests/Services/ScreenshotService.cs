@@ -77,7 +77,7 @@ public class ScreenshotService : IScreenshotService
         Computed.GetCurrent()!.Invalidated += c => {
             Task.Delay(2000, default).ContinueWith(_ => {
                 // Let's dispose these values in 2 seconds
-                var computed = (IComputed<Bitmap>) c;
+                var computed = (Computed<Bitmap>) c;
                 if (computed.HasValue)
                     computed.Value.Dispose();
             }, TaskScheduler.Default);

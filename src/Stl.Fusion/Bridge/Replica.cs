@@ -2,71 +2,31 @@ using Stl.Fusion.Internal;
 
 namespace Stl.Fusion.Bridge;
 
-public interface IReplica : IDisposable
+public abstract class Replica : ComputedInput, IFunction, IDisposable, IEquatable<Replica>
 {
-    ComputedOptions ComputedOptions { get; }
-    PublicationRef PublicationRef { get; }
-    IReplicator Replicator { get; }
-    IReplicaComputed Computed { get; }
-    bool IsUpdateRequested { get; }
-    Exception? UpdateError { get; }
-
-    Task RequestUpdate(CancellationToken cancellationToken = default);
-}
-
-public interface IReplica<T> : IReplica
-{
-    new IReplicaComputed<T> Computed { get; }
-}
-
-public interface IReplicaImpl : IReplica, IFunction
-{
-    void DisposeTemporaryInstance();
-    bool ApplyFailedUpdate(Exception? error, CancellationToken cancelledToken);
-}
-
-public interface IReplicaImpl<T> : IReplica<T>, IFunction<ReplicaInput, T>, IReplicaImpl
-{
-    bool ApplySuccessfulUpdate(Result<T>? output, LTag version, bool isConsistent);
-}
-
-public class Replica<T> : IReplicaImpl<T>
-{
-    protected readonly ReplicaInput Input;
-    protected volatile IReplicaComputed<T> ComputedField = null!;
-    protected volatile Exception? UpdateErrorField;
-    protected volatile Task<Unit>? UpdateRequestTask;
-    protected IReplicatorImpl ReplicatorImpl => (IReplicatorImpl) Replicator;
-    protected readonly object Lock = new();
+    protected IReplicatorImpl ReplicatorImpl { get; }
 
     public ComputedOptions ComputedOptions { get; }
-    public PublicationRef PublicationRef => Input.PublicationRef;
-    public IReplicator Replicator { get; }
-    public IReplicaComputed<T> Computed => ComputedField;
-    public bool IsUpdateRequested => UpdateRequestTask != null;
-    public Exception? UpdateError => UpdateErrorField;
+    public PublicationRef PublicationRef { get; }
+    public IReplicator Replicator => ReplicatorImpl;
+    public IServiceProvider Services => ReplicatorImpl.Services;
 
-    // Explicit property implementations
-    IServiceProvider IHasServices.Services => ReplicatorImpl.Services;
-    IReplicaComputed IReplica.Computed => ComputedField;
+    public abstract IReplicaComputed UntypedComputed { get; }
+    public abstract bool IsUpdateRequested { get; }
+    public abstract Exception? UpdateError { get; }
 
-    public Replica(
-        ComputedOptions computedOptions,
-        PublicationStateInfo<T> info,
-        IReplicator replicator,
-        bool isUpdateRequested = false)
+    protected Replica(ComputedOptions computedOptions, PublicationRef publicationRef, IReplicatorImpl replicatorImpl)
     {
-        if (computedOptions.SwappingOptions.IsEnabled)
-            throw Errors.UnsupportedComputedOptions(GetType());
         ComputedOptions = computedOptions;
-        Replicator = replicator;
-        Input = new ReplicaInput(this, info.PublicationRef);
-        // ReSharper disable once VirtualMemberCallInConstructor
-        ApplySuccessfulUpdate(info.Output, info.Version, info.IsConsistent);
-        if (isUpdateRequested)
-            // ReSharper disable once VirtualMemberCallInConstructor
-            UpdateRequestTask = CreateUpdateRequestTask();
+        PublicationRef = publicationRef;
+        ReplicatorImpl = replicatorImpl;
+        Initialize(this, PublicationRef.GetHashCode());
     }
+
+    public override string ToString()
+        => $"{GetType().Name}({PublicationRef})";
+
+    // Finalization & Dispose
 
     // We want to make sure the replicas are connected to
     // publishers only while they're used.
@@ -74,11 +34,7 @@ public class Replica<T> : IReplicaImpl<T>
     ~Replica() => Dispose(false);
 #pragma warning restore MA0055
 
-    // Called for temp. replicas that were never exposed by ReplicaRegistry
-    void IReplicaImpl.DisposeTemporaryInstance()
-        => GC.SuppressFinalize(this);
-
-    public virtual void Dispose()
+    public void Dispose()
     {
         GC.SuppressFinalize(this);
         Dispose(true);
@@ -87,7 +43,7 @@ public class Replica<T> : IReplicaImpl<T>
     protected virtual void Dispose(bool disposing)
     {
         try {
-            Input.ReplicatorImpl.OnReplicaDisposed(this);
+            ReplicatorImpl.OnReplicaDisposed(this);
         }
         catch {
             // Intended
@@ -95,33 +51,87 @@ public class Replica<T> : IReplicaImpl<T>
         ReplicaRegistry.Instance.Remove(this);
     }
 
-    Task IReplica.RequestUpdate(CancellationToken cancellationToken)
-        => RequestUpdate(cancellationToken);
-    public virtual Task RequestUpdate(CancellationToken cancellationToken = default)
+    // Called for temp. replicas that were never exposed by ReplicaRegistry
+    public void DisposeTemporaryInstance()
+        => GC.SuppressFinalize(this);
+
+    // Abstract members
+    public abstract Task RequestUpdate(CancellationToken cancellationToken = default);
+    public abstract bool ApplyFailedUpdate(Exception? error, CancellationToken cancelledToken);
+
+#pragma warning disable MA0025
+    ValueTask<IComputed> IFunction.Invoke(ComputedInput input, IComputed? usedBy, ComputeContext? context,
+        CancellationToken cancellationToken) =>
+        throw new NotImplementedException();
+
+    Task IFunction.InvokeAndStrip(ComputedInput input, IComputed? usedBy, ComputeContext? context,
+        CancellationToken cancellationToken) =>
+        throw new NotImplementedException();
+#pragma warning restore MA0025
+
+    // Equality
+
+    public bool Equals(Replica? other)
+        => !ReferenceEquals(null, other) && PublicationRef == other.PublicationRef;
+    public override bool Equals(ComputedInput? other)
+        => other is Replica ri && PublicationRef == ri.PublicationRef;
+    public override bool Equals(object? obj)
+        => Equals(obj as Replica);
+    public override int GetHashCode()
+        => HashCode;
+}
+
+public sealed class Replica<T> : Replica, IFunction<T>
+{
+    private volatile ReplicaComputed<T> _computed = null!;
+    private volatile Exception? _updateError;
+    private volatile Task<Unit>? _updateRequestTask;
+    private readonly object _lock = new();
+
+    public ReplicaComputed<T> Computed => _computed;
+    public override IReplicaComputed UntypedComputed => _computed;
+    public override bool IsUpdateRequested => _updateRequestTask != null;
+    public override Exception? UpdateError => _updateError;
+
+    public Replica(
+        ComputedOptions computedOptions,
+        PublicationStateInfo<T> info,
+        IReplicatorImpl replicatorImpl,
+        bool isUpdateRequested = false)
+        : base(computedOptions, info.PublicationRef, replicatorImpl)
     {
-        var updateRequestTask = UpdateRequestTask;
+        if (computedOptions.SwappingOptions.IsEnabled)
+            throw Errors.UnsupportedComputedOptions(GetType());
+        // ReSharper disable once VirtualMemberCallInConstructor
+        ApplySuccessfulUpdate(info.Output, info.Version, info.IsConsistent);
+        if (isUpdateRequested)
+            // ReSharper disable once VirtualMemberCallInConstructor
+            _updateRequestTask = CreateUpdateRequestTask();
+    }
+
+    public override Task RequestUpdate(CancellationToken cancellationToken = default)
+    {
+        var updateRequestTask = _updateRequestTask;
         if (updateRequestTask != null)
             return updateRequestTask.WaitAsync(cancellationToken);
         // Double check locking
-        lock (Lock) {
-            updateRequestTask = UpdateRequestTask;
+        lock (_lock) {
+            updateRequestTask = _updateRequestTask;
             if (updateRequestTask != null)
                 return updateRequestTask.WaitAsync(cancellationToken);
-            UpdateRequestTask = updateRequestTask = CreateUpdateRequestTask();
-            Input.ReplicatorImpl.Subscribe(this);
+            _updateRequestTask = updateRequestTask = CreateUpdateRequestTask();
+            ReplicatorImpl.Subscribe(this);
             return updateRequestTask.WaitAsync(cancellationToken);
         }
     }
 
-    bool IReplicaImpl<T>.ApplySuccessfulUpdate(Result<T>? output, LTag version, bool isConsistent)
-        => ApplySuccessfulUpdate(output, version, isConsistent);
-    protected virtual bool ApplySuccessfulUpdate(Result<T>? output, LTag version, bool isConsistent)
+    public bool ApplySuccessfulUpdate(Result<T>? output, LTag version, bool isConsistent)
     {
         Task<Unit>? updateRequestTask;
-        lock (Lock) {
+        lock (_lock) {
             // 1. Update Computed & UpdateError
-            UpdateErrorField = null;
-            var oldComputed = ComputedField;
+            _updateError = null;
+            var oldComputed = _computed;
 
             if (oldComputed == null! || oldComputed.Version != version)
                 ReplaceComputedUnsafe(oldComputed, output, version, isConsistent);
@@ -133,7 +143,7 @@ public class Replica<T> : IReplicaImpl<T>
             }
 
             // 2. Complete UpdateRequestTask
-            (updateRequestTask, UpdateRequestTask) = (UpdateRequestTask, null);
+            (updateRequestTask, _updateRequestTask) = (_updateRequestTask, null);
         }
 
         if (updateRequestTask != null) {
@@ -143,19 +153,17 @@ public class Replica<T> : IReplicaImpl<T>
         return true;
     }
 
-    bool IReplicaImpl.ApplyFailedUpdate(Exception? error, CancellationToken cancelledToken)
-        => ApplyFailedUpdate(error, cancelledToken);
-    protected virtual bool ApplyFailedUpdate(Exception? error, CancellationToken cancelledToken)
+    public override bool ApplyFailedUpdate(Exception? error, CancellationToken cancelledToken)
     {
-        IReplicaComputed<T>? computed;
+        ReplicaComputed<T>? computed;
         Task<Unit>? updateRequestTask;
-        lock (Lock) {
+        lock (_lock) {
             // 1. Update Computed & UpdateError
-            computed = ComputedField;
-            UpdateErrorField = error;
+            computed = _computed;
+            _updateError = error;
 
             // 2. Complete UpdateRequestTask
-            (updateRequestTask, UpdateRequestTask) = (UpdateRequestTask, null);
+            (updateRequestTask, _updateRequestTask) = (_updateRequestTask, null);
         }
 
         if (error != null)
@@ -168,33 +176,33 @@ public class Replica<T> : IReplicaImpl<T>
         return true;
     }
 
-    protected virtual Task<Unit> CreateUpdateRequestTask()
-        => TaskSource.New<Unit>(true).Task;
+    // IFunction<T> & IFunction
 
-    protected virtual void ReplaceComputedUnsafe(
-        IReplicaComputed<T>? oldComputed,
-        Result<T>? output, LTag version, bool isConsistent)
-    {
-        oldComputed?.Invalidate();
-        if (output.HasValue) {
-            var newComputed = new ReplicaComputed<T>(
-                ComputedOptions, Input, output.GetValueOrDefault(), version, isConsistent);
-            if (isConsistent)
-                ComputedRegistry.Instance.Register(newComputed);
-            ComputedField = newComputed;
-        }
-    }
-
-    protected async ValueTask<IComputed<T>> Invoke(
-        ReplicaInput input, IComputed? usedBy, ComputeContext? context,
+    async ValueTask<IComputed> IFunction.Invoke(ComputedInput input, IComputed? usedBy, ComputeContext? context,
         CancellationToken cancellationToken)
     {
-#if DEBUG
-        if (input != Input)
+        if (!ReferenceEquals(input, this))
             // This "Function" supports just a single input == Input
             throw new ArgumentOutOfRangeException(nameof(input));
-#endif
 
+        return await Invoke(this, usedBy, context, cancellationToken).ConfigureAwait(false);
+    }
+
+    ValueTask<Computed<T>> IFunction<T>.Invoke(
+        ComputedInput input, IComputed? usedBy, ComputeContext? context,
+        CancellationToken cancellationToken)
+    {
+        if (!ReferenceEquals(input, this))
+            // This "Function" supports just a single input == Input
+            throw new ArgumentOutOfRangeException(nameof(input));
+
+        return Invoke(this, usedBy, context, cancellationToken);
+    }
+
+    private async ValueTask<Computed<T>> Invoke(
+        Replica<T> input, IComputed? usedBy, ComputeContext? context,
+        CancellationToken cancellationToken)
+    {
         context ??= ComputeContext.Current;
 
         var result = Computed;
@@ -208,16 +216,31 @@ public class Replica<T> : IReplicaImpl<T>
         return result;
     }
 
-    protected Task<T> InvokeAndStrip(
-        ReplicaInput input, IComputed? usedBy, ComputeContext? context,
+    Task IFunction.InvokeAndStrip(ComputedInput input, IComputed? usedBy, ComputeContext? context,
         CancellationToken cancellationToken)
     {
-#if DEBUG
-        if (input != Input)
+        if (!ReferenceEquals(input, this))
             // This "Function" supports just a single input == Input
             throw new ArgumentOutOfRangeException(nameof(input));
-#endif
 
+        return InvokeAndStrip(this, usedBy, context, cancellationToken);
+    }
+
+    Task<T> IFunction<T>.InvokeAndStrip(
+        ComputedInput input, IComputed? usedBy, ComputeContext? context,
+        CancellationToken cancellationToken)
+    {
+        if (!ReferenceEquals(input, this))
+            // This "Function" supports just a single input == Input
+            throw new ArgumentOutOfRangeException(nameof(input));
+
+        return InvokeAndStrip(this, usedBy, context, cancellationToken);
+    }
+
+    private Task<T> InvokeAndStrip(
+        Replica<T> input, IComputed? usedBy, ComputeContext? context,
+        CancellationToken cancellationToken)
+    {
         context ??= ComputeContext.Current;
 
         var result = Computed;
@@ -226,7 +249,26 @@ public class Replica<T> : IReplicaImpl<T>
             : TryRecompute(usedBy, context, cancellationToken);
     }
 
-    protected async Task<T> TryRecompute(
+    // Private methods
+
+    private Task<Unit> CreateUpdateRequestTask()
+        => TaskSource.New<Unit>(true).Task;
+
+    private void ReplaceComputedUnsafe(
+        ReplicaComputed<T>? oldComputed,
+        Result<T>? output, LTag version, bool isConsistent)
+    {
+        oldComputed?.Invalidate();
+        if (output.HasValue) {
+            var newComputed = new ReplicaComputed<T>(
+                ComputedOptions, this, output.GetValueOrDefault(), version, isConsistent);
+            if (isConsistent)
+                ComputedRegistry.Instance.Register(newComputed);
+            _computed = newComputed;
+        }
+    }
+
+    private async Task<T> TryRecompute(
         IComputed? usedBy, ComputeContext context,
         CancellationToken cancellationToken)
     {
@@ -236,24 +278,4 @@ public class Replica<T> : IReplicaImpl<T>
         result.UseNew(context, usedBy);
         return result.Value;
     }
-
-    #region Explicit impl. of IFunction & IFunction<...>
-
-    async ValueTask<IComputed> IFunction.Invoke(ComputedInput input, IComputed? usedBy, ComputeContext? context,
-        CancellationToken cancellationToken)
-        => await Invoke((ReplicaInput) input, usedBy, context, cancellationToken).ConfigureAwait(false);
-
-    Task IFunction.InvokeAndStrip(ComputedInput input, IComputed? usedBy, ComputeContext? context,
-        CancellationToken cancellationToken)
-        => InvokeAndStrip((ReplicaInput) input, usedBy, context, cancellationToken);
-
-    ValueTask<IComputed<T>> IFunction<ReplicaInput, T>.Invoke(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
-        CancellationToken cancellationToken)
-        => Invoke(input, usedBy, context, cancellationToken);
-
-    Task<T> IFunction<ReplicaInput, T>.InvokeAndStrip(ReplicaInput input, IComputed? usedBy, ComputeContext? context,
-        CancellationToken cancellationToken)
-        => InvokeAndStrip(input, usedBy, context, cancellationToken);
-
-    #endregion
 }

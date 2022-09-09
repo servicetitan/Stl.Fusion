@@ -51,13 +51,13 @@ public sealed class ReplicaRegistry : IDisposable
     public void Dispose()
         => _gcHandlePool.Dispose();
 
-    public IReplica? Get(PublicationRef publicationRef)
+    public Replica? Get(PublicationRef publicationRef)
     {
         var random = publicationRef.PublicationId.HashCode;
         OnOperation(random);
         if (!_handles.TryGetValue(publicationRef, out var handle))
             return null;
-        var target = (IReplica?) handle.Target;
+        var target = (Replica?) handle.Target;
         if (target != null)
             return target;
         // GCHandle target == null => we have to recycle it
@@ -69,23 +69,23 @@ public sealed class ReplicaRegistry : IDisposable
         return null;
     }
 
-    public (IReplica Replica, bool IsNew) GetOrRegister(PublicationRef publicationRef, Func<IReplica> replicaFactory)
+    public (Replica Replica, bool IsNew) GetOrRegister(PublicationRef publicationRef, Func<Replica> replicaFactory)
     {
         var random = publicationRef.PublicationId.HashCode;
         OnOperation(random);
         var spinWait = new SpinWait();
-        var newReplica = (IReplica?) null; // Just to make sure we store this ref
+        var newReplica = (Replica?) null; // Just to make sure we store this ref
         while (true) {
             // ReSharper disable once HeapView.CanAvoidClosure
             var handle = _handles.GetOrAdd(publicationRef, _ => {
                 newReplica = replicaFactory();
                 return _gcHandlePool.Acquire(newReplica, random);
             });
-            var target = (IReplica?) handle.Target;
+            var target = (Replica?) handle.Target;
             if (target != null) {
                 if (target == newReplica)
                     return (target, true);
-                (newReplica as IReplicaImpl)?.DisposeTemporaryInstance();
+                newReplica?.DisposeTemporaryInstance();
                 return (target, false);
             }
             // GCHandle target == null => we have to recycle it
@@ -97,7 +97,7 @@ public sealed class ReplicaRegistry : IDisposable
         }
     }
 
-    public bool Remove(IReplica replica)
+    public bool Remove(Replica replica)
     {
         var publicationRef = replica.PublicationRef;
         var random = publicationRef.PublicationId.HashCode;

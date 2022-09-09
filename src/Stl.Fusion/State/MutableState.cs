@@ -107,7 +107,7 @@ public class MutableState<T> : State<T>, IMutableState<T>
 
     // Protected methods
 
-    protected internal override void OnInvalidated(IComputed<T> computed)
+    protected internal override void OnInvalidated(Computed<T> computed)
     {
         base.OnInvalidated(computed);
         if (Snapshot.Computed != computed)
@@ -117,15 +117,10 @@ public class MutableState<T> : State<T>, IMutableState<T>
             throw Errors.InternalError("Update() task must complete synchronously here.");
     }
 
-    protected override ValueTask<IComputed<T>> Invoke(
-        State<T> input, IComputed? usedBy, ComputeContext? context,
+    protected override ValueTask<Computed<T>> Invoke(
+        IComputed? usedBy, ComputeContext? context,
         CancellationToken cancellationToken)
     {
-        // This method should always complete synchronously in IMutableState<T>
-        if (input != this)
-            // This "Function" supports just a single input == this
-            throw new ArgumentOutOfRangeException(nameof(input));
-
         context ??= ComputeContext.Current;
 
         var result = Computed;
@@ -147,14 +142,9 @@ public class MutableState<T> : State<T>, IMutableState<T>
     }
 
     protected override Task<T> InvokeAndStrip(
-        State<T> input, IComputed? usedBy, ComputeContext? context,
+        IComputed? usedBy, ComputeContext? context,
         CancellationToken cancellationToken)
     {
-        // This method should always complete synchronously in IMutableState<T>
-        if (input != this)
-            // This "Function" supports just a single input == this
-            throw new ArgumentOutOfRangeException(nameof(input));
-
         context ??= ComputeContext.Current;
 
         var result = Computed;
