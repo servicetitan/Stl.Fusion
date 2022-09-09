@@ -26,13 +26,7 @@ public abstract class Replica : ComputedInput, IFunction, IDisposable, IEquatabl
     public override string ToString()
         => $"{GetType().Name}({PublicationRef})";
 
-    // Finalization & Dispose
-
-    // We want to make sure the replicas are connected to
-    // publishers only while they're used.
-#pragma warning disable MA0055
-    ~Replica() => Dispose(false);
-#pragma warning restore MA0055
+    // Dispose
 
     public void Dispose()
     {
@@ -108,6 +102,12 @@ public sealed class Replica<T> : Replica, IFunction<T>
             // ReSharper disable once VirtualMemberCallInConstructor
             _updateRequestTask = CreateUpdateRequestTask();
     }
+
+    // We want to make sure the replicas are connected to
+    // publishers only while they're used.
+#pragma warning disable MA0055
+    ~Replica() => Dispose(false);
+#pragma warning restore MA0055
 
     public override Task RequestUpdate(CancellationToken cancellationToken = default)
     {
