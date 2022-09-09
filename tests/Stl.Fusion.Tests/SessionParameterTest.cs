@@ -40,13 +40,13 @@ public class SessionParameterTest : SimpleFusionTestBase
         x2.Should().Be(x1 + 1);
 
         var session = sessionA;
-        var aaComputed = await Computed.Capture(_ => counters.Get("a", session));
+        var aaComputed = await Computed.Capture(() => counters.Get("a", session));
         _ = Task.Run(() => Watch(nameof(aaComputed), aaComputed));
-        var abComputed = await Computed.Capture(_ => counters.Get("b", session));
+        var abComputed = await Computed.Capture(() => counters.Get("b", session));
         _ = Task.Run(() => Watch(nameof(abComputed), abComputed));
 
         session = sessionB;
-        var baComputed = await Computed.Capture(_ => counters.Get("a", session));
+        var baComputed = await Computed.Capture(() => counters.Get("a", session));
         _ = Task.Run(() => Watch(nameof(baComputed), baComputed));
 
         session = sessionA;

@@ -22,7 +22,7 @@ public class PublisherTest : FusionTestBase
 
         sp.SetValue("");
 
-        var p1 = await publisher.Publish(_ => sp.GetValue());
+        var p1 = await publisher.Publish(() => sp.GetValue());
         p1.Should().NotBeNull();
 
         Debug.WriteLine("a1");

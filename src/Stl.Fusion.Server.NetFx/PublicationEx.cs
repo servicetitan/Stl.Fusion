@@ -68,10 +68,9 @@ public static class HttpContextExt
     public static async Task<Computed<T>> Publish<T>(
         this HttpActionContext httpActionContext,
         IPublisher publisher,
-        Func<CancellationToken, Task<T>> producer,
-        CancellationToken cancellationToken = default)
+        Func<Task<T>> producer)
     {
-        var p = await publisher.Publish(producer, cancellationToken).ConfigureAwait(false);
+        var p = await publisher.Publish(producer).ConfigureAwait(false);
         var c = p.State.Computed;
         httpActionContext.Publish(p);
         return c;

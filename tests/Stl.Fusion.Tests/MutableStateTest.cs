@@ -98,9 +98,9 @@ public class MutableStateTest : SimpleFusionTestBase
 
         var services = CreateServiceProviderFor<CounterService>();
         var counters = services.GetRequiredService<CounterService>();
-        var aComputed = await Computed.Capture(_ => counters.Get("a"));
+        var aComputed = await Computed.Capture(() => counters.Get("a"));
         _ = Task.Run(() => Watch(nameof(aComputed), aComputed));
-        var bComputed = await Computed.Capture(_ => counters.Get("b"));
+        var bComputed = await Computed.Capture(() => counters.Get("b"));
         _ = Task.Run(() => Watch(nameof(bComputed), bComputed));
 
         await counters.Increment("a");

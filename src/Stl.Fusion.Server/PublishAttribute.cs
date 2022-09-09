@@ -17,7 +17,7 @@ public class PublishAttribute : ActionFilterAttribute
 
         var publisher = httpContext.RequestServices.GetRequiredService<IPublisher>();
         var publication = await publisher
-            .Publish(_ => (Task) next(), httpContext.RequestAborted)
+            .Publish(() => (Task) next(), httpContext.RequestAborted)
             .ConfigureAwait(false);
         httpContext.Publish(publication);
     }

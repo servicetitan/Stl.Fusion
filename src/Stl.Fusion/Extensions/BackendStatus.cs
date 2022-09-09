@@ -35,7 +35,7 @@ public class BackendStatus : IBackendStatus
         CancellationToken cancellationToken = default)
     {
         var backendComputed = await Computed
-            .Capture(ct => HitBackend(session, backend, ct), cancellationToken)
+            .Capture(() => HitBackend(session, backend, cancellationToken))
             .ConfigureAwait(false);
         // ReSharper disable once HeapView.PossibleBoxingAllocation
         var usedSet = (IRefHashSetSlim<IComputedImpl>) UsedField.GetValue(backendComputed)!;

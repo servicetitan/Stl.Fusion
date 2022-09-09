@@ -17,7 +17,7 @@ public class ReplicationTest : FusionTestBase, IAsyncLifetime
         var sp = scope.ServiceProvider.GetRequiredService<ISimplestProvider>();
 
         sp.SetValue("");
-        var p1 = await publisher.Publish(_ => sp.GetValue());
+        var p1 = await publisher.Publish(() => sp.GetValue());
         p1.Should().NotBeNull();
 
         var r1 = replicator.GetOrAdd<string>(p1.Ref, true);
@@ -46,7 +46,7 @@ public class ReplicationTest : FusionTestBase, IAsyncLifetime
         var replicator = ClientServices.GetRequiredService<IReplicator>();
         var tp = WebServices.GetRequiredService<ITimeService>();
 
-        var pub = await publisher.Publish(_ => tp.GetTime());
+        var pub = await publisher.Publish(() => tp.GetTime());
         var rep = replicator.GetOrAdd<DateTime>(pub.Ref);
 
         var count = 0;

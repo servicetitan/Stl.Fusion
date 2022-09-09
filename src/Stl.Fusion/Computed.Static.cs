@@ -52,14 +52,12 @@ public static class Computed
 
     // TryCapture
 
-    public static async ValueTask<Option<IComputed>> TryCapture(
-        Func<CancellationToken, Task> producer,
-        CancellationToken cancellationToken = default)
+    public static async ValueTask<Option<IComputed>> TryCapture(Func<Task> producer)
     {
         using var ccs = BeginCapture();
         IComputed result;
         try {
-            await producer(cancellationToken).ConfigureAwait(false);
+            await producer().ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             if (ccs.Context.TryGetCaptured(out result!) && result.HasError)
@@ -69,14 +67,12 @@ public static class Computed
         return ccs.Context.TryGetCaptured(out result!) ? Option.Some(result) : default;
     }
 
-    public static async ValueTask<Option<Computed<T>>> TryCapture<T>(
-        Func<CancellationToken, Task<T>> producer,
-        CancellationToken cancellationToken = default)
+    public static async ValueTask<Option<Computed<T>>> TryCapture<T>(Func<Task<T>> producer)
     {
         using var ccs = BeginCapture();
         Computed<T> result;
         try {
-            await producer(cancellationToken).ConfigureAwait(false);
+            await producer().ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             if (ccs.Context.TryGetCaptured(out result!) && result.HasError)
@@ -86,14 +82,12 @@ public static class Computed
         return ccs.Context.TryGetCaptured(out result!) ? Option.Some(result) : default;
     }
 
-    public static async ValueTask<Option<IComputed>> TryCapture(
-        Func<CancellationToken, ValueTask> producer,
-        CancellationToken cancellationToken = default)
+    public static async ValueTask<Option<IComputed>> TryCapture(Func<ValueTask> producer)
     {
         using var ccs = BeginCapture();
         IComputed result;
         try {
-            await producer(cancellationToken).ConfigureAwait(false);
+            await producer().ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             if (ccs.Context.TryGetCaptured(out result!) && result.HasError)
@@ -103,14 +97,12 @@ public static class Computed
         return ccs.Context.TryGetCaptured(out result!) ? Option.Some(result) : default;
     }
 
-    public static async ValueTask<Option<Computed<T>>> TryCapture<T>(
-        Func<CancellationToken, ValueTask<T>> producer,
-        CancellationToken cancellationToken = default)
+    public static async ValueTask<Option<Computed<T>>> TryCapture<T>(Func<ValueTask<T>> producer)
     {
         using var ccs = BeginCapture();
         Computed<T> result;
         try {
-            await producer(cancellationToken).ConfigureAwait(false);
+            await producer().ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             if (ccs.Context.TryGetCaptured(out result!) && result.HasError)
@@ -122,11 +114,11 @@ public static class Computed
 
     // Capture
 
-    public static async ValueTask<IComputed> Capture(Func<CancellationToken, Task> producer, CancellationToken cancellationToken = default)
+    public static async ValueTask<IComputed> Capture(Func<Task> producer)
     {
         using var ccs = BeginCapture();
         try {
-            await producer(cancellationToken).ConfigureAwait(false);
+            await producer().ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             if (ccs.Context.TryGetCaptured(out var result) && result.HasError)
@@ -136,11 +128,11 @@ public static class Computed
         return ccs.Context.GetCaptured();
     }
 
-    public static async ValueTask<Computed<T>> Capture<T>(Func<CancellationToken, Task<T>> producer, CancellationToken cancellationToken = default)
+    public static async ValueTask<Computed<T>> Capture<T>(Func<Task<T>> producer)
     {
         using var ccs = BeginCapture();
         try {
-            await producer(cancellationToken).ConfigureAwait(false);
+            await producer().ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             if (ccs.Context.TryGetCaptured<T>(out var result) && result.HasError)
@@ -150,11 +142,11 @@ public static class Computed
         return ccs.Context.GetCaptured<T>();
     }
 
-    public static async ValueTask<IComputed> Capture(Func<CancellationToken, ValueTask> producer, CancellationToken cancellationToken = default)
+    public static async ValueTask<IComputed> Capture(Func<ValueTask> producer)
     {
         using var ccs = BeginCapture();
         try {
-            await producer(cancellationToken).ConfigureAwait(false);
+            await producer().ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             if (ccs.Context.TryGetCaptured(out var result) && result.HasError)
@@ -164,11 +156,11 @@ public static class Computed
         return ccs.Context.GetCaptured();
     }
 
-    public static async ValueTask<Computed<T>> Capture<T>(Func<CancellationToken, ValueTask<T>> producer, CancellationToken cancellationToken = default)
+    public static async ValueTask<Computed<T>> Capture<T>(Func<ValueTask<T>> producer)
     {
         using var ccs = BeginCapture();
         try {
-            await producer(cancellationToken).ConfigureAwait(false);
+            await producer().ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             if (ccs.Context.TryGetCaptured<T>(out var result) && result.HasError)

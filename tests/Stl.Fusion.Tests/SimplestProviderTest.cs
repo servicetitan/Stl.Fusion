@@ -93,8 +93,8 @@ public class SimplestProviderTest : FusionTestBase
     {
         var p = Services.GetRequiredService<ISimplestProvider>();
         p.SetValue(null!); // Will cause an exception in GetCharCount
-        var c1Opt = await Computed.TryCapture(_ => p.GetCharCount());
-        var c2 = await Computed.Capture(_ => p.GetCharCount());
+        var c1Opt = await Computed.TryCapture(() => p.GetCharCount());
+        var c2 = await Computed.Capture(() => p.GetCharCount());
         c1Opt.Value.Error!.GetType().Should().Be(typeof(TransientException));
         c2.Should().BeSameAs(c1Opt.Value);
     }
@@ -106,12 +106,12 @@ public class SimplestProviderTest : FusionTestBase
         var p = Services.GetRequiredService<ISimplestProvider>();
         p.SetValue("");
 
-        var c1 = await Computed.Capture(_ => p.GetValue());
+        var c1 = await Computed.Capture(() => p.GetValue());
         c1.Options.KeepAliveTime.Should().Be(TimeSpan.FromSeconds(10));
         c1.Options.TransientErrorInvalidationDelay.Should().Be(d.TransientErrorInvalidationDelay);
         c1.Options.AutoInvalidationDelay.Should().Be(d.AutoInvalidationDelay);
 
-        var c2 = await Computed.Capture(_ => p.GetCharCount());
+        var c2 = await Computed.Capture(() => p.GetCharCount());
         c2.Options.KeepAliveTime.Should().Be(TimeSpan.FromSeconds(0.5));
         c2.Options.TransientErrorInvalidationDelay.Should().Be(TimeSpan.FromSeconds(0.5));
         c2.Options.AutoInvalidationDelay.Should().Be(d.AutoInvalidationDelay);
@@ -124,11 +124,11 @@ public class SimplestProviderTest : FusionTestBase
         var p = Services.GetRequiredService<ISimplestProvider>();
         p.SetValue("");
 
-        var c1 = await Computed.Capture(_ => p.Fail(typeof(TransientException), false));
+        var c1 = await Computed.Capture(() => p.Fail(typeof(TransientException), false));
         c1.Error.Should().BeOfType<TransientException>();
         await c1.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(1));
 
-        c1 = await Computed.Capture(_ => p.Fail(typeof(TransientException), true));
+        c1 = await Computed.Capture(() => p.Fail(typeof(TransientException), true));
         c1.Error.Should().BeOfType<ServiceException>()
             .Which.InnerException.Should().BeOfType<TransientException>();
         await Delay(1);

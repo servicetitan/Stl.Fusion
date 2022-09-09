@@ -18,12 +18,12 @@ public class UserProviderTest : FusionTestBase
         }));
 
         var u1 = await users.Get(int.MaxValue);
-        var c1 = await Computed.Capture(_ => users.Count());
+        var c1 = await Computed.Capture(() => users.Count());
 
         users.Invalidate();
 
         var u2 = await users.Get(int.MaxValue);
-        var c2 = await Computed.Capture(_ => users.Count());
+        var c2 = await Computed.Capture(() => users.Count());
 
         u2.Should().NotBeSameAs(u1);
         u2!.Id.Should().Be(u1!.Id);
@@ -147,8 +147,8 @@ public class UserProviderTest : FusionTestBase
     {
         var users = Services.GetRequiredService<IUserService>();
 
-        var cUser0 = await Computed.Capture(_ => users.Get(0));
-        var cCount = await Computed.Capture(_ => users.Count());
+        var cUser0 = await Computed.Capture(() => users.Get(0));
+        var cCount = await Computed.Capture(() => users.Count());
 
         cUser0!.Options.KeepAliveTime.Should().Be(TimeSpan.FromSeconds(1));
         cCount!.Options.KeepAliveTime.Should().Be(TimeSpan.FromSeconds(1));
