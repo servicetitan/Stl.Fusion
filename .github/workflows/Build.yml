@@ -1,4 +1,4 @@
-name: Build
+Zname: Build
 
 on:
   push:
@@ -15,7 +15,7 @@ jobs:
           # Avoid shallow clone for Nerdbank.GitVersioning
           fetch-depth: 0
 
-      - uses: dotnet/nbgv@master
+      - uses: dotnet/nbgv@main
         id: nbgv
         with:
           setAllVars: true
