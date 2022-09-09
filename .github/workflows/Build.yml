@@ -1,4 +1,4 @@
-Zname: Build
+name: Build
 
 on:
   push:
