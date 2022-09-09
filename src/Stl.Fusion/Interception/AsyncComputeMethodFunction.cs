@@ -18,43 +18,41 @@ public class AsyncComputeMethodFunction<T> : ComputeMethodFunctionBase<T>
     }
 
     public override async Task<T> InvokeAndStrip(
-        ComputeMethodInput input, IComputed? usedBy, ComputeContext? context,
+        ComputedInput input, IComputed? usedBy, ComputeContext? context,
         CancellationToken cancellationToken = default)
     {
+        var typedInput = (ComputeMethodInput) input;
         context ??= ComputeContext.Current;
         ResultBox<T>? output;
 
         // Read-Lock-RetryRead-Compute-Store pattern
 
-        var computed = GetExisting(input);
-        if (computed != null) {
-            output = await computed.TryUseExisting(context, usedBy, cancellationToken)
-                .ConfigureAwait(false);
+        var asyncComputed = GetExistingAsyncComputed(typedInput);
+        if (asyncComputed != null) {
+            output = await asyncComputed.TryUseExisting(context, usedBy, cancellationToken).ConfigureAwait(false);
             if (output != null)
                 return output.Value;
         }
 
         using var @lock = await Locks.Lock(input, cancellationToken).ConfigureAwait(false);
 
-        computed = GetExisting(input);
-        if (computed != null) {
-            output = await computed.TryUseExisting(context, usedBy, cancellationToken)
-                .ConfigureAwait(false);
+        asyncComputed = GetExistingAsyncComputed(typedInput);
+        if (asyncComputed != null) {
+            output = await asyncComputed.TryUseExisting(context, usedBy, cancellationToken).ConfigureAwait(false);
             if (output != null)
                 return output.Value;
         }
 
-        computed = (IAsyncComputed<T>) await Compute(input, computed, cancellationToken)
-            .ConfigureAwait(false);
+        var computed = await Compute(input, (Computed<T>?) asyncComputed, cancellationToken).ConfigureAwait(false);
         var rOutput = computed.Output; // RenewTimeouts isn't called yet, so it's ok
         computed.UseNew(context, usedBy);
         return rOutput!.Value;
     }
 
-    protected override IComputed<T> CreateComputed(ComputeMethodInput input, LTag tag)
+    protected override Computed<T> CreateComputed(ComputeMethodInput input, LTag tag)
         => new SwappingComputed<T>(ComputedOptions, input, tag);
 
-    protected new IAsyncComputed<T>? GetExisting(ComputeMethodInput input)
+    protected IAsyncComputed<T>? GetExistingAsyncComputed(ComputeMethodInput input)
     {
         var computed = ComputedRegistry.Instance.Get(input);
         return computed as IAsyncComputed<T>;

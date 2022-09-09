@@ -27,7 +27,7 @@ public interface IState : IResult, IHasServices
 public interface IState<T> : IState, IResult<T>
 {
     new StateSnapshot<T> Snapshot { get; }
-    new IComputed<T> Computed { get; }
+    new Computed<T> Computed { get; }
     new T LatestNonErrorValue { get; }
 
     new event Action<IState<T>, StateEventKind>? Invalidated;
@@ -38,7 +38,7 @@ public interface IState<T> : IState, IResult<T>
 public abstract class State<T> : ComputedInput,
     IState<T>,
     IEquatable<State<T>>,
-    IFunction<State<T>, T>
+    IFunction<T>
 {
     public record Options : IState.IOptions
     {
@@ -64,7 +64,7 @@ public abstract class State<T> : ComputedInput,
     public StateSnapshot<T> Snapshot => _snapshot!;
     public IServiceProvider Services { get; }
 
-    public IComputed<T> Computed {
+    public Computed<T> Computed {
         get => Snapshot.Computed;
         protected set {
             value.AssertConsistencyStateIsNot(ConsistencyState.Computing);
@@ -90,7 +90,7 @@ public abstract class State<T> : ComputedInput,
     public T LatestNonErrorValue => Snapshot.LatestNonErrorComputed.Value;
 
     IStateSnapshot IState.Snapshot => Snapshot;
-    IComputed<T> IState<T>.Computed => Computed;
+    Computed<T> IState<T>.Computed => Computed;
     IComputed IState.Computed => Computed;
     // ReSharper disable once HeapView.PossibleBoxingAllocation
     object? IState.LatestNonErrorValue => LatestNonErrorValue;
@@ -120,6 +120,7 @@ public abstract class State<T> : ComputedInput,
 
     protected State(Options options, IServiceProvider services, bool initialize = true)
     {
+        Initialize(this, RuntimeHelpers.GetHashCode(this));
         Services = services;
         ComputedOptions = options.ComputedOptions;
         VersionGenerator = options.VersionGenerator ?? services.VersionGenerator<LTag>();
@@ -127,8 +128,6 @@ public abstract class State<T> : ComputedInput,
         var untypedOptions = (IState.IOptions) options;
         untypedOptions.EventConfigurator?.Invoke(this);
 
-        Function = this;
-        HashCode = RuntimeHelpers.GetHashCode(this);
         AsyncLock = new AsyncLock(ReentryMode.CheckedFail);
         if (initialize) Initialize(options);
     }
@@ -173,7 +172,7 @@ public abstract class State<T> : ComputedInput,
             computed.Invalidate();
     }
 
-    protected internal virtual void OnInvalidated(IComputed<T> computed)
+    protected internal virtual void OnInvalidated(Computed<T> computed)
     {
         var snapshot = Snapshot;
         if (computed != snapshot.Computed)
@@ -182,7 +181,7 @@ public abstract class State<T> : ComputedInput,
         UntypedInvalidated?.Invoke(this, StateEventKind.Invalidated);
     }
 
-    protected virtual void OnUpdating(IComputed<T> computed)
+    protected virtual void OnUpdating(Computed<T> computed)
     {
         var snapshot = Snapshot;
         if (computed != snapshot.Computed)
@@ -207,23 +206,30 @@ public abstract class State<T> : ComputedInput,
 
     // IFunction<T> & IFunction
 
-    ValueTask<IComputed<T>> IFunction<State<T>, T>.Invoke(State<T> input, IComputed? usedBy, ComputeContext? context,
-        CancellationToken cancellationToken)
-        => Invoke(input, usedBy, context, cancellationToken);
-    async ValueTask<IComputed> IFunction.Invoke(ComputedInput input, IComputed? usedBy, ComputeContext? context,
-        CancellationToken cancellationToken)
-        => await Invoke((State<T>) input, usedBy, context, cancellationToken).ConfigureAwait(false);
-
-    protected virtual async ValueTask<IComputed<T>> Invoke(
-        State<T> input, IComputed? usedBy, ComputeContext? context,
+    ValueTask<Computed<T>> IFunction<T>.Invoke(ComputedInput input, IComputed? usedBy, ComputeContext? context,
         CancellationToken cancellationToken)
     {
-#if DEBUG
-        if (input != this)
+        if (!ReferenceEquals(input, this))
             // This "Function" supports just a single input == this
             throw new ArgumentOutOfRangeException(nameof(input));
-#endif
 
+        return Invoke(usedBy, context, cancellationToken);
+    }
+
+    async ValueTask<IComputed> IFunction.Invoke(ComputedInput input, IComputed? usedBy, ComputeContext? context,
+        CancellationToken cancellationToken)
+    {
+        if (!ReferenceEquals(input, this))
+            // This "Function" supports just a single input == this
+            throw new ArgumentOutOfRangeException(nameof(input));
+
+        return await Invoke(usedBy, context, cancellationToken).ConfigureAwait(false);
+    }
+
+    protected virtual async ValueTask<Computed<T>> Invoke(
+        IComputed? usedBy, ComputeContext? context,
+        CancellationToken cancellationToken)
+    {
         context ??= ComputeContext.Current;
 
         var result = Computed;
@@ -245,21 +251,28 @@ public abstract class State<T> : ComputedInput,
     async Task IFunction.InvokeAndStrip(
         ComputedInput input, IComputed? usedBy, ComputeContext? context,
         CancellationToken cancellationToken)
-        => await InvokeAndStrip((State<T>) input, usedBy, context, cancellationToken).ConfigureAwait(false);
-    Task<T> IFunction<State<T>, T>.InvokeAndStrip(State<T> input, IComputed? usedBy, ComputeContext? context,
-        CancellationToken cancellationToken)
-        => InvokeAndStrip(input, usedBy, context, cancellationToken);
-
-    protected virtual Task<T> InvokeAndStrip(
-        State<T> input, IComputed? usedBy, ComputeContext? context,
-        CancellationToken cancellationToken)
     {
-#if DEBUG
-        if (input != this)
+        if (!ReferenceEquals(input, this))
             // This "Function" supports just a single input == this
             throw new ArgumentOutOfRangeException(nameof(input));
-#endif
 
+        await InvokeAndStrip(usedBy, context, cancellationToken).ConfigureAwait(false);
+    }
+
+    Task<T> IFunction<T>.InvokeAndStrip(ComputedInput input, IComputed? usedBy, ComputeContext? context,
+        CancellationToken cancellationToken)
+    {
+        if (!ReferenceEquals(input, this))
+            // This "Function" supports just a single input == this
+            throw new ArgumentOutOfRangeException(nameof(input));
+
+        return InvokeAndStrip(usedBy, context, cancellationToken);
+    }
+
+    protected virtual Task<T> InvokeAndStrip(
+        IComputed? usedBy, ComputeContext? context,
+        CancellationToken cancellationToken)
+    {
         context ??= ComputeContext.Current;
 
         var result = Computed;

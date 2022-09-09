@@ -37,13 +37,12 @@ public static class HttpContextExt
         responseHeaders[FusionHeaders.Publication] = JsonConvert.SerializeObject(psi);
     }
 
-    public static async Task<IComputed<T>> Publish<T>(
+    public static async Task<Computed<T>> Publish<T>(
         this HttpContext httpContext,
         IPublisher publisher,
-        Func<CancellationToken, Task<T>> producer,
-        CancellationToken cancellationToken = default)
+        Func<Task<T>> producer)
     {
-        var p = await publisher.Publish(producer, cancellationToken).ConfigureAwait(false);
+        var p = await publisher.Publish(producer).ConfigureAwait(false);
         var c = p.State.Computed;
         httpContext.Publish(p);
         return c;

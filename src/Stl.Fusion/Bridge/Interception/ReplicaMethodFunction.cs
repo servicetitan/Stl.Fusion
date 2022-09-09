@@ -20,22 +20,23 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
         VersionGenerator = versionGenerator;
     }
 
-    protected override async ValueTask<IComputed<T>> Compute(
-        ComputeMethodInput input, IComputed<T>? existing,
+    protected override async ValueTask<Computed<T>> Compute(
+        ComputedInput input, Computed<T>? existing,
         CancellationToken cancellationToken)
     {
-        var methodDef = input.MethodDef;
-        IReplica<T> replica;
-        IReplicaComputed<T> replicaComputed;
+        var typedInput = (ComputeMethodInput) input;
+        var methodDef = typedInput.MethodDef;
+        Replica<T> replica;
+        ReplicaComputed<T> replicaComputed;
         ReplicaMethodComputed<T> result;
 
         // 1. Trying to update the Replica first
-        if (existing is IReplicaMethodComputed<T> rsc && rsc.Replica != null) {
+        if (existing is ReplicaMethodComputed<T> rsc && rsc.Replica != null) {
             try {
                 replica = rsc.Replica;
-                replicaComputed = (IReplicaComputed<T>)
+                replicaComputed = (ReplicaComputed<T>)
                     await replica.Computed.Update(cancellationToken).ConfigureAwait(false);
-                result = new (methodDef.ComputedOptions, input, replicaComputed);
+                result = new (methodDef.ComputedOptions, typedInput, replicaComputed);
                 ComputeContext.Current.TryCapture(result);
                 return result;
             }
@@ -49,7 +50,7 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
         PublicationStateInfo? psi;
         using (var psiCapture = new PublicationStateInfoCapture()) {
             try {
-                var rpcResult = input.InvokeOriginalFunction(cancellationToken);
+                var rpcResult = typedInput.InvokeOriginalFunction(cancellationToken);
                 if (methodDef.ReturnsValueTask) {
                     var rpcResultTask = (ValueTask<T>) rpcResult;
                     output = Result.Value(await rpcResultTask.ConfigureAwait(false));
@@ -72,7 +73,7 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
             output = new Result<T>(default!, Errors.NoPublicationStateInfo());
             // We need a unique LTag here, so we use a range that's supposed to be unused by LTagGenerators.
             var version = new LTag(VersionGenerator.NextVersion().Value ^ (1L << 62));
-            result = new (methodDef.ComputedOptions, input, output.Error!, version);
+            result = new (methodDef.ComputedOptions, typedInput, output.Error!, version);
             ComputeContext.Current.TryCapture(result);
             return result;
         }
@@ -89,9 +90,9 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
                 psi.Version = new LTag(VersionGenerator.NextVersion().Value ^ (1L << 62));
         }
         replica = Replicator.GetOrAdd(ComputedOptions, new PublicationStateInfo<T>(psi, output));
-        replicaComputed = (IReplicaComputed<T>)
+        replicaComputed = (ReplicaComputed<T>)
             await replica.Computed.Update(cancellationToken).ConfigureAwait(false);
-        result = new ReplicaMethodComputed<T>(methodDef.ComputedOptions, input, replicaComputed);
+        result = new ReplicaMethodComputed<T>(methodDef.ComputedOptions, typedInput, replicaComputed);
         ComputeContext.Current.TryCapture(result);
         return result;
     }

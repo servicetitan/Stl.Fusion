@@ -61,7 +61,7 @@ public abstract class AppBase
     public async Task WatchProduct(string productId, CancellationToken cancellationToken = default)
     {
         var productService = WatchServices.GetRequiredService<IProductService>();
-        var computed = await Computed.Capture(ct => productService.Get(productId, ct), cancellationToken);
+        var computed = await Computed.Capture(() => productService.Get(productId, cancellationToken));
         while (true) {
             WriteLine($"  {computed.Value}");
             await computed.WhenInvalidated(cancellationToken);
@@ -72,7 +72,7 @@ public abstract class AppBase
     public async Task WatchCartTotal(string cartId, CancellationToken cancellationToken = default)
     {
         var cartService = WatchServices.GetRequiredService<ICartService>();
-        var computed = await Computed.Capture(ct => cartService.GetTotal(cartId, ct), cancellationToken);
+        var computed = await Computed.Capture(() => cartService.GetTotal(cartId, cancellationToken));
         while (true) {
             WriteLine($"  {cartId}: total = {computed.Value}");
             await computed.WhenInvalidated(cancellationToken);

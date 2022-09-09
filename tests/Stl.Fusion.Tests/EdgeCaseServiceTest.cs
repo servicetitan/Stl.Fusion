@@ -41,7 +41,7 @@ public class EdgeCaseServiceTest : FusionTestBase
         await Delay(0.2);
         (await service.GetNullable(1)).Should().Be((long?) 1);
 
-        var c = await Computed.Capture(_ => service.GetNullable(0));
+        var c = await Computed.Capture(() => service.GetNullable(0));
         c.Value.Should().Be(null);
         using (Computed.Invalidate())
             _ = actualService.GetNullable(0);
@@ -60,12 +60,10 @@ public class EdgeCaseServiceTest : FusionTestBase
         (await service.GetSuffix()).Should().Be("");
 
         // ThrowIfContainsError method test
-        var c1 = await Computed.Capture(
-            ct => service.ThrowIfContainsError("a", ct));
+        var c1 = await Computed.Capture(() => service.ThrowIfContainsError("a"));
         c1.Value.Should().Be("a");
 
-        var c2 = await Computed.Capture(
-            ct => service.ThrowIfContainsError("error", ct));
+        var c2 = await Computed.Capture(() => service.ThrowIfContainsError("error"));
         c2.Error.Should().BeAssignableTo<ArgumentException>();
         c2.Error!.Message.Should().StartWith("Error!");
 
@@ -96,7 +94,7 @@ public class EdgeCaseServiceTest : FusionTestBase
         await service.SetSuffix("");
     }
 
-    private async Task<IComputed<T>> Update<T>(IComputed<T> computed, CancellationToken cancellationToken = default)
+    private async Task<Computed<T>> Update<T>(Computed<T> computed, CancellationToken cancellationToken = default)
     {
         if (computed is IReplicaMethodComputed rc)
             await rc.Replica!.RequestUpdate(cancellationToken);

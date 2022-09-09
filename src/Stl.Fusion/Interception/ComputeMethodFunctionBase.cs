@@ -15,16 +15,17 @@ public abstract class ComputeMethodFunctionBase<T> : ComputeFunctionBase<T>
         VersionGenerator = versionGenerator;
     }
 
-    protected override async ValueTask<IComputed<T>> Compute(
-        ComputeMethodInput input, IComputed<T>? existing,
+    protected override async ValueTask<Computed<T>> Compute(
+        ComputedInput input, Computed<T>? existing,
         CancellationToken cancellationToken)
     {
+        var typedInput = (ComputeMethodInput) input;
         var version = VersionGenerator.NextVersion(existing?.Version ?? default);
-        var computed = CreateComputed(input, version);
+        var computed = CreateComputed(typedInput, version);
         try {
             using var _ = Computed.ChangeCurrent(computed);
-            var result = input.InvokeOriginalFunction(cancellationToken);
-            if (input.MethodDef.ReturnsValueTask) {
+            var result = typedInput.InvokeOriginalFunction(cancellationToken);
+            if (typedInput.MethodDef.ReturnsValueTask) {
                 var output = await ((ValueTask<T>) result).ConfigureAwait(false);
                 computed.TrySetOutput(output);
             }
@@ -50,5 +51,5 @@ public abstract class ComputeMethodFunctionBase<T> : ComputeFunctionBase<T>
         return computed;
     }
 
-    protected abstract IComputed<T> CreateComputed(ComputeMethodInput input, LTag tag);
+    protected abstract Computed<T> CreateComputed(ComputeMethodInput input, LTag tag);
 }

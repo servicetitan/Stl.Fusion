@@ -2,14 +2,14 @@ namespace Stl.Fusion;
 
 public abstract class ComputedInput : IEquatable<ComputedInput>
 {
-    public IFunction Function { get; protected set; } = null!;
-    public int HashCode { get; protected set; }
+    public IFunction Function { get; private set; } = null!;
+    public int HashCode { get; private set; }
 
-    protected ComputedInput() { }
-    protected ComputedInput(IFunction function)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    protected void Initialize(IFunction function, int hashCode)
     {
         Function = function;
-        HashCode = function.GetHashCode();
+        HashCode = hashCode;
     }
 
     public override string ToString() => $"{Function}(...)";

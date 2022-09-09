@@ -60,7 +60,7 @@ public static class ComputedExt
         return taskSource.Task;
     }
 
-    public static void SetOutput<T>(this IComputed<T> computed, Result<T> output)
+    public static void SetOutput<T>(this Computed<T> computed, Result<T> output)
     {
         if (!computed.TrySetOutput(output))
             throw Errors.WrongComputedState(ConsistencyState.Computing, computed.ConsistencyState);
@@ -68,9 +68,9 @@ public static class ComputedExt
 
     // Updates N computed so that all of them are in consistent state
 
-    public static async ValueTask<(IComputed<T1>, IComputed<T2>)> Update<T1, T2>(
-        IComputed<T1> c1,
-        IComputed<T2> c2,
+    public static async ValueTask<(Computed<T1>, Computed<T2>)> Update<T1, T2>(
+        Computed<T1> c1,
+        Computed<T2> c2,
         CancellationToken cancellationToken = default)
     {
         while (true) {
@@ -87,10 +87,10 @@ public static class ComputedExt
         }
     }
 
-    public static async ValueTask<(IComputed<T1>, IComputed<T2>, IComputed<T3>)> Update<T1, T2, T3>(
-        IComputed<T1> c1,
-        IComputed<T2> c2,
-        IComputed<T3> c3,
+    public static async ValueTask<(Computed<T1>, Computed<T2>, Computed<T3>)> Update<T1, T2, T3>(
+        Computed<T1> c1,
+        Computed<T2> c2,
+        Computed<T3> c3,
         CancellationToken cancellationToken = default)
     {
         while (true) {
@@ -111,7 +111,7 @@ public static class ComputedExt
 
     // When
 
-    public static async Task<IComputed<T>> When<T>(this IComputed<T> computed,
+    public static async Task<Computed<T>> When<T>(this Computed<T> computed,
         Func<T, bool> predicate,
         CancellationToken cancellationToken = default)
     {
@@ -126,8 +126,8 @@ public static class ComputedExt
 
     // Changes
 
-    public static async IAsyncEnumerable<IComputed<T>> Changes<T>(
-        this IComputed<T> computed,
+    public static async IAsyncEnumerable<Computed<T>> Changes<T>(
+        this Computed<T> computed,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         while (true) {

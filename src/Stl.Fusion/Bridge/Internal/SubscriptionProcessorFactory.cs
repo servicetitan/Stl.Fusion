@@ -62,7 +62,7 @@ public sealed class SubscriptionProcessorFactory : ISubscriptionProcessorFactory
             => _genericType = genericType;
 
         public SubscriptionProcessor Apply<T>(
-            IPublication<T> publication,
+            Publication<T> publication,
             (PublisherChannelProcessor PublisherChannelProcessor,
                 TimeSpan SubscriptionExpirationTime,
                 MomentClockSet Clocks,

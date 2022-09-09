@@ -4,13 +4,15 @@ using Stl.Locking;
 
 namespace Stl.Fusion.Swapping;
 
-public class SwappingComputed<T> : Computed<T>, IAsyncComputed<T>, ISwappable
+public class SwappingComputed<T> : ComputeMethodComputed<T>, IAsyncComputed<T>, ISwappable
 {
     private readonly Lazy<AsyncLock> _swapOutputLockLazy =
         new(() => new AsyncLock(ReentryMode.UncheckedDeadlock));
     private volatile ResultBox<T>? _maybeOutput;
 
+    protected ComputeMethodInput TypedInput => (ComputeMethodInput) Input;
     protected AsyncLock SwapOutputLock => _swapOutputLockLazy.Value;
+
     public override Result<T> Output {
         get {
             this.AssertConsistencyStateIsNot(ConsistencyState.Computing);
@@ -59,7 +61,7 @@ public class SwappingComputed<T> : Computed<T>, IAsyncComputed<T>, ISwappable
             return maybeOutput;
 
         var swapService = Function.Services.GetService<ISwapService>() ?? NoSwapService.Instance;
-        maybeOutput = await swapService.Load((Input, Version), cancellationToken).ConfigureAwait(false) as ResultBox<T>;
+        maybeOutput = await swapService.Load((TypedInput, Version), cancellationToken).ConfigureAwait(false) as ResultBox<T>;
         if (maybeOutput == null) {
             Invalidate();
             return null;
@@ -93,7 +95,7 @@ public class SwappingComputed<T> : Computed<T>, IAsyncComputed<T>, ISwappable
         if (MaybeOutput == null)
             return;
         var swapService = Function.Services.GetService<ISwapService>() ?? NoSwapService.Instance;
-        await swapService.Store((Input, Version), MaybeOutput, cancellationToken).ConfigureAwait(false);
+        await swapService.Store((TypedInput, Version), MaybeOutput, cancellationToken).ConfigureAwait(false);
         Interlocked.Exchange(ref _maybeOutput, null);
         RenewTimeouts();
     }

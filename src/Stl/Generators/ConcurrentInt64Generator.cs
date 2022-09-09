@@ -15,6 +15,6 @@ public static class ConcurrentInt64Generator
         return new ConcurrentFuncBasedGenerator<long>(i => {
             var count = start + i;
             return () => count += dCount;
-        });
+        }, concurrencyLevel);
     }
 }

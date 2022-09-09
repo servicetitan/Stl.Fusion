@@ -1,24 +1,26 @@
 namespace Stl.Fusion;
 
-public class StateBoundComputed<T> : Computed<State<T>, T>
+public class StateBoundComputed<T> : Computed<T>
 {
+    public State<T> State { get; }
+
     public StateBoundComputed(
         ComputedOptions options,
-        State<T> input, LTag version)
-        : base(options, input, version)
-    { }
+        State<T> state, LTag version)
+        : base(options, state, version)
+        => State = state;
 
     protected StateBoundComputed(
         ComputedOptions options,
-        State<T> input,
+        State<T> state,
         Result<T> output, LTag version, bool isConsistent)
-        : base(options, input, output, version, isConsistent)
-    { }
+        : base(options, state, output, version, isConsistent)
+        => State = state;
 
     protected override void OnInvalidated()
     {
         try {
-            Input.OnInvalidated(this);
+            State.OnInvalidated(this);
         }
         catch {
             // Intended: shouldn't throw errors

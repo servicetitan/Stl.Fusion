@@ -11,8 +11,7 @@ public class ComputedInterceptorTest : FusionTestBase
     {
         var stateFactory = Services.StateFactory();
         var time = Services.GetRequiredService<ITimeService>();
-        var c = await Computed.Capture(
-            _ => time.GetTimeWithOffset(TimeSpan.FromSeconds(1)));
+        var c = await Computed.Capture(() => time.GetTimeWithOffset(TimeSpan.FromSeconds(1)));
 
         var count = 0L;
         using var state = stateFactory.NewComputed<DateTime>(
@@ -61,14 +60,14 @@ public class ComputedInterceptorTest : FusionTestBase
     {
         var time = Services.GetRequiredService<ITimeService>();
 
-        var c1 = await Computed.Capture(_ => time.GetTime());
+        var c1 = await Computed.Capture(() => time.GetTime());
 
         // Wait for time invalidation
         await Task.Delay(500);
 
-        var c2a = await Computed.Capture(_ => time.GetTime());
+        var c2a = await Computed.Capture(() => time.GetTime());
         c2a.Should().NotBeSameAs(c1);
-        var c2b = await Computed.Capture(_ => time.GetTime());
+        var c2b = await Computed.Capture(() => time.GetTime());
         c2b.Should().BeSameAs(c2a);
     }
 
@@ -79,22 +78,22 @@ public class ComputedInterceptorTest : FusionTestBase
         // otherwise it has a tiny chance of failure
         var time = Services.GetRequiredService<ITimeService>();
 
-        var c1 = await Computed.Capture(_ => time.GetTimeWithOffset(TimeSpan.FromSeconds(1)));
+        var c1 = await Computed.Capture(() => time.GetTimeWithOffset(TimeSpan.FromSeconds(1)));
         c1.Should().NotBeNull();
-        var c2 = await Computed.Capture(_ => time.GetTimeWithOffset(TimeSpan.FromSeconds(2)));
+        var c2 = await Computed.Capture(() => time.GetTimeWithOffset(TimeSpan.FromSeconds(2)));
         c2.Should().NotBeNull();
         c1.Should().NotBeSameAs(c2);
 
-        var c1a = await Computed.Capture(_ => time.GetTimeWithOffset(TimeSpan.FromSeconds(1)));
-        var c2a = await Computed.Capture(_ => time.GetTimeWithOffset(TimeSpan.FromSeconds(2)));
+        var c1a = await Computed.Capture(() => time.GetTimeWithOffset(TimeSpan.FromSeconds(1)));
+        var c2a = await Computed.Capture(() => time.GetTimeWithOffset(TimeSpan.FromSeconds(2)));
         c1.Should().BeSameAs(c1a);
         c2.Should().BeSameAs(c2a);
 
         // Wait for time invalidation
         await Task.Delay(500);
 
-        c1a = await Computed.Capture(_ => time.GetTimeWithOffset(TimeSpan.FromSeconds(1)));
-        c2a = await Computed.Capture(_ => time.GetTimeWithOffset(TimeSpan.FromSeconds(2)));
+        c1a = await Computed.Capture(() => time.GetTimeWithOffset(TimeSpan.FromSeconds(1)));
+        c2a = await Computed.Capture(() => time.GetTimeWithOffset(TimeSpan.FromSeconds(2)));
         c1.Should().NotBeSameAs(c1a);
         c2.Should().NotBeSameAs(c2a);
     }

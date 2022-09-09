@@ -129,16 +129,16 @@ and the more complex logic you have, the larger performance gain is.
 There are 4 components:
 1. [Compute Services] are services exposing methods "backed" by Fusion's 
   version of "computed observables". When such methods run, they produce
-  [Computed Values] (instances of `IComputed<T>`) under the hood, even
+  [Computed Values] (instances of `Computed<T>`) under the hood, even
   though the results they return are usual (i.e. are of their return type). 
-  But `IComputed<T>` instances are cached and reused on future calls to 
+  But `Computed<T>` instances are cached and reused on future calls to 
   the same method with the same arguments; moreover, they form dependency graphs, 
-  so once some "deep" `IComputed<T>` gets invalidated, all of its dependencies
+  so once some "deep" `Computed<T>` gets invalidated, all of its dependencies
   are invalidated too.
 2. [Replica Services] are remote proxies of Compute Services.
   They substitute [Compute Services] they "replicate" on the client side
   exposing their interface, but more importantly, they also "connect" 
-  `IComputed<T>` instances they create on the client with their server-side 
+  `Computed<T>` instances they create on the client with their server-side 
   counterparts.
   Any Replica Service is also a Compute Service, so any other client-side 
   Compute Service method that calls it becomes dependent on its output too.
@@ -148,11 +148,11 @@ There are 4 components:
   States are quite similar to observables in Knockout or MobX, but
   designed to follow Fusion game rules. And yes, you mostly use them in UI and
   almost never - on the server-side.
-4. And finally, there is [`IComputed<T>`] &ndash; an observable [Computed Value]
+4. And finally, there is [`Computed<T>`] &ndash; an observable [Computed Value]
   that's in some ways similar to the one you can find in Knockout, MobX, or Vue.js,
   but very different, if you look at its fundamental properties.
     
-[`IComputed<T>`] is:
+[`Computed<T>`] is:
 * **Thread-safe**
 * **Asynchronous** &ndash; any [Computed Value] is computed asynchronously; 
   Fusion APIs dependent on this feature are also asynchronous.
@@ -160,14 +160,14 @@ There are 4 components:
   to `IsConsistent() == false` state
 * **GC-friendly** &ndash; if you know about 
   [Pure Computed Observables](https://knockoutjs.com/documentation/computed-pure.html) 
-  from Knockout, you understand the problem. [`IComputed<T>`] solves it even better &ndash;
+  from Knockout, you understand the problem. [`Computed<T>`] solves it even better &ndash;
   dependent-dependency relationships are explicit there, and the reference pointing
   from dependency to dependent is 
   [weak](https://en.wikipedia.org/wiki/Weak_reference), 
   so any dependent [Computed Value] is available for GC unless it's referenced by something 
   else (i.e. used).
 
-All of this makes it possible to use [`IComputed<T>`] on the server side &ndash; 
+All of this makes it possible to use [`Computed<T>`] on the server side &ndash; 
 you don't have to synchronize access to it, you can use it everywhere, including
 async functions, and you don't need to worry about GC.
 
@@ -197,7 +197,7 @@ to see a much more robust description of how Fusion scales.
 Most of Fusion-based code lives in [Compute Services].
 Such services are resolved via DI containers to their Fusion-generated proxies
 producing [Computed Values] while they run.
-Proxies cache and reuse these `IComputed<T>` instances on future calls to 
+Proxies cache and reuse these `Computed<T>` instances on future calls to 
 the same method with the same arguments.
 
 A typical Compute Service looks as follows:
@@ -436,7 +436,7 @@ please help us to make it better by completing [Fusion Feedback Form]
 
 [Compute Services]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part01.md
 [Compute Service]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part01.md
-[`IComputed<T>`]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part02.md
+[`Computed<T>`]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part02.md
 [Computed Value]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part02.md
 [Computed Values]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part02.md
 [Replica Services]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part04.md

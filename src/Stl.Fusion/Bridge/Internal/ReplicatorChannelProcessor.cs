@@ -100,11 +100,11 @@ public class ReplicatorChannelProcessor : WorkerBase
         }
     }
 
-    public virtual void Subscribe(IReplica replica)
+    public virtual void Subscribe(Replica replica)
     {
         // No checks, since they're done by the only caller of this method
         var publicationId = replica.PublicationRef.PublicationId;
-        var computed = replica.Computed;
+        var computed = replica.UntypedComputed;
         var isConsistent = computed.IsConsistent();
         lock (Lock) {
             Subscriptions.Add(publicationId);
@@ -118,7 +118,7 @@ public class ReplicatorChannelProcessor : WorkerBase
         }
     }
 
-    public virtual void Unsubscribe(IReplica replica)
+    public virtual void Unsubscribe(Replica replica)
     {
         // No checks, since they're done by the only caller of this method
         var publicationId = replica.PublicationRef.PublicationId;
@@ -145,7 +145,7 @@ public class ReplicatorChannelProcessor : WorkerBase
             // Fast dispatch to OnStateMessage<T>
             return OnPublicationStateReplyHandlers[psr.GetResultType()].Handle(psr, (this, cancellationToken));
         case PublicationAbsentsReply pam:
-            var replica = (IReplicaImpl?) Replicator.Get((PublisherId, pam.PublicationId));
+            var replica = Replicator.Get((PublisherId, pam.PublicationId));
             replica?.ApplyFailedUpdate(Errors.PublicationAbsents(), default);
             break;
         }
@@ -161,8 +161,7 @@ public class ReplicatorChannelProcessor : WorkerBase
             reply.Output.GetValueOrDefault());
 
         var replica = Replicator.GetOrAdd(psi);
-        var replicaImpl = (IReplicaImpl<T>) replica;
-        replicaImpl.ApplySuccessfulUpdate(reply.Output, psi.Version, psi.IsConsistent);
+        replica.ApplySuccessfulUpdate(reply.Output, psi.Version, psi.IsConsistent);
         return Task.CompletedTask;
     }
 

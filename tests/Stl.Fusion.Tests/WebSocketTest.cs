@@ -32,7 +32,7 @@ public class WebSocketTest : FusionTestBase
         var replicator = ClientServices.GetRequiredService<IReplicator>();
         var tp = WebServices.GetRequiredService<ITimeService>();
 
-        var pub = await publisher.Publish(_ => tp.GetTime());
+        var pub = await publisher.Publish(() => tp.GetTime());
         var rep = replicator.GetOrAdd<DateTime>(pub.Ref);
         await rep.RequestUpdate().AsAsyncFunc()
             .Should().CompleteWithinAsync(TimeSpan.FromMinutes(1));
@@ -59,7 +59,7 @@ public class WebSocketTest : FusionTestBase
         var replicator = ClientServices.GetRequiredService<IReplicator>();
         var time = WebServices.GetRequiredService<ITimeService>();
 
-        var pub = await publisher.Publish(_ => time.GetTime());
+        var pub = await publisher.Publish(() => time.GetTime());
 
         var rep1 = replicator.GetOrAdd<DateTime>(("NoPublisher", pub.Id));
         rep1.Computed.IsConsistent().Should().BeFalse();
@@ -94,8 +94,7 @@ public class WebSocketTest : FusionTestBase
         Debug.WriteLine("0");
         var kvs = WebServices.GetRequiredService<IKeyValueService<string>>();
         await kvs.Set("a", "b");
-        var c = (ReplicaMethodComputed<string>)
-            await Computed.Capture(_ => kvsClient.Get("a"));
+        var c = (ReplicaMethodComputed<string>) await Computed.Capture(() => kvsClient.Get("a"));
         c.Value.Should().Be("b");
         c.IsConsistent().Should().BeTrue();
 
