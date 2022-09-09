@@ -18,6 +18,6 @@ public static class ConcurrentInt32Generator
         return new ConcurrentFuncBasedGenerator<int>(i => {
             var count = start + i;
             return () => count += dCount;
-        });
+        }, concurrencyLevel);
     }
 }

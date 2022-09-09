@@ -15,9 +15,12 @@ public static class ConcurrentLTagGenerator
         var mCount = long.MaxValue >> 8; // Let's have some reserve @ the top of the band
         return new ConcurrentFuncBasedGenerator<LTag>(i => {
             var count = start + i;
-            // We want to return only strictly positive LTags
-            // (w/o IsSpecial flag)
-            return () => new LTag(1 + ((count += dCount) & mCount));
-        });
+            return () => {
+                count = (count + dCount) & mCount;
+                // We want to return only strictly positive LTags
+                // (w/o IsSpecial flag)
+                return new LTag(count + 1);
+            };
+        }, concurrencyLevel);
     }
 }
