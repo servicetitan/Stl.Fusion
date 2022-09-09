@@ -36,10 +36,10 @@ public abstract class SubscriptionProcessor : WorkerBase
 
 public class SubscriptionProcessor<T> : SubscriptionProcessor
 {
-    public new readonly IPublication<T> Publication;
+    public new readonly Publication<T> Publication;
 
     public SubscriptionProcessor(
-        IPublication<T> publication,
+        Publication<T> publication,
         PublisherChannelProcessor publisherChannelProcessor,
         TimeSpan expirationTime,
         MomentClockSet clocks,

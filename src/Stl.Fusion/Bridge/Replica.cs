@@ -2,7 +2,7 @@ using Stl.Fusion.Internal;
 
 namespace Stl.Fusion.Bridge;
 
-public abstract class Replica : ComputedInput, IFunction, IDisposable, IEquatable<Replica>
+public abstract class Replica : ComputedInput, IFunction, IEquatable<Replica>, IDisposable
 {
     protected IReplicatorImpl ReplicatorImpl { get; }
 

@@ -30,7 +30,7 @@ public static class PublisherExt
         return publication;
     }
 
-    public static async Task<IPublication<T>?> TryPublish<T>(
+    public static async Task<Publication<T>?> TryPublish<T>(
         this IPublisher publisher,
         Func<Task<T>> producer,
         CancellationToken cancellationToken = default)
@@ -38,7 +38,7 @@ public static class PublisherExt
         var computed = await Computed.Capture(producer).ConfigureAwait(false);
         if (computed == null!)
             return null;
-        var publication = (IPublication<T>) publisher.Publish(computed);
+        var publication = (Publication<T>) publisher.Publish(computed);
 
         // Publication doesn't have to be "in sync" with the computed
         // we requested it for (i.e. it might still point to its older,
@@ -99,13 +99,13 @@ public static class PublisherExt
         return publication;
     }
 
-    public static async Task<IPublication<T>> Publish<T>(
+    public static async Task<Publication<T>> Publish<T>(
         this IPublisher publisher,
         Func<Task<T>> producer,
         CancellationToken cancellationToken = default)
     {
         var computed = await Computed.Capture(producer).ConfigureAwait(false);
-        var publication = (IPublication<T>) publisher.Publish(computed);
+        var publication = (Publication<T>) publisher.Publish(computed);
 
         // Publication doesn't have to be "in sync" with the computed
         // we requested it for (i.e. it might still point to its older,

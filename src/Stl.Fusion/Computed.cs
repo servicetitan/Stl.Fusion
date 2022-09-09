@@ -23,46 +23,17 @@ public interface IComputed : IHasConsistencyState, IResult, IHasVersion<LTag>
     ValueTask<object> Use(CancellationToken cancellationToken = default);
 }
 
-// Removed: use Computed<TOut> instead
-/* 
-public interface IComputed<TOut> : IComputed, IResult<TOut>
-{
-    new Result<TOut> Output { get; }
-    new Task<TOut> OutputAsTask { get; }
-    bool TrySetOutput(Result<TOut> output);
-
-    new ValueTask<IComputed<TOut>> Update(CancellationToken cancellationToken = default);
-    new ValueTask<TOut> Use(CancellationToken cancellationToken = default);
-}
-*/
-
-public interface IAsyncComputed : IComputed
+public interface IAsyncComputed : IComputed, IResult
 {
     IResult? MaybeOutput { get; }
     ValueTask<IResult?> GetOutput(CancellationToken cancellationToken = default);
 }
 
-public interface IAsyncComputed<T> : IAsyncComputed, IComputed, IResult<T>
+public interface IAsyncComputed<T> : IAsyncComputed, IResult<T>
 {
     new ResultBox<T>? MaybeOutput { get; }
     new ValueTask<ResultBox<T>?> GetOutput(CancellationToken cancellationToken = default);
 }
-
-// Removed: use Computed<TOut> instead
-/* 
-public interface IComputedWithTypedInput<out TIn> : IComputed
-    where TIn : ComputedInput
-{
-    new TIn Input { get; }
-}
-*/
-
-// Removed: use Computed<TOut> instead
-/* 
-public interface IComputed<out TIn, TOut> : IComputed<TOut>
-    where TIn : ComputedInput
-{ }
-*/
 
 public abstract class Computed<T> : IComputed, IComputedImpl, IResult<T>
 {

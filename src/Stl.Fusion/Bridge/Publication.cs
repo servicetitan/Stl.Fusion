@@ -23,12 +23,7 @@ public interface IPublication : IDisposable
     TResult Apply<TArg, TResult>(IPublicationApplyHandler<TArg, TResult> handler, TArg arg);
 }
 
-public interface IPublication<T> : IPublication
-{
-    new PublicationState<T> State { get; }
-}
-
-public sealed class Publication<T> : IPublication<T>
+public sealed class Publication<T> : IPublication
 {
     private readonly IMomentClock _clock;
     private volatile PublicationState<T> _state;
