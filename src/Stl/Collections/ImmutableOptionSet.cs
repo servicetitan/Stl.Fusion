@@ -75,7 +75,7 @@ public readonly struct ImmutableOptionSet : IServiceProvider, IEquatable<Immutab
     {
         var key = typeof(T).ToSymbol();
         var currentValue = (T?) this[key];
-        if (EqualityComparer<T>.Default.Equals(currentValue!, expectedValue))
+        if (!EqualityComparer<T>.Default.Equals(currentValue!, expectedValue))
             return this;
         return Set(key, value);
     }

@@ -32,4 +32,17 @@ public class ImmutableOptionSetTest
         options = ImmutableOptionSet.Empty;
         options.Items.Count.Should().Be(0);
     }
+
+    [Fact]
+    public void ReplaceTest()
+    {
+        var options = new ImmutableOptionSet();
+        options = options.Replace(null, "A");
+        options.Get<string>().Should().Be("A");
+        options = options.Replace("A", "B");
+        options.Get<string>().Should().Be("B");
+
+        options = options.Replace("C", "D");
+        options.Get<string>().Should().Be("B");
+    }
 }

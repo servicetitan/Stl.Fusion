@@ -32,4 +32,17 @@ public class OptionSetTest
         options.Clear();
         options.Items.Count.Should().Be(0);
     }
+
+    [Fact]
+    public void ReplaceTest()
+    {
+        var options = new OptionSet();
+        options.Replace(null, "A").Should().BeTrue();
+        options.Get<string>().Should().Be("A");
+        options.Replace("A", "B").Should().BeTrue();
+        options.Get<string>().Should().Be("B");
+
+        options.Replace("C", "D").Should().BeFalse();
+        options.Get<string>().Should().Be("B");
+    }
 }

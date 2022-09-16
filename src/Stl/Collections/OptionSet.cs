@@ -93,7 +93,7 @@ public class OptionSet : IServiceProvider
     {
         var key = typeof(T).ToSymbol();
         var currentValue = (T?) this[key];
-        if (EqualityComparer<T>.Default.Equals(currentValue!, expectedValue))
+        if (!EqualityComparer<T>.Default.Equals(currentValue!, expectedValue))
             return false;
         this[key] = value;
         return true;
