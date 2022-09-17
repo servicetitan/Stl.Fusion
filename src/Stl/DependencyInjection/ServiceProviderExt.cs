@@ -25,7 +25,7 @@ public static class ServiceProviderExt
     public static ILogger LogFor(this IServiceProvider services, string category)
         => services.Logs().CreateLogger(category);
 
-    // Get HostedServiceManager
+    // Get HostedServiceGroupManager
 
     public static HostedServiceGroupManager HostedServices(this IServiceProvider services)
         => new(services);
@@ -45,4 +45,16 @@ public static class ServiceProviderExt
 
     public static object Activate(this IServiceProvider services, Type instanceType, params object[] arguments)
         => ActivatorUtilities.CreateInstance(services, instanceType, arguments);
+
+    // GetRequiredMixedModeService
+
+    public static T GetRequiredMixedModeService<T>(this IServiceProvider services)
+        where T : class
+    {
+        var singleton = services.GetRequiredService<MixedModeService<T>.Singleton>();
+        if (ReferenceEquals(singleton.Provider, services))
+            return singleton.Service;
+        var scoped = services.GetRequiredService<MixedModeService<T>.Scoped>();
+        return scoped.Service;
+    }
 }

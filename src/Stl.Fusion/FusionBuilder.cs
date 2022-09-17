@@ -56,13 +56,17 @@ public readonly struct FusionBuilder
         Services.TryAddSingleton(new ComputeServiceInterceptor.Options());
         Services.TryAddSingleton<ComputeServiceInterceptor>();
 
-        // States & their dependencies
-        Services.TryAddTransient<IStateFactory, StateFactory>();
+        // States
+        Services.TryAddSingleton(c => new MixedModeService<IStateFactory>.Singleton(new StateFactory(c), c));
+        Services.TryAddScoped(c => new MixedModeService<IStateFactory>.Scoped(new StateFactory(c), c));
+        Services.TryAddTransient(c => c.GetRequiredMixedModeService<IStateFactory>());
         Services.TryAddSingleton(typeof(MutableState<>.Options));
         Services.TryAddTransient(typeof(IMutableState<>), typeof(MutableState<>));
-        Services.TryAddTransient<IUpdateDelayer>(c => new UpdateDelayer(c.UIActionTracker()));
-        Services.TryAddSingleton<UIActionTracker.Options>();
+
+        // Update delayer & UI action tracker
         Services.TryAddScoped<UIActionTracker, UIActionTracker>();
+        Services.TryAddScoped<IUpdateDelayer>(c => new UpdateDelayer(c.UIActionTracker()));
+        Services.TryAddSingleton<UIActionTracker.Options>();
 
         // CommandR, command completion and invalidation
         var commander = Services.AddCommander();

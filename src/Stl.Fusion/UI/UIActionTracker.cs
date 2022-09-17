@@ -7,8 +7,6 @@ public class UIActionTracker : IHasServices, IDisposable
     private static readonly UnboundedChannelOptions ChannelOptions =
         new() { AllowSynchronousContinuations = false };
 
-    public static UIActionTracker None { get; set; } = new NoUIActionTracker(0);
-
     public record Options {
         public TimeSpan MaxInvalidationDelay { get; init; } = TimeSpan.FromMilliseconds(300);
         public IMomentClock? Clock { get; init; }

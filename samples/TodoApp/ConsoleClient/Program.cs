@@ -11,10 +11,8 @@ var session = new Session(sessionId);
 var services = CreateServiceProvider();
 var todoService = services.GetRequiredService<ITodoService>();
 var computed = await Computed.Capture(() => todoService.GetSummary(session));
-while (true) {
-    WriteLine($"- {computed.Value}");
-    await computed.WhenInvalidated();
-    computed = await computed.Update();
+await foreach (var c in computed.Changes()) {
+    WriteLine($"- {c.Value}");
 }
 
 IServiceProvider CreateServiceProvider()
@@ -44,7 +42,7 @@ IServiceProvider CreateServiceProvider()
     fusion.AddAuthentication().AddRestEaseClient();
 
     // Default update delay is 0.2s
-    services.AddTransient<IUpdateDelayer>(c => new UpdateDelayer(c.UIActionTracker(), 0.2));
+    services.AddScoped<IUpdateDelayer>(c => new UpdateDelayer(c.UIActionTracker(), 0.2));
 
     return services.BuildServiceProvider();
 }

@@ -20,8 +20,4 @@
     <ProjectReference Include="..\Stl.Interception\Stl.Interception.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="State\Internal" />
-  </ItemGroup>
-
 </Project>

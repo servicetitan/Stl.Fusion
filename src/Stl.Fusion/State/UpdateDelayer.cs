@@ -4,41 +4,68 @@ namespace Stl.Fusion;
 
 public interface IUpdateDelayer
 {
-    UIActionTracker UIActionTracker { get; }
-    IMomentClock Clock { get; }
-    TimeSpan MinDelay { get; }
-    TimeSpan MinRetryDelay { get; }
-
-    TimeSpan GetDelay(int retryCount);
+    ValueTask Delay(int retryCount, CancellationToken cancellationToken = default);
 }
 
-public sealed record UpdateDelayer(
-    UIActionTracker UIActionTracker,
-    RandomTimeSpan Delay,
+public sealed partial record UpdateDelayer(
+    UIActionTracker? UIActionTracker,
+    RandomTimeSpan UpdateDelay,
     RetryDelaySeq RetryDelays
     ) : IUpdateDelayer
 {
     public static class Defaults
     {
-        public static RandomTimeSpan Delay { get; set; } = TimeSpan.FromSeconds(1);
-        public static TimeSpan MinDelay { get; set; } = TimeSpan.FromMilliseconds(25);
+        public static RandomTimeSpan UpdateDelay { get; set; } = TimeSpan.FromSeconds(1);
         public static RetryDelaySeq RetryDelays { get; set; } = new(TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(2));
+        public static TimeSpan MinDelay { get; set; } = TimeSpan.FromMilliseconds(33);
     }
 
-    public static UpdateDelayer Instant { get; set; } = new(UIActionTracker.None, Defaults.MinDelay);
-    public static UpdateDelayer ZeroUnsafe { get; set; } = new(UIActionTracker.None, 0) { MinDelay = TimeSpan.Zero };
+    public static Fixed ZeroUnsafe { get; } = new(TimeSpan.Zero);
+    public static Fixed Instant { get; set; } = new(Defaults.MinDelay);
 
-    public IMomentClock Clock { get; init; } = UIActionTracker.Clock;
+    public IMomentClock Clock { get; init; } = UIActionTracker?.Clock ?? MomentClockSet.Default.UIClock;
     public TimeSpan MinDelay { get; init; } = Defaults.MinDelay;
-    public TimeSpan MinRetryDelay => RetryDelays.Min;
 
     public UpdateDelayer(UIActionTracker uiActionTracker)
-        : this(uiActionTracker, Defaults.Delay, Defaults.RetryDelays) { }
+        : this(uiActionTracker, Defaults.UpdateDelay, Defaults.RetryDelays) { }
     public UpdateDelayer(UIActionTracker uiActionTracker, RandomTimeSpan updateDelay)
         : this(uiActionTracker, updateDelay, Defaults.RetryDelays) { }
 
-    public TimeSpan GetDelay(int retryCount) 
-        => retryCount > 0 ? RetryDelays[retryCount] : Delay.Next();
+    public async ValueTask Delay(int retryCount, CancellationToken cancellationToken = default)
+    {
+        var minDelay = retryCount == 0 ? MinDelay : RetryDelays.Min;
+        var delay = TimeSpanExt.Max(minDelay, GetDelay(retryCount));
+        if (delay <= TimeSpan.Zero)
+            return; // This may only happen if MinDelay == 0 - e.g. for UpdateDelayer.ZeroUnsafe
+
+        var clock = Clock;
+        var minDelayEndTime = clock.Now + minDelay;
+
+        // Await for either delay or the beginning of a period of instant updates
+        if (UIActionTracker != null) {
+            var cts = cancellationToken.CreateLinkedTokenSource();
+            try {
+                var task1 = clock.Delay(delay, cts.Token);
+                var task2 = UIActionTracker.WhenInstantUpdatesEnabled();
+                await Task.WhenAny(task1, task2).ConfigureAwait(false);
+            }
+            finally {
+                cts.CancelAndDisposeSilently();
+            }
+        }
+        else {
+            await clock.Delay(delay, cancellationToken).ConfigureAwait(false);
+        }
+
+        // Ensure MinDelay is enforced no matter what, otherwise we might
+        // end up in a situation when updates are consuming 100% CPU
+        var remainingTime = minDelayEndTime - clock.Now;
+        if (remainingTime > TimeSpan.Zero)
+            await clock.Delay(remainingTime, cancellationToken).ConfigureAwait(false);
+    }
+
+    public TimeSpan GetDelay(int retryCount)
+        => retryCount > 0 ? RetryDelays[retryCount] : UpdateDelay.Next();
 
     // We want referential equality back for this type:
     // it's a record solely to make it possible to use it with "with" keyword
