@@ -10,9 +10,9 @@ public static class TimeSpanExt
     public static TimeSpan Clamp(this TimeSpan value, TimeSpan min, TimeSpan max)
         => Min(max, Max(min, value));
     public static TimeSpan Min(TimeSpan first, TimeSpan second)
-        => first < second ? first : second;
+        => new(Math.Min(first.Ticks, second.Ticks));
     public static TimeSpan Max(TimeSpan first, TimeSpan second)
-        => first > second ? first : second;
+        => new(Math.Max(first.Ticks, second.Ticks));
 
     public static RandomTimeSpan ToRandom(this TimeSpan value, TimeSpan maxDelta)
         => new(value, maxDelta);

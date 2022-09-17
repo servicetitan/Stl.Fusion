@@ -15,7 +15,7 @@ public class ComputedInterceptorTest : FusionTestBase
 
         var count = 0L;
         using var state = stateFactory.NewComputed<DateTime>(
-            UpdateDelayer.ZeroDelay,
+            UpdateDelayer.Instant,
             async (_, ct) => await c.Use(ct));
         state.Updated += (s, _)
             => Log.LogInformation($"{++count} -> {s.Value:hh:mm:ss:fff}");

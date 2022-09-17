@@ -61,6 +61,7 @@ public readonly struct FusionBuilder
         Services.TryAddSingleton(typeof(MutableState<>.Options));
         Services.TryAddTransient(typeof(IMutableState<>), typeof(MutableState<>));
         Services.TryAddTransient<IUpdateDelayer>(c => new UpdateDelayer(c.UIActionTracker()));
+        Services.TryAddSingleton<UIActionTracker.Options>();
         Services.TryAddScoped<UIActionTracker, UIActionTracker>();
 
         // CommandR, command completion and invalidation

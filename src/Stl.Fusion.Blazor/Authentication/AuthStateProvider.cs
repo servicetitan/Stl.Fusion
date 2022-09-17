@@ -13,7 +13,7 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
 
         public Options()
         {
-            var minDelayUpdateDelayer = Fusion.UpdateDelayer.MinDelay;
+            var minDelayUpdateDelayer = Fusion.UpdateDelayer.Instant;
             UpdateDelayer = minDelayUpdateDelayer with {
                 RetryDelays = minDelayUpdateDelayer.RetryDelays with { Max = TimeSpan.FromSeconds(10) },
             };
@@ -96,8 +96,8 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
             NotifyAuthenticationStateChanged(authenticationStateTask);
 
             var authStateTask = Task.FromResult(state.LatestNonErrorValue);
-            var uiClock = UIActionTracker.Clocks.UIClock;
-            var action = new UIAction<AuthState>(new ChangeAuthStateUICommand(), uiClock, authStateTask, default);
+            var clock = UIActionTracker.Clock;
+            var action = new UIAction<AuthState>(new ChangeAuthStateUICommand(), clock, authStateTask, default);
             UIActionTracker.Register(action);
         });
 }

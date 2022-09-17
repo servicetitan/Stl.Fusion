@@ -111,8 +111,13 @@ public static class ComputedExt
 
     // When
 
+    public static Task<Computed<T>> When<T>(this Computed<T> computed,
+        Func<T, bool> predicate,
+        CancellationToken cancellationToken = default)
+        => computed.When(predicate, UpdateDelayer.Instant, cancellationToken);
     public static async Task<Computed<T>> When<T>(this Computed<T> computed,
         Func<T, bool> predicate,
+        IUpdateDelayer updateDelayer,
         CancellationToken cancellationToken = default)
     {
         while (true) {
@@ -121,19 +126,32 @@ public static class ComputedExt
             if (predicate(computed.Value))
                 return computed;
             await computed.WhenInvalidated(cancellationToken).ConfigureAwait(false);
+            await updateDelayer.Delay(0, cancellationToken).ConfigureAwait(false);
         }
     }
 
     // Changes
 
+    public static IAsyncEnumerable<Computed<T>> Changes<T>(
+        this Computed<T> computed,
+        CancellationToken cancellationToken = default)
+        => computed.Changes(UpdateDelayer.Instant, cancellationToken);
     public static async IAsyncEnumerable<Computed<T>> Changes<T>(
         this Computed<T> computed,
+        IUpdateDelayer updateDelayer,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
+        var retryCount = 0;
         while (true) {
             computed = await computed.Update(cancellationToken).ConfigureAwait(false);
             yield return computed;
+
             await computed.WhenInvalidated(cancellationToken).ConfigureAwait(false);
+
+            var hasTransientError = computed.Error is { } error && ((IComputedImpl) computed).IsTransientError(error);
+            retryCount = hasTransientError ? retryCount + 1 : 0;
+
+            await updateDelayer.Delay(retryCount, cancellationToken).ConfigureAwait(false);
         }
         // ReSharper disable once IteratorNeverReturns
     }

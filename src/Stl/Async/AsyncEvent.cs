@@ -6,7 +6,7 @@ public abstract class AsyncEvent<T>
     protected readonly TaskSource<AsyncEvent<T>> WhenNextSource;
 
     public T Value { get; }
-    
+
     protected AsyncEvent(T value, bool runContinuationsAsynchronously)
     {
         RunContinuationsAsynchronously = runContinuationsAsynchronously;

@@ -10,14 +10,14 @@ public class UICommander : IHasServices
     public IServiceProvider Services { get; }
     public ICommander Commander { get; }
     public UIActionTracker UIActionTracker { get; }
-    public MomentClockSet Clocks { get; }
+    public IMomentClock Clock { get; }
 
     public UICommander(IServiceProvider services)
     {
         Services = services;
         Commander = services.Commander();
         UIActionTracker = services.GetRequiredService<UIActionTracker>();
-        Clocks = UIActionTracker.Clocks;
+        Clock = UIActionTracker.Clock;
     }
 
     public async Task<TResult> Call<TResult>(ICommand<TResult> command, CancellationToken cancellationToken = default)
@@ -67,7 +67,7 @@ public class UICommander : IHasServices
     {
         var typedCommand = (ICommand<TResult>) command;
         var resultTask = Commander.Call(typedCommand, isOutermost: true, cancellationToken);
-        var action = new UIAction<TResult>(typedCommand, Clocks.UIClock, resultTask, cancellationToken);
+        var action = new UIAction<TResult>(typedCommand, Clock, resultTask, cancellationToken);
         return action;
     }
 

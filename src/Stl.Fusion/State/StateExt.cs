@@ -1,3 +1,5 @@
+using Stl.Fusion.Internal;
+
 namespace Stl.Fusion;
 
 public static class StateExt
@@ -82,6 +84,11 @@ public static class StateExt
         Func<T, bool> predicate,
         CancellationToken cancellationToken = default)
         => state.Computed.When(predicate, cancellationToken);
+    public static Task<Computed<T>> When<T>(this IState<T> state,
+        Func<T, bool> predicate,
+        IUpdateDelayer updateDelayer,
+        CancellationToken cancellationToken = default)
+        => state.Computed.When(predicate, updateDelayer, cancellationToken);
 
     // Changes
 
@@ -89,4 +96,9 @@ public static class StateExt
         this IState<T> state,
         CancellationToken cancellationToken = default)
         => state.Computed.Changes(cancellationToken);
+    public static IAsyncEnumerable<Computed<T>> Changes<T>(
+        this IState<T> state,
+        IUpdateDelayer updateDelayer,
+        CancellationToken cancellationToken = default)
+        => state.Computed.Changes(updateDelayer, cancellationToken);
 }

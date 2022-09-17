@@ -51,7 +51,7 @@ public class ReplicationTest : FusionTestBase, IAsyncLifetime
 
         var count = 0;
         using var state = Services.StateFactory().NewComputed<DateTime>(
-            UpdateDelayer.ZeroDelay,
+            UpdateDelayer.Instant,
             async (_, ct) => await rep.Computed.Use(ct));
         state.Updated += (s, _) => {
             Out.WriteLine($"{s.Value}");

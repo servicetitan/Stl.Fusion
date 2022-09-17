@@ -93,7 +93,7 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
                 if (!computed.IsInvalidated())
                     await computed.WhenInvalidated(cancellationToken).ConfigureAwait(false);
                 if (snapshot.UpdateCount != 0)
-                    await UpdateDelayer.Delay(snapshot, cancellationToken).ConfigureAwait(false);
+                    await UpdateDelayer.Delay(snapshot.RetryCount, cancellationToken).ConfigureAwait(false);
                 if (!snapshot.WhenUpdated().IsCompleted)
                     await computed.Update(cancellationToken).ConfigureAwait(false);
             }
