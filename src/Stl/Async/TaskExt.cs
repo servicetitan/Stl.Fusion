@@ -431,7 +431,7 @@ public static class TaskExt
     }
 
     public static async Task<(T1, T2, T3)> Join<T1, T2, T3>(
-        Task<T1> task1, Task<T2> task2, Task<T3> task3)
+        this Task<T1> task1, Task<T2> task2, Task<T3> task3)
     {
         var r1 = await task1.ConfigureAwait(false);
         var r2 = await task2.ConfigureAwait(false);
@@ -440,7 +440,7 @@ public static class TaskExt
     }
 
     public static async Task<(T1, T2, T3, T4)> Join<T1, T2, T3, T4>(
-        Task<T1> task1, Task<T2> task2, Task<T3> task3, Task<T4> task4)
+        this Task<T1> task1, Task<T2> task2, Task<T3> task3, Task<T4> task4)
     {
         var r1 = await task1.ConfigureAwait(false);
         var r2 = await task2.ConfigureAwait(false);
@@ -450,7 +450,7 @@ public static class TaskExt
     }
 
     public static async Task<(T1, T2, T3, T4, T5)> Join<T1, T2, T3, T4, T5>(
-        Task<T1> task1, Task<T2> task2, Task<T3> task3, Task<T4> task4, Task<T5> task5)
+        this Task<T1> task1, Task<T2> task2, Task<T3> task3, Task<T4> task4, Task<T5> task5)
     {
         var r1 = await task1.ConfigureAwait(false);
         var r2 = await task2.ConfigureAwait(false);
