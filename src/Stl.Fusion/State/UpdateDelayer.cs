@@ -7,22 +7,12 @@ public interface IUpdateDelayer
     ValueTask Delay(int retryCount, CancellationToken cancellationToken = default);
 }
 
-public sealed partial record UpdateDelayer(
+public sealed record UpdateDelayer(
     UIActionTracker? UIActionTracker,
     RandomTimeSpan UpdateDelay,
     RetryDelaySeq RetryDelays
     ) : IUpdateDelayer
 {
-    public static class Defaults
-    {
-        public static RandomTimeSpan UpdateDelay { get; set; } = TimeSpan.FromSeconds(1);
-        public static RetryDelaySeq RetryDelays { get; set; } = new(TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(2));
-        public static TimeSpan MinDelay { get; set; } = TimeSpan.FromMilliseconds(33);
-    }
-
-    public static Fixed ZeroUnsafe { get; } = new(TimeSpan.Zero);
-    public static Fixed Instant { get; set; } = new(Defaults.MinDelay);
-
     public IMomentClock Clock { get; init; } = UIActionTracker?.Clock ?? MomentClockSet.Default.UIClock;
     public TimeSpan MinDelay { get; init; } = Defaults.MinDelay;
 
@@ -67,8 +57,21 @@ public sealed partial record UpdateDelayer(
     public TimeSpan GetDelay(int retryCount)
         => retryCount > 0 ? RetryDelays[retryCount] : UpdateDelay.Next();
 
-    // We want referential equality back for this type:
-    // it's a record solely to make it possible to use it with "with" keyword
-    public bool Equals(UpdateDelayer? other) => ReferenceEquals(this, other);
-    public override int GetHashCode() => RuntimeHelpers.GetHashCode(this);
+    // Nested types
+
+    public static class Defaults
+    {
+        public static RandomTimeSpan UpdateDelay { get; set; } = TimeSpan.FromSeconds(1);
+
+        public static RetryDelaySeq RetryDelays {
+            get => FixedDelayer.Defaults.RetryDelays;
+            set => FixedDelayer.Defaults.RetryDelays = value;
+        }
+
+        public static TimeSpan MinDelay {
+            get => FixedDelayer.Defaults.MinDelay;
+            set => FixedDelayer.Defaults.MinDelay = value;
+        }
+    }
 }
+

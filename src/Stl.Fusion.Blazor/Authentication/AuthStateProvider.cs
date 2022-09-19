@@ -13,9 +13,9 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
 
         public Options()
         {
-            var minDelayUpdateDelayer = Fusion.UpdateDelayer.Instant;
-            UpdateDelayer = minDelayUpdateDelayer with {
-                RetryDelays = minDelayUpdateDelayer.RetryDelays with { Max = TimeSpan.FromSeconds(10) },
+            var updateDelayer = FixedDelayer.Instant;
+            UpdateDelayer = updateDelayer with {
+                RetryDelays = updateDelayer.RetryDelays with { Max = TimeSpan.FromSeconds(10) },
             };
         }
     };

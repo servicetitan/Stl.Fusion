@@ -1,7 +1,7 @@
 namespace Stl.Time;
 
 [DataContract]
-public record RetryDelaySeq(
+public sealed record RetryDelaySeq(
     [property: DataMember] TimeSpan Min,
     [property: DataMember] TimeSpan Max,
     [property: DataMember] double MaxDelta = 0.1)
@@ -12,7 +12,7 @@ public record RetryDelaySeq(
 
     [DataMember] public double Multiplier { get; init; } = Math.Sqrt(2);
 
-    public virtual TimeSpan this[int failedTryCount] {
+    public TimeSpan this[int failedTryCount] {
         get {
             if (failedTryCount <= 0)
                 return TimeSpan.Zero;
@@ -39,7 +39,7 @@ public record RetryDelaySeq(
 
     // Conversion
 
-    public override string ToString() 
+    public override string ToString()
         => $"[{Min.ToShortString()} ± {MaxDelta * 100:P} .. {Max.ToShortString()}]";
 
     public static implicit operator RetryDelaySeq(TimeSpan min) => new(min);

@@ -34,7 +34,7 @@ public class AsyncComputeMethodFunction<T> : ComputeMethodFunctionBase<T>
                 return output.Value;
         }
 
-        using var @lock = await Locks.Lock(input, cancellationToken).ConfigureAwait(false);
+        using var @lock = await InputLocks.Lock(input, cancellationToken).ConfigureAwait(false);
 
         asyncComputed = GetExistingAsyncComputed(typedInput);
         if (asyncComputed != null) {

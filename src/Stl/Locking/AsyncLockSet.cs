@@ -96,7 +96,7 @@ public class AsyncLockSet<TKey> : IAsyncLockSet<TKey>
     {
         var spinWait = new SpinWait();
         while (true) {
-            var entry = _entries.GetOrAdd(key, (key1, self) => new Entry(self, key1), this);
+            var entry = _entries.GetOrAdd(key, static (key1, self) => new Entry(self, key1), this);
             var asyncLock = entry.TryBeginUse();
             if (asyncLock != null)
                 return (asyncLock, entry);
@@ -128,6 +128,8 @@ public class AsyncLockSet<TKey> : IAsyncLockSet<TKey>
             throw;
         }
     }
+
+    // Nested types
 
     private class Entry
     {
@@ -173,10 +175,10 @@ public class AsyncLockSet<TKey> : IAsyncLockSet<TKey>
         }
     }
 
-    public struct Releaser : IDisposable
+    public readonly struct Releaser : IDisposable
     {
         private readonly Entry _entry;
-        private AsyncLock.Releaser _asyncLockReleaser;
+        private readonly AsyncLock.Releaser _asyncLockReleaser;
 
         public Releaser(object entry, AsyncLock.Releaser asyncLockReleaser)
         {

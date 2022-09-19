@@ -20,7 +20,7 @@ public sealed class ComputedRegistry : IDisposable
 
         public int InitialCapacity { get; init; } = DefaultInitialCapacity;
         public int ConcurrencyLevel { get; init; } = DefaultInitialConcurrency;
-        public Func<IFunction, IAsyncLockSet<ComputedInput>>? LocksProvider { get; init; } = null;
+        public Func<AsyncLockSet<ComputedInput>>? LocksFactory { get; init; } = null;
         public GCHandlePool? GCHandlePool { get; init; } = null;
 
         static Options()
@@ -36,28 +36,27 @@ public sealed class ComputedRegistry : IDisposable
     }
 
     private readonly ConcurrentDictionary<ComputedInput, GCHandle> _storage;
-    private readonly Func<IFunction, IAsyncLockSet<ComputedInput>> _locksProvider;
     private readonly GCHandlePool _gcHandlePool;
     private readonly StochasticCounter _opCounter;
     private volatile int _pruneCounterThreshold;
     private Task? _pruneTask;
     private object Lock => _storage;
 
+    public AsyncLockSet<ComputedInput> InputLocks { get; }
+
     public ComputedRegistry() : this(Options.Default) { }
     public ComputedRegistry(Options options)
     {
         _storage = new ConcurrentDictionary<ComputedInput, GCHandle>(options.ConcurrencyLevel, options.InitialCapacity);
-        var locksProvider = options.LocksProvider;
-        if (locksProvider == null) {
-            var locks = new AsyncLockSet<ComputedInput>(ReentryMode.CheckedFail);
-            locksProvider = _ => locks;
-        }
-        _locksProvider = locksProvider;
         _gcHandlePool = options.GCHandlePool ?? new GCHandlePool(GCHandleType.Weak);
         if (_gcHandlePool.HandleType != GCHandleType.Weak)
             throw new ArgumentOutOfRangeException(
                 $"{nameof(options)}.{nameof(options.GCHandlePool)}.{nameof(_gcHandlePool.HandleType)}");
         _opCounter = new StochasticCounter();
+        InputLocks = options.LocksFactory?.Invoke() ?? new AsyncLockSet<ComputedInput>(
+            ReentryMode.CheckedFail,
+            TaskCreationOptions.RunContinuationsAsynchronously,
+            options.ConcurrencyLevel, options.InitialCapacity);
         UpdatePruneCounterThreshold();
     }
 
@@ -140,9 +139,6 @@ public sealed class ComputedRegistry : IDisposable
         _gcHandlePool.Release(handle, random);
         return true;
     }
-
-    public IAsyncLockSet<ComputedInput> GetLocksFor(IFunction function)
-        => _locksProvider(function);
 
     public void InvalidateEverything()
     {

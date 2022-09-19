@@ -22,7 +22,7 @@ public class MutableStateTest : SimpleFusionTestBase
         ms2.Value.Should().Be("B");
 
         var cs = factory.NewComputed<string>(
-            UpdateDelayer.Instant,
+            FixedDelayer.Instant,
             async (s, ct) => {
                 var value1 = await ms1.Computed.Use(ct);
                 var value2 = await ms2.Computed.Use(ct);

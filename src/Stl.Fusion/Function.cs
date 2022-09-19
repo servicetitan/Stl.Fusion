@@ -29,8 +29,7 @@ public interface IFunction<T> : IFunction
 
 public abstract class FunctionBase<T> : IFunction<T>
 {
-    protected IAsyncLockSet<ComputedInput> Locks { get; }
-    protected object Lock => Locks;
+    protected static AsyncLockSet<ComputedInput> InputLocks => ComputedRegistry.Instance.InputLocks;
     protected readonly ILogger Log;
     protected readonly ILogger? DebugLog;
 
@@ -41,7 +40,6 @@ public abstract class FunctionBase<T> : IFunction<T>
         Services = services;
         Log = Services.LogFor(GetType());
         DebugLog = Log.IsLogging(LogLevel.Debug) ? Log : null;
-        Locks = ComputedRegistry.Instance.GetLocksFor(this);
     }
 
     async ValueTask<IComputed> IFunction.Invoke(ComputedInput input,
@@ -63,7 +61,7 @@ public abstract class FunctionBase<T> : IFunction<T>
         if (result.TryUseExisting(context, usedBy))
             return result!;
 
-        using var _ = await Locks.Lock(input, cancellationToken).ConfigureAwait(false);
+        using var _ = await InputLocks.Lock(input, cancellationToken).ConfigureAwait(false);
 
         result = GetExisting(input);
         if (result.TryUseExisting(context, usedBy))
@@ -98,7 +96,7 @@ public abstract class FunctionBase<T> : IFunction<T>
         ComputeContext context,
         CancellationToken cancellationToken = default)
     {
-        using var _ = await Locks.Lock(input, cancellationToken).ConfigureAwait(false);
+        using var _ = await InputLocks.Lock(input, cancellationToken).ConfigureAwait(false);
 
         var result = GetExisting(input);
         if (result.TryUseExisting(context, usedBy))

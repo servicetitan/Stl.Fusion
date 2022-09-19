@@ -39,7 +39,7 @@ public class WebSocketTest : FusionTestBase
 
         var count = 0;
         using var state = WebServices.StateFactory().NewComputed<DateTime>(
-            UpdateDelayer.Instant,
+            FixedDelayer.Instant,
             async (_, ct) => await rep.Computed.Use(ct));
         state.Updated += (s, _) => {
             Out.WriteLine($"Client: {s.Value}");
