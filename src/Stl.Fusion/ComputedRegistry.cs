@@ -47,7 +47,7 @@ public sealed class ComputedRegistry : IDisposable
     public IEnumerable<ComputedInput> Keys => _storage.Select(p => p.Key);
     public AsyncLockSet<ComputedInput> InputLocks { get; }
 
-    public ComputedGraphPruner GraphPruner {
+    public ComputedGraphPruner? GraphPruner {
         get => _graphPruner;
         set {
             ComputedGraphPruner oldGraphPruner;
@@ -55,7 +55,7 @@ public sealed class ComputedRegistry : IDisposable
                 oldGraphPruner = _graphPruner;
                 _graphPruner = value;
             }
-            oldGraphPruner.Dispose();
+            oldGraphPruner?.Dispose();
         }
     }
 
@@ -73,6 +73,7 @@ public sealed class ComputedRegistry : IDisposable
             TaskCreationOptions.RunContinuationsAsynchronously,
             options.ConcurrencyLevel, options.InitialCapacity);
         _graphPruner = new ComputedGraphPruner(new());
+        _graphPruner.Run();
         UpdatePruneCounterThreshold();
     }
 

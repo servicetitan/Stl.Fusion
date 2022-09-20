@@ -58,9 +58,9 @@ public static class StartupHelper
 
     public static void ConfigureSharedServices(IServiceCollection services)
     {
-        services.AddSingleton(new ComputedGraphPruner.Options());
-        services.AddSingleton<ComputedGraphPruner>();
-        services.AddHostedService<ComputedGraphPruner>();
+        // services.AddSingleton(new ComputedGraphPruner.Options());
+        // services.AddSingleton<ComputedGraphPruner>();
+        // services.AddHostedService<ComputedGraphPruner>();
         IComputedState.DefaultOptions.MustFlowExecutionContext = true;
 
         // Blazorise

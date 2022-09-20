@@ -6,7 +6,7 @@ public sealed class ComputedGraphPruner : WorkerBase
 {
     public record Options
     {
-        public bool AutoActivate { get; init; }
+        public bool AutoActivate { get; init; } = true;
         public RandomTimeSpan CheckPeriod { get; init; } = TimeSpan.FromMinutes(10).ToRandom(0.1);
         public RandomTimeSpan NextBatchDelay { get; init; } = TimeSpan.FromSeconds(0.1).ToRandom(0.25);
         public RetryDelaySeq RetryDelays { get; init; } = (TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(10));
