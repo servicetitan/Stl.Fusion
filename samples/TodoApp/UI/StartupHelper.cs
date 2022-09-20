@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Stl.Fusion.Client;
 using Stl.Fusion.Blazor;
 using Stl.Fusion.Extensions;
+using Stl.Fusion.Internal;
 using Stl.Fusion.UI;
 using Templates.TodoApp.Abstractions;
 using Templates.TodoApp.Abstractions.Clients;
@@ -57,7 +58,10 @@ public static class StartupHelper
 
     public static void ConfigureSharedServices(IServiceCollection services)
     {
-        ComputedStateComponent.DefaultStateOptions.MustFlowExecutionContext = true;
+        services.AddSingleton(new ComputedGraphPruner.Options());
+        services.AddSingleton<ComputedGraphPruner>();
+        services.AddHostedService<ComputedGraphPruner>();
+        IComputedState.DefaultOptions.MustFlowExecutionContext = true;
 
         // Blazorise
         services.AddBlazorise().AddBootstrapProviders().AddFontAwesomeIcons();

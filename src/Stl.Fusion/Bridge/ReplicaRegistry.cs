@@ -119,8 +119,10 @@ public sealed class ReplicaRegistry : IDisposable
     public Task Prune()
     {
         lock (Lock) {
-            if (_pruneTask == null || _pruneTask.IsCompleted)
+            if (_pruneTask == null || _pruneTask.IsCompleted) {
+                using var _ = ExecutionContextExt.SuppressFlow();
                 _pruneTask = Task.Run(PruneInternal);
+            }
             return _pruneTask;
         }
     }

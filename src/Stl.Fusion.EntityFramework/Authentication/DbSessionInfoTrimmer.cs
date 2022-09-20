@@ -47,7 +47,7 @@ public class DbSessionInfoTrimmer<TDbContext, TDbSessionInfo, TDbUserId> : DbSes
         var runChain = new AsyncChain($"Trim({tenant.Id})", async cancellationToken1 => {
             var minLastSeenAt = (Clocks.SystemClock.Now - Settings.MaxSessionAge).ToDateTime();
             lastTrimCount = await Sessions
-                .Trim(tenant, minLastSeenAt, Settings.BatchSize, cancellationToken)
+                .Trim(tenant, minLastSeenAt, Settings.BatchSize, cancellationToken1)
                 .ConfigureAwait(false);
 
             if (lastTrimCount > 0 && IsLoggingEnabled)

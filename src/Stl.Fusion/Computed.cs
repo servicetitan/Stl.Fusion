@@ -212,6 +212,22 @@ public abstract class Computed<T> : IComputed, IComputedImpl, IResult<T>
         CancelTimeouts();
     }
 
+    public virtual void RenewTimeouts()
+    {
+        if (ConsistencyState == ConsistencyState.Invalidated)
+            return;
+        var options = Options;
+        if (options.KeepAliveTime > TimeSpan.Zero)
+            Timeouts.KeepAlive.AddOrUpdateToLater(this, Timeouts.Clock.Now + options.KeepAliveTime);
+    }
+
+    public virtual void CancelTimeouts()
+    {
+        var options = Options;
+        if (options.KeepAliveTime > TimeSpan.Zero)
+            Timeouts.KeepAlive.Remove(this);
+    }
+
     // Update
 
     async ValueTask<IComputed> IComputed.Update(CancellationToken cancellationToken)
@@ -266,6 +282,26 @@ public abstract class Computed<T> : IComputed, IComputedImpl, IResult<T>
 
     // IComputedImpl methods
 
+    IComputedImpl[] IComputedImpl.Used {
+        get {
+            var result = new IComputedImpl[_used.Count];
+            lock (Lock) {
+                _used.CopyTo(result);
+                return result;
+            }
+        }
+    }
+
+    (ComputedInput Input, LTag Version)[] IComputedImpl.UsedBy {
+        get {
+            var result = new (ComputedInput Input, LTag Version)[_usedBy.Count];
+            lock (Lock) {
+                _usedBy.CopyTo(result);
+                return result;
+            }
+        }
+    }
+
     void IComputedImpl.AddUsed(IComputedImpl used)
     {
         // Debug.WriteLine($"{nameof(IComputedImpl.AddUsed)}: {this} <- {used}");
@@ -309,20 +345,24 @@ public abstract class Computed<T> : IComputed, IComputedImpl, IResult<T>
         }
     }
 
-    public virtual void RenewTimeouts()
+    (int OldCount, int NewCount) IComputedImpl.PruneUsedBy()
     {
-        if (ConsistencyState == ConsistencyState.Invalidated)
-            return;
-        var options = Options;
-        if (options.KeepAliveTime > TimeSpan.Zero)
-            Timeouts.KeepAlive.AddOrUpdateToLater(this, Timeouts.Clock.Now + options.KeepAliveTime);
-    }
-
-    public virtual void CancelTimeouts()
-    {
-        var options = Options;
-        if (options.KeepAliveTime > TimeSpan.Zero)
-            Timeouts.KeepAlive.Remove(this);
+        lock (Lock) {
+            if (ConsistencyState != ConsistencyState.Consistent)
+                // _usedBy is already empty or going to be empty soon;
+                // moreover, only Invalidated code can modify
+                // _used/_usedBy once invalidation flag is set
+                return (0, 0);
+            var replacement = new HashSetSlim3<(ComputedInput Input, LTag Version)>();
+            var oldCount = _usedBy.Count;
+            foreach (var entry in _usedBy.Items) {
+                var c = ComputedRegistry.Instance.Get(entry.Input);
+                if (c != null && c.Version == entry.Version)
+                    replacement.Add(entry);
+            }
+            _usedBy = replacement;
+            return (oldCount, _usedBy.Count);
+        }
     }
 
     // Protected & private methods

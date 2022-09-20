@@ -1,4 +1,5 @@
 using Stl.Concurrency;
+using Stl.Fusion.Internal;
 using Stl.Locking;
 using Stl.OS;
 using Stl.Time.Internal;
@@ -38,11 +39,25 @@ public sealed class ComputedRegistry : IDisposable
     private readonly ConcurrentDictionary<ComputedInput, GCHandle> _storage;
     private readonly GCHandlePool _gcHandlePool;
     private readonly StochasticCounter _opCounter;
+    private volatile ComputedGraphPruner _graphPruner;
     private volatile int _pruneCounterThreshold;
     private Task? _pruneTask;
     private object Lock => _storage;
 
+    public IEnumerable<ComputedInput> Keys => _storage.Select(p => p.Key);
     public AsyncLockSet<ComputedInput> InputLocks { get; }
+
+    public ComputedGraphPruner GraphPruner {
+        get => _graphPruner;
+        set {
+            ComputedGraphPruner oldGraphPruner;
+            lock (Lock) {
+                oldGraphPruner = _graphPruner;
+                _graphPruner = value;
+            }
+            oldGraphPruner.Dispose();
+        }
+    }
 
     public ComputedRegistry() : this(Options.Default) { }
     public ComputedRegistry(Options options)
@@ -57,6 +72,7 @@ public sealed class ComputedRegistry : IDisposable
             ReentryMode.CheckedFail,
             TaskCreationOptions.RunContinuationsAsynchronously,
             options.ConcurrencyLevel, options.InitialCapacity);
+        _graphPruner = new ComputedGraphPruner(new());
         UpdatePruneCounterThreshold();
     }
 
@@ -150,8 +166,10 @@ public sealed class ComputedRegistry : IDisposable
     public Task Prune()
     {
         lock (Lock) {
-            if (_pruneTask == null || _pruneTask.IsCompleted)
-                _pruneTask = Task.Run(PruneInternal);
+            if (_pruneTask == null || _pruneTask.IsCompleted) {
+                using var _ = ExecutionContextExt.SuppressFlow();
+                _pruneTask = Task.Run(PruneUnsafe);
+            }
             return _pruneTask;
         }
     }
@@ -178,7 +196,7 @@ public sealed class ComputedRegistry : IDisposable
         }
     }
 
-    private void PruneInternal()
+    private void PruneUnsafe()
     {
         var type = GetType();
         using var activity = type.GetActivitySource().StartActivity(type, nameof(Prune));

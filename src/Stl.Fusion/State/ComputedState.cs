@@ -2,6 +2,11 @@ namespace Stl.Fusion;
 
 public interface IComputedState : IState, IDisposable, IHasWhenDisposed
 {
+    public static class DefaultOptions
+    {
+        public static bool MustFlowExecutionContext { get; set; } = false;
+    }
+
     public new interface IOptions : IState.IOptions
     {
         IUpdateDelayer? UpdateDelayer { get; init; }
@@ -21,7 +26,7 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
     public new record Options : State<T>.Options, IComputedState.IOptions
     {
         public IUpdateDelayer? UpdateDelayer { get; init; }
-        public bool MustFlowExecutionContext { get; init; }
+        public bool MustFlowExecutionContext { get; init; } = IComputedState.DefaultOptions.MustFlowExecutionContext;
     }
 
     private volatile IUpdateDelayer _updateDelayer;

@@ -7,19 +7,10 @@ public static class ComputedStateComponent
     public static ComputedStateComponentOptions DefaultOptions { get; set; } =
         ComputedStateComponentOptions.SynchronizeComputeState
         | ComputedStateComponentOptions.RecomputeOnParametersSet;
-
-    public static class DefaultStateOptions
-    {
-        public static bool MustFlowExecutionContext { get; set; } = false;
-    }
 }
 
 public abstract class ComputedStateComponent<TState> : StatefulComponentBase<IComputedState<TState>>
 {
-    public static ComputedState<TState>.Options DefaultStateOptions { get; set; } = new() {
-        MustFlowExecutionContext = ComputedStateComponent.DefaultStateOptions.MustFlowExecutionContext
-    };
-
     protected ComputedStateComponentOptions Options { get; init; } = ComputedStateComponent.DefaultOptions;
 
     // State frequently depends on component parameters, so...
@@ -31,8 +22,7 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
         return Task.CompletedTask;
     }
 
-    protected virtual ComputedState<TState>.Options GetStateOptions()
-        => DefaultStateOptions;
+    protected virtual ComputedState<TState>.Options GetStateOptions() => new();
 
     protected override IComputedState<TState> CreateState()
     {

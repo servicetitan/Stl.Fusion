@@ -47,13 +47,13 @@ public class DbKeyValueTrimmer<TDbContext, TDbKeyValue> : DbTenantWorkerBase<TDb
                 .OrderBy(o => o.ExpiresAt)
                 .Select(o => o.Key)
                 .Take(Settings.BatchSize)
-                .ToArrayAsync(cancellationToken).ConfigureAwait(false);
+                .ToArrayAsync(cancellationToken1).ConfigureAwait(false);
             if (keys.Length == 0)
                 return;
 
             // This must be done via IKeyValueStore & operations,
             // otherwise invalidation won't happen for removed entries
-            await KeyValueStore.Remove(tenant.Id, keys, cancellationToken).ConfigureAwait(false);
+            await KeyValueStore.Remove(tenant.Id, keys, cancellationToken1).ConfigureAwait(false);
             lastTrimCount = keys.Length;
 
             if (lastTrimCount > 0 && IsLoggingEnabled)
