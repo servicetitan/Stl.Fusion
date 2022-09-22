@@ -7,6 +7,7 @@ using Stl.Fusion.Authentication;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Interception;
+using Stl.Fusion.Internal;
 using Stl.Fusion.Multitenancy;
 using Stl.Fusion.Operations.Internal;
 using Stl.Fusion.Operations.Reprocessing;
@@ -137,7 +138,7 @@ public readonly struct FusionBuilder
             Services.AddSingleton(optionsFactory);
         else 
             Services.TryAddSingleton<PublisherOptions>();
-        
+
         Services.TryAddSingleton<IPublisher, Publisher>();
         return this;
     }
@@ -235,6 +236,21 @@ public readonly struct FusionBuilder
             Services.AddTransient<IOperationReprocessor>(c => c.GetRequiredService<TOperationReprocessor>());
             Services.AddCommander().AddHandlers<TOperationReprocessor>();
         }
+        return this;
+    }
+
+    // AddComputedGraphPruner
+
+    public FusionBuilder AddComputedGraphPruner(
+        Func<IServiceProvider, ComputedGraphPruner.Options>? optionsFactory = null)
+    {
+        if (optionsFactory != null)
+            Services.AddSingleton(optionsFactory);
+        else
+            Services.TryAddSingleton<ComputedGraphPruner.Options>();
+
+        Services.TryAddSingleton<ComputedGraphPruner>();
+        Services.AddHostedService<ComputedGraphPruner>();
         return this;
     }
 }

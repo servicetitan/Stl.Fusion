@@ -9,13 +9,14 @@ public sealed class ComputedGraphPruner : WorkerBase
         public bool AutoActivate { get; init; } = true;
         public RandomTimeSpan CheckPeriod { get; init; } = TimeSpan.FromMinutes(10).ToRandom(0.1);
         public RandomTimeSpan NextBatchDelay { get; init; } = TimeSpan.FromSeconds(0.1).ToRandom(0.25);
-        public RetryDelaySeq RetryDelays { get; init; } = (TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(10));
         public int BatchSize { get; init; } = 1024 * HardwareInfo.GetProcessorCountPo2Factor();
     }
 
     public Options Settings { get; init; }
     public IMomentClock Clock { get; init; }
     public ILogger Log { get; init; }
+
+    public Task<Unit> WhenActivated { get; }
 
     public ComputedGraphPruner(Options settings, ILogger<ComputedGraphPruner>? log = null)
         : this(settings, MomentClockSet.Default, log) { }
@@ -24,20 +25,33 @@ public sealed class ComputedGraphPruner : WorkerBase
         Settings = settings;
         Clock = clocks.CpuClock;
         Log = log ?? NullLogger<ComputedGraphPruner>.Instance;
+        WhenActivated = TaskSource.New<Unit>(true).Task;
+
+        if (settings.AutoActivate)
+            Start();
     }
 
-    protected override Task RunInternal(CancellationToken cancellationToken)
+    protected override async Task RunInternal(CancellationToken cancellationToken)
     {
-        if (Settings.AutoActivate)
-            ComputedRegistry.Instance.GraphPruner = this;
-        else if (ComputedRegistry.Instance.GraphPruner != this) {
-            Log.LogWarning("Terminating: ComputedRegistry.Instance.GraphPruner != this");
-            return Task.CompletedTask;
+        var computedRegistry = ComputedRegistry.Instance;
+        if (Settings.AutoActivate) {
+            // This prevents race condition when two pruners are assigned at almost
+            // the same time - they'll both may end up activate themselves here
+            var oldGraphPruner = computedRegistry.GraphPruner;
+            while (oldGraphPruner != this) {
+                await oldGraphPruner.WhenActivated.ConfigureAwait(false);
+                oldGraphPruner = computedRegistry.ChangeGraphPruner(this, oldGraphPruner);
+            }
         }
+        else if (computedRegistry.GraphPruner != this) {
+            Log.LogWarning("Terminating: ComputedRegistry.Instance.GraphPruner != this");
+            return;
+        }
+        TaskSource.For(WhenActivated).TrySetResult(default);
 
         var activitySource = GetType().GetActivitySource();
 
-        var runChain = new AsyncChain("Prune", async ct => {
+        var runChain = new AsyncChain("Prune()", async ct => {
             var computedRegistry = ComputedRegistry.Instance;
             using var keyEnumerator = computedRegistry.Keys.GetEnumerator();
             var computedCount = 0L;
@@ -59,7 +73,7 @@ public sealed class ComputedGraphPruner : WorkerBase
                     consistentCount++;
                     var (oldEdgeCount, newEdgeCount) = computed.PruneUsedBy();
                     edgeCount += oldEdgeCount;
-                    removedEdgeCount += oldEdgeCount - newEdgeCount; 
+                    removedEdgeCount += oldEdgeCount - newEdgeCount;
                 }
             }
             Log.LogInformation(
@@ -67,15 +81,13 @@ public sealed class ComputedGraphPruner : WorkerBase
                 "and removed {RemovedEdgeCount}/{EdgeCount} \"used by\" edges " +
                 "in {BatchCount} batches (x {BatchSize})",
                 consistentCount, computedCount, removedEdgeCount, edgeCount, batchCount + 1, Settings.BatchSize);
-        }).Trace(() => activitySource.StartActivity("Prune"), Log);
+        }).Trace(() => activitySource.StartActivity("Prune"), Log).Silence();
 
-        var sleepChain = new AsyncChain("Sleep", ct => Clock.Delay(Settings.CheckPeriod.Next(), ct));
+        var chain = runChain.AppendDelay(Settings.CheckPeriod, Clock)
+            .CycleForever()
+            .LogBoundary(Log);
 
-        var chain = runChain
-            .RetryForever(Settings.RetryDelays, Clock, Log)
-            .Append(sleepChain)
-            .CycleForever();
-
-        return chain.Start(cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
+        await chain.Start(cancellationToken).ConfigureAwait(false);
     }
 }

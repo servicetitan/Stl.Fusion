@@ -58,9 +58,6 @@ public static class StartupHelper
 
     public static void ConfigureSharedServices(IServiceCollection services)
     {
-        // services.AddSingleton(new ComputedGraphPruner.Options());
-        // services.AddSingleton<ComputedGraphPruner>();
-        // services.AddHostedService<ComputedGraphPruner>();
         IComputedState.DefaultOptions.MustFlowExecutionContext = true;
 
         // Blazorise
@@ -68,6 +65,7 @@ public static class StartupHelper
 
         // Other UI-related services
         var fusion = services.AddFusion();
+        fusion.AddComputedGraphPruner(_ => new() { CheckPeriod = TimeSpan.FromSeconds(30) });
         fusion.AddFusionTime();
         fusion.AddBackendStatus();
 

@@ -27,7 +27,7 @@ public readonly struct PublicationRef : IEquatable<PublicationRef>
     }
 
     public static implicit operator PublicationRef((Symbol, Symbol) pair)
-        => new PublicationRef(pair.Item1, pair.Item2);
+        => new(pair.Item1, pair.Item2);
 
     // Equality
 

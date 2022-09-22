@@ -28,11 +28,40 @@ public static class AsyncChainExt
                 try {
                     await asyncChain.Start(cancellationToken).ConfigureAwait(false);
                 }
-                catch (Exception e) {
-                    if (IsAlwaysThrowable(e)) throw;
-
+                catch (Exception e) when (!IsAlwaysThrowable(e)) {
                     log.LogError(e, "{ChainName} failed", asyncChain.Name);
                     throw;
+                }
+            }
+        };
+    }
+
+    public static AsyncChain LogBoundary(this AsyncChain asyncChain, ILogger? log)
+        => asyncChain.LogBoundary(LogLevel.Information, log);
+    public static AsyncChain LogBoundary(this AsyncChain asyncChain, LogLevel logLevel, ILogger? log)
+    {
+        if (log == null)
+            return asyncChain;
+        return asyncChain with {
+            Start = async cancellationToken => {
+                log?.Log(logLevel, "AsyncChain started: {ChainName}", asyncChain.Name);
+                var error = (Exception?) null;
+                try {
+                    await asyncChain.Start(cancellationToken).ConfigureAwait(false);
+                }
+                catch (Exception e) {
+                    error = e;
+                }
+                finally {
+                    if (error == null || IsAlwaysThrowable(error)) {
+                        if (cancellationToken.IsCancellationRequested)
+                            log?.Log(logLevel, "AsyncChain completed (cancelled): {ChainName}", asyncChain.Name);
+                        else
+                            log?.Log(logLevel, "AsyncChain completed: {ChainName}", asyncChain.Name);
+                    }
+                    else {
+                        log?.LogError(error, "AsyncChain failed: {ChainName}", asyncChain.Name);
+                    }
                 }
             }
         };
@@ -55,10 +84,27 @@ public static class AsyncChainExt
             try {
                 await asyncChain.Start(cancellationToken).ConfigureAwait(false);
             }
-            catch (Exception e) {
-                if (IsAlwaysThrowable(e)) throw;
-            }
+            catch (Exception e) when (!IsAlwaysThrowable(e)) { }
         });
+
+    public static AsyncChain AppendDelay(this AsyncChain asyncChain, Func<RandomTimeSpan> delayFactory, IMomentClock? clock = null)
+        => asyncChain.AppendDelay(() => delayFactory.Invoke().Next());
+    public static AsyncChain AppendDelay(this AsyncChain asyncChain, Func<TimeSpan> delayFactory, IMomentClock? clock = null)
+    {
+        clock ??= MomentClockSet.Default.CpuClock;
+        return new($"{asyncChain.Name}.AppendDelay(?)", async cancellationToken => {
+            await asyncChain.Start(cancellationToken).ConfigureAwait(false);
+            await clock.Delay(delayFactory.Invoke(), cancellationToken).ConfigureAwait(false);
+        });
+    }
+    public static AsyncChain AppendDelay(this AsyncChain asyncChain, RandomTimeSpan sleepDelay, IMomentClock? clock = null)
+    {
+        clock ??= MomentClockSet.Default.CpuClock;
+        return new($"{asyncChain.Name}.AppendDelay({sleepDelay})", async cancellationToken => {
+            await asyncChain.Start(cancellationToken).ConfigureAwait(false);
+            await clock.Delay(sleepDelay.Next(), cancellationToken).ConfigureAwait(false);
+        });
+    }
 
     public static AsyncChain RetryForever(this AsyncChain asyncChain, RetryDelaySeq retryDelays, ILogger? log = null)
         => asyncChain.RetryForever(retryDelays, null, log);

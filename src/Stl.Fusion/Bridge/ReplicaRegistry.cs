@@ -121,7 +121,7 @@ public sealed class ReplicaRegistry : IDisposable
         lock (Lock) {
             if (_pruneTask == null || _pruneTask.IsCompleted) {
                 using var _ = ExecutionContextExt.SuppressFlow();
-                _pruneTask = Task.Run(PruneInternal);
+                _pruneTask = Task.Run(PruneUnsafe);
             }
             return _pruneTask;
         }
@@ -149,7 +149,7 @@ public sealed class ReplicaRegistry : IDisposable
         }
     }
 
-    private void PruneInternal()
+    private void PruneUnsafe()
     {
         var type = GetType();
         using var activity = type.GetActivitySource().StartActivity(type, nameof(Prune));

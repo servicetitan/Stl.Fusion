@@ -20,7 +20,7 @@ public abstract class InterceptorBase : IOptionalInterceptor, IHasServices
     protected ILogger Log { get; }
     protected bool IsLoggingEnabled { get; set; }
     protected LogLevel LogLevel { get; set; } = LogLevel.Debug;
-    protected LogLevel ValidationLogLevel { get; set; } = LogLevel.Information;
+    protected LogLevel ValidationLogLevel { get; set; } = LogLevel.Debug;
 
     public IServiceProvider Services { get; }
 

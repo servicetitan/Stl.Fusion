@@ -12,11 +12,11 @@ public readonly record struct AsyncChain(string Name, Func<CancellationToken, Ta
     // Constructor-like methods
 
     public static AsyncChain Delay(TimeSpan timeSpan, IMomentClock? clock = null)
-        => new($"Delay({timeSpan.ToString()})", 
+        => new($"Delay({timeSpan.ToString()})",
             ct => (clock ?? MomentClockSet.Default.CpuClock).Delay(timeSpan, ct));
 
     public static AsyncChain Delay(RandomTimeSpan delay, IMomentClock? clock = null)
-        => new($"Delay({delay.ToString()})", 
+        => new($"Delay({delay.ToString()})",
             ct => (clock ?? MomentClockSet.Default.CpuClock).Delay(delay.Next(), ct));
 
     // Conversion
@@ -26,7 +26,7 @@ public readonly record struct AsyncChain(string Name, Func<CancellationToken, Ta
     public static implicit operator AsyncChain(Func<CancellationToken, Task> start) => new(start);
     public static implicit operator AsyncChain(RandomTimeSpan value) => Delay(value);
     public static implicit operator AsyncChain(TimeSpan value) => Delay(value);
-    
+
     // Operators
 
     public static AsyncChain operator &(AsyncChain first, AsyncChain second) => first.Append(second);

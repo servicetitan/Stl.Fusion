@@ -69,7 +69,7 @@ public class DbOperationLogReader<TDbContext> : DbTenantWorkerBase<TDbContext>
             lastCount = operations.Count;
         }).Trace(() => activitySource.StartActivity("Read").AddTenantTags(tenant), Log);
 
-        var sleepChain = new AsyncChain("Sleep", async cancellationToken1 => {
+        var waitForChangesChain = new AsyncChain("WaitForChanges()", async cancellationToken1 => {
             if (lastCount == Settings.BatchSize)
                 return;
 
@@ -94,8 +94,10 @@ public class DbOperationLogReader<TDbContext> : DbTenantWorkerBase<TDbContext>
 
         var chain = runChain
             .RetryForever(Settings.RetryDelays, Clocks.CpuClock, Log)
-            .Append(sleepChain)
-            .CycleForever();
+            .Append(waitForChangesChain)
+            .CycleForever()
+            .LogBoundary(Log);
+
         return chain.Start(cancellationToken);
     }
 }

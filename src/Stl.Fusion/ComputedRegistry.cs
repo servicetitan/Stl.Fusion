@@ -39,25 +39,14 @@ public sealed class ComputedRegistry : IDisposable
     private readonly ConcurrentDictionary<ComputedInput, GCHandle> _storage;
     private readonly GCHandlePool _gcHandlePool;
     private readonly StochasticCounter _opCounter;
-    private volatile ComputedGraphPruner _graphPruner;
+    private volatile ComputedGraphPruner _graphPruner = null!;
     private volatile int _pruneCounterThreshold;
     private Task? _pruneTask;
     private object Lock => _storage;
 
     public IEnumerable<ComputedInput> Keys => _storage.Select(p => p.Key);
     public AsyncLockSet<ComputedInput> InputLocks { get; }
-
-    public ComputedGraphPruner? GraphPruner {
-        get => _graphPruner;
-        set {
-            ComputedGraphPruner oldGraphPruner;
-            lock (Lock) {
-                oldGraphPruner = _graphPruner;
-                _graphPruner = value;
-            }
-            oldGraphPruner?.Dispose();
-        }
-    }
+    public ComputedGraphPruner GraphPruner => _graphPruner;
 
     public ComputedRegistry() : this(Options.Default) { }
     public ComputedRegistry(Options options)
@@ -72,8 +61,7 @@ public sealed class ComputedRegistry : IDisposable
             ReentryMode.CheckedFail,
             TaskCreationOptions.RunContinuationsAsynchronously,
             options.ConcurrencyLevel, options.InitialCapacity);
-        _graphPruner = new ComputedGraphPruner(new());
-        _graphPruner.Run();
+        ChangeGraphPruner(new ComputedGraphPruner(new()), null!);
         UpdatePruneCounterThreshold();
     }
 
@@ -173,6 +161,18 @@ public sealed class ComputedRegistry : IDisposable
             }
             return _pruneTask;
         }
+    }
+
+    public ComputedGraphPruner ChangeGraphPruner(
+        ComputedGraphPruner graphPruner,
+        ComputedGraphPruner expectedGraphPruner)
+    {
+        var oldGraphPruner = Interlocked.CompareExchange(ref _graphPruner, graphPruner, expectedGraphPruner);
+        if (oldGraphPruner != expectedGraphPruner)
+            return oldGraphPruner;
+
+        graphPruner.Start();
+        return graphPruner;
     }
 
     // Private methods

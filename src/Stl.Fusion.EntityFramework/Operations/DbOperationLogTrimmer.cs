@@ -45,17 +45,13 @@ public class DbOperationLogTrimmer<TDbContext> : DbTenantWorkerBase<TDbContext>
                     "Trim({tenant.Id}) trimmed {Count} operations", tenant.Id, lastTrimCount);
         }).Trace(() => activitySource.StartActivity("Trim").AddTenantTags(tenant), Log);
 
-        var sleepChain = new AsyncChain("Sleep", cancellationToken1 => {
-            var delay = lastTrimCount < Settings.BatchSize
-                ? Settings.CheckPeriod
-                : Settings.NextBatchDelay;
-            return Clocks.CpuClock.Delay(delay.Next(), cancellationToken1);
-        });
-
         var chain = runChain
             .RetryForever(Settings.RetryDelays, Clocks.CpuClock, Log)
-            .Append(sleepChain)
-            .CycleForever();
+            .AppendDelay(
+                () => lastTrimCount < Settings.BatchSize ? Settings.CheckPeriod : Settings.NextBatchDelay,
+                Clocks.CpuClock)
+            .CycleForever()
+            .LogBoundary(Log);
 
         return chain.Start(cancellationToken);
     }

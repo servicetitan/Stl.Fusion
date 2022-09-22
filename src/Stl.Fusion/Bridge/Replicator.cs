@@ -59,7 +59,8 @@ public class Replicator : SafeAsyncDisposableBase, IReplicatorImpl
     public Replica<T> GetOrAdd<T>(
         ComputedOptions computedOptions, PublicationStateInfo<T> publicationStateInfo, bool requestUpdate = false)
     {
-        var (replica, isNew) = ReplicaRegistry.Instance.GetOrRegister(publicationStateInfo.PublicationRef,
+        var (replica, isNew) = ReplicaRegistry.Instance.GetOrRegister(
+            publicationStateInfo.PublicationRef,
             () => new Replica<T>(computedOptions, publicationStateInfo, this, requestUpdate));
         if (isNew)
             Subscribe(replica);
