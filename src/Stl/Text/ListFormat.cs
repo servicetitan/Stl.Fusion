@@ -2,7 +2,7 @@ using Cysharp.Text;
 
 namespace Stl.Text;
 
-[StructLayout(LayoutKind.Sequential)]
+[StructLayout(LayoutKind.Auto)]
 public readonly struct ListFormat
 {
     public static readonly ListFormat Default = new('|');

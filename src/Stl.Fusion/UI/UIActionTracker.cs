@@ -13,8 +13,8 @@ public class UIActionTracker : IHasServices, IDisposable
     }
 
     protected long RunningActionCountValue;
-    protected volatile AsyncEventImpl<UIAction?> LastActionEventImpl;
-    protected volatile AsyncEventImpl<IUIActionResult?> LastResultEventImpl;
+    protected volatile ManualAsyncEvent<UIAction?> LastActionEventField;
+    protected volatile ManualAsyncEvent<IUIActionResult?> LastResultEventField;
 
     protected HashSet<Channel<UIAction>> ActionChannels { get; } = new();
     protected HashSet<Channel<IUIActionResult>> ResultChannels { get; } = new();
@@ -28,8 +28,8 @@ public class UIActionTracker : IHasServices, IDisposable
     public long RunningActionCount => Interlocked.Read(ref RunningActionCountValue);
     public IAsyncEnumerable<UIAction> Actions => GetActions();
     public IAsyncEnumerable<IUIActionResult> Results => GetResults();
-    public AsyncEvent<UIAction?> LastActionEvent => LastActionEventImpl;
-    public AsyncEvent<IUIActionResult?> LastResultEvent => LastResultEventImpl;
+    public AsyncEvent<UIAction?> LastActionEvent => LastActionEventField;
+    public AsyncEvent<IUIActionResult?> LastResultEvent => LastResultEventField;
 
     public UIActionTracker(Options options, IServiceProvider services)
     {
@@ -38,8 +38,8 @@ public class UIActionTracker : IHasServices, IDisposable
         Clock = options.Clock ?? services.Clocks().UIClock;
         Log = services.LogFor(GetType());
 
-        LastActionEventImpl = new AsyncEventImpl<UIAction?>(null, true);
-        LastResultEventImpl = new AsyncEventImpl<IUIActionResult?>(null, true);
+        LastActionEventField = new ManualAsyncEvent<UIAction?>(null, true);
+        LastResultEventField = new ManualAsyncEvent<IUIActionResult?>(null, true);
     }
 
     public void Dispose()
@@ -74,9 +74,9 @@ public class UIActionTracker : IHasServices, IDisposable
                 return;
             Interlocked.Increment(ref RunningActionCountValue);
             try {
-                var prevEvent = LastActionEventImpl;
+                var prevEvent = LastActionEventField;
                 var nextEvent = prevEvent.CreateNext(action);
-                LastActionEventImpl = nextEvent;
+                LastActionEventField = nextEvent;
                 prevEvent.Complete(nextEvent);
                 foreach (var channel in ActionChannels)
                     channel.Writer.TryWrite(action);
@@ -99,9 +99,9 @@ public class UIActionTracker : IHasServices, IDisposable
             lock (ResultChannels) {
                 if (IsDisposed)
                     return;
-                var prevEvent = LastResultEventImpl;
+                var prevEvent = LastResultEventField;
                 var nextEvent = prevEvent.CreateNext(result);
-                LastResultEventImpl = nextEvent;
+                LastResultEventField = nextEvent;
                 prevEvent.Complete(nextEvent);
                 foreach (var channel in ResultChannels)
                     channel.Writer.TryWrite(result);

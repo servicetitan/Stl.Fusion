@@ -3,7 +3,7 @@ using Stl.Internal;
 
 namespace Stl.Text;
 
-[StructLayout(LayoutKind.Sequential)]
+[StructLayout(LayoutKind.Auto)]
 public ref struct ListParser
 {
     public ListFormat Format => new(Delimiter, Escape);

@@ -21,7 +21,7 @@ public interface IOption
 
 [DataContract]
 [DebuggerDisplay("{" + nameof(DebugValue) + "}")]
-[StructLayout(LayoutKind.Sequential)]
+[StructLayout(LayoutKind.Auto)]
 public readonly struct Option<T> : IEquatable<Option<T>>, IOption
 {
     /// <inheritdoc />

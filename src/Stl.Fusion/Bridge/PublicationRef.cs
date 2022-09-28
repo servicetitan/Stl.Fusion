@@ -1,7 +1,7 @@
 namespace Stl.Fusion.Bridge;
 
 [DataContract]
-[StructLayout(LayoutKind.Sequential)]
+[StructLayout(LayoutKind.Auto)]
 public readonly struct PublicationRef : IEquatable<PublicationRef>
 {
     [DataMember(Order = 0)]

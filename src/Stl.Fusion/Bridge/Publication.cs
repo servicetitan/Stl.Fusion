@@ -123,7 +123,11 @@ public sealed class Publication<T> : IPublication
             var state = _state;
             if (state.IsDisposed || state.Computed.IsConsistent())
                 return;
+
             var newComputed = await state.Computed.Update(cancellationToken).ConfigureAwait(false);
+            if (newComputed == state.Computed)
+                return;
+
             var newState = new PublicationState<T>(this, newComputed, false);
             if (ChangeState(newState, state) == state)
                 return;

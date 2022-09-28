@@ -2,7 +2,7 @@ using Cysharp.Text;
 
 namespace Stl.Text;
 
-[StructLayout(LayoutKind.Sequential)]
+[StructLayout(LayoutKind.Auto)]
 public ref struct ListFormatter
 {
     public ListFormat Format => new(Delimiter, Escape);
