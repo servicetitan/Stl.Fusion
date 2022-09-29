@@ -1,49 +1,40 @@
 using Stl.Fusion.Interception;
-using Stl.Fusion.Internal;
 
 namespace Stl.Fusion.Bridge.Interception;
 
 public interface IReplicaMethodComputed : IComputed
 {
     Replica? Replica { get; }
+    PublicationStateInfo? State { get; }
 }
 
 public class ReplicaMethodComputed<T> : ComputeMethodComputed<T>, IReplicaMethodComputed
 {
     Replica? IReplicaMethodComputed.Replica => Replica;
-    public Replica<T>? Replica { get; }
+    PublicationStateInfo? IReplicaMethodComputed.State => State;
 
-    // Two primary constructors
-    public ReplicaMethodComputed(ComputedOptions options, ComputeMethodInput input, ReplicaComputed<T> source)
-        : this(source.Replica, options, input, source.Version)
+    public Replica<T>? Replica { get; }
+    public PublicationStateInfo<T>? State { get; }
+
+    public ReplicaMethodComputed(ComputedOptions options, ComputeMethodInput input, Replica<T>? replica, PublicationStateInfo<T> state)
+        : base(options, input, state.Output, state.Version, state.IsConsistent)
     {
-        ((IComputedImpl) this).AddUsed((IComputedImpl) source);
-        // ReSharper disable once VirtualMemberCallInConstructor
-        TrySetOutput(source.Output);
-        if (!source.IsConsistent())
-            Invalidate();
+        Replica = replica;
+        State = state;
     }
 
     public ReplicaMethodComputed(ComputedOptions options, ComputeMethodInput input, Exception error, LTag version)
-        : this(null, options, input, new Result<T>(default!, error), version, false) { }
-
-    // And the "inherited" ones allowing to configure this computed as you wish
-    protected ReplicaMethodComputed(Replica<T>? replica,
-        ComputedOptions options, ComputeMethodInput input, LTag version)
-        : base(options, input, version)
-        => Replica = replica;
-
-    protected ReplicaMethodComputed(Replica<T>? replica,
-        ComputedOptions options, ComputeMethodInput input,
-        Result<T> output, LTag version, bool isConsistent)
-        : base(options, input, output, version, isConsistent)
-        => Replica = replica;
+        : base(options, input, new Result<T>(default!, error), version, false)
+    {
+        Replica = null;
+        State = null;
+    }
 
     protected override void OnInvalidated()
     {
         // We intentionally suppress ComputedRegistry.Unregister here,
         // otherwise it won't be possible to find Replica using
-        // old IComputed.
+        // the old IComputed.
         CancelTimeouts();
     }
 }

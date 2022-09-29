@@ -58,7 +58,7 @@ public sealed class ReplicaRegistry : IDisposable
         if (!_handles.TryGetValue(publicationRef, out var handle))
             return null;
         var target = (Replica?) handle.Target;
-        if (target != null)
+        if (target is { IsDisposed: false })
             return target;
         // GCHandle target == null => we have to recycle it
         if (!_handles.TryRemove(publicationRef, handle))
@@ -82,8 +82,8 @@ public sealed class ReplicaRegistry : IDisposable
                 return _gcHandlePool.Acquire(newReplica, random);
             });
             var target = (Replica?) handle.Target;
-            if (target != null) {
-                if (target == newReplica)
+            if (target is { IsDisposed: false }) {
+                if (ReferenceEquals(target, newReplica))
                     return (target, true);
                 newReplica?.DisposeTemporaryInstance();
                 return (target, false);

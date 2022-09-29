@@ -26,7 +26,7 @@ public class EdgeCaseServiceTest : FusionTestBase
         await ActualTest(service);
     }
 
-    [Fact(Timeout = 300_000)]
+    [Fact(Timeout = 30_000)]
     public async Task TestNullable()
     {
         await using var serving = await WebHost.Serve();
@@ -97,7 +97,12 @@ public class EdgeCaseServiceTest : FusionTestBase
     private async Task<Computed<T>> Update<T>(Computed<T> computed, CancellationToken cancellationToken = default)
     {
         if (computed is IReplicaMethodComputed rc)
-            await rc.Replica!.RequestUpdate(cancellationToken);
+            await rc.Replica!
+                .RequestUpdateUntyped(true)
+                .WaitAsync(TimeSpan.FromSeconds(0.2), cancellationToken)
+                .SuppressExceptions(); 
+        // Why WaitAsync? If it is consistent, the update comes only once it gets invalidated,
+        // so if there is no timeout, it might wait for it indefinitely long.
         return await computed.Update(cancellationToken);
     }
 }

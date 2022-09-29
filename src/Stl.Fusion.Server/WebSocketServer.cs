@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.AspNetCore.Http;
 using Stl.Channels;
 using Stl.Fusion.Bridge;
@@ -42,27 +43,37 @@ public class WebSocketServer
 
     public async Task HandleRequest(HttpContext context)
     {
+        var cancellationToken = context.RequestAborted;
         if (!context.WebSockets.IsWebSocketRequest) {
-            context.Response.StatusCode = 400;
+            context.Response.StatusCode = (int) HttpStatusCode.BadRequest;
             return;
         }
-        var publisherId = context.Request.Query[Settings.PublisherIdQueryParameterName];
-        if (Publisher.Id != publisherId) {
-            context.Response.StatusCode = 400;
-            return;
-        }
+
+        var requestQuery = context.Request.Query;
+        var clientId = requestQuery[Settings.ClientIdQueryParameterName];
+        var publisherId = requestQuery[Settings.PublisherIdQueryParameterName];
 
         var serializers = Settings.SerializerFactory();
-        var clientId = context.Request.Query[Settings.ClientIdQueryParameterName];
         var webSocket = await context.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
-
         var wsChannel = new WebSocketChannel(webSocket);
         await using var _ = wsChannel.ConfigureAwait(false);
 
         var channel = wsChannel
             .WithTextSerializer(serializers)
             .WithId(clientId);
-        Publisher.ChannelHub.Attach(channel);
+
+        var welcomeReply = new WelcomeReply() {
+            PublisherId = Publisher.Id,
+            MessageIndex = -1,
+            IsAccepted = Publisher.Id == publisherId,
+        };
+        await channel.Writer.WriteAsync(welcomeReply, cancellationToken).ConfigureAwait(false);
+
+        if (welcomeReply.IsAccepted)
+            Publisher.ChannelHub.Attach(channel);
+        else
+            channel.Writer.TryComplete();
+
         try {
             await wsChannel.WhenClosed().ConfigureAwait(false);
         }

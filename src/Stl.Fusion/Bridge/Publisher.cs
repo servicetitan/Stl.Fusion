@@ -18,7 +18,7 @@ public interface IPublisher : IHasId<Symbol>, IHasServices
     IPublication? Get(Symbol publicationId);
     ValueTask Subscribe(
         Channel<BridgeMessage> channel, IPublication publication,
-        bool isUpdateRequested, CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default);
     ValueTask Unsubscribe(
         Channel<BridgeMessage> channel, IPublication publication,
         CancellationToken cancellationToken = default);
@@ -113,7 +113,7 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
 
     public virtual ValueTask Subscribe(
         Channel<BridgeMessage> channel, IPublication publication,
-        bool isUpdateRequested, CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
         this.ThrowIfDisposedOrDisposing();
         publication.Touch();
@@ -124,7 +124,6 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
         var message = new SubscribeRequest() {
             PublisherId = Id,
             PublicationId = publication.Id,
-            IsUpdateRequested = isUpdateRequested,
         };
         return channelProcessor.OnReplicaRequest(message, cancellationToken);
     }

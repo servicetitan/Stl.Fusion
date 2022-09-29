@@ -20,6 +20,7 @@ public class ScreenshotController : ControllerBase
     public Task<Screenshot> GetScreenshot(int width)
     {
         CallCount++;
-        return Service.GetScreenshot(width, this.RequestAborted());
+        var screenshot = Service.GetScreenshot(width, this.RequestAborted());
+        return screenshot;
     }
 }

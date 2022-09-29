@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Net.WebSockets;
 using System.Runtime.ExceptionServices;
 using Stl.Extensibility;
 using Stl.Fusion.Bridge.Messages;
@@ -18,12 +20,17 @@ public class ReplicatorChannelProcessor : WorkerBase
             => arg.Item1.OnPublicationStateReply((PublicationStateReply<T>) target, arg.Item2);
     }
 
+    protected readonly TimeSpan SendTimeout = TimeSpan.FromSeconds(15);
+    protected readonly TimeSpan DisposeTimeout = TimeSpan.FromSeconds(60);
+
     protected readonly IServiceProvider Services;
     protected IReplicatorImpl ReplicatorImpl => (IReplicatorImpl) Replicator;
     protected readonly HashSet<Symbol> Subscriptions;
-    protected volatile Task<Channel<BridgeMessage>> ChannelTask = null!;
-    protected volatile Channel<BridgeMessage> SendChannel = null!;
+    protected volatile Task<Channel<BridgeMessage>> ChannelTask;
+    protected int Version;
+
     protected Symbol ClientId => Replicator.Id;
+    protected readonly MomentClockSet Clocks;
     protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     public readonly IReplicator Replicator;
@@ -33,88 +40,75 @@ public class ReplicatorChannelProcessor : WorkerBase
     public ReplicatorChannelProcessor(IReplicator replicator, Symbol publisherId, IServiceProvider services)
     {
         Services = services;
+        Clocks = services.Clocks();
         Replicator = replicator;
         PublisherId = publisherId;
         Subscriptions = new HashSet<Symbol>();
         var stateFactory = Replicator.Services.StateFactory();
         IsConnected = stateFactory.NewMutable(true);
         // ReSharper disable once VirtualMemberCallInConstructor
-        Reconnect();
+        ChannelTask = Reconnect(null, StopToken);
     }
 
     protected override async Task RunInternal(CancellationToken cancellationToken)
     {
-        try {
-            var lastChannelTask = (Task<Channel<BridgeMessage>>?) null;
-            var channel = (Channel<BridgeMessage>) null!;
-            while (true) {
-                var error = (Exception?) null;
-                try {
-                    var channelTask = ChannelTask;
-                    if (channelTask != lastChannelTask)
-                        channel = await ChannelTask.WaitAsync(cancellationToken).ConfigureAwait(false);
-                    var reply = await channel.Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
-                    await OnReply(reply, cancellationToken).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException) {
-                    if (cancellationToken.IsCancellationRequested)
-                        throw;
-                }
-                catch (AggregateException e) {
-                    error = e.Flatten().InnerExceptions.SingleOrDefault() ?? e;
-                }
-                catch (Exception e) {
-                    error = e;
-                }
-
-                switch (error) {
-                case null:
-                    break;
-                case OperationCanceledException oce:
-                    if (cancellationToken.IsCancellationRequested)
-                        ExceptionDispatchInfo.Capture(oce).Throw();
-                    break;
-                default:
-                    Reconnect(error);
-                    // NOTE(AY): Starting from v2.0.73 Fusion won't
-                    // tag all replicas from failed channel as inconsistent.
-                    // And since Reconnect implies (re)-Subscribe for any
-                    // replica, this ensures the inconsistent ones will
-                    // be anyway updated on reconnect.
-                    /*
-                    foreach (var publicationId in GetSubscriptions()) {
-                        var publicationRef = new PublicationRef(PublisherId, publicationId);
-                        var replicaImpl = (IReplicaImpl?) Replicator.Get(publicationRef);
-                        replicaImpl?.ApplyFailedUpdate(error, cancellationToken);
-                    }
-                    */
-                    break;
-                }
+        var channel = (Channel<BridgeMessage>) null!;
+        while (true) {
+            try {
+                channel ??= await ChannelTask.ConfigureAwait(false);
+                var reply = await channel.Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
+                await OnReply(reply, cancellationToken).ConfigureAwait(false);
             }
-        }
-        finally {
-            // Awaiting for disposal here = cyclic task dependency;
-            // we should just ensure it starts right when this method
-            // completes.
-            _ = DisposeAsync();
+            catch (Exception e) when (e is not OperationCanceledException) {
+                if (e is AggregateException ae)
+                    e = ae.Flatten().InnerExceptions.SingleOrDefault() ?? e;
+                if (e is OperationCanceledException)
+                    ExceptionDispatchInfo.Capture(e).Throw();
+
+                channel = null;
+#pragma warning disable CS4014
+                var reconnectTask = Reconnect(e, cancellationToken);
+                Interlocked.Exchange(ref ChannelTask, reconnectTask);
+#pragma warning restore CS4014
+            }
         }
     }
 
-    public virtual void Subscribe(Replica replica)
+    protected override Task OnStopping()
+    {
+        Log.LogInformation("{ClientId}: stopping...", ClientId);
+        var hasSubscriptions = true;
+        while (hasSubscriptions) {
+            var publicationIds = GetSubscriptions();
+            hasSubscriptions = publicationIds.Count != 0;
+            foreach (var publicationId in publicationIds) {
+                var publicationRef = new PublicationRef(PublisherId, publicationId);
+                var replica = Replicator.Get(publicationRef);
+                if (replica != null)
+                    replica.Dispose();
+                else {
+                    lock (Lock) {
+                        Subscriptions.Remove(publicationId);
+                    }
+                }
+            }
+        }
+        return Task.CompletedTask;
+    }
+
+    public virtual void Subscribe(Replica replica, PublicationStateInfo state)
     {
         // No checks, since they're done by the only caller of this method
         var publicationId = replica.PublicationRef.PublicationId;
-        var computed = replica.UntypedComputed;
-        var isConsistent = computed.IsConsistent();
         lock (Lock) {
-            Subscriptions.Add(publicationId);
-            Send(new SubscribeRequest() {
+            if (Subscriptions.Add(publicationId))
+                Version++;
+            _ = Send(new SubscribeRequest() {
                 PublisherId = PublisherId,
                 PublicationId = publicationId,
-                Version = computed.Version,
-                IsConsistent = isConsistent,
-                IsUpdateRequested = replica.IsUpdateRequested,
-            });
+                Version = state.Version,
+                IsConsistent = state.IsConsistent,
+            }, StopToken);
         }
     }
 
@@ -124,11 +118,26 @@ public class ReplicatorChannelProcessor : WorkerBase
         var publicationId = replica.PublicationRef.PublicationId;
         lock (Lock) {
             Subscriptions.Remove(publicationId);
-            Send(new UnsubscribeRequest() {
+            if (Subscriptions.Count == 0)
+                StartDelayedDispose(Version, StopToken);
+            _ = Send(new UnsubscribeRequest() {
                 PublisherId = PublisherId,
                 PublicationId = publicationId,
-            });
+            }, StopToken);
         }
+    }
+
+    // Protected methods
+
+    protected void StartDelayedDispose(int disposeVersion, CancellationToken cancellationToken)
+    {
+        Task.Run(async () => {
+            await Clocks.CpuClock.Delay(DisposeTimeout, cancellationToken).ConfigureAwait(false);
+            lock (Lock) {
+                if (Version == disposeVersion)
+                    _ = DisposeAsync();
+            }
+        }, cancellationToken);
     }
 
     protected List<Symbol> GetSubscriptions()
@@ -146,7 +155,7 @@ public class ReplicatorChannelProcessor : WorkerBase
             return OnPublicationStateReplyHandlers[psr.GetResultType()].Handle(psr, (this, cancellationToken));
         case PublicationAbsentsReply pam:
             var replica = Replicator.Get((PublisherId, pam.PublicationId));
-            replica?.ApplyFailedUpdate(Errors.PublicationAbsents(), default);
+            replica?.Dispose();
             break;
         }
         return Task.CompletedTask;
@@ -160,102 +169,74 @@ public class ReplicatorChannelProcessor : WorkerBase
             reply.Version, reply.IsConsistent,
             reply.Output.GetValueOrDefault());
 
-        var replica = Replicator.GetOrAdd(psi);
-        replica.ApplySuccessfulUpdate(reply.Output, psi.Version, psi.IsConsistent);
+        var replica = Replicator.Get(psi.PublicationRef);
+        replica?.UpdateUntyped(psi);
         return Task.CompletedTask;
     }
 
-    protected virtual void Reconnect(Exception? error = null)
+    protected virtual async Task<Channel<BridgeMessage>> Reconnect(
+        Exception? error, CancellationToken cancellationToken)
     {
-        if (error != null)
-            IsConnected.Error = error;
-        else
-            IsConnected.Value = false;
-
-        var sendChannel = CreateSendChannel();
-        var channelTaskSource = TaskSource.New<Channel<BridgeMessage>>(true);
-        var channelTask = channelTaskSource.Task;
-
-        Channel<BridgeMessage> oldSendChannel;
-        lock (Lock) {
-            oldSendChannel = Interlocked.Exchange(ref SendChannel, sendChannel);
-            Interlocked.Exchange(ref ChannelTask, channelTask);
-        }
         try {
-            oldSendChannel?.Writer.TryComplete();
-        }
-        catch {
-            // Intended
-        }
+            if (error != null)
+                IsConnected.Error = error;
+            else
+                IsConnected.Value = false;
 
-        // Connect task
-        var connectTask = Task.Run(async () => {
-            CancellationToken cancellationToken = default;
             if (error != null) {
                 Log.LogError(error, "{ClientId}: error", ClientId);
-                await Task.Delay(Replicator.Options.ReconnectDelay, cancellationToken).ConfigureAwait(false);
+                var delay = Replicator.Options.ReconnectDelay.Next();
+                await Clocks.CpuClock.Delay(delay, cancellationToken).ConfigureAwait(false);
                 Log.LogInformation("{ClientId}: reconnecting...", ClientId);
             }
             else
                 Log.LogInformation("{ClientId}: connecting...", ClientId);
 
-            var channelProvider = ReplicatorImpl.ChannelProvider;
-            var channel = await channelProvider
+            var channel = await ReplicatorImpl.ChannelProvider
                 .CreateChannel(PublisherId, cancellationToken)
                 .ConfigureAwait(false);
+            var message = await channel.Reader.ReadAsync(cancellationToken).ConfigureAwait(false);
+            if (message is not WelcomeReply { IsAccepted: true })
+                throw Errors.WrongPublisher();
 
+            IsConnected.Value = true;
             foreach (var publicationId in GetSubscriptions()) {
                 var publicationRef = new PublicationRef(PublisherId, publicationId);
                 var replica = Replicator.Get(publicationRef);
                 if (replica != null)
-                    Subscribe(replica);
+                    _ = replica.RequestUpdateUntyped(true);
                 else {
                     lock (Lock) {
                         Subscriptions.Remove(publicationId);
                     }
                 }
             }
-
             return channel;
-        });
-        connectTask.ContinueWith(connectTask1 => {
-            channelTaskSource.SetFromTask(connectTask1, default);
-            if (connectTask1.IsCompletedSuccessfully())
-                IsConnected.Value = true;
-        }, default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
-
-        // Copy task
-        Task.Run(async () => {
-            CancellationToken cancellationToken = default;
-            try {
-                var sendChannelReader = sendChannel.Reader;
-                var channel = (Channel<BridgeMessage>?) null;
-                while (await sendChannelReader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
-                while (sendChannelReader.TryRead(out var message)) {
-                    if (sendChannel != SendChannel)
-                        break;
-                    channel ??= await channelTask.ConfigureAwait(false);
-                    await channel.Writer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
-                }
-            }
-            catch (Exception e) {
-                Log.LogError(e, "{ClientId}: error", ClientId);
-            }
-        });
+        }
+        catch (PublisherException) {
+            Log.LogInformation(
+                "{ClientId}: publisher '{PublisherId}' is unavailable at the destination server",
+                ClientId, PublisherId);
+            _ = DisposeAsync();
+            throw;
+        }
     }
 
-    protected virtual Channel<BridgeMessage> CreateSendChannel()
-        => Channel.CreateUnbounded<BridgeMessage>(
-            new UnboundedChannelOptions() {
-                AllowSynchronousContinuations = true,
-                SingleReader = true,
-                SingleWriter = false,
-            });
-
-    protected void Send(BridgeMessage message)
+    protected async Task Send(BridgeMessage message, CancellationToken cancellationToken)
     {
+        if (StopToken.IsCancellationRequested) // Disposing
+            return;
         if (message is ReplicatorRequest rr)
             rr.ReplicatorId = Replicator.Id;
-        SendChannel.Writer.WriteAsync(message);
+        try {
+            var channel = await ChannelTask
+                .WaitAsync(Clocks.CpuClock, SendTimeout, cancellationToken)
+                .ConfigureAwait(false);
+            await channel.Writer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception e) when (e is not OperationCanceledException) {
+            Log.LogDebug(e, "Send failed");
+            throw;
+        }
     }
 }

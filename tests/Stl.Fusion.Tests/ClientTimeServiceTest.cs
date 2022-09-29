@@ -1,3 +1,4 @@
+using Stl.Fusion.Bridge;
 using Stl.Fusion.Tests.Services;
 
 namespace Stl.Fusion.Tests;
@@ -76,5 +77,16 @@ public class ClientTimeServiceTest : FusionTestBase
             await Task.Delay(TimeSpan.FromSeconds(0.1));
         }
         matchCount.Should().BeGreaterThan(2);
+    }
+
+    [Fact]
+    public async Task TestNoControllerMethod()
+    {
+        await using var serving = await WebHost.Serve();
+        var service = ClientServices.GetRequiredService<IClientTimeService>();
+
+        await Assert.ThrowsAsync<ReplicaException>(async () => {
+            await service.GetTimeNoControllerMethod();
+        });
     }
 }

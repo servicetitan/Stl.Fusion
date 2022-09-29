@@ -51,7 +51,7 @@ public class WebSocketServer : IHasServices
 
     public HttpStatusCode HandleRequest(IOwinContext owinContext)
     {
-        // written based on https://stackoverflow.com/questions/41848095/websockets-using-owin
+        // Based on https://stackoverflow.com/questions/41848095/websockets-using-owin
 
         var acceptToken = owinContext.Get<WebSocketAccept>("websocket.Accept");
         if (acceptToken == null)
@@ -60,8 +60,6 @@ public class WebSocketServer : IHasServices
         var publisherId = owinContext.Request.Query[Settings.PublisherIdQueryParameterName];
         if (Publisher.Id != publisherId)
             return HttpStatusCode.BadRequest;
-
-        var clientId = owinContext.Request.Query[Settings.ClientIdQueryParameterName];
 
         var requestHeaders =
             GetValue<IDictionary<string, string[]>>(owinContext.Environment, "owin.RequestHeaders")
@@ -75,24 +73,41 @@ public class WebSocketServer : IHasServices
 
         acceptToken(acceptOptions, wsEnv => {
             var wsContext = (WebSocketContext)wsEnv["System.Net.WebSockets.WebSocketContext"];
-            return HandleWebSocket(wsContext, clientId);
+            return HandleWebSocket(owinContext, wsContext);
         });
 
         return HttpStatusCode.SwitchingProtocols;
     }
 
-    private async Task HandleWebSocket(WebSocketContext wsContext, string clientId)
+    private async Task HandleWebSocket(IOwinContext owinContext, WebSocketContext wsContext)
     {
+        var cancellationToken = owinContext.Request.CallCancelled;
+
+        var requestQuery = owinContext.Request.Query;
+        var clientId = requestQuery[Settings.ClientIdQueryParameterName];
+        var publisherId = requestQuery[Settings.PublisherIdQueryParameterName];
+
         var serializers = Settings.SerializerFactory();
         var webSocket = wsContext.WebSocket;
-
         var wsChannel = new WebSocketChannel(webSocket);
         await using var _ = wsChannel.ConfigureAwait(false);
 
         var channel = wsChannel
             .WithTextSerializer(serializers)
             .WithId(clientId);
-        Publisher.ChannelHub.Attach(channel);
+
+        var welcomeReply = new WelcomeReply() {
+            PublisherId = Publisher.Id,
+            MessageIndex = -1,
+            IsAccepted = Publisher.Id == publisherId,
+        };
+        await channel.Writer.WriteAsync(welcomeReply, cancellationToken).ConfigureAwait(false);
+
+        if (welcomeReply.IsAccepted)
+            Publisher.ChannelHub.Attach(channel);
+        else
+            channel.Writer.TryComplete();
+
         try {
             await wsChannel.WhenClosed().ConfigureAwait(false);
         }

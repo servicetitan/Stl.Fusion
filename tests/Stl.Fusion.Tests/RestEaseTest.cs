@@ -63,6 +63,7 @@ public class RestEaseTest : FusionTestBase
         jsonString.Value.Should().Be("abcD");
     }
 
+#if NETCOREAPP
     [Fact]
     public async Task GetFromQueryComplex()
     {
@@ -74,6 +75,7 @@ public class RestEaseTest : FusionTestBase
         result.Name.Should().Be(model.Name);
         result.Description.Should().Be(model.Description);
     }
+#endif
 
     [Fact]
     public async Task PostFromPath()

@@ -9,8 +9,7 @@ public interface IReplicator : IHasId<Symbol>, IHasServices
     ReplicatorOptions Options { get; }
 
     Replica? Get(PublicationRef publicationRef);
-    Replica<T> GetOrAdd<T>(
-        ComputedOptions computedOptions, PublicationStateInfo<T> publicationStateInfo, bool requestUpdate = false);
+    Replica<T> AddOrUpdate<T>(PublicationStateInfo<T> state);
 
     IState<bool> GetPublisherConnectionState(Symbol publisherId);
 }
@@ -19,7 +18,7 @@ public interface IReplicatorImpl : IReplicator
 {
     IChannelProvider ChannelProvider { get; }
 
-    void Subscribe(Replica replica);
+    bool Subscribe(Replica replica);
     void OnReplicaDisposed(Replica replica);
 }
 
@@ -28,7 +27,7 @@ public record ReplicatorOptions
     public static Symbol NewId() => "R-" + RandomStringGenerator.Default.Next();
 
     public Symbol Id { get; init; } = NewId();
-    public TimeSpan ReconnectDelay { get; init; } = TimeSpan.FromSeconds(10);
+    public RandomTimeSpan ReconnectDelay { get; init; } = TimeSpan.FromSeconds(10);
     public IChannelProvider? ChannelProvider { get; init; }
 }
 
@@ -56,14 +55,15 @@ public class Replicator : SafeAsyncDisposableBase, IReplicatorImpl
     public Replica? Get(PublicationRef publicationRef)
         => ReplicaRegistry.Instance.Get(publicationRef);
 
-    public Replica<T> GetOrAdd<T>(
-        ComputedOptions computedOptions, PublicationStateInfo<T> publicationStateInfo, bool requestUpdate = false)
+    public Replica<T> AddOrUpdate<T>(PublicationStateInfo<T> state)
     {
         var (replica, isNew) = ReplicaRegistry.Instance.GetOrRegister(
-            publicationStateInfo.PublicationRef,
-            () => new Replica<T>(computedOptions, publicationStateInfo, this, requestUpdate));
-        if (isNew)
-            Subscribe(replica);
+            state.PublicationRef,
+            () => new Replica<T>(state, this));
+        if (isNew && state.IsConsistent)
+            replica.RequestUpdateUntyped(); // Any new inconsistent replica should subscribe for invalidations
+        else
+            replica.UpdateUntyped(state); // Otherwise we update it
         return (Replica<T>) replica;
     }
 
@@ -87,13 +87,19 @@ public class Replicator : SafeAsyncDisposableBase, IReplicatorImpl
         return channelProcessor;
     }
 
-    void IReplicatorImpl.Subscribe(Replica replica)
+    bool IReplicatorImpl.Subscribe(Replica replica)
         => Subscribe(replica);
-    protected virtual void Subscribe(Replica replica)
+    protected virtual bool Subscribe(Replica replica)
     {
         if (replica.Replicator != this)
             throw new ArgumentOutOfRangeException(nameof(replica));
-        GetChannelProcessor(replica.PublicationRef.PublisherId).Subscribe(replica);
+
+        var state = replica.UntypedState;
+        if (state == null)
+            return false;
+
+        GetChannelProcessor(replica.PublicationRef.PublisherId).Subscribe(replica, state);
+        return true;
     }
 
     void IReplicatorImpl.OnReplicaDisposed(Replica replica)
@@ -104,7 +110,8 @@ public class Replicator : SafeAsyncDisposableBase, IReplicatorImpl
             return;
         if (replica.Replicator != this)
             throw new ArgumentOutOfRangeException(nameof(replica));
-        GetChannelProcessor(replica.PublicationRef.PublisherId).Unsubscribe(replica);
+        if (replica.IsUpdateRequested)
+            GetChannelProcessor(replica.PublicationRef.PublisherId).Unsubscribe(replica);
     }
 
     protected override async Task DisposeAsync(bool disposing)

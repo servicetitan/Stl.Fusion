@@ -31,16 +31,13 @@ public class WebSocketTest : FusionTestBase
         var publisher = WebServices.GetRequiredService<IPublisher>();
         var replicator = ClientServices.GetRequiredService<IReplicator>();
         var tp = WebServices.GetRequiredService<ITimeService>();
+        var ctp = ClientServices.GetRequiredService<IClientTimeService>();
 
-        var pub = await publisher.Publish(() => tp.GetTime());
-        var rep = replicator.GetOrAdd<DateTime>(pub.Ref);
-        await rep.RequestUpdate().AsAsyncFunc()
-            .Should().CompleteWithinAsync(TimeSpan.FromMinutes(1));
-
+        var cTime = await Computed.Capture(() => ctp.GetTime()).AsTask().WaitAsync(TimeSpan.FromMinutes(1));
         var count = 0;
         using var state = WebServices.StateFactory().NewComputed<DateTime>(
             FixedDelayer.Instant,
-            async (_, ct) => await rep.Computed.Use(ct));
+            async (_, ct) => await ctp.GetTime(ct));
         state.Updated += (s, _) => {
             Out.WriteLine($"Client: {s.Value}");
             count++;
@@ -49,39 +46,6 @@ public class WebSocketTest : FusionTestBase
         await TestExt.WhenMet(
             () => count.Should().BeGreaterThan(2),
             TimeSpan.FromSeconds(5));
-    }
-
-    [Fact(Timeout = 120_000)]
-    public async Task NoConnectionTest()
-    {
-        await using var serving = await WebHost.Serve();
-        var publisher = WebServices.GetRequiredService<IPublisher>();
-        var replicator = ClientServices.GetRequiredService<IReplicator>();
-        var time = WebServices.GetRequiredService<ITimeService>();
-
-        var pub = await publisher.Publish(() => time.GetTime());
-
-        var rep1 = replicator.GetOrAdd<DateTime>(("NoPublisher", pub.Id));
-        rep1.Computed.IsConsistent().Should().BeFalse();
-        var updateTask1 = rep1.RequestUpdate();
-
-        var psi2 = new PublicationStateInfo<DateTime>(
-            ("NoPublisher1", pub.Id),
-            new LTag(123),
-            true,
-            pub.State.Computed.Value);
-        var rep2 = replicator.GetOrAdd(psi2);
-        rep2.Computed.IsConsistent().Should().BeTrue();
-        var updateTask2 = rep2.RequestUpdate();
-
-        await Delay(30);
-
-        // No publisher = no update
-        updateTask1.IsCompleted.Should().BeFalse();
-        updateTask2.IsCompleted.Should().BeFalse();
-        // And state should be the same (shouldn't reset to inconsistent)
-        rep1.Computed.IsConsistent().Should().BeFalse();
-        rep2.Computed.IsConsistent().Should().BeTrue();
     }
 
     [SkipOnGitHubFact(Timeout = 120_000)]
@@ -95,16 +59,20 @@ public class WebSocketTest : FusionTestBase
         var kvs = WebServices.GetRequiredService<IKeyValueService<string>>();
         await kvs.Set("a", "b");
         var c = (ReplicaMethodComputed<string>) await Computed.Capture(() => kvsClient.Get("a"));
+        var pub = c.State!.PublicationRef;
         c.Value.Should().Be("b");
         c.IsConsistent().Should().BeTrue();
 
         Debug.WriteLine("1");
-        await c.Replica!.RequestUpdate().AsAsyncFunc()
-            .Should().CompleteWithinAsync(TimeSpan.FromSeconds(5));
+        await Assert.ThrowsAsync<TimeoutException>(async () => {
+            // RequestUpdate should wait until the invalidation in this case,
+            // and since there is none, it should wait indefinitely.
+            await c.Replica!.RequestUpdate().WaitAsync(TimeSpan.FromSeconds(3));
+        });
         c.IsConsistent().Should().BeTrue();
 
         Debug.WriteLine("2");
-        var cs = replicator.GetPublisherConnectionState(c.Replica.PublicationRef.PublisherId);
+        var cs = replicator.GetPublisherConnectionState(c.Replica!.PublicationRef.PublisherId);
         cs.Value.Should().BeTrue();
         cs.Computed.IsConsistent().Should().BeTrue();
         await cs.Recompute();
@@ -150,7 +118,10 @@ public class WebSocketTest : FusionTestBase
         updateTask.IsCompleted.Should().BeTrue();
         c = (ReplicaMethodComputed<string>) await c.Update();
         c.IsConsistent().Should().BeTrue();
-        c.Value.Should().Be("c");
+        if (c.State!.PublicationRef == pub)
+            c.Value.Should().Be("c");
+        else
+            c.Value.Should().BeNull();
 
         await serving.DisposeAsync();
     }

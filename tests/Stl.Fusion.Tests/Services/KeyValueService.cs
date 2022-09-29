@@ -37,6 +37,11 @@ public class KeyValueService<TValue> : IKeyValueService<TValue>
 {
     private readonly ConcurrentDictionary<string, TValue> _values = new(StringComparer.Ordinal);
 
+    public KeyValueService(IServiceProvider services)
+    {
+        Debug.WriteLine($"{GetType().Name} created @ {services.GetHashCode()}.");
+    }
+
     public virtual Task<Option<TValue>> TryGet(string key, CancellationToken cancellationToken = default)
         => Task.FromResult(_values.TryGetValue(key, out var v) ? Option.Some(v) : default);
 
@@ -81,4 +86,7 @@ public class KeyValueService<TValue> : IKeyValueService<TValue>
 }
 
 [RegisterComputeService(typeof(IKeyValueService<string>), Scope = ServiceScope.Services)]
-public class StringKeyValueService : KeyValueService<string> { }
+public class StringKeyValueService : KeyValueService<string>
+{
+    public StringKeyValueService(IServiceProvider services) : base(services) { }
+}

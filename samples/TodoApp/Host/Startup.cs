@@ -28,6 +28,7 @@ using Stl.Fusion.Extensions;
 using Stl.Fusion.Operations.Reprocessing;
 using Stl.Fusion.Server.Authentication;
 using Stl.Fusion.Server.Controllers;
+using Stl.Generators;
 using Stl.IO;
 using Stl.Multitenancy;
 using Templates.TodoApp.Abstractions;
@@ -116,7 +117,7 @@ public class Startup
         });
 
         // Fusion services
-        services.AddSingleton(new PublisherOptions() { Id = HostSettings.PublisherId });
+        services.AddSingleton(new PublisherOptions() { Id = $"p-{RandomStringGenerator.Default.Next(8)}" });
         var fusion = services.AddFusion();
         var fusionServer = fusion.AddWebServer();
         if (HostSettings.UseMultitenancy)

@@ -101,8 +101,8 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
             if (IsLoggingEnabled)
                 Log.Log(Settings.LogLevel,
                     "{ClientId}: connecting to {ConnectionUri}...", clientId, connectionUri);
-            var ws = Settings.ClientWebSocketFactory(Services);
 
+            var ws = Settings.ClientWebSocketFactory(Services);
             try {
                 await ws.ConnectAsync(connectionUri, cts.Token)
                     .WaitAsync(Clock, Settings.ConnectTimeout, cts.Token)
@@ -121,7 +121,8 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
                     clientId, Log, Settings.MessageLogLevel, Settings.MessageMaxLength);
             var serializers = Settings.SerializerFactory(Services);
             var resultChannel = stringChannel.WithTextSerializer(serializers);
-            _ = wsChannel.WhenClosed().ContinueWith(_ => wsChannel.DisposeAsync(), TaskScheduler.Default);
+            _ = wsChannel.WhenClosed()
+                .ContinueWith(_ => wsChannel.DisposeAsync(), TaskScheduler.Default);
             return resultChannel;
         }
         catch (Exception e) when (e is not OperationCanceledException) {

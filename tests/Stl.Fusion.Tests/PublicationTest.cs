@@ -26,7 +26,7 @@ public class PublisherTest : FusionTestBase
         p1.Should().NotBeNull();
 
         Debug.WriteLine("a1");
-        await publisher.Subscribe(cp.Channel1, p1, true);
+        await publisher.Subscribe(cp.Channel1, p1);
         Debug.WriteLine("a2");
         var m = await cReader.AssertRead();
         m.Should().BeOfType<PublicationStateReply<string, string>>()
@@ -55,7 +55,7 @@ public class PublisherTest : FusionTestBase
         await cReader.AssertCannotRead();
 
         Debug.WriteLine("d1");
-        await publisher.Subscribe(cp.Channel1, p1, true);
+        await publisher.Subscribe(cp.Channel1, p1);
         Debug.WriteLine("d2");
         m = await cReader.AssertRead();
         Debug.WriteLine("d3");
@@ -73,7 +73,7 @@ public class PublisherTest : FusionTestBase
 
         Debug.WriteLine("f1");
         await Assert.ThrowsAsync<ObjectDisposedException>(async () => {
-            await publisher.Subscribe(cp.Channel1, p1, true);
+            await publisher.Subscribe(cp.Channel1, p1);
         });
         Debug.WriteLine("f2");
         await cReader.AssertCannotRead();

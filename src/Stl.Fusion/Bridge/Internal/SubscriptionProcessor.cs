@@ -70,16 +70,14 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
                 if (MessageIndex == 0)
                     LastSentVersion = (sm.Version, sm.IsConsistent);
 
-                if (sm.IsUpdateRequested) {
-                    // We do only explicit state updates
+                if (!sm.IsConsistent) { 
+                    // Subscribe with IsInconsistent flag = request update
                     await Publication.Update(cancellationToken).ConfigureAwait(false);
                     state = Publication.State;
                 }
 
                 var computed = state.Computed;
-                var isUpdateNeeded = sm.IsUpdateRequested
-                    || sm.Version != computed.Version
-                    || sm.IsConsistent != computed.IsConsistent();
+                var isUpdateNeeded = sm.Version != computed.Version || sm.IsConsistent != computed.IsConsistent();
                 await TrySendUpdate(state, isUpdateNeeded, cancellationToken).ConfigureAwait(false);
 
                 incomingMessageTask = incomingChannelReader.ReadAsync(cancellationToken).AsTask();

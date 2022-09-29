@@ -7,6 +7,7 @@ public class ScreenshotServiceClientTest : FusionTestBase
 {
     public ScreenshotServiceClientTest(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out, options) { }
 
+#if NETCOREAPP
     [Fact]
     public async Task BasicTest()
     {
@@ -14,11 +15,7 @@ public class ScreenshotServiceClientTest : FusionTestBase
             // Screenshots don't work on Unix
             return;
 
-#if NETCOREAPP
         var epsilon = TimeSpan.FromSeconds(0.5);
-#else
-        var epsilon = TimeSpan.FromSeconds(0.8);
-#endif
 
         await using var serving = await WebHost.Serve();
         await Delay(0.25);
@@ -33,4 +30,5 @@ public class ScreenshotServiceClientTest : FusionTestBase
         }
         ScreenshotController.CallCount.Should().BeLessThan(15);
     }
+#endif
 }

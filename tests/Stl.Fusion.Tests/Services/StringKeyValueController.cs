@@ -25,7 +25,7 @@ public class StringKeyValueController : ControllerBase
         => Service.TryGet(key ?? "", this.RequestAborted());
 
     [HttpGet, Publish]
-    public async Task<JsonString> Get(string? key)
+    public async Task<JsonString> Get(string? key) 
         => (await Service.Get(key ?? "", this.RequestAborted()))!;
 
     [HttpPost]

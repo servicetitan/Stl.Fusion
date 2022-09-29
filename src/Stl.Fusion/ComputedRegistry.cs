@@ -94,27 +94,22 @@ public sealed class ComputedRegistry : IDisposable
         while (computed.ConsistencyState != ConsistencyState.Invalidated) {
             if (_storage.TryGetValue(key, out var handle)) {
                 var target = (IComputed?) handle.Target;
-                if (target == computed)
-                    break;
-                if (target == null || target.ConsistencyState == ConsistencyState.Invalidated) {
-                    if (_storage.TryRemove(key, handle))
-                        _gcHandlePool.Release(handle, random);
+                if (target == computed) {
+                    if (newHandle.HasValue)
+                        _gcHandlePool.Release(newHandle.Value, random);
+                    return;
                 }
-                else {
-                    // This typically triggers Unregister -
-                    // except for ReplicaClientComputed.
+                if (target is { ConsistencyState: not ConsistencyState.Invalidated }) {
+                    // This typically triggers Unregister - except for ReplicaMethodComputed
                     target.Invalidate();
                 }
+                if (_storage.TryRemove(key, handle))
+                    _gcHandlePool.Release(handle, random);
             }
             else {
                 newHandle ??= _gcHandlePool.Acquire(computed, random);
-                if (_storage.TryAdd(key, newHandle.GetValueOrDefault())) {
-                    if (computed.ConsistencyState == ConsistencyState.Invalidated) {
-                        if (_storage.TryRemove(key, handle))
-                            _gcHandlePool.Release(handle, random);
-                    }
-                    break;
-                }
+                if (_storage.TryAdd(key, newHandle.GetValueOrDefault()))
+                    return;
             }
             spinWait.SpinOnce();
         }

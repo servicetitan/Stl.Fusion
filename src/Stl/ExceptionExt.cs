@@ -18,7 +18,7 @@ public static class ExceptionExt
         {
             if (ex is AggregateException ae) {
                 foreach (var e in ae.InnerExceptions) {
-                    if (e != null)
+                    if (e != null!)
                         Traverse(list, e);
                 }
             }

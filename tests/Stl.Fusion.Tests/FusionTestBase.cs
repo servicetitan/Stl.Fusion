@@ -57,7 +57,7 @@ public class FusionTestBase : TestBase, IAsyncLifetime
         "Server=localhost,1433;Database=stl_fusion_tests;MultipleActiveResultSets=True;User Id=sa;Password=SqlServer1";
     public FusionTestWebHost WebHost { get; }
     public IServiceProvider Services { get; }
-    public IServiceProvider WebServices { get; }
+    public IServiceProvider WebServices => WebHost.Services;
     public IServiceProvider ClientServices { get; }
     public ILogger Log { get; }
 
@@ -70,7 +70,6 @@ public class FusionTestBase : TestBase, IAsyncLifetime
         // ReSharper disable once VirtualMemberCallInConstructor
         Services = CreateServices();
         WebHost = Services.GetRequiredService<FusionTestWebHost>();
-        WebServices = WebHost.Services;
         ClientServices = CreateServices(true);
         if (Options.UseLogging)
             Log = (ILogger) Services.GetRequiredService(typeof(ILogger<>).MakeGenericType(GetType()));
@@ -273,7 +272,7 @@ public class FusionTestBase : TestBase, IAsyncLifetime
 #endif
                 webHost = new FusionTestWebHost(services, webHostOptions);
             }
-            services.AddSingleton(c => webHost);
+            services.AddSingleton(_ => webHost);
         }
         else {
             // Configuring ClientServices

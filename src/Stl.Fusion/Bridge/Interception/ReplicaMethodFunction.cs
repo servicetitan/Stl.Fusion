@@ -26,24 +26,29 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
     {
         var typedInput = (ComputeMethodInput) input;
         var methodDef = typedInput.MethodDef;
-        Replica<T> replica;
-        ReplicaComputed<T> replicaComputed;
-        ReplicaMethodComputed<T> result;
 
         // 1. Trying to update the Replica first
-        if (existing is ReplicaMethodComputed<T> rsc && rsc.Replica != null) {
-            try {
-                replica = rsc.Replica;
-                replicaComputed = (ReplicaComputed<T>)
-                    await replica.Computed.Update(cancellationToken).ConfigureAwait(false);
-                result = new (methodDef.ComputedOptions, typedInput, replicaComputed);
-                ComputeContext.Current.TryCapture(result);
-                return result;
+        if (existing is ReplicaMethodComputed<T> { Replica: { State: { } state } replica }) {
+            if (!state.IsConsistent) {
+                // Every time we call Update on replica, it calls RequestUpdate automatically
+                // if the state is consistent, which delivers invalidations.
+                // But here we request an update when the state is inconsistent,
+                // i.e. here we request the new data _after_ the invalidation.
+                await replica.RequestUpdate().WaitAsync(cancellationToken).ConfigureAwait(false);
             }
-            catch (Exception e) when (e is not OperationCanceledException) {
-                DebugLog?.LogError(e, "ComputeAsync: error on Replica update");
-            }
+            var computed = replica.RenewComputed(
+                typedInput,
+                static (replica, state, typedInput1) => new ReplicaMethodComputed<T>(
+                    typedInput1.MethodDef.ComputedOptions, typedInput1, replica, state));
+            if (computed == null)
+                goto renewReplica;
+
+            ComputeContext.Current.TryCapture(computed);
+            return computed;
+            // If we're here, computed == null, which means replica.IsDisposed == true
         }
+
+        renewReplica:
 
         // 2. Replica update failed, let's refresh it
         Result<T> output;
@@ -61,7 +66,7 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
                 }
             }
             catch (Exception e) when (e is not OperationCanceledException) {
-                DebugLog?.LogError(e, "ComputeAsync: error on update");
+                DebugLog?.LogError(e, "Compute: failed to fetch the initial value");
                 if (e is AggregateException ae)
                     e = ae.GetFirstInnerException();
                 output = Result.Error<T>(e);
@@ -69,14 +74,17 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
             psi = psiCapture.Captured;
         }
 
+        // 3. No PublicationStateInfo - all we can do is to expose this as an error 
         if (psi == null) {
             output = new Result<T>(default!, Errors.NoPublicationStateInfo());
             // We need a unique LTag here, so we use a range that's supposed to be unused by LTagGenerators.
             var version = new LTag(VersionGenerator.NextVersion().Value ^ (1L << 62));
-            result = new (methodDef.ComputedOptions, typedInput, output.Error!, version);
-            ComputeContext.Current.TryCapture(result);
-            return result;
+            var computed = new ReplicaMethodComputed<T>(methodDef.ComputedOptions, typedInput, output.Error!, version);
+            ComputeContext.Current.TryCapture(computed);
+            return computed;
         }
+
+        // 4. If it's an error, let's try to pull the detailed one from PublicationStateInfo
         if (output.Error != null) {
             // Try to pull the server-side error first
             if (psi is PublicationStateInfo<object> { Output.HasError: true } errorPsi)
@@ -89,11 +97,22 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
             if (psi.Version == default)
                 psi.Version = new LTag(VersionGenerator.NextVersion().Value ^ (1L << 62));
         }
-        replica = Replicator.GetOrAdd(ComputedOptions, new PublicationStateInfo<T>(psi, output));
-        replicaComputed = (ReplicaComputed<T>)
-            await replica.Computed.Update(cancellationToken).ConfigureAwait(false);
-        result = new ReplicaMethodComputed<T>(methodDef.ComputedOptions, typedInput, replicaComputed);
-        ComputeContext.Current.TryCapture(result);
-        return result;
+
+        // 5. Create new Replica<T> & Computed<T>
+        {
+            var typedPsi = new PublicationStateInfo<T>(psi, output);
+            replica = Replicator.AddOrUpdate(typedPsi);
+            var computed = replica.RenewComputed(
+                typedInput,
+                static (replica, state, typedInput1) => new ReplicaMethodComputed<T>(
+                    typedInput1.MethodDef.ComputedOptions, typedInput1, replica, state));
+            if (computed == null) {
+                DebugLog?.LogError("Compute: the replica was disposed right after it was created");
+                goto renewReplica;
+            }
+
+            ComputeContext.Current.TryCapture(computed);
+            return computed;
+        }
     }
 }

@@ -7,6 +7,10 @@ public interface ITimeService
     [ComputeMethod]
     Task<DateTime> GetTime(CancellationToken cancellationToken = default);
     [ComputeMethod]
+    Task<DateTime> GetTimeNoControllerMethod(CancellationToken cancellationToken = default);
+    [ComputeMethod]
+    Task<DateTime> GetTimeNoPublication(CancellationToken cancellationToken = default);
+    [ComputeMethod]
     Task<DateTime> GetTimeWithDelay(CancellationToken cancellationToken = default);
     [ComputeMethod]
     Task<string?> GetFormattedTime(string format, CancellationToken cancellationToken = default);
@@ -36,6 +40,14 @@ public class TimeService : ITimeService
 
     [ComputeMethod(AutoInvalidationDelay = 0.25)]
     public virtual Task<DateTime> GetTime(CancellationToken cancellationToken = default)
+        => Task.FromResult(Time);
+
+    [ComputeMethod(AutoInvalidationDelay = 0.25)]
+    public virtual Task<DateTime> GetTimeNoControllerMethod(CancellationToken cancellationToken = default) 
+        => Task.FromResult(Time);
+
+    [ComputeMethod(AutoInvalidationDelay = 0.25)]
+    public virtual Task<DateTime> GetTimeNoPublication(CancellationToken cancellationToken = default)
         => Task.FromResult(Time);
 
     [ComputeMethod(AutoInvalidationDelay = 0.25)]
