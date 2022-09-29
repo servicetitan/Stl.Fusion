@@ -7,7 +7,6 @@ public class ScreenshotServiceClientTest : FusionTestBase
 {
     public ScreenshotServiceClientTest(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out, options) { }
 
-#if NETCOREAPP
     [Fact]
     public async Task BasicTest()
     {
@@ -30,5 +29,4 @@ public class ScreenshotServiceClientTest : FusionTestBase
         }
         ScreenshotController.CallCount.Should().BeLessThan(15);
     }
-#endif
 }

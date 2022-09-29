@@ -7,6 +7,6 @@ namespace Stl.Fusion.Tests.Services;
 [BasePath("screenshot")]
 public interface IScreenshotServiceClient
 {
-    [Get("getScreenshot"), ComputeMethod(MinCacheDuration = 1)]
+    [Get(nameof(GetScreenshot)), ComputeMethod(MinCacheDuration = 1)]
     Task<Screenshot> GetScreenshot(int width, CancellationToken cancellationToken = default);
 }

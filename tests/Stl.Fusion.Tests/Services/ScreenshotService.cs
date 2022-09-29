@@ -1,7 +1,6 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
-using System.Text.Json.Serialization;
 using Stl.OS;
 
 namespace Stl.Fusion.Tests.Services;
@@ -13,16 +12,6 @@ public record Screenshot
     [DataMember] public int Height { get; init; }
     [DataMember] public Moment CapturedAt { get; init; }
     [DataMember] public Base64Encoded Image { get; init; } = "";
-
-    public Screenshot() { }
-    [JsonConstructor, Newtonsoft.Json.JsonConstructor]
-    public Screenshot(int width, int height, Moment capturedAt, Base64Encoded image)
-    {
-        Width = width;
-        Height = height;
-        CapturedAt = capturedAt;
-        Image = image;
-    }
 }
 
 public interface IScreenshotService

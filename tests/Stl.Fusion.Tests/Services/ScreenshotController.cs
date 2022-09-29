@@ -14,13 +14,14 @@ public class ScreenshotController : ControllerBase
     public static int CallCount { get; set; }
     protected IScreenshotService Service { get; }
 
-    public ScreenshotController(IScreenshotService service) => Service = service;
+    public ScreenshotController(IScreenshotService service)
+        => Service = service;
 
     [HttpGet, Publish]
-    public Task<Screenshot> GetScreenshot(int width)
+    public Task<Screenshot> GetScreenshot(int width, CancellationToken cancellationToken)
     {
         CallCount++;
-        var screenshot = Service.GetScreenshot(width, this.RequestAborted());
+        var screenshot = Service.GetScreenshot(width, cancellationToken);
         return screenshot;
     }
 }
