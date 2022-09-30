@@ -40,7 +40,7 @@ public sealed record RetryDelaySeq(
     // Conversion
 
     public override string ToString()
-        => $"[{Min.ToShortString()} ± {MaxDelta * 100:P} .. {Max.ToShortString()}]";
+        => $"[{Min.ToShortString()} ± {MaxDelta:P0} .. {Max.ToShortString()}]";
 
     public static implicit operator RetryDelaySeq(TimeSpan min) => new(min);
     public static implicit operator RetryDelaySeq(double minInSeconds) => new(TimeSpan.FromSeconds(minInSeconds));
