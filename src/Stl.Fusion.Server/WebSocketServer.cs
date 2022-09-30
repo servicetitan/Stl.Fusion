@@ -15,6 +15,9 @@ public class WebSocketServer
         public string PublisherIdQueryParameterName { get; init; } = "publisherId";
         public string ClientIdQueryParameterName { get; init; } = "clientId";
         public Func<ITextSerializer<BridgeMessage>> SerializerFactory { get; init; } = DefaultSerializerFactory;
+#if NET6_0_OR_GREATER
+        public Func<WebSocketAcceptContext> ConfigureWebSocket { get; init; } = () => new();
+#endif
 
         public static ITextSerializer<BridgeMessage> DefaultSerializerFactory()
             => TextSerializer.NewAsymmetric(
@@ -54,7 +57,13 @@ public class WebSocketServer
         var publisherId = requestQuery[Settings.PublisherIdQueryParameterName];
 
         var serializers = Settings.SerializerFactory();
-        var webSocket = await context.WebSockets.AcceptWebSocketAsync().ConfigureAwait(false);
+#if NET6_0_OR_GREATER
+        var webSocketAcceptContext = Settings.ConfigureWebSocket.Invoke();
+        var acceptWebSocketTask = context.WebSockets.AcceptWebSocketAsync(webSocketAcceptContext);
+#else
+        var acceptWebSocketTask = context.WebSockets.AcceptWebSocketAsync();
+#endif
+        var webSocket = await acceptWebSocketTask.ConfigureAwait(false);
         var wsChannel = new WebSocketChannel(webSocket);
         await using var _ = wsChannel.ConfigureAwait(false);
 

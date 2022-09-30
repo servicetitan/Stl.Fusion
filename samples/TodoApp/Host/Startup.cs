@@ -117,12 +117,18 @@ public class Startup
         });
 
         // Fusion services
+        var fusion = services.AddFusion();
+        var fusionServer = fusion.AddWebServer();
         services.AddSingleton(new PublisherOptions() {
             // Id = "p",
             Id = $"p-{RandomStringGenerator.Default.Next(8)}",
         });
-        var fusion = services.AddFusion();
-        var fusionServer = fusion.AddWebServer();
+        services.AddSingleton(new WebSocketServer.Options() {
+            ConfigureWebSocket = () => new WebSocketAcceptContext() {
+                DangerousEnableCompression = true,
+            }
+        });
+
         if (HostSettings.UseMultitenancy)
             fusionServer.ConfigureSessionMiddleware(_ => new() {
                 TenantIdExtractor = TenantIdExtractors.FromSubdomain(".localhost")
