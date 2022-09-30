@@ -40,9 +40,11 @@ public class ScreenshotService : IScreenshotService
             ?? new Rectangle(0, 0, 1920, 1080);
     }
 
+    // [ComputeMethod(MinCacheDuration = 0.3)]
     public virtual async Task<Screenshot> GetScreenshot(int width, CancellationToken cancellationToken = default)
     {
         var bScreen = await GetScreenshot(cancellationToken).ConfigureAwait(false);
+
         // The code below scales a full-resolution screenshot to a desirable resolution
         var (w, h) = (_displayDimensions.Width, _displayDimensions.Height);
         var ow = width;
@@ -53,8 +55,8 @@ public class ScreenshotService : IScreenshotService
         gOut.InterpolationMode = InterpolationMode.Default;
         gOut.CompositingMode = CompositingMode.SourceCopy;
         gOut.DrawImage(bScreen, 0, 0, ow, oh);
-        await using var streamAdapter = new MemoryStream().ToAsyncDisposableAdapter();
-        var stream = streamAdapter.Target;
+
+        using var stream = new MemoryStream();
         bOut.Save(stream, _jpegEncoder, _jpegEncoderParameters);
         var bytes = stream.ToArray();
         var base64Content = Convert.ToBase64String(bytes);

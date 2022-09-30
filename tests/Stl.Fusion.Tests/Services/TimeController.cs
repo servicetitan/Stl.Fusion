@@ -25,7 +25,7 @@ public class TimeController : ControllerBase, ITimeService
     public Task<DateTime> GetTimeNoControllerMethod(CancellationToken cancellationToken = default)
         => Service.GetTimeNoControllerMethod(cancellationToken);
 
-    [HttpGet, Publish]
+    [HttpGet]
     public Task<DateTime> GetTimeNoPublication(CancellationToken cancellationToken = default)
         => Service.GetTimeNoPublication(cancellationToken);
 

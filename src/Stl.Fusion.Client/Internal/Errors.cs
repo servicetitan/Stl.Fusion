@@ -5,7 +5,7 @@ public static class Errors
     public static Exception InterfaceTypeExpected(Type type, bool mustBePublic, string? argumentName = null)
     {
         var message = $"'{type}' must be {(mustBePublic ? "a public": "an")} interface type.";
-        return string.IsNullOrEmpty(argumentName)
+        return argumentName.IsNullOrEmpty()
             ? new InvalidOperationException(message)
             : new ArgumentOutOfRangeException(argumentName, message);
     }

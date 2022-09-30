@@ -14,7 +14,7 @@ public class ScreenshotServiceClientTest : FusionTestBase
             // Screenshots don't work on Unix
             return;
 
-        var epsilon = TimeSpan.FromSeconds(0.5);
+        var epsilon = TimeSpan.FromSeconds(1000);
 
         await using var serving = await WebHost.Serve();
         await Delay(0.25);
@@ -22,7 +22,8 @@ public class ScreenshotServiceClientTest : FusionTestBase
 
         ScreenshotController.CallCount = 0;
         for (var i = 0; i < 50; i++) {
-            var screenshot = await service.GetScreenshot(100);
+            var c = await Computed.Capture(() => service.GetScreenshot(100));
+            var screenshot = c.Value;
             screenshot.Should().NotBeNull();
             (SystemClock.Now - screenshot.CapturedAt).Should().BeLessThan(epsilon);
             await Task.Delay(TimeSpan.FromSeconds(0.02));

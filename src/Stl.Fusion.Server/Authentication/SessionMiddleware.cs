@@ -60,7 +60,7 @@ public class SessionMiddleware : IMiddleware, IHasServices
         var cookies = httpContext.Request.Cookies;
         var cookieName = Settings.Cookie.Name ?? "";
         cookies.TryGetValue(cookieName, out var sessionId);
-        return string.IsNullOrEmpty(sessionId) ? null : new Session(sessionId);
+        return sessionId.IsNullOrEmpty() ? null : new Session(sessionId);
     }
 
     public virtual async Task<Session> GetOrCreateSession(HttpContext httpContext)

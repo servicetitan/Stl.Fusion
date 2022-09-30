@@ -71,7 +71,7 @@ public class MatchingComponentFor : ComponentBase
 
         var i = 0;
         builder.OpenComponent(i++, componentType);
-        if (!string.IsNullOrEmpty(SourceParameterName))
+        if (!SourceParameterName.IsNullOrEmpty())
             builder.AddAttribute(i++, SourceParameterName, Source);
         if (Attributes != null)
             foreach (var (key, value) in Attributes)

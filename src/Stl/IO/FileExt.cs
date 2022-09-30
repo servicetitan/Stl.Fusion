@@ -26,7 +26,7 @@ public static class FileExt
             throw new ArgumentException("EmptyPath", nameof(path));
         if (cancellationToken.IsCancellationRequested)
             return Task.FromCanceled(cancellationToken);
-        if (!string.IsNullOrEmpty(contents)) {
+        if (!contents.IsNullOrEmpty()) {
             return Task.Run(() => {
                 File.WriteAllText(path, contents, encoding);
             }, cancellationToken);

@@ -114,7 +114,7 @@ public record User : IHasId<Symbol>, IHasVersion<long>, IRequirementTarget
         var claims = new List<Claim>();
         if (IsGuest()) {
             // Guest (not authenticated)
-            if (!string.IsNullOrEmpty(Name))
+            if (!Name.IsNullOrEmpty())
                 claims.Add(new(ClaimTypes.Name, Name, ClaimValueTypes.String));
             foreach (var (key, value) in Claims)
                 claims.Add(new Claim(key, value));
@@ -125,7 +125,7 @@ public record User : IHasId<Symbol>, IHasVersion<long>, IRequirementTarget
             // Authenticated
             claims.Add(new Claim(ClaimTypes.NameIdentifier, Id, ClaimValueTypes.String));
             claims.Add(new(ClaimTypes.Version, Version.ToString(CultureInfo.InvariantCulture), ClaimValueTypes.String));
-            if (!string.IsNullOrEmpty(Name))
+            if (!Name.IsNullOrEmpty())
                 claims.Add(new(ClaimTypes.Name, Name, ClaimValueTypes.String));
             foreach (var (key, value) in Claims)
                 claims.Add(new Claim(key, value));

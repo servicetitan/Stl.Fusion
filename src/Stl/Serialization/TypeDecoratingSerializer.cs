@@ -31,7 +31,7 @@ public class TypeDecoratingSerializer : TextSerializerBase
         using var p = ListFormat.Default.CreateParser(data);
 
         p.ParseNext();
-        if (string.IsNullOrEmpty(p.Item))
+        if (p.Item.IsNullOrEmpty())
             // Special case: null deserialization
             return null;
 

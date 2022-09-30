@@ -39,7 +39,7 @@ public partial class InMemoryAuthService
 
         var isNewUser = false;
         var userWithAuthenticatedIdentity = GetByUserIdentity(tenant, authenticatedIdentity);
-        if (string.IsNullOrEmpty(user.Id)) {
+        if (user.Id.IsEmpty) {
             // No user.Id -> try to find existing user by authenticatedIdentity
             if (userWithAuthenticatedIdentity == null) {
                 user = user with { Id = GetNextUserId() };
@@ -100,8 +100,8 @@ public partial class InMemoryAuthService
         context.Operation().Items.Set(sessionInfo == null); // invIsNew
         sessionInfo ??= new SessionInfo(session, Clocks.SystemClock.Now);
         sessionInfo = sessionInfo with {
-            IPAddress = string.IsNullOrEmpty(ipAddress) ? sessionInfo.IPAddress : ipAddress,
-            UserAgent = string.IsNullOrEmpty(userAgent) ? sessionInfo.UserAgent : userAgent,
+            IPAddress = ipAddress.IsNullOrEmpty() ? sessionInfo.IPAddress : ipAddress,
+            UserAgent = userAgent.IsNullOrEmpty() ? sessionInfo.UserAgent : userAgent,
         };
         sessionInfo = UpsertSessionInfo(tenant, session.Id, sessionInfo, sessionInfo.Version);
         context.Operation().Items.Set(sessionInfo); // invSessionInfo
@@ -141,7 +141,7 @@ public partial class InMemoryAuthService
     protected virtual Task<ImmutableArray<(Symbol Id, SessionInfo SessionInfo)>> GetUserSessions(
         Symbol tenantId, string userId, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(userId))
+        if (userId.IsNullOrEmpty())
             return Task.FromResult(ImmutableArray<(Symbol Id, SessionInfo SessionInfo)>.Empty);
         var result = SessionInfos
             .Where(kv => kv.Key.TenantId == tenantId && StringComparer.Ordinal.Equals(kv.Value.UserId, userId))

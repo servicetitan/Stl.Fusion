@@ -9,7 +9,7 @@ public static class Errors
     public static Exception MustImplement(Type type, Type expectedType, string? argumentName = null)
     {
         var message = $"'{type}' must implement '{expectedType}'.";
-        return string.IsNullOrEmpty(argumentName)
+        return argumentName.IsNullOrEmpty()
             ? new InvalidOperationException(message)
             : new ArgumentOutOfRangeException(argumentName, message);
     }
@@ -19,7 +19,7 @@ public static class Errors
     public static Exception MustBeAssignableTo(Type type, Type mustBeAssignableToType, string? argumentName = null)
     {
         var message = $"'{type}' must be assignable to '{mustBeAssignableToType}'.";
-        return string.IsNullOrEmpty(argumentName)
+        return argumentName.IsNullOrEmpty()
             ? new InvalidOperationException(message)
             : new ArgumentOutOfRangeException(argumentName, message);
     }

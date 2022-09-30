@@ -16,8 +16,8 @@ public static class PathCompatExt
     {
         // From https://stackoverflow.com/questions/275689/how-to-get-relative-path-from-absolute-path
 
-        if (string.IsNullOrEmpty(relativeTo)) throw new ArgumentNullException("relativeTo");
-        if (string.IsNullOrEmpty(path))   throw new ArgumentNullException("path");
+        if (relativeTo.IsNullOrEmpty()) throw new ArgumentNullException("relativeTo");
+        if (path.IsNullOrEmpty())   throw new ArgumentNullException("path");
 
         Uri fromUri = new(relativeTo);
         Uri toUri = new(path);

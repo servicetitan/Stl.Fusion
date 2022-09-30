@@ -76,7 +76,7 @@ public class ServerAuthHelper : IHasServices
     {
         var httpUser = httpContext.User;
         var httpAuthenticationSchema = httpUser.Identity?.AuthenticationType ?? "";
-        var httpIsAuthenticated = !string.IsNullOrEmpty(httpAuthenticationSchema);
+        var httpIsAuthenticated = !httpAuthenticationSchema.IsNullOrEmpty();
 
         var ipAddress = httpContext.GetRemoteIPAddress()?.ToString() ?? "";
         var userAgent = httpContext.Request.Headers.TryGetValue("User-Agent", out var userAgentValues)
@@ -166,7 +166,7 @@ public class ServerAuthHelper : IHasServices
     protected static string? FirstClaimOrDefault(IReadOnlyDictionary<string, string> claims, string[] keys)
     {
         foreach (var key in keys)
-            if (claims.TryGetValue(key, out var value) && !string.IsNullOrEmpty(value))
+            if (claims.TryGetValue(key, out var value) && !value.IsNullOrEmpty())
                 return value;
         return null;
     }

@@ -14,7 +14,7 @@ public static class HttpContextExt
         var allSchemes = await schemes.GetAllSchemesAsync().ConfigureAwait(false);
         return (
             from scheme in allSchemes
-            where !string.IsNullOrEmpty(scheme.DisplayName)
+            where !scheme.DisplayName.IsNullOrEmpty()
             select scheme
             ).ToArray();
     }

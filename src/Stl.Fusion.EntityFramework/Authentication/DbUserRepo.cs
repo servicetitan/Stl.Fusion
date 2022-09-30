@@ -81,7 +81,7 @@ public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbConte
         TDbContext dbContext, User user, CancellationToken cancellationToken = default)
     {
         TDbUser dbUser;
-        if (!string.IsNullOrEmpty(user.Id)) {
+        if (!user.Id.IsEmpty) {
             dbUser = await Get(dbContext, DbUserIdHandler.Parse(user.Id), false, cancellationToken).ConfigureAwait(false)
                 ?? throw Errors.EntityNotFound<TDbUser>();
             return (dbUser, false);

@@ -105,4 +105,26 @@ public class KeyValueModelTest : FusionTestBase
             ae.Message.Should().StartWith("Error!");
         }
     }
+
+    [Fact]
+    public async Task ClientExceptionTest()
+    {
+        await using var _ = await WebHost.Serve();
+        var kv = ClientServices.GetRequiredService<IKeyValueServiceClient<string>>();
+
+        try {
+            await kv.Get("error");
+        }
+        catch (ArgumentException ae) {
+            ae.Message.Should().StartWith("Error!");
+        }
+
+        var kvc = ClientServices.GetRequiredService<IKeyValueServiceClient<string>>();
+        try {
+            await kvc.Get("error");
+        }
+        catch (ArgumentException ae) {
+            ae.Message.Should().StartWith("Error!");
+        }
+    }
 }

@@ -24,7 +24,7 @@ public class BlazorModeController : ControllerBase
             var isServerSideBlazor01 = Convert.ToInt32(isServerSideBlazor).ToString(CultureInfo.InvariantCulture);
             response.Cookies.Append(Cookie.Name!, isServerSideBlazor01, Cookie.Build(HttpContext));
         }
-        if (string.IsNullOrEmpty(redirectTo))
+        if (redirectTo.IsNullOrEmpty())
             redirectTo = "~/";
         return Redirect(redirectTo);
     }

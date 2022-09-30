@@ -65,7 +65,7 @@ public readonly struct UserIdentity : IEquatable<UserIdentity>
 
     private static (string Schema, string SchemaBoundId) ParseId(string id)
     {
-        if (string.IsNullOrEmpty(id))
+        if (id.IsNullOrEmpty())
             return ("", "");
         using var p = IdFormat.CreateParser(id);
         if (!p.TryParseNext())

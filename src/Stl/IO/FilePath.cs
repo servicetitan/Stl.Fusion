@@ -46,7 +46,7 @@ public readonly partial struct FilePath : IEquatable<FilePath>, IComparable<File
         => string.Compare(Value, other.Value, StringComparison.Ordinal);
 
     // Useful helpers
-    public bool IsEmpty => string.IsNullOrEmpty(_value);
+    public bool IsEmpty => _value.IsNullOrEmpty();
 #if !NETSTANDARD2_0
     public bool IsFullyQualified => Path.IsPathFullyQualified(Value);
 #else
@@ -89,13 +89,13 @@ public readonly partial struct FilePath : IEquatable<FilePath>, IComparable<File
 
     public static FilePath Join(string s1, string s2)
 #if !NETSTANDARD2_0
-        => string.IsNullOrEmpty(s2)
+        => s2.IsNullOrEmpty()
             ? s1
             : Path.IsPathFullyQualified(s2)
                 ? throw new ArgumentOutOfRangeException(s2)
                 : Path.Join(s1, s2);
 #else
-        => string.IsNullOrEmpty(s2)
+        => s2.IsNullOrEmpty()
             ? s1
             : PathCompatExt.IsPathFullyQualified(s2)
                 ? throw new ArgumentOutOfRangeException(s2)

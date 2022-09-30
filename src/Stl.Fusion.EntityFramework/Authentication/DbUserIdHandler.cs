@@ -51,12 +51,12 @@ public class DbUserIdHandler<TDbUserId> : IDbUserIdHandler<TDbUserId>
             : Formatter.Convert(userId);
 
     public virtual TDbUserId Parse(string formattedUserId)
-        => string.IsNullOrEmpty(formattedUserId)
+        => formattedUserId.IsNullOrEmpty()
             ? None
             : Parser.Convert(formattedUserId);
 
     public virtual Option<TDbUserId> TryParse(string formattedUserId)
-        => string.IsNullOrEmpty(formattedUserId)
+        => formattedUserId.IsNullOrEmpty()
             ? None
             : Parser.TryConvert(formattedUserId);
 }

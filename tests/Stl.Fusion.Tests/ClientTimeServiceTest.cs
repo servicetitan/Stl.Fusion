@@ -89,4 +89,15 @@ public class ClientTimeServiceTest : FusionTestBase
             await service.GetTimeNoControllerMethod();
         });
     }
+
+    [Fact]
+    public async Task TestNoPublication()
+    {
+        await using var serving = await WebHost.Serve();
+        var service = ClientServices.GetRequiredService<IClientTimeService>();
+
+        await Assert.ThrowsAsync<ReplicaException>(async () => {
+            await service.GetTimeNoPublication();
+        });
+    }
 }

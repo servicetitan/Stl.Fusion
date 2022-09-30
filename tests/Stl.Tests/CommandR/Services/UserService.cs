@@ -37,7 +37,7 @@ public class UserService : DbServiceBase<TestDbContext>
             .ConfigureAwait(false);
 
         var user = command.Users[0];
-        if (string.IsNullOrEmpty(user.Id))
+        if (user.Id.IsNullOrEmpty())
             throw new InvalidOperationException("User.Id must be set.");
         await dbContext.Users.AddAsync(user, cancellationToken).ConfigureAwait(false);
         await dbContext.SaveChangesAsync(cancellationToken);

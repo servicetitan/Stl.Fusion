@@ -24,23 +24,26 @@ public class FusionHttpMessageHandler : DelegatingHandler, IHasServices
         var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
         if (psiCapture == null) {
-            // Regular request
-            if (response.StatusCode == HttpStatusCode.InternalServerError)
-                throw await DeserializeError(response).ConfigureAwait(false);
+            // Non-Fusion response / regular request
+            if (response.StatusCode == HttpStatusCode.InternalServerError) {
+                // [JsonifyErrors] responds with this status code 
+                var error = await DeserializeError(response).ConfigureAwait(false);
+                throw error;
+            }
             return response;
         }
 
-        // Publication request
+        // Fusion response
         var headers = response.Headers;
         headers.TryGetValues(FusionHeaders.Publication, out var values);
         var psiJson = values?.FirstOrDefault();
-        if (string.IsNullOrEmpty(psiJson))
+        if (psiJson.IsNullOrEmpty())
             throw Fusion.Internal.Errors.NoPublicationStateInfo();
 
-        var psi = JsonConvert.DeserializeObject<PublicationStateInfo>(psiJson!)!;
+        var psi = JsonConvert.DeserializeObject<PublicationStateInfo>(psiJson)!;
         if (response.StatusCode == HttpStatusCode.InternalServerError) {
+            // [JsonifyErrors] responds with this status code 
             var error = await DeserializeError(response).ConfigureAwait(false);
-            psi = new PublicationStateInfo<object>(psi, Result.Error<object>(error));
             psiCapture.Capture(psi);
             throw error;
         }
@@ -64,7 +67,7 @@ public class FusionHttpMessageHandler : DelegatingHandler, IHasServices
             try {
                 var jError = JObject.Parse(content);
                 var message = jError[nameof(Exception.Message)]?.Value<string>();
-                return string.IsNullOrEmpty(message)
+                return message.IsNullOrEmpty()
                     ? Errors.UnknownServerSideError()
                     : new RemoteException(message!);
             }

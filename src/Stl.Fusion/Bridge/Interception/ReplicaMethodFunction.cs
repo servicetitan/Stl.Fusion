@@ -84,21 +84,7 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
             return computed;
         }
 
-        // 4. If it's an error, let's try to pull the detailed one from PublicationStateInfo
-        if (output.Error != null) {
-            // Try to pull the server-side error first
-            if (psi is PublicationStateInfo<object> { Output.HasError: true } errorPsi)
-                output = Result.Error<T>(errorPsi.Output.Error!);
-            else
-                // No server-side error -> it's a client-side error
-                output = Result.Error<T>(output.Error);
-            // We need a unique LTag here, so we use a range that's supposed
-            // to be unused by LTagGenerators.
-            if (psi.Version == default)
-                psi.Version = new LTag(VersionGenerator.NextVersion().Value ^ (1L << 62));
-        }
-
-        // 5. Create new Replica<T> & Computed<T>
+        // 4. Create new Replica<T> & Computed<T>
         {
             var typedPsi = new PublicationStateInfo<T>(psi, output);
             replica = Replicator.AddOrUpdate(typedPsi);

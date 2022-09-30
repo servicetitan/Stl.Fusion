@@ -17,7 +17,7 @@ public static class TestRunnerInfo
         static TeamCity()
         {
             var version = Environment.GetEnvironmentVariable("TEAMCITY_VERSION");
-            if (!string.IsNullOrEmpty(version))
+            if (!version.IsNullOrEmpty())
                 Version.TryParse(version, out Version);
             ProjectName = Environment.GetEnvironmentVariable("TEAMCITY_PROJECT_NAME") ?? "";
             BuildConfigurationName = Environment.GetEnvironmentVariable("TEAMCITY_BUILDCONF_NAME") ?? "";

@@ -32,7 +32,7 @@ public readonly struct Base64Encoded : IEquatable<Base64Encoded>, IReadOnlyColle
     public string? Encode()
         => Convert.ToBase64String(Data);
     public static Base64Encoded Decode(string? encodedData)
-        => string.IsNullOrEmpty(encodedData) ? Array.Empty<byte>() : Convert.FromBase64String(encodedData);
+        => encodedData.IsNullOrEmpty() ? Array.Empty<byte>() : Convert.FromBase64String(encodedData);
 
     // Operators
     public static implicit operator Base64Encoded(byte[] data) => new(data);

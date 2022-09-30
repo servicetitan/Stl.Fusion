@@ -45,7 +45,7 @@ public readonly partial struct FilePath
 
     public static FilePath GetApplicationTempDirectory(string appId = "", bool createIfAbsents = false)
     {
-        if (string.IsNullOrEmpty(appId))
+        if (appId.IsNullOrEmpty())
             appId = Assembly.GetEntryAssembly()?.GetName()?.Name ?? "unknown";
         var subdirectory = GetHashedName($"{appId}_{GetApplicationDirectory()}");
         var path = Path.GetTempPath() & subdirectory;

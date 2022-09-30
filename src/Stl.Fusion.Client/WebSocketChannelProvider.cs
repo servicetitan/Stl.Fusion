@@ -57,7 +57,7 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
             var queryTail =
                 $"{settings.PublisherIdQueryParameterName}={publisherId.Value}" +
                 $"&{settings.ClientIdQueryParameterName}={channelProvider.ClientId.Value}";
-            if (!string.IsNullOrEmpty(uriBuilder.Query))
+            if (!uriBuilder.Query.IsNullOrEmpty())
                 uriBuilder.Query += "&" + queryTail;
             else
                 uriBuilder.Query = queryTail;
