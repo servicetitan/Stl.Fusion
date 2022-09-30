@@ -11,6 +11,7 @@ public abstract class SubscriptionProcessor : WorkerBase
     protected readonly TimeSpan ExpirationTime;
     protected long MessageIndex;
     protected (LTag Version, bool IsConsistent) LastSentVersion;
+    protected LTag LastSentOutputVersion;
     protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     public IPublisher Publisher => Publication.Publisher;
@@ -67,8 +68,10 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
                 if (incomingMessage is not SubscribeRequest sm)
                     continue;
 
-                if (MessageIndex == 0)
+                if (MessageIndex == 0) {
                     LastSentVersion = (sm.Version, sm.IsConsistent);
+                    LastSentOutputVersion = sm.Version;
+                }
 
                 if (!sm.IsConsistent) { 
                     // Subscribe with IsInconsistent flag = request update
@@ -134,6 +137,7 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
             var absentsMessage = new PublicationAbsentsReply();
             await Reply(absentsMessage, cancellationToken).ConfigureAwait(false);
             LastSentVersion = default;
+            LastSentOutputVersion = default;
             return;
         }
 
@@ -143,7 +147,8 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
         if (!mustUpdate && LastSentVersion == version)
             return;
 
-        var reply = isConsistent || LastSentVersion.Version != computed.Version
+        var mustSendOutput = LastSentOutputVersion != computed.Version;
+        var reply = mustSendOutput
             ? PublicationStateReply<T>.New(computed.Output)
             : new PublicationStateReply<T>();
         reply.Version = computed.Version;
@@ -151,6 +156,8 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
 
         await Reply(reply, cancellationToken).ConfigureAwait(false);
         LastSentVersion = version;
+        if (mustSendOutput)
+            LastSentOutputVersion = computed.Version;
     }
 
     protected virtual async ValueTask Reply(PublicationReply reply, CancellationToken cancellationToken)

@@ -124,9 +124,9 @@ public sealed class Replica<T> : Replica
                 return;
 
             if (state is { Output: null }) {
-                // Invalidation messages contains Output only when this is true:
-                // "isConsistent || LastSentVersion.Version != computed.Version"
-                // See SubscriptionProcessor.TrySendUpdate, line ~ 146
+                // SubscriptionProcessor sends the output only when it knows
+                // its version differs from the last one seen by Replica.
+                // See SubscriptionProcessor.TrySendUpdate, line ~ 150
                 // So if there in no Output, we try to preserve the old one.
                 state.Output = oldState.Output;
             }
