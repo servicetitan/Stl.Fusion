@@ -27,7 +27,7 @@ public record ReplicatorOptions
     public static Symbol NewId() => "R-" + RandomStringGenerator.Default.Next();
 
     public Symbol Id { get; init; } = NewId();
-    public RandomTimeSpan ReconnectDelay { get; init; } = TimeSpan.FromSeconds(10);
+    public RetryDelaySeq ReconnectDelays { get; init; } = new(3, 15);
     public IChannelProvider? ChannelProvider { get; init; }
 }
 
@@ -68,7 +68,7 @@ public class Replicator : SafeAsyncDisposableBase, IReplicatorImpl
     }
 
     public IState<bool> GetPublisherConnectionState(Symbol publisherId)
-        => GetChannelProcessor(publisherId).IsConnected;
+        => GetChannelProcessor(publisherId).Connector.IsConnected;
 
     protected virtual ReplicatorChannelProcessor GetChannelProcessor(Symbol publisherId)
         => ChannelProcessors

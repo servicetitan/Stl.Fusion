@@ -22,9 +22,9 @@ public sealed record RetryDelaySeq(
         }
     }
 
-    public RetryDelaySeq() : this(DefaultMin) { }
+    public RetryDelaySeq() : this(DefaultMin, DefaultMax) { }
     public RetryDelaySeq(TimeSpan min) : this(min, DefaultMax) { }
-    public RetryDelaySeq(double minInSeconds) 
+    public RetryDelaySeq(double minInSeconds)
         : this(TimeSpan.FromSeconds(minInSeconds), DefaultMax) { }
     public RetryDelaySeq(double minInSeconds, double maxInSeconds, double maxDelta = 0.1) 
         : this(TimeSpan.FromSeconds(minInSeconds), TimeSpan.FromSeconds(maxInSeconds), maxDelta) { }

@@ -4,9 +4,9 @@ using Stl.Fusion.Tests.Services;
 
 namespace Stl.Fusion.Tests;
 
-public class WebSocketTest : FusionTestBase
+public class BridgeTest : FusionTestBase
 {
-    public WebSocketTest(ITestOutputHelper @out, FusionTestOptions? options = null)
+    public BridgeTest(ITestOutputHelper @out, FusionTestOptions? options = null)
         : base(@out, options) { }
 
     protected override void ConfigureServices(IServiceCollection services, bool isClient = false)
@@ -72,29 +72,27 @@ public class WebSocketTest : FusionTestBase
         c.IsConsistent().Should().BeTrue();
 
         Debug.WriteLine("2");
-        var cs = replicator.GetPublisherConnectionState(c.Replica!.PublicationRef.PublisherId);
-        cs.Value.Should().BeTrue();
-        cs.Computed.IsConsistent().Should().BeTrue();
-        await cs.Recompute();
+        var isConnected = replicator.GetPublisherConnectionState(c.Replica!.PublicationRef.PublisherId);
+        isConnected.Value.Should().BeTrue();
+        isConnected.Computed.IsConsistent().Should().BeTrue();
         Debug.WriteLine("3");
-        cs.Value.Should().BeTrue();
-        cs.Computed.IsConsistent().Should().BeTrue();
         var cs1 = replicator.GetPublisherConnectionState(c.Replica.PublicationRef.PublisherId);
-        cs1.Should().BeSameAs(cs);
+        cs1.Should().BeSameAs(isConnected);
 
         Debug.WriteLine("WebServer: stopping.");
         await serving.DisposeAsync();
+        await isConnected.Changes()
+            .FirstAsync(c1 => c1.Error != null).AsTask()
+            .WaitAsync(TimeSpan.FromSeconds(10));
         Debug.WriteLine("WebServer: stopped.");
 
-        // First try -- should fail w/ WebSocketException or ChannelClosedException
+        // Nothing should be changed
         c.IsConsistent().Should().BeTrue();
         c.Value.Should().Be("b");
         Debug.WriteLine("4");
 
-        await cs.Update();
-        cs.Error.Should().BeAssignableTo<Exception>();
-        cs.Computed.IsConsistent().Should().BeTrue();
         var updateTask = c.Replica.RequestUpdate();
+        await Delay(0.5);
         updateTask.IsCompleted.Should().BeFalse();
         Debug.WriteLine("5");
 
@@ -106,13 +104,10 @@ public class WebSocketTest : FusionTestBase
 
         Debug.WriteLine("WebServer: starting.");
         serving = await WebHost.Serve();
-        await Delay(1);
+        await isConnected.Changes()
+            .FirstAsync(c1 => c1.ValueOrDefault).AsTask()
+            .WaitAsync(TimeSpan.FromSeconds(10));
         Debug.WriteLine("WebServer: started.");
-
-        await TestExt.WhenMet(
-            () => cs.Error.Should().BeNull(),
-            TimeSpan.FromSeconds(30));
-        Debug.WriteLine("7");
 
         await Delay(1);
         updateTask.IsCompleted.Should().BeTrue();
@@ -123,6 +118,7 @@ public class WebSocketTest : FusionTestBase
         else
             c.Value.Should().BeNull();
 
+        Debug.WriteLine("Disposing");
         await serving.DisposeAsync();
     }
 }

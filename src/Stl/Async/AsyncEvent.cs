@@ -1,3 +1,5 @@
+namespace Stl.Async;
+
 public abstract class AsyncEvent<T>
 {
     protected readonly bool RunContinuationsAsynchronously;

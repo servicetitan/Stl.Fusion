@@ -75,9 +75,9 @@ public class UIActionTracker : IHasServices, IDisposable
             Interlocked.Increment(ref RunningActionCountValue);
             try {
                 var prevEvent = LastActionEventField;
-                var nextEvent = prevEvent.CreateNext(action);
+                var nextEvent = prevEvent.Create(action);
                 LastActionEventField = nextEvent;
-                prevEvent.Complete(nextEvent);
+                prevEvent.SetNext(nextEvent);
                 foreach (var channel in ActionChannels)
                     channel.Writer.TryWrite(action);
             }
@@ -100,9 +100,9 @@ public class UIActionTracker : IHasServices, IDisposable
                 if (IsDisposed)
                     return;
                 var prevEvent = LastResultEventField;
-                var nextEvent = prevEvent.CreateNext(result);
+                var nextEvent = prevEvent.Create(result);
                 LastResultEventField = nextEvent;
-                prevEvent.Complete(nextEvent);
+                prevEvent.SetNext(nextEvent);
                 foreach (var channel in ResultChannels)
                     channel.Writer.TryWrite(result);
             }

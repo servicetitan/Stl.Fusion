@@ -117,7 +117,10 @@ public class Startup
         });
 
         // Fusion services
-        services.AddSingleton(new PublisherOptions() { Id = $"p-{RandomStringGenerator.Default.Next(8)}" });
+        services.AddSingleton(new PublisherOptions() {
+            // Id = "p",
+            Id = $"p-{RandomStringGenerator.Default.Next(8)}",
+        });
         var fusion = services.AddFusion();
         var fusionServer = fusion.AddWebServer();
         if (HostSettings.UseMultitenancy)
