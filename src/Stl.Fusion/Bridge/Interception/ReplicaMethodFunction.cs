@@ -40,8 +40,15 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
                 typedInput,
                 static (replica, state, typedInput1) => new ReplicaMethodComputed<T>(
                     typedInput1.MethodDef.ComputedOptions, typedInput1, replica, state));
-            if (computed == null)
+            if (computed == null) {
+                // Two cases are possible here:
+                // - Replica is there, but its State == null, i.e. it is disposed
+                // - Replica.State.Output == null, i.e. somehow it didn't get any
+                //   update that contains it & had no Output from the very beginning
+                //   (they retain the output while possible).
+                // In any of these cases all we can do is to renew it.
                 goto renewReplica;
+            }
 
             ComputeContext.Current.TryCapture(computed);
             return computed;

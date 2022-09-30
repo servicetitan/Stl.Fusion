@@ -17,7 +17,7 @@ public class ReplicaMethodComputed<T> : ComputeMethodComputed<T>, IReplicaMethod
     public PublicationStateInfo<T>? State { get; }
 
     public ReplicaMethodComputed(ComputedOptions options, ComputeMethodInput input, Replica<T>? replica, PublicationStateInfo<T> state)
-        : base(options, input, state.Output, state.Version, state.IsConsistent)
+        : base(options, input, state.Output!.Value, state.Version, state.IsConsistent)
     {
         Replica = replica;
         State = state;

@@ -25,13 +25,13 @@ public class PublicationStateInfo
 public class PublicationStateInfo<T> : PublicationStateInfo
 {
     [DataMember(Order = 3)]
-    public Result<T> Output { get; set; }
+    public Result<T>? Output { get; set; }
 
     public PublicationStateInfo() { }
     public PublicationStateInfo(PublicationRef publicationRef) : base(publicationRef) { }
-    public PublicationStateInfo(PublicationStateInfo stateInfo, Result<T> output = default)
+    public PublicationStateInfo(PublicationStateInfo stateInfo, Result<T>? output = default)
         : this(stateInfo.PublicationRef, stateInfo.Version, stateInfo.IsConsistent, output) { }
-    public PublicationStateInfo(PublicationRef publicationRef, LTag version, bool isConsistent, Result<T> output = default)
+    public PublicationStateInfo(PublicationRef publicationRef, LTag version, bool isConsistent, Result<T>? output = default)
         : base(publicationRef, version, isConsistent)
         => Output = output;
 }

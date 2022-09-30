@@ -14,7 +14,7 @@ public class ScreenshotServiceClientTest : FusionTestBase
             // Screenshots don't work on Unix
             return;
 
-        var epsilon = TimeSpan.FromSeconds(1000);
+        var epsilon = TimeSpan.FromSeconds(1);
 
         await using var serving = await WebHost.Serve();
         await Delay(0.25);

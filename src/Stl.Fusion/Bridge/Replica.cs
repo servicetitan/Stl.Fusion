@@ -81,9 +81,7 @@ public sealed class Replica<T> : Replica
         lock (_lock) {
             oldComputed = Computed;
             var state = State;
-            Computed = computed = state != null 
-                ? computedFactory.Invoke(this, state, arg)
-                : null;
+            Computed = computed = state?.Output == null ? null : computedFactory.Invoke(this, state, arg);
         }
         oldComputed?.Invalidate();
         return computed;
@@ -125,6 +123,13 @@ public sealed class Replica<T> : Replica
             if (oldState == null) // Already disposed - we do "dispose just once" check here 
                 return;
 
+            if (state is { Output: null }) {
+                // Invalidation messages contains Output only when this is true:
+                // "isConsistent || LastSentVersion.Version != computed.Version"
+                // See SubscriptionProcessor.TrySendUpdate, line ~ 146
+                // So if there in no Output, we try to preserve the old one.
+                state.Output = oldState.Output;
+            }
             _state = state;
             (oldUpdateRequestTask, _updateRequestTask) = (_updateRequestTask, null);
         }

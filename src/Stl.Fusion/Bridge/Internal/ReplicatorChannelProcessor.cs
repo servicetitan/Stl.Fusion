@@ -164,7 +164,7 @@ public class ReplicatorChannelProcessor : WorkerBase
         var psi = new PublicationStateInfo<T>(
             new PublicationRef(reply.PublisherId, reply.PublicationId),
             reply.Version, reply.IsConsistent,
-            reply.Output.GetValueOrDefault());
+            reply.Output);
 
         var replica = Replicator.Get(psi.PublicationRef);
         replica?.UpdateUntyped(psi);

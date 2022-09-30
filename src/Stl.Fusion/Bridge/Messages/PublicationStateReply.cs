@@ -24,7 +24,7 @@ public class PublicationStateReply<T> : PublicationStateReply
         typeof(T).IsConstructedGenericType && typeof(T).GetGenericTypeDefinition() == typeof(Nullable<>);
 
     [IgnoreDataMember, JsonIgnore]
-    public virtual Result<T>? Output => new Result<T>(default!, null);
+    public virtual Result<T>? Output => null;
 
     public override Type GetResultType() => typeof(T);
 
