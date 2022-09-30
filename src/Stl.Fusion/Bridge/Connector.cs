@@ -7,22 +7,22 @@ public sealed class Connector<TConnection> : WorkerBase
     private volatile ManualAsyncEvent<State> _state;
 
     public IMutableState<bool> IsConnected { get; }
+
     public Func<TConnection, CancellationToken, Task>? Connected { get; init; }
     public Func<TConnection?, Exception?, CancellationToken, Task>? Disconnected { get; init; }
-    public RetryDelaySeq RetryDelays { get; init; } = new();
-    public IMomentClock Clock { get; init; }
+    public RetryDelaySeq ReconnectDelays { get; init; } = new();
+    public IMomentClock Clock { get; init; } = MomentClockSet.Default.CpuClock;
     public ILogger? Log { get; init; }
     public LogLevel LogLevel { get; init; } = LogLevel.Debug;
     public string LogTag { get; init; } = "(Unknown)";
 
     public Connector(
         Func<CancellationToken, Task<TConnection>> connectionFactory,
-        IServiceProvider services)
+        IStateFactory stateFactory)
     {
-        Clock = services.Clocks().CpuClock;
-        IsConnected = services.StateFactory().NewMutable<bool>();
-        _connectionFactory = connectionFactory;
         _state = new ManualAsyncEvent<State>(new(), true);
+        _connectionFactory = connectionFactory;
+        IsConnected = stateFactory.NewMutable<bool>();
     }
 
     public Task<TConnection> GetConnection(CancellationToken cancellationToken)
@@ -36,6 +36,7 @@ public sealed class Connector<TConnection> : WorkerBase
 
         async Task<TConnection> AwaitConnection()
         {
+            Start();
             while (true) {
                 try {
                     return await state.Value.ConnectionTask.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -138,7 +139,7 @@ public sealed class Connector<TConnection> : WorkerBase
                 await Disconnected.Invoke(connection, error, cancellationToken).ConfigureAwait(false);
 
             if (state.Value.RetryIndex > 0) {
-                var retryDelay = RetryDelays[state.Value.RetryIndex];
+                var retryDelay = ReconnectDelays[state.Value.RetryIndex];
                 Log?.Log(LogLevel, "{LogTag}: Will reconnect in {RetryDelay}", LogTag, retryDelay.ToShortString());
                 await Clock.Delay(retryDelay, cancellationToken).ConfigureAwait(false);
             }
@@ -172,7 +173,7 @@ public sealed class Connector<TConnection> : WorkerBase
     {
         public State() : this(TaskSource.New<TConnection>(true).Task) { }
 
-        public void Dispose() 
+        public void Dispose()
         {
             var connectionTask = ConnectionTask;
             if (!connectionTask.IsCompletedSuccessfully())

@@ -19,7 +19,6 @@ public class ReplicatorChannelProcessor : WorkerBase
     protected readonly TimeSpan SendTimeout = TimeSpan.FromSeconds(15);
     protected readonly TimeSpan DisposeTimeout = TimeSpan.FromSeconds(60);
 
-    protected readonly IServiceProvider Services;
     protected IReplicatorImpl ReplicatorImpl => (IReplicatorImpl) Replicator;
     protected readonly HashSet<Symbol> Subscriptions;
     protected int Version;
@@ -32,17 +31,18 @@ public class ReplicatorChannelProcessor : WorkerBase
     public readonly Connector<Channel<BridgeMessage>> Connector;
     public IMomentClock Clock => Connector.Clock;
 
-    public ReplicatorChannelProcessor(IReplicator replicator, Symbol publisherId, IServiceProvider services)
+    public ReplicatorChannelProcessor(IReplicator replicator, Symbol publisherId)
     {
+        var services = replicator.Services;
         Log = services.LogFor(GetType());
-        Services = services;
         Replicator = replicator;
         PublisherId = publisherId;
         Subscriptions = new HashSet<Symbol>();
-        Connector = new Connector<Channel<BridgeMessage>>(Connect, Services) {
+        Connector = new Connector<Channel<BridgeMessage>>(Connect, services.StateFactory()) {
             Connected = OnConnected,
             Disconnected = OnDisconnected,
-            RetryDelays = Replicator.Options.ReconnectDelays,
+            ReconnectDelays = Replicator.Options.ReconnectDelays,
+            Clock = services.Clocks().CpuClock,
             Log = Log,
             LogTag = $"Replicator '{Replicator.Id}' -> Publisher '{PublisherId}'",
             LogLevel = LogLevel.Information,
@@ -51,7 +51,6 @@ public class ReplicatorChannelProcessor : WorkerBase
 
     protected override async Task RunInternal(CancellationToken cancellationToken)
     {
-        Connector.Start();
         var channel = (Channel<BridgeMessage>) null!;
         while (true) {
             try {
