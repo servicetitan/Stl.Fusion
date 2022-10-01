@@ -128,7 +128,11 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
             // Creating MasterDbContext
             CommandContext.Items.Replace<IOperationScope?>(null, this);
             var masterDbContext = DbContextFactory.CreateDbContext(Tenant).ReadWrite();
+#if NET7_0_OR_GREATER
+            masterDbContext.Database.AutoTransactionBehavior = AutoTransactionBehavior.Never;
+#else
             masterDbContext.Database.AutoTransactionsEnabled = false;
+#endif
 #if NET6_0_OR_GREATER
             masterDbContext.Database.AutoSavepointsEnabled = false;
 #endif
@@ -143,7 +147,11 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
             MasterDbContext = masterDbContext;
         }
         // Initializing DbContext, which is going to share MasterDbContext's transaction
+#if NET7_0_OR_GREATER
+        dbContext.Database.AutoTransactionBehavior = AutoTransactionBehavior.Never;
+#else
         dbContext.Database.AutoTransactionsEnabled = false;
+#endif
 #if NET6_0_OR_GREATER
         dbContext.Database.AutoSavepointsEnabled = false;
 #endif
@@ -189,7 +197,11 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
                     // We need a new connection here, since the old one might be broken
                     var verifierDbContext = DbContextFactory.CreateDbContext(Tenant);
                     await using var _1 = verifierDbContext.ConfigureAwait(false);
+#if NET7_0_OR_GREATER
+                    verifierDbContext.Database.AutoTransactionBehavior = AutoTransactionBehavior.WhenNeeded;
+#else
                     verifierDbContext.Database.AutoTransactionsEnabled = true;
+#endif
                     var committedOperation = await DbOperationLog
                         .Get(verifierDbContext, operation.Id, cancellationToken)
                         .ConfigureAwait(false);

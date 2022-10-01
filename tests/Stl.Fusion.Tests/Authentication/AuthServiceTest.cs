@@ -288,7 +288,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         user.Should().NotBeNull();
         user!.Name.Should().Be("John");
 
-#if NET5_0_OR_GREATER
+#if NET5_0_OR_GREATER && !NET7_0_OR_GREATER
         if (Options.DbType != FusionTestDbType.InMemory
             && Options.DbType != FusionTestDbType.MariaDb) {
             await Assert.ThrowsAnyAsync<Exception>(async () => {

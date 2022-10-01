@@ -34,7 +34,7 @@ public class HostedServiceTest
             .Add(new MemoryConfigurationSource {
                 InitialData = new[] {
                     KeyValuePair.Create("TestSettings:Value", "1"),
-                }
+                }!
             })
             .Build();
         var section = cfg.GetSection("TestSettings");

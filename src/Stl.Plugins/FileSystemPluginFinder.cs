@@ -91,10 +91,7 @@ public class FileSystemPluginFinder : CachingPluginFinderBase
                         plugins.Add(type);
                 }
             }
-            catch (FileNotFoundException e) {
-                Log.LogWarning(e, "Assembly load failed: {AssemblyName}", assemblyPath);
-            }
-            catch (FileLoadException e) {
+            catch (Exception e) when (e is TypeLoadException or FileNotFoundException or FileLoadException) {
                 Log.LogWarning(e, "Assembly load failed: {AssemblyName}", assemblyPath);
             }
         }

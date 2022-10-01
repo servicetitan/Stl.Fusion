@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net5.0;netcoreapp3.1;netstandard2.1;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net7.0;net6.0;net5.0;netcoreapp3.1;netstandard2.1;netstandard2.0</TargetFrameworks>
     <PackageTags>servicetitan stl stl_fusion client</PackageTags>
     <Description>Client-side components of Stl.Fusion - <!--
     -->a new implementation of "computed observables" <!--
@@ -19,6 +19,9 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="RestEase" />
+  </ItemGroup>
+  <ItemGroup Condition="!$(TargetFramework.StartsWith('net7'))">
+    <PackageReference Include="Microsoft.Extensions.Http" VersionOverride="$(MicrosoftExtensionsVersion6)" />
   </ItemGroup>
 
 </Project>

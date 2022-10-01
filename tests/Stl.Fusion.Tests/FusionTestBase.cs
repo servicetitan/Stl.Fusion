@@ -54,7 +54,7 @@ public class FusionTestBase : TestBase, IAsyncLifetime
     public string MariaDbConnectionString { get; protected set; } =
         "Server=localhost;Database=stl_fusion_tests;Port=3306;User=root;Password=mariadb";
     public string SqlServerConnectionString { get; protected set; } =
-        "Server=localhost,1433;Database=stl_fusion_tests;MultipleActiveResultSets=True;User Id=sa;Password=SqlServer1";
+        "Server=localhost,1433;Database=stl_fusion_tests;MultipleActiveResultSets=true;TrustServerCertificate=true;User Id=sa;Password=SqlServer1";
     public FusionTestWebHost WebHost { get; }
     public IServiceProvider Services { get; }
     public IServiceProvider WebServices => WebHost.Services;
@@ -159,9 +159,9 @@ public class FusionTestBase : TestBase, IAsyncLifetime
                     // DbLoggerCategory.Update.Name,
                 };
 
-                bool LogFilter(string category, LogLevel level)
+                bool LogFilter(string? category, LogLevel level)
                     => IsLoggingEnabled &&
-                        debugCategories.Any(category.StartsWith)
+                        debugCategories.Any(x => category?.StartsWith(x) ?? false)
                         && level >= LogLevel.Debug;
 
                 logging.ClearProviders();
@@ -228,7 +228,7 @@ public class FusionTestBase : TestBase, IAsyncLifetime
                 default:
                     throw new NotSupportedException();
                 }
-#if NET5_0_OR_GREATER
+#if NET5_0_OR_GREATER && !NET7_0_OR_GREATER
                 if (Options.DbType != FusionTestDbType.InMemory)
                     builder.UseValidationCheckConstraints(c => c.UseRegex(false));
 #endif

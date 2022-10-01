@@ -14,7 +14,7 @@ public class ConfigureAllNamedOptions<TOptions>: IConfigureNamedOptions<TOptions
         _configure = configure;
     }
 
-    public void Configure(string name, TOptions options)
+    public void Configure(string? name, TOptions options)
         => _configure(_services, name, options);
 
     // This won't be called, but is required for the interface

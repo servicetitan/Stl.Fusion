@@ -12,7 +12,7 @@ namespace Stl.Fusion.EntityFramework;
 /// </summary>
 public abstract class DbContextBase : DbContext
 {
-#if NET6_0
+#if NET6_0_OR_GREATER
     private static readonly Func<DbContext, DbContextLease> LeaseGetter;
     private static readonly Func<DbContext, bool, bool> DisposedSetter;
 
@@ -41,7 +41,7 @@ public abstract class DbContextBase : DbContext
     protected DbContextBase() { }
     protected DbContextBase(DbContextOptions options) : base(options) { }
 
-#if NET6_0
+#if NET6_0_OR_GREATER
     public override void Dispose()
     {
 #pragma warning disable EF1001

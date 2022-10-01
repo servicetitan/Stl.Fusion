@@ -40,7 +40,7 @@ public class FusionHttpMessageHandler : DelegatingHandler, IHasServices
         if (psiJson.IsNullOrEmpty())
             throw Fusion.Internal.Errors.NoPublicationStateInfo();
 
-        var psi = JsonConvert.DeserializeObject<PublicationStateInfo>(psiJson)!;
+        var psi = JsonConvert.DeserializeObject<PublicationStateInfo>(psiJson!)!;
         if (response.StatusCode == HttpStatusCode.InternalServerError) {
             // [JsonifyErrors] responds with this status code 
             var error = await DeserializeError(response).ConfigureAwait(false);

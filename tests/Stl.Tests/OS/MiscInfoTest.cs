@@ -1,4 +1,5 @@
 using Stl.OS;
+using Xunit.Sdk;
 
 namespace Stl.Tests.OS;
 
@@ -30,8 +31,14 @@ public class MiscInfoTest : TestBase
     {
         var version = RuntimeInfo.DotNetCore.Version;
         var versionString = RuntimeInfo.DotNetCore.VersionString;
-        if (version == null)
-            versionString.Should().StartWith("6.");
+        if (version == null) {
+            try {
+                versionString.Should().StartWith("6.");
+            }
+            catch (XunitException) {
+                versionString.Should().StartWith("7.");
+            }
+        }
         else
             version.Should().BeGreaterThan(Version.Parse("3.0"));
         WriteLine($".NET Core version: {version}");

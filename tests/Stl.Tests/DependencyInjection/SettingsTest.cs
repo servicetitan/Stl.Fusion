@@ -54,7 +54,7 @@ public class SettingsTest
                     KeyValuePair.Create("YSettings:Value", "2"),
                     KeyValuePair.Create("Z:Value", "3"),
                     KeyValuePair.Create("F:Value", ""),
-                }
+                }!
             })
             .Build();
 

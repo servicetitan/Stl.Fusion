@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net5.0;netcoreapp3.1;netstandard2.1;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net7.0;net6.0;net5.0;netcoreapp3.1;netstandard2.1;netstandard2.0</TargetFrameworks>
     <PackageTags>servicetitan stl stl_fusion</PackageTags>
     <Description>Stl ("ServiceTitan Library") is a collection of <!--
     -->relatively small abstractions or methods we couldn't find in BCL. <!--
@@ -24,14 +24,23 @@
     <PackageReference Include="System.Collections.Immutable" />
     <PackageReference Include="System.Linq.Async" />
     <PackageReference Include="System.Reactive" />
-    <!--    
-    <PackageReference Include="System.Runtime.Experimental" />
-    -->
     <PackageReference Include="System.Threading.Channels" />
     <PackageReference Include="ZString" />
   </ItemGroup>
-  
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+
+  <ItemGroup Condition="!$(TargetFramework.StartsWith('net7'))">
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" VersionOverride="$(MicrosoftExtensionsVersion6)" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" VersionOverride="$(MicrosoftExtensionsVersion6)" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" VersionOverride="$(MicrosoftExtensionsVersion6)" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" VersionOverride="$(MicrosoftExtensionsVersion6)" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" VersionOverride="$(MicrosoftExtensionsVersion6)" />
+    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" VersionOverride="$(MicrosoftExtensionsVersion6)" />
+    <PackageReference Include="System.Collections.Immutable" VersionOverride="$(SystemXxxVersion6)" />
+    <PackageReference Include="System.Linq.Async" VersionOverride="$(SystemXxxVersion6)" />
+    <PackageReference Include="System.Threading.Channels" VersionOverride="$(SystemXxxVersion6)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$(TargetFramework.StartsWith('netstandard2.0'))">
     <PackageReference Include="IndexRange" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
     <PackageReference Include="System.Memory" />

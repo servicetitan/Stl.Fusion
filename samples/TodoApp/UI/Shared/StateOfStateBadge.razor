@@ -31,7 +31,7 @@
     public IState State {
         get => _state;
         set {
-            if (_state == value)
+            if (ReferenceEquals(_state, value))
                 return;
             _state?.RemoveEventHandler(StateEventKind.All, _stateChangedHandler);
             _state = value;

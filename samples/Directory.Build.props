@@ -6,6 +6,6 @@
     <OutputPath>$(SolutionDir)artifacts\samples\$(MSBuildProjectName)</OutputPath>
     <IsPackable>false</IsPackable>
     <IsPublishable>false</IsPublishable>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
   </PropertyGroup>
 </Project>

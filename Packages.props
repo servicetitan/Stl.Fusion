@@ -4,41 +4,56 @@
     <EnablePackageVersionOverrideWithoutCentralVersion>true</EnablePackageVersionOverrideWithoutCentralVersion>
   </PropertyGroup>
 
-  <PropertyGroup Label="ASP.NET Core Versions">
-    <AspNetCoreVersion>6.0.7</AspNetCoreVersion>
+  <PropertyGroup>
+    <!-- Core packages -->
+    <AspNetCoreVersion>7.0.0-rc.*</AspNetCoreVersion>
+    <AspNetCoreVersion6>6.*</AspNetCoreVersion6>
     <AspNetCoreVersion5>5.*</AspNetCoreVersion5>
     <AspNetCoreVersion3>3.*</AspNetCoreVersion3>
-  </PropertyGroup>
-
-  <PropertyGroup Label="EF Core Package Versions">
+    <BlazorVersion>$(AspNetCoreVersion)</BlazorVersion>
+    <BlazorVersion6>$(AspNetCoreVersion6)</BlazorVersion6>
+    <BlazorVersion5>$(AspNetCoreVersion5)</BlazorVersion5>
+    <BlazorVersion3>$(AspNetCoreVersion3)</BlazorVersion3>
+    <SystemXxxVersion>$(AspNetCoreVersion)</SystemXxxVersion>
+    <SystemXxxVersion6>$(AspNetCoreVersion6)</SystemXxxVersion6>
+    <SystemXxxVersion5>$(AspNetCoreVersion5)</SystemXxxVersion5>
+    <MicrosoftExtensionsVersion>$(AspNetCoreVersion)</MicrosoftExtensionsVersion>
+    <MicrosoftExtensionsVersion6>$(AspNetCoreVersion6)</MicrosoftExtensionsVersion6>
+    <!-- EF Core -->
     <EntityFrameworkCoreVersion>$(AspNetCoreVersion)</EntityFrameworkCoreVersion>
+    <EntityFrameworkCoreVersion6>$(AspNetCoreVersion6)</EntityFrameworkCoreVersion6>
     <EntityFrameworkCoreVersion5>$(AspNetCoreVersion5)</EntityFrameworkCoreVersion5>
     <EntityFrameworkCoreVersion3>$(AspNetCoreVersion3)</EntityFrameworkCoreVersion3>
-    <MySqlVersion>2.1.*</MySqlVersion>
-    <MySqlVersion5>$(MySqlVersion)</MySqlVersion5>
+    <MySqlVersion>2.2.0-beta*</MySqlVersion>
+    <MySqlVersion6>2.1.*</MySqlVersion6>
+    <MySqlVersion5>$(MySqlVersion6)</MySqlVersion5>
     <MySqlVersion3>0.*</MySqlVersion3>
-    <NpgsqlVersion>6.0.*</NpgsqlVersion>
+    <NpgsqlVersion>$(EntityFrameworkCoreVersion)</NpgsqlVersion>
+    <NpgsqlVersion6>$(EntityFrameworkCoreVersion6)</NpgsqlVersion6>
     <NpgsqlVersion5>$(EntityFrameworkCoreVersion5)</NpgsqlVersion5>
     <NpgsqlVersion3>$(EntityFrameworkCoreVersion3)</NpgsqlVersion3>
     <EntityFrameworkCoreNpgsqlVersion>$(NpgsqlVersion)</EntityFrameworkCoreNpgsqlVersion>
+    <EntityFrameworkCoreNpgsqlVersion6>$(NpgsqlVersion6)</EntityFrameworkCoreNpgsqlVersion6>
     <EntityFrameworkCoreNpgsqlVersion5>$(NpgsqlVersion5)</EntityFrameworkCoreNpgsqlVersion5>
     <EntityFrameworkCoreNpgsqlVersion3>$(NpgsqlVersion3)</EntityFrameworkCoreNpgsqlVersion3>
-    <EntityFrameworkCoreMySqlVersion>6.0.*</EntityFrameworkCoreMySqlVersion>
-    <EntityFrameworkCoreMySqlVersion5>5.*</EntityFrameworkCoreMySqlVersion5>
-    <EntityFrameworkCoreMySqlVersion3>3.*</EntityFrameworkCoreMySqlVersion3>
-  </PropertyGroup>
-
-  <PropertyGroup Label="Blazor-related Package Versions">
-    <BlazorVersion>$(AspNetCoreVersion)</BlazorVersion>
-    <BlazorVersion5>$(AspNetCoreVersion5)</BlazorVersion5>
-    <BlazorVersion3>$(AspNetCoreVersion3)</BlazorVersion3>
-    <BlazoriseVersion>1.0.*</BlazoriseVersion>
-  </PropertyGroup>
-
-  <PropertyGroup>
+    <EntityFrameworkCoreMySqlVersion>$(AspNetCoreVersion6)</EntityFrameworkCoreMySqlVersion>
+    <EntityFrameworkCoreMySqlVersion6>$(AspNetCoreVersion6)</EntityFrameworkCoreMySqlVersion6>
+    <EntityFrameworkCoreMySqlVersion5>$(AspNetCoreVersion5)</EntityFrameworkCoreMySqlVersion5>
+    <EntityFrameworkCoreMySqlVersion3>$(AspNetCoreVersion3)</EntityFrameworkCoreMySqlVersion3>
+    <!-- Serialization -->
+    <NewtonsoftJsonVersion>13.0.*</NewtonsoftJsonVersion>
     <MessagePackVersion>2.4.*</MessagePackVersion>
-    <MicrosoftExtensionsVersion>6.0.*</MicrosoftExtensionsVersion>
-    <StlFusionVersion>3.8.*</StlFusionVersion>
+    <AspNetCoreNewtonsoftJsonVersion>$(AspNetCoreVersion)</AspNetCoreNewtonsoftJsonVersion>
+    <AspNetCoreNewtonsoftJsonVersion6>$(AspNetCoreVersion6)</AspNetCoreNewtonsoftJsonVersion6>
+    <!-- Testing -->
+    <AspNetCoreMvcTestingVersion>$(AspNetCoreVersion6)</AspNetCoreMvcTestingVersion>
+    <AspNetCoreMvcTestingVersion6>$(AspNetCoreVersion6)</AspNetCoreMvcTestingVersion6>
+    <AspNetCoreMvcTestingVersion5>$(AspNetCoreVersion5)</AspNetCoreMvcTestingVersion5>
+    <AspNetCoreMvcTestingVersion3>$(AspNetCoreVersion3)</AspNetCoreMvcTestingVersion3>
+    <AspNetCoreMvcTestingVersionN4>$(AspNetCoreVersion5)</AspNetCoreMvcTestingVersionN4>
+    <!-- Build & Samples -->
+    <BlazoriseVersion>1.1.*</BlazoriseVersion>
+    <StlFusionVersion>3.9.*</StlFusionVersion>
   </PropertyGroup>
 
   <ItemGroup Label="Package Versions">
@@ -52,7 +67,7 @@
     <PackageReference Update="Castle.Core" Version="5.1.*" />
     <PackageReference Update="CliWrap" Version="3.5.*" />
     <PackageReference Update="DataAnnotationsValidatorNetStandard" Version="1.0.*" />
-    <PackageReference Update="EFCore.CheckConstraints" Version="6.0.*" />
+    <PackageReference Update="EFCore.CheckConstraints" Version="$(EntityFrameworkCoreVersion6)" />
     <PackageReference Update="Enums.NET" Version="4.0.*" />
     <PackageReference Update="MessagePack" Version="$(MessagePackVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Authentication.Cookies" Version="2.2.*" />
@@ -64,7 +79,7 @@
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly" Version="$(BlazorVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="$(BlazorVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="$(AspNetCoreVersion)" />
-    <PackageReference Update="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="$(AspNetCoreVersion)" />
+    <PackageReference Update="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="$(AspNetCoreNewtonsoftJsonVersion)" />
     <PackageReference Update="Microsoft.CSharp" Version="4.*" />
     <PackageReference Update="Microsoft.Data.SqlClient" Version="5.0.*" />
     <PackageReference Update="Microsoft.Extensions.Caching.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
@@ -79,7 +94,9 @@
     <PackageReference Update="Microsoft.Extensions.Logging.Console" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.Extensions.Logging.Debug" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.Extensions.Logging.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
+    <PackageReference Update="Microsoft.Extensions.Options" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.Extensions.Options.DataAnnotations" Version="$(MicrosoftExtensionsVersion)" />
+    <PackageReference Update="Microsoft.Extensions.Primitives" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.EntityFrameworkCore" Version="$(EntityFrameworkCoreVersion)" />
     <PackageReference Update="Microsoft.EntityFrameworkCore.Abstractions" Version="$(EntityFrameworkCoreVersion)" />
     <PackageReference Update="Microsoft.EntityFrameworkCore.InMemory" Version="$(EntityFrameworkCoreVersion)" />
@@ -92,27 +109,27 @@
     <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="$(EntityFrameworkCoreNpgsqlVersion)" />
     <PackageReference Update="Microsoft.Identity.Web" Version="1.25.*" />
     <PackageReference Update="MsgPack.Cli" Version="1.0.*" />
-    <PackageReference Update="Newtonsoft.Json" Version="13.0.*" />
+    <PackageReference Update="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
     <PackageReference Update="Pluralize.NET" Version="1.0.*" />
     <PackageReference Update="Pomelo.EntityFrameworkCore.MySql" Version="$(EntityFrameworkCoreMySqlVersion)" />
     <PackageReference Update="RestEase" Version="1.5.*" />
     <PackageReference Update="StackExchange.Redis" Version="2.6.*" />
     <PackageReference Update="Swashbuckle.AspNetCore" Version="6.4.0" />
-    <PackageReference Update="System.Collections.Immutable" Version="6.0.*" />
-    <PackageReference Update="System.Configuration.ConfigurationManager" Version="6.0.*" />
+    <PackageReference Update="System.Collections.Immutable" Version="$(SystemXxxVersion)" />
+    <PackageReference Update="System.Configuration.ConfigurationManager" Version="$(SystemXxxVersion)" />
     <PackageReference Update="System.CommandLine" Version="2.0.0-beta4.22272.1" />
     <PackageReference Update="System.CommandLine.DragonFruit" Version="0.3.0-alpha.21216.1" />
-    <PackageReference Update="System.Drawing.Common" Version="6.0.*" />
+    <PackageReference Update="System.Diagnostics.Common" Version="$(SystemXxxVersion)" />
+    <PackageReference Update="System.Drawing.Common" Version="$(SystemXxxVersion)" />
     <PackageReference Update="System.IO.Abstractions" Version="17.2.3" />
-    <PackageReference Update="System.Linq.Async" Version="6.0.*" />
-    <PackageReference Update="System.Net.Http.Json" Version="6.0.*" />
+    <PackageReference Update="System.Linq.Async" Version="$(SystemXxxVersion6)" />
+    <PackageReference Update="System.Net.Http.Json" Version="$(SystemXxxVersion)" />
     <PackageReference Update="System.Net.WebSockets" Version="4.3.*" />
     <PackageReference Update="System.Net.WebSockets.Client" Version="4.3.*" />
     <PackageReference Update="System.Reactive" Version="5.0.*" />
     <PackageReference Update="System.Runtime.Loader" Version="4.3.*" />
-    <PackageReference Update="System.Runtime.Experimental" Version="$(AspNetCoreVersion)" />
-    <PackageReference Update="System.Text.Json" Version="6.0.*" />
-    <PackageReference Update="System.Threading.Channels" Version="6.0.*" />
+    <PackageReference Update="System.Text.Json" Version="$(SystemXxxVersion)" />
+    <PackageReference Update="System.Threading.Channels" Version="$(SystemXxxVersion)" />
     <PackageReference Update="UAParser" Version="3.1.*" />
     <PackageReference Update="Ulid" Version="1.2.*" />
     <PackageReference Update="ZString" Version="2.4.*" />
@@ -132,7 +149,7 @@
     <PackageReference Update="coverlet.collector" Version="3.1.2" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
     <PackageReference Update="FluentAssertions" Version="6.7.*" />
     <PackageReference Update="ILogger.Moq" Version="1.1.*" />
-    <PackageReference Update="Microsoft.AspNetCore.Mvc.Testing" Version="$(AspNetCoreVersion)" />
+    <PackageReference Update="Microsoft.AspNetCore.Mvc.Testing" Version="$(AspNetCoreMvcTestingVersion)" />
     <PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.3.2" />
     <PackageReference Update="Moq" Version="4.18.*" />
     <PackageReference Update="xunit" Version="2.4.2" />

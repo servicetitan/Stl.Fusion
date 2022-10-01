@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net5.0;netcoreapp3.1;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net7.0;net6.0;net5.0;netcoreapp3.1;netstandard2.1</TargetFrameworks>
     <RazorLangVersion>3.0</RazorLangVersion>
     <PackageTags>servicetitan stl stl_fusion blazor</PackageTags>
     <Description>Blazor components of Stl.Fusion - <!--
@@ -18,14 +18,20 @@
     <ScopedCssEnabled>false</ScopedCssEnabled>
     <NoWarn>$(NoWarn);NU5118</NoWarn>
   </PropertyGroup>
-  <Target Name="PrepareProjectReferences"></Target>
+  <Target Name="PrepareProjectReferences"/>
   <!-- </workaround for https://github.com/dotnet/aspnetcore/issues/30427 > -->
 
-  <ItemGroup Condition="$(TargetFramework.StartsWith('net6'))">
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+  </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net6'))">
+    <PackageReference Include="Microsoft.AspNetCore.Components" VersionOverride="$(BlazorVersion6)" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" VersionOverride="$(BlazorVersion6)" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" VersionOverride="$(BlazorVersion6)" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" VersionOverride="$(BlazorVersion6)" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('net5'))">
     <PackageReference Include="Microsoft.AspNetCore.Components" VersionOverride="$(BlazorVersion5)" />

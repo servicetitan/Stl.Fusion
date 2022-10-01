@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net5.0;netcoreapp3.1;netstandard2.1;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net7.0;net6.0;net5.0;netcoreapp3.1;netstandard2.1;netstandard2.0</TargetFrameworks>
     <PackageTags>servicetitan stl stl_fusion blazor knockout mobx</PackageTags>
     <Description>Core components of Stl.Fusion - <!--
     -->a new implementation of "computed observables" <!--
@@ -12,6 +12,9 @@
 
   <ItemGroup>
     <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
+  <ItemGroup Condition="!$(TargetFramework.StartsWith('net7'))">
+    <PackageReference Include="System.Text.Json" VersionOverride="$(SystemXxxVersion6)" />
   </ItemGroup>
 
   <ItemGroup>

@@ -66,7 +66,9 @@ public abstract class TestWebHostBase : ITestWebHost
         // ReSharper disable once HeapView.BoxingAllocation
         return AsyncDisposable.New(async self => {
             var host1 = self.Host;
-            await host1.StopAsync().SuppressExceptions().ConfigureAwait(false);
+            // 100ms for graceful shutdown 
+            using var cts = new CancellationTokenSource(100);
+            await host1.StopAsync(cts.Token).SuppressExceptions().ConfigureAwait(false);
             if (disposeOnStop)
                 _ = Task.Run(() => host1.Dispose());
             self.HostLazy = new Lazy<IHost>(CreateHost);
