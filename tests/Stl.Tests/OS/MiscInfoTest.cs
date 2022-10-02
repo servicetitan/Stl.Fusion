@@ -32,12 +32,13 @@ public class MiscInfoTest : TestBase
         var version = RuntimeInfo.DotNetCore.Version;
         var versionString = RuntimeInfo.DotNetCore.VersionString;
         if (version == null) {
-            try {
-                versionString.Should().StartWith("6.");
-            }
-            catch (XunitException) {
-                versionString.Should().StartWith("7.");
-            }
+#if NET7_0
+        versionString.Should().StartWith("7.");
+#elif NET6_0
+        versionString.Should().StartWith("6.");
+#elif NET5_0
+        versionString.Should().StartWith("5.");
+#endif
         }
         else
             version.Should().BeGreaterThan(Version.Parse("3.0"));

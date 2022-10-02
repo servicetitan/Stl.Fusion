@@ -13,7 +13,7 @@ public class ActivitySourceTest : TestBase
         Out.WriteLine(a.Name);
         Out.WriteLine(a.Version);
         a.Name.Should().Be("Stl");
-        a.Version.Should().StartWith("3.");
+        a.Version.Should().StartWith("4.");
         a.Version.Should().Contain("+");
 
         var b = typeof(Result).GetActivitySource();
