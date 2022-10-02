@@ -25,8 +25,8 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: "6.0.x"
-          include-prerelease: false
+          dotnet-version: "7.0.x"
+          include-prerelease: true
 
       - name: Install WASM tools
         run: dotnet workload install wasm-tools
@@ -35,10 +35,10 @@ jobs:
         run: dotnet run --project build -c Release --no-launch-profile -- restore restore-tools
 
       - name: Build
-        run: dotnet run --project build -c Release --no-launch-profile -- --configuration Debug --framework net6.0 build
+        run: dotnet run --project build -c Release --no-launch-profile -- --configuration Debug --framework net7.0 build
 
       - name: Run tests
-        run: dotnet run --project build -c Release --no-launch-profile -- --configuration Debug --framework net6.0 coverage
+        run: dotnet run --project build -c Release --no-launch-profile -- --configuration Debug --framework net7.0 coverage
 
       - name: Codecov
         uses: codecov/codecov-action@v1.0.13
