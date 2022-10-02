@@ -28,7 +28,7 @@ public class AppV4 : AppBase
                 cfg.Sources.Insert(0, new MemoryConfigurationSource() {
                     InitialData = new Dictionary<string, string>() {
                         { WebHostDefaults.ServerUrlsKey, baseUri.ToString() },
-                    }
+                    }!
                 });
             })
             .ConfigureWebHostDefaults(webHost => webHost
