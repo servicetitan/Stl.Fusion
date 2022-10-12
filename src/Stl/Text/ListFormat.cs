@@ -24,14 +24,14 @@ public readonly struct ListFormat
     public ListFormatter CreateFormatter(ref Utf16ValueStringBuilder output, int itemIndex = 0)
         => new(this, output, false, itemIndex);
 
-    public ListParser CreateParser(in string source, int itemIndex = 0)
+    public ListParser CreateParser(string source, int itemIndex = 0)
         => CreateParser(source.AsSpan(), itemIndex);
-    public ListParser CreateParser(in string source, ref Utf16ValueStringBuilder item, int itemIndex = 0)
+    public ListParser CreateParser(string source, ref Utf16ValueStringBuilder item, int itemIndex = 0)
         => CreateParser(source.AsSpan(), ref item, itemIndex);
 
-    public ListParser CreateParser(in ReadOnlySpan<char> source, int itemIndex = 0)
+    public ListParser CreateParser(ReadOnlySpan<char> source, int itemIndex = 0)
         => new(this, source, ZString.CreateStringBuilder(), true, itemIndex);
-    public ListParser CreateParser(in ReadOnlySpan<char> source, ref Utf16ValueStringBuilder item, int itemIndex = 0)
+    public ListParser CreateParser(ReadOnlySpan<char> source, ref Utf16ValueStringBuilder item, int itemIndex = 0)
         => new(this, source, item, false, itemIndex);
 
     public string Format(params string[] source)
