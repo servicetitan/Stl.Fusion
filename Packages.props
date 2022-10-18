@@ -24,7 +24,7 @@
     <EntityFrameworkCoreVersion6>$(AspNetCoreVersion6)</EntityFrameworkCoreVersion6>
     <EntityFrameworkCoreVersion5>$(AspNetCoreVersion5)</EntityFrameworkCoreVersion5>
     <EntityFrameworkCoreVersion3>$(AspNetCoreVersion3)</EntityFrameworkCoreVersion3>
-    <MySqlVersion>2.2.0-beta*</MySqlVersion>
+    <MySqlVersion>2.2.0.pre</MySqlVersion>
     <MySqlVersion6>2.1.*</MySqlVersion6>
     <MySqlVersion5>$(MySqlVersion6)</MySqlVersion5>
     <MySqlVersion3>0.*</MySqlVersion3>
