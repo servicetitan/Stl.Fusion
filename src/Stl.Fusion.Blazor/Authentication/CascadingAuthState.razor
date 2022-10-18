@@ -8,7 +8,7 @@
 @implements IDisposable
 @inject Session Session
 @inject AuthStateProvider AuthStateProvider
-@inject PresenceService PresenceService
+@inject PresenceReporter PresenceReporter
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
@@ -30,7 +30,7 @@
         AuthStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
         OnAuthenticationStateChanged(AuthStateProvider.GetAuthenticationStateAsync());
         if (StartPresenceService)
-            PresenceService.Start();
+            PresenceReporter.Start();
     }
 
     void IDisposable.Dispose()
