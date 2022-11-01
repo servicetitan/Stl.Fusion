@@ -15,7 +15,7 @@ jobs:
           # Avoid shallow clone for Nerdbank.GitVersioning
           fetch-depth: 0
 
-      - uses: dotnet/nbgv@main
+      - uses: dotnet/nbgv@master
         id: nbgv
         with:
           setAllVars: true
