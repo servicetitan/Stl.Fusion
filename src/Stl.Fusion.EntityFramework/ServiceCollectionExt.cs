@@ -11,6 +11,6 @@ public static class ServiceCollectionExt
     public static IServiceCollection AddDbContextServices<TDbContext>(
         this IServiceCollection services,
         Action<DbContextBuilder<TDbContext>> configure)
-        where TDbContext : DbContext 
+        where TDbContext : DbContext
         => new DbContextBuilder<TDbContext>(services, configure).Services;
 }
