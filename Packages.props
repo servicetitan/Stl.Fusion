@@ -112,7 +112,7 @@
     <PackageReference Update="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
     <PackageReference Update="Pluralize.NET" Version="1.0.*" />
     <PackageReference Update="Pomelo.EntityFrameworkCore.MySql" Version="$(EntityFrameworkCoreMySqlVersion)" />
-    <PackageReference Update="RestEase" Version="1.5.*" />
+    <PackageReference Update="RestEase" Version="1.6.*" />
     <PackageReference Update="StackExchange.Redis" Version="2.6.*" />
     <PackageReference Update="Swashbuckle.AspNetCore" Version="6.4.0" />
     <PackageReference Update="System.Collections.Immutable" Version="$(SystemXxxVersion)" />
