@@ -32,7 +32,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" VersionOverride="$(EntityFrameworkCoreVersion6)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" VersionOverride="$(EntityFrameworkCoreVersion6)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" VersionOverride="$(EntityFrameworkCoreVersion6)" />
-    <PackageReference Include="MySqlConnector" VersionOverride="$(MySqlVersion6)" />
+    <PackageReference Include="MySqlConnector" VersionOverride="$(MySqlConnectorVersion6)" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" VersionOverride="$(EntityFrameworkCoreMySqlVersion6)" />
     <PackageReference Include="System.Drawing.Common" VersionOverride="$(SystemXxxVersion6)" />
   </ItemGroup>
@@ -41,7 +41,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" VersionOverride="$(EntityFrameworkCoreVersion5)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" VersionOverride="$(EntityFrameworkCoreVersion5)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" VersionOverride="$(EntityFrameworkCoreVersion5)" />
-    <PackageReference Include="MySqlConnector" VersionOverride="$(MySqlVersion5)" />
+    <PackageReference Include="MySqlConnector" VersionOverride="$(MySqlConnectorVersion5)" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" VersionOverride="$(EntityFrameworkCoreMySqlVersion5)" />
     <PackageReference Include="System.Drawing.Common" VersionOverride="$(SystemXxxVersion5)" />
   </ItemGroup>
@@ -50,7 +50,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" VersionOverride="$(EntityFrameworkCoreVersion3)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" VersionOverride="$(EntityFrameworkCoreVersion3)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" VersionOverride="$(EntityFrameworkCoreVersion3)" />
-    <PackageReference Include="MySqlConnector" VersionOverride="$(MySqlVersion3)" />
+    <PackageReference Include="MySqlConnector" VersionOverride="$(MySqlConnectorVersion3)" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" VersionOverride="$(EntityFrameworkCoreMySqlVersion3)" />
     <PackageReference Include="System.Drawing.Common" VersionOverride="$(SystemXxxVersion5)" />
   </ItemGroup>
