@@ -31,6 +31,7 @@ using Stl.Fusion.Server.Controllers;
 using Stl.Generators;
 using Stl.IO;
 using Stl.Multitenancy;
+using Stl.OS;
 using Templates.TodoApp.Abstractions;
 using Templates.TodoApp.UI;
 
@@ -229,10 +230,11 @@ public class Startup
         // and set it as this server's content root.
         var baseDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "";
         var wwwRootPath = Path.Combine(baseDir, "wwwroot");
+        var dotNetDir = $"net{RuntimeInfo.DotNetCore.Version?.Major ?? 7}.0";
         if (!Directory.Exists(Path.Combine(wwwRootPath, "_framework")))
             // This is a regular build, not a build produced w/ "publish",
             // so we remap wwwroot to the client's wwwroot folder
-            wwwRootPath = Path.GetFullPath(Path.Combine(baseDir, "../../UI/net6.0/wwwroot"));
+            wwwRootPath = Path.GetFullPath(Path.Combine(baseDir, $"../../UI/{dotNetDir}/wwwroot"));
         Env.WebRootPath = wwwRootPath;
         Env.WebRootFileProvider = new PhysicalFileProvider(Env.WebRootPath);
         StaticWebAssetsLoader.UseStaticWebAssets(Env, Cfg);
