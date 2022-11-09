@@ -26,10 +26,12 @@ public class ComponentFor : ComponentBase
         if (Type == null)
             return;
         var i = 0;
+#pragma warning disable MA0123
         builder.OpenComponent(i++, Type);
         if (Attributes != null)
             foreach (var (key, value) in Attributes)
                 builder.AddAttribute(i++, key, value);
         builder.CloseComponent();
+#pragma warning restore MA0123
     }
 }

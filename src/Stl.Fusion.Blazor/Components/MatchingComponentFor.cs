@@ -70,6 +70,7 @@ public class MatchingComponentFor : ComponentBase
         }
 
         var i = 0;
+#pragma warning disable MA0123
         builder.OpenComponent(i++, componentType);
         if (!SourceParameterName.IsNullOrEmpty())
             builder.AddAttribute(i++, SourceParameterName, Source);
@@ -77,5 +78,6 @@ public class MatchingComponentFor : ComponentBase
             foreach (var (key, value) in Attributes)
                 builder.AddAttribute(i++, key, value);
         builder.CloseComponent();
+#pragma warning restore MA0123
     }
 }
