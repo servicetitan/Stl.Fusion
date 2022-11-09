@@ -41,6 +41,4 @@ public static class EnumerableCompatExt
     }
 
 #endif
-
 }
-

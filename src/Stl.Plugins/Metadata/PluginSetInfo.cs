@@ -55,7 +55,7 @@ public class PluginSetInfo
             return result;
         }
 
-#if NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK
         var hAssemblies = EnumerableCompatExt.ToHashSet(ci.Plugins.Select(t => t.Assembly));
 #else
         var hAssemblies = ci.Plugins.Select(t => t.Assembly).ToHashSet();
@@ -63,7 +63,7 @@ public class PluginSetInfo
         ci.AllAssemblyRefs = hAssemblies
             .Select(a => (
                 Assembly: a,
-#if NETFRAMEWORK
+#if NETSTANDARD2_0 || NETFRAMEWORK
                 Refs: EnumerableCompatExt.ToHashSet(
                     GetAllDependencies(a)
                         .Where(a => hAssemblies.Contains(a)))
