@@ -71,6 +71,7 @@ public class ClientTimeServiceTest : FusionTestBase
         for (int i = 0; i < 20; i++) {
             var time = await service.GetTime();
             var formatted = await service.GetFormattedTime(format);
+            // ReSharper disable once HeapView.BoxingAllocation
             var expected = string.Format(format, time);
             if (formatted == expected)
                 matchCount++;
