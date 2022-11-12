@@ -9,8 +9,8 @@ public static class OperationExt
     {
         var nestedCommands = operation.Items.Get<ImmutableList<NestedCommandEntry>>();
         operation.Items.Remove<ImmutableList<NestedCommandEntry>>();
-        return Disposable.NewClosed((operation, nestedCommands), state => {
-            state.operation.Items.Set(state.nestedCommands);
-        });
+        return Disposable.NewClosed(
+            (operation, nestedCommands),
+            state => state.operation.Items.Set(state.nestedCommands));
     }
 }

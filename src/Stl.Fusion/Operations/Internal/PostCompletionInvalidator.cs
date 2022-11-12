@@ -69,7 +69,7 @@ public class PostCompletionInvalidator : ICommandHandler<ICompletion>
 
             var operationItems = operation.Items;
             try {
-                var nestedCommands = operationItems.Get(ImmutableList<NestedCommandEntry>.Empty);
+                var nestedCommands = operationItems.GetOrDefault(ImmutableList<NestedCommandEntry>.Empty);
                 if (!nestedCommands.IsEmpty)
                     await InvokeNestedCommands(context, operation, nestedCommands, cancellationToken).ConfigureAwait(false);
             }
@@ -109,7 +109,7 @@ public class PostCompletionInvalidator : ICommandHandler<ICompletion>
                 operation.Items = items;
                 await context.Commander.Call(command, cancellationToken).ConfigureAwait(false);
             }
-            var subcommands = items.Get(ImmutableList<NestedCommandEntry>.Empty);
+            var subcommands = items.GetOrDefault(ImmutableList<NestedCommandEntry>.Empty);
             if (!subcommands.IsEmpty)
                 await InvokeNestedCommands(context, operation, subcommands, cancellationToken).ConfigureAwait(false);
         }

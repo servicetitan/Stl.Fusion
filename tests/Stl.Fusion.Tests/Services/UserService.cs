@@ -106,7 +106,7 @@ public class UserService : DbServiceBase<TestDbContext>, IUserService
         var user = command.User;
         var context = CommandContext.GetCurrent();
         if (Computed.IsInvalidating()) {
-            var success = context.Operation().Items.Get<bool>();
+            var success = context.Operation().Items.GetOrDefault<bool>();
             if (success) {
                 _ = Get(user.Id, default).AssertCompleted();
                 _ = Count(default).AssertCompleted();

@@ -2,7 +2,7 @@ namespace Stl.CommandR.Internal;
 
 // This interface just lists all the methods CommandContext has;
 // you should always use CommandContext instead of it.
-internal interface ICommandContext : IHasServices
+internal interface ICommandContext : IHasServices, IRequirementTarget
 {
     ICommander Commander { get; }
     ICommand UntypedCommand { get; }

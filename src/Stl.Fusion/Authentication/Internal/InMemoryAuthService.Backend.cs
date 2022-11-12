@@ -85,7 +85,7 @@ public partial class InMemoryAuthService
 
         if (Computed.IsInvalidating()) {
             _ = GetSessionInfo(session, default); // Must go first!
-            var invIsNew = context.Operation().Items.Get<bool>();
+            var invIsNew = context.Operation().Items.GetOrDefault<bool>();
             if (invIsNew) {
                 _ = GetAuthInfo(session, default);
                 _ = GetOptions(session, default);

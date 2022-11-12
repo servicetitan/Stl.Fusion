@@ -1,6 +1,6 @@
 namespace Stl.Fusion.Operations;
 
-public interface IOperationScope : IAsyncDisposable
+public interface IOperationScope : IAsyncDisposable, IRequirementTarget
 {
     IOperation Operation { get; }
     CommandContext CommandContext { get; }

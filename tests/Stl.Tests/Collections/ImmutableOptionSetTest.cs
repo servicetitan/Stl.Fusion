@@ -12,21 +12,21 @@ public class ImmutableOptionSetTest
         options = options.Set("A");
         options = options.PassThroughAllSerializers();
         options.Get<string>().Should().Be("A");
-        options.Get("").Should().Be("A");
+        options.GetOrDefault("").Should().Be("A");
         options.GetRequiredService<string>().Should().Be("A");
         options.Items.Count.Should().Be(1);
 
         options = options.Set("B");
         options = options.PassThroughAllSerializers();
         options.Get<string>().Should().Be("B");
-        options.Get("").Should().Be("B");
+        options.GetOrDefault("").Should().Be("B");
         options.GetRequiredService<string>().Should().Be("B");
         options.Items.Count.Should().Be(1);
 
         options = options.Remove<string>();
         options = options.PassThroughAllSerializers();
         options.Get<string>().Should().BeNull();
-        options.Get("").Should().Be("");
+        options.GetOrDefault("").Should().Be("");
         options.GetService<string>().Should().Be(null);
         options.Items.Count.Should().Be(0);
     }
@@ -43,22 +43,22 @@ public class ImmutableOptionSetTest
 
         options = options.Set(1L);
         options = options.PassThroughAllSerializers();
-        options.Get<long>().Should().Be(1L);
-        options.Get(-1L).Should().Be(1L);
+        options.GetOrDefault<long>().Should().Be(1L);
+        options.GetOrDefault(-1L).Should().Be(1L);
         options.GetRequiredService<long>().Should().Be(1L);
         options.Items.Count.Should().Be(1);
 
         options = options.Set(2L);
         options = options.PassThroughAllSerializers();
-        options.Get<long>().Should().Be(2L);
-        options.Get(-1L).Should().Be(2L);
+        options.GetOrDefault<long>().Should().Be(2L);
+        options.GetOrDefault(-1L).Should().Be(2L);
         options.GetRequiredService<long>().Should().Be(2L);
         options.Items.Count.Should().Be(1);
 
         options = options.Remove<long>();
         options = options.PassThroughAllSerializers();
-        options.Get<long>().Should().Be(0L);
-        options.Get(-1L).Should().Be(-1L);
+        options.GetOrDefault<long>().Should().Be(0L);
+        options.GetOrDefault(-1L).Should().Be(-1L);
         options.Items.Count.Should().Be(0);
     }
 
@@ -69,7 +69,7 @@ public class ImmutableOptionSetTest
         var copy = new ImmutableOptionSet().SetMany(options);
 
         copy.Items.Count.Should().Be(2);
-        copy.Get<long>().Should().Be(1L);
+        copy.GetOrDefault<long>().Should().Be(1L);
         copy.Get<string>().Should().Be("A");
     }
 

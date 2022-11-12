@@ -54,10 +54,17 @@ public readonly struct ImmutableOptionSet : IServiceProvider, IEquatable<Immutab
         return true;
     }
 
-    public T Get<T>(T @default = default!)
+    public T? Get<T>()
+        where T : class
     {
         var value = this[typeof(T)];
-        return value == null ? @default : (T) value;
+        return (T?) value;
+    }
+
+    public T GetOrDefault<T>(T @default = default!)
+    {
+        var value = this[typeof(T)];
+        return value != null ? (T) value : @default;
     }
 
     // ReSharper disable once HeapView.PossibleBoxingAllocation

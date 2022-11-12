@@ -29,14 +29,12 @@ public class DbHub<TDbContext>
     public IsolationLevel CommandIsolationLevel {
         get {
             var commandContext = CommandContext.GetCurrent();
-            var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>()
-                ?? throw new KeyNotFoundException();
+            var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>().Require();
             return operationScope.IsolationLevel;
         }
         set {
             var commandContext = CommandContext.GetCurrent();
-            var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>()
-                ?? throw new KeyNotFoundException();
+            var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>().Require();
             operationScope.IsolationLevel = value;
         }
     }
@@ -66,8 +64,7 @@ public class DbHub<TDbContext>
             throw Errors.CreateCommandDbContextIsCalledFromInvalidationCode();
 
         var commandContext = CommandContext.GetCurrent();
-        var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>()
-            ?? throw new KeyNotFoundException();
+        var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>().Require();
         var dbContext = CreateDbContext(tenant, readWrite: true);
         ExecutionStrategyExt.Suspend(dbContext);
         return InitializeDbContext();

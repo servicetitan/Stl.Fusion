@@ -52,7 +52,7 @@ public class NestedCommandLogger : ICommandHandler<ICommand>
                     commandItems = newOperation.Items;
                     newOperation.Items = operationItems = new OptionSet();
                 }
-                var nestedCommands = operationItems.Get(ImmutableList<NestedCommandEntry>.Empty);
+                var nestedCommands = operationItems.GetOrDefault(ImmutableList<NestedCommandEntry>.Empty);
                 nestedCommands = nestedCommands.Add(new NestedCommandEntry(command, commandItems));
                 operationItems.Set(nestedCommands);
             }

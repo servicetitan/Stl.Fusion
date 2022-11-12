@@ -1,6 +1,6 @@
 namespace Stl.Fusion.Operations;
 
-public interface IOperation
+public interface IOperation : IRequirementTarget
 {
     string Id { get; set; }
     string AgentId { get; set; }
