@@ -90,22 +90,24 @@ public class ServerAuthHelper : IHasServices
             || !StringComparer.Ordinal.Equals(sessionInfo.UserAgent, userAgent)
             || sessionInfo.LastSeenAt + Settings.SessionInfoUpdatePeriod < Clocks.SystemClock.Now;
         if (mustSetupSession)
-            await SetupSession(session, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
+            sessionInfo = await SetupSession(session, sessionInfo, ipAddress, userAgent, cancellationToken)
+                .ConfigureAwait(false);
 
-        var user = await GetUser(session, cancellationToken).ConfigureAwait(false);
+        var user = await GetUser(session, sessionInfo, cancellationToken).ConfigureAwait(false);
         try {
             if (httpIsAuthenticated) {
                 if (IsSameUser(user, httpUser, httpAuthenticationSchema))
                     return;
-                await SignIn(session, user, httpUser, httpAuthenticationSchema, cancellationToken).ConfigureAwait(false);
+                await SignIn(session, sessionInfo, user, httpUser, httpAuthenticationSchema, cancellationToken)
+                    .ConfigureAwait(false);
             }
             else if (user != null && !Settings.KeepSignedIn) {
-                await SignOut(session, cancellationToken).ConfigureAwait(false);
+                await SignOut(session, sessionInfo, cancellationToken).ConfigureAwait(false);
             }
         }
         finally {
             // This should be done once important things are completed
-            await UpdatePresence(session).ConfigureAwait(false);
+            await UpdatePresence(session, sessionInfo, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -124,11 +126,13 @@ public class ServerAuthHelper : IHasServices
     protected virtual Task<SessionInfo?> GetSessionInfo(Session session, CancellationToken cancellationToken)
         => Auth.GetSessionInfo(session, cancellationToken);
 
-    protected virtual Task<User?> GetUser(Session session, CancellationToken cancellationToken)
+    protected virtual Task<User?> GetUser(
+        Session session, SessionInfo sessionInfo,
+        CancellationToken cancellationToken)
         => Auth.GetUser(session, cancellationToken);
 
-    protected virtual Task SetupSession(
-        Session session, string ipAddress, string userAgent,
+    protected virtual Task<SessionInfo> SetupSession(
+        Session session, SessionInfo? sessionInfo, string ipAddress, string userAgent,
         CancellationToken cancellationToken)
     {
         var setupSessionCommand = new SetupSessionCommand(session, ipAddress, userAgent);
@@ -136,7 +140,8 @@ public class ServerAuthHelper : IHasServices
     }
 
     protected virtual Task SignIn(
-        Session session, User? user, ClaimsPrincipal httpUser, string httpAuthenticationSchema,
+        Session session, SessionInfo sessionInfo,
+        User? user, ClaimsPrincipal httpUser, string httpAuthenticationSchema,
         CancellationToken cancellationToken)
     {
         var (newUser, authenticatedIdentity) = CreateOrUpdateUser(user, httpUser, httpAuthenticationSchema);
@@ -144,15 +149,19 @@ public class ServerAuthHelper : IHasServices
         return Commander.Call(signInCommand, true, cancellationToken);
     }
 
-    protected virtual Task SignOut(Session session, CancellationToken cancellationToken)
+    protected virtual Task SignOut(
+        Session session, SessionInfo sessionInfo,
+        CancellationToken cancellationToken)
     {
         var signOutCommand = new SignOutCommand(session);
         return Commander.Call(signOutCommand, true, cancellationToken);
     }
 
-    protected virtual Task UpdatePresence(Session session)
+    protected virtual Task UpdatePresence(
+        Session session, SessionInfo sessionInfo,
+        CancellationToken cancellationToken)
     {
-        _ = Task.Run(() => Auth.UpdatePresence(session, default), default);
+        _ = Task.Run(() => Auth.UpdatePresence(session, CancellationToken.None), CancellationToken.None);
         return Task.CompletedTask;
     }
 
