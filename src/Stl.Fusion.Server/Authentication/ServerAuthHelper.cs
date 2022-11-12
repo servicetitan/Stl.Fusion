@@ -89,7 +89,7 @@ public class ServerAuthHelper : IHasServices
             || !StringComparer.Ordinal.Equals(sessionInfo.IPAddress, ipAddress)
             || !StringComparer.Ordinal.Equals(sessionInfo.UserAgent, userAgent)
             || sessionInfo.LastSeenAt + Settings.SessionInfoUpdatePeriod < Clocks.SystemClock.Now;
-        if (mustSetupSession)
+        if (mustSetupSession || sessionInfo == null)
             sessionInfo = await SetupSession(session, sessionInfo, ipAddress, userAgent, cancellationToken)
                 .ConfigureAwait(false);
 
