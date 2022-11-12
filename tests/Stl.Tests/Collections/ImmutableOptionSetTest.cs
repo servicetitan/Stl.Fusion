@@ -38,6 +38,9 @@ public class ImmutableOptionSetTest
         options = options.PassThroughAllSerializers();
         options.Items.Count.Should().Be(0);
 
+        // We use Int64 type here b/c JSON serializer
+        // deserializes integers to this type.
+
         options = options.Set(1L);
         options = options.PassThroughAllSerializers();
         options.Get<long>().Should().Be(1L);
