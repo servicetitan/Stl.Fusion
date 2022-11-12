@@ -83,34 +83,29 @@ public class ServerAuthHelper : IHasServices
             ? userAgentValues.FirstOrDefault() ?? ""
             : "";
 
-        var sessionInfo = await Auth.GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
-        var mustUpdateSessionInfo =
+        var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
+        var mustSetupSession =
             sessionInfo == null
             || !StringComparer.Ordinal.Equals(sessionInfo.IPAddress, ipAddress)
             || !StringComparer.Ordinal.Equals(sessionInfo.UserAgent, userAgent)
             || sessionInfo.LastSeenAt + Settings.SessionInfoUpdatePeriod < Clocks.SystemClock.Now;
-        if (mustUpdateSessionInfo) {
-            var setupSessionCommand = new SetupSessionCommand(session, ipAddress, userAgent);
-            await Commander.Call(setupSessionCommand, cancellationToken).ConfigureAwait(false);
-        }
+        if (mustSetupSession)
+            await SetupSession(session, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
 
-        var user = await Auth.GetUser(session, cancellationToken).ConfigureAwait(false);
+        var user = await GetUser(session, cancellationToken).ConfigureAwait(false);
         try {
             if (httpIsAuthenticated) {
                 if (IsSameUser(user, httpUser, httpAuthenticationSchema))
                     return;
-                var (newUser, authenticatedIdentity) = CreateOrUpdateUser(user, httpUser, httpAuthenticationSchema);
-                var signInCommand = new SignInCommand(session, newUser, authenticatedIdentity);
-                await Commander.Call(signInCommand, cancellationToken).ConfigureAwait(false);
+                await SignIn(session, user, httpUser, httpAuthenticationSchema, cancellationToken).ConfigureAwait(false);
             }
             else if (user != null && !Settings.KeepSignedIn) {
-                var signOutCommand = new SignOutCommand(session);
-                await Commander.Call(signOutCommand, cancellationToken).ConfigureAwait(false);
+                await SignOut(session, cancellationToken).ConfigureAwait(false);
             }
         }
         finally {
-            // Ideally this should be done once important things are completed
-            _ = Task.Run(() => Auth.UpdatePresence(session, default), default);
+            // This should be done once important things are completed
+            await UpdatePresence(session).ConfigureAwait(false);
         }
     }
 
@@ -125,6 +120,41 @@ public class ServerAuthHelper : IHasServices
     }
 
     // Protected methods
+
+    protected virtual Task<SessionInfo?> GetSessionInfo(Session session, CancellationToken cancellationToken)
+        => Auth.GetSessionInfo(session, cancellationToken);
+
+    protected virtual Task<User?> GetUser(Session session, CancellationToken cancellationToken)
+        => Auth.GetUser(session, cancellationToken);
+
+    protected virtual Task SetupSession(
+        Session session, string ipAddress, string userAgent,
+        CancellationToken cancellationToken)
+    {
+        var setupSessionCommand = new SetupSessionCommand(session, ipAddress, userAgent);
+        return Commander.Call(setupSessionCommand, true, cancellationToken);
+    }
+
+    protected virtual Task SignIn(
+        Session session, User? user, ClaimsPrincipal httpUser, string httpAuthenticationSchema,
+        CancellationToken cancellationToken)
+    {
+        var (newUser, authenticatedIdentity) = CreateOrUpdateUser(user, httpUser, httpAuthenticationSchema);
+        var signInCommand = new SignInCommand(session, newUser, authenticatedIdentity);
+        return Commander.Call(signInCommand, true, cancellationToken);
+    }
+
+    protected virtual Task SignOut(Session session, CancellationToken cancellationToken)
+    {
+        var signOutCommand = new SignOutCommand(session);
+        return Commander.Call(signOutCommand, true, cancellationToken);
+    }
+
+    protected virtual Task UpdatePresence(Session session)
+    {
+        _ = Task.Run(() => Auth.UpdatePresence(session, default), default);
+        return Task.CompletedTask;
+    }
 
     protected virtual bool IsSameUser(User? user, ClaimsPrincipal httpUser, string schema)
     {
