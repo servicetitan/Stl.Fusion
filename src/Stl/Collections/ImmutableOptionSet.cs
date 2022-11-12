@@ -54,21 +54,29 @@ public readonly struct ImmutableOptionSet : IServiceProvider, IEquatable<Immutab
         return true;
     }
 
-    public T? Get<T>()
-        => (T?) this[typeof(T)];
-
-    public T GetOrDefault<T>(T @default)
+    public T Get<T>(T @default = default!)
     {
         var value = this[typeof(T)];
         return value == null ? @default : (T) value;
     }
 
-    public ImmutableOptionSet Set(Symbol key, object? value)
-        => new(value != null ? Items.SetItem(key, value) : Items.Remove(key));
-    public ImmutableOptionSet Set(Type optionType, object? value)
-        => Set(optionType.ToSymbol(), value);
     // ReSharper disable once HeapView.PossibleBoxingAllocation
     public ImmutableOptionSet Set<T>(T value) => Set(typeof(T), value);
+    public ImmutableOptionSet Set(Type optionType, object? value)
+        => Set(optionType.ToSymbol(), value);
+    public ImmutableOptionSet Set(Symbol key, object? value)
+        => new(value != null ? Items.SetItem(key, value) : Items.Remove(key));
+
+    public ImmutableOptionSet SetMany(ImmutableOptionSet overrides)
+        => SetMany(overrides.Items!);
+    public ImmutableOptionSet SetMany(IEnumerable<KeyValuePair<Symbol, object?>> overrides)
+    {
+        var result = this;
+        foreach (var (key, value) in overrides)
+            result = result.Set(key, value);
+        return result;
+    }
+
     public ImmutableOptionSet Remove<T>() => Set(typeof(T), null);
 
     public ImmutableOptionSet Replace<T>(T expectedValue, T value)

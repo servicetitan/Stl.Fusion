@@ -75,10 +75,7 @@ public class OptionSet : IServiceProvider
         return true;
     }
 
-    public T? Get<T>()
-        => (T?) this[typeof(T)];
-
-    public T GetOrDefault<T>(T @default)
+    public T Get<T>(T @default = default!)
     {
         var value = this[typeof(T)];
         return value == null ? @default : (T) value;
@@ -86,6 +83,14 @@ public class OptionSet : IServiceProvider
 
     // ReSharper disable once HeapView.PossibleBoxingAllocation
     public void Set<T>(T value) => this[typeof(T)] = value;
+
+    public void SetMany(OptionSet overrides)
+        => SetMany(overrides.Items!);
+    public void SetMany(IEnumerable<KeyValuePair<Symbol, object?>> overrides)
+    {
+        foreach (var (key, value) in overrides)
+            this[key] = value;
+    }
 
     public void Remove<T>() => this[typeof(T)] = null;
 

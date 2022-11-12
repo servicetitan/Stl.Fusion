@@ -79,13 +79,13 @@ public partial class InMemoryAuthService
     public virtual async Task<SessionInfo> SetupSession(
         SetupSessionCommand command, CancellationToken cancellationToken = default)
     {
-        var (session, ipAddress, userAgent) = command;
+        var (session, ipAddress, userAgent, options) = command;
         var context = CommandContext.GetCurrent();
         var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
 
         if (Computed.IsInvalidating()) {
             _ = GetSessionInfo(session, default); // Must go first!
-            var invIsNew = context.Operation().Items.GetOrDefault(false);
+            var invIsNew = context.Operation().Items.Get<bool>();
             if (invIsNew) {
                 _ = GetAuthInfo(session, default);
                 _ = GetOptions(session, default);
@@ -102,6 +102,7 @@ public partial class InMemoryAuthService
         sessionInfo = sessionInfo with {
             IPAddress = ipAddress.IsNullOrEmpty() ? sessionInfo.IPAddress : ipAddress,
             UserAgent = userAgent.IsNullOrEmpty() ? sessionInfo.UserAgent : userAgent,
+            Options = sessionInfo.Options.SetMany(options),
         };
         sessionInfo = UpsertSessionInfo(tenant, session.Id, sessionInfo, sessionInfo.Version);
         context.Operation().Items.Set(sessionInfo); // invSessionInfo

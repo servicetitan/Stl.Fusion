@@ -81,7 +81,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     public override async Task<SessionInfo> SetupSession(
         SetupSessionCommand command, CancellationToken cancellationToken = default)
     {
-        var (session, ipAddress, userAgent) = command;
+        var (session, ipAddress, userAgent, options) = command;
         var context = CommandContext.GetCurrent();
         var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
 
@@ -90,7 +90,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
             if (invSessionInfo == null)
                 return null!;
             _ = GetSessionInfo(session, default); // Must go first!
-            var invIsNew = context.Operation().Items.GetOrDefault(false);
+            var invIsNew = context.Operation().Items.Get<bool>();
             if (invIsNew) {
                 _ = GetAuthInfo(session, default);
                 _ = GetOptions(session, default);
@@ -112,6 +112,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
             LastSeenAt = now,
             IPAddress = ipAddress.IsNullOrEmpty() ? sessionInfo.IPAddress : ipAddress,
             UserAgent = userAgent.IsNullOrEmpty() ? sessionInfo.UserAgent : userAgent,
+            Options = sessionInfo.Options.SetMany(options),
         };
         try {
             dbSessionInfo = await Sessions.Upsert(dbContext, session.Id, sessionInfo, cancellationToken)
