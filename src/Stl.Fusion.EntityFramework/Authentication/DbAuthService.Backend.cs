@@ -112,7 +112,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
             LastSeenAt = now,
             IPAddress = ipAddress.IsNullOrEmpty() ? sessionInfo.IPAddress : ipAddress,
             UserAgent = userAgent.IsNullOrEmpty() ? sessionInfo.UserAgent : userAgent,
-            Options = sessionInfo.Options.SetMany(options),
+            Options = options.SetMany(sessionInfo.Options),
         };
         try {
             dbSessionInfo = await Sessions.Upsert(dbContext, session.Id, sessionInfo, cancellationToken)

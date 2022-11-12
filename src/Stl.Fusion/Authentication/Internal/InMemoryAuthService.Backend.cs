@@ -102,7 +102,7 @@ public partial class InMemoryAuthService
         sessionInfo = sessionInfo with {
             IPAddress = ipAddress.IsNullOrEmpty() ? sessionInfo.IPAddress : ipAddress,
             UserAgent = userAgent.IsNullOrEmpty() ? sessionInfo.UserAgent : userAgent,
-            Options = sessionInfo.Options.SetMany(options),
+            Options = options.SetMany(sessionInfo.Options),
         };
         sessionInfo = UpsertSessionInfo(tenant, session.Id, sessionInfo, sessionInfo.Version);
         context.Operation().Items.Set(sessionInfo); // invSessionInfo
