@@ -28,7 +28,7 @@
     <EntityFrameworkCoreNpgsqlVersion6>$(EntityFrameworkCoreVersion6)</EntityFrameworkCoreNpgsqlVersion6>
     <EntityFrameworkCoreNpgsqlVersion5>$(EntityFrameworkCoreVersion5)</EntityFrameworkCoreNpgsqlVersion5>
     <EntityFrameworkCoreNpgsqlVersion3>$(EntityFrameworkCoreVersion3)</EntityFrameworkCoreNpgsqlVersion3>
-    <MySqlConnectorVersion>2.2.0</MySqlConnectorVersion>
+    <MySqlConnectorVersion>2.2.1</MySqlConnectorVersion>
     <MySqlConnectorVersion6>2.1.*</MySqlConnectorVersion6>
     <MySqlConnectorVersion5>$(MySqlConnectorVersion6)</MySqlConnectorVersion5>
     <MySqlConnectorVersion3>0.*</MySqlConnectorVersion3>
