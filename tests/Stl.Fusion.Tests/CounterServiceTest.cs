@@ -1,12 +1,13 @@
+using Stl.Fusion.Internal;
 using Stl.Fusion.Tests.Services;
 using Stl.Testing.Collections;
 
 namespace Stl.Fusion.Tests;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class GetExistingTest : SimpleFusionTestBase
+public class CounterServiceTest : SimpleFusionTestBase
 {
-    public GetExistingTest(ITestOutputHelper @out) : base(@out) { }
+    public CounterServiceTest(ITestOutputHelper @out) : base(@out) { }
 
     protected override void ConfigureCommonServices(ServiceCollection services)
         => services.AddFusion().AddAuthentication();
@@ -57,5 +58,45 @@ public class GetExistingTest : SimpleFusionTestBase
 
         var c2 = Computed.GetExisting(() => counters.Get(key));
         c2.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ConcurrentWaitTest()
+    {
+        var services = CreateServiceProviderFor<CounterService>();
+        var counters = services.GetRequiredService<CounterService>();
+
+        // Case 1: Tasks for both keys are started, but just the first one is used
+        await counters.Set("x", 1);
+        await counters.Set("y wait", 2);
+        var sw = new Stopwatch();
+        sw.Start();
+        var c = await Computed.Capture(() => counters.GetFirstNonZero("x", "y wait"));
+        sw.ElapsedMilliseconds.Should().BeLessThan(250);
+        var cImpl = (IComputedImpl) c;
+        c.Value.Should().Be(1);
+        cImpl.Used.Length.Should().Be(1);
+
+        // Case 2: both keys are used
+        await counters.Set("x", 0);
+        await counters.Set("y wait", 2); // Just to make sure it gets recomputed
+        sw = new Stopwatch();
+        sw.Start();
+        c = await Computed.Capture(() => counters.GetFirstNonZero("x", "y wait"));
+        sw.ElapsedMilliseconds.Should().BeGreaterThan(250);
+        cImpl = c;
+        c.Value.Should().Be(2);
+        cImpl.Used.Length.Should().Be(2);
+
+        // Case 3: first key throws an error
+        await counters.Set("x fail", 0);
+        await counters.Set("y wait", 2); // Just to make sure it gets recomputed
+        sw = new Stopwatch();
+        sw.Start();
+        c = await Computed.Capture(() => counters.GetFirstNonZero("x fail", "y wait"));
+        sw.ElapsedMilliseconds.Should().BeLessThan(250);
+        cImpl = c;
+        c.Error!.GetType().Should().Be(typeof(ArgumentOutOfRangeException));
+        cImpl.Used.Length.Should().Be(1);
     }
 }

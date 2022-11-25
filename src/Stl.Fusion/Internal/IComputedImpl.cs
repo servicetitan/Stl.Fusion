@@ -6,7 +6,7 @@ public interface IComputedImpl : IComputed
     (ComputedInput Input, LTag Version)[] UsedBy { get; }
 
     void AddUsed(IComputedImpl used);
-    void AddUsedBy(IComputedImpl usedBy); // Should be called only from AddUsedValue
+    bool AddUsedBy(IComputedImpl usedBy); // Should be called only from AddUsed
     void RemoveUsedBy(IComputedImpl usedBy);
     (int OldCount, int NewCount) PruneUsedBy();
 

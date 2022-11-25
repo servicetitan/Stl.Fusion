@@ -306,18 +306,26 @@ public abstract class Computed<T> : IComputed, IComputedImpl, IResult<T>
     {
         // Debug.WriteLine($"{nameof(IComputedImpl.AddUsed)}: {this} <- {used}");
         lock (Lock) {
-            switch (ConsistencyState) {
-            case ConsistencyState.Consistent:
-                throw Errors.WrongComputedState(ConsistencyState);
-            case ConsistencyState.Invalidated:
-                return; // Already invalidated, so nothing to do here
+            if (ConsistencyState != ConsistencyState.Computing) {
+                // The current computed is either:
+                // - Invalidated: nothing to do in this case.
+                //   Deps are meaningless for whatever is already invalidated.   
+                // - Consistent: this means the dependency computation hasn't been completed
+                //   while the dependant was computing, which literally means it is actually unused.
+                //   This happens e.g. when N tasks to compute dependencies start during the computation,
+                //   but only some of them are awaited. Other results might be ignored e.g. because
+                //   an exception was thrown in one of early "awaits". And if you "linearize" such a
+                //   method, it becomes clear that dependencies that didn't finish by the end of computation
+                //   actually aren't used, coz in the "linear" flow they would be requested at some
+                //   later point.
+                return;
             }
-            used.AddUsedBy(this);
-            _used.Add(used);
+            if (used.AddUsedBy(this))
+                _used.Add(used);
         }
     }
 
-    void IComputedImpl.AddUsedBy(IComputedImpl usedBy)
+    bool IComputedImpl.AddUsedBy(IComputedImpl usedBy)
     {
         lock (Lock) {
             switch (ConsistencyState) {
@@ -325,11 +333,12 @@ public abstract class Computed<T> : IComputed, IComputedImpl, IResult<T>
                 throw Errors.WrongComputedState(ConsistencyState);
             case ConsistencyState.Invalidated:
                 usedBy.Invalidate();
-                return;
+                return false;
             }
 
             var usedByRef = (usedBy.Input, usedBy.Version);
             _usedBy.Add(usedByRef);
+            return true;
         }
     }
 
