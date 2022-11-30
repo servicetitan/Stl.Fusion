@@ -1,4 +1,5 @@
 @inherits FusionComponentBase
+@attribute [ParameterComparer(typeof(ByValueParameterComparer))]
 @inject Session Session
 @inject UICommander UICommander
 @inject ILogger<TodoItemView> Log
@@ -25,7 +26,7 @@
 </Addons>
 
 @code {
-    [Parameter, ParameterComparer(typeof(ByValueParameterComparer))]
+    [Parameter]
     public Todo Value { get; set; } = null!;
 
     private Task InvertDone()
