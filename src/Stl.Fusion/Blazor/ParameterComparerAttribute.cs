@@ -1,6 +1,11 @@
 namespace Stl.Fusion.Blazor;
 
-[AttributeUsage(AttributeTargets.Class | AttributeTargets.Property)]
+[AttributeUsage(
+    AttributeTargets.Interface |
+    AttributeTargets.Class |
+    AttributeTargets.Struct |
+    AttributeTargets.Delegate |
+    AttributeTargets.Property)]
 public class ParameterComparerAttribute : Attribute
 {
     public Type ComparerType { get; }
