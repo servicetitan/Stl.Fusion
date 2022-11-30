@@ -20,9 +20,9 @@ public static class ComponentExt
 
     public record ComponentInfo
     {
-        public Type Type { get; init; } = null!;
-        public IReadOnlyDictionary<string, ComponentParameterInfo> Parameters { get; init; } =
-            ImmutableDictionary<string, ComponentParameterInfo>.Empty;
+        public Type Type { get; init; }
+        public bool HasCustomParameterComparers { get; init; }
+        public IReadOnlyDictionary<string, ComponentParameterInfo> Parameters { get; init; }
 
         internal ComponentInfo(Type type)
         {
@@ -31,19 +31,23 @@ public static class ComponentExt
 
             var bindingFlags = BindingFlags.FlattenHierarchy | BindingFlags.Instance | BindingFlags.Public;
             var parameters = new Dictionary<string, ComponentParameterInfo>(StringComparer.Ordinal);
+            var hasCustomParameterComparers = false;
             foreach (var property in type.GetProperties(bindingFlags)) {
                 var pa = property.GetCustomAttribute<ParameterAttribute>(true);
                 CascadingParameterAttribute? cpa = null;
                 if (pa == null) {
                     cpa = property.GetCustomAttribute<CascadingParameterAttribute>(true);
                     if (cpa == null)
-                        continue;
+                        continue; // Not a parameter
                 }
+
                 var pca = property.GetCustomAttribute<ParameterComparerAttribute>(true);
                 var comparerType = pca?.ComparerType;
                 var comparer = comparerType != null
                     ? ParameterComparer.Get(comparerType)
                     : ParameterComparer.Default;
+
+                hasCustomParameterComparers |= comparer is not DefaultParameterComparer;
                 var parameter = new ComponentParameterInfo() {
                     Property = property,
                     IsCascading = cpa != null,
@@ -57,6 +61,7 @@ public static class ComponentExt
             }
             Type = type;
             Parameters = new ReadOnlyDictionary<string, ComponentParameterInfo>(parameters);
+            HasCustomParameterComparers = hasCustomParameterComparers;
         }
     }
 
@@ -102,15 +107,19 @@ public static class ComponentExt
     public static bool HasChangedParameters(this IComponent component, ParameterView parameterView)
     {
         var componentInfo = component.GetComponentInfo();
+        if (!componentInfo.HasCustomParameterComparers)
+            return true; // No custom comparers -> trigger default flow
+
         var parameters = componentInfo.Parameters;
         foreach (var parameterValue in parameterView) {
             if (!parameters.TryGetValue(parameterValue.Name, out var parameterInfo))
-                return true;
+                return true; // Unknown parameter -> trigger default flow
+
             var oldValue = parameterInfo.Getter(component);
             if (!parameterInfo.Comparer.AreEqual(oldValue, parameterValue.Value))
-                return true;
+                return true; // Comparer says values aren't equal -> trigger default flow
         }
-        return false;
+        return false; // All parameter values are equal
     }
 
     // Internal and private methods

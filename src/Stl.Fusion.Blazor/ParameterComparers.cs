@@ -17,7 +17,7 @@ public abstract class ParameterComparer
         });
 }
 
-public class DefaultParameterComparer : ParameterComparer
+public sealed class DefaultParameterComparer : ParameterComparer
 {
     // Mostly copied from Microsoft.AspNetCore.Components.ChangeDetection
     public override bool AreEqual(object? oldValue, object? newValue)
@@ -54,19 +54,19 @@ public class DefaultParameterComparer : ParameterComparer
             || type.IsEnum; // NOTE(AY): Blazor's IsKnownImmutableType doesn't have this 
 }
 
-public class ByValueParameterComparer : ParameterComparer
+public sealed class ByValueParameterComparer : ParameterComparer
 {
     public override bool AreEqual(object? oldValue, object? newValue)
         => Equals(oldValue, newValue);
 }
 
-public class ByReferenceParameterComparer : ParameterComparer
+public sealed class ByReferenceParameterComparer : ParameterComparer
 {
     public override bool AreEqual(object? oldValue, object? newValue)
         => ReferenceEquals(oldValue, newValue);
 }
 
-public class ByIdParameterComparer<TId> : ParameterComparer
+public sealed class ByIdParameterComparer<TId> : ParameterComparer
 {
     public override bool AreEqual(object? oldValue, object? newValue)
     {
@@ -83,7 +83,7 @@ public class ByIdParameterComparer<TId> : ParameterComparer
     }
 }
 
-public class ByVersionParameterComparer<TVersion> : ParameterComparer
+public sealed class ByVersionParameterComparer<TVersion> : ParameterComparer
     where TVersion : notnull
 {
     public override bool AreEqual(object? oldValue, object? newValue)
@@ -101,7 +101,7 @@ public class ByVersionParameterComparer<TVersion> : ParameterComparer
     }
 }
 
-public class ByIdAndVersionParameterComparer<TId, TVersion> : ParameterComparer
+public sealed class ByIdAndVersionParameterComparer<TId, TVersion> : ParameterComparer
     where TVersion : notnull
 {
     public override bool AreEqual(object? oldValue, object? newValue)
@@ -124,7 +124,7 @@ public class ByIdAndVersionParameterComparer<TId, TVersion> : ParameterComparer
     }
 }
 
-public class AlwaysEqualParameterComparer : ParameterComparer
+public sealed class AlwaysEqualParameterComparer : ParameterComparer
 {
     public override bool AreEqual(object? oldValue, object? newValue)
         => true;

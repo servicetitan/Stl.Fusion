@@ -3,7 +3,7 @@ using Stl.Internal;
 
 namespace Stl.Fusion.Blazor;
 
-public abstract class StatefulComponentBase : ComponentBase, IAsyncDisposable, IHandleEvent
+public abstract class StatefulComponentBase : FusionComponentBase, IAsyncDisposable, IHandleEvent
 {
     private StateEventKind _stateHasChangedTriggers = StateEventKind.Updated;
 

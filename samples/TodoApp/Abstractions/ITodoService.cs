@@ -2,23 +2,23 @@ using Stl.Fusion.Extensions;
 
 namespace Templates.TodoApp.Abstractions;
 
-public record Todo(string Id, string Title, bool IsDone = false)
+public sealed record Todo(string Id, string Title, bool IsDone = false)
 {
     public Todo() : this("", "") { }
 }
 
-public record TodoSummary(int Count, int DoneCount)
+public sealed record TodoSummary(int Count, int DoneCount)
 {
     public TodoSummary() : this(0, 0) { }
 }
 
-public record AddOrUpdateTodoCommand(Session Session, Todo Item) : ISessionCommand<Todo>
+public sealed record AddOrUpdateTodoCommand(Session Session, Todo Item) : ISessionCommand<Todo>
 {
     // Newtonsoft.Json needs this constructor to deserialize this record
     public AddOrUpdateTodoCommand() : this(Session.Null, default!) { }
 }
 
-public record RemoveTodoCommand(Session Session, string Id) : ISessionCommand<Unit>
+public sealed record RemoveTodoCommand(Session Session, string Id) : ISessionCommand<Unit>
 {
     // Newtonsoft.Json needs this constructor to deserialize this record
     public RemoveTodoCommand() : this(Session.Null, "") { }

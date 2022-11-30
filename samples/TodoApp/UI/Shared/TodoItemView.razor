@@ -1,3 +1,4 @@
+@inherits FusionComponentBase
 @inject Session Session
 @inject UICommander UICommander
 @inject ILogger<TodoItemView> Log
@@ -26,9 +27,6 @@
 @code {
     [Parameter, ParameterComparer(typeof(ByValueParameterComparer))]
     public Todo Value { get; set; } = null!;
-
-    public override Task SetParametersAsync(ParameterView parameters)
-        => this.HasChangedParameters(parameters) ? base.SetParametersAsync(parameters) : Task.CompletedTask;
 
     private Task InvertDone()
     {
