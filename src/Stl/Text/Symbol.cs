@@ -22,7 +22,7 @@ public readonly struct Symbol : IRequirementTarget,
     public int HashCode => _hashCode;
     public bool IsEmpty => Value.Length == 0;
 
-    public Symbol(string value)
+    public Symbol(string? value)
     {
         _value = value ?? "";
         _hashCode = _value.Length == 0 ? 0 : StringComparer.Ordinal.GetHashCode(_value);
@@ -33,7 +33,7 @@ public readonly struct Symbol : IRequirementTarget,
     // Conversion
 
     string IConvertibleTo<string>.Convert() => Value;
-    public static implicit operator Symbol(string source) => new(source);
+    public static implicit operator Symbol(string? source) => new(source);
     public static implicit operator string(Symbol source) => source.Value;
 
     // Operators

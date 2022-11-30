@@ -121,7 +121,7 @@ public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId> : DbServic
     public virtual async Task<TDbSessionInfo?> Get(
         TDbContext dbContext, string sessionId, bool forUpdate, CancellationToken cancellationToken = default)
     {
-        var dbSessionInfos = forUpdate 
+        var dbSessionInfos = forUpdate
             ? dbContext.Set<TDbSessionInfo>().ForUpdate()
             : dbContext.Set<TDbSessionInfo>();
         return await dbSessionInfos
