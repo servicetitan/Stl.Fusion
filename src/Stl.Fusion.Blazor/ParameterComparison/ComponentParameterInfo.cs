@@ -10,5 +10,5 @@ public sealed class ComponentParameterInfo
     public string? CascadingParameterName { get; init; }
     public Func<IComponent, object> Getter { get; init; } = null!;
     public Action<IComponent, object> Setter { get; init; } = null!;
-    public ParameterComparer Comparer { get; init; } = ParameterComparer.Default;
+    public ParameterComparer Comparer { get; init; } = null!;
 }

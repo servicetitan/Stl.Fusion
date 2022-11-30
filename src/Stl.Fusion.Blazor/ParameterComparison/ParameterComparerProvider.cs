@@ -6,10 +6,21 @@ public class ParameterComparerProvider
 
     public static ParameterComparerProvider Instance { get; set; } = new();
 
+    protected Dictionary<Type, Type> KnownComparerTypes { get; init; } = new() {
+        { typeof(Symbol), typeof(ByValueParameterComparer) },
+        { typeof(TimeSpan), typeof(ByValueParameterComparer) },
+        { typeof(Moment), typeof(ByValueParameterComparer) },
+        { typeof(DateTimeOffset), typeof(ByValueParameterComparer) },
+#if NET6_0_OR_GREATER
+        { typeof(DateOnly), typeof(ByValueParameterComparer) },
+        { typeof(TimeOnly), typeof(ByValueParameterComparer) },
+#endif
+    };
+
     public static ParameterComparer Get(Type? comparerType)
     {
         if (comparerType == null)
-            return ParameterComparer.Default;
+            return DefaultParameterComparer.Instance;
 
         return Cache.GetOrAdd(comparerType, static comparerType1 => {
             if (!typeof(ParameterComparer).IsAssignableFrom(comparerType1))
@@ -30,7 +41,7 @@ public class ParameterComparerProvider
         if (type != null)
             return type;
 
-        type = GetDefaultComparerType(property);
+        type = GetKnownComparerType(property);
         if (type != null)
             return type;
 
@@ -45,12 +56,11 @@ public class ParameterComparerProvider
         return null;
     }
 
-    protected virtual Type? GetDefaultComparerType(PropertyInfo property)
+    protected virtual Type? GetKnownComparerType(PropertyInfo property)
     {
         var propertyType = property.PropertyType;
-        if (propertyType == typeof(Symbol))
+        if (propertyType.IsEnum)
             return typeof(ByValueParameterComparer);
-
-        return null;
+        return KnownComparerTypes.GetValueOrDefault(propertyType);
     }
 }

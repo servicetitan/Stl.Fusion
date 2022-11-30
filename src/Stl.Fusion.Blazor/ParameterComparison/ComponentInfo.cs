@@ -50,7 +50,7 @@ public sealed class ComponentInfo
         HasCustomParameterComparers = hasCustomParameterComparers;
     }
 
-    public bool ShouldSetParameters(IComponent component, ParameterView parameterView)
+    public bool ShouldSetParameters(ComponentBase component, ParameterView parameterView)
     {
         if (!HasCustomParameterComparers)
             return true; // No custom comparers -> trigger default flow

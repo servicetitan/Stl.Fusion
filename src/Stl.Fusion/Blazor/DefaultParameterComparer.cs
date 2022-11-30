@@ -2,6 +2,8 @@ namespace Stl.Fusion.Blazor;
 
 public sealed class DefaultParameterComparer : ParameterComparer
 {
+    public static DefaultParameterComparer Instance { get; } = new();
+
     // Mostly copied from Microsoft.AspNetCore.Components.ChangeDetection
     public override bool AreEqual(object? oldValue, object? newValue)
     {
@@ -34,5 +36,5 @@ public sealed class DefaultParameterComparer : ParameterComparer
             || type == typeof(DateTime)
             || type == typeof(Type)
             || type == typeof(decimal)
-            || type.IsEnum; // NOTE(AY): Blazor's IsKnownImmutableType doesn't have this 
+            || type == typeof(Guid);
 }
