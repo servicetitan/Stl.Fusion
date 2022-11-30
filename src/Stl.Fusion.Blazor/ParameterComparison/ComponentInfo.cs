@@ -19,6 +19,7 @@ public sealed class ComponentInfo
         if (!typeof(IComponent).IsAssignableFrom(type))
             throw new ArgumentOutOfRangeException(nameof(type));
 
+        var parameterComparerProvider = ParameterComparerProvider.Instance;
         var bindingFlags = BindingFlags.FlattenHierarchy | BindingFlags.Instance | BindingFlags.Public;
         var parameters = new Dictionary<string, ComponentParameterInfo>(StringComparer.Ordinal);
         var hasCustomParameterComparers = false;
@@ -31,13 +32,7 @@ public sealed class ComponentInfo
                     continue; // Not a parameter
             }
 
-            var pca = property.GetCustomAttribute<ParameterComparerAttribute>(true);
-            var typePca = property.PropertyType.GetCustomAttribute<ParameterComparerAttribute>(true);
-            var defaultPca = property.DeclaringType?.GetCustomAttribute<ParameterComparerAttribute>(true);
-
-            var comparerType = pca?.ComparerType ?? typePca?.ComparerType ?? defaultPca?.ComparerType;
-            var comparer = ParameterComparer.Get(comparerType);
-
+            var comparer = parameterComparerProvider.Get(property);
             hasCustomParameterComparers |= comparer is not DefaultParameterComparer;
             var parameter = new ComponentParameterInfo() {
                 Property = property,
