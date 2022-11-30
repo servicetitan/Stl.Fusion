@@ -32,11 +32,11 @@ public sealed class ComponentInfo
             }
 
             var pca = property.GetCustomAttribute<ParameterComparerAttribute>(true);
-            var typePca = property.DeclaringType?.GetCustomAttribute<ParameterComparerAttribute>(true);
-            var comparerType = pca?.ComparerType ?? typePca?.ComparerType;
-            var comparer = comparerType != null
-                ? ParameterComparer.Get(comparerType)
-                : ParameterComparer.Default;
+            var typePca = property.PropertyType.GetCustomAttribute<ParameterComparerAttribute>(true);
+            var defaultPca = property.DeclaringType?.GetCustomAttribute<ParameterComparerAttribute>(true);
+
+            var comparerType = pca?.ComparerType ?? typePca?.ComparerType ?? defaultPca?.ComparerType;
+            var comparer = ParameterComparer.Get(comparerType);
 
             hasCustomParameterComparers |= comparer is not DefaultParameterComparer;
             var parameter = new ComponentParameterInfo() {

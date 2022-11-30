@@ -1,7 +1,9 @@
+using Stl.Fusion.Blazor;
 using Stl.Fusion.Extensions;
 
 namespace Templates.TodoApp.Abstractions;
 
+[ParameterComparer(typeof(ByValueParameterComparer))]
 public sealed record Todo(string Id, string Title, bool IsDone = false)
 {
     public Todo() : this("", "") { }
