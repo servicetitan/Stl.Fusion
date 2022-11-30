@@ -4,6 +4,7 @@ namespace Stl.Fusion.Blazor;
     AttributeTargets.Interface |
     AttributeTargets.Class |
     AttributeTargets.Struct |
+    AttributeTargets.Enum |
     AttributeTargets.Delegate |
     AttributeTargets.Property)]
 public class ParameterComparerAttribute : Attribute
