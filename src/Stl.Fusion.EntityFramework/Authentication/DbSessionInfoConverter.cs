@@ -4,7 +4,7 @@ using Stl.Fusion.Authentication.Internal;
 
 namespace Stl.Fusion.EntityFramework.Authentication;
 
-public class DbSessionInfoConverter<TDbContext, TDbSessionInfo, TDbUserId> 
+public class DbSessionInfoConverter<TDbContext, TDbSessionInfo, TDbUserId>
     : DbEntityConverter<TDbContext, TDbSessionInfo, SessionInfo>
     where TDbContext : DbContext
     where TDbSessionInfo : DbSessionInfo<TDbUserId>, new()

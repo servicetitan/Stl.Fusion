@@ -35,7 +35,7 @@ public class DbSessionInfo<TDbUserId> : IHasId<string>, IHasVersion<long>
 
     // Authentication
     public string AuthenticatedIdentity { get; set; } = "";
-    public TDbUserId UserId { get; set; } = default!;
+    public TDbUserId? UserId { get; set; } = default;
     public bool IsSignOutForced { get; set; }
 
     // Options
