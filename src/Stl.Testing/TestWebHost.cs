@@ -83,8 +83,8 @@ public abstract class TestWebHostBase : ITestWebHost
 
     protected virtual IHostBuilder CreateHostBuilder()
     {
-        var emptyDir = FilePath.GetApplicationDirectory() & "Empty";
-        Directory.CreateDirectory(emptyDir);
+        var wwwRootDir = FilePath.GetApplicationTempDirectory() & "tmp_wwwroot";
+        Directory.CreateDirectory(wwwRootDir);
 
         var builder = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder();
         builder.UseDefaultServiceProvider((ctx, options) => {
@@ -96,7 +96,7 @@ public abstract class TestWebHostBase : ITestWebHost
         builder.ConfigureWebHost(b => {
             b.UseKestrel();
             b.UseUrls(ServerUri.ToString());
-            b.UseContentRoot(emptyDir);
+            b.UseContentRoot(wwwRootDir);
             ConfigureWebHost(b);
         });
 #endif
