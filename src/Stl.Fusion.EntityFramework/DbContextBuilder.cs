@@ -158,7 +158,7 @@ public readonly struct DbContextBuilder<TDbContext>
         if (isConfigured)
             return this;
 
-        AddEntityResolver<string, TDbKeyValue>();
+        TryAddEntityResolver<string, TDbKeyValue>();
         var fusion = Services.AddFusion();
         fusion.AddComputeService<DbKeyValueStore<TDbContext, TDbKeyValue>>();
         Services.TryAddSingleton<IKeyValueStore>(c => c.GetRequiredService<DbKeyValueStore<TDbContext, TDbKeyValue>>());
