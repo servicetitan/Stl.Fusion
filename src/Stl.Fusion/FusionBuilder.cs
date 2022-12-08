@@ -211,7 +211,7 @@ public readonly struct FusionBuilder
 
     public FusionAuthenticationBuilder AddAuthentication()
         => new(this, null);
-    
+
     public FusionBuilder AddAuthentication(Action<FusionAuthenticationBuilder> configure) 
         => new FusionAuthenticationBuilder(this, configure).Fusion;
 

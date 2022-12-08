@@ -43,23 +43,21 @@ public readonly struct DbAuthenticationBuilder<TDbContext, TDbSessionInfo, TDbUs
             DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>>();
 
         // Entity converters
-        DbContext.AddEntityConverter<TDbUser, User, 
-            DbUserConverter<TDbContext, TDbUser, TDbUserId>>();
-        DbContext.AddEntityConverter<TDbSessionInfo, SessionInfo, 
-            DbSessionInfoConverter<TDbContext, TDbSessionInfo, TDbUserId>>();
+        DbContext.TryAddEntityConverter<TDbUser, User, DbUserConverter<TDbContext, TDbUser, TDbUserId>>();
+        DbContext.TryAddEntityConverter<TDbSessionInfo, SessionInfo, DbSessionInfoConverter<TDbContext, TDbSessionInfo, TDbUserId>>();
 
         // Entity resolvers
-        DbContext.AddEntityResolver<string, TDbSessionInfo>();
-        DbContext.AddEntityResolver<TDbUserId, TDbUser>(
+        DbContext.TryAddEntityResolver<string, TDbSessionInfo>();
+        DbContext.TryAddEntityResolver<TDbUserId, TDbUser>(
             _ => new DbEntityResolver<TDbContext, TDbUserId, TDbUser>.Options() {
                 QueryTransformer = query => query.Include(u => u.Identities),
             });
 
         // DbUserIdHandler
-        Services.AddSingleton<IDbUserIdHandler<TDbUserId>, DbUserIdHandler<TDbUserId>>();
+        Services.TryAddSingleton<IDbUserIdHandler<TDbUserId>, DbUserIdHandler<TDbUserId>>();
 
         // Default isolation level selector
-        DbContext.AddOperations().AddIsolationLevelSelector(_ => new DbAuthIsolationLevelSelector<TDbContext>());
+        DbContext.AddOperations().TryAddIsolationLevelSelector(_ => new DbAuthIsolationLevelSelector<TDbContext>());
 
         // DbSessionInfoTrimmer - hosted service!
         Services.TryAddSingleton<DbSessionInfoTrimmer<TDbContext>.Options>();

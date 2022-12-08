@@ -46,9 +46,43 @@ public readonly struct DbContextBuilder<TDbContext>
         return this;
     }
 
+    public DbContextBuilder<TDbContext> TryAddEntityConverter<TDbEntity, TEntity, TConverter>()
+        where TDbEntity : class
+        where TEntity : notnull
+        where TConverter : class, IDbEntityConverter<TDbEntity, TEntity>
+    {
+        Services.TryAddSingleton<IDbEntityConverter<TDbEntity, TEntity>, TConverter>();
+        return this;
+    }
+
     // Entity resolvers
 
     public DbContextBuilder<TDbContext> AddEntityResolver<TKey, TDbEntity>(
+        Func<IServiceProvider, DbEntityResolver<TDbContext, TKey, TDbEntity>.Options>? optionsFactory = null)
+        where TKey : notnull
+        where TDbEntity : class
+    {
+        if (optionsFactory != null)
+            Services.AddSingleton(optionsFactory);
+        else
+            Services.TryAddSingleton<DbEntityResolver<TDbContext, TKey, TDbEntity>.Options>();
+        Services.AddSingleton<
+            IDbEntityResolver<TKey, TDbEntity>,
+            DbEntityResolver<TDbContext, TKey, TDbEntity>>();
+        return this;
+    }
+
+    public DbContextBuilder<TDbContext> AddEntityResolver<TKey, TDbEntity, TResolver>(
+        Func<IServiceProvider, TResolver> resolverFactory)
+        where TKey : notnull
+        where TDbEntity : class
+        where TResolver : class, IDbEntityResolver<TKey, TDbEntity>
+    {
+        Services.AddSingleton<IDbEntityResolver<TKey, TDbEntity>>(resolverFactory);
+        return this;
+    }
+
+    public DbContextBuilder<TDbContext> TryAddEntityResolver<TKey, TDbEntity>(
         Func<IServiceProvider, DbEntityResolver<TDbContext, TKey, TDbEntity>.Options>? optionsFactory = null)
         where TKey : notnull
         where TDbEntity : class
@@ -63,13 +97,13 @@ public readonly struct DbContextBuilder<TDbContext>
         return this;
     }
 
-    public DbContextBuilder<TDbContext> AddEntityResolver<TKey, TDbEntity, TResolver>(
+    public DbContextBuilder<TDbContext> TryAddEntityResolver<TKey, TDbEntity, TResolver>(
         Func<IServiceProvider, TResolver> resolverFactory)
         where TKey : notnull
         where TDbEntity : class
         where TResolver : class, IDbEntityResolver<TKey, TDbEntity>
     {
-        Services.AddSingleton<IDbEntityResolver<TKey, TDbEntity>>(resolverFactory);
+        Services.TryAddSingleton<IDbEntityResolver<TKey, TDbEntity>>(resolverFactory);
         return this;
     }
 
@@ -92,19 +126,19 @@ public readonly struct DbContextBuilder<TDbContext>
         AddAuthentication<TDbSessionInfo, TDbUser, TDbUserId>()
         where TDbSessionInfo : DbSessionInfo<TDbUserId>, new()
         where TDbUser : DbUser<TDbUserId>, new()
-        where TDbUserId : notnull 
+        where TDbUserId : notnull
         => new(this, null);
 
     public DbContextBuilder<TDbContext> AddAuthentication<TDbUserId>(
         Action<DbAuthenticationBuilder<TDbContext, DbSessionInfo<TDbUserId>, DbUser<TDbUserId>, TDbUserId>> configure)
-        where TDbUserId : notnull 
+        where TDbUserId : notnull
         => AddAuthentication<DbSessionInfo<TDbUserId>, DbUser<TDbUserId>, TDbUserId>(configure);
 
     public DbContextBuilder<TDbContext> AddAuthentication<TDbSessionInfo, TDbUser, TDbUserId>(
         Action<DbAuthenticationBuilder<TDbContext, TDbSessionInfo, TDbUser, TDbUserId>> configure)
         where TDbSessionInfo : DbSessionInfo<TDbUserId>, new()
         where TDbUser : DbUser<TDbUserId>, new()
-        where TDbUserId : notnull 
+        where TDbUserId : notnull
         => new DbAuthenticationBuilder<TDbContext, TDbSessionInfo, TDbUser, TDbUserId>(this, configure).DbContext;
 
     // KeyValueStore

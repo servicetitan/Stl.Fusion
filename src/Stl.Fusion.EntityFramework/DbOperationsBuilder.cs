@@ -94,6 +94,21 @@ public readonly struct DbOperationsBuilder<TDbContext>
         return this;
     }
 
+    public DbOperationsBuilder<TDbContext> TryAddIsolationLevelSelector(
+        Func<IServiceProvider, DbIsolationLevelSelector<TDbContext>> dbIsolationLevelSelector)
+    {
+        Services.TryAddSingleton(dbIsolationLevelSelector);
+        return this;
+    }
+
+    public DbOperationsBuilder<TDbContext> TryAddIsolationLevelSelector(
+        Func<IServiceProvider, CommandContext, IsolationLevel> dbIsolationLevelSelector)
+    {
+        Services.TryAddSingleton(c => new DbIsolationLevelSelector<TDbContext>(
+            context => dbIsolationLevelSelector.Invoke(c, context)));
+        return this;
+    }
+
     // File-based operation log change tracking
 
     public DbOperationsBuilder<TDbContext> AddFileBasedOperationLogChangeTracking(
