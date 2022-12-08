@@ -25,10 +25,11 @@ public class DbUserIdHandler<TDbUserId> : IDbUserIdHandler<TDbUserId>
     public DbUserIdHandler(IConverterProvider converters, Func<TDbUserId>? generator = null)
     {
         None = default!;
+        if (typeof(TDbUserId) == typeof(string))
+            None = (TDbUserId) (object) "";
         if (generator == null) {
             generator = () => default!;
             if (typeof(TDbUserId) == typeof(string)) {
-                None = (TDbUserId) (object) string.Empty;
                 var rsg = new RandomStringGenerator(12, RandomStringGenerator.Base32Alphabet);
                 generator = () => (TDbUserId) (object) rsg.Next();
             }
