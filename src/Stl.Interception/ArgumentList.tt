@@ -99,6 +99,47 @@ public sealed record ArgumentList<<#=argumentTypes#>> : ArgumentList, IEquatable
         }
     }
 
+    public bool Equals(ArgumentList<<#=argumentTypes#>>? other, Delegate?[] equalDelegates)
+    {
+        if (equalDelegates.Length != <#=i#>)
+            throw new ArgumentOutOfRangeException(nameof(equalDelegates));
+        if (other == null)
+            return false;
+<#for (int t = 0; t < i; t++) {#>
+        if (equalDelegates[<#=t#>] is Func<T<#=t#>, T<#=t#>, bool> func<#=t#>) {
+            if (!func<#=t#>.Invoke(Item<#=t#>, other.Item<#=t#>))
+                return false;
+        }
+        else if (!EqualityComparer<T<#=t#>>.Default.Equals(Item<#=t#>, other.Item<#=t#>)) {
+            return false;
+        }
+
+<#}#>
+        return true;
+    }
+
+    public int GetHashCode(Delegate?[] getHashCodeDelegates)
+    {
+        if (getHashCodeDelegates.Length != <#=i#>)
+            throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
+        unchecked {
+            int hashCode;
+            if (getHashCodeDelegates[0] is Func<T0, int> func0)
+                hashCode = func0(Item0);
+            else
+                hashCode = Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+
+<#for (int t = 1; t < i; t++) {#>
+            if (getHashCodeDelegates[<#=t#>] is Func<T<#=t#>, int> func<#=t#>)
+                hashCode = (hashCode * 397) + func<#=t#>(Item<#=t#>);
+            else
+                hashCode = (hashCode * 397) + (Item<#=t#> is null ? 0 : EqualityComparer<T<#=t#>>.Default.GetHashCode(Item<#=t#>));
+
+<#}#>
+            return hashCode;
+        }
+    }
+
     public ArgumentList(<#=argumentDeclaration#>)
     {
 <#for (int t = 0; t < i; t++) {#>
