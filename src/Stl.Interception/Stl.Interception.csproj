@@ -25,6 +25,8 @@
 
   <ItemGroup>
     <Compile Update="ArgumentList.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
       <DependentUpon>ArgumentList.tt</DependentUpon>
     </Compile>
   </ItemGroup>
