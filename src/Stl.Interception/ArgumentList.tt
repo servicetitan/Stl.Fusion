@@ -1,0 +1,65 @@
+<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ output extension=".cs" #>
+<# int argumentCount = 16; #>
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable ArrangeConstructorOrDestructorBody
+namespace Stl.Interception;
+
+partial record ArgumentList
+{
+    public readonly ArgumentList Empty = new ();
+
+<# for(int i = 1; i<=argumentCount; i++) {
+   string argumentTypes = "" ;
+   string argumentDeclaration = "";
+   string argumentUsage = "";
+   for (int t = 0; t < i; t++) {
+       if (t > 0)
+           argumentTypes += ", ";
+       argumentTypes += ("T" + t);
+
+       if (t > 0)
+           argumentDeclaration += ", ";
+       argumentDeclaration += ("T" + t + " item" + t);
+
+       if (t > 0)
+           argumentUsage += ", ";
+       argumentUsage += ("item" + t);
+   }
+#>
+    public static ArgumentList<<#=argumentTypes#>> New<<#=argumentTypes#>>(<#=argumentDeclaration#>)
+        => new (<#=argumentUsage#>);
+
+<#}#>
+    protected ArgumentList() {}
+}
+
+<# for(int i = 1; i<=argumentCount; i++) {
+   string argumentTypes = "" ;
+   string argumentDeclaration = "";
+   for (int t = 0; t < i; t++) {
+       if (t > 0)
+           argumentTypes += ", ";
+       argumentTypes += ("T" + t);
+
+       if (t > 0)
+           argumentDeclaration += ", ";
+       argumentDeclaration += ("T" + t + " item" + t);
+   }
+#>
+public record ArgumentList<<#=argumentTypes#>> : ArgumentList
+{
+<#for (int t = 0; t < i; t++) {#>
+    public T<#=t#> Item<#=t#> { get; }
+<#}#>
+
+    public ArgumentList(<#=argumentDeclaration#>)
+    {
+<#for (int t = 0; t < i; t++) {#>
+        Item<#=t#> = item<#=t#>;
+<#}#>
+    }
+}
+
+<#}#>
