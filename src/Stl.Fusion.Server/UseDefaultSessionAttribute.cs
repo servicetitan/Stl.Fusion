@@ -6,7 +6,7 @@ namespace Stl.Fusion.Server;
 public class UseDefaultSessionAttribute : ActionFilterAttribute
 {
     public override Task OnActionExecutionAsync(
-        ActionExecutingContext context, 
+        ActionExecutingContext context,
         ActionExecutionDelegate next)
     {
         if (!StringComparer.Ordinal.Equals(context.HttpContext.Request.Method, HttpMethod.Post.Method))

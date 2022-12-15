@@ -30,7 +30,7 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
         Settings = settings;
         Services = services;
         Log = Services.LogFor(GetType());
-        Clock = Settings.Clock ?? Services.SystemClock();
+        Clock = Settings.Clock ?? Services.Clocks().SystemClock;
 
         AgentInfo = Services.GetRequiredService<AgentInfo>();
         OperationCompletionListeners = Services.GetServices<IOperationCompletionListener>().ToArray();

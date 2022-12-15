@@ -8,9 +8,12 @@ public static class Errors
         => new ArgumentOutOfRangeException(parameterName, "Provided Session.Id is invalid.");
     public static Exception NoSessionProvided()
         => new InvalidOperationException("No Session provided.");
+    public static Exception SessionProviderSessionCannotBeSetForRootInstance()
+        => new InvalidOperationException("ISessionProvider.Session can't be set for root (non-scoped) ISessionProvider.");
 
     public static Exception ForcedSignOut()
         => new SecurityException("The Session is unavailable.");
     public static Exception NotAuthenticated()
         => new SecurityException("You must sign in to perform this action.");
+
 }

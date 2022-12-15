@@ -28,7 +28,7 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
         Store = services.GetRequiredService<IKeyValueStore>();
         Auth = services.GetRequiredService<IAuth>();
         TenantResolver = services.GetRequiredService<ITenantResolver>();
-        Clock = settings.Clock ?? services.SystemClock();
+        Clock = settings.Clock ?? services.Clocks().SystemClock;
     }
 
     public virtual async Task Set(SandboxedSetCommand command, CancellationToken cancellationToken = default)

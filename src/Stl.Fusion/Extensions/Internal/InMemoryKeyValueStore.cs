@@ -18,7 +18,7 @@ public class InMemoryKeyValueStore : WorkerBase, IKeyValueStore
     public InMemoryKeyValueStore(Options settings, IServiceProvider services)
     {
         Settings = settings;
-        Clock = settings.Clock ?? services.SystemClock();
+        Clock = settings.Clock ?? services.Clocks().SystemClock;
         Store = new();
     }
 
