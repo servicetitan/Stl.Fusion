@@ -6,7 +6,9 @@ public static class ServiceProviderExt
     public static ICommander Commander(this IServiceProvider services)
         => services.GetRequiredService<ICommander>();
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsScoped(this IServiceProvider services)
-        => !ReferenceEquals(services.Commander().Services, services);
+    {
+        services = services.GetRequiredService<IServiceProvider>();
+        return !ReferenceEquals(services.Commander().Services, services);
+    }
 }
