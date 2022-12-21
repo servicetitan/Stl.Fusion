@@ -78,10 +78,15 @@ public static partial class TaskExt
             if (task.IsCompleted)
                 CompletedTasks.Writer.WriteAsync(task); 
             else {
-                task.ContinueWith(static (_, entry1) => {
-                    var entry = (IncompleteEntry)entry1;
-                    entry.Collector.CompletedTasks.Writer.WriteAsync(entry.Task);
-                }, new IncompleteEntry(this, task));
+                task.ContinueWith(
+                    static (_, entry1) => {
+                        var entry = (IncompleteEntry)entry1!;
+                        entry.Collector.CompletedTasks.Writer.WriteAsync(entry.Task);
+                    }, 
+                    new IncompleteEntry(this, task),
+                    CancellationToken.None,
+                    TaskContinuationOptions.ExecuteSynchronously,
+                    TaskScheduler.Default);
             }
         }
 
