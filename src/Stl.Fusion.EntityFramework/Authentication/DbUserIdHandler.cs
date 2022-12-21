@@ -6,12 +6,12 @@ namespace Stl.Fusion.EntityFramework.Authentication;
 public interface IDbUserIdHandler<TDbUserId>
 {
     TDbUserId New();
-    TDbUserId? None { get; }
+    TDbUserId None { get; }
 
     bool IsNone(TDbUserId? userId);
     string Format(TDbUserId? userId);
-    TDbUserId? Parse(string formattedUserId);
-    Option<TDbUserId?> TryParse(string formattedUserId);
+    TDbUserId Parse(string formattedUserId);
+    Option<TDbUserId> TryParse(string formattedUserId);
 }
 
 public class DbUserIdHandler<TDbUserId> : IDbUserIdHandler<TDbUserId>
@@ -51,13 +51,20 @@ public class DbUserIdHandler<TDbUserId> : IDbUserIdHandler<TDbUserId>
             ? string.Empty
             : Formatter.Convert(userId);
 
-    public virtual TDbUserId? Parse(string formattedUserId)
+    public virtual TDbUserId Parse(string formattedUserId)
         => formattedUserId.IsNullOrEmpty()
             ? None
-            : Parser.Convert(formattedUserId);
+            : Parser.Convert(formattedUserId) ?? None;
 
-    public virtual Option<TDbUserId?> TryParse(string formattedUserId)
-        => formattedUserId.IsNullOrEmpty()
-            ? None
-            : Parser.TryConvert(formattedUserId);
+    public virtual Option<TDbUserId> TryParse(string formattedUserId)
+    {
+        if (formattedUserId.IsNullOrEmpty())
+            return Option<TDbUserId>.None;
+        
+        var result = Parser.TryConvert(formattedUserId);
+        if (result.IsSome(out var value) && IsNone(value))
+            return Option<TDbUserId>.None;
+
+        return result!;
+    }
 }
