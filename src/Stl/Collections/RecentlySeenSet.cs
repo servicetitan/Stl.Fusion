@@ -16,7 +16,7 @@ public sealed class RecentlySeenSet<T>
         Clock = clock ?? MomentClockSet.Default.SystemClock;
 
         _heap = new BinaryHeap<Moment, T>(capacity + 1); // we may add one extra item, so "+ 1"
-        _set = new HashSet<T>(capacity + 1); // we may add one extra item, so "+ 1"
+        _set = new HashSet<T>();
     }
 
     public bool TryAdd(T item)
