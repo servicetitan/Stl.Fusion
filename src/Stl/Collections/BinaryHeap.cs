@@ -4,7 +4,7 @@ public class BinaryHeap<TPriority, TValue> : IEnumerable<(TPriority Priority, TV
 {
     private readonly Option<(TPriority Priority, TValue Value)> _none = default;
     private readonly IComparer<TPriority> _comparer;
-    private readonly List<(TPriority Key, TValue Value)> _heap = new();
+    private readonly List<(TPriority Key, TValue Value)> _heap;
 
     public int Count {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -12,17 +12,25 @@ public class BinaryHeap<TPriority, TValue> : IEnumerable<(TPriority Priority, TV
     }
 
     public BinaryHeap(IComparer<TPriority>? comparer = null)
-        => _comparer = comparer ?? Comparer<TPriority>.Default;
+        : this(16, comparer) { }
+
+    public BinaryHeap(int capacity, IComparer<TPriority>? comparer = null)
+    {
+        _heap = new(capacity);
+        _comparer = comparer ?? Comparer<TPriority>.Default;
+    }
 
     public BinaryHeap(BinaryHeap<TPriority, TValue> other)
     {
-        _comparer = other._comparer;
         _heap = other._heap.ToList();
+        _comparer = other._comparer;
     }
 
     public BinaryHeap(IEnumerable<(TPriority, TValue)> source, IComparer<TPriority>? comparer = null)
-        : this(comparer)
-        => _heap = source.OrderBy(i => i.Item1, _comparer).ToList();
+    {
+        _heap = source.OrderBy(i => i.Item1, _comparer).ToList();
+        _comparer = comparer ?? Comparer<TPriority>.Default;
+    }
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     public IEnumerator<(TPriority Priority, TValue Value)> GetEnumerator()

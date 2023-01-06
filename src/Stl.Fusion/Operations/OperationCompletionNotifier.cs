@@ -19,9 +19,8 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
     protected IServiceProvider Services { get; }
     protected AgentInfo AgentInfo { get; }
     protected IOperationCompletionListener[] OperationCompletionListeners { get; }
-    protected BinaryHeap<Moment, Symbol> KnownOperationHeap { get; } = new();
-    protected HashSet<Symbol> KnownOperationSet { get; } = new();
-    protected object Lock { get; } = new();
+    protected RecentlySeenSet<Symbol> RecentlySeenOperations { get; }
+    protected object Lock => RecentlySeenOperations;
     protected IMomentClock Clock { get; }
     protected ILogger Log { get; }
 
@@ -34,6 +33,7 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
 
         AgentInfo = Services.GetRequiredService<AgentInfo>();
         OperationCompletionListeners = Services.GetServices<IOperationCompletionListener>().ToArray();
+        RecentlySeenOperations = new RecentlySeenSet<Symbol>(Settings.MaxKnownOperationCount, Settings.MaxKnownOperationAge, Clock);
     }
 
     public bool IsReady()
@@ -41,28 +41,10 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
 
     public Task<bool> NotifyCompleted(IOperation operation, CommandContext? commandContext)
     {
-        var now = Clock.Now;
-        var minOperationStartTime = now - Settings.MaxKnownOperationAge;
-        var operationStartTime = operation.StartTime.ToMoment();
         var operationId = (Symbol) operation.Id;
         lock (Lock) {
-            if (KnownOperationSet.Contains(operationId))
+            if (!RecentlySeenOperations.TryAdd(operationId, operation.StartTime))
                 return TaskExt.FalseTask;
-            // Removing some operations if there are too many
-            while (KnownOperationSet.Count >= Settings.MaxKnownOperationCount) {
-                if (KnownOperationHeap.ExtractMin().IsSome(out var value))
-                    KnownOperationSet.Remove(value.Value);
-                else
-                    break;
-            }
-            // Removing too old operations
-            while (KnownOperationHeap.PeekMin().IsSome(out var value) && value.Priority < minOperationStartTime) {
-                KnownOperationHeap.ExtractMin();
-                KnownOperationSet.Remove(value.Value);
-            }
-            // Adding the current one
-            if (KnownOperationSet.Add(operationId))
-                KnownOperationHeap.Add(operationStartTime, operationId);
         }
 
         using var _ = ExecutionContextExt.SuppressFlow();
