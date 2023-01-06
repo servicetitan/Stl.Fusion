@@ -32,7 +32,7 @@ public class Commander : ICommander
             var command = context.UntypedCommand;
             var handlers = HandlerResolver.GetCommandHandlers(command.GetType());
             context.ExecutionState = new CommandExecutionState(handlers);
-            if (handlers.Count == 0)
+            if (handlers.Length == 0)
                 await OnUnhandledCommand(command, context, cancellationToken).ConfigureAwait(false);
 
             using var _ = context.Activate();
