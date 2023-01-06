@@ -38,5 +38,5 @@ public interface IAuthBackend : IComputeService
 
     // Queries
     [ComputeMethod(MinCacheDuration = 10)]
-    Task<User?> GetUser(Symbol tenantId, string userId, CancellationToken cancellationToken = default);
+    Task<User?> GetUser(Symbol tenantId, Symbol userId, CancellationToken cancellationToken = default);
 }

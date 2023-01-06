@@ -12,7 +12,7 @@ public record SessionAuthInfo : IRequirementTarget
 
     // Authentication
     public UserIdentity AuthenticatedIdentity { get; init; }
-    public string UserId { get; init; } = "";
+    public Symbol UserId { get; init; } = Symbol.Empty;
     public bool IsSignOutForced { get; init; }
 
     public SessionAuthInfo() { }
@@ -20,5 +20,5 @@ public record SessionAuthInfo : IRequirementTarget
         => SessionHash = session?.Hash ?? "";
 
     public bool IsAuthenticated()
-        => !(IsSignOutForced || UserId.IsNullOrEmpty());
+        => !(IsSignOutForced || UserId.IsEmpty);
 }

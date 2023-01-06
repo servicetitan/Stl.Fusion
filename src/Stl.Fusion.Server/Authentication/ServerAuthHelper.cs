@@ -188,9 +188,9 @@ public class ServerAuthHelper : IHasServices
 
         if (user == null)
             // Create
-            user = new User("", name) {
+            user = new User(Symbol.Empty, name) {
                 Claims = claims,
-                Identities = identities
+                Identities = identities,
             };
         else {
             // Update

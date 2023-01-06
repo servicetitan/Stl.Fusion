@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Stl.Requirements;
 
 public record FuncRequirement<T>(Func<T?, bool> Validator) : CustomizableRequirementBase<T>
@@ -10,6 +12,10 @@ public record FuncRequirement<T>(Func<T?, bool> Validator) : CustomizableRequire
     public static implicit operator FuncRequirement<T>(Func<T?, bool> validator)
         => new(validator);
 
+#if NETSTANDARD2_0
     public override bool IsSatisfied(T? value)
+#else
+    public override bool IsSatisfied([NotNullWhen(true)] T? value)
+#endif
         => Validator.Invoke(value);
 }

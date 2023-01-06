@@ -1,4 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Conversion;
+using Stl.Fusion.EntityFramework.Internal;
 using Stl.Generators;
 
 namespace Stl.Fusion.EntityFramework.Authentication;
@@ -8,10 +10,17 @@ public interface IDbUserIdHandler<TDbUserId>
     TDbUserId New();
     TDbUserId None { get; }
 
+#if NETSTANDARD2_0
     bool IsNone(TDbUserId? userId);
-    string Format(TDbUserId? userId);
-    TDbUserId Parse(string formattedUserId);
-    Option<TDbUserId> TryParse(string formattedUserId);
+    void Require(TDbUserId? userId);
+#else
+    bool IsNone([NotNullWhen(false)] TDbUserId? userId);
+    void Require([NotNull] TDbUserId? userId);
+#endif
+
+    Symbol Format(TDbUserId? userId);
+    TDbUserId Parse(Symbol userId, bool allowNone);
+    bool TryParse(Symbol userId, bool allowNone, out TDbUserId result);
 }
 
 public class DbUserIdHandler<TDbUserId> : IDbUserIdHandler<TDbUserId>
@@ -42,29 +51,51 @@ public class DbUserIdHandler<TDbUserId> : IDbUserIdHandler<TDbUserId>
     public virtual TDbUserId New()
         => Generator();
 
+#if NETSTANDARD2_0
     public virtual bool IsNone(TDbUserId? userId)
+#else
+    public virtual bool IsNone([NotNullWhen(false)] TDbUserId? userId)
+#endif
         => EqualityComparer<TDbUserId>.Default.Equals(userId!, None)
             || EqualityComparer<TDbUserId>.Default.Equals(userId!, default!);
 
-    public virtual string Format(TDbUserId? userId)
+#if NETSTANDARD2_0
+    public void Require(TDbUserId? userId)
+#else
+    public void Require([NotNull] TDbUserId? userId)
+#endif
+    {
+        if (IsNone(userId))
+            throw Errors.UserIdRequired();
+    }
+
+    public virtual Symbol Format(TDbUserId? userId)
         => IsNone(userId)
-            ? string.Empty
+            ? Symbol.Empty
             : Formatter.Convert(userId);
 
-    public virtual TDbUserId Parse(string formattedUserId)
-        => formattedUserId.IsNullOrEmpty()
-            ? None
-            : Parser.Convert(formattedUserId) ?? None;
-
-    public virtual Option<TDbUserId> TryParse(string formattedUserId)
+    public virtual TDbUserId Parse(Symbol userId, bool allowNone)
     {
-        if (formattedUserId.IsNullOrEmpty())
-            return Option<TDbUserId>.None;
-        
-        var result = Parser.TryConvert(formattedUserId);
-        if (result.IsSome(out var value) && IsNone(value))
-            return Option<TDbUserId>.None;
+        if (!TryParse(userId, true, out var result))
+            throw Errors.InvalidUserId();
+        if (!allowNone && IsNone(result))
+            throw Errors.UserIdRequired();
+        return result;
+    }
 
-        return result!;
+    public virtual bool TryParse(Symbol userId, bool allowNone, out TDbUserId result)
+    {
+        result = None;
+        if (userId.IsEmpty)
+            return allowNone;
+
+        if (!Parser.TryConvert(userId).IsSome(out var parsed))
+            return false;
+
+        if (parsed is null)
+            return allowNone;
+
+        result = parsed;
+        return true;
     }
 }

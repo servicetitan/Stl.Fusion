@@ -83,7 +83,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
         context.Operation().Items.Set(sessionInfo);
         sessionInfo = sessionInfo with {
             AuthenticatedIdentity = "",
-            UserId = "",
+            UserId = Symbol.Empty,
             IsSignOutForced = force,
         };
         UpsertSessionInfo(tenant, session.Id, sessionInfo, null);
@@ -179,7 +179,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
         if (!(authInfo?.IsAuthenticated() ?? false))
             return null;
 
-        var user = await GetUser(tenant.Id, authInfo!.UserId, cancellationToken).ConfigureAwait(false);
+        var user = await GetUser(tenant.Id, authInfo.UserId, cancellationToken).ConfigureAwait(false);
         return user;
     }
 
