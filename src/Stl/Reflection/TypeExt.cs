@@ -127,7 +127,7 @@ public static class TypeExt
 
     public static Type? GetTaskOrValueTaskType(this Type type)
     {
-        return GetTaskOrValueTaskTypeCache.GetOrAdd(type, type1 => {
+        return GetTaskOrValueTaskTypeCache.GetOrAdd(type, static type1 => {
             if (type1 == typeof(object))
                 return null;
             if (type1 == typeof(ValueTask) || type1 == typeof(Task))

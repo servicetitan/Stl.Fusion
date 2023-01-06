@@ -21,29 +21,31 @@ public class InvalidationInfoProvider
     {
         if (command == null)
             return false;
-        return IsComputeServiceCommandCache.GetOrAdd(command.GetType(), (_, command1) => {
-            var finalHandlerServiceType = GetFinalHandlerServiceType(command1);
+        return IsComputeServiceCommandCache.GetOrAdd(command.GetType(), static (_, arg) => {
+            var (self, command1) = arg;
+            var finalHandlerServiceType = self.GetFinalHandlerServiceType(command1);
             return typeof(IComputeService).IsAssignableFrom(finalHandlerServiceType);
-        }, command);
+        }, (this, command));
     }
 
     public virtual bool IsReplicaServiceCommand(ICommand? command)
     {
         if (command == null)
             return false;
-        return IsReplicaServiceCommandCache.GetOrAdd(command.GetType(), (_, command1) => {
-            var finalHandlerServiceType = GetFinalHandlerServiceType(command1);
+        return IsReplicaServiceCommandCache.GetOrAdd(command.GetType(), static (_, arg) => {
+            var (self, command1) = arg;
+            var finalHandlerServiceType = self.GetFinalHandlerServiceType(command1);
             return typeof(IReplicaService).IsAssignableFrom(finalHandlerServiceType);
-        }, command);
+        }, (this, command));
     }
 
     public virtual Type? GetFinalHandlerServiceType(ICommand? command)
     {
         if (command == null)
             return null;
-        return FinalHandlerServiceTypeCache.GetOrAdd(command.GetType(), (type, arg) => {
+        return FinalHandlerServiceTypeCache.GetOrAdd(command.GetType(), static (type, arg) => {
             var (self, command1) = arg;
-            var context = CommandContext.New(self.Commander, command1!, isOutermost: true);
+            var context = CommandContext.New(self.Commander, command1, isOutermost: true);
             try {
                 var handlers = self.CommandHandlerResolver.GetCommandHandlers(command1.GetType());
                 var finalHandler = handlers.FirstOrDefault(h => !h.IsFilter);

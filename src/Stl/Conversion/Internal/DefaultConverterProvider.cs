@@ -10,7 +10,7 @@ public class DefaultConverterProvider : ConverterProvider
         => Services = services;
 
     public override ISourceConverterProvider From(Type sourceType)
-        => _cache.GetOrAdd(sourceType, (sourceType1, self) => {
+        => _cache.GetOrAdd(sourceType, static (sourceType1, self) => {
             var scpType = typeof(ISourceConverterProvider<>).MakeGenericType(sourceType1);
             return (ISourceConverterProvider) self.Services.GetRequiredService(scpType);
         }, this);

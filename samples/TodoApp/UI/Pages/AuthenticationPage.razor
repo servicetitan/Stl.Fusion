@@ -161,7 +161,7 @@
         var result = new List<SessionInfoModel>();
 
         foreach (var sessionInfo in sessionInfos) {
-            var userAgent = UserAgentCache.GetOrAdd(sessionInfo.UserAgent, ua => Parser.ParseUserAgent(ua));
+            var userAgent = UserAgentCache.GetOrAdd(sessionInfo.UserAgent, static ua => Parser.ParseUserAgent(ua));
             var model = new SessionInfoModel() {
                 SessionHash = sessionInfo.SessionHash,
                 IsCurrent = sessionInfo.SessionHash == Session.Hash,

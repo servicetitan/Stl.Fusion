@@ -34,7 +34,7 @@ public class PublicationStateReply<T> : PublicationStateReply
         var tActual = tType.IsValueType ? tType : output.ValueOrDefault?.GetType() ?? tType;
         return NewInstanceCache.GetOrAdd(
             tActual,
-            tActual1 => {
+            static tActual1 => {
                 var mNewInternal = NewInternalMethod.MakeGenericMethod(tActual1);
                 var pOutput = Expression.Parameter(typeof(Result<T>));
                 var fnNewInternal = Expression.Lambda<Func<Result<T>, PublicationStateReply<T>>>(

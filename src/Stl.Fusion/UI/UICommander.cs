@@ -75,7 +75,7 @@ public class UICommander : IHasServices
 
     private static UIAction CreateUIAction(UICommander commander, ICommand command, CancellationToken cancellationToken)
     {
-        var factory = CachedActionFactories.GetOrAdd(command.GetResultType(), 
+        var factory = CachedActionFactories.GetOrAdd(command.GetResultType(),
             static (tCommand, commander1) => {
                 var mCreateUIAction = commander1
                     .GetType()
