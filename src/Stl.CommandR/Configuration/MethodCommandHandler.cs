@@ -2,7 +2,7 @@ using Stl.CommandR.Internal;
 
 namespace Stl.CommandR.Configuration;
 
-public record MethodCommandHandler<TCommand> : CommandHandler<TCommand>
+public sealed record MethodCommandHandler<TCommand> : CommandHandler<TCommand>
     where TCommand : class, ICommand
 {
     private ParameterInfo[]? _cachedParameters;
@@ -10,7 +10,7 @@ public record MethodCommandHandler<TCommand> : CommandHandler<TCommand>
     public MethodInfo MethodInfo { get; }
 
     public MethodCommandHandler(Type serviceType, MethodInfo methodInfo, bool isFilter = false, double priority = 0)
-        : base(isFilter, priority)
+        : base($"{serviceType.GetName(true)}.{methodInfo.Name}", isFilter, priority)
     {
         ServiceType = serviceType;
         MethodInfo = methodInfo;
@@ -44,6 +44,12 @@ public record MethodCommandHandler<TCommand> : CommandHandler<TCommand>
             throw;
         }
     }
+
+    public override string ToString() => base.ToString();
+
+    // This record relies on reference-based equality
+    public bool Equals(MethodCommandHandler<TCommand>? other) => ReferenceEquals(this, other);
+    public override int GetHashCode() => RuntimeHelpers.GetHashCode(this);
 
     private static object GetParameterValue(ParameterInfo parameter, ICommandContext context, IServiceProvider services)
     {

@@ -8,6 +8,6 @@ public abstract class ServiceBase
     protected ServiceBase(IServiceProvider services)
     {
         Services = services;
-        Log = services.GetService<ILoggerFactory>()?.CreateLogger(GetType()) ?? NullLogger.Instance;
+        Log = services.LogFor(GetType());
     }
 }

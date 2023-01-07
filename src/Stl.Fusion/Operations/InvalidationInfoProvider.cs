@@ -47,7 +47,9 @@ public class InvalidationInfoProvider
             var (self, command1) = arg;
             var context = CommandContext.New(self.Commander, command1, isOutermost: true);
             try {
-                var handlers = self.CommandHandlerResolver.GetCommandHandlers(command1.GetType());
+                var handlers = self.CommandHandlerResolver
+                    .GetCommandHandlers(command1.GetType())
+                    .GetHandlerChain(command1);
                 var finalHandler = handlers.FirstOrDefault(h => !h.IsFilter);
                 var finalHandlerServiceType = finalHandler?
                     .GetHandlerService(command1, context)

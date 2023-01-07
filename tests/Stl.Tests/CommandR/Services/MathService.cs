@@ -3,6 +3,10 @@ namespace Stl.Tests.CommandR.Services;
 [RegisterCommandService]
 public class MathService : ServiceBase
 {
+    private readonly object _lock = new();
+
+    public long Value { get; set; }
+
     public MathService(IServiceProvider services) : base(services) { }
 
     [CommandHandler(Priority = 2)]
@@ -47,5 +51,40 @@ public class MathService : ServiceBase
         var tailSumTask = RecSum(tailCommand, cancellationToken);
         var tailSum = await tailSumTask.ConfigureAwait(false);
         return command.Arguments[0] + tailSum;
+    }
+
+    [CommandHandler]
+    public virtual async Task<Unit> Set(IncSetFailCommand command, CancellationToken cancellationToken = default)
+    {
+        await Task.Delay(command.SetDelay, cancellationToken).ConfigureAwait(false);
+        Log.LogInformation("Set: ChainId = {ChainId}", command.ChainId);
+        command.ChainId.IsEmpty.Should().BeFalse();
+        if (command.SetValue is { } value) {
+            lock (_lock)
+                Value = value;
+        }
+
+        return default;
+    }
+
+    [CommandHandler]
+    public virtual async Task Inc(IncSetFailCommand command, CancellationToken cancellationToken = default)
+    {
+        await Task.Delay(command.IncrementDelay, cancellationToken).ConfigureAwait(false);
+        Log.LogInformation("Inc: ChainId = {ChainId}", command.ChainId);
+        command.ChainId.IsEmpty.Should().BeFalse();
+        lock (_lock) {
+            Value += command.IncrementBy;
+        }
+    }
+
+    [CommandHandler]
+    public virtual async Task Fail(IncSetFailCommand command, CancellationToken cancellationToken = default)
+    {
+        await Task.Delay(command.FailDelay, cancellationToken).ConfigureAwait(false);
+        Log.LogInformation("Fail: ChainId = {ChainId}", command.ChainId);
+        command.ChainId.IsEmpty.Should().BeFalse();
+        if (command.MustFail)
+            throw new InvalidOperationException("Fail!");
     }
 }
