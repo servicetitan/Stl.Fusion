@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net7.0;net6.0;net5.0;netcoreapp3.1;netstandard2.1;netstandard2.0;net48;net471</TargetFrameworks>
-    <PackageTags>servicetitan stl plugins</PackageTags>
+    <PackageTags>servicetitan stl stl_fusion plugins</PackageTags>
     <Description><!--
       -->MEF-style plugin library that focuses on core capabilities <!--
       -->needed to add plugins to your application - namely, <!--
