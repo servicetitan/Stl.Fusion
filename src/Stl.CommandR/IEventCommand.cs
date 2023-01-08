@@ -1,6 +1,6 @@
 namespace Stl.CommandR;
 
-public interface IMultiChainCommand : ICommand<Unit>
+public interface IEventCommand : ICommand<Unit>
 {
     Symbol ChainId { get; init; }
 }

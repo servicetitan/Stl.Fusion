@@ -15,6 +15,14 @@ public class BasicTest : CommandRTestBase
     }
 
     [Fact]
+    public async Task LogEventTest()
+    {
+        var services = CreateServices();
+        var command = new LogEvent() { Message = "Hi!" };
+        await services.Commander().Call(command);
+    }
+
+    [Fact]
     public async Task DivCommandTest()
     {
         var services = CreateServices();

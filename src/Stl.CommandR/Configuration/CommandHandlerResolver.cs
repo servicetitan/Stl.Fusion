@@ -43,7 +43,7 @@ public class CommandHandlerResolver : ICommandHandlerResolver
 
             var nonFilterHandlers = handlers.Where(h => !h.IsFilter);
 
-            if (!typeof(IMultiChainCommand).IsAssignableFrom(commandType1)) {
+            if (!typeof(IEventCommand).IsAssignableFrom(commandType1)) {
                 // Regular ICommand
                 if (nonFilterHandlers.Count() > 1) {
                     var e = Errors.MultipleNonFilterHandlers(commandType1);
@@ -55,13 +55,13 @@ public class CommandHandlerResolver : ICommandHandlerResolver
                 return new CommandHandlerSet(commandType1, handlers.ToImmutableArray());
             }
             else {
-                // IMultiChainCommand
-                var multipleChains = (
+                // IEventCommand
+                var handlerChains = (
                     from nonFilterHandler in nonFilterHandlers
                     let handlerSubset = handlers.Where(h => h.IsFilter || h == nonFilterHandler).ToImmutableArray()
                     select KeyValuePair.Create(nonFilterHandler.Id, handlerSubset)
                     ).ToImmutableDictionary();
-                return new CommandHandlerSet(commandType1, multipleChains);
+                return new CommandHandlerSet(commandType1, handlerChains);
             }
         }, this);
 }

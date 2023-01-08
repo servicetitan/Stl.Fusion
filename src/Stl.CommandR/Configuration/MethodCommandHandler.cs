@@ -74,11 +74,11 @@ public static class MethodCommandHandler
     public static CommandHandler? TryNew(Type serviceType, MethodInfo methodInfo, double? priorityOverride = null)
     {
         var attr = GetAttribute(methodInfo);
-        var isEnabled = attr?.IsEnabled ?? false;
-        if (!isEnabled)
+        if (attr == null)
             return null;
-        var isFilter = attr?.IsFilter ?? false;
-        var order = priorityOverride ?? attr?.Priority ?? 0;
+
+        var isFilter = attr.IsFilter;
+        var order = priorityOverride ?? attr.Priority;
 
         if (methodInfo.IsStatic)
             throw Errors.CommandHandlerMethodMustBeInstanceMethod(methodInfo);

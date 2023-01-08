@@ -7,7 +7,7 @@ public class LogEnterExitService : ServiceBase
 {
     public LogEnterExitService(IServiceProvider services) : base(services) { }
 
-    [CommandHandler(1000, IsFilter = true)]
+    [CommandFilter(1000)]
     public async Task OnAnyCommand(
         ICommand command, CommandContext context,
         CancellationToken cancellationToken)

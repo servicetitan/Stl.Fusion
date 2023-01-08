@@ -1,6 +1,6 @@
 namespace Stl.CommandR.Internal;
 
-public record LocalActionCommand : LocalCommand, ICommand<Unit>
+public sealed record LocalActionCommand : LocalCommand, ICommand<Unit>
 {
     [IgnoreDataMember, JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public Func<CancellationToken, Task>? Handler { get; init; }

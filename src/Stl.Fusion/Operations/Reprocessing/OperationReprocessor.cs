@@ -91,7 +91,7 @@ public class OperationReprocessor : IOperationReprocessor
         return IsTransientFailure(allErrors);
     }
 
-    [CommandHandler(Priority = FusionOperationsCommandHandlerPriority.OperationReprocessor, IsFilter = true)]
+    [CommandFilter(Priority = FusionOperationsCommandHandlerPriority.OperationReprocessor)]
     public virtual async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
     {
         var isReprocessingAllowed =

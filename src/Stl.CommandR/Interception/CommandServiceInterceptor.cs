@@ -63,7 +63,7 @@ public class CommandServiceInterceptor : InterceptorBase
                 continue;
 
             var methodDef = new CommandHandlerMethodDef(this, method);
-            var attributeName = nameof(CommandHandlerAttribute)
+            var attributeName = attr.GetType().GetName()
 #if NETSTANDARD2_0
                 .Replace(nameof(Attribute), "");
 #else

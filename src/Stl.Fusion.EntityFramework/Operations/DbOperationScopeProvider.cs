@@ -17,7 +17,7 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
     public DbOperationScopeProvider(IServiceProvider services) : base(services) 
         => OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
 
-    [CommandHandler(Priority = FusionEntityFrameworkCommandHandlerPriority.DbOperationScopeProvider, IsFilter = true)]
+    [CommandFilter(Priority = FusionEntityFrameworkCommandHandlerPriority.DbOperationScopeProvider)]
     public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
     {
         var isOperationRequired =

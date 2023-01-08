@@ -3,36 +3,33 @@ namespace Stl.CommandR.Configuration;
 public sealed record CommandHandlerSet
 {
     public Type CommandType { get; }
-    public bool IsSingleChain { get; }
-    public ImmutableArray<CommandHandler> SingleChain { get; }
-    public ImmutableDictionary<Symbol, ImmutableArray<CommandHandler>> MultipleChains { get; }
+    public ImmutableDictionary<Symbol, ImmutableArray<CommandHandler>> HandlerChains { get; }
+    public ImmutableArray<CommandHandler> SingleHandlerChain { get; }
 
-    public CommandHandlerSet(Type commandType, ImmutableArray<CommandHandler> singleChain)
+    public CommandHandlerSet(Type commandType, ImmutableArray<CommandHandler> singleHandlerChain)
     {
         CommandType = commandType;
-        IsSingleChain = false;
-        SingleChain = singleChain;
-        MultipleChains = ImmutableDictionary<Symbol, ImmutableArray<CommandHandler>>.Empty;
+        SingleHandlerChain = singleHandlerChain;
+        HandlerChains = ImmutableDictionary<Symbol, ImmutableArray<CommandHandler>>.Empty;
     }
 
-    public CommandHandlerSet(Type commandType, ImmutableDictionary<Symbol, ImmutableArray<CommandHandler>> multipleChains)
+    public CommandHandlerSet(Type commandType, ImmutableDictionary<Symbol, ImmutableArray<CommandHandler>> handlerChains)
     {
         CommandType = commandType;
-        IsSingleChain = true;
-        SingleChain = ImmutableArray<CommandHandler>.Empty;
-        MultipleChains = multipleChains;
+        HandlerChains = handlerChains;
+        SingleHandlerChain = ImmutableArray<CommandHandler>.Empty;
     }
 
     public ImmutableArray<CommandHandler> GetHandlerChain(ICommand command)
     {
-        if (command is not IMultiChainCommand multiChainCommand)
-            return SingleChain;
+        if (command is not IEventCommand eventCommand)
+            return SingleHandlerChain;
 
-        var chainId = multiChainCommand.ChainId;
+        var chainId = eventCommand.ChainId;
         if (chainId.IsEmpty)
             return ImmutableArray<CommandHandler>.Empty;
 
-        return MultipleChains.TryGetValue(chainId, out var result)
+        return HandlerChains.TryGetValue(chainId, out var result)
             ? result
             : ImmutableArray<CommandHandler>.Empty;
     }

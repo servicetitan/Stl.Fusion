@@ -7,7 +7,7 @@ namespace Stl.Fusion.Client.Internal;
 /// </summary>
 public class BackendUnreachableDetector : ICommandHandler<ICommand>
 {
-    [CommandHandler(Priority = FusionClientCommandHandlerPriority.BackendUnreachableDetector, IsFilter = true)]
+    [CommandFilter(Priority = FusionClientCommandHandlerPriority.BackendUnreachableDetector)]
     public async Task OnCommand(
         ICommand command, CommandContext context,
         CancellationToken cancellationToken)

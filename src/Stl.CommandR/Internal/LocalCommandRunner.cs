@@ -1,6 +1,6 @@
 namespace Stl.CommandR.Internal;
 
-public class LocalCommandRunner : ICommandHandler<ILocalCommand>
+public sealed class LocalCommandRunner : ICommandHandler<ILocalCommand>
 {
     [CommandHandler(Priority = CommanderCommandHandlerPriority.LocalCommandRunner)]
     public Task OnCommand(

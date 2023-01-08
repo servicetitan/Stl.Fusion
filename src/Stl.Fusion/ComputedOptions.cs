@@ -23,7 +23,7 @@ public record ComputedOptions
         ComputeMethodAttribute? attribute,
         SwapAttribute? swapAttribute)
     {
-        if (attribute is not { IsEnabled: true })
+        if (attribute == null)
             return null;
         var options = new ComputedOptions() {
             KeepAliveTime = ToTimeSpan(attribute.MinCacheDuration) ?? defaultOptions.KeepAliveTime,
