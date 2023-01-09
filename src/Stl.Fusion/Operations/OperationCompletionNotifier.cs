@@ -19,8 +19,8 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
     protected IServiceProvider Services { get; }
     protected AgentInfo AgentInfo { get; }
     protected IOperationCompletionListener[] OperationCompletionListeners { get; }
-    protected RecentlySeenSet<Symbol> RecentlySeenOperations { get; }
-    protected object Lock => RecentlySeenOperations;
+    protected RecentlySeenMap<Symbol, Unit> RecentlySeenMapOperations { get; }
+    protected object Lock => RecentlySeenMapOperations;
     protected IMomentClock Clock { get; }
     protected ILogger Log { get; }
 
@@ -33,7 +33,10 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
 
         AgentInfo = Services.GetRequiredService<AgentInfo>();
         OperationCompletionListeners = Services.GetServices<IOperationCompletionListener>().ToArray();
-        RecentlySeenOperations = new RecentlySeenSet<Symbol>(Settings.MaxKnownOperationCount, Settings.MaxKnownOperationAge, Clock);
+        RecentlySeenMapOperations = new RecentlySeenMap<Symbol, Unit>(
+            Settings.MaxKnownOperationCount,
+            Settings.MaxKnownOperationAge,
+            Clock);
     }
 
     public bool IsReady()
@@ -43,7 +46,7 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
     {
         var operationId = (Symbol) operation.Id;
         lock (Lock) {
-            if (!RecentlySeenOperations.TryAdd(operationId, operation.StartTime))
+            if (!RecentlySeenMapOperations.TryAdd(operationId, operation.StartTime))
                 return TaskExt.FalseTask;
         }
 
