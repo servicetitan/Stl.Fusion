@@ -1,6 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Stl.Collections;
 
 public sealed class RecentlySeenMap<TKey, TValue>
+    where TKey : notnull
 {
     private readonly BinaryHeap<Moment, TKey> _heap;
     private readonly Dictionary<TKey, TValue> _map;
@@ -19,7 +22,11 @@ public sealed class RecentlySeenMap<TKey, TValue>
         _map = new Dictionary<TKey, TValue>(capacity + 1); // we may add one extra item, so "+ 1"
     }
 
-    public bool TryGet(TKey key, out TValue existingValue)
+#if NETSTANDARD2_0
+    public bool TryGet(TKey key, out TValue? existingValue)
+#else
+    public bool TryGet(TKey key, [MaybeNullWhen(false)] out TValue existingValue)
+#endif
         => _map.TryGetValue(key, out existingValue);
 
     public bool TryAdd(TKey key, TValue value = default!)
