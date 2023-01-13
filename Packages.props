@@ -111,7 +111,7 @@
     <PackageReference Update="RestEase" Version="1.6.*" />
     <PackageReference Update="RestEase.SourceGenerator" Version="1.6.*" />
     <PackageReference Update="StackExchange.Redis" Version="2.6.*" />
-    <PackageReference Update="Swashbuckle.AspNetCore" Version="6.4.0" />
+    <PackageReference Update="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageReference Update="System.Collections.Immutable" Version="$(SystemXxxVersion)" />
     <PackageReference Update="System.Configuration.ConfigurationManager" Version="$(SystemXxxVersion)" />
     <PackageReference Update="System.CommandLine" Version="2.0.0-beta4.22272.1" />
