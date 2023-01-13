@@ -11,7 +11,7 @@ public class FusionComponentBase : ComponentBase
 
     public override Task SetParametersAsync(ParameterView parameters)
     {
-        if (_isInitialized) {
+        if (!_isInitialized) {
             _isInitialized = true;
             return base.SetParametersAsync(parameters);
         }
