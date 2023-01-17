@@ -32,7 +32,7 @@
     <MySqlConnectorVersion6>2.1.*</MySqlConnectorVersion6>
     <MySqlConnectorVersion5>$(MySqlConnectorVersion6)</MySqlConnectorVersion5>
     <MySqlConnectorVersion3>0.*</MySqlConnectorVersion3>
-    <EntityFrameworkCoreMySqlVersion>6.0.2</EntityFrameworkCoreMySqlVersion>
+    <EntityFrameworkCoreMySqlVersion>7.0.0</EntityFrameworkCoreMySqlVersion>
     <EntityFrameworkCoreMySqlVersion6>$(AspNetCoreVersion6)</EntityFrameworkCoreMySqlVersion6>
     <EntityFrameworkCoreMySqlVersion5>$(AspNetCoreVersion5)</EntityFrameworkCoreMySqlVersion5>
     <EntityFrameworkCoreMySqlVersion3>$(AspNetCoreVersion3)</EntityFrameworkCoreMySqlVersion3>
