@@ -30,6 +30,9 @@ public static class Errors
     public static Exception NoComputedCaptured()
         => new InvalidOperationException($"No {nameof(IComputed)} was captured.");
 
+    public static Exception AnonymousComputedSourceIsNotComputedYet()
+        => new InvalidOperationException("This anonymous computed source isn't computed yet.");
+
     public static Exception WrongPublisher()
         => new PublisherException("Wrong publisher.");
     public static Exception WrongPublisher(IPublisher expected, Symbol providedPublisherId)
