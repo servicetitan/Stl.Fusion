@@ -77,7 +77,7 @@
     <PackageReference Update="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="$(AspNetCoreVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="$(AspNetCoreNewtonsoftJsonVersion)" />
     <PackageReference Update="Microsoft.CSharp" Version="4.*" />
-    <PackageReference Update="Microsoft.Data.SqlClient" Version="5.0.*" />
+    <PackageReference Update="Microsoft.Data.SqlClient" Version="5.1.*" />
     <PackageReference Update="Microsoft.Extensions.Caching.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.Extensions.Configuration.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.Extensions.Configuration" Version="$(MicrosoftExtensionsVersion)" />
