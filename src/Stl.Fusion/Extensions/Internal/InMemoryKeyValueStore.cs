@@ -126,7 +126,7 @@ public class InMemoryKeyValueStore : WorkerBase, IKeyValueStore
             }
             if (Store.TryAdd((tenantId, key), (value, expiresAt)))
                 return true;
-            spinWait.SpinOnce();
+            spinWait.SpinOnce(); // Safe for WASM (unused there)
         }
     }
 

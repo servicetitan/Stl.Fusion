@@ -33,7 +33,7 @@ public class OptionSet : IServiceProvider
                 if (oldItems == items)
                     return;
                 items = oldItems;
-                spinWait.SpinOnce();
+                spinWait.SpinOnce(); // Safe for WASM
             }
         }
     }
@@ -121,7 +121,7 @@ public class OptionSet : IServiceProvider
             if (oldItems == items || oldItems.Count == 0)
                 return;
             items = oldItems;
-            spinWait.SpinOnce();
+            spinWait.SpinOnce(); // Safe for WASM
         }
     }
 }

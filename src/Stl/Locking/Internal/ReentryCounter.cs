@@ -38,7 +38,7 @@ public class ReentryCounter
             if (oldCount == count)
                 return true;
             count = oldCount;
-            spinWait.SpinOnce();
+            spinWait.SpinOnce(); // Safe for WASM
         }
         return false;
     }

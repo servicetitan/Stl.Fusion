@@ -84,7 +84,7 @@ public class MatchingTypeFinder : IMatchingTypeFinder
             var newSet = oldSet.Add(assembly);
             if (Interlocked.CompareExchange(ref _scannedAssemblies, newSet, oldSet) == oldSet)
                 return;
-            spinWait.SpinOnce();
+            spinWait.SpinOnce(); // Safe for WASM
         }
     }
 
@@ -102,7 +102,7 @@ public class MatchingTypeFinder : IMatchingTypeFinder
                 newSet = newSet.Add(searchAssembly);
             if (Interlocked.CompareExchange(ref _scannedAssemblies, newSet, oldSet) == oldSet)
                 return;
-            spinWait.SpinOnce();
+            spinWait.SpinOnce(); // Safe for WASM
         }
     }
 }

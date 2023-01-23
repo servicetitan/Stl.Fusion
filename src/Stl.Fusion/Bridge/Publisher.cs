@@ -104,7 +104,7 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
                  }, (this, computed));
             if (p.TryTouch())
                 return p;
-            spinWait.SpinOnce();
+            spinWait.SpinOnce(); // Safe for WASM (unused there)
         }
     }
 

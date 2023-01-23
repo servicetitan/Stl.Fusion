@@ -111,7 +111,7 @@ public sealed class ComputedRegistry : IDisposable
                 if (_storage.TryAdd(key, newHandle.GetValueOrDefault()))
                     return;
             }
-            spinWait.SpinOnce();
+            spinWait.SpinOnce(); // Safe for WASM
         }
     }
 

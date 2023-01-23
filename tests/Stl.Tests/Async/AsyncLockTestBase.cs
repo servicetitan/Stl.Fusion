@@ -63,9 +63,9 @@ public abstract class AsyncLockTestBase : TestBase
             var spinCount = (delayMs * 347) & 7;
             for (var i = 0; i < spinCount; i++)
 #if !NETFRAMEWORK
-                sw.SpinOnce(-1);
+                sw.SpinOnce(-1); // Unused in WASM
 #else
-                sw.SpinOnce();
+                sw.SpinOnce(); // Unused in WASM
 #endif
         }
     }

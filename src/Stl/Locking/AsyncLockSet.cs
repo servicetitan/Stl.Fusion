@@ -100,7 +100,7 @@ public class AsyncLockSet<TKey> : IAsyncLockSet<TKey>
             var asyncLock = entry.TryBeginUse();
             if (asyncLock != null)
                 return (asyncLock, entry);
-            spinWait.SpinOnce();
+            spinWait.SpinOnce(); // Safe for WASM
         }
     }
 
