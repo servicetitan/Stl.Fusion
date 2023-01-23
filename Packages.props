@@ -20,11 +20,11 @@
     <MicrosoftExtensionsVersion>$(AspNetCoreVersion)</MicrosoftExtensionsVersion>
     <MicrosoftExtensionsVersion6>$(AspNetCoreVersion6)</MicrosoftExtensionsVersion6>
     <!-- EF Core -->
-    <EntityFrameworkCoreVersion>[7.0.0-rc.2.22472.11,8)</EntityFrameworkCoreVersion>
+    <EntityFrameworkCoreVersion>7.*</EntityFrameworkCoreVersion>
     <EntityFrameworkCoreVersion6>$(AspNetCoreVersion6)</EntityFrameworkCoreVersion6>
     <EntityFrameworkCoreVersion5>$(AspNetCoreVersion5)</EntityFrameworkCoreVersion5>
     <EntityFrameworkCoreVersion3>$(AspNetCoreVersion3)</EntityFrameworkCoreVersion3>
-    <EntityFrameworkCoreNpgsqlVersion>[7.0.0-rc.2,8)</EntityFrameworkCoreNpgsqlVersion>
+    <EntityFrameworkCoreNpgsqlVersion>7.*</EntityFrameworkCoreNpgsqlVersion>
     <EntityFrameworkCoreNpgsqlVersion6>$(EntityFrameworkCoreVersion6)</EntityFrameworkCoreNpgsqlVersion6>
     <EntityFrameworkCoreNpgsqlVersion5>$(EntityFrameworkCoreVersion5)</EntityFrameworkCoreNpgsqlVersion5>
     <EntityFrameworkCoreNpgsqlVersion3>$(EntityFrameworkCoreVersion3)</EntityFrameworkCoreNpgsqlVersion3>
@@ -32,7 +32,7 @@
     <MySqlConnectorVersion6>2.1.*</MySqlConnectorVersion6>
     <MySqlConnectorVersion5>$(MySqlConnectorVersion6)</MySqlConnectorVersion5>
     <MySqlConnectorVersion3>0.*</MySqlConnectorVersion3>
-    <EntityFrameworkCoreMySqlVersion>7.0.0</EntityFrameworkCoreMySqlVersion>
+    <EntityFrameworkCoreMySqlVersion>7.0.*</EntityFrameworkCoreMySqlVersion>
     <EntityFrameworkCoreMySqlVersion6>$(AspNetCoreVersion6)</EntityFrameworkCoreMySqlVersion6>
     <EntityFrameworkCoreMySqlVersion5>$(AspNetCoreVersion5)</EntityFrameworkCoreMySqlVersion5>
     <EntityFrameworkCoreMySqlVersion3>$(AspNetCoreVersion3)</EntityFrameworkCoreMySqlVersion3>
@@ -63,7 +63,7 @@
     <PackageReference Update="Castle.Core" Version="5.1.*" />
     <PackageReference Update="CliWrap" Version="3.6.*" />
     <PackageReference Update="DataAnnotationsValidatorNetStandard" Version="1.0.*" />
-    <PackageReference Update="EFCore.CheckConstraints" Version="$(EntityFrameworkCoreVersion6)" />
+    <PackageReference Update="EFCore.CheckConstraints" Version="$(EntityFrameworkCoreVersion)" />
     <PackageReference Update="Enums.NET" Version="4.0.*" />
     <PackageReference Update="MessagePack" Version="$(MessagePackVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Authentication.Cookies" Version="2.2.*" />

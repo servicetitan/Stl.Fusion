@@ -95,8 +95,13 @@ public abstract class AuthServiceTestBase : FusionTestBase
             var user = await authBackend.GetUser(default, i.ToString());
             user.Should().BeNull();
         }
-        var s1 = await CreateUser(new User("Bob1").WithIdentity("g:1"));
-        var s2 = await CreateUser(new User("100500", "Bob2").WithIdentity("g:2"));
+
+        var u1 = new User("Bob1").WithIdentity("g:1");
+        var s1 = await CreateUser(u1);
+        var u2 = new User("100500", "Bob2").WithIdentity("g:2");
+        if (Options.DbType == FusionTestDbType.SqlServer)
+            u2 = u2 with { Id = "" }; // SQL Server doesn't support identity inserts by default
+        var s2 = await CreateUser(u2);
         await Assert.ThrowsAsync<FormatException>(async () => {
             var s3 = await CreateUser(new User("invalid", "Bob3").WithIdentity("g:3"));
         });
@@ -323,7 +328,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         user.Should().NotBeNull();
         user!.Name.Should().Be("John");
 
-#if NET5_0_OR_GREATER && !NET7_0_OR_GREATER
+#if NET5_0_OR_GREATER
         if (Options.DbType != FusionTestDbType.InMemory
             && Options.DbType != FusionTestDbType.MariaDb) {
             await Assert.ThrowsAnyAsync<Exception>(async () => {

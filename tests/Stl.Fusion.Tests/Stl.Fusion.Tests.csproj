@@ -23,10 +23,6 @@
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" />
     <PackageReference Include="System.Drawing.Common" />
   </ItemGroup>
-  <ItemGroup Condition="$(TargetFramework.StartsWith('net7'))">
-    <!-- Currently EFCore.CheckConstraints doesn't support .NET 7 -->
-    <PackageReference Remove="EFCore.CheckConstraints" />
-  </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('net6'))">
     <PackageReference Include="EFCore.CheckConstraints" VersionOverride="$(EntityFrameworkCoreVersion6)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" VersionOverride="$(EntityFrameworkCoreVersion6)" />
