@@ -44,21 +44,21 @@ public static partial class TaskExt
         }
         await collector.ToResultAndRelease().ConfigureAwait(false);
     }
-    
+
     // Nested types
 
     private sealed class Collector
     {
-        private static readonly int CacheSize = HardwareInfo.GetProcessorCountPo2Factor(16, 16); 
+        private static readonly int CacheSize = HardwareInfo.GetProcessorCountPo2Factor(16, 16);
         private static readonly ConcurrentBag<Collector> Cache = new();
-    
-        public static Collector Rent() 
+
+        public static Collector Rent()
             => Cache.TryTake(out var cached) ? cached : new Collector();
 
         public readonly List<Task> Tasks = new();
-        public readonly Channel<Task> CompletedTasks = 
+        public readonly Channel<Task> CompletedTasks =
             Channel.CreateUnbounded<Task>(new UnboundedChannelOptions() {
-                SingleReader = true, 
+                SingleReader = true,
                 SingleWriter = false
             });
         public int RunningTaskCount;
@@ -110,13 +110,17 @@ public static partial class TaskExt
         {
             // Waiting for remaining tasks
             await Complete(RunningTaskCount).ConfigureAwait(false);
-            var result = new T[Tasks.Count];
-            for (var i = 0; i < Tasks.Count; i++) {
-                var task = (Task<T>)Tasks[i];
-                result[i] = await task; // It must be already completed, so no ConfigureAwait(false) here 
+            try {
+                var result = new T[Tasks.Count];
+                for (var i = 0; i < Tasks.Count; i++) {
+                    var task = (Task<T>)Tasks[i];
+                    result[i] = await task; // It must be already completed, so no ConfigureAwait(false) here 
+                }
+                return result;
             }
-            Release();
-            return result;
+            finally {
+                Release();
+            }
         }
 
         private void Release()
