@@ -10,8 +10,10 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
 {
     public record Options
     {
-        public int MaxKnownOperationCount { get; init; } = 10_000;
-        public TimeSpan MaxKnownOperationAge { get; init; } = TimeSpan.FromHours(1);
+        // Should be >= MaxBatchSize @ DbOperationLogReader.Options
+        public int MaxKnownOperationCount { get; init; } = 16384;
+        // Should be >= MaxCommitAge + MaxCommitDuration @ DbOperationLogReader.Options
+        public TimeSpan MaxKnownOperationAge { get; init; } = TimeSpan.FromMinutes(10);
         public IMomentClock? Clock { get; init; }
     }
 
@@ -19,8 +21,8 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
     protected IServiceProvider Services { get; }
     protected AgentInfo AgentInfo { get; }
     protected IOperationCompletionListener[] OperationCompletionListeners { get; }
-    protected RecentlySeenMap<Symbol, Unit> RecentlySeenMapOperations { get; }
-    protected object Lock => RecentlySeenMapOperations;
+    protected RecentlySeenMap<Symbol, Unit> RecentlySeenOperationIds { get; }
+    protected object Lock => RecentlySeenOperationIds;
     protected IMomentClock Clock { get; }
     protected ILogger Log { get; }
 
@@ -33,7 +35,7 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
 
         AgentInfo = Services.GetRequiredService<AgentInfo>();
         OperationCompletionListeners = Services.GetServices<IOperationCompletionListener>().ToArray();
-        RecentlySeenMapOperations = new RecentlySeenMap<Symbol, Unit>(
+        RecentlySeenOperationIds = new RecentlySeenMap<Symbol, Unit>(
             Settings.MaxKnownOperationCount,
             Settings.MaxKnownOperationAge,
             Clock);
@@ -46,15 +48,15 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
     {
         var operationId = (Symbol) operation.Id;
         lock (Lock) {
-            if (!RecentlySeenMapOperations.TryAdd(operationId, operation.StartTime))
+            if (!RecentlySeenOperationIds.TryAdd(operationId, operation.StartTime))
                 return TaskExt.FalseTask;
         }
 
         using var _ = ExecutionContextExt.SuppressFlow();
         return Task.Run(async () => {
-            // An important assertion
             var isLocal = commandContext != null;
             var isFromLocalAgent = StringComparer.Ordinal.Equals(operation.AgentId, AgentInfo.Id.Value);
+            // An important assertion
             if (isLocal != isFromLocalAgent) {
                 if (isFromLocalAgent)
                     Log.LogError("Assertion failed: operation w/o CommandContext originates from local agent");
@@ -70,6 +72,7 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
                     tasks[i] = handler.OnOperationCompleted(operation, commandContext);
                 }
                 catch (Exception e) {
+                    tasks[i] = Task.CompletedTask;
                     Log.LogError(e, "Error in operation completion handler of type '{HandlerType}'",
                         handler.GetType());
                 }
