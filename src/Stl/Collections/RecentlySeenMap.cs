@@ -46,8 +46,8 @@ public sealed class RecentlySeenMap<TKey, TValue>
     {
         // Removing some items while there are too many
         while (_map.Count >= Capacity) {
-            if (_heap.ExtractMin().IsSome(out var key))
-                _map.Remove(key.Value);
+            if (_heap.ExtractMin().IsSome(out var entry))
+                _map.Remove(entry.Value);
             else
                 break;
         }
