@@ -91,10 +91,9 @@ public class DbOperationLogReader<TDbContext> : DbTenantWorkerBase<TDbContext>
                 let isLocal = StringComparer.Ordinal.Equals(operation.AgentId, AgentInfo.Id.Value)
                 where !isLocal
                 select OperationCompletionNotifier.NotifyCompleted(operation, null);
-            var notifyBatches =
-                from chunk in notifyTasks.Chunk(64)
-                select chunk.Collect();
-            await notifyBatches.Collect(HardwareInfo.ProcessorCount).ConfigureAwait(false);
+            await notifyTasks
+                .Collect(HardwareInfo.GetProcessorCountFactor(64, 64))
+                .ConfigureAwait(false);
         }).Trace(() => activitySource.StartActivity("Read").AddTenantTags(tenant), Log);
 
         var waitForChangesChain = new AsyncChain("WaitForChanges()", async cancellationToken1 => {
