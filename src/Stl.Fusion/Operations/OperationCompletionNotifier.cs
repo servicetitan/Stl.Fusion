@@ -65,23 +65,24 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
             }
 
             // Notification
-            var tasks = new Task[OperationCompletionListeners.Length];
-            for (var i = 0; i < OperationCompletionListeners.Length; i++) {
-                var handler = OperationCompletionListeners[i];
+            var listeners = OperationCompletionListeners;
+            var tasks = new Task[listeners.Length];
+            for (var i = 0; i < listeners.Length; i++) {
+                var listener = listeners[i];
                 try {
-                    tasks[i] = handler.OnOperationCompleted(operation, commandContext);
+                    tasks[i] = listener.OnOperationCompleted(operation, commandContext);
                 }
                 catch (Exception e) {
                     tasks[i] = Task.CompletedTask;
-                    Log.LogError(e, "Error in operation completion handler of type '{HandlerType}'",
-                        handler.GetType());
+                    Log.LogError(e, "Operation completion listener of type '{HandlerType}' failed",
+                        listener.GetType());
                 }
             }
             try {
                 await Task.WhenAll(tasks).ConfigureAwait(false);
             }
             catch (Exception e) {
-                Log.LogError(e, "Error in one of operation completion handlers");
+                Log.LogError(e, "One of operation completion listeners failed");
             }
             return true;
         });

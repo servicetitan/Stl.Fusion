@@ -31,7 +31,7 @@ public static class DbEntityResolverExt
         var entities = await keys
             .Distinct()
             .Select(key => resolver.Get(tenant.Id, key, cancellationToken))
-            .Collect(0)
+            .Collect()
             .ConfigureAwait(false);
         var result = new Dictionary<TKey, TDbEntity>();
         foreach (var entity in entities)

@@ -119,7 +119,7 @@ public class TaskExtTest : TestBase
             var rnd = new Random(cl * size);
             var seeds = Enumerable.Range(0, size).Select(_ => rnd.Next()).ToArray(); 
             var tasks = seeds.Select(seed => RandomIntDelay(seed, 200));
-            
+
             // ReSharper disable once PossibleMultipleEnumeration
             var collectTask = tasks.Collect(cl);
             // ReSharper disable once PossibleMultipleEnumeration
@@ -144,7 +144,7 @@ public class TaskExtTest : TestBase
             var rnd = new Random(cl * size);
             var seeds = Enumerable.Range(0, size).Select(_ => rnd.Next()).ToArray(); 
             var tasks = seeds.Select(seed => (Task)RandomIntDelay(seed, 200));
-            
+
             // ReSharper disable once PossibleMultipleEnumeration
             var collectTask = tasks.Collect(cl);
             // ReSharper disable once PossibleMultipleEnumeration

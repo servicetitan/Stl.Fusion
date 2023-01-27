@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Stl.Multitenancy;
+using Stl.OS;
 
 namespace Stl.Fusion.EntityFramework.Operations;
 
@@ -79,23 +80,21 @@ public class DbOperationLogReader<TDbContext> : DbTenantWorkerBase<TDbContext>
             var maxCommitTime = operations.Max(o => o.CommitTime).ToMoment();
             maxKnownCommitTime = Moment.Max(maxKnownCommitTime, maxCommitTime);
 
-            // Run completion notifications 
-            try {
-                // Local completions are invoked by TransientOperationScopeProvider
-                // _inside_ the command processing pipeline. Trying to trigger them here
-                // means a tiny chance of running them _outside_ of command processing
-                // pipeline, which makes it possible to see command completing
-                // prior to its invalidation logic completion.
-                var notifyTasks =
-                    from operation in operations
-                    let isLocal = StringComparer.Ordinal.Equals(operation.AgentId, AgentInfo.Id.Value)
-                    where !isLocal
-                    select OperationCompletionNotifier.NotifyCompleted(operation, null);
-                await notifyTasks.Collect().ConfigureAwait(false);
-            }
-            catch (Exception e) when (e is not OperationCanceledException) {
-                Log.LogError(e, "Error in one of OperationCompletionNotifier.NotifyCompleted tasks");
-            }
+            // Run completion notifications: 
+            // Local completions are invoked by TransientOperationScopeProvider
+            // _inside_ the command processing pipeline. Trying to trigger them here
+            // means a tiny chance of running them _outside_ of command processing
+            // pipeline, which makes it possible to see command completing
+            // prior to its invalidation logic completion.
+            var notifyTasks =
+                from operation in operations
+                let isLocal = StringComparer.Ordinal.Equals(operation.AgentId, AgentInfo.Id.Value)
+                where !isLocal
+                select OperationCompletionNotifier.NotifyCompleted(operation, null);
+            var notifyBatches =
+                from chunk in notifyTasks.Chunk(64)
+                select chunk.Collect();
+            await notifyBatches.Collect(HardwareInfo.ProcessorCount).ConfigureAwait(false);
         }).Trace(() => activitySource.StartActivity("Read").AddTenantTags(tenant), Log);
 
         var waitForChangesChain = new AsyncChain("WaitForChanges()", async cancellationToken1 => {
