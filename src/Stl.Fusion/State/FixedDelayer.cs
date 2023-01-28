@@ -42,7 +42,7 @@ public sealed record FixedDelayer(
     {
         private static TimeSpan _minDelay;
         private static RetryDelaySeq _retryDelays = new(TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(2));
-        private static IMomentClock _clock = MomentClockSet.Default.UIClock;
+        private static IMomentClock _clock = MomentClockSet.Default.CpuClock;
 
         public static TimeSpan MinDelay {
             get => _minDelay;

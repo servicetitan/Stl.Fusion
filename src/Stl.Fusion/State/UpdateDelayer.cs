@@ -13,7 +13,7 @@ public sealed record UpdateDelayer(
     RetryDelaySeq RetryDelays
     ) : IUpdateDelayer
 {
-    public IMomentClock Clock { get; init; } = UIActionTracker?.Clock ?? MomentClockSet.Default.UIClock;
+    public IMomentClock Clock { get; init; } = UIActionTracker?.Clock ?? MomentClockSet.Default.CpuClock;
     public TimeSpan MinDelay { get; init; } = Defaults.MinDelay;
 
     public UpdateDelayer(UIActionTracker uiActionTracker)
