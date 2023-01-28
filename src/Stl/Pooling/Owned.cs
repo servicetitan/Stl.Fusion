@@ -19,7 +19,7 @@ public readonly struct Owned<TItem, TOwner> : IDisposable, IEquatable<Owned<TIte
         owner = Owner;
     }
 
-    public override string ToString() => $"{GetType().Name}({Subject} @ {Owner})";
+    public override string ToString() => $"{GetType().GetName()}({Subject} @ {Owner})";
 
     public void Dispose() => Owner?.Dispose();
 

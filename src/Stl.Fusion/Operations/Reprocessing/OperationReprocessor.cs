@@ -104,7 +104,7 @@ public class OperationReprocessor : IOperationReprocessor
         }
         if (CommandContext != null)
             throw Errors.InternalError(
-                $"{GetType().Name} cannot be used more than once in the same command execution pipeline.");
+                $"{GetType().GetName()} cannot be used more than once in the same command execution pipeline.");
         CommandContext = context;
 
         context.Items.Set((IOperationReprocessor) this);

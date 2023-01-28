@@ -1,3 +1,4 @@
+using Cysharp.Text;
 using Stl.Fusion.Internal;
 using Stl.Locking;
 using Stl.Versioning;
@@ -7,6 +8,7 @@ namespace Stl.Fusion;
 public class AnonymousComputedSource<T> : ComputedInput, IFunction<T>, IEquatable<AnonymousComputedSource<T>>
 {
     private volatile AnonymousComputed<T>? _computed;
+    private string? _category;
     private ILogger? _log;
 
     protected AsyncLock AsyncLock { get; }
@@ -14,9 +16,15 @@ public class AnonymousComputedSource<T> : ComputedInput, IFunction<T>, IEquatabl
     protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     public IServiceProvider Services { get; }
-    public Func<AnonymousComputedSource<T>, CancellationToken, ValueTask<T>> Computer { get; }
+
+    public override string Category {
+        get => _category ??= GetType().GetName();
+        init => _category = value;
+    }
+
     public ComputedOptions ComputedOptions { get; init; }
     public VersionGenerator<LTag> VersionGenerator { get; init; }
+    public Func<AnonymousComputedSource<T>, CancellationToken, ValueTask<T>> Computer { get; }
     public event Action<AnonymousComputed<T>>? Invalidated;
     public event Action<AnonymousComputed<T>>? Updated;
 
@@ -40,17 +48,18 @@ public class AnonymousComputedSource<T> : ComputedInput, IFunction<T>, IEquatabl
 
     public AnonymousComputedSource(
         IServiceProvider services,
-        Func<AnonymousComputedSource<T>, CancellationToken, ValueTask<T>> computer)
+        Func<AnonymousComputedSource<T>, CancellationToken, ValueTask<T>> computer,
+        string? category = null)
     {
         Services = services;
         Computer = computer;
+        _category = category;
+
         ComputedOptions = ComputedOptions.Default;
         VersionGenerator = services.VersionGenerator<LTag>();
         AsyncLock = new AsyncLock(ReentryMode.CheckedFail);
         Initialize(this, RuntimeHelpers.GetHashCode(this));
     }
-
-    public override string ToString() => $"{GetType().Name}({Computer})";
 
     // Update & Use
 

@@ -9,7 +9,7 @@ public readonly struct Ref<T> : IEquatable<Ref<T>>
     public Ref(T target) => Target = target;
 
     public override string ToString()
-        => $"{GetType().Name}({Target?.ToString() ?? "␀"})";
+        => $"{GetType().GetName()}({Target?.ToString() ?? "␀"})";
 
     // Equality
     public bool Equals(Ref<T> other)

@@ -22,7 +22,7 @@ public readonly struct ResourceLease<T> : IResourceLease<T>, IEquatable<Resource
             d.Dispose();
     }
 
-    public override string ToString() => $"{GetType().Name}({Resource})";
+    public override string ToString() => $"{GetType().GetName()}({Resource})";
 
     // Equality
 

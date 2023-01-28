@@ -22,7 +22,7 @@ public abstract class Replica : IEquatable<Replica>, IDisposable
     }
 
     public override string ToString()
-        => $"{GetType().Name}({PublicationRef})";
+        => $"{GetType().GetName()}({PublicationRef})";
 
     // Called for temp. replicas that were never exposed by ReplicaRegistry
     public void DisposeTemporaryInstance()

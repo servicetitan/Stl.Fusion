@@ -6,7 +6,7 @@ public interface IStateSnapshot
 {
     IState State { get; }
     IComputed Computed { get; }
-    IComputed LatestNonErrorComputed { get; }
+    IComputed LastNonErrorComputed { get; }
     int UpdateCount { get; }
     int ErrorCount { get; }
     int RetryCount { get; }
@@ -20,7 +20,7 @@ public interface IStateSnapshot<T> : IStateSnapshot
 {
     new IState<T> State { get; }
     new Computed<T> Computed { get; }
-    new Computed<T> LatestNonErrorComputed { get; }
+    new Computed<T> LastNonErrorComputed { get; }
 }
 
 public class StateSnapshot<T> : IStateSnapshot<T>
@@ -30,20 +30,20 @@ public class StateSnapshot<T> : IStateSnapshot<T>
 
     public IState<T> State { get; }
     public Computed<T> Computed { get; }
-    public Computed<T> LatestNonErrorComputed { get; }
+    public Computed<T> LastNonErrorComputed { get; }
     public int UpdateCount { get; }
     public int ErrorCount { get; }
     public int RetryCount { get; }
 
     IState IStateSnapshot.State => State;
     IComputed IStateSnapshot.Computed => Computed;
-    IComputed IStateSnapshot.LatestNonErrorComputed => LatestNonErrorComputed;
+    IComputed IStateSnapshot.LastNonErrorComputed => LastNonErrorComputed;
 
     public StateSnapshot(IState<T> state, Computed<T> computed)
     {
         State = state;
         Computed = computed;
-        LatestNonErrorComputed = computed;
+        LastNonErrorComputed = computed;
         WhenUpdatingSource = TaskSource.New<Unit>(true);
         WhenUpdatedSource = TaskSource.New<Unit>(true);
         UpdateCount = 0;
@@ -59,7 +59,7 @@ public class StateSnapshot<T> : IStateSnapshot<T>
         WhenUpdatedSource = TaskSource.New<Unit>(true);
         var error = computed.Error;
         if (error == null) {
-            LatestNonErrorComputed = computed;
+            LastNonErrorComputed = computed;
             UpdateCount = 1 + prevSnapshot.UpdateCount;
             ErrorCount = prevSnapshot.ErrorCount;
             RetryCount = 0;
@@ -68,14 +68,14 @@ public class StateSnapshot<T> : IStateSnapshot<T>
             var computedImpl = (IComputedImpl) computed;
             if (!computedImpl.IsTransientError(error)) {
                 // Non-transient error
-                LatestNonErrorComputed = prevSnapshot.LatestNonErrorComputed;
+                LastNonErrorComputed = prevSnapshot.LastNonErrorComputed;
                 UpdateCount = 1 + prevSnapshot.UpdateCount;
                 ErrorCount = 1 + prevSnapshot.ErrorCount;
                 RetryCount = 0;
             }
             else {
                 // Transient error
-                LatestNonErrorComputed = prevSnapshot.LatestNonErrorComputed;
+                LastNonErrorComputed = prevSnapshot.LastNonErrorComputed;
                 UpdateCount = 1 + prevSnapshot.UpdateCount;
                 ErrorCount = 1 + prevSnapshot.ErrorCount;
                 RetryCount = 1 + prevSnapshot.RetryCount;
@@ -84,7 +84,7 @@ public class StateSnapshot<T> : IStateSnapshot<T>
     }
 
     public override string ToString()
-        => $"{GetType().Name}({Computed}, [{UpdateCount} update(s) / {ErrorCount} failure(s)])";
+        => $"{GetType().GetName()}({Computed}, [{UpdateCount} update(s) / {ErrorCount} failure(s)])";
 
     public Task WhenInvalidated(CancellationToken cancellationToken = default)
         => Computed.WhenInvalidated(cancellationToken);

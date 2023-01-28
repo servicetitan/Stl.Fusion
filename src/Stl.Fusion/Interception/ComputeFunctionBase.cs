@@ -13,10 +13,7 @@ public abstract class ComputeFunctionBase<T> : FunctionBase<T>
     }
 
     public override string ToString()
-    {
-        var mi = MethodDef.MethodInfo;
-        return $"Intercepted:{mi.DeclaringType!.Name}.{mi.Name}";
-    }
+        => MethodDef.FullName;
 
     // Protected methods
 

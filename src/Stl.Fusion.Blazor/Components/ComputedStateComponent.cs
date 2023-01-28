@@ -4,9 +4,18 @@ namespace Stl.Fusion.Blazor;
 
 public static class ComputedStateComponent
 {
+    private static readonly ConcurrentDictionary<Type, string> StateCategoryCache = new();
+    private static readonly ConcurrentDictionary<Type, string> MutableStateCategoryCache = new();
+
     public static ComputedStateComponentOptions DefaultOptions { get; set; } =
         ComputedStateComponentOptions.SynchronizeComputeState
         | ComputedStateComponentOptions.RecomputeOnParametersSet;
+
+    public static string GetStateCategory(Type componentType)
+        => StateCategoryCache.GetOrAdd(componentType, t => $"{t.GetName()}.State");
+
+    public static string GetMutableStateCategory(Type componentType)
+        => StateCategoryCache.GetOrAdd(componentType, t => $"{t.GetName()}.MutableState");
 }
 
 public abstract class ComputedStateComponent<TState> : StatefulComponentBase<IComputedState<TState>>
@@ -22,7 +31,11 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
         return Task.CompletedTask;
     }
 
-    protected virtual ComputedState<TState>.Options GetStateOptions() => new();
+    protected virtual string GetStateCategory()
+        => ComputedStateComponent.GetStateCategory(GetType());
+
+    protected virtual ComputedState<TState>.Options GetStateOptions()
+        => new() { Category = GetStateCategory() };
 
     protected override IComputedState<TState> CreateState()
     {

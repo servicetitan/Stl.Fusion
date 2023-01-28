@@ -28,7 +28,7 @@ public static class Errors
     public static Exception EntityNotFound<TEntity>()
         => EntityNotFound(typeof(TEntity));
     public static Exception EntityNotFound(Type entityType)
-        => new KeyNotFoundException($"Requested {entityType.Name} entity is not found.");
+        => new KeyNotFoundException($"Requested {entityType.GetName()} entity is not found.");
 
     public static Exception InvalidUserId()
         => new FormatException("Invalid UserId.");

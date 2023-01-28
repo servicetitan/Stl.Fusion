@@ -23,7 +23,7 @@ public class ThreadSafe<T>
     public ThreadSafe(T value) => Value = value!;
 #pragma warning restore CS8618
 
-    public override string ToString() => $"{GetType().Name}({Value})";
+    public override string ToString() => $"{GetType().GetName()}({Value})";
 
     public static implicit operator ThreadSafe<T>(T value) => new(value);
     public static implicit operator T(ThreadSafe<T> value) => value.Value;

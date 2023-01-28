@@ -20,7 +20,7 @@ public class RedisDb
     }
 
     public override string ToString()
-        => $"{GetType().Name}(KeyPrefix = {KeyPrefix})";
+        => $"{GetType().GetName()}(KeyPrefix = {KeyPrefix})";
 
     public string FullKey(string keySuffix)
         => KeyPrefix.IsNullOrEmpty()

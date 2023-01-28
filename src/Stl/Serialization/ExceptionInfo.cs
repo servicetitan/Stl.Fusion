@@ -59,10 +59,10 @@ public readonly struct ExceptionInfo : IEquatable<ExceptionInfo>
         return $"{GetType().Name}({TypeRef}, {JsonFormatter.Format(Message)})";
     }
 
-    public Exception? ToException() 
+    public Exception? ToException()
         => ToExceptionConverter.Invoke(this);
 
-    public ExceptionInfo Unwrap() 
+    public ExceptionInfo Unwrap()
         => HasWrappedTypeRef ? new ExceptionInfo(WrappedTypeRef, Message) : this;
 
     // Conversion

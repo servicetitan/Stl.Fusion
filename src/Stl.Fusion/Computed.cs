@@ -135,7 +135,7 @@ public abstract class Computed<T> : IComputed, IComputedImpl, IResult<T>
     }
 
     public override string ToString()
-        => $"{GetType().Name}({Input} {Version}, State: {ConsistencyState})";
+        => $"{GetType().GetName()}({Input} {Version}, State: {ConsistencyState})";
 
     public virtual bool TrySetOutput(Result<T> output)
     {

@@ -14,5 +14,5 @@ public class UIActionFailureTracker : MutableList<IUIActionResult>
     }
 
     public override string ToString()
-        => $"{GetType().Name}({Count} item(s))";
+        => $"{GetType().GetName()}({Count} item(s))";
 }

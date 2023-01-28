@@ -8,7 +8,7 @@
 @inject NavigationManager Nav
 
 @{
-    var state = State.LatestNonErrorValue;
+    var state = State.LastNonErrorValue;
     var error = State.Error;
     var user = state.User.OrGuest();
     var sessions = state.Sessions ?? new();

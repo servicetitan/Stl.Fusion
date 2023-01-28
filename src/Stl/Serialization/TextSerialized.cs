@@ -39,7 +39,7 @@ public class TextSerialized<T> : IEquatable<TextSerialized<T>>
         => _dataOption = data;
 
     public override string ToString()
-        => $"{GetType().Name} {{ Data = {JsonFormatter.Format(Data)} }}";
+        => $"{GetType().GetName()} {{ Data = {JsonFormatter.Format(Data)} }}";
 
     // Private & protected methods
 

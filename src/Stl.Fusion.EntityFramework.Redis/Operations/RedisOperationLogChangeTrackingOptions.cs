@@ -11,6 +11,6 @@ public record RedisOperationLogChangeTrackingOptions<TDbContext> : DbOperationCo
     {
         var tDbContext = typeof(TDbContext);
         var tenantSuffix = tenant == Tenant.Default ? "" : $".{tenant.Id.Value}";
-        return $"{tDbContext.Name}{tenantSuffix}._Operations";
+        return $"{tDbContext.GetName()}{tenantSuffix}._Operations";
     }
 }

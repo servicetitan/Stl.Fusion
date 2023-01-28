@@ -212,7 +212,7 @@ public class RadixHeapSet<T> : IEnumerable<(long Priority, T Value)>
             }
         }
         throw Errors.InternalError(
-            $"{GetType().Name}'s internal structure is corrupted.");
+            $"{GetType().GetName()}: internal structure is corrupted.");
     }
 
     // Private methods
@@ -241,7 +241,7 @@ public class RadixHeapSet<T> : IEnumerable<(long Priority, T Value)>
             }
         }
         throw Errors.InternalError(
-            $"{GetType().Name}'s internal structure is corrupted.");
+            $"{GetType().GetName()}: internal structure is corrupted.");
     }
 
     private IReadOnlyDictionary<T, long> ExtractBucket0()

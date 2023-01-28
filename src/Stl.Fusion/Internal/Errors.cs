@@ -30,6 +30,10 @@ public static class Errors
     public static Exception NoComputedCaptured()
         => new InvalidOperationException($"No {nameof(IComputed)} was captured.");
 
+    public static Exception ComputedInputCategoryCannotBeSet()
+        => new NotSupportedException(
+            "Only IState and IAnonymousComputedInput allow to manually set Category property.");
+
     public static Exception AnonymousComputedSourceIsNotComputedYet()
         => new InvalidOperationException("This anonymous computed source isn't computed yet.");
 
@@ -67,7 +71,7 @@ public static class Errors
 
     public static Exception UnsupportedReplicaType(Type replicaType)
         => new NotSupportedException(
-            $"Replica<{replicaType.Name}> isn't supported by the current client, " +
+            $"Replica<{replicaType.GetName()}> isn't supported by the current client, " +
             $"most likely because there is no good way to intercept the deserialization " +
             $"of results of this type.");
 

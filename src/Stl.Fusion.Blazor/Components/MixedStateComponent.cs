@@ -27,8 +27,11 @@ public abstract class MixedStateComponent<TState, TMutableState> : ComputedState
         base.OnInitialized();
     }
 
+    protected virtual string GetMutableStateCategory()
+        => ComputedStateComponent.GetMutableStateCategory(GetType());
+
     protected virtual MutableState<TMutableState>.Options GetMutableStateOptions()
-        => new();
+        => new() { Category = GetMutableStateCategory() };
 
     protected virtual IMutableState<TMutableState> CreateMutableState()
         => StateFactory.NewMutable(GetMutableStateOptions());

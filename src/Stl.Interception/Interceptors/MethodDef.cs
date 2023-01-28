@@ -4,8 +4,12 @@ namespace Stl.Interception.Interceptors;
 
 public abstract record MethodDef
 {
+    private string? _fullName;
+
     public IInterceptor Interceptor { get; init; }
     public MethodInfo MethodInfo { get; init; }
+    public string Name => MethodInfo.Name;
+    public string FullName => _fullName ??= $"{MethodInfo.DeclaringType!.GetName()}.{MethodInfo.Name}";
     public bool IsAsyncMethod { get; init; }
     public bool IsAsyncVoidMethod { get; init; }
     public bool ReturnsTask { get; init; }

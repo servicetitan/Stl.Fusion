@@ -59,5 +59,5 @@ public class PluginInfo
             .ToImmutableHashSet();
     }
 
-    public override string ToString() => $"{GetType().Name}({Type})";
+    public override string ToString() => $"{GetType().GetName()}({Type})";
 }

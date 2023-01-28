@@ -18,7 +18,7 @@ public readonly struct NestedCommandEntry : IEquatable<NestedCommandEntry>
         items = Items;
     }
 
-    public override string ToString() => $"{GetType().Name}({Command})";
+    public override string ToString() => $"{GetType().GetName()}({Command})";
 
     // Equality
 

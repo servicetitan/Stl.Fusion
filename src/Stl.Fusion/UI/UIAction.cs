@@ -20,7 +20,7 @@ public abstract class UIAction
     }
 
     public override string ToString()
-        => $"{GetType().Name}(#{ActionId}: {Command}, {UntypedResult?.ToString() ?? "still running"})";
+        => $"{GetType().GetName()}(#{ActionId}: {Command}, {UntypedResult?.ToString() ?? "still running"})";
 }
 
 public class UIAction<TResult> : UIAction

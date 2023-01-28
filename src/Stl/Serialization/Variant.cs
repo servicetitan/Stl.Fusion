@@ -29,7 +29,7 @@ public abstract class Variant<TValue> : IEquatable<Variant<TValue>>
     protected Variant(TValue? value) => Value = value;
 
     public override string ToString()
-        => $"{GetType().Name} {{ Value = {Value} }}";
+        => $"{GetType().GetName()} {{ Value = {Value} }}";
 
     // Equality
 

@@ -22,7 +22,7 @@ public readonly struct CommandExecutionState : IEquatable<CommandExecutionState>
     }
 
     public override string ToString()
-        => $"{GetType().Name}({NextHandlerIndex}/{Handlers.Length})";
+        => $"{GetType().GetName()}({NextHandlerIndex}/{Handlers.Length})";
 
     public CommandHandler? FindFinalHandler()
         => FindFinalHandler(NextHandlerIndex);
