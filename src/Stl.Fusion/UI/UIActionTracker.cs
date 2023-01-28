@@ -122,7 +122,7 @@ public class UIActionTracker : IHasServices, IDisposable
         return false;
     }
 
-    public Task WhenInstantUpdatesEnabled() 
+    public Task WhenInstantUpdatesEnabled()
         => AreInstantUpdatesEnabled() ? Task.CompletedTask : LastActionEvent.WhenNext();
 
     // Protected methods
