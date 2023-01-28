@@ -12,11 +12,7 @@ public sealed class AnonymousComputed<T> : Computed<T>
 
     protected override void OnInvalidated()
     {
-        try {
-            Source.OnInvalidated(this);
-        }
-        catch {
-            // Intended: shouldn't throw errors
-        }
+        Source.OnInvalidated(this);
+        base.OnInvalidated();
     }
 }

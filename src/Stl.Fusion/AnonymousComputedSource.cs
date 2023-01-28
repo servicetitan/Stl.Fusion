@@ -7,9 +7,11 @@ namespace Stl.Fusion;
 public class AnonymousComputedSource<T> : ComputedInput, IFunction<T>, IEquatable<AnonymousComputedSource<T>>
 {
     private volatile AnonymousComputed<T>? _computed;
+    private ILogger? _log;
 
     protected AsyncLock AsyncLock { get; }
     protected object Lock => AsyncLock;
+    protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     public IServiceProvider Services { get; }
     public Func<AnonymousComputedSource<T>, CancellationToken, ValueTask<T>> Computer { get; }
@@ -152,7 +154,14 @@ public class AnonymousComputedSource<T> : ComputedInput, IFunction<T>, IEquatabl
     }
 
     internal void OnInvalidated(AnonymousComputed<T> computed)
-        => Invalidated?.Invoke(computed);
+    {
+        try {
+            Invalidated?.Invoke(computed);
+        }
+        catch (Exception e) {
+            Log.LogError(e, "Invalidated handler failed");
+        }
+    }
 
     // IFunction<T> & IFunction
 

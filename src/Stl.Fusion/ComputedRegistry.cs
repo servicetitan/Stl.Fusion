@@ -47,6 +47,8 @@ public sealed class ComputedRegistry : IDisposable
     public IEnumerable<ComputedInput> Keys => _storage.Select(p => p.Key);
     public AsyncLockSet<ComputedInput> InputLocks { get; }
     public ComputedGraphPruner GraphPruner => _graphPruner;
+    public Action<IComputed>? OnRegister { get; set; }
+    public Action<IComputed>? OnUnregister { get; set; }
 
     public ComputedRegistry() : this(Options.Default) { }
     public ComputedRegistry(Options options)
@@ -85,6 +87,8 @@ public sealed class ComputedRegistry : IDisposable
     public void Register(IComputed computed)
     {
         // Debug.WriteLine($"{nameof(Register)}: {computed}");
+
+        OnRegister?.Invoke(computed);
         var key = computed.Input;
         var random = Randomize(key.HashCode);
         OnOperation(random);
@@ -117,15 +121,16 @@ public sealed class ComputedRegistry : IDisposable
 
     public bool Unregister(IComputed computed)
     {
-        // Debug.WriteLine($"{nameof(Unregister)}: {computed}");
         // We can't remove what still could be invalidated,
         // since "usedBy" links are resolved via this registry
         if (computed.ConsistencyState != ConsistencyState.Invalidated)
             throw Errors.WrongComputedState(computed.ConsistencyState);
 
+        OnUnregister?.Invoke(computed);
         var key = computed.Input;
         var random = Randomize(key.HashCode);
         OnOperation(random);
+
         if (!_storage.TryGetValue(key, out var handle))
             return false;
         var target = handle.Target;
@@ -139,6 +144,9 @@ public sealed class ComputedRegistry : IDisposable
         _gcHandlePool.Release(handle, random);
         return true;
     }
+
+    public void PseudoUnregister(IComputed computed)
+        => OnUnregister?.Invoke(computed);
 
     public void InvalidateEverything()
     {

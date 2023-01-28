@@ -19,11 +19,7 @@ public class StateBoundComputed<T> : Computed<T>
 
     protected override void OnInvalidated()
     {
-        try {
-            State.OnInvalidated(this);
-        }
-        catch {
-            // Intended: shouldn't throw errors
-        }
+        State.OnInvalidated(this);
+        base.OnInvalidated();
     }
 }

@@ -56,10 +56,13 @@ public abstract class State<T> : ComputedInput,
     }
 
     private volatile StateSnapshot<T>? _snapshot;
+    private ILogger? _log;
+
     protected VersionGenerator<LTag> VersionGenerator { get; set; }
     protected ComputedOptions ComputedOptions { get; }
     protected AsyncLock AsyncLock { get; }
     protected object Lock => AsyncLock;
+    protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     public StateSnapshot<T> Snapshot => _snapshot!;
     public IServiceProvider Services { get; }
@@ -81,8 +84,7 @@ public abstract class State<T> : ComputedInput,
         }
     }
 
-    [MaybeNull]
-    public T ValueOrDefault => Computed.ValueOrDefault;
+    public T? ValueOrDefault => Computed.ValueOrDefault;
     public T Value => Computed.Value;
     public Exception? Error => Computed.Error;
     public bool HasValue => Computed.HasValue;
@@ -177,8 +179,14 @@ public abstract class State<T> : ComputedInput,
         var snapshot = Snapshot;
         if (computed != snapshot.Computed)
             return;
-        Invalidated?.Invoke(this, StateEventKind.Invalidated);
-        UntypedInvalidated?.Invoke(this, StateEventKind.Invalidated);
+
+        try {
+            Invalidated?.Invoke(this, StateEventKind.Invalidated);
+            UntypedInvalidated?.Invoke(this, StateEventKind.Invalidated);
+        }
+        catch (Exception e) {
+            Log.LogError(e, "Invalidated / UntypedInvalidated handler failed");
+        }
     }
 
     protected virtual void OnUpdating(Computed<T> computed)
@@ -186,9 +194,15 @@ public abstract class State<T> : ComputedInput,
         var snapshot = Snapshot;
         if (computed != snapshot.Computed)
             return;
-        snapshot.OnUpdating();
-        Updating?.Invoke(this, StateEventKind.Updating);
-        UntypedUpdating?.Invoke(this, StateEventKind.Updating);
+
+        try {
+            snapshot.OnUpdating();
+            Updating?.Invoke(this, StateEventKind.Updating);
+            UntypedUpdating?.Invoke(this, StateEventKind.Updating);
+        }
+        catch (Exception e) {
+            Log.LogError(e, "Updating / UntypedUpdating handler failed");
+        }
     }
 
     protected virtual void OnSetSnapshot(StateSnapshot<T> snapshot, StateSnapshot<T>? prevSnapshot)
@@ -199,9 +213,15 @@ public abstract class State<T> : ComputedInput,
                 throw Errors.UnsupportedComputedOptions(snapshot.Computed.GetType());
             return;
         }
-        prevSnapshot.OnUpdated();
-        Updated?.Invoke(this, StateEventKind.Updated);
-        UntypedUpdated?.Invoke(this, StateEventKind.Updated);
+
+        try {
+            prevSnapshot.OnUpdated();
+            Updated?.Invoke(this, StateEventKind.Updated);
+            UntypedUpdated?.Invoke(this, StateEventKind.Updated);
+        }
+        catch (Exception e) {
+            Log.LogError(e, "Updated / UntypedUpdated handler failed");
+        }
     }
 
     // IFunction<T> & IFunction

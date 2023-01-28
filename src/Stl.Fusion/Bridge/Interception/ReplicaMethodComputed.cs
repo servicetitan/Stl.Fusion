@@ -32,9 +32,15 @@ public class ReplicaMethodComputed<T> : ComputeMethodComputed<T>, IReplicaMethod
 
     protected override void OnInvalidated()
     {
-        // We intentionally suppress ComputedRegistry.Unregister here,
-        // otherwise it won't be possible to find Replica using
-        // the old IComputed.
+        // PseudoUnregister is used here just to trigger the
+        // Unregistered event in ComputedRegistry.
+        // We want to keep this computed while it's possible:
+        // ReplicaMethodFunction.Compute tries to use it
+        // to find a Replica to update through.
+        // If this computed instance is gone from registry,  
+        // a new Replica is going to be created for each call
+        // to replica method.
+        ComputedRegistry.Instance.PseudoUnregister(this);
         CancelTimeouts();
     }
 }
