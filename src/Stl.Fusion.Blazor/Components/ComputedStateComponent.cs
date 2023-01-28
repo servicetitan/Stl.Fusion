@@ -12,10 +12,10 @@ public static class ComputedStateComponent
         | ComputedStateComponentOptions.RecomputeOnParametersSet;
 
     public static string GetStateCategory(Type componentType)
-        => StateCategoryCache.GetOrAdd(componentType, t => $"{t.GetName()}.State");
+        => StateCategoryCache.GetOrAdd(componentType, static t => $"{t.GetName()}.State");
 
     public static string GetMutableStateCategory(Type componentType)
-        => StateCategoryCache.GetOrAdd(componentType, t => $"{t.GetName()}.MutableState");
+        => StateCategoryCache.GetOrAdd(componentType, static t => $"{t.GetName()}.MutableState");
 }
 
 public abstract class ComputedStateComponent<TState> : StatefulComponentBase<IComputedState<TState>>
