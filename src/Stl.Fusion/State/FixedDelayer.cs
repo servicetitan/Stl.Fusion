@@ -40,7 +40,7 @@ public sealed record FixedDelayer(
 
     public static class Defaults
     {
-        private static TimeSpan _minDelay = TimeSpan.Zero;
+        private static TimeSpan _minDelay = TimeSpan.FromMilliseconds(32); // ~= 1/30 sec.
         private static RetryDelaySeq _retryDelays = new(TimeSpan.FromSeconds(1), TimeSpan.FromMinutes(2));
         private static IMomentClock _clock = MomentClockSet.Default.CpuClock;
 
