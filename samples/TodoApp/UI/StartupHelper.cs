@@ -76,9 +76,13 @@ public static class StartupHelper
 
         // Diagnostics
         services.AddHostedService(c => {
+            var isWasm = OSInfo.IsWebAssembly;
             return new FusionMonitor(c) {
-                OutputPeriod = TimeSpan.FromSeconds(OSInfo.IsWebAssembly ? 3 : 60),
-                AccessFilter = OSInfo.IsWebAssembly
+                SleepPeriod = isWasm 
+                    ? TimeSpan.Zero 
+                    : TimeSpan.FromMinutes(1).ToRandom(0.25),
+                CollectPeriod = TimeSpan.FromSeconds(isWasm ? 3 : 60),
+                AccessFilter = isWasm
                     ? static computed => computed.Input.Function is IReplicaMethodFunction
                     : static computed => true,
                 AccessStatisticsPreprocessor = StatisticsPreprocessor,
@@ -90,7 +94,7 @@ public static class StartupHelper
                 foreach (var key in stats.Keys.ToList()) {
                     if (key.Contains(".Pseudo"))
                         stats.Remove(key);
-                    if (key.Contains("FusionTime."))
+                    if (key.StartsWith("FusionTime."))
                         stats.Remove(key);
                 }
             }

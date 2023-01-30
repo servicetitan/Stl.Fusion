@@ -1,9 +1,10 @@
+using System.Globalization;
 using Stl.OS;
 
 namespace Stl.Diagnostics;
 
 public sealed record Sampler(
-    string Name,
+    string Id,
     double Probability,
     Func<bool> Next,
     Func<Sampler> Duplicate)
@@ -18,7 +19,9 @@ public sealed record Sampler(
     public double InverseProbability { get; } = 1d / Probability;
 
     public override string ToString()
-        => $"{Name}({Probability:P})";
+        => Id.EndsWith(")", StringComparison.Ordinal)
+            ? Id // .ToConcurrent(...)-like case, the probability is already in Id there
+            : $"{Id}({Probability.ToString("P1",CultureInfo.InvariantCulture)})";
 
     public Sampler ToConcurrent(int concurrencyLevel = -1)
     {
@@ -31,7 +34,7 @@ public sealed record Sampler(
             samplers[i] = Duplicate();
 
         var concurrencyMask = concurrencyLevel - 1;
-        var name = $"{Name}.{nameof(ToConcurrent)}({concurrencyLevel})";
+        var name = $"{ToString()}.{nameof(ToConcurrent)}({concurrencyLevel})";
         var sampler = new Sampler(name, Probability, () => {
             var sampler = samplers[Thread.CurrentThread.ManagedThreadId % concurrencyMask];
             return sampler.Next();

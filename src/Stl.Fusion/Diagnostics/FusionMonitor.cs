@@ -21,7 +21,8 @@ public sealed class FusionMonitor : WorkerBase
     private ILogger Log { get; }
 
     // Settings
-    public TimeSpan OutputPeriod { get; init; } = TimeSpan.FromMinutes(1);
+    public RandomTimeSpan SleepPeriod { get; init; } = TimeSpan.Zero;
+    public TimeSpan CollectPeriod { get; init; } = TimeSpan.FromMinutes(1);
     public Sampler AccessSampler { get; init; } = Sampler.EveryNth(8);
     public Func<IComputed, bool> AccessFilter { get; init; } = static _ => true;
     public Sampler RegistrationSampler { get; init; } = Sampler.EveryNth(8);
@@ -40,27 +41,32 @@ public sealed class FusionMonitor : WorkerBase
 
     protected override async Task RunInternal(CancellationToken cancellationToken)
     {
-        var registry = ComputedRegistry.Instance;
-        Renew();
-        registry.OnAccess += _onAccess;
-        registry.OnRegister += _onRegister;
-        registry.OnUnregister += _onUnregister;
         try {
+            Attach();
             Log.LogInformation("Running");
 
             // We want to format this log message as quickly as possible, so use StringBuilder here
             var sb = new StringBuilder();
             var fp = CultureInfo.InvariantCulture;
             while (!cancellationToken.IsCancellationRequested) {
-                await Task.Delay(OutputPeriod, cancellationToken).ConfigureAwait(false);
-                var (accesses, registrations) = Renew();
+                var sleepDelay = SleepPeriod.Next();
+                if (sleepDelay > TimeSpan.Zero) {
+                    Detach();
+                    Log.LogInformation("Sleeping for {SleepPeriod}...", sleepDelay);
+                    await Task.Delay(sleepDelay, cancellationToken).ConfigureAwait(false);
+                    Attach();
+                }
+
+                Log.LogInformation("Collecting for {CollectPeriod}...", CollectPeriod);
+                await Task.Delay(CollectPeriod, cancellationToken).ConfigureAwait(false);
+                var (accesses, registrations) = GetAndResetStatistics();
                 AccessStatisticsPreprocessor?.Invoke(accesses);
                 RegistrationStatisticsPreprocessor?.Invoke(registrations);
 
                 // Accesses
                 if (accesses.Count != 0) {
                     var m = AccessSampler.InverseProbability;
-                    sb.AppendFormat(fp, "Reads, sampled with p={0:P}:", AccessSampler.Probability);
+                    sb.AppendFormat(fp, "Reads, sampled with {0}:", AccessSampler);
                     var hitSum = 0;
                     var missSum = 0;
                     foreach (var (key, (hits, misses)) in accesses.OrderByDescending(kv => kv.Value.Item1 + kv.Value.Item2)) {
@@ -81,7 +87,7 @@ public sealed class FusionMonitor : WorkerBase
                 // Registrations
                 if (registrations.Count != 0) {
                     var m = RegistrationSampler.InverseProbability;
-                    sb.AppendFormat(fp, "Updates (+) and invalidations (-) sampled with p={0:P}:", RegistrationSampler.Probability);
+                    sb.AppendFormat(fp, "Updates (+) and invalidations (-), sampled with {0}:", RegistrationSampler);
                     var addSum = 0;
                     var subSum = 0;
                     foreach (var (key, (adds, subs)) in registrations.OrderByDescending(kv => kv.Value.Item1)) {
@@ -99,14 +105,31 @@ public sealed class FusionMonitor : WorkerBase
             }
         }
         finally {
-            registry.OnAccess -= _onAccess;
-            registry.OnRegister -= _onRegister;
-            registry.OnUnregister -= _onUnregister;
-            Renew();
+            Detach();
+            GetAndResetStatistics();
         }
     }
 
-    private (Dictionary<string, (int, int)> Accesses, Dictionary<string, (int, int)> Registrations) Renew()
+    // Private methods
+
+    private void Attach()
+    {
+        GetAndResetStatistics();
+        var registry = ComputedRegistry.Instance;
+        registry.OnAccess += _onAccess;
+        registry.OnRegister += _onRegister;
+        registry.OnUnregister += _onUnregister;
+    }
+
+    private void Detach()
+    {
+        var registry = ComputedRegistry.Instance;
+        registry.OnAccess -= _onAccess;
+        registry.OnRegister -= _onRegister;
+        registry.OnUnregister -= _onUnregister;
+    }
+
+    private (Dictionary<string, (int, int)> Accesses, Dictionary<string, (int, int)> Registrations) GetAndResetStatistics()
     {
         lock (_lock) {
             var gets = _accesses;
