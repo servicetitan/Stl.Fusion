@@ -22,9 +22,9 @@ public sealed class FusionMonitor : WorkerBase
 
     // Settings
     public TimeSpan OutputPeriod { get; init; } = TimeSpan.FromMinutes(1);
-    public Sampler AccessSampler { get; init; } = Sampler.EveryNth(5);
+    public Sampler AccessSampler { get; init; } = Sampler.EveryNth(8);
     public Func<IComputed, bool> AccessFilter { get; init; } = static _ => true;
-    public Sampler RegistrationSampler { get; init; } = Sampler.EveryNth(5);
+    public Sampler RegistrationSampler { get; init; } = Sampler.EveryNth(8);
     public Sampler RegistrationLogSampler { get; init; } = Sampler.Never; // Applied after RegistrationSampler!
     public Action<Dictionary<string, (int, int)>>? AccessStatisticsPreprocessor { get; init; }
     public Action<Dictionary<string, (int, int)>>? RegistrationStatisticsPreprocessor { get; init; }
