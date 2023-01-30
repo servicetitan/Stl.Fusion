@@ -21,8 +21,8 @@ public class RefHolder
 
     public RefHolder(int concurrencyLevel = -1)
     {
-        if (concurrencyLevel < 0)
-            concurrencyLevel = HardwareInfo.ProcessorCount << 2;
+        if (concurrencyLevel <= 0)
+            concurrencyLevel = HardwareInfo.GetProcessorCountPo2Factor(4);
         concurrencyLevel =  Math.Max(1, (int) Bits.GreaterOrEqualPowerOf2((uint) concurrencyLevel));
         _concurrencyMask = concurrencyLevel - 1;
         _lists = new LinkedList<object>[concurrencyLevel];

@@ -1,13 +1,43 @@
+using Stl.OS;
+
 namespace Stl.Diagnostics;
 
 public sealed record Sampler(
+    string Name,
     double Probability,
-    Func<bool> Next)
+    Func<bool> Next,
+    Func<Sampler> Duplicate)
 {
-    public static Sampler Always { get; } = new(1, static () => true);
-    public static Sampler Never { get; } = new(0, static () => false);
+    public static Sampler Always { get; } = 
+        new(nameof(Always), 1, static () => true, () => Always);
+    public static Sampler Never { get; } = 
+        new(nameof(Never), 0, static () => false, () => Never);
 
     public double InverseProbability { get; } = 1d / Probability;
+
+    public override string ToString()
+        => $"{Name}({Probability:P})";
+
+    public Sampler ToConcurrent(int concurrencyLevel = -1)
+    {
+        if (concurrencyLevel <= 0)
+            concurrencyLevel = HardwareInfo.GetProcessorCountPo2Factor(2);
+        concurrencyLevel = (int)Bits.GreaterOrEqualPowerOf2((ulong)concurrencyLevel);
+
+        var samplers = new Sampler[concurrencyLevel];
+        for (var i = 0; i < concurrencyLevel; i++)
+            samplers[i] = Duplicate();
+
+        var concurrencyMask = concurrencyLevel - 1;
+        var name = $"{Name}.{nameof(ToConcurrent)}({concurrencyLevel})";
+        var sampler = new Sampler(name, Probability, () => {
+            var sampler = samplers[Thread.CurrentThread.ManagedThreadId % concurrencyMask];
+            return sampler.Next();
+        }, () => ToConcurrent());
+
+        Thread.MemoryBarrier();
+        return sampler;
+    }
 
     public static Sampler EveryNth(long n)
     {
@@ -16,32 +46,43 @@ public sealed record Sampler(
         if (n == 1)
             return Always;
 
-        var limit = n * 1000_000;
         var i = 0L;
-        var sampler = new Sampler(1d / n, () => {
-            var j = Interlocked.Increment(ref i);
-            if (j >= limit)
-                Interlocked.CompareExchange(ref i, j - limit, j);
-            return j % n == 0;
-        });
+        Sampler sampler;
+        if (Bits.IsPowerOf2((ulong)n)) { // Faster version: use binary and w/ mask
+            var mask = n - 1;
+            sampler = new Sampler(nameof(EveryNth), 1d / n, () => {
+                var j = Interlocked.Increment(ref i);
+                return (j & mask) == 0;
+            }, () => EveryNth(n));
+        }
+        else { // Slower version: use modulo
+            var limit = n * 1000_000;
+            sampler = new Sampler(nameof(EveryNth), 1d / n, () => {
+                var j = Interlocked.Increment(ref i);
+                if (j >= limit)
+                    Interlocked.CompareExchange(ref i, j - limit, j);
+                return j % n == 0;
+            }, () => EveryNth(n));
+        }
+
         Thread.MemoryBarrier();
         return sampler;
     }
 
-    public static Sampler Random(double probability, Random? random = null)
+    public static Sampler Random(double probability)
     {
         if (probability <= 0)
             return Never;
         if (probability >= 1)
             return Always;
 
-        var rnd = random ?? new Random();
+        var rnd = new Random();
         var maxIntBasedLimit = (int)((1d + int.MaxValue) * probability - 1);
-        var sampler = new Sampler(probability, () => {
+        var sampler = new Sampler(nameof(Random), probability, () => {
             lock (rnd) {
                 return rnd.Next() <= maxIntBasedLimit;
             }
-        });
+        }, () => Random(probability));
         Thread.MemoryBarrier();
         return sampler;
     }
@@ -57,22 +98,22 @@ public sealed record Sampler(
         return Random(probability);
 #else
         var maxIntBasedLimit = (int)((1d + int.MaxValue) * probability - 1);
-        var sampler = new Sampler(probability, () => {
+        var sampler = new Sampler(nameof(RandomShared), probability, () => {
             return System.Random.Shared.Next() <= maxIntBasedLimit;
-        });
+        }, () => RandomShared(probability));
         Thread.MemoryBarrier();
         return sampler;
 #endif
     }
 
-    public static Sampler AlternativeRandom(double probability, Random? random = null)
+    public static Sampler AlternativeRandom(double probability)
     {
         if (probability <= 0)
             return Never;
         if (probability >= 1)
             return Always;
 
-        var rnd = random ?? new Random();
+        var rnd = new Random();
         var stepSize = 1d / probability;
         var maxIntBasedLimit = (int)((1d + int.MaxValue) * probability - 1);
 
@@ -83,7 +124,7 @@ public sealed record Sampler(
         var stepCount = 0L;
         Interlocked.Exchange(ref stepCount, (long)fStepCount);
 
-        var sampler = new Sampler(probability, () => {
+        var sampler = new Sampler(nameof(AlternativeRandom), probability, () => {
             var c = Interlocked.Decrement(ref stepCount);
             if (c > 0)
                 return false;
@@ -102,8 +143,12 @@ public sealed record Sampler(
                 Interlocked.Exchange(ref stepCount, (long)fStepCount);
                 return true;
             }
-        });
+        }, () => AlternativeRandom(probability));
         Thread.MemoryBarrier();
         return sampler;
     }
+
+    // This record relies on reference-based equality
+    public bool Equals(Sampler? other) => ReferenceEquals(this, other);
+    public override int GetHashCode() => RuntimeHelpers.GetHashCode(this);
 }

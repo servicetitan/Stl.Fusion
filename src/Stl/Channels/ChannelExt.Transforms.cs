@@ -123,7 +123,7 @@ public static partial class ChannelExt
         ChannelCompletionMode channelCompletionMode,
         CancellationToken cancellationToken = default)
     {
-        if (concurrencyLevel < 0)
+        if (concurrencyLevel <= 0)
             concurrencyLevel = HardwareInfo.GetProcessorCountFactor();
         var semaphore = new SemaphoreSlim(concurrencyLevel, concurrencyLevel);
         Exception? error = null;

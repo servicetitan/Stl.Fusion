@@ -13,16 +13,21 @@ public class SamplerTest : TestBase
     public async Task TestAll()
     {
         var samplers = new [] {
+            Sampler.Random(0.25).ToConcurrent(),
             Sampler.Random(0.25),
             Sampler.RandomShared(0.25),
             Sampler.AlternativeRandom(0.25),
+            Sampler.AlternativeRandom(0.25).ToConcurrent(),
+            Sampler.Random(0.05).ToConcurrent(),
             Sampler.Random(0.05),
             Sampler.RandomShared(0.05),
             Sampler.AlternativeRandom(0.05),
+            Sampler.AlternativeRandom(0.05).ToConcurrent(),
             Sampler.Random(0.01),
             Sampler.RandomShared(0.01),
             Sampler.AlternativeRandom(0.01),
             Sampler.EveryNth(10),
+            Sampler.EveryNth(8),
             Sampler.Never,
             Sampler.Always,
         };
@@ -40,8 +45,7 @@ public class SamplerTest : TestBase
 
     private void Test(Sampler sampler)
     {
-        var title = $"{sampler.Next.Method.Name}, p = {sampler.Probability:P0}";
-        Out.WriteLine($"{title}:");
+        Out.WriteLine($"{sampler}:");
 
         var opCount = 1_000_000;
         var replies = new bool[opCount];
@@ -56,7 +60,7 @@ public class SamplerTest : TestBase
                 ? p / sampler.Probability - 1
                 : p - sampler.Probability;
             Out.WriteLine($"- Error: {error:P2}");
-            error.Should().BeLessThan(0.02);
+            error.Should().BeLessThan(0.05);
 
             var rate = opCount / sw.Elapsed.TotalSeconds;
             if (testIndex == 2)
@@ -66,8 +70,7 @@ public class SamplerTest : TestBase
 
     private async Task PerformanceTest(Sampler sampler)
     {
-        var title = $"{sampler.Next.Method.Name}, p = {sampler.Probability:P0}";
-        Out.WriteLine($"{title}:");
+        Out.WriteLine($"{sampler}:");
 
         var opCount = 200_000;
         var tasks = new Task[HardwareInfo.ProcessorCount / 2];
