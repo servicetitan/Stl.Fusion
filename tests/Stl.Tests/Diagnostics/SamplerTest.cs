@@ -10,6 +10,13 @@ public class SamplerTest : TestBase
     public SamplerTest(ITestOutputHelper @out) : base(@out) { }
 
     [Fact]
+    public void AlwaysNeverTest()
+    {
+        Sampler.Always.Duplicate().Should().BeSameAs(Sampler.Always);
+        Sampler.Never.Duplicate().Should().BeSameAs(Sampler.Never);
+    }
+
+    [Fact]
     public async Task TestAll()
     {
         var samplers = new [] {

@@ -8,10 +8,12 @@ public sealed record Sampler(
     Func<bool> Next,
     Func<Sampler> Duplicate)
 {
-    public static Sampler Always { get; } = 
+#pragma warning disable CS8603
+    public static Sampler Always { get; } =
         new(nameof(Always), 1, static () => true, () => Always);
-    public static Sampler Never { get; } = 
+    public static Sampler Never { get; } =
         new(nameof(Never), 0, static () => false, () => Never);
+#pragma warning restore CS8603
 
     public double InverseProbability { get; } = 1d / Probability;
 
