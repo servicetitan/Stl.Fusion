@@ -1,6 +1,12 @@
 namespace Stl.Fusion.Interception;
 
-public abstract class ComputeFunctionBase<T> : FunctionBase<T>
+public interface IComputeFunction
+{
+    ComputeMethodDef MethodDef { get; }
+    ComputedOptions ComputedOptions { get; }
+}
+
+public abstract class ComputeFunctionBase<T> : FunctionBase<T>, IComputeFunction
 {
     public ComputeMethodDef MethodDef { get; }
     public ComputedOptions ComputedOptions { get; }

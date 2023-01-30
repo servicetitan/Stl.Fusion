@@ -1,11 +1,18 @@
-using Cysharp.Text;
 using Stl.Fusion.Internal;
 using Stl.Locking;
 using Stl.Versioning;
 
 namespace Stl.Fusion;
 
-public class AnonymousComputedSource<T> : ComputedInput, IFunction<T>, IEquatable<AnonymousComputedSource<T>>
+public interface IAnonymousComputedSource : IFunction
+{
+    ComputedOptions ComputedOptions { get; init; }
+    VersionGenerator<LTag> VersionGenerator { get; init; }
+}
+
+public class AnonymousComputedSource<T> : ComputedInput,
+    IFunction<T>, IAnonymousComputedSource,
+    IEquatable<AnonymousComputedSource<T>>
 {
     private volatile AnonymousComputed<T>? _computed;
     private string? _category;

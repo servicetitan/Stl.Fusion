@@ -94,24 +94,30 @@ public class SwappingComputed<T> : ComputeMethodComputed<T>, IAsyncComputed<T>, 
         using var _ = await SwapOutputLock.Lock(cancellationToken).ConfigureAwait(false);
         if (MaybeOutput == null)
             return;
+
         var swapService = Function.Services.GetService<ISwapService>() ?? NoSwapService.Instance;
         await swapService.Store((TypedInput, Version), MaybeOutput, cancellationToken).ConfigureAwait(false);
         Interlocked.Exchange(ref _maybeOutput, null);
-        RenewTimeouts();
+        RenewSwapTimeouts();
     }
 
-    public override void RenewTimeouts()
+    public void RenewSwapTimeouts()
     {
         if (ConsistencyState == ConsistencyState.Invalidated)
             return;
+
         if (MaybeOutput != null) {
             var swappingOptions = Options.SwappingOptions;
             if (swappingOptions.IsEnabled && swappingOptions.SwapDelay > TimeSpan.Zero) {
                 Timeouts.Swap.AddOrUpdateToLater(this, Timeouts.Clock.Now + swappingOptions.SwapDelay);
-                return;
             }
         }
-        base.RenewTimeouts();
+    }
+
+    public override void RenewTimeouts(bool isNew)
+    {
+        RenewSwapTimeouts();
+        base.RenewTimeouts(isNew);
     }
 
     public override void CancelTimeouts()

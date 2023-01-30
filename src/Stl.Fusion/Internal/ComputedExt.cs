@@ -25,8 +25,8 @@ public static class ComputedExt
             return true;
         }
         if (!mustUseExisting)
-            ((IComputedImpl?) usedBy)?.AddUsed(existing!);
-        ((IComputedImpl?) existing)?.RenewTimeouts();
+            ((IComputedImpl?) usedBy)?.AddUsed(existing);
+        ((IComputedImpl) existing).RenewTimeouts(false);
         return true;
     }
 
@@ -59,7 +59,7 @@ public static class ComputedExt
         context.TryCapture(existing);
         if (!mustUseExisting)
             ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) existing!);
-        ((IComputedImpl?) existing)?.RenewTimeouts();
+        ((IComputedImpl?) existing)?.RenewTimeouts(false);
         return result;
     }
 
@@ -67,9 +67,10 @@ public static class ComputedExt
     {
         if (existing == null || !existing.IsConsistent())
             return false;
+
         context.TryCapture(existing);
-        ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) existing!);
-        ((IComputedImpl?) existing)?.RenewTimeouts();
+        ((IComputedImpl?) usedBy)?.AddUsed(existing);
+        ((IComputedImpl?) existing)?.RenewTimeouts(false);
         return true;
     }
 
@@ -89,15 +90,15 @@ public static class ComputedExt
 
         context.TryCapture(existing);
         ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) existing!);
-        ((IComputedImpl?) existing)?.RenewTimeouts();
+        ((IComputedImpl?) existing)?.RenewTimeouts(false);
         return result;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static void UseNew<T>(this Computed<T> computed, ComputeContext context, IComputed? usedBy)
     {
-        ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) computed);
-        ((IComputedImpl?) computed)?.RenewTimeouts();
+        ((IComputedImpl?) usedBy)?.AddUsed(computed);
+        ((IComputedImpl?) computed)?.RenewTimeouts(true);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

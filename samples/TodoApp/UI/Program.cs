@@ -11,8 +11,6 @@ public class Program
         var culture = CultureInfo.CreateSpecificCulture("fr-FR");
         CultureInfo.DefaultThreadCurrentCulture = culture;
         CultureInfo.DefaultThreadCurrentUICulture = culture;
-        ComputedRegistry.Instance.OnRegister = c => Console.WriteLine($"+ {c.Input.Category}");
-        ComputedRegistry.Instance.OnUnregister = c => Console.WriteLine($"- {c.Input.Category}");
 
         var builder = WebAssemblyHostBuilder.CreateDefault(args);
         StartupHelper.ConfigureServices(builder.Services, builder);

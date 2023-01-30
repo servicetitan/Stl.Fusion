@@ -250,7 +250,7 @@ public readonly struct FusionBuilder
             Services.TryAddSingleton<ComputedGraphPruner.Options>();
 
         Services.TryAddSingleton<ComputedGraphPruner>();
-        Services.AddHostedService<ComputedGraphPruner>();
+        Services.AddHostedService(c => c.GetRequiredService<ComputedGraphPruner>());
         return this;
     }
 }

@@ -147,6 +147,9 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
         if (!mustUpdate && LastSentVersion == version)
             return;
 
+        if (isConsistent)
+            ComputedRegistry.Instance.ReportAccess(computed, false);
+
         var mustSendOutput = LastSentOutputVersion != computed.Version;
         var reply = mustSendOutput
             ? PublicationStateReply<T>.New(computed.Output)

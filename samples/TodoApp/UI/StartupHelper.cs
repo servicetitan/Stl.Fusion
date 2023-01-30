@@ -1,13 +1,14 @@
-using System.Globalization;
 using Blazorise;
 using Blazorise.Bootstrap;
 using Blazorise.Icons.FontAwesome;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Stl.Fusion.Client;
 using Stl.Fusion.Blazor;
+using Stl.Fusion.Bridge.Interception;
+using Stl.Fusion.Diagnostics;
 using Stl.Fusion.Extensions;
-using Stl.Fusion.Internal;
 using Stl.Fusion.UI;
+using Stl.OS;
 using Templates.TodoApp.Abstractions;
 using Templates.TodoApp.Abstractions.Clients;
 
@@ -19,6 +20,7 @@ public static class StartupHelper
     {
         builder.Logging.SetMinimumLevel(LogLevel.Warning);
         builder.Logging.AddFilter(typeof(App).Namespace, LogLevel.Information);
+        builder.Logging.AddFilter(typeof(FusionMonitor).Namespace, LogLevel.Information);
 
         var baseUri = new Uri(builder.HostEnvironment.BaseAddress);
         var apiBaseUri = new Uri($"{baseUri}api/");
@@ -71,5 +73,27 @@ public static class StartupHelper
 
         // Default update delay is 0.5s
         services.AddScoped<IUpdateDelayer>(c => new UpdateDelayer(c.UIActionTracker(), 0.5));
+
+        // Diagnostics
+        services.AddHostedService(c => {
+            return new FusionMonitor(c) {
+                OutputPeriod = TimeSpan.FromSeconds(OSInfo.IsWebAssembly ? 3 : 60),
+                AccessFilter = OSInfo.IsWebAssembly
+                    ? static computed => computed.Input.Function is IReplicaMethodFunction
+                    : static computed => true,
+                AccessStatisticsPreprocessor = StatisticsPreprocessor,
+                RegistrationStatisticsPreprocessor = StatisticsPreprocessor,
+            };
+
+            void StatisticsPreprocessor(Dictionary<string, (int, int)> stats)
+            {
+                foreach (var key in stats.Keys.ToList()) {
+                    if (key.Contains(".Pseudo"))
+                        stats.Remove(key);
+                    if (key.Contains("FusionTime."))
+                        stats.Remove(key);
+                }
+            }
+        });
     }
 }

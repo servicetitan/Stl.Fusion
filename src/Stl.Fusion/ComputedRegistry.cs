@@ -1,4 +1,5 @@
 using Stl.Concurrency;
+using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
 using Stl.Locking;
 using Stl.OS;
@@ -47,8 +48,10 @@ public sealed class ComputedRegistry : IDisposable
     public IEnumerable<ComputedInput> Keys => _storage.Select(p => p.Key);
     public AsyncLockSet<ComputedInput> InputLocks { get; }
     public ComputedGraphPruner GraphPruner => _graphPruner;
-    public Action<IComputed>? OnRegister { get; set; }
-    public Action<IComputed>? OnUnregister { get; set; }
+
+    public event Action<IComputed>? OnRegister;
+    public event Action<IComputed>? OnUnregister;
+    public event Action<IComputed, bool>? OnAccess;
 
     public ComputedRegistry() : this(Options.Default) { }
     public ComputedRegistry(Options options)
@@ -78,6 +81,7 @@ public sealed class ComputedRegistry : IDisposable
             var value = (IComputed?) handle.Target;
             if (value != null)
                 return value;
+
             if (_storage.TryRemove(key, handle))
                 _gcHandlePool.Release(handle, random);
         }
@@ -176,6 +180,12 @@ public sealed class ComputedRegistry : IDisposable
 
         graphPruner.Start();
         return graphPruner;
+    }
+
+    public void ReportAccess(IComputed computed, bool isNew)
+    {
+        if (OnAccess != null && computed.Input.Function is IComputeMethodFunction)
+            OnAccess.Invoke(computed, isNew);
     }
 
     // Private methods

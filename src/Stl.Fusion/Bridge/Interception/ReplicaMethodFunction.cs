@@ -6,12 +6,17 @@ using Stl.Versioning;
 
 namespace Stl.Fusion.Bridge.Interception;
 
-public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
+public interface IReplicaMethodFunction : IComputeMethodFunction
+{
+    IReplicator Replicator { get; }
+}
+
+public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>, IReplicaMethodFunction
 {
     private string? _toString;
 
-    protected readonly VersionGenerator<LTag> VersionGenerator;
-    protected readonly IReplicator Replicator;
+    public VersionGenerator<LTag> VersionGenerator { get; }
+    public IReplicator Replicator { get; }
 
     public ReplicaMethodFunction(
         ComputeMethodDef methodDef,

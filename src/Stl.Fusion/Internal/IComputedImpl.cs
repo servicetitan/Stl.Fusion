@@ -10,7 +10,7 @@ public interface IComputedImpl : IComputed
     void RemoveUsedBy(IComputedImpl usedBy);
     (int OldCount, int NewCount) PruneUsedBy();
 
-    void RenewTimeouts();
+    void RenewTimeouts(bool isNew);
     void CancelTimeouts();
 
     bool IsTransientError(Exception error);
