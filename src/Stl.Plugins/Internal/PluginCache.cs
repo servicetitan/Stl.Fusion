@@ -1,5 +1,3 @@
-using Stl.Concurrency;
-
 namespace Stl.Plugins.Internal;
 
 public interface IPluginCache
@@ -15,7 +13,7 @@ public class PluginCache : IPluginCache
     public PluginCache(IServiceProvider services) => _services = services;
 
     public IPluginInstanceHandle GetOrCreate(Type pluginImplementationType)
-        => _cache.GetOrAddChecked(
+        => _cache.GetOrAdd(
             pluginImplementationType,
             (pit, self) => {
                 var handleType = typeof(IPluginInstanceHandle<>).MakeGenericType(pit);

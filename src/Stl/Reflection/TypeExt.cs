@@ -1,6 +1,4 @@
 using System.Text.RegularExpressions;
-using Cysharp.Text;
-using Stl.Concurrency;
 
 namespace Stl.Reflection;
 
@@ -68,7 +66,7 @@ public static class TypeExt
     public static string GetName(this Type type, bool useFullName = false, bool useFullArgumentNames = false)
     {
         var key = (type, useFullName, useFullArgumentNames);
-        return GetNameCache.GetOrAddChecked(key,
+        return GetNameCache.GetOrAdd(key,
             static key1 => {
                 var (type1, useFullName1, useFullArgumentNames1) = key1;
                 var name = type1.Name;
@@ -94,7 +92,7 @@ public static class TypeExt
     public static string ToIdentifierName(this Type type, bool useFullName = false, bool useFullArgumentNames = false)
     {
         var key = (type, useFullName, useFullArgumentNames);
-        return ToIdentifierNameCache.GetOrAddChecked(key,
+        return ToIdentifierNameCache.GetOrAdd(key,
             static key1 => {
                 var (type1, useFullName1, useFullArgumentNames1) = key1;
                 var name = type1.Name;
@@ -118,7 +116,7 @@ public static class TypeExt
 
     public static Symbol ToSymbol(this Type type, bool withPrefix = true)
         => withPrefix
-            ? ToSymbolCache.GetOrAddChecked(type,
+            ? ToSymbolCache.GetOrAdd(type,
                 static type1 => new Symbol(SymbolPrefix + type1.ToIdentifierName(true, true)))
             : (Symbol) type.ToIdentifierName(true, true);
 

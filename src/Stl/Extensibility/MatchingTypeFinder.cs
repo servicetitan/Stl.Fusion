@@ -1,4 +1,3 @@
-using Stl.Concurrency;
 using Stl.Internal;
 
 namespace Stl.Extensibility;
@@ -48,7 +47,7 @@ public class MatchingTypeFinder : IMatchingTypeFinder
     {
         if (source == null)
             throw new ArgumentNullException(nameof(source));
-        return _cache.GetOrAddChecked((source, scope), (key, self) => {
+        return _cache.GetOrAdd((source, scope), (key, self) => {
             var (source1, scope1) = key;
             var baseTypes = source1.GetAllBaseTypes(true, true);
             foreach (var cType in baseTypes) {

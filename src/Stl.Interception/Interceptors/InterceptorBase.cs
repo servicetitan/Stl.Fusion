@@ -1,5 +1,4 @@
 using Castle.DynamicProxy;
-using Stl.Concurrency;
 
 namespace Stl.Interception.Interceptors;
 
@@ -47,11 +46,11 @@ public abstract class InterceptorBase : IOptionalInterceptor, IHasServices
     }
 
     public Action<IInvocation>? GetHandler(IInvocation invocation)
-        => _handlerCache.GetOrAddChecked(invocation.Method, _createHandlerUntyped, invocation);
+        => _handlerCache.GetOrAdd(invocation.Method, _createHandlerUntyped, invocation);
 
     public void ValidateType(Type type)
     {
-        _validateTypeCache.GetOrAddChecked(type, (type1, self) => {
+        _validateTypeCache.GetOrAdd(type, (type1, self) => {
             Log.Log(ValidationLogLevel, "Validating: '{Type}'", type1);
             try {
                 self.ValidateTypeInternal(type1);
@@ -67,7 +66,7 @@ public abstract class InterceptorBase : IOptionalInterceptor, IHasServices
     protected virtual Action<IInvocation>? CreateHandlerUntyped(MethodInfo methodInfo, IInvocation initialInvocation)
     {
         var proxyMethodInfo = initialInvocation.Method;
-        var methodDef = _methodDefCache.GetOrAddChecked(proxyMethodInfo, _createMethodDef, initialInvocation);
+        var methodDef = _methodDefCache.GetOrAdd(proxyMethodInfo, _createMethodDef, initialInvocation);
         if (methodDef == null)
             return null;
 

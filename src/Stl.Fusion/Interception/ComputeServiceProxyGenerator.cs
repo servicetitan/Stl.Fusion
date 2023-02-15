@@ -1,5 +1,4 @@
 using Castle.DynamicProxy;
-using Stl.Concurrency;
 using Stl.Interception.Interceptors;
 
 namespace Stl.Fusion.Interception;
@@ -11,7 +10,7 @@ public class ComputeServiceProxyGenerator : ProxyGeneratorBase
     private ConcurrentDictionary<Type, Type> Cache { get; } = new();
 
     public virtual Type GetProxyType(Type type)
-        => Cache.GetOrAddChecked(type, static (type1, self) => {
+        => Cache.GetOrAdd(type, static (type1, self) => {
             var tInterfaces = typeof(IComputeService).IsAssignableFrom(type1)
                 ? Array.Empty<Type>()
                 : new[] { typeof(IComputeService) };

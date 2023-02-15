@@ -1,5 +1,3 @@
-using Stl.Concurrency;
-
 namespace Stl.RegisterAttributes.Internal;
 
 internal readonly struct ServiceInfo
@@ -47,14 +45,14 @@ internal readonly struct ServiceInfo
     }
 
     public static ServiceInfo[] ForAll(Assembly assembly)
-        => ServiceInfoCache!.GetOrAddChecked(
+        => ServiceInfoCache!.GetOrAdd(
             assembly, a => a.ExportedTypes
                 .Select(For)
                 .Where(s => s.Attributes.Length != 0)
                 .ToArray())!;
 
     public static ServiceInfo[] ForAll(Assembly assembly, Symbol scope)
-        => ScopedServiceInfoCache.GetOrAddChecked(
+        => ScopedServiceInfoCache.GetOrAdd(
             (assembly, scope), key => {
                 var (assembly1, scope1) = key;
                 return ForAll(assembly1)

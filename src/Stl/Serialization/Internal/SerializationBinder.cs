@@ -1,6 +1,5 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using Stl.Concurrency;
 
 namespace Stl.Serialization.Internal;
 
@@ -29,7 +28,7 @@ public class SerializationBinder : ISerializationBinder
     // Protected part
 
     protected Type? GetType(string? assemblyName, string typeName)
-        => _cache.GetOrAddChecked((assemblyName, typeName), _resolveTypeHandler);
+        => _cache.GetOrAdd((assemblyName, typeName), _resolveTypeHandler);
 
     protected virtual Type? ResolveType((string? AssemblyName, string TypeName) key)
     {

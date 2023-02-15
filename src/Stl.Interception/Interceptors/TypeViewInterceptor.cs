@@ -1,5 +1,4 @@
 using Castle.DynamicProxy;
-using Stl.Concurrency;
 using Stl.Conversion;
 
 namespace Stl.Interception.Interceptors;
@@ -32,7 +31,7 @@ public class TypeViewInterceptor : IInterceptor
     public void Intercept(IInvocation invocation)
     {
         var key = (invocation.Method, invocation.Proxy.GetType());
-        var handler = _handlerCache.GetOrAddChecked(key, _createHandler, invocation);
+        var handler = _handlerCache.GetOrAdd(key, _createHandler, invocation);
         if (handler == null)
             invocation.Proceed();
         else

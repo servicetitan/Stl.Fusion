@@ -90,7 +90,7 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
         ExecutionContextExt.SuppressFlow();
         var spinWait = new SpinWait();
         while (true) {
-             var p = Publications.GetOrAddChecked(
+             var p = Publications.GetOrAdd(
                  computed.Input,
                  static (key, arg) => {
                      var (this1, computed1) = arg;
