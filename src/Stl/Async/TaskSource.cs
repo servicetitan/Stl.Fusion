@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using System.Reflection.Emit;
+using Cysharp.Text;
 
 namespace Stl.Async;
 
@@ -190,7 +191,7 @@ public readonly struct TaskSource<T> : IEquatable<TaskSource<T>>
         // .NET Standard version fails even on above code,
         // so IL emit is used to generate private field assignment code.
         var setTaskMethod = new DynamicMethod(
-            string.Concat("_Set", fTask!.Name, "_"),
+            ZString.Concat("_Set", fTask!.Name, "_"),
             typeof(void),
             new [] { typeof(TaskCompletionSource<T>), typeof(Task<T>) },
             fTask.DeclaringType!,
@@ -206,7 +207,7 @@ public readonly struct TaskSource<T> : IEquatable<TaskSource<T>>
             typeof(Action<TaskCompletionSource<T>, Task<T>>));
 
         var resetTaskMethod = new DynamicMethod(
-            string.Concat("_Reset", fTask!.Name, "_"),
+            ZString.Concat("_Reset", fTask!.Name, "_"),
             typeof(void),
             new [] { typeof(TaskCompletionSource<T>) },
             fTask.DeclaringType!,

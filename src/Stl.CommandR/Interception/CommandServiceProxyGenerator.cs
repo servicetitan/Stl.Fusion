@@ -11,12 +11,12 @@ public class CommandServiceProxyGenerator : ProxyGeneratorBase
     private ConcurrentDictionary<Type, Type> Cache { get; } = new();
 
     public virtual Type GetProxyType(Type type)
-        => Cache.GetOrAddChecked(type, static (type1, self) => {
+        => Cache.GetOrAddChecked(type, static type1 => {
             var tInterfaces = typeof(ICommandService).IsAssignableFrom(type1)
                 ? Array.Empty<Type>()
                 : new[] { typeof(ICommandService) };
             var options = new ProxyGenerationOptions();
             var proxyType = ProxyBuilder.CreateClassProxyType(type1, tInterfaces, options);
             return proxyType;
-        }, this);
+        });
 }
