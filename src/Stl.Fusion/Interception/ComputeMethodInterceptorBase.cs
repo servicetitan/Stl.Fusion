@@ -63,12 +63,12 @@ public abstract class ComputeMethodInterceptorBase : InterceptorBase
     {
         ValidateType(initialInvocation.TargetType);
 
-        var options = ComputedOptionsProvider.GetComputedOptions(methodInfo);
+        var proxyType = initialInvocation.Proxy.GetType();
+        var options = ComputedOptionsProvider.GetComputedOptions(methodInfo, proxyType);
         if (options == null)
             return null;
 
-        var methodDef = (ComputeMethodDef) Services.Activate(
-            options.ComputeMethodDefType, this, methodInfo);
+        var methodDef = (ComputeMethodDef) Services.Activate(options.ComputeMethodDefType, this, methodInfo, proxyType);
         return methodDef.IsValid ? methodDef : null;
     }
 }

@@ -6,10 +6,12 @@ namespace Stl.Fusion;
 public record ComputedOptions
 {
     public static ComputedOptions Default { get; set; } = new();
+    public static ComputedOptions ReplicaDefault { get; set; } = new() {
+        KeepAliveTime = TimeSpan.FromMinutes(1),
+    };
     public static ComputedOptions MutableStateDefault { get; set; } = new() {
         TransientErrorInvalidationDelay = TimeSpan.MaxValue,
     };
-    public static ComputedOptions ReplicaDefault { get; set; } = new();
 
     public TimeSpan KeepAliveTime { get; init; }
     public TimeSpan TransientErrorInvalidationDelay { get; init; } = TimeSpan.FromSeconds(1);

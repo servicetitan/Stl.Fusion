@@ -10,7 +10,10 @@ public abstract class InterceptorBase : IOptionalInterceptor, IHasServices
         public bool IsLoggingEnabled { get; init; } = true;
     }
 
-    private readonly MethodInfo _createTypedHandlerMethod;
+    private static readonly MethodInfo CreateTypedHandlerMethod = typeof(InterceptorBase)
+        .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
+        .Single(m => StringComparer.Ordinal.Equals(m.Name, nameof(CreateHandler)));
+
     private readonly Func<MethodInfo, IInvocation, Action<IInvocation>?> _createHandlerUntyped;
     private readonly Func<MethodInfo, IInvocation, MethodDef?> _createMethodDef;
     private readonly ConcurrentDictionary<MethodInfo, MethodDef?> _methodDefCache = new();
@@ -32,9 +35,6 @@ public abstract class InterceptorBase : IOptionalInterceptor, IHasServices
 
         _createHandlerUntyped = CreateHandlerUntyped;
         _createMethodDef = CreateMethodDef;
-        _createTypedHandlerMethod = GetType()
-            .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-            .Single(m => StringComparer.Ordinal.Equals(m.Name, nameof(CreateHandler)));
     }
 
     public void Intercept(IInvocation invocation)
@@ -71,7 +71,7 @@ public abstract class InterceptorBase : IOptionalInterceptor, IHasServices
         if (methodDef == null)
             return null;
 
-        return (Action<IInvocation>) _createTypedHandlerMethod
+        return (Action<IInvocation>) CreateTypedHandlerMethod
             .MakeGenericMethod(methodDef.UnwrappedReturnType)
             .Invoke(this, new object[] { initialInvocation, methodDef })!;
     }

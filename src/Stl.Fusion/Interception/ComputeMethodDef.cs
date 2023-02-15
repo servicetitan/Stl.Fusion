@@ -14,13 +14,14 @@ public record ComputeMethodDef : MethodDef
 
     public ComputeMethodDef(
         ComputeMethodInterceptorBase interceptor,
-        MethodInfo methodInfo)
+        MethodInfo methodInfo,
+        Type proxyType)
         : base(interceptor, methodInfo)
     {
         if (!IsAsyncMethod)
             return;
 
-        var computedOptions = interceptor.ComputedOptionsProvider.GetComputedOptions(methodInfo);
+        var computedOptions = interceptor.ComputedOptionsProvider.GetComputedOptions(methodInfo, proxyType);
         if (computedOptions == null)
             return;
 

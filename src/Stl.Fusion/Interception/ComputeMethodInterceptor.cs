@@ -28,8 +28,8 @@ public class ComputeMethodInterceptor : ComputeMethodInterceptorBase
             | BindingFlags.Instance | BindingFlags.Static
             | BindingFlags.FlattenHierarchy;
         foreach (var method in type.GetMethods(bindingFlags)) {
-            var attr = ComputedOptionsProvider.GetComputeMethodAttribute(method);
-            var options = ComputedOptionsProvider.GetComputedOptions(method);
+            var attr = ComputedOptionsProvider.GetComputeMethodAttribute(method, type);
+            var options = ComputedOptionsProvider.GetComputedOptions(method, type);
             if (attr == null || options == null)
                 continue;
             if (method.IsStatic)
