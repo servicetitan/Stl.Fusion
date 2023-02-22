@@ -142,7 +142,7 @@
     <PackageReference Update="System.Reflection.Emit.Lightweight" Version="4.7.0" />
     
     <!-- Test time only -->
-    <PackageReference Update="AutoFixture.AutoMoq" Version="4.17.*" />
+    <PackageReference Update="AutoFixture.AutoMoq" Version="4.18.*" />
     <PackageReference Update="coverlet.collector" Version="3.2.0" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
     <PackageReference Update="FluentAssertions" Version="6.9.*" />
     <PackageReference Update="ILogger.Moq" Version="1.1.*" />
