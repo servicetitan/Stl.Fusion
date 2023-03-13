@@ -38,7 +38,7 @@
     <EntityFrameworkCoreMySqlVersion3>$(AspNetCoreVersion3)</EntityFrameworkCoreMySqlVersion3>
     <!-- Serialization -->
     <NewtonsoftJsonVersion>13.0.*</NewtonsoftJsonVersion>
-    <MessagePackVersion>2.4.*</MessagePackVersion>
+    <MessagePackVersion>2.5.*</MessagePackVersion>
     <AspNetCoreNewtonsoftJsonVersion>$(AspNetCoreVersion)</AspNetCoreNewtonsoftJsonVersion>
     <AspNetCoreNewtonsoftJsonVersion6>$(AspNetCoreVersion6)</AspNetCoreNewtonsoftJsonVersion6>
     <!-- Testing -->
