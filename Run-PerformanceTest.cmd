@@ -8,3 +8,4 @@ if "%runtime%"=="" (
   set runtime=net7.0
 )
 dotnet run --no-launch-profile -c:Release -f:%runtime% --project tests/Stl.Fusion.Tests.PerformanceTestRunner/Stl.Fusion.Tests.PerformanceTestRunner.csproj
+pause
