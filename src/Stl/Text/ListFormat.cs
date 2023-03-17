@@ -20,19 +20,12 @@ public readonly struct ListFormat
     }
 
     public ListFormatter CreateFormatter(int itemIndex = 0)
-        => new(this, ZString.CreateStringBuilder(), true, itemIndex);
-    public ListFormatter CreateFormatter(ref Utf16ValueStringBuilder output, int itemIndex = 0)
-        => new(this, output, false, itemIndex);
+        => new(this, itemIndex);
 
     public ListParser CreateParser(string source, int itemIndex = 0)
         => CreateParser(source.AsSpan(), itemIndex);
-    public ListParser CreateParser(string source, ref Utf16ValueStringBuilder item, int itemIndex = 0)
-        => CreateParser(source.AsSpan(), ref item, itemIndex);
-
     public ListParser CreateParser(ReadOnlySpan<char> source, int itemIndex = 0)
-        => new(this, source, ZString.CreateStringBuilder(), true, itemIndex);
-    public ListParser CreateParser(ReadOnlySpan<char> source, ref Utf16ValueStringBuilder item, int itemIndex = 0)
-        => new(this, source, item, false, itemIndex);
+        => new(this, source, itemIndex);
 
     public string Format(params string[] source)
     {
@@ -55,30 +48,18 @@ public readonly struct ListFormat
     public List<string> Parse(string source, List<string>? target = null)
     {
         target ??= new List<string>();
-        var sb = ZString.CreateStringBuilder();
-        var p = CreateParser(source, ref sb);
-        try {
-            while (p.TryParseNext())
-                target.Add(p.Item);
-            return target;
-        }
-        finally {
-            sb.Dispose();
-        }
+        var p = CreateParser(source);
+        while (p.TryParseNext())
+            target.Add(p.Item);
+        return target;
     }
 
     public List<string> Parse(in ReadOnlySpan<char> source, List<string>? target = null)
     {
         target ??= new List<string>();
-        var sb = ZString.CreateStringBuilder();
-        var p = CreateParser(source, ref sb);
-        try {
-            while (p.TryParseNext())
-                target.Add(p.Item);
-            return target;
-        }
-        finally {
-            sb.Dispose();
-        }
+        using var p = CreateParser(source);
+        while (p.TryParseNext())
+            target.Add(p.Item);
+        return target;
     }
 }
