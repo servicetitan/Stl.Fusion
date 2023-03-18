@@ -6,6 +6,27 @@ namespace Stl.Generators.Internal;
 
 public static class GenerationExt
 {
+    public static IEnumerable<ITypeSymbol> GetAllBaseTypes(this ITypeSymbol typeSymbol, bool includingSelf = false)
+    {
+        var current = typeSymbol;
+        while (current != null) {
+            if (includingSelf || !ReferenceEquals(current, typeSymbol))
+                yield return current;
+            current = current.BaseType;
+        }
+    }
+
+    public static IEnumerable<ITypeSymbol> GetAllInterfaces(this ITypeSymbol typeSymbol, bool includingSelf = false)
+    {
+        if (includingSelf && typeSymbol.TypeKind == TypeKind.Interface)
+            yield return typeSymbol;
+
+        // DFS traversal
+        foreach (var i in typeSymbol.Interfaces)
+            foreach (var iBase in i.GetAllInterfaces(true))
+                yield return iBase;
+    }
+
     public static INamedTypeSymbol? GetTypeFor<T>(this Compilation compilation)
     {
         var type = typeof(T);
@@ -129,6 +150,9 @@ public static class GenerationExt
 
     public static bool IsVoid(this TypeSyntax typeSyntax)
         => typeSyntax is PredefinedTypeSyntax pts && pts.Keyword.IsKind(SyntaxKind.VoidKeyword);
+
+    public static bool IsObject(this TypeSyntax typeSyntax)
+        => typeSyntax is PredefinedTypeSyntax pts && pts.Keyword.IsKind(SyntaxKind.ObjectKeyword);
 
     public static LocalDeclarationStatementSyntax ToVarStatement(this VariableDeclaratorSyntax variable)
         => LocalDeclarationStatement(VariableDeclaration(VarIdentifierDef())

@@ -212,7 +212,29 @@ public class ProxyTypeGenerator
 
     private IEnumerable<IMethodSymbol> GetProxyMethods()
     {
-        foreach (var member in TypeSymbol.GetMembers()) {
+        var hierarchy = IsInterfaceProxy
+            ? TypeSymbol.GetAllInterfaces(true)
+            : TypeSymbol.GetAllBaseTypes(true);
+        var processedMethods = new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
+        foreach (var baseType in hierarchy) {
+            if (baseType.ToTypeRef().IsObject())
+                continue;
+
+            foreach (var method in GetDeclaredProxyMethods(baseType)) {
+                if (processedMethods.Contains(method))
+                    continue;
+
+                processedMethods.Add(method);
+                if (method.OverriddenMethod != null)
+                    processedMethods.Add(method.OverriddenMethod);
+                yield return method;
+            }
+        }
+    }
+
+    private IEnumerable<IMethodSymbol> GetDeclaredProxyMethods(ITypeSymbol type)
+    {
+        foreach (var member in type.GetMembers()) {
             if (member is not IMethodSymbol method)
                 continue;
             if (method.MethodKind is not MethodKind.Ordinary)
