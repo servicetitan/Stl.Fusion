@@ -218,7 +218,7 @@ public class ProxyGenerator : IIncrementalGenerator
                     continue;
                 var isVirtual = modifiers.Any(c => c.IsKind(SyntaxKind.VirtualKeyword));
                 if (!isVirtual) {
-                    context.ReportDiagnostic(DebugWarning($"method is not virtual and not private: {method.ToString()}."));
+                    context.ReportDiagnostic(DebugWarning($"Method is not virtual nor private: {method.ToString()}."));
                     continue;
                 }
                 var accessModifier = isPublic ? Token(SyntaxKind.PublicKeyword)
