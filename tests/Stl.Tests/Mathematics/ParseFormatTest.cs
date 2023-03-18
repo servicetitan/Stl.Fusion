@@ -40,7 +40,7 @@ public class ParseFormatTest
             RandomStringGenerator.Base64Alphabet,
         };
         var rnd = new RandomInt64Generator();
-        for (int i = 0; i < 1000; i++) {
+        for (var i = 0; i < 1000; i++) {
             foreach (var alphabet in alphabets) {
                 var n = rnd.Next();
                 var f = MathExt.Format(n, alphabet);

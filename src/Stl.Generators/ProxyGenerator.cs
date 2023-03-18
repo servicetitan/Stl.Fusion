@@ -122,7 +122,7 @@ public class ProxyGenerator : IIncrementalGenerator
 
         var classMembers = new List<MemberDeclarationSyntax>();
 
-        AddMethodOverrides(classMembers, context, typeDef);
+        AddMethodOverrides(context, classMembers, typeDef);
 
 #if DEBUG        
         context.ReportDiagnostic(DebugWarning($"{classMembers.Count} class members added for method overrides."));
@@ -130,9 +130,8 @@ public class ProxyGenerator : IIncrementalGenerator
 
         AddInterceptor(classMembers);
 
-        if (originalClassDef != null) {
+        if (originalClassDef != null)
             AddClassConstructors(classMembers, originalClassDef, classDef.Identifier.Text);
-        }
         else {
             classMembers.Add(PrivateFieldDeclaration(SubjectFieldName, originalTypeFullNameSyntax, true));
             AddInterfaceProxyConstructor(classMembers, originalTypeFullNameSyntax, classDef.Identifier.Text);
@@ -200,8 +199,8 @@ public class ProxyGenerator : IIncrementalGenerator
     }
 
     private void AddMethodOverrides(
-        ICollection<MemberDeclarationSyntax> classMembers,
         SourceProductionContext context,
+        ICollection<MemberDeclarationSyntax> classMembers,
         TypeDeclarationSyntax originalTypeDef)
     {
         var methodIndex = 0;
@@ -211,11 +210,16 @@ public class ProxyGenerator : IIncrementalGenerator
             var modifiers = method.Modifiers;
             SyntaxToken[] methodModifiers;
             if (!isInterfaceProxy) {
+                var isGeneric = method.TypeParameterList?.Parameters.Any() == true;
+                if (isGeneric)
+                    continue;
+
                 var isPublic = modifiers.Any(c => c.IsKind(SyntaxKind.PublicKeyword));
                 var isProtected = modifiers.Any(c => c.IsKind(SyntaxKind.ProtectedKeyword));
                 var isPrivate = !isPublic && !isProtected;
                 if (isPrivate)
                     continue;
+
                 var isVirtual = modifiers.Any(c => c.IsKind(SyntaxKind.VirtualKeyword));
                 if (!isVirtual) {
                     context.ReportDiagnostic(DebugWarning($"Method is not virtual nor private: {method.ToString()}."));
@@ -299,7 +303,9 @@ public class ProxyGenerator : IIncrementalGenerator
                         Argument(
                             LiteralExpression(SyntaxKind.StringLiteralExpression, Literal(method.Identifier.Text))),
                         Argument(
-                            ImplicitArrayCreationExpression(
+                            methodParameterTypes.Length == 0
+                            ? EmptyTypeArrayExpression()
+                            : ImplicitArrayCreationExpression(
                                 InitializerExpression(
                                     SyntaxKind.ArrayInitializerExpression,
                                     CommaSeparatedList(methodParameterTypes
@@ -345,12 +351,13 @@ public class ProxyGenerator : IIncrementalGenerator
 
     private SimpleLambdaExpressionSyntax CreateInterceptedLambda(MethodDeclarationSyntax method, bool isInterfaceProxy)
     {
-        var typedArgsVarGenericArguments = method.ParameterList
-            .Parameters.Select(p => p.Type!).ToArray();
+        var typedArgsVarGenericArguments = method.ParameterList.Parameters.Select(p => p.Type!).ToArray();
 
-        var typeArgsVariableType = QualifiedName(_interceptionNs,
-            GenericName(Identifier(ArgumentListTypeName))
-                .WithTypeArgumentList(
+        var typeArgsVariableType =
+            QualifiedName(_interceptionNs,
+                typedArgsVarGenericArguments.Length == 0
+                ? IdentifierName(ArgumentListTypeName)
+                : GenericName(Identifier(ArgumentListTypeName)).WithTypeArgumentList(
                     TypeArgumentList(CommaSeparatedList(typedArgsVarGenericArguments))));
 
         const string lambdaParameterName = "args";
@@ -360,7 +367,7 @@ public class ProxyGenerator : IIncrementalGenerator
                 )));
 
         var subjectCallArguments = new List<ArgumentSyntax>();
-        for (int itemId = 0; itemId < method.ParameterList.Parameters.Count; itemId++) {
+        for (var itemId = 0; itemId < method.ParameterList.Parameters.Count; itemId++) {
             var argumentListPropertyName = "Item" + itemId;
             subjectCallArguments.Add(Argument(
                 MemberAccessExpression(
@@ -378,13 +385,12 @@ public class ProxyGenerator : IIncrementalGenerator
                 VariableDeclaration(VarIdentifier())
                     .WithVariables(SingletonSeparatedList(typedArgsVariable))),
             InvocationExpression(
-                    MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        methodSubjectCall,
-                        IdentifierName(method.Identifier.Text)),
-                    ArgumentList(CommaSeparatedList(subjectCallArguments))
-                )
-                .ToLastBlockStatement(!method.ReturnType.IsVoid())
+                MemberAccessExpression(
+                    SyntaxKind.SimpleMemberAccessExpression,
+                    methodSubjectCall,
+                    IdentifierName(method.Identifier.Text)),
+                ArgumentList(CommaSeparatedList(subjectCallArguments))
+            ).ToLastBlockStatement(!method.ReturnType.IsVoid())
         );
 
         var lambdaExpression = SimpleLambdaExpression(Parameter(Identifier(lambdaParameterName)))
@@ -460,7 +466,8 @@ public class ProxyGenerator : IIncrementalGenerator
         var bindInterceptorMethod = MethodDeclaration(
                 PredefinedType(Token(SyntaxKind.VoidKeyword)),
                 Identifier(ProxyInterfaceBindMethodName))
-            .WithExplicitInterfaceSpecifier(ExplicitInterfaceSpecifier(QualifiedName(_interceptionNs, IdentifierName(ProxyInterfaceTypeName))))
+            .WithExplicitInterfaceSpecifier(
+                ExplicitInterfaceSpecifier(QualifiedName(_interceptionNs, IdentifierName(ProxyInterfaceTypeName))))
             .WithParameterList(ParameterList(
                     SingletonSeparatedList(
                         Parameter(Identifier(interceptorParameterName))
@@ -482,7 +489,7 @@ public class ProxyGenerator : IIncrementalGenerator
                                             Argument(
                                                 LiteralExpression(
                                                     SyntaxKind.StringLiteralExpression,
-                                                    Literal("Interceptor is bound already.")))))))),
+                                                    Literal("Interceptor is already bound.")))))))),
                     ExpressionStatement(
                         AssignmentExpression(
                             SyntaxKind.SimpleAssignmentExpression,
@@ -502,6 +509,26 @@ public class ProxyGenerator : IIncrementalGenerator
                                                             Literal(interceptorParameterName))))))))))));
         classMembers.Add(bindInterceptorMethod);
     }
+
+    private static InvocationExpressionSyntax EmptyTypeArrayExpression()
+        => InvocationExpression(
+            MemberAccessExpression(
+                SyntaxKind.SimpleMemberAccessExpression,
+                MemberAccessExpression(
+                    SyntaxKind.SimpleMemberAccessExpression,
+                    AliasQualifiedName(
+                        IdentifierName(Token(SyntaxKind.GlobalKeyword)),
+                        IdentifierName("System")),
+                    IdentifierName("Array")),
+                GenericName(Identifier("Empty"))
+                    .WithTypeArgumentList(
+                        TypeArgumentList(
+                            SingletonSeparatedList<TypeSyntax>(
+                                QualifiedName(
+                                    AliasQualifiedName(
+                                        IdentifierName(Token(SyntaxKind.GlobalKeyword)),
+                                        IdentifierName("System")),
+                                    IdentifierName("Type")))))));
 
     private static SeparatedSyntaxList<TNode> CommaSeparatedList<TNode>(params TNode[] nodes) where TNode : SyntaxNode
         => CommaSeparatedList((IEnumerable<TNode>)nodes);
