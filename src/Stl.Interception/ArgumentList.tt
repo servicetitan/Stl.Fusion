@@ -22,6 +22,8 @@ public record ArgumentList
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public virtual int Length => 0;
 
+    public static ArgumentList New()
+        => Empty;
 <# for (var itemCount = 1; itemCount <= maxItemCount; itemCount++) {
     var argumentTypes = "" ;
     var argumentDeclaration = "";
@@ -46,7 +48,7 @@ public record ArgumentList
 
     public virtual T GetItem<T>(int index)
         => throw new ArgumentOutOfRangeException(nameof(index));
-    public virtual object? GetItemUntyped(int index) 
+    public virtual object? GetItemUntyped(int index)
         => throw new ArgumentOutOfRangeException(nameof(index));
 
     public virtual void SetItem<T>(int index, T value)
