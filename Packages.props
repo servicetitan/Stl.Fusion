@@ -20,19 +20,19 @@
     <MicrosoftExtensionsVersion>$(AspNetCoreVersion)</MicrosoftExtensionsVersion>
     <MicrosoftExtensionsVersion6>$(AspNetCoreVersion6)</MicrosoftExtensionsVersion6>
     <!-- EF Core -->
-    <EntityFrameworkCoreVersion>[7.0.0-rc.2.22472.11,8)</EntityFrameworkCoreVersion>
+    <EntityFrameworkCoreVersion>7.*</EntityFrameworkCoreVersion>
     <EntityFrameworkCoreVersion6>$(AspNetCoreVersion6)</EntityFrameworkCoreVersion6>
     <EntityFrameworkCoreVersion5>$(AspNetCoreVersion5)</EntityFrameworkCoreVersion5>
     <EntityFrameworkCoreVersion3>$(AspNetCoreVersion3)</EntityFrameworkCoreVersion3>
-    <EntityFrameworkCoreNpgsqlVersion>[7.0.0-rc.2,8)</EntityFrameworkCoreNpgsqlVersion>
+    <EntityFrameworkCoreNpgsqlVersion>7.*</EntityFrameworkCoreNpgsqlVersion>
     <EntityFrameworkCoreNpgsqlVersion6>$(EntityFrameworkCoreVersion6)</EntityFrameworkCoreNpgsqlVersion6>
     <EntityFrameworkCoreNpgsqlVersion5>$(EntityFrameworkCoreVersion5)</EntityFrameworkCoreNpgsqlVersion5>
     <EntityFrameworkCoreNpgsqlVersion3>$(EntityFrameworkCoreVersion3)</EntityFrameworkCoreNpgsqlVersion3>
-    <MySqlConnectorVersion>2.2.2</MySqlConnectorVersion>
+    <MySqlConnectorVersion>2.2.*</MySqlConnectorVersion>
     <MySqlConnectorVersion6>2.1.*</MySqlConnectorVersion6>
     <MySqlConnectorVersion5>$(MySqlConnectorVersion6)</MySqlConnectorVersion5>
     <MySqlConnectorVersion3>0.*</MySqlConnectorVersion3>
-    <EntityFrameworkCoreMySqlVersion>6.0.2</EntityFrameworkCoreMySqlVersion>
+    <EntityFrameworkCoreMySqlVersion>7.0.*</EntityFrameworkCoreMySqlVersion>
     <EntityFrameworkCoreMySqlVersion6>$(AspNetCoreVersion6)</EntityFrameworkCoreMySqlVersion6>
     <EntityFrameworkCoreMySqlVersion5>$(AspNetCoreVersion5)</EntityFrameworkCoreMySqlVersion5>
     <EntityFrameworkCoreMySqlVersion3>$(AspNetCoreVersion3)</EntityFrameworkCoreMySqlVersion3>
@@ -49,7 +49,7 @@
     <AspNetCoreMvcTestingVersionN4>$(AspNetCoreVersion5)</AspNetCoreMvcTestingVersionN4>
     <!-- Build & Samples -->
     <BlazoriseVersion>1.1.*</BlazoriseVersion>
-    <StlFusionVersion>4.1.*</StlFusionVersion>
+    <StlFusionVersion>4.3.*</StlFusionVersion>
   </PropertyGroup>
 
   <ItemGroup Label="Package Versions">
@@ -61,9 +61,9 @@
     <PackageReference Update="Blazorise.Sidebar" Version="$(BlazoriseVersion)" />
     <PackageReference Update="Bullseye" Version="4.2.*" />
     <PackageReference Update="Castle.Core" Version="5.1.*" />
-    <PackageReference Update="CliWrap" Version="3.5.*" />
+    <PackageReference Update="CliWrap" Version="3.6.*" />
     <PackageReference Update="DataAnnotationsValidatorNetStandard" Version="1.0.*" />
-    <PackageReference Update="EFCore.CheckConstraints" Version="$(EntityFrameworkCoreVersion6)" />
+    <PackageReference Update="EFCore.CheckConstraints" Version="$(EntityFrameworkCoreVersion)" />
     <PackageReference Update="Enums.NET" Version="4.0.*" />
     <PackageReference Update="MessagePack" Version="$(MessagePackVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Authentication.Cookies" Version="2.2.*" />
@@ -77,7 +77,7 @@
     <PackageReference Update="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="$(AspNetCoreVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="$(AspNetCoreNewtonsoftJsonVersion)" />
     <PackageReference Update="Microsoft.CSharp" Version="4.*" />
-    <PackageReference Update="Microsoft.Data.SqlClient" Version="5.0.*" />
+    <PackageReference Update="Microsoft.Data.SqlClient" Version="5.1.*" />
     <PackageReference Update="Microsoft.Extensions.Caching.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.Extensions.Configuration.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.Extensions.Configuration" Version="$(MicrosoftExtensionsVersion)" />
@@ -103,21 +103,22 @@
     <PackageReference Update="MySqlConnector" Version="$(MySqlConnectorVersion)" />
     <PackageReference Update="Npgsql" Version="$(EntityFrameworkCoreVersion)" />
     <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="$(EntityFrameworkCoreNpgsqlVersion)" />
-    <PackageReference Update="Microsoft.Identity.Web" Version="1.25.*" />
+    <PackageReference Update="Microsoft.Identity.Web" Version="2.5.*" />
     <PackageReference Update="MsgPack.Cli" Version="1.0.*" />
     <PackageReference Update="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
     <PackageReference Update="Pluralize.NET" Version="1.0.*" />
     <PackageReference Update="Pomelo.EntityFrameworkCore.MySql" Version="$(EntityFrameworkCoreMySqlVersion)" />
     <PackageReference Update="RestEase" Version="1.6.*" />
+    <PackageReference Update="RestEase.SourceGenerator" Version="1.6.*" />
     <PackageReference Update="StackExchange.Redis" Version="2.6.*" />
-    <PackageReference Update="Swashbuckle.AspNetCore" Version="6.4.0" />
+    <PackageReference Update="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageReference Update="System.Collections.Immutable" Version="$(SystemXxxVersion)" />
     <PackageReference Update="System.Configuration.ConfigurationManager" Version="$(SystemXxxVersion)" />
     <PackageReference Update="System.CommandLine" Version="2.0.0-beta4.22272.1" />
     <PackageReference Update="System.CommandLine.DragonFruit" Version="0.3.0-alpha.21216.1" />
     <PackageReference Update="System.Diagnostics.Common" Version="$(SystemXxxVersion)" />
     <PackageReference Update="System.Drawing.Common" Version="$(SystemXxxVersion)" />
-    <PackageReference Update="System.IO.Abstractions" Version="18.0.1" />
+    <PackageReference Update="System.IO.Abstractions" Version="19.2.4" />
     <PackageReference Update="System.Linq.Async" Version="$(SystemXxxVersion6)" />
     <PackageReference Update="System.Net.Http.Json" Version="$(SystemXxxVersion)" />
     <PackageReference Update="System.Net.WebSockets" Version="4.3.*" />
@@ -141,12 +142,12 @@
     <PackageReference Update="System.Reflection.Emit.Lightweight" Version="4.7.0" />
     
     <!-- Test time only -->
-    <PackageReference Update="AutoFixture.AutoMoq" Version="4.17.*" />
+    <PackageReference Update="AutoFixture.AutoMoq" Version="4.18.*" />
     <PackageReference Update="coverlet.collector" Version="3.2.0" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
-    <PackageReference Update="FluentAssertions" Version="6.8.*" />
+    <PackageReference Update="FluentAssertions" Version="6.10.*" />
     <PackageReference Update="ILogger.Moq" Version="1.1.*" />
     <PackageReference Update="Microsoft.AspNetCore.Mvc.Testing" Version="$(AspNetCoreMvcTestingVersion)" />
-    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.4.0" />
+    <PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.5.0" />
     <PackageReference Update="Moq" Version="4.18.*" />
     <PackageReference Update="xunit" Version="2.4.2" />
     <PackageReference Update="Xunit.DependencyInjection.Logging" Version="8.0.*" />
@@ -164,9 +165,9 @@
     <!-- Analyzers -->
     <PackageReference Update="Moq.Analyzers" Version="0.0.9" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers"/>
     <PackageReference Update="xunit.analyzers" Version="1.1.0" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
-    <PackageReference Update="Microsoft.VisualStudio.Threading.Analyzers" Version="17.4.*" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
+    <PackageReference Update="Microsoft.VisualStudio.Threading.Analyzers" Version="17.5.*" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
     <PackageReference Update="Roslynator.Analyzers" Version="4.2.*" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers"/>
-    <PackageReference Update="Meziantou.Analyzer" Version="1.0.*" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers"/>
+    <PackageReference Update="Meziantou.Analyzer" Version="2.0.*" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers"/>
     
     <!-- Generators -->
     <PackageReference Update="Microsoft.CodeAnalysis.Analyzers" Version="3.3.3">

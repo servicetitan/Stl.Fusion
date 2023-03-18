@@ -90,7 +90,7 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
         ExecutionContextExt.SuppressFlow();
         var spinWait = new SpinWait();
         while (true) {
-             var p = Publications.GetOrAddChecked(
+             var p = Publications.GetOrAdd(
                  computed.Input,
                  static (key, arg) => {
                      var (this1, computed1) = arg;
@@ -104,7 +104,7 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
                  }, (this, computed));
             if (p.TryTouch())
                 return p;
-            spinWait.SpinOnce();
+            spinWait.SpinOnce(); // Safe for WASM (unused there)
         }
     }
 

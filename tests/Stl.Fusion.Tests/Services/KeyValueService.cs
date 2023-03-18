@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Stl.Reflection;
 
 namespace Stl.Fusion.Tests.Services;
 
@@ -39,7 +40,7 @@ public class KeyValueService<TValue> : IKeyValueService<TValue>
 
     public KeyValueService(IServiceProvider services)
     {
-        Debug.WriteLine($"{GetType().Name} created @ {services.GetHashCode()}.");
+        Debug.WriteLine($"{GetType().GetName()} created @ {services.GetHashCode()}.");
     }
 
     public virtual Task<Option<TValue>> TryGet(string key, CancellationToken cancellationToken = default)

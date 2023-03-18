@@ -8,19 +8,19 @@ public abstract class CommandContext : ICommandContext, IHasServices, IAsyncDisp
     protected static readonly AsyncLocal<CommandContext?> CurrentLocal = new();
     public static CommandContext? Current => CurrentLocal.Value;
 
-    protected internal IServiceScope ServiceScope { get; set; } = null!;
+    protected internal IServiceScope ServiceScope { get; protected init; } = null!;
     public ICommander Commander { get; }
     public abstract ICommand UntypedCommand { get; }
     public abstract Task UntypedResultTask { get; }
     public abstract Result<object> UntypedResult { get; }
     public abstract bool IsCompleted { get; }
 
-    public CommandContext? OuterContext { get; protected set; }
-    public CommandContext OutermostContext { get; protected set; } = null!;
+    public CommandContext? OuterContext { get; protected init; }
+    public CommandContext OutermostContext { get; protected init; } = null!;
     public bool IsOutermost => ReferenceEquals(OutermostContext, this);
     public CommandExecutionState ExecutionState { get; set; }
     public IServiceProvider Services => ServiceScope.ServiceProvider;
-    public OptionSet Items { get; protected set; } = null!;
+    public OptionSet Items { get; protected init; } = null!;
 
     // Static methods
 
@@ -90,7 +90,7 @@ public sealed class CommandContext<TResult> : CommandContext
 {
     private Result<TResult> _result;
     public ICommand<TResult> Command { get; }
-    public Task<TResult> ResultTask; // Set at the very end of the pipeline (via Complete)
+    public readonly Task<TResult> ResultTask; // Set at the very end of the pipeline (via Complete)
 
     // Result may change while the pipeline runs
     public Result<TResult> Result {

@@ -109,5 +109,5 @@ public class PluginSetInfo
     }
 
     public override string ToString()
-        => $"{GetType().Name} of [{InfoByType.Values.ToDelimitedString()}]";
+        => $"{GetType().GetName()} of [{InfoByType.Values.ToDelimitedString()}]";
 }

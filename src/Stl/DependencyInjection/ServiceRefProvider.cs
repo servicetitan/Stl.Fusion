@@ -38,7 +38,7 @@ public class ServiceRefProvider : IServiceRefProvider
     protected Type? GetServiceType(Type implementationType)
         => ServiceTypeCache.GetOrAdd(
             implementationType,
-            (implementationType1, self) => self.ServiceCollection
+            static (implementationType1, self) => self.ServiceCollection
                 .Where(d => self.IsMatch(implementationType1, d))
                 .Select(d => d.ServiceType)
                 .SingleOrDefault(),

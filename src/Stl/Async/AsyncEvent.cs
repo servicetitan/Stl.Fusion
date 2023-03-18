@@ -15,7 +15,7 @@ public abstract class AsyncEvent<T>
     }
 
     public override string ToString()
-        => $"{GetType().Name}({Value})";
+        => $"{GetType().GetName()}({Value})";
 
     public Task<AsyncEvent<T>> WhenNext()
         => WhenNextSource.Task;

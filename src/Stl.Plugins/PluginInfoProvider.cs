@@ -39,7 +39,7 @@ public class PluginInfoProvider : IPluginInfoProvider
     }
 
     protected virtual object? GetPlugin(Type pluginType)
-        => _pluginCache.GetOrAdd(pluginType, (type, self) => {
+        => _pluginCache.GetOrAdd(pluginType, static (type, self) => {
             var ctor = type.GetConstructor(new [] {typeof(IPluginInfoProvider.Query)});
             if (ctor != null)
                 return ctor.Invoke(new object[] { IPluginInfoProvider.Query.Instance });

@@ -135,7 +135,7 @@ public abstract class Computed<T> : IComputed, IComputedImpl, IResult<T>
     }
 
     public override string ToString()
-        => $"{GetType().Name}({Input} {Version}, State: {ConsistencyState})";
+        => $"{GetType().GetName()}({Input} {Version}, State: {ConsistencyState})";
 
     public virtual bool TrySetOutput(Result<T> output)
     {
@@ -212,13 +212,16 @@ public abstract class Computed<T> : IComputed, IComputedImpl, IResult<T>
         CancelTimeouts();
     }
 
-    public virtual void RenewTimeouts()
+    public virtual void RenewTimeouts(bool isNew)
     {
         if (ConsistencyState == ConsistencyState.Invalidated)
-            return;
+            return; // We shouldn't register miss here, since it's going to be counted as hit anyway
+
         var options = Options;
         if (options.KeepAliveTime > TimeSpan.Zero)
             Timeouts.KeepAlive.AddOrUpdateToLater(this, Timeouts.Clock.Now + options.KeepAliveTime);
+
+        ComputedRegistry.Instance.ReportAccess(this, isNew);
     }
 
     public virtual void CancelTimeouts()

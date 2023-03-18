@@ -34,5 +34,5 @@ public class UIActionResult<TResult> : ResultBox<TResult>, IUIActionResult
     // Conversion
 
     public override string ToString()
-        => $"{GetType().Name}(#{ActionId}: {AsResult()}, Duration = {Duration.ToShortString()})";
+        => $"{GetType().GetName()}(#{ActionId}: {AsResult()}, Duration = {Duration.ToShortString()})";
 }

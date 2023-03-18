@@ -1,11 +1,17 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Requirements;
 
 namespace Stl;
 
 public abstract record Requirement
 {
+#if NETSTANDARD2_0
     public abstract bool IsSatisfiedUntyped(object? value);
-    public abstract object RequireUntyped(object? value);
+    public abstract object CheckUntyped(object? value);
+#else
+    public abstract bool IsSatisfiedUntyped([NotNullWhen(true)] object? value);
+    public abstract object CheckUntyped([NotNull] object? value);
+#endif
 
     public static FuncRequirement<T> New<T>(ExceptionBuilder exceptionBuilder, Func<T?, bool> validator) 
         => new(exceptionBuilder, validator);
@@ -41,15 +47,23 @@ public abstract record Requirement<T> : Requirement
         }
     }
 
+#if NETSTANDARD2_0
     public override bool IsSatisfiedUntyped(object? value)
         => IsSatisfied((T?) value);
-    public override object RequireUntyped(object? value)
-#pragma warning disable CS8603
-        => Check((T?) value);
-#pragma warning restore CS8603
+    public override object CheckUntyped(object? value)
+        => Check((T?) value)!;
 
     public abstract bool IsSatisfied(T? value);
     public abstract T Check(T? value);
+#else
+    public override bool IsSatisfiedUntyped([NotNullWhen(true)] object? value)
+        => IsSatisfied((T?) value);
+    public override object CheckUntyped([NotNull] object? value)
+        => Check((T?) value)!;
+
+    public abstract bool IsSatisfied([NotNullWhen(true)] T? value);
+    public abstract T Check([NotNull] T? value);
+#endif
 
     public Requirement<T> And(Requirement<T> secondary)
         => new JointRequirement<T>(this, secondary);

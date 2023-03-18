@@ -81,7 +81,7 @@ public sealed class Publication<T> : IPublication
             state = currentState;
             if (state.IsDisposed)
                 return;
-            spinWait.SpinOnce();
+            spinWait.SpinOnce(); // Safe for WASM (unused there)
         }
         _disposeTokenSource.CancelAndDisposeSilently();
         if (Publisher is IPublisherImpl pi)

@@ -31,7 +31,7 @@ public abstract class SafeAsyncDisposableBase : IAsyncDisposable, IDisposable, I
                 disposeTask = _disposeTask;
                 if (disposeTask != null)
                     return disposeTask.ToValueTask();
-                spinWait.SpinOnce();
+                spinWait.SpinOnce(); // Safe for WASM
             }
         }
 

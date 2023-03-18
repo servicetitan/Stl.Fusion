@@ -1,9 +1,15 @@
+using Stl.Fusion.Internal;
+
 namespace Stl.Fusion;
 
 public abstract class ComputedInput : IEquatable<ComputedInput>
 {
     public IFunction Function { get; private set; } = null!;
     public int HashCode { get; private set; }
+    public virtual string Category {
+        get => Function.ToString() ?? "";
+        init => throw Errors.ComputedInputCategoryCannotBeSet();
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected void Initialize(IFunction function, int hashCode)
@@ -12,7 +18,8 @@ public abstract class ComputedInput : IEquatable<ComputedInput>
         HashCode = hashCode;
     }
 
-    public override string ToString() => $"{Function}(...)";
+    public override string ToString()
+        => $"{Category} #{HashCode}";
 
     // Equality
 

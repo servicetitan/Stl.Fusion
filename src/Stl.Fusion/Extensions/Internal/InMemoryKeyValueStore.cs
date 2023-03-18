@@ -18,7 +18,7 @@ public class InMemoryKeyValueStore : WorkerBase, IKeyValueStore
     public InMemoryKeyValueStore(Options settings, IServiceProvider services)
     {
         Settings = settings;
-        Clock = settings.Clock ?? services.SystemClock();
+        Clock = settings.Clock ?? services.Clocks().SystemClock;
         Store = new();
     }
 
@@ -126,7 +126,7 @@ public class InMemoryKeyValueStore : WorkerBase, IKeyValueStore
             }
             if (Store.TryAdd((tenantId, key), (value, expiresAt)))
                 return true;
-            spinWait.SpinOnce();
+            spinWait.SpinOnce(); // Safe for WASM (unused there)
         }
     }
 

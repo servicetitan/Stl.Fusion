@@ -1,3 +1,4 @@
+using Cysharp.Text;
 using Stl.Fusion.Bridge.Internal;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
@@ -5,10 +6,17 @@ using Stl.Versioning;
 
 namespace Stl.Fusion.Bridge.Interception;
 
-public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
+public interface IReplicaMethodFunction : IComputeMethodFunction
 {
-    protected readonly VersionGenerator<LTag> VersionGenerator;
-    protected readonly IReplicator Replicator;
+    IReplicator Replicator { get; }
+}
+
+public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>, IReplicaMethodFunction
+{
+    private string? _toString;
+
+    public VersionGenerator<LTag> VersionGenerator { get; }
+    public IReplicator Replicator { get; }
 
     public ReplicaMethodFunction(
         ComputeMethodDef methodDef,
@@ -19,6 +27,9 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>
         Replicator = replicator;
         VersionGenerator = versionGenerator;
     }
+
+    public override string ToString()
+        => _toString ??= ZString.Concat('*', base.ToString());
 
     protected override async ValueTask<Computed<T>> Compute(
         ComputedInput input, Computed<T>? existing,

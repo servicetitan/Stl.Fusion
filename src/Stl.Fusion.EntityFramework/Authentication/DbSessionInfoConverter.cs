@@ -33,7 +33,9 @@ public class DbSessionInfoConverter<TDbContext, TDbSessionInfo, TDbUserId>
         target.Options = source.Options;
 
         target.AuthenticatedIdentity = source.AuthenticatedIdentity;
-        target.UserId = DbUserIdHandler.Parse(source.UserId);
+        target.UserId = DbUserIdHandler.Parse(source.UserId, true);
+        if (DbUserIdHandler.IsNone(target.UserId))
+            target.UserId = default; // Should be null instead of None
         target.IsSignOutForced = source.IsSignOutForced;
     }
 

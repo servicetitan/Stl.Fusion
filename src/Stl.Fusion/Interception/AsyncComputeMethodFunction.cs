@@ -4,7 +4,10 @@ using Stl.Versioning;
 
 namespace Stl.Fusion.Interception;
 
-public class AsyncComputeMethodFunction<T> : ComputeMethodFunctionBase<T>
+public interface IAsyncComputeMethodFunction : IComputeMethodFunction
+{ }
+
+public class AsyncComputeMethodFunction<T> : ComputeMethodFunctionBase<T>, IAsyncComputeMethodFunction
 {
     public AsyncComputeMethodFunction(
         ComputeMethodDef methodDef,

@@ -71,7 +71,7 @@ public class ResultBox<T> : IResult<T>
     }
 
     /// <inheritdoc />
-    public override string? ToString() => Value?.ToString();
+    public override string ToString() => Value?.ToString() ?? "";
 
     /// <inheritdoc />
     public void Deconstruct(out T value, out Exception? error)

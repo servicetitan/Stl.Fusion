@@ -1,17 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
     <RootNamespace>Templates.TodoApp.UI</RootNamespace>
     <AssemblyName>Templates.TodoApp.UI</AssemblyName>
-<!--    <InvariantGlobalization>true</InvariantGlobalization>-->
-<!--    <BlazorEnableTimeZoneSupport>false</BlazorEnableTimeZoneSupport>-->
-    <!-- AOT causes GitHub builds to fail at random with "file is being used by another process" -->
-    <!--
-    <RunAOTCompilation>true</RunAOTCompilation>
-    -->
+
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>partial</TrimMode>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <!--<RunAOTCompilation>true</RunAOTCompilation>-->
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
     <!-- CS8669: The annotation for nullable reference types should only be used in code within a '#nullable' annotations context. Auto-generated code requires an explicit '#nullable' directive in source. -->
+    
     <NoWarn>CS8669</NoWarn>
   </PropertyGroup>
 

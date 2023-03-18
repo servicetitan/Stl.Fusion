@@ -27,7 +27,7 @@ public class PostCompletionInvalidator : ICommandHandler<ICompletion>
         InvalidationInfoProvider = invalidationInfoProvider;
     }
 
-    [CommandHandler(Priority = FusionOperationsCommandHandlerPriority.PostCompletionInvalidator, IsFilter = true)]
+    [CommandFilter(Priority = FusionOperationsCommandHandlerPriority.PostCompletionInvalidator)]
     public async Task OnCommand(ICompletion command, CommandContext context, CancellationToken cancellationToken)
     {
         var originalCommand = command.UntypedCommand;

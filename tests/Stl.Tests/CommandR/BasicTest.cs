@@ -15,6 +15,14 @@ public class BasicTest : CommandRTestBase
     }
 
     [Fact]
+    public async Task LogEventTest()
+    {
+        var services = CreateServices();
+        var command = new LogEvent() { Message = "Hi!" };
+        await services.Commander().Call(command);
+    }
+
+    [Fact]
     public async Task DivCommandTest()
     {
         var services = CreateServices();
@@ -31,6 +39,50 @@ public class BasicTest : CommandRTestBase
 
         var command = new DivCommand() { Divisible = 4, Divisor = 0 };
         await Assert.ThrowsAsync<DivideByZeroException>(async () => {
+            await services.Commander().Call(command);
+        });
+    }
+
+    [Fact]
+    public async Task MultiChainCommandTest()
+    {
+        var services = CreateServices();
+        var mathService = services.GetRequiredService<MathService>();
+
+        mathService.Value = 0;
+        var command = new IncSetFailCommand() {
+            SetValue = 2,
+            IncrementBy = 1,
+            IncrementDelay = 200,
+        };
+        await services.Commander().Call(command);
+        mathService.Value.Should().Be(3);
+
+        mathService.Value = 0;
+        command = new IncSetFailCommand() {
+            SetValue = 2,
+            IncrementBy = 1,
+            SetDelay = 200,
+        };
+        await services.Commander().Call(command);
+        mathService.Value.Should().Be(2);
+
+        // Fail early
+        command = new IncSetFailCommand() {
+            MustFail = true,
+            SetDelay = 200,
+            IncrementDelay = 200,
+        };
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => {
+            await services.Commander().Call(command);
+        });
+
+        // Fail late
+        command = new IncSetFailCommand() {
+            MustFail = true,
+            FailDelay = 200,
+        };
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => {
             await services.Commander().Call(command);
         });
     }

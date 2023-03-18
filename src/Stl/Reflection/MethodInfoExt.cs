@@ -1,5 +1,3 @@
-using Stl.Concurrency;
-
 namespace Stl.Reflection;
 
 public static class MethodInfoExt
@@ -15,7 +13,7 @@ public static class MethodInfoExt
         if (!method.IsVirtual || method.IsStatic || method.DeclaringType!.IsInterface)
             return null!;
 
-        return BaseOrDeclaringMethodCache.GetOrAddChecked(method, method1 => {
+        return BaseOrDeclaringMethodCache.GetOrAdd(method, method1 => {
             var declaringType = method1.DeclaringType;
             var baseType = method1.ReflectedType == declaringType
                 ? declaringType!.BaseType

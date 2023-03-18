@@ -32,9 +32,6 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
     private volatile IUpdateDelayer _updateDelayer;
     private volatile Task? _whenDisposed;
     private readonly CancellationTokenSource _disposeTokenSource;
-    private ILogger? _log;
-
-    protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     public IUpdateDelayer UpdateDelayer {
         get => _updateDelayer;

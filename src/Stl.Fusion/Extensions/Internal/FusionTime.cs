@@ -15,7 +15,7 @@ public class FusionTime : IFusionTime
     public FusionTime(Options settings, IServiceProvider services)
     {
         Settings = settings;
-        Clock = Settings.Clock ?? services.SystemClock();
+        Clock = Settings.Clock ?? services.Clocks().SystemClock;
     }
 
     public virtual Task<DateTime> GetUtcNow()

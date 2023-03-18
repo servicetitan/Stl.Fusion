@@ -2,9 +2,14 @@ using Stl.Versioning;
 
 namespace Stl.Fusion.Interception;
 
-public abstract class ComputeMethodFunctionBase<T> : ComputeFunctionBase<T>
+public interface IComputeMethodFunction : IComputeFunction
 {
-    protected readonly VersionGenerator<LTag> VersionGenerator;
+    VersionGenerator<LTag> VersionGenerator { get; }
+}
+
+public abstract class ComputeMethodFunctionBase<T> : ComputeFunctionBase<T>, IComputeMethodFunction
+{
+    public VersionGenerator<LTag> VersionGenerator { get; }
 
     protected ComputeMethodFunctionBase(
         ComputeMethodDef methodDef,

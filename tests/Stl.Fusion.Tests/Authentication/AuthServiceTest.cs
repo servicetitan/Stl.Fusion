@@ -81,6 +81,46 @@ public abstract class AuthServiceTestBase : FusionTestBase
     }
 
     [Fact]
+    public async Task CreateUserTest()
+    {
+        if (MustSkip()) return;
+
+        await using var serving = await WebHost.Serve();
+        var auth = Services.GetRequiredService<IAuth>();
+        var authBackend = Services.GetRequiredService<IAuthBackend>();
+        var authClient = ClientServices.GetRequiredService<IAuth>();
+        var sessionFactory = ClientServices.GetRequiredService<ISessionFactory>();
+
+        for (var i = -100; i < 100; i++) {
+            var user = await authBackend.GetUser(default, i.ToString());
+            user.Should().BeNull();
+        }
+
+        var u1 = new User("Bob1").WithIdentity("g:1");
+        var s1 = await CreateUser(u1);
+        var u2 = new User("100500", "Bob2").WithIdentity("g:2");
+        if (Options.DbType == FusionTestDbType.SqlServer)
+            u2 = u2 with { Id = "" }; // SQL Server doesn't support identity inserts by default
+        var s2 = await CreateUser(u2);
+        await Assert.ThrowsAsync<FormatException>(async () => {
+            var s3 = await CreateUser(new User("invalid", "Bob3").WithIdentity("g:3"));
+        });
+
+        async Task<Session> CreateUser(User source)
+        {
+            var session = sessionFactory.CreateSession();
+            await WebServices.Commander().Call(new SignInCommand(session, source));
+
+            var user = await authClient.GetUser(session);
+            user.Should().NotBeNull();
+            user!.Name.Should().Be(source.Name);
+            long.TryParse(user.Id, out _).Should().BeTrue();
+            user.Claims.Count.Should().Be(0);
+            return session;
+        }
+    }
+
+    [Fact]
     public async Task BasicTest1()
     {
         if (MustSkip()) return;
@@ -288,7 +328,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         user.Should().NotBeNull();
         user!.Name.Should().Be("John");
 
-#if NET5_0_OR_GREATER && !NET7_0_OR_GREATER
+#if NET5_0_OR_GREATER
         if (Options.DbType != FusionTestDbType.InMemory
             && Options.DbType != FusionTestDbType.MariaDb) {
             await Assert.ThrowsAnyAsync<Exception>(async () => {

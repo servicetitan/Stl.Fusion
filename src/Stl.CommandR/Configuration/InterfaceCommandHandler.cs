@@ -1,12 +1,12 @@
 namespace Stl.CommandR.Configuration;
 
-public record InterfaceCommandHandler<TCommand> : CommandHandler<TCommand>
+public sealed record InterfaceCommandHandler<TCommand> : CommandHandler<TCommand>
     where TCommand : class, ICommand
 {
     public Type ServiceType { get; }
 
     public InterfaceCommandHandler(Type serviceType, bool isFilter = false, double priority = 0)
-        : base(isFilter, priority)
+        : base($"{serviceType.GetName(true)} via interface", isFilter, priority)
         => ServiceType = serviceType;
 
     public override object GetHandlerService(ICommand command, CommandContext context)
@@ -19,6 +19,12 @@ public record InterfaceCommandHandler<TCommand> : CommandHandler<TCommand>
         var handler = (ICommandHandler<TCommand>) GetHandlerService(command, context);
         return handler.OnCommand((TCommand) command, context, cancellationToken);
     }
+
+    public override string ToString() => base.ToString();
+
+    // This record relies on reference-based equality
+    public bool Equals(InterfaceCommandHandler<TCommand>? other) => ReferenceEquals(this, other);
+    public override int GetHashCode() => RuntimeHelpers.GetHashCode(this);
 }
 
 public static class InterfaceCommandHandler

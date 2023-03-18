@@ -9,7 +9,7 @@ public static class ConcurrentLTagGenerator
 
     public static ConcurrentGenerator<LTag> New(long start, int concurrencyLevel = -1)
     {
-        if (concurrencyLevel < 0)
+        if (concurrencyLevel <= 0)
             concurrencyLevel = ConcurrentInt32Generator.DefaultConcurrencyLevel;
         var dCount = (long) Bits.GreaterOrEqualPowerOf2((uint) concurrencyLevel);
         var mCount = long.MaxValue >> 8; // Let's have some reserve @ the top of the band

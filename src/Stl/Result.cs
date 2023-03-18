@@ -173,8 +173,8 @@ public readonly struct Result<T> : IResult<T>, IEquatable<Result<T>>
         Error = error;
     }
 
-    public override string? ToString()
-        => $"{GetType().Name}({(HasError ? $"Error: {Error}" : Value?.ToString())})";
+    public override string ToString()
+        => $"{GetType().GetName()}({(HasError ? $"Error: {Error}" : Value?.ToString())})";
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Deconstruct(out T value, out Exception? error)

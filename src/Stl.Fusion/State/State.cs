@@ -13,11 +13,12 @@ public interface IState : IResult, IHasServices
         ComputedOptions ComputedOptions { get; init; }
         VersionGenerator<LTag>? VersionGenerator { get; init; }
         Action<IState>? EventConfigurator { get; init; }
+        string? Category { get; init; }
     }
 
     IStateSnapshot Snapshot { get; }
     IComputed Computed { get; }
-    object? LatestNonErrorValue { get; }
+    object? LastNonErrorValue { get; }
 
     event Action<IState, StateEventKind>? Invalidated;
     event Action<IState, StateEventKind>? Updating;
@@ -28,7 +29,7 @@ public interface IState<T> : IState, IResult<T>
 {
     new StateSnapshot<T> Snapshot { get; }
     new Computed<T> Computed { get; }
-    new T LatestNonErrorValue { get; }
+    new T LastNonErrorValue { get; }
 
     new event Action<IState<T>, StateEventKind>? Invalidated;
     new event Action<IState<T>, StateEventKind>? Updating;
@@ -45,6 +46,7 @@ public abstract class State<T> : ComputedInput,
         public ComputedOptions ComputedOptions { get; init; } = ComputedOptions.Default;
         public VersionGenerator<LTag>? VersionGenerator { get; init; }
         public Result<T> InitialOutput { get; init; } = default;
+        public string? Category { get; init; }
 
         public T InitialValue {
             get => InitialOutput.ValueOrDefault!;
@@ -56,13 +58,22 @@ public abstract class State<T> : ComputedInput,
     }
 
     private volatile StateSnapshot<T>? _snapshot;
+    private string? _category;
+    private ILogger? _log;
+
     protected VersionGenerator<LTag> VersionGenerator { get; set; }
     protected ComputedOptions ComputedOptions { get; }
     protected AsyncLock AsyncLock { get; }
     protected object Lock => AsyncLock;
+    protected ILogger Log => _log ??= Services.LogFor(GetType());
 
-    public StateSnapshot<T> Snapshot => _snapshot!;
     public IServiceProvider Services { get; }
+    public StateSnapshot<T> Snapshot => _snapshot!;
+
+    public override string Category {
+        get => _category ??= GetType().GetName();
+        init => _category = value;
+    }
 
     public Computed<T> Computed {
         get => Snapshot.Computed;
@@ -81,19 +92,18 @@ public abstract class State<T> : ComputedInput,
         }
     }
 
-    [MaybeNull]
-    public T ValueOrDefault => Computed.ValueOrDefault;
+    public T? ValueOrDefault => Computed.ValueOrDefault;
     public T Value => Computed.Value;
     public Exception? Error => Computed.Error;
     public bool HasValue => Computed.HasValue;
     public bool HasError => Computed.HasError;
-    public T LatestNonErrorValue => Snapshot.LatestNonErrorComputed.Value;
+    public T LastNonErrorValue => Snapshot.LastNonErrorComputed.Value;
 
     IStateSnapshot IState.Snapshot => Snapshot;
     Computed<T> IState<T>.Computed => Computed;
     IComputed IState.Computed => Computed;
     // ReSharper disable once HeapView.PossibleBoxingAllocation
-    object? IState.LatestNonErrorValue => LatestNonErrorValue;
+    object? IState.LastNonErrorValue => LastNonErrorValue;
     // ReSharper disable once HeapView.PossibleBoxingAllocation
     object? IResult.UntypedValue => Computed.Value;
 
@@ -122,6 +132,7 @@ public abstract class State<T> : ComputedInput,
     {
         Initialize(this, RuntimeHelpers.GetHashCode(this));
         Services = services;
+        _category = options.Category;
         ComputedOptions = options.ComputedOptions;
         VersionGenerator = options.VersionGenerator ?? services.VersionGenerator<LTag>();
         options.EventConfigurator?.Invoke(this);
@@ -129,11 +140,9 @@ public abstract class State<T> : ComputedInput,
         untypedOptions.EventConfigurator?.Invoke(this);
 
         AsyncLock = new AsyncLock(ReentryMode.CheckedFail);
+        // ReSharper disable once VirtualMemberCallInConstructor
         if (initialize) Initialize(options);
     }
-
-    public override string ToString()
-        => $"{GetType().Name}(#{HashCode})";
 
     public void Deconstruct(out T value, out Exception? error)
         => Computed.Deconstruct(out value, out error);
@@ -177,8 +186,14 @@ public abstract class State<T> : ComputedInput,
         var snapshot = Snapshot;
         if (computed != snapshot.Computed)
             return;
-        Invalidated?.Invoke(this, StateEventKind.Invalidated);
-        UntypedInvalidated?.Invoke(this, StateEventKind.Invalidated);
+
+        try {
+            Invalidated?.Invoke(this, StateEventKind.Invalidated);
+            UntypedInvalidated?.Invoke(this, StateEventKind.Invalidated);
+        }
+        catch (Exception e) {
+            Log.LogError(e, "Invalidated / UntypedInvalidated handler failed");
+        }
     }
 
     protected virtual void OnUpdating(Computed<T> computed)
@@ -186,9 +201,15 @@ public abstract class State<T> : ComputedInput,
         var snapshot = Snapshot;
         if (computed != snapshot.Computed)
             return;
-        snapshot.OnUpdating();
-        Updating?.Invoke(this, StateEventKind.Updating);
-        UntypedUpdating?.Invoke(this, StateEventKind.Updating);
+
+        try {
+            snapshot.OnUpdating();
+            Updating?.Invoke(this, StateEventKind.Updating);
+            UntypedUpdating?.Invoke(this, StateEventKind.Updating);
+        }
+        catch (Exception e) {
+            Log.LogError(e, "Updating / UntypedUpdating handler failed");
+        }
     }
 
     protected virtual void OnSetSnapshot(StateSnapshot<T> snapshot, StateSnapshot<T>? prevSnapshot)
@@ -199,9 +220,15 @@ public abstract class State<T> : ComputedInput,
                 throw Errors.UnsupportedComputedOptions(snapshot.Computed.GetType());
             return;
         }
-        prevSnapshot.OnUpdated();
-        Updated?.Invoke(this, StateEventKind.Updated);
-        UntypedUpdated?.Invoke(this, StateEventKind.Updated);
+
+        try {
+            prevSnapshot.OnUpdated();
+            Updated?.Invoke(this, StateEventKind.Updated);
+            UntypedUpdated?.Invoke(this, StateEventKind.Updated);
+        }
+        catch (Exception e) {
+            Log.LogError(e, "Updated / UntypedUpdated handler failed");
+        }
     }
 
     // IFunction<T> & IFunction

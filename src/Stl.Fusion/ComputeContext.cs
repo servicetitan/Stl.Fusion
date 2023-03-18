@@ -47,7 +47,8 @@ public class ComputeContext
     protected ComputeContext(CallOptions callOptions)
         => CallOptions = callOptions;
 
-    public override string ToString() => $"{GetType().Name}({CallOptions})";
+    public override string ToString()
+        => $"{GetType().GetName()}({CallOptions})";
 
     public ComputeContextScope Activate() => new (this);
     public static ComputeContextScope Suppress() => new(Default);

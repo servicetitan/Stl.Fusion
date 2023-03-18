@@ -1,5 +1,4 @@
 using Castle.DynamicProxy;
-using Stl.Concurrency;
 
 namespace Stl.Interception.Interceptors;
 
@@ -10,7 +9,10 @@ public abstract class InterceptorBase : IOptionalInterceptor, IHasServices
         public bool IsLoggingEnabled { get; init; } = true;
     }
 
-    private readonly MethodInfo _createTypedHandlerMethod;
+    private static readonly MethodInfo CreateTypedHandlerMethod = typeof(InterceptorBase)
+        .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
+        .Single(m => StringComparer.Ordinal.Equals(m.Name, nameof(CreateHandler)));
+
     private readonly Func<MethodInfo, IInvocation, Action<IInvocation>?> _createHandlerUntyped;
     private readonly Func<MethodInfo, IInvocation, MethodDef?> _createMethodDef;
     private readonly ConcurrentDictionary<MethodInfo, MethodDef?> _methodDefCache = new();
@@ -32,9 +34,6 @@ public abstract class InterceptorBase : IOptionalInterceptor, IHasServices
 
         _createHandlerUntyped = CreateHandlerUntyped;
         _createMethodDef = CreateMethodDef;
-        _createTypedHandlerMethod = GetType()
-            .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-            .Single(m => StringComparer.Ordinal.Equals(m.Name, nameof(CreateHandler)));
     }
 
     public void Intercept(IInvocation invocation)
@@ -47,11 +46,11 @@ public abstract class InterceptorBase : IOptionalInterceptor, IHasServices
     }
 
     public Action<IInvocation>? GetHandler(IInvocation invocation)
-        => _handlerCache.GetOrAddChecked(invocation.Method, _createHandlerUntyped, invocation);
+        => _handlerCache.GetOrAdd(invocation.Method, _createHandlerUntyped, invocation);
 
     public void ValidateType(Type type)
     {
-        _validateTypeCache.GetOrAddChecked(type, (type1, self) => {
+        _validateTypeCache.GetOrAdd(type, (type1, self) => {
             Log.Log(ValidationLogLevel, "Validating: '{Type}'", type1);
             try {
                 self.ValidateTypeInternal(type1);
@@ -67,11 +66,11 @@ public abstract class InterceptorBase : IOptionalInterceptor, IHasServices
     protected virtual Action<IInvocation>? CreateHandlerUntyped(MethodInfo methodInfo, IInvocation initialInvocation)
     {
         var proxyMethodInfo = initialInvocation.Method;
-        var methodDef = _methodDefCache.GetOrAddChecked(proxyMethodInfo, _createMethodDef, initialInvocation);
+        var methodDef = _methodDefCache.GetOrAdd(proxyMethodInfo, _createMethodDef, initialInvocation);
         if (methodDef == null)
             return null;
 
-        return (Action<IInvocation>) _createTypedHandlerMethod
+        return (Action<IInvocation>) CreateTypedHandlerMethod
             .MakeGenericMethod(methodDef.UnwrappedReturnType)
             .Invoke(this, new object[] { initialInvocation, methodDef })!;
     }

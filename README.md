@@ -109,20 +109,13 @@ including sign-in state:
 compares "raw" [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/)-based
 Data Access Layer (DAL) against its version relying on Fusion:
 
-![](docs/img/Performance.gif)
+![](docs/img/Performance.jpg)
 
-The speedup you see is:
-* ~31,500x for [Sqlite EF Core Provider](https://www.sqlite.org/index.html)
-* ~1,000x for [In-memory EF Core Provider](https://docs.microsoft.com/en-us/ef/core/providers/in-memory/?tabs=dotnet-core-cli)
-* These numbers are 
-  [slightly smaller](https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html#109) 
-  on the most recent Fusion version, but the difference is still huge.
+Fusion's transparent caching ensures every API call result your code produces is cached, and moreover, even when such results are recomputed, they mostly use other cached dependencies instead of hitting a much slower storage (DB in this case).
 
-Fusion's transparent caching ensures every computation your code runs
-re-uses as many of cached dependencies as possible & caches its own output.
-As you can see, this feature allows to speed up even a very basic logic 
-(fetching a single random user) using **in-memory** EF Core provider by **1000x**,
-and the more complex logic you have, the larger performance gain is.
+This feature alone speeds up even a very basic logic 
+(fetching a single random user) by ~ **3000x**, and
+the more complex logic you have, the larger performance gain you're expected to see. 
 
 ## How Fusion works?
 

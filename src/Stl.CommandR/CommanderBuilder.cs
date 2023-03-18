@@ -104,7 +104,7 @@ public readonly struct CommanderBuilder
 
         var interfaceMethods = new HashSet<MethodInfo>();
 
-        // Interfaces
+        // ICommandHandler<TCommand> interfaces
         var tInterfaces = implementationType.GetInterfaces();
         foreach (var tInterface in tInterfaces) {
             if (!tInterface.IsGenericType)
@@ -118,9 +118,6 @@ public readonly struct CommanderBuilder
 
             var method = implementationType.GetInterfaceMap(tInterface).TargetMethods.Single();
             var attr = MethodCommandHandler.GetAttribute(method);
-            var isEnabled = attr?.IsEnabled ?? true;
-            if (!isEnabled)
-                continue;
             var isFilter = attr?.IsFilter ?? false;
             var order = priorityOverride ?? attr?.Priority ?? 0;
             AddHandler(InterfaceCommandHandler.New(serviceType, tCommand, isFilter, order));
@@ -147,6 +144,7 @@ public readonly struct CommanderBuilder
             var handler = MethodCommandHandler.TryNew(serviceType, method, priorityOverride);
             if (handler == null)
                 continue;
+
             AddHandler(handler);
         }
 

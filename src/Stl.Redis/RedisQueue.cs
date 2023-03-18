@@ -84,7 +84,7 @@ public sealed class RedisQueue<T> : IAsyncDisposable
         Settings = settings ?? new();
         RedisDb = redisDb;
         Key = key;
-        var enqueuePubKey = $"{typeof(T).Name}-{Key}{Settings.EnqueuePubKeySuffix}";
+        var enqueuePubKey = $"{typeof(T).GetName()}-{Key}{Settings.EnqueuePubKeySuffix}";
         EnqueuePub = RedisDb.GetPub(enqueuePubKey);
         EnqueueSub = RedisDb.GetTaskSub(
             (enqueuePubKey, RedisChannel.PatternMode.Literal),

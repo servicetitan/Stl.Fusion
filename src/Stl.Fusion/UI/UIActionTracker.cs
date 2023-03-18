@@ -35,7 +35,7 @@ public class UIActionTracker : IHasServices, IDisposable
     {
         Settings = options;
         Services = services;
-        Clock = options.Clock ?? services.Clocks().UIClock;
+        Clock = options.Clock ?? services.Clocks().CpuClock;
         Log = services.LogFor(GetType());
 
         LastActionEventField = new ManualAsyncEvent<UIAction?>(null, true);
@@ -122,7 +122,7 @@ public class UIActionTracker : IHasServices, IDisposable
         return false;
     }
 
-    public Task WhenInstantUpdatesEnabled() 
+    public Task WhenInstantUpdatesEnabled()
         => AreInstantUpdatesEnabled() ? Task.CompletedTask : LastActionEvent.WhenNext();
 
     // Protected methods

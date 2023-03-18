@@ -15,7 +15,7 @@ public class TestIdFormatter
     public TestIdFormatter(Type testType) : this($"{testType.Name}_{testType.Namespace}") { }
     public TestIdFormatter(string testId) => TestId = testId;
 
-    public override string? ToString() => Format();
+    public override string ToString() => Format();
     public static implicit operator string(TestIdFormatter f) => f.Format();
 
     public string Format(

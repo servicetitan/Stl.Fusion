@@ -52,8 +52,8 @@ public sealed class ComputedGraphPruner : WorkerBase
         var activitySource = GetType().GetActivitySource();
 
         var runChain = new AsyncChain("Prune()", async ct => {
-            var computedRegistry = ComputedRegistry.Instance;
-            using var keyEnumerator = computedRegistry.Keys.GetEnumerator();
+            var registry = ComputedRegistry.Instance;
+            using var keyEnumerator = registry.Keys.GetEnumerator();
             var computedCount = 0L;
             var consistentCount = 0L;
             var edgeCount = 0L;
@@ -61,7 +61,7 @@ public sealed class ComputedGraphPruner : WorkerBase
             var remainingBatchCapacity = Settings.BatchSize;
             var batchCount = 0;
             while (keyEnumerator.MoveNext()) {
-                if (0 >= --remainingBatchCapacity) {
+                if (--remainingBatchCapacity <= 0) {
                     await Clock.Delay(Settings.NextBatchDelay.Next(), ct).ConfigureAwait(false);
                     remainingBatchCapacity = Settings.BatchSize;
                     batchCount++;
@@ -69,7 +69,7 @@ public sealed class ComputedGraphPruner : WorkerBase
 
                 var computedInput = keyEnumerator.Current!;
                 computedCount++;
-                if (computedRegistry.Get(computedInput) is IComputedImpl computed && computed.IsConsistent()) {
+                if (registry.Get(computedInput) is IComputedImpl computed && computed.IsConsistent()) {
                     consistentCount++;
                     var (oldEdgeCount, newEdgeCount) = computed.PruneUsedBy();
                     edgeCount += oldEdgeCount;

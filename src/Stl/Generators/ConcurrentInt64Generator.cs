@@ -9,7 +9,7 @@ public static class ConcurrentInt64Generator
 
     public static ConcurrentGenerator<long> New(long start, int concurrencyLevel = -1)
     {
-        if (concurrencyLevel < 0)
+        if (concurrencyLevel <= 0)
             concurrencyLevel = ConcurrentInt32Generator.DefaultConcurrencyLevel;
         var dCount = (long) Bits.GreaterOrEqualPowerOf2((uint) concurrencyLevel);
         return new ConcurrentFuncBasedGenerator<long>(i => {

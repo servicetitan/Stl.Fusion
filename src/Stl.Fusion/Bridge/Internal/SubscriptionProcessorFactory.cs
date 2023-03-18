@@ -1,4 +1,3 @@
-using Stl.Concurrency;
 using Stl.Fusion.Internal;
 
 namespace Stl.Fusion.Bridge.Internal;
@@ -30,7 +29,7 @@ public sealed class SubscriptionProcessorFactory : ISubscriptionProcessorFactory
         TimeSpan subscriptionExpirationTime, MomentClockSet clocks,
         IServiceProvider services)
         => ConstructorCache
-            .GetOrAddChecked(genericType, CreateCache)
+            .GetOrAdd(genericType, CreateCache)
             .Invoke(publication, publisherChannelProcessor, subscriptionExpirationTime, clocks, services);
 
     private static Constructor Create(Type genericType)
@@ -68,7 +67,7 @@ public sealed class SubscriptionProcessorFactory : ISubscriptionProcessorFactory
                 MomentClockSet Clocks,
                 IServiceProvider Services) arg)
         {
-            var closedType = _closedTypeCache.GetOrAddChecked(
+            var closedType = _closedTypeCache.GetOrAdd(
                 typeof(T),
                 (tArg, tGeneric) => tGeneric.MakeGenericType(tArg),
                 _genericType);

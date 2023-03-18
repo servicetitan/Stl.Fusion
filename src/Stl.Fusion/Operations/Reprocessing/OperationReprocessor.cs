@@ -91,7 +91,7 @@ public class OperationReprocessor : IOperationReprocessor
         return IsTransientFailure(allErrors);
     }
 
-    [CommandHandler(Priority = FusionOperationsCommandHandlerPriority.OperationReprocessor, IsFilter = true)]
+    [CommandFilter(Priority = FusionOperationsCommandHandlerPriority.OperationReprocessor)]
     public virtual async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
     {
         var isReprocessingAllowed =
@@ -104,7 +104,7 @@ public class OperationReprocessor : IOperationReprocessor
         }
         if (CommandContext != null)
             throw Errors.InternalError(
-                $"{GetType().Name} cannot be used more than once in the same command execution pipeline.");
+                $"{GetType().GetName()} cannot be used more than once in the same command execution pipeline.");
         CommandContext = context;
 
         context.Items.Set((IOperationReprocessor) this);

@@ -64,7 +64,7 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
         _cachedStateValueTask = State.Update().AsTask().ContinueWith(t => {
             var snapshot = t.Result.Snapshot;
             _cachedStateSnapshot = snapshot;
-            return (AuthenticationState) snapshot.LatestNonErrorComputed.Value;
+            return (AuthenticationState) snapshot.LastNonErrorComputed.Value;
         }, default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
         return _cachedStateValueTask;
     }
@@ -92,10 +92,10 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
 
     protected virtual void OnStateChanged(IState<AuthState> state, StateEventKind eventKind)
         => Task.Run(() => {
-            var authenticationStateTask = Task.FromResult((AuthenticationState) state.LatestNonErrorValue);
+            var authenticationStateTask = Task.FromResult((AuthenticationState) state.LastNonErrorValue);
             NotifyAuthenticationStateChanged(authenticationStateTask);
 
-            var authStateTask = Task.FromResult(state.LatestNonErrorValue);
+            var authStateTask = Task.FromResult(state.LastNonErrorValue);
             var clock = UIActionTracker.Clock;
             var action = new UIAction<AuthState>(new ChangeAuthStateUICommand(), clock, authStateTask, default);
             UIActionTracker.Register(action);

@@ -13,7 +13,7 @@ public sealed record UpdateDelayer(
     RetryDelaySeq RetryDelays
     ) : IUpdateDelayer
 {
-    public IMomentClock Clock { get; init; } = UIActionTracker?.Clock ?? MomentClockSet.Default.UIClock;
+    public IMomentClock Clock { get; init; } = UIActionTracker?.Clock ?? MomentClockSet.Default.CpuClock;
     public TimeSpan MinDelay { get; init; } = Defaults.MinDelay;
 
     public UpdateDelayer(UIActionTracker uiActionTracker)
@@ -33,14 +33,18 @@ public sealed record UpdateDelayer(
 
         // Await for either delay or the beginning of a period of instant updates
         if (UIActionTracker != null) {
-            var cts = cancellationToken.CreateLinkedTokenSource();
-            try {
-                var task1 = clock.Delay(delay, cts.Token);
-                var task2 = UIActionTracker.WhenInstantUpdatesEnabled();
-                await Task.WhenAny(task1, task2).ConfigureAwait(false);
-            }
-            finally {
-                cts.CancelAndDisposeSilently();
+            var whenInstantUpdatesEnabledTask = UIActionTracker.WhenInstantUpdatesEnabled();
+            if (!whenInstantUpdatesEnabledTask.IsCompleted) {
+                var cts = cancellationToken.CreateLinkedTokenSource();
+                try {
+                    await Task.WhenAny(
+                        whenInstantUpdatesEnabledTask,
+                        clock.Delay(delay, cts.Token)
+                        ).ConfigureAwait(false);
+                }
+                finally {
+                    cts.CancelAndDisposeSilently();
+                }
             }
         }
         else {
@@ -74,4 +78,3 @@ public sealed record UpdateDelayer(
         }
     }
 }
-

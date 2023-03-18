@@ -58,8 +58,11 @@ public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbConte
         TDbContext dbContext, User user, CancellationToken cancellationToken = default)
     {
         // Creating "base" dbUser
+        var id = DbUserIdHandler.Parse(user.Id, true);
+        if (DbUserIdHandler.IsNone(id))
+            id = DbUserIdHandler.New();
         var dbUser = new TDbUser() {
-            Id = DbUserIdHandler.New(),
+            Id = id,
             Version = VersionGenerator.NextVersion(),
             Name = user.Name,
             Claims = user.Claims,
@@ -80,11 +83,12 @@ public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbConte
     public virtual async Task<(TDbUser DbUser, bool IsCreated)> GetOrCreateOnSignIn(
         TDbContext dbContext, User user, CancellationToken cancellationToken = default)
     {
-        TDbUser dbUser;
-        if (!user.Id.IsEmpty) {
-            dbUser = await Get(dbContext, DbUserIdHandler.Parse(user.Id), false, cancellationToken).ConfigureAwait(false)
-                ?? throw Errors.EntityNotFound<TDbUser>();
-            return (dbUser, false);
+        var dbUserId = DbUserIdHandler.Parse(user.Id, true);
+        TDbUser? dbUser;
+        if (!DbUserIdHandler.IsNone(dbUserId)) {
+            dbUser = await Get(dbContext, dbUserId, false, cancellationToken).ConfigureAwait(false);
+            if (dbUser != null)
+                return (dbUser, false);
         }
 
         // No user found, let's create it

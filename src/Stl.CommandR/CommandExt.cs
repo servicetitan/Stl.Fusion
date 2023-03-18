@@ -14,7 +14,7 @@ public static class CommandExt
     {
         if (commandType == null)
             throw new ArgumentNullException(nameof(commandType));
-        var result = ResultTypeCache.GetOrAdd(commandType, tCommand => {
+        var result = ResultTypeCache.GetOrAdd(commandType, static tCommand => {
             foreach (var tInterface in tCommand.GetInterfaces()) {
                 if (!tInterface.IsConstructedGenericType)
                     continue;

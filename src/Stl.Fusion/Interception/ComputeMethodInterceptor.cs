@@ -28,8 +28,8 @@ public class ComputeMethodInterceptor : ComputeMethodInterceptorBase
             | BindingFlags.Instance | BindingFlags.Static
             | BindingFlags.FlattenHierarchy;
         foreach (var method in type.GetMethods(bindingFlags)) {
-            var attr = ComputedOptionsProvider.GetComputeMethodAttribute(method);
-            var options = ComputedOptionsProvider.GetComputedOptions(method);
+            var attr = ComputedOptionsProvider.GetComputeMethodAttribute(method, type);
+            var options = ComputedOptionsProvider.GetComputedOptions(method, type);
             if (attr == null || options == null)
                 continue;
             if (method.IsStatic)
@@ -46,28 +46,22 @@ public class ComputeMethodInterceptor : ComputeMethodInterceptorBase
             if (returnType.GetTaskOrValueTaskArgument() == null)
                 throw Errors.ComputeServiceMethodAttributeOnAsyncMethodReturningNonGenericTask(method);
 
-            var attributeName = nameof(ComputeMethodAttribute)
+            var attributeName = attr.GetType().GetName()
 #if NETSTANDARD2_0
                 .Replace(nameof(Attribute), "");
 #else
                 .Replace(nameof(Attribute), "", StringComparison.Ordinal);
 #endif
-            if (!attr.IsEnabled)
-                Log.Log(ValidationLogLevel,
-                    // ReSharper disable once TemplateIsNotCompileTimeConstantProblem
-                    $"- {{Method}}: has [{attributeName}(false)]", method.ToString());
-            else {
-                var properties = new List<string>();
-                if (!double.IsNaN(attr.MinCacheDuration))
-                    properties.Add($"{nameof(attr.MinCacheDuration)} = {Format(attr.MinCacheDuration)}");
-                if (!double.IsNaN(attr.AutoInvalidationDelay))
-                    properties.Add($"{nameof(attr.AutoInvalidationDelay)} = {Format(attr.AutoInvalidationDelay)}");
-                if (!double.IsNaN(attr.TransientErrorInvalidationDelay))
-                    properties.Add($"{nameof(attr.TransientErrorInvalidationDelay)} = {Format(attr.TransientErrorInvalidationDelay)}");
-                Log.Log(ValidationLogLevel,
-                    // ReSharper disable once TemplateIsNotCompileTimeConstantProblem
-                    $"+ {{Method}}: [{attributeName}({properties.ToDelimitedString(", ")})]", method.ToString());
-            }
+            var properties = new List<string>();
+            if (!double.IsNaN(attr.MinCacheDuration))
+                properties.Add($"{nameof(attr.MinCacheDuration)} = {Format(attr.MinCacheDuration)}");
+            if (!double.IsNaN(attr.AutoInvalidationDelay))
+                properties.Add($"{nameof(attr.AutoInvalidationDelay)} = {Format(attr.AutoInvalidationDelay)}");
+            if (!double.IsNaN(attr.TransientErrorInvalidationDelay))
+                properties.Add($"{nameof(attr.TransientErrorInvalidationDelay)} = {Format(attr.TransientErrorInvalidationDelay)}");
+            Log.Log(ValidationLogLevel,
+                // ReSharper disable once TemplateIsNotCompileTimeConstantProblem
+                $"+ {{Method}}: [{attributeName}({properties.ToDelimitedString(", ")})]", method.ToString());
 
             static string Format(double value)
                 => value.ToString(CultureInfo.InvariantCulture);

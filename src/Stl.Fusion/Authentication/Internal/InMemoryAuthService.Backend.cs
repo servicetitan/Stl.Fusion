@@ -38,23 +38,25 @@ public partial class InMemoryAuthService
             throw Errors.ForcedSignOut();
 
         var isNewUser = false;
-        var userWithAuthenticatedIdentity = GetByUserIdentity(tenant, authenticatedIdentity);
-        if (user.Id.IsEmpty) {
-            // No user.Id -> try to find existing user by authenticatedIdentity
-            if (userWithAuthenticatedIdentity == null) {
-                user = user with { Id = GetNextUserId() };
-                isNewUser = true;
-            }
-            else
-                user = MergeUsers(userWithAuthenticatedIdentity, user);
+
+        // First, let's validate user.Id
+        if (!user.Id.IsEmpty)
+            _ = long.Parse(user.Id, NumberStyles.Integer, CultureInfo.InvariantCulture);
+
+        // And find the existing user
+        var existingUser = GetByUserIdentity(tenant, authenticatedIdentity);
+        if (existingUser == null && !user.Id.IsEmpty)
+            existingUser = Users.GetValueOrDefault((tenant, user.Id));
+
+        if (existingUser != null) {
+            // Merge if found
+            user = MergeUsers(existingUser, user);
         }
         else {
-            // We have Id -> the user exists for sure, but we might need to switch
-            // to userWithAuthenticatedIdentity, otherwise we'll register the same
-            // UserIdentity for 2 or more users
-            _ = long.Parse(user.Id, NumberStyles.Integer, CultureInfo.InvariantCulture);
-            var existingUser = Users[(tenant, user.Id)];
-            user = userWithAuthenticatedIdentity ?? MergeUsers(existingUser, user);
+            // Otherwise, create a new one
+            if (user.Id.IsEmpty)
+                user = user with { Id = GetNextUserId() };
+            isNewUser = true;
         }
 
         // Update user.Version
@@ -92,7 +94,7 @@ public partial class InMemoryAuthService
             }
             var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
             if (invSessionInfo?.IsAuthenticated() ?? false)
-                _ = GetUserSessions(tenant.Id, invSessionInfo!.UserId, default);
+                _ = GetUserSessions(tenant.Id, invSessionInfo.UserId, default);
             return null!;
         }
 
@@ -134,18 +136,18 @@ public partial class InMemoryAuthService
     // Compute methods
 
     // [ComputeMethod] inherited
-    public virtual Task<User?> GetUser(Symbol tenantId, string userId, CancellationToken cancellationToken = default)
+    public virtual Task<User?> GetUser(Symbol tenantId, Symbol userId, CancellationToken cancellationToken = default)
         => Task.FromResult(Users.TryGetValue((tenantId, userId), out var user) ? user : null);
 
     // Protected methods
 
     protected virtual Task<ImmutableArray<(Symbol Id, SessionInfo SessionInfo)>> GetUserSessions(
-        Symbol tenantId, string userId, CancellationToken cancellationToken = default)
+        Symbol tenantId, Symbol userId, CancellationToken cancellationToken = default)
     {
-        if (userId.IsNullOrEmpty())
+        if (userId.IsEmpty)
             return Task.FromResult(ImmutableArray<(Symbol Id, SessionInfo SessionInfo)>.Empty);
         var result = SessionInfos
-            .Where(kv => kv.Key.TenantId == tenantId && StringComparer.Ordinal.Equals(kv.Value.UserId, userId))
+            .Where(kv => kv.Key.TenantId == tenantId && kv.Value.UserId == userId)
             .OrderByDescending(kv => kv.Value.LastSeenAt)
             .Select(kv => (kv.Key.SessionId, kv.Value))
             .ToImmutableArray();

@@ -4,5 +4,5 @@ namespace Stl.Fusion.Bridge.Messages;
 public abstract class BridgeMessage
 {
     public override string ToString()
-        => $"{GetType().Name} {JsonFormatter.Format(this)}";
+        => $"{GetType().GetName()}: {JsonFormatter.Format(this)}";
 }

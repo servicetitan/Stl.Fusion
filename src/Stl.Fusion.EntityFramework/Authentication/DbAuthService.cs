@@ -94,7 +94,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         sessionInfo = sessionInfo with {
             LastSeenAt = Clocks.SystemClock.Now,
             AuthenticatedIdentity = "",
-            UserId = "",
+            UserId = Symbol.Empty,
             IsSignOutForced = force,
         };
         await Sessions.Upsert(dbContext, session.Id, sessionInfo, cancellationToken).ConfigureAwait(false);
@@ -121,7 +121,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         var dbContext = await CreateCommandDbContext(tenant, cancellationToken).ConfigureAwait(false);
         await using var _1 = dbContext.ConfigureAwait(false);
 
-        var dbUserId = DbUserIdHandler.Parse(sessionInfo.UserId);
+        var dbUserId = DbUserIdHandler.Parse(sessionInfo.UserId, false);
         var dbUser = await Users.Get(dbContext, dbUserId, true, cancellationToken).ConfigureAwait(false);
         if (dbUser == null)
             throw Internal.Errors.EntityNotFound(Users.UserEntityType);
@@ -186,7 +186,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
             return null;
 
         var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);
-        var user = await GetUser(tenant.Id, authInfo!.UserId, cancellationToken).ConfigureAwait(false);
+        var user = await GetUser(tenant.Id, authInfo.UserId, cancellationToken).ConfigureAwait(false);
         return user;
     }
 

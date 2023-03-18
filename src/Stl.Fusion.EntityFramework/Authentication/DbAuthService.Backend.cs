@@ -171,9 +171,11 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
 
     // [ComputeMethod] inherited
     public override async Task<User?> GetUser(
-        Symbol tenantId, string userId, CancellationToken cancellationToken = default)
+        Symbol tenantId, Symbol userId, CancellationToken cancellationToken = default)
     {
-        var dbUserId = DbUserIdHandler.Parse(userId);
+        if (!DbUserIdHandler.TryParse(userId, false, out var dbUserId))
+            return null;
+
         var tenant = TenantRegistry.Get(tenantId);
         var dbUser = await Users.Get(tenant, dbUserId, cancellationToken).ConfigureAwait(false);
         return UserConverter.ToModel(dbUser);
@@ -185,7 +187,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     protected virtual async Task<ImmutableArray<(Symbol Id, SessionInfo SessionInfo)>> GetUserSessions(
         Symbol tenantId, string userId, CancellationToken cancellationToken = default)
     {
-        if (!DbUserIdHandler.TryParse(userId).IsSome(out var dbUserId))
+        if (!DbUserIdHandler.TryParse(userId, false, out var dbUserId))
             return ImmutableArray<(Symbol Id, SessionInfo SessionInfo)>.Empty;
 
         var dbContext = CreateDbContext(tenantId);

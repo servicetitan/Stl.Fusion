@@ -47,7 +47,7 @@ public class MutableList<T> : IMutableList<T>
     }
 
     public override string ToString()
-        => $"{GetType().Name}({Count} item(s))";
+        => $"{GetType().GetName()}({Count} item(s))";
 
     public bool Update(ImmutableList<T> items)
     {

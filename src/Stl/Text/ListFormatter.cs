@@ -9,30 +9,23 @@ public ref struct ListFormatter
     public readonly char Delimiter;
     public readonly char Escape;
     public Utf16ValueStringBuilder OutputBuilder;
-    public readonly bool OwnsOutputBuilder;
     public int ItemIndex;
     public string Output => OutputBuilder.ToString();
 
 #pragma warning disable RCS1242
     internal ListFormatter(
         ListFormat format,
-        in Utf16ValueStringBuilder outputBuilder,
-        bool ownsOutputBuilder,
         int itemIndex)
 #pragma warning restore RCS1242
     {
         Delimiter = format.Delimiter;
         Escape = format.Escape;
-        OutputBuilder = outputBuilder;
-        OwnsOutputBuilder = ownsOutputBuilder;
+        OutputBuilder = ZString.CreateStringBuilder();
         ItemIndex = itemIndex;
     }
 
     public void Dispose()
-    {
-        if (OwnsOutputBuilder)
-            OutputBuilder.Dispose();
-    }
+        => OutputBuilder.Dispose();
 
     public void Append(string item)
     {

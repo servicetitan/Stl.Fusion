@@ -1,4 +1,5 @@
 using Castle.DynamicProxy;
+using Cysharp.Text;
 using Stl.Fusion.Interception.Internal;
 
 namespace Stl.Fusion.Interception;
@@ -38,7 +39,7 @@ public sealed class ComputeMethodInput : ComputedInput, IEquatable<ComputeMethod
     }
 
     public override string ToString()
-        => $"{Function}({string.Join(", ", Arguments)})";
+        => ZString.Concat(Category, "(", ZString.Join(", ", Arguments), ") #", HashCode);
 
     public object InvokeOriginalFunction(CancellationToken cancellationToken)
     {

@@ -39,7 +39,7 @@ public class ByteSerialized<T> : IEquatable<ByteSerialized<T>>
     // ToString
 
     public override string ToString()
-        => $"{GetType().Name} {{ Data = {JsonFormatter.Format(Data)} }}";
+        => $"{GetType().GetName()} {{ Data = {JsonFormatter.Format(Data)} }}";
 
     // Private & protected methods
 

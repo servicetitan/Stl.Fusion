@@ -3,7 +3,7 @@ using System.Web.Http.Dependencies;
 
 namespace Stl.Fusion.Server;
 
-public static class ServiceProviderExt
+public static class ServiceCollectionExt
 {
     public static IServiceCollection AddControllersAsServices(this IServiceCollection services,
         IEnumerable<Type> controllerTypes)

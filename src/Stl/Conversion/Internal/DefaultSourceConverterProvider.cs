@@ -13,7 +13,7 @@ public class DefaultSourceConverterProvider<TSource> : SourceConverterProvider<T
         => Services = services;
 
     public override Converter<TSource> To(Type targetType)
-        => (Converter<TSource>) _cache.GetOrAdd(targetType, (targetType1, self) => {
+        => (Converter<TSource>) _cache.GetOrAdd(targetType, static (targetType1, self) => {
             var mGetConverter = self.GetType()
                 .GetMethod(nameof(GetConverter), BindingFlags.Instance | BindingFlags.NonPublic)!
                 .MakeGenericMethod(targetType1);

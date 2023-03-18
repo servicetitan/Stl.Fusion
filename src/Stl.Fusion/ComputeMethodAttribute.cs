@@ -5,7 +5,6 @@ namespace Stl.Fusion;
 [AttributeUsage(AttributeTargets.Method, Inherited = false)]
 public class ComputeMethodAttribute : Attribute
 {
-    public bool IsEnabled { get; } = true;
     public Type? ComputeMethodDefType { get; set; } = null;
 
     /// <summary>
@@ -37,7 +36,4 @@ public class ComputeMethodAttribute : Attribute
     /// <code>double.NaN</code> means "use default".
     /// </summary>
     public double AutoInvalidationDelay { get; set; } = double.NaN;
-
-    public ComputeMethodAttribute() { }
-    public ComputeMethodAttribute(bool isEnabled) => IsEnabled = isEnabled;
 }

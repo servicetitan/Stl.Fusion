@@ -93,7 +93,7 @@ public sealed class ReplicaRegistry : IDisposable
                 // The thread that succeeds in removal releases gcHandle as well
                 _gcHandlePool.Release(handle, random);
             // And since we didn't manage to add the replica, let's retry
-            spinWait.SpinOnce();
+            spinWait.SpinOnce(); // Safe for WASM
         }
     }
 

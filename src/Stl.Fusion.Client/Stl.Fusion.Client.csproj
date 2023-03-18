@@ -19,6 +19,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Http" />
     <PackageReference Include="RestEase" />
+    <PackageReference Include="RestEase.SourceGenerator" />
   </ItemGroup>
   <ItemGroup Condition="!$(TargetFramework.StartsWith('net7'))">
     <PackageReference Include="Microsoft.Extensions.Http" VersionOverride="$(MicrosoftExtensionsVersion6)" />

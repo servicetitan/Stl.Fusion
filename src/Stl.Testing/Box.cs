@@ -7,7 +7,7 @@ public class Box<T>
     public Box() => Value = default!;
     public Box(T value) => Value = value!;
 
-    public override string ToString() => $"{GetType().Name}({Value})";
+    public override string ToString() => $"{GetType().GetName()}({Value})";
 }
 
 public static class Box

@@ -72,7 +72,7 @@ public class Replicator : SafeAsyncDisposableBase, IReplicatorImpl
 
     protected virtual ReplicatorChannelProcessor GetChannelProcessor(Symbol publisherId)
         => ChannelProcessors
-            .GetOrAddChecked(publisherId, CreateChannelProcessorHandler);
+            .GetOrAdd(publisherId, CreateChannelProcessorHandler);
 
     protected virtual ReplicatorChannelProcessor CreateChannelProcessor(Symbol publisherId)
     {

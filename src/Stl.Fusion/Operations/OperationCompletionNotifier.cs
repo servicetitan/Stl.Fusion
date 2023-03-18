@@ -10,8 +10,10 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
 {
     public record Options
     {
-        public int MaxKnownOperationCount { get; init; } = 10_000;
-        public TimeSpan MaxKnownOperationAge { get; init; } = TimeSpan.FromHours(1);
+        // Should be >= MaxBatchSize @ DbOperationLogReader.Options
+        public int MaxKnownOperationCount { get; init; } = 16384;
+        // Should be >= MaxCommitAge + MaxCommitDuration @ DbOperationLogReader.Options
+        public TimeSpan MaxKnownOperationAge { get; init; } = TimeSpan.FromMinutes(10);
         public IMomentClock? Clock { get; init; }
     }
 
@@ -19,9 +21,8 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
     protected IServiceProvider Services { get; }
     protected AgentInfo AgentInfo { get; }
     protected IOperationCompletionListener[] OperationCompletionListeners { get; }
-    protected BinaryHeap<Moment, Symbol> KnownOperationHeap { get; } = new();
-    protected HashSet<Symbol> KnownOperationSet { get; } = new();
-    protected object Lock { get; } = new();
+    protected RecentlySeenMap<Symbol, Unit> RecentlySeenOperationIds { get; }
+    protected object Lock => RecentlySeenOperationIds;
     protected IMomentClock Clock { get; }
     protected ILogger Log { get; }
 
@@ -30,10 +31,14 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
         Settings = settings;
         Services = services;
         Log = Services.LogFor(GetType());
-        Clock = Settings.Clock ?? Services.SystemClock();
+        Clock = Settings.Clock ?? Services.Clocks().SystemClock;
 
         AgentInfo = Services.GetRequiredService<AgentInfo>();
         OperationCompletionListeners = Services.GetServices<IOperationCompletionListener>().ToArray();
+        RecentlySeenOperationIds = new RecentlySeenMap<Symbol, Unit>(
+            Settings.MaxKnownOperationCount,
+            Settings.MaxKnownOperationAge,
+            Clock);
     }
 
     public bool IsReady()
@@ -41,35 +46,17 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
 
     public Task<bool> NotifyCompleted(IOperation operation, CommandContext? commandContext)
     {
-        var now = Clock.Now;
-        var minOperationStartTime = now - Settings.MaxKnownOperationAge;
-        var operationStartTime = operation.StartTime.ToMoment();
         var operationId = (Symbol) operation.Id;
         lock (Lock) {
-            if (KnownOperationSet.Contains(operationId))
+            if (!RecentlySeenOperationIds.TryAdd(operationId, operation.StartTime))
                 return TaskExt.FalseTask;
-            // Removing some operations if there are too many
-            while (KnownOperationSet.Count >= Settings.MaxKnownOperationCount) {
-                if (KnownOperationHeap.ExtractMin().IsSome(out var value))
-                    KnownOperationSet.Remove(value.Value);
-                else
-                    break;
-            }
-            // Removing too old operations
-            while (KnownOperationHeap.PeekMin().IsSome(out var value) && value.Priority < minOperationStartTime) {
-                KnownOperationHeap.ExtractMin();
-                KnownOperationSet.Remove(value.Value);
-            }
-            // Adding the current one
-            if (KnownOperationSet.Add(operationId))
-                KnownOperationHeap.Add(operationStartTime, operationId);
         }
 
         using var _ = ExecutionContextExt.SuppressFlow();
         return Task.Run(async () => {
-            // An important assertion
             var isLocal = commandContext != null;
             var isFromLocalAgent = StringComparer.Ordinal.Equals(operation.AgentId, AgentInfo.Id.Value);
+            // An important assertion
             if (isLocal != isFromLocalAgent) {
                 if (isFromLocalAgent)
                     Log.LogError("Assertion failed: operation w/o CommandContext originates from local agent");
@@ -78,22 +65,24 @@ public class OperationCompletionNotifier : IOperationCompletionNotifier
             }
 
             // Notification
-            var tasks = new Task[OperationCompletionListeners.Length];
-            for (var i = 0; i < OperationCompletionListeners.Length; i++) {
-                var handler = OperationCompletionListeners[i];
+            var listeners = OperationCompletionListeners;
+            var tasks = new Task[listeners.Length];
+            for (var i = 0; i < listeners.Length; i++) {
+                var listener = listeners[i];
                 try {
-                    tasks[i] = handler.OnOperationCompleted(operation, commandContext);
+                    tasks[i] = listener.OnOperationCompleted(operation, commandContext);
                 }
                 catch (Exception e) {
-                    Log.LogError(e, "Error in operation completion handler of type '{HandlerType}'",
-                        handler.GetType());
+                    tasks[i] = Task.CompletedTask;
+                    Log.LogError(e, "Operation completion listener of type '{HandlerType}' failed",
+                        listener.GetType());
                 }
             }
             try {
                 await Task.WhenAll(tasks).ConfigureAwait(false);
             }
             catch (Exception e) {
-                Log.LogError(e, "Error in one of operation completion handlers");
+                Log.LogError(e, "One of operation completion listeners failed");
             }
             return true;
         });

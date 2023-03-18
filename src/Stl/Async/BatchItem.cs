@@ -20,7 +20,8 @@ public readonly struct BatchItem<TIn, TOut>
         outputTask = OutputTask;
     }
 
-    public override string ToString() => $"{GetType().Name}({Input}, {CancellationToken}, {OutputTask})";
+    public override string ToString()
+        => $"{GetType().GetName()}({Input}, {CancellationToken}, {OutputTask})";
 
     public bool TryCancel(CancellationToken cancellationToken = default)
     {

@@ -56,7 +56,7 @@ public class MutableDictionary<TKey, TValue> : IMutableDictionary<TKey, TValue>
     }
 
     public override string ToString()
-        => $"{GetType().Name}({Count} item(s))";
+        => $"{GetType().GetName()}({Count} item(s))";
 
     public bool Update(ImmutableDictionary<TKey, TValue> items)
     {

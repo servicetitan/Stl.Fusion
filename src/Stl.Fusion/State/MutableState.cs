@@ -110,8 +110,10 @@ public class MutableState<T> : State<T>, IMutableState<T>
     protected internal override void OnInvalidated(Computed<T> computed)
     {
         base.OnInvalidated(computed);
+
         if (Snapshot.Computed != computed)
             return;
+
         var updateTask = computed.Update();
         if (!updateTask.IsCompleted)
             throw Errors.InternalError("Update() task must complete synchronously here.");

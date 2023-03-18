@@ -22,7 +22,7 @@ public class CommandTracer : ICommandHandler<ICommand>
         Services = services;
     }
 
-    [CommandHandler(Priority = CommanderCommandHandlerPriority.CommandTracer, IsFilter = true)]
+    [CommandFilter(Priority = CommanderCommandHandlerPriority.CommandTracer)]
     public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
     {
         using var activity = StartActivity(command, context);
