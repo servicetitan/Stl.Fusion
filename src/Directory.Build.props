@@ -48,7 +48,7 @@
   </ItemGroup>
 
   <!-- Global usings -->
-  <ItemGroup>
+  <ItemGroup Condition="!($(MSBuildProjectFile.Contains('Generators')))">
     <Using Include="System.Console" Static="True" />
     <Using Include="System.Collections" />
     <Using Include="System.Collections.Immutable" />
