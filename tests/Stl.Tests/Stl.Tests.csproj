@@ -42,6 +42,11 @@
     <ProjectReference Include="..\..\src\Stl.RegisterAttributes\Stl.RegisterAttributes.csproj" />
     <ProjectReference Include="..\..\src\Stl.Testing\Stl.Testing.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Stl.Generators\Stl.Generators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Update="*.xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />

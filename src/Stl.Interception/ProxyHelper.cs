@@ -1,9 +1,11 @@
 namespace Stl.Interception;
 
-public static class GenerateProxyHelper
+public static class ProxyHelper
 {
-    public static readonly BindingFlags GetMethodBindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+    public static readonly BindingFlags GetMethodBindingFlags =
+        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static MethodInfo? GetMethodInfo(Type type, string name, Type[] types)
     {
 #if NETSTANDARD || NETCOREAPP

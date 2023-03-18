@@ -1,9 +1,9 @@
 using Stl.Interception;
 
-namespace Stl.Fusion.Tests.Generators;
+namespace Stl.Tests.Generators;
 
 [GenerateProxy]
-public interface IChats
+public interface ITestInterface
 {
     Task NoArgs();
     Task<int> NoArgs1();
@@ -12,9 +12,22 @@ public interface IChats
 }
 
 [GenerateProxy]
-public class Chats : IChats
+public class TestClassBase
 {
-    public Chats(int x) { }
+    public TestClassBase(int x) { }
+
+    public virtual Task BaseNoArgs() => Task.CompletedTask;
+    public virtual Task<int> BaseFoo(int a, string b) => Task.FromResult(a);
+
+    // Must be ignored in proxy
+    public virtual Task<T> BaseTest1<T>(T argument) => throw new NotSupportedException();
+    private Task BaseTest2() => throw new NotSupportedException();
+}
+
+[GenerateProxy]
+public class TestClass : TestClassBase
+{
+    public TestClass(int x) : base(x) { }
 
     public virtual Task NoArgs() => Task.CompletedTask;
     public virtual Task<int> NoArgs1() => Task.FromResult(0);

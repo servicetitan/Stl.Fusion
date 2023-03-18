@@ -2,43 +2,22 @@ namespace Stl.Interception;
 
 public abstract class Interceptor
 {
-    public TResult Intercept<TResult>(Invocation invocation)
+    public virtual TResult Intercept<TResult>(Invocation invocation)
     {
-        OnBefore();
-        TResult result;
-        Exception? error = null;
-        try {
-            var func = (Func<ArgumentList,TResult>)invocation.Delegate;
-            result = func(invocation.Arguments);
-            return result;
-        }
-        catch (Exception e) {
-            error = e;
-            throw;
-        }
-        finally {
-            OnAfter(error);
-        }
+        return invocation.Delegate is Func<ArgumentList, TResult> func
+            ? func.Invoke(invocation.Arguments)
+#pragma warning disable MA0025
+            : throw new NotImplementedException();
+#pragma warning restore MA0025
     }
 
-    public void Intercept(Invocation invocation)
+    public virtual void Intercept(Invocation invocation)
     {
-        OnBefore();
-        Exception? error = null;
-        try {
-            var action = (Action<ArgumentList>)invocation.Delegate;
-            action(invocation.Arguments);
-        }
-        catch (Exception e) {
-            error = e;
-            throw;
-        }
-        finally {
-            OnAfter(error);
-        }
+        if (invocation.Delegate is Action<ArgumentList> action)
+            action.Invoke(invocation.Arguments);
+        else
+#pragma warning disable MA0025
+            throw new NotImplementedException();
+#pragma warning restore MA0025
     }
-
-    protected abstract void OnBefore();
-
-    protected abstract void OnAfter(Exception? error);
 }

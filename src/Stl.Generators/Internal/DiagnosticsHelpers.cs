@@ -20,12 +20,26 @@ public static class DiagnosticsHelpers
 
     // Diagnostics
 
+    public static void ReportDebug(this SourceProductionContext context, string text, Location? location = null)
+    {
+#if DEBUG
+        context.ReportDiagnostic(DebugWarning(text, location));
+#endif
+    }
+
+    public static void ReportDebug(this SourceProductionContext context, Exception error)
+    {
+#if DEBUG
+        context.ReportDiagnostic(DebugWarning(error));
+#endif
+    }
+
     public static Diagnostic DebugWarning(string text, Location? location = null)
         => Diagnostic.Create(DebugDescriptor, location ?? Location.None, text);
 
-    public static Diagnostic DebugWarning(Exception e)
+    public static Diagnostic DebugWarning(Exception error)
     {
-        var text = (e.ToString() ?? "")
+        var text = (error.ToString() ?? "")
             .Replace("\r\n", " | ")
             .Replace("\n", " | ");
         return DebugWarning(text);

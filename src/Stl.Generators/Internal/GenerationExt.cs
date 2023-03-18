@@ -1,5 +1,6 @@
 using System.Globalization;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+using static Stl.Generators.Internal.SyntaxHelpers;
 
 namespace Stl.Generators.Internal;
 
@@ -12,7 +13,7 @@ public static class GenerationExt
         return compilation.GetTypeByMetadataName(fullName);
     }
 
-    public static (string? Name, TypeSyntax TypeDef) GetNameAndType(this MemberDeclarationSyntax memberDef)
+    public static (string? Name, TypeSyntax TypeRef) GetMemberNameAndTypeRef(this MemberDeclarationSyntax memberDef)
     {
         if (memberDef is FieldDeclarationSyntax f) {
             var typeDef = f.Declaration.Type;
@@ -53,21 +54,30 @@ public static class GenerationExt
         return arguments.SingleOrDefault();
     }
 
-    public static NameSyntax? GetNamespaceName(this TypeDeclarationSyntax classDef)
+    public static NameSyntax? GetNamespaceRef(this TypeDeclarationSyntax typeDef)
     {
-        if (classDef.Parent is NamespaceDeclarationSyntax ns)
+        if (typeDef.Parent is NamespaceDeclarationSyntax ns)
             return ns.Name;
-        if (classDef.Parent is FileScopedNamespaceDeclarationSyntax fns)
+        if (typeDef.Parent is FileScopedNamespaceDeclarationSyntax fns)
             return fns.Name;
         return null;
     }
 
-    public static TypeSyntax ToTypeName(this Type type)
+    public static TypeSyntax ToTypeRef(this TypeDeclarationSyntax typeDef)
+    {
+        var ns = typeDef.GetNamespaceRef()?.ToString() ?? "";
+        return ParseTypeName(
+            string.IsNullOrEmpty(ns)
+                ? typeDef.Identifier.Text
+                : $"{ns.WithGlobalPrefix()}.{typeDef.Identifier.Text}");
+    }
+
+    public static TypeSyntax ToTypeRef(this Type type)
     {
         if (!type.IsGenericType)
             return ParseTypeName(string.IsNullOrEmpty(type.Namespace)
-                ? $"global::{type.Name}"
-                : $"global::{type.Namespace}.{type.Name}");
+                ? type.Name
+                : $"{type.Namespace.WithGlobalPrefix()}.{type.Name}");
 
         // Get the C# representation of the generic type minus its type arguments.
         var name = type.Name.Replace('+', '.');
@@ -76,11 +86,11 @@ public static class GenerationExt
         var args = type.GetGenericArguments();
         return GenericName(
             Identifier(name),
-            TypeArgumentList(SeparatedList(args.Select(ToTypeName)))
+            TypeArgumentList(SeparatedList(args.Select(ToTypeRef)))
         );
     }
 
-    public static TypeSyntax ToTypeName(this ITypeSymbol typeSymbol)
+    public static TypeSyntax ToTypeRef(this ITypeSymbol typeSymbol)
         => ParseTypeName(typeSymbol.ToFullName());
 
     public static string ToFullName(this ITypeSymbol typeSymbol)
@@ -120,10 +130,25 @@ public static class GenerationExt
     public static bool IsVoid(this TypeSyntax typeSyntax)
         => typeSyntax is PredefinedTypeSyntax pts && pts.Keyword.IsKind(SyntaxKind.VoidKeyword);
 
-    public static StatementSyntax ToLastBlockStatement(this ExpressionSyntax expression, bool shouldReturn)
-        => shouldReturn ? ReturnStatement(expression) : ExpressionStatement(expression);
+    public static LocalDeclarationStatementSyntax ToVarStatement(this VariableDeclaratorSyntax variable)
+        => LocalDeclarationStatement(VariableDeclaration(VarIdentifierDef())
+            .WithVariables(SingletonSeparatedList(variable)));
 
-    // Private methods
+    public static StatementSyntax ToStatement(this ExpressionSyntax expression, bool isReturnStatement = false)
+        => isReturnStatement
+            ? ReturnStatement(expression)
+            : ExpressionStatement(expression);
+
+    public static string WithGlobalPrefix(this string ns)
+    {
+        if (string.IsNullOrEmpty(ns))
+            return "global::";
+        if (ns.StartsWith("global::", StringComparison.Ordinal))
+            return ns;
+        return "global::" + ns;
+    }
+
+    // Helpers
 
     private static string Simplify(string shortName, string fullName)
         => shortName switch {
@@ -141,6 +166,7 @@ public static class GenerationExt
             "Double" => "double",
             "String" => "string",
             "Object" => "object",
+            "Void" => "void",
             _ => fullName,
         };
 }
