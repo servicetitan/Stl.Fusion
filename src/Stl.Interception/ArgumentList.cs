@@ -3,123 +3,145 @@
 // ReSharper disable ArrangeConstructorOrDestructorBody
 namespace Stl.Interception;
 
-public partial record ArgumentList
+[DataContract]
+public record ArgumentList
 {
-    public readonly ArgumentList Empty = new ();
+    public static ArgumentList Empty { get; } = new();
 
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public virtual int Length => 0;
-
-    public object? this[int index]
-    {
-      get {
-        if (index < 0 || index >= Length)
-            throw new ArgumentOutOfRangeException(nameof(index));
-        return GetItem(index);
-      }
-    }
-
-    protected virtual object? GetItem(int index)
-        => throw new NotSupportedException();
 
     public static ArgumentList<T0> New<T0>(T0 item0)
         => new (item0);
-
     public static ArgumentList<T0, T1> New<T0, T1>(T0 item0, T1 item1)
         => new (item0, item1);
-
     public static ArgumentList<T0, T1, T2> New<T0, T1, T2>(T0 item0, T1 item1, T2 item2)
         => new (item0, item1, item2);
-
     public static ArgumentList<T0, T1, T2, T3> New<T0, T1, T2, T3>(T0 item0, T1 item1, T2 item2, T3 item3)
         => new (item0, item1, item2, item3);
-
     public static ArgumentList<T0, T1, T2, T3, T4> New<T0, T1, T2, T3, T4>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4)
         => new (item0, item1, item2, item3, item4);
-
     public static ArgumentList<T0, T1, T2, T3, T4, T5> New<T0, T1, T2, T3, T4, T5>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5)
         => new (item0, item1, item2, item3, item4, item5);
-
     public static ArgumentList<T0, T1, T2, T3, T4, T5, T6> New<T0, T1, T2, T3, T4, T5, T6>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6)
         => new (item0, item1, item2, item3, item4, item5, item6);
-
     public static ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7> New<T0, T1, T2, T3, T4, T5, T6, T7>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7)
         => new (item0, item1, item2, item3, item4, item5, item6, item7);
-
     public static ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8> New<T0, T1, T2, T3, T4, T5, T6, T7, T8>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8)
         => new (item0, item1, item2, item3, item4, item5, item6, item7, item8);
-
     public static ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> New<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8, T9 item9)
         => new (item0, item1, item2, item3, item4, item5, item6, item7, item8, item9);
-
     public static ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> New<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8, T9 item9, T10 item10)
         => new (item0, item1, item2, item3, item4, item5, item6, item7, item8, item9, item10);
-
     public static ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> New<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8, T9 item9, T10 item10, T11 item11)
         => new (item0, item1, item2, item3, item4, item5, item6, item7, item8, item9, item10, item11);
 
-    public static ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> New<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8, T9 item9, T10 item10, T11 item11, T12 item12)
-        => new (item0, item1, item2, item3, item4, item5, item6, item7, item8, item9, item10, item11, item12);
+    public virtual T GetItem<T>(int index)
+        => throw new ArgumentOutOfRangeException(nameof(index));
+    public virtual object? GetItemUntyped(int index) 
+        => throw new ArgumentOutOfRangeException(nameof(index));
 
-    public static ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> New<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8, T9 item9, T10 item10, T11 item11, T12 item12, T13 item13)
-        => new (item0, item1, item2, item3, item4, item5, item6, item7, item8, item9, item10, item11, item12, item13);
+    public virtual void SetItem<T>(int index, T value)
+         => throw new ArgumentOutOfRangeException(nameof(index));
+    public virtual void SetItemUntyped(int index, object? value)
+         => throw new ArgumentOutOfRangeException(nameof(index));
 
-    public static ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> New<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8, T9 item9, T10 item10, T11 item11, T12 item12, T13 item13, T14 item14)
-        => new (item0, item1, item2, item3, item4, item5, item6, item7, item8, item9, item10, item11, item12, item13, item14);
-
-    public static ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> New<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8, T9 item9, T10 item10, T11 item11, T12 item12, T13 item13, T14 item14, T15 item15)
-        => new (item0, item1, item2, item3, item4, item5, item6, item7, item8, item9, item10, item11, item12, item13, item14, item15);
-
-    protected ArgumentList() {}
+    public virtual bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
+        => other?.GetType() == typeof(ArgumentList);
+    public virtual int GetHashCode(Delegate?[] equalsDelegates)
+        => 0;
 }
 
-public sealed record ArgumentList<T0> : ArgumentList, IEquatable<ArgumentList<T0>>
+public sealed record ArgumentList<T0>(
+    T0 Item0
+) : ArgumentList
 {
+    private T0 _item0 = Item0;
+
+    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 1;
 
-    public T0 Item0 { get; }
+    // GetItem
 
-    protected override object? GetItem(int index)
+    public override T GetItem<T>(int index)
         => index switch {
+            0 => Item0 is T value ? value : default!,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override object? GetItemUntyped(int index)
+        => index switch {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             0 => Item0,
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
+
+    // SetItem
+
+    public override void SetItem<T>(int index, T value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    public override void SetItemUntyped(int index, object? value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    // Equality
 
     public bool Equals(ArgumentList<T0>? other)
     {
         if (other == null)
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) return false;
+
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+            return false;
         return true;
     }
 
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken || Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
             return hashCode;
         }
     }
 
-    public bool Equals(ArgumentList<T0>? other, Delegate?[] equalDelegates)
+    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
     {
-        if (equalDelegates.Length != 1)
-            throw new ArgumentOutOfRangeException(nameof(equalDelegates));
-        if (other == null)
+        if (equalsDelegates.Length < 1)
+            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
+        if (other is not ArgumentList<T0> vOther)
             return false;
-        if (equalDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, other.Item0))
+
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
                 return false;
         }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) {
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
-        }
 
         return true;
     }
 
-    public int GetHashCode(Delegate?[] getHashCodeDelegates)
+    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
     {
-        if (getHashCodeDelegates.Length != 1)
+        if (getHashCodeDelegates.Length < 1)
             throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
         unchecked {
             int hashCode;
@@ -131,73 +153,120 @@ public sealed record ArgumentList<T0> : ArgumentList, IEquatable<ArgumentList<T0
             return hashCode;
         }
     }
-
-    public ArgumentList(T0 item0)
-    {
-        Item0 = item0;
-    }
 }
 
-public sealed record ArgumentList<T0, T1> : ArgumentList, IEquatable<ArgumentList<T0, T1>>
+public sealed record ArgumentList<T0, T1>(
+    T0 Item0,
+    T1 Item1
+) : ArgumentList
 {
+    private T0 _item0 = Item0;
+    private T1 _item1 = Item1;
+
+    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [property: DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 2;
 
-    public T0 Item0 { get; }
-    public T1 Item1 { get; }
+    // GetItem
 
-    protected override object? GetItem(int index)
+    public override T GetItem<T>(int index)
         => index switch {
+            0 => Item0 is T value ? value : default!,
+            1 => Item1 is T value ? value : default!,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override object? GetItemUntyped(int index)
+        => index switch {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             0 => Item0,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             1 => Item1,
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
+
+    // SetItem
+
+    public override void SetItem<T>(int index, T value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = value is T1 item1 ? item1 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    public override void SetItemUntyped(int index, object? value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = value is T1 item1 ? item1 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    // Equality
 
     public bool Equals(ArgumentList<T0, T1>? other)
     {
         if (other == null)
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) return false;
+
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+            return false;
+        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+            return false;
         return true;
     }
 
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken || Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = (hashCode * 397) + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+            hashCode = 397*hashCode + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
             return hashCode;
         }
     }
 
-    public bool Equals(ArgumentList<T0, T1>? other, Delegate?[] equalDelegates)
+    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
     {
-        if (equalDelegates.Length != 2)
-            throw new ArgumentOutOfRangeException(nameof(equalDelegates));
-        if (other == null)
+        if (equalsDelegates.Length < 2)
+            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
+        if (other is not ArgumentList<T0, T1> vOther)
             return false;
-        if (equalDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, other.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) {
-            return false;
-        }
 
-        if (equalDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, other.Item1))
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
                 return false;
         }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) {
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
+
+        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
+            if (!func1.Invoke(Item1, vOther.Item1))
+                return false;
         }
+        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
 
         return true;
     }
 
-    public int GetHashCode(Delegate?[] getHashCodeDelegates)
+    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
     {
-        if (getHashCodeDelegates.Length != 2)
+        if (getHashCodeDelegates.Length < 2)
             throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
         unchecked {
             int hashCode;
@@ -214,86 +283,142 @@ public sealed record ArgumentList<T0, T1> : ArgumentList, IEquatable<ArgumentLis
             return hashCode;
         }
     }
-
-    public ArgumentList(T0 item0, T1 item1)
-    {
-        Item0 = item0;
-        Item1 = item1;
-    }
 }
 
-public sealed record ArgumentList<T0, T1, T2> : ArgumentList, IEquatable<ArgumentList<T0, T1, T2>>
+public sealed record ArgumentList<T0, T1, T2>(
+    T0 Item0,
+    T1 Item1,
+    T2 Item2
+) : ArgumentList
 {
+    private T0 _item0 = Item0;
+    private T1 _item1 = Item1;
+    private T2 _item2 = Item2;
+
+    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [property: DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+    [property: DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
+
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 3;
 
-    public T0 Item0 { get; }
-    public T1 Item1 { get; }
-    public T2 Item2 { get; }
+    // GetItem
 
-    protected override object? GetItem(int index)
+    public override T GetItem<T>(int index)
         => index switch {
+            0 => Item0 is T value ? value : default!,
+            1 => Item1 is T value ? value : default!,
+            2 => Item2 is T value ? value : default!,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override object? GetItemUntyped(int index)
+        => index switch {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             0 => Item0,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             1 => Item1,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             2 => Item2,
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
+
+    // SetItem
+
+    public override void SetItem<T>(int index, T value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = value is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = value is T2 item2 ? item2 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    public override void SetItemUntyped(int index, object? value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = value is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = value is T2 item2 ? item2 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2>? other)
     {
         if (other == null)
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) return false;
+
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+            return false;
+        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+            return false;
+        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+            return false;
         return true;
     }
 
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken || Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = (hashCode * 397) + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = (hashCode * 397) + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
+            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+            hashCode = 397*hashCode + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+            hashCode = 397*hashCode + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
             return hashCode;
         }
     }
 
-    public bool Equals(ArgumentList<T0, T1, T2>? other, Delegate?[] equalDelegates)
+    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
     {
-        if (equalDelegates.Length != 3)
-            throw new ArgumentOutOfRangeException(nameof(equalDelegates));
-        if (other == null)
+        if (equalsDelegates.Length < 3)
+            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
+        if (other is not ArgumentList<T0, T1, T2> vOther)
             return false;
-        if (equalDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, other.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) {
-            return false;
-        }
 
-        if (equalDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, other.Item1))
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
                 return false;
         }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) {
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
-        }
 
-        if (equalDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, other.Item2))
+        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
+            if (!func1.Invoke(Item1, vOther.Item1))
                 return false;
         }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) {
+        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
             return false;
+
+        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
+            if (!func2.Invoke(Item2, vOther.Item2))
+                return false;
         }
+        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
 
         return true;
     }
 
-    public int GetHashCode(Delegate?[] getHashCodeDelegates)
+    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
     {
-        if (getHashCodeDelegates.Length != 3)
+        if (getHashCodeDelegates.Length < 3)
             throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
         unchecked {
             int hashCode;
@@ -315,99 +440,164 @@ public sealed record ArgumentList<T0, T1, T2> : ArgumentList, IEquatable<Argumen
             return hashCode;
         }
     }
-
-    public ArgumentList(T0 item0, T1 item1, T2 item2)
-    {
-        Item0 = item0;
-        Item1 = item1;
-        Item2 = item2;
-    }
 }
 
-public sealed record ArgumentList<T0, T1, T2, T3> : ArgumentList, IEquatable<ArgumentList<T0, T1, T2, T3>>
+public sealed record ArgumentList<T0, T1, T2, T3>(
+    T0 Item0,
+    T1 Item1,
+    T2 Item2,
+    T3 Item3
+) : ArgumentList
 {
+    private T0 _item0 = Item0;
+    private T1 _item1 = Item1;
+    private T2 _item2 = Item2;
+    private T3 _item3 = Item3;
+
+    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [property: DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+    [property: DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
+    [property: DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
+
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 4;
 
-    public T0 Item0 { get; }
-    public T1 Item1 { get; }
-    public T2 Item2 { get; }
-    public T3 Item3 { get; }
+    // GetItem
 
-    protected override object? GetItem(int index)
+    public override T GetItem<T>(int index)
         => index switch {
+            0 => Item0 is T value ? value : default!,
+            1 => Item1 is T value ? value : default!,
+            2 => Item2 is T value ? value : default!,
+            3 => Item3 is T value ? value : default!,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override object? GetItemUntyped(int index)
+        => index switch {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             0 => Item0,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             1 => Item1,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             2 => Item2,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             3 => Item3,
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
+
+    // SetItem
+
+    public override void SetItem<T>(int index, T value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = value is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = value is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = value is T3 item3 ? item3 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    public override void SetItemUntyped(int index, object? value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = value is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = value is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = value is T3 item3 ? item3 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3>? other)
     {
         if (other == null)
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) return false;
+
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+            return false;
+        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+            return false;
+        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+            return false;
+        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+            return false;
         return true;
     }
 
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken || Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = (hashCode * 397) + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = (hashCode * 397) + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-            hashCode = (hashCode * 397) + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
+            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+            hashCode = 397*hashCode + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+            hashCode = 397*hashCode + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
+            hashCode = 397*hashCode + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
             return hashCode;
         }
     }
 
-    public bool Equals(ArgumentList<T0, T1, T2, T3>? other, Delegate?[] equalDelegates)
+    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
     {
-        if (equalDelegates.Length != 4)
-            throw new ArgumentOutOfRangeException(nameof(equalDelegates));
-        if (other == null)
+        if (equalsDelegates.Length < 4)
+            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
+        if (other is not ArgumentList<T0, T1, T2, T3> vOther)
             return false;
-        if (equalDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, other.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) {
-            return false;
-        }
 
-        if (equalDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, other.Item1))
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
                 return false;
         }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) {
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
-        }
 
-        if (equalDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, other.Item2))
+        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
+            if (!func1.Invoke(Item1, vOther.Item1))
                 return false;
         }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) {
+        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
             return false;
-        }
 
-        if (equalDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, other.Item3))
+        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
+            if (!func2.Invoke(Item2, vOther.Item2))
                 return false;
         }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) {
+        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
             return false;
+
+        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
+            if (!func3.Invoke(Item3, vOther.Item3))
+                return false;
         }
+        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
 
         return true;
     }
 
-    public int GetHashCode(Delegate?[] getHashCodeDelegates)
+    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
     {
-        if (getHashCodeDelegates.Length != 4)
+        if (getHashCodeDelegates.Length < 4)
             throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
         unchecked {
             int hashCode;
@@ -434,112 +624,186 @@ public sealed record ArgumentList<T0, T1, T2, T3> : ArgumentList, IEquatable<Arg
             return hashCode;
         }
     }
-
-    public ArgumentList(T0 item0, T1 item1, T2 item2, T3 item3)
-    {
-        Item0 = item0;
-        Item1 = item1;
-        Item2 = item2;
-        Item3 = item3;
-    }
 }
 
-public sealed record ArgumentList<T0, T1, T2, T3, T4> : ArgumentList, IEquatable<ArgumentList<T0, T1, T2, T3, T4>>
+public sealed record ArgumentList<T0, T1, T2, T3, T4>(
+    T0 Item0,
+    T1 Item1,
+    T2 Item2,
+    T3 Item3,
+    T4 Item4
+) : ArgumentList
 {
+    private T0 _item0 = Item0;
+    private T1 _item1 = Item1;
+    private T2 _item2 = Item2;
+    private T3 _item3 = Item3;
+    private T4 _item4 = Item4;
+
+    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [property: DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+    [property: DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
+    [property: DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
+    [property: DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
+
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 5;
 
-    public T0 Item0 { get; }
-    public T1 Item1 { get; }
-    public T2 Item2 { get; }
-    public T3 Item3 { get; }
-    public T4 Item4 { get; }
+    // GetItem
 
-    protected override object? GetItem(int index)
+    public override T GetItem<T>(int index)
         => index switch {
+            0 => Item0 is T value ? value : default!,
+            1 => Item1 is T value ? value : default!,
+            2 => Item2 is T value ? value : default!,
+            3 => Item3 is T value ? value : default!,
+            4 => Item4 is T value ? value : default!,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override object? GetItemUntyped(int index)
+        => index switch {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             0 => Item0,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             1 => Item1,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             2 => Item2,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             3 => Item3,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             4 => Item4,
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
+
+    // SetItem
+
+    public override void SetItem<T>(int index, T value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = value is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = value is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = value is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = value is T4 item4 ? item4 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    public override void SetItemUntyped(int index, object? value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = value is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = value is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = value is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = value is T4 item4 ? item4 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3, T4>? other)
     {
         if (other == null)
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) return false;
+
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+            return false;
+        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+            return false;
+        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+            return false;
+        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+            return false;
+        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+            return false;
         return true;
     }
 
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken || Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = (hashCode * 397) + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = (hashCode * 397) + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-            hashCode = (hashCode * 397) + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-            hashCode = (hashCode * 397) + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
+            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+            hashCode = 397*hashCode + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+            hashCode = 397*hashCode + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
+            hashCode = 397*hashCode + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
+            hashCode = 397*hashCode + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
             return hashCode;
         }
     }
 
-    public bool Equals(ArgumentList<T0, T1, T2, T3, T4>? other, Delegate?[] equalDelegates)
+    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
     {
-        if (equalDelegates.Length != 5)
-            throw new ArgumentOutOfRangeException(nameof(equalDelegates));
-        if (other == null)
+        if (equalsDelegates.Length < 5)
+            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
+        if (other is not ArgumentList<T0, T1, T2, T3, T4> vOther)
             return false;
-        if (equalDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, other.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) {
-            return false;
-        }
 
-        if (equalDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, other.Item1))
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
                 return false;
         }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) {
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
-        }
 
-        if (equalDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, other.Item2))
+        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
+            if (!func1.Invoke(Item1, vOther.Item1))
                 return false;
         }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) {
+        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
             return false;
-        }
 
-        if (equalDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, other.Item3))
+        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
+            if (!func2.Invoke(Item2, vOther.Item2))
                 return false;
         }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) {
+        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
             return false;
-        }
 
-        if (equalDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, other.Item4))
+        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
+            if (!func3.Invoke(Item3, vOther.Item3))
                 return false;
         }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) {
+        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
             return false;
+
+        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
+            if (!func4.Invoke(Item4, vOther.Item4))
+                return false;
         }
+        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+            return false;
 
         return true;
     }
 
-    public int GetHashCode(Delegate?[] getHashCodeDelegates)
+    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
     {
-        if (getHashCodeDelegates.Length != 5)
+        if (getHashCodeDelegates.Length < 5)
             throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
         unchecked {
             int hashCode;
@@ -571,125 +835,208 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4> : ArgumentList, IEquatable
             return hashCode;
         }
     }
-
-    public ArgumentList(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4)
-    {
-        Item0 = item0;
-        Item1 = item1;
-        Item2 = item2;
-        Item3 = item3;
-        Item4 = item4;
-    }
 }
 
-public sealed record ArgumentList<T0, T1, T2, T3, T4, T5> : ArgumentList, IEquatable<ArgumentList<T0, T1, T2, T3, T4, T5>>
+public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
+    T0 Item0,
+    T1 Item1,
+    T2 Item2,
+    T3 Item3,
+    T4 Item4,
+    T5 Item5
+) : ArgumentList
 {
+    private T0 _item0 = Item0;
+    private T1 _item1 = Item1;
+    private T2 _item2 = Item2;
+    private T3 _item3 = Item3;
+    private T4 _item4 = Item4;
+    private T5 _item5 = Item5;
+
+    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [property: DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+    [property: DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
+    [property: DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
+    [property: DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
+    [property: DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
+
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 6;
 
-    public T0 Item0 { get; }
-    public T1 Item1 { get; }
-    public T2 Item2 { get; }
-    public T3 Item3 { get; }
-    public T4 Item4 { get; }
-    public T5 Item5 { get; }
+    // GetItem
 
-    protected override object? GetItem(int index)
+    public override T GetItem<T>(int index)
         => index switch {
+            0 => Item0 is T value ? value : default!,
+            1 => Item1 is T value ? value : default!,
+            2 => Item2 is T value ? value : default!,
+            3 => Item3 is T value ? value : default!,
+            4 => Item4 is T value ? value : default!,
+            5 => Item5 is T value ? value : default!,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override object? GetItemUntyped(int index)
+        => index switch {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             0 => Item0,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             1 => Item1,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             2 => Item2,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             3 => Item3,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             4 => Item4,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             5 => Item5,
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
+
+    // SetItem
+
+    public override void SetItem<T>(int index, T value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = value is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = value is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = value is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = value is T4 item4 ? item4 : default!;
+            break;
+        case 5:
+            _item5 = value is T5 item5 ? item5 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    public override void SetItemUntyped(int index, object? value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = value is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = value is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = value is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = value is T4 item4 ? item4 : default!;
+            break;
+        case 5:
+            _item5 = value is T5 item5 ? item5 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5>? other)
     {
         if (other == null)
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5)) return false;
+
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+            return false;
+        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+            return false;
+        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+            return false;
+        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+            return false;
+        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+            return false;
+        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
+            return false;
         return true;
     }
 
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken || Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = (hashCode * 397) + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = (hashCode * 397) + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-            hashCode = (hashCode * 397) + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-            hashCode = (hashCode * 397) + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
-            hashCode = (hashCode * 397) + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
+            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+            hashCode = 397*hashCode + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+            hashCode = 397*hashCode + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
+            hashCode = 397*hashCode + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
+            hashCode = 397*hashCode + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
+            hashCode = 397*hashCode + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
             return hashCode;
         }
     }
 
-    public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5>? other, Delegate?[] equalDelegates)
+    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
     {
-        if (equalDelegates.Length != 6)
-            throw new ArgumentOutOfRangeException(nameof(equalDelegates));
-        if (other == null)
+        if (equalsDelegates.Length < 6)
+            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
+        if (other is not ArgumentList<T0, T1, T2, T3, T4, T5> vOther)
             return false;
-        if (equalDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, other.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) {
-            return false;
-        }
 
-        if (equalDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, other.Item1))
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
                 return false;
         }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) {
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
-        }
 
-        if (equalDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, other.Item2))
+        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
+            if (!func1.Invoke(Item1, vOther.Item1))
                 return false;
         }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) {
+        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
             return false;
-        }
 
-        if (equalDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, other.Item3))
+        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
+            if (!func2.Invoke(Item2, vOther.Item2))
                 return false;
         }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) {
+        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
             return false;
-        }
 
-        if (equalDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, other.Item4))
+        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
+            if (!func3.Invoke(Item3, vOther.Item3))
                 return false;
         }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) {
+        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
             return false;
-        }
 
-        if (equalDelegates[5] is Func<T5, T5, bool> func5) {
-            if (!func5.Invoke(Item5, other.Item5))
+        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
+            if (!func4.Invoke(Item4, vOther.Item4))
                 return false;
         }
-        else if (!EqualityComparer<T5>.Default.Equals(Item5, other.Item5)) {
+        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
             return false;
+
+        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
+            if (!func5.Invoke(Item5, vOther.Item5))
+                return false;
         }
+        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
+            return false;
 
         return true;
     }
 
-    public int GetHashCode(Delegate?[] getHashCodeDelegates)
+    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
     {
-        if (getHashCodeDelegates.Length != 6)
+        if (getHashCodeDelegates.Length < 6)
             throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
         unchecked {
             int hashCode;
@@ -726,138 +1073,230 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5> : ArgumentList, IEquat
             return hashCode;
         }
     }
-
-    public ArgumentList(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5)
-    {
-        Item0 = item0;
-        Item1 = item1;
-        Item2 = item2;
-        Item3 = item3;
-        Item4 = item4;
-        Item5 = item5;
-    }
 }
 
-public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6> : ArgumentList, IEquatable<ArgumentList<T0, T1, T2, T3, T4, T5, T6>>
+public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
+    T0 Item0,
+    T1 Item1,
+    T2 Item2,
+    T3 Item3,
+    T4 Item4,
+    T5 Item5,
+    T6 Item6
+) : ArgumentList
 {
+    private T0 _item0 = Item0;
+    private T1 _item1 = Item1;
+    private T2 _item2 = Item2;
+    private T3 _item3 = Item3;
+    private T4 _item4 = Item4;
+    private T5 _item5 = Item5;
+    private T6 _item6 = Item6;
+
+    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [property: DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+    [property: DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
+    [property: DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
+    [property: DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
+    [property: DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
+    [property: DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
+
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 7;
 
-    public T0 Item0 { get; }
-    public T1 Item1 { get; }
-    public T2 Item2 { get; }
-    public T3 Item3 { get; }
-    public T4 Item4 { get; }
-    public T5 Item5 { get; }
-    public T6 Item6 { get; }
+    // GetItem
 
-    protected override object? GetItem(int index)
+    public override T GetItem<T>(int index)
         => index switch {
+            0 => Item0 is T value ? value : default!,
+            1 => Item1 is T value ? value : default!,
+            2 => Item2 is T value ? value : default!,
+            3 => Item3 is T value ? value : default!,
+            4 => Item4 is T value ? value : default!,
+            5 => Item5 is T value ? value : default!,
+            6 => Item6 is T value ? value : default!,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override object? GetItemUntyped(int index)
+        => index switch {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             0 => Item0,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             1 => Item1,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             2 => Item2,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             3 => Item3,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             4 => Item4,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             5 => Item5,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             6 => Item6,
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
+
+    // SetItem
+
+    public override void SetItem<T>(int index, T value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = value is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = value is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = value is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = value is T4 item4 ? item4 : default!;
+            break;
+        case 5:
+            _item5 = value is T5 item5 ? item5 : default!;
+            break;
+        case 6:
+            _item6 = value is T6 item6 ? item6 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    public override void SetItemUntyped(int index, object? value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = value is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = value is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = value is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = value is T4 item4 ? item4 : default!;
+            break;
+        case 5:
+            _item5 = value is T5 item5 ? item5 : default!;
+            break;
+        case 6:
+            _item6 = value is T6 item6 ? item6 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6>? other)
     {
         if (other == null)
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5)) return false;
-        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6)) return false;
+
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+            return false;
+        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+            return false;
+        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+            return false;
+        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+            return false;
+        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+            return false;
+        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
+            return false;
+        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
+            return false;
         return true;
     }
 
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken || Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = (hashCode * 397) + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = (hashCode * 397) + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-            hashCode = (hashCode * 397) + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-            hashCode = (hashCode * 397) + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
-            hashCode = (hashCode * 397) + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
-            hashCode = (hashCode * 397) + (Item6 is CancellationToken || Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
+            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+            hashCode = 397*hashCode + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+            hashCode = 397*hashCode + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
+            hashCode = 397*hashCode + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
+            hashCode = 397*hashCode + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
+            hashCode = 397*hashCode + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
+            hashCode = 397*hashCode + (Item6 is CancellationToken || Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
             return hashCode;
         }
     }
 
-    public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6>? other, Delegate?[] equalDelegates)
+    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
     {
-        if (equalDelegates.Length != 7)
-            throw new ArgumentOutOfRangeException(nameof(equalDelegates));
-        if (other == null)
+        if (equalsDelegates.Length < 7)
+            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
+        if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6> vOther)
             return false;
-        if (equalDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, other.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) {
-            return false;
-        }
 
-        if (equalDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, other.Item1))
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
                 return false;
         }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) {
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
-        }
 
-        if (equalDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, other.Item2))
+        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
+            if (!func1.Invoke(Item1, vOther.Item1))
                 return false;
         }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) {
+        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
             return false;
-        }
 
-        if (equalDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, other.Item3))
+        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
+            if (!func2.Invoke(Item2, vOther.Item2))
                 return false;
         }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) {
+        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
             return false;
-        }
 
-        if (equalDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, other.Item4))
+        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
+            if (!func3.Invoke(Item3, vOther.Item3))
                 return false;
         }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) {
+        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
             return false;
-        }
 
-        if (equalDelegates[5] is Func<T5, T5, bool> func5) {
-            if (!func5.Invoke(Item5, other.Item5))
+        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
+            if (!func4.Invoke(Item4, vOther.Item4))
                 return false;
         }
-        else if (!EqualityComparer<T5>.Default.Equals(Item5, other.Item5)) {
+        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
             return false;
-        }
 
-        if (equalDelegates[6] is Func<T6, T6, bool> func6) {
-            if (!func6.Invoke(Item6, other.Item6))
+        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
+            if (!func5.Invoke(Item5, vOther.Item5))
                 return false;
         }
-        else if (!EqualityComparer<T6>.Default.Equals(Item6, other.Item6)) {
+        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
             return false;
+
+        if (equalsDelegates[6] is Func<T6, T6, bool> func6) {
+            if (!func6.Invoke(Item6, vOther.Item6))
+                return false;
         }
+        else if (!EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
+            return false;
 
         return true;
     }
 
-    public int GetHashCode(Delegate?[] getHashCodeDelegates)
+    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
     {
-        if (getHashCodeDelegates.Length != 7)
+        if (getHashCodeDelegates.Length < 7)
             throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
         unchecked {
             int hashCode;
@@ -899,151 +1338,252 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6> : ArgumentList, IE
             return hashCode;
         }
     }
-
-    public ArgumentList(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6)
-    {
-        Item0 = item0;
-        Item1 = item1;
-        Item2 = item2;
-        Item3 = item3;
-        Item4 = item4;
-        Item5 = item5;
-        Item6 = item6;
-    }
 }
 
-public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7> : ArgumentList, IEquatable<ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>>
+public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
+    T0 Item0,
+    T1 Item1,
+    T2 Item2,
+    T3 Item3,
+    T4 Item4,
+    T5 Item5,
+    T6 Item6,
+    T7 Item7
+) : ArgumentList
 {
+    private T0 _item0 = Item0;
+    private T1 _item1 = Item1;
+    private T2 _item2 = Item2;
+    private T3 _item3 = Item3;
+    private T4 _item4 = Item4;
+    private T5 _item5 = Item5;
+    private T6 _item6 = Item6;
+    private T7 _item7 = Item7;
+
+    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [property: DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+    [property: DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
+    [property: DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
+    [property: DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
+    [property: DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
+    [property: DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
+    [property: DataMember(Order = 7)] public T7 Item7 { get => _item7; init => _item7 = value; }
+
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 8;
 
-    public T0 Item0 { get; }
-    public T1 Item1 { get; }
-    public T2 Item2 { get; }
-    public T3 Item3 { get; }
-    public T4 Item4 { get; }
-    public T5 Item5 { get; }
-    public T6 Item6 { get; }
-    public T7 Item7 { get; }
+    // GetItem
 
-    protected override object? GetItem(int index)
+    public override T GetItem<T>(int index)
         => index switch {
+            0 => Item0 is T value ? value : default!,
+            1 => Item1 is T value ? value : default!,
+            2 => Item2 is T value ? value : default!,
+            3 => Item3 is T value ? value : default!,
+            4 => Item4 is T value ? value : default!,
+            5 => Item5 is T value ? value : default!,
+            6 => Item6 is T value ? value : default!,
+            7 => Item7 is T value ? value : default!,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override object? GetItemUntyped(int index)
+        => index switch {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             0 => Item0,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             1 => Item1,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             2 => Item2,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             3 => Item3,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             4 => Item4,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             5 => Item5,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             6 => Item6,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             7 => Item7,
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
+
+    // SetItem
+
+    public override void SetItem<T>(int index, T value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = value is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = value is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = value is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = value is T4 item4 ? item4 : default!;
+            break;
+        case 5:
+            _item5 = value is T5 item5 ? item5 : default!;
+            break;
+        case 6:
+            _item6 = value is T6 item6 ? item6 : default!;
+            break;
+        case 7:
+            _item7 = value is T7 item7 ? item7 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    public override void SetItemUntyped(int index, object? value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = value is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = value is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = value is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = value is T4 item4 ? item4 : default!;
+            break;
+        case 5:
+            _item5 = value is T5 item5 ? item5 : default!;
+            break;
+        case 6:
+            _item6 = value is T6 item6 ? item6 : default!;
+            break;
+        case 7:
+            _item7 = value is T7 item7 ? item7 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>? other)
     {
         if (other == null)
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5)) return false;
-        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6)) return false;
-        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7)) return false;
+
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+            return false;
+        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+            return false;
+        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+            return false;
+        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+            return false;
+        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+            return false;
+        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
+            return false;
+        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
+            return false;
+        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
+            return false;
         return true;
     }
 
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken || Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = (hashCode * 397) + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = (hashCode * 397) + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-            hashCode = (hashCode * 397) + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-            hashCode = (hashCode * 397) + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
-            hashCode = (hashCode * 397) + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
-            hashCode = (hashCode * 397) + (Item6 is CancellationToken || Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
-            hashCode = (hashCode * 397) + (Item7 is CancellationToken || Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
+            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+            hashCode = 397*hashCode + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+            hashCode = 397*hashCode + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
+            hashCode = 397*hashCode + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
+            hashCode = 397*hashCode + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
+            hashCode = 397*hashCode + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
+            hashCode = 397*hashCode + (Item6 is CancellationToken || Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
+            hashCode = 397*hashCode + (Item7 is CancellationToken || Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
             return hashCode;
         }
     }
 
-    public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>? other, Delegate?[] equalDelegates)
+    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
     {
-        if (equalDelegates.Length != 8)
-            throw new ArgumentOutOfRangeException(nameof(equalDelegates));
-        if (other == null)
+        if (equalsDelegates.Length < 8)
+            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
+        if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7> vOther)
             return false;
-        if (equalDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, other.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) {
-            return false;
-        }
 
-        if (equalDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, other.Item1))
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
                 return false;
         }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) {
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
-        }
 
-        if (equalDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, other.Item2))
+        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
+            if (!func1.Invoke(Item1, vOther.Item1))
                 return false;
         }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) {
+        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
             return false;
-        }
 
-        if (equalDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, other.Item3))
+        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
+            if (!func2.Invoke(Item2, vOther.Item2))
                 return false;
         }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) {
+        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
             return false;
-        }
 
-        if (equalDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, other.Item4))
+        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
+            if (!func3.Invoke(Item3, vOther.Item3))
                 return false;
         }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) {
+        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
             return false;
-        }
 
-        if (equalDelegates[5] is Func<T5, T5, bool> func5) {
-            if (!func5.Invoke(Item5, other.Item5))
+        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
+            if (!func4.Invoke(Item4, vOther.Item4))
                 return false;
         }
-        else if (!EqualityComparer<T5>.Default.Equals(Item5, other.Item5)) {
+        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
             return false;
-        }
 
-        if (equalDelegates[6] is Func<T6, T6, bool> func6) {
-            if (!func6.Invoke(Item6, other.Item6))
+        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
+            if (!func5.Invoke(Item5, vOther.Item5))
                 return false;
         }
-        else if (!EqualityComparer<T6>.Default.Equals(Item6, other.Item6)) {
+        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
             return false;
-        }
 
-        if (equalDelegates[7] is Func<T7, T7, bool> func7) {
-            if (!func7.Invoke(Item7, other.Item7))
+        if (equalsDelegates[6] is Func<T6, T6, bool> func6) {
+            if (!func6.Invoke(Item6, vOther.Item6))
                 return false;
         }
-        else if (!EqualityComparer<T7>.Default.Equals(Item7, other.Item7)) {
+        else if (!EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
             return false;
+
+        if (equalsDelegates[7] is Func<T7, T7, bool> func7) {
+            if (!func7.Invoke(Item7, vOther.Item7))
+                return false;
         }
+        else if (!EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
+            return false;
 
         return true;
     }
 
-    public int GetHashCode(Delegate?[] getHashCodeDelegates)
+    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
     {
-        if (getHashCodeDelegates.Length != 8)
+        if (getHashCodeDelegates.Length < 8)
             throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
         unchecked {
             int hashCode;
@@ -1090,164 +1630,274 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7> : ArgumentList
             return hashCode;
         }
     }
-
-    public ArgumentList(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7)
-    {
-        Item0 = item0;
-        Item1 = item1;
-        Item2 = item2;
-        Item3 = item3;
-        Item4 = item4;
-        Item5 = item5;
-        Item6 = item6;
-        Item7 = item7;
-    }
 }
 
-public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8> : ArgumentList, IEquatable<ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>>
+public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
+    T0 Item0,
+    T1 Item1,
+    T2 Item2,
+    T3 Item3,
+    T4 Item4,
+    T5 Item5,
+    T6 Item6,
+    T7 Item7,
+    T8 Item8
+) : ArgumentList
 {
+    private T0 _item0 = Item0;
+    private T1 _item1 = Item1;
+    private T2 _item2 = Item2;
+    private T3 _item3 = Item3;
+    private T4 _item4 = Item4;
+    private T5 _item5 = Item5;
+    private T6 _item6 = Item6;
+    private T7 _item7 = Item7;
+    private T8 _item8 = Item8;
+
+    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [property: DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+    [property: DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
+    [property: DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
+    [property: DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
+    [property: DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
+    [property: DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
+    [property: DataMember(Order = 7)] public T7 Item7 { get => _item7; init => _item7 = value; }
+    [property: DataMember(Order = 8)] public T8 Item8 { get => _item8; init => _item8 = value; }
+
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 9;
 
-    public T0 Item0 { get; }
-    public T1 Item1 { get; }
-    public T2 Item2 { get; }
-    public T3 Item3 { get; }
-    public T4 Item4 { get; }
-    public T5 Item5 { get; }
-    public T6 Item6 { get; }
-    public T7 Item7 { get; }
-    public T8 Item8 { get; }
+    // GetItem
 
-    protected override object? GetItem(int index)
+    public override T GetItem<T>(int index)
         => index switch {
+            0 => Item0 is T value ? value : default!,
+            1 => Item1 is T value ? value : default!,
+            2 => Item2 is T value ? value : default!,
+            3 => Item3 is T value ? value : default!,
+            4 => Item4 is T value ? value : default!,
+            5 => Item5 is T value ? value : default!,
+            6 => Item6 is T value ? value : default!,
+            7 => Item7 is T value ? value : default!,
+            8 => Item8 is T value ? value : default!,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override object? GetItemUntyped(int index)
+        => index switch {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             0 => Item0,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             1 => Item1,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             2 => Item2,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             3 => Item3,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             4 => Item4,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             5 => Item5,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             6 => Item6,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             7 => Item7,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             8 => Item8,
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
+
+    // SetItem
+
+    public override void SetItem<T>(int index, T value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = value is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = value is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = value is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = value is T4 item4 ? item4 : default!;
+            break;
+        case 5:
+            _item5 = value is T5 item5 ? item5 : default!;
+            break;
+        case 6:
+            _item6 = value is T6 item6 ? item6 : default!;
+            break;
+        case 7:
+            _item7 = value is T7 item7 ? item7 : default!;
+            break;
+        case 8:
+            _item8 = value is T8 item8 ? item8 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    public override void SetItemUntyped(int index, object? value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = value is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = value is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = value is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = value is T4 item4 ? item4 : default!;
+            break;
+        case 5:
+            _item5 = value is T5 item5 ? item5 : default!;
+            break;
+        case 6:
+            _item6 = value is T6 item6 ? item6 : default!;
+            break;
+        case 7:
+            _item7 = value is T7 item7 ? item7 : default!;
+            break;
+        case 8:
+            _item8 = value is T8 item8 ? item8 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>? other)
     {
         if (other == null)
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5)) return false;
-        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6)) return false;
-        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7)) return false;
-        if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8)) return false;
+
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+            return false;
+        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+            return false;
+        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+            return false;
+        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+            return false;
+        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+            return false;
+        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
+            return false;
+        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
+            return false;
+        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
+            return false;
+        if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8))
+            return false;
         return true;
     }
 
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken || Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = (hashCode * 397) + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = (hashCode * 397) + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-            hashCode = (hashCode * 397) + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-            hashCode = (hashCode * 397) + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
-            hashCode = (hashCode * 397) + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
-            hashCode = (hashCode * 397) + (Item6 is CancellationToken || Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
-            hashCode = (hashCode * 397) + (Item7 is CancellationToken || Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
-            hashCode = (hashCode * 397) + (Item8 is CancellationToken || Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
+            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+            hashCode = 397*hashCode + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+            hashCode = 397*hashCode + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
+            hashCode = 397*hashCode + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
+            hashCode = 397*hashCode + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
+            hashCode = 397*hashCode + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
+            hashCode = 397*hashCode + (Item6 is CancellationToken || Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
+            hashCode = 397*hashCode + (Item7 is CancellationToken || Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
+            hashCode = 397*hashCode + (Item8 is CancellationToken || Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
             return hashCode;
         }
     }
 
-    public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>? other, Delegate?[] equalDelegates)
+    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
     {
-        if (equalDelegates.Length != 9)
-            throw new ArgumentOutOfRangeException(nameof(equalDelegates));
-        if (other == null)
+        if (equalsDelegates.Length < 9)
+            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
+        if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8> vOther)
             return false;
-        if (equalDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, other.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) {
-            return false;
-        }
 
-        if (equalDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, other.Item1))
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
                 return false;
         }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) {
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
-        }
 
-        if (equalDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, other.Item2))
+        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
+            if (!func1.Invoke(Item1, vOther.Item1))
                 return false;
         }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) {
+        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
             return false;
-        }
 
-        if (equalDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, other.Item3))
+        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
+            if (!func2.Invoke(Item2, vOther.Item2))
                 return false;
         }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) {
+        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
             return false;
-        }
 
-        if (equalDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, other.Item4))
+        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
+            if (!func3.Invoke(Item3, vOther.Item3))
                 return false;
         }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) {
+        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
             return false;
-        }
 
-        if (equalDelegates[5] is Func<T5, T5, bool> func5) {
-            if (!func5.Invoke(Item5, other.Item5))
+        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
+            if (!func4.Invoke(Item4, vOther.Item4))
                 return false;
         }
-        else if (!EqualityComparer<T5>.Default.Equals(Item5, other.Item5)) {
+        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
             return false;
-        }
 
-        if (equalDelegates[6] is Func<T6, T6, bool> func6) {
-            if (!func6.Invoke(Item6, other.Item6))
+        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
+            if (!func5.Invoke(Item5, vOther.Item5))
                 return false;
         }
-        else if (!EqualityComparer<T6>.Default.Equals(Item6, other.Item6)) {
+        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
             return false;
-        }
 
-        if (equalDelegates[7] is Func<T7, T7, bool> func7) {
-            if (!func7.Invoke(Item7, other.Item7))
+        if (equalsDelegates[6] is Func<T6, T6, bool> func6) {
+            if (!func6.Invoke(Item6, vOther.Item6))
                 return false;
         }
-        else if (!EqualityComparer<T7>.Default.Equals(Item7, other.Item7)) {
+        else if (!EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
             return false;
-        }
 
-        if (equalDelegates[8] is Func<T8, T8, bool> func8) {
-            if (!func8.Invoke(Item8, other.Item8))
+        if (equalsDelegates[7] is Func<T7, T7, bool> func7) {
+            if (!func7.Invoke(Item7, vOther.Item7))
                 return false;
         }
-        else if (!EqualityComparer<T8>.Default.Equals(Item8, other.Item8)) {
+        else if (!EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
             return false;
+
+        if (equalsDelegates[8] is Func<T8, T8, bool> func8) {
+            if (!func8.Invoke(Item8, vOther.Item8))
+                return false;
         }
+        else if (!EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
+            return false;
 
         return true;
     }
 
-    public int GetHashCode(Delegate?[] getHashCodeDelegates)
+    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
     {
-        if (getHashCodeDelegates.Length != 9)
+        if (getHashCodeDelegates.Length < 9)
             throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
         unchecked {
             int hashCode;
@@ -1299,177 +1949,296 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8> : Argument
             return hashCode;
         }
     }
-
-    public ArgumentList(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8)
-    {
-        Item0 = item0;
-        Item1 = item1;
-        Item2 = item2;
-        Item3 = item3;
-        Item4 = item4;
-        Item5 = item5;
-        Item6 = item6;
-        Item7 = item7;
-        Item8 = item8;
-    }
 }
 
-public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> : ArgumentList, IEquatable<ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>>
+public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
+    T0 Item0,
+    T1 Item1,
+    T2 Item2,
+    T3 Item3,
+    T4 Item4,
+    T5 Item5,
+    T6 Item6,
+    T7 Item7,
+    T8 Item8,
+    T9 Item9
+) : ArgumentList
 {
+    private T0 _item0 = Item0;
+    private T1 _item1 = Item1;
+    private T2 _item2 = Item2;
+    private T3 _item3 = Item3;
+    private T4 _item4 = Item4;
+    private T5 _item5 = Item5;
+    private T6 _item6 = Item6;
+    private T7 _item7 = Item7;
+    private T8 _item8 = Item8;
+    private T9 _item9 = Item9;
+
+    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [property: DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+    [property: DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
+    [property: DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
+    [property: DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
+    [property: DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
+    [property: DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
+    [property: DataMember(Order = 7)] public T7 Item7 { get => _item7; init => _item7 = value; }
+    [property: DataMember(Order = 8)] public T8 Item8 { get => _item8; init => _item8 = value; }
+    [property: DataMember(Order = 9)] public T9 Item9 { get => _item9; init => _item9 = value; }
+
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 10;
 
-    public T0 Item0 { get; }
-    public T1 Item1 { get; }
-    public T2 Item2 { get; }
-    public T3 Item3 { get; }
-    public T4 Item4 { get; }
-    public T5 Item5 { get; }
-    public T6 Item6 { get; }
-    public T7 Item7 { get; }
-    public T8 Item8 { get; }
-    public T9 Item9 { get; }
+    // GetItem
 
-    protected override object? GetItem(int index)
+    public override T GetItem<T>(int index)
         => index switch {
+            0 => Item0 is T value ? value : default!,
+            1 => Item1 is T value ? value : default!,
+            2 => Item2 is T value ? value : default!,
+            3 => Item3 is T value ? value : default!,
+            4 => Item4 is T value ? value : default!,
+            5 => Item5 is T value ? value : default!,
+            6 => Item6 is T value ? value : default!,
+            7 => Item7 is T value ? value : default!,
+            8 => Item8 is T value ? value : default!,
+            9 => Item9 is T value ? value : default!,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override object? GetItemUntyped(int index)
+        => index switch {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             0 => Item0,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             1 => Item1,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             2 => Item2,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             3 => Item3,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             4 => Item4,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             5 => Item5,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             6 => Item6,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             7 => Item7,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             8 => Item8,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             9 => Item9,
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
+
+    // SetItem
+
+    public override void SetItem<T>(int index, T value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = value is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = value is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = value is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = value is T4 item4 ? item4 : default!;
+            break;
+        case 5:
+            _item5 = value is T5 item5 ? item5 : default!;
+            break;
+        case 6:
+            _item6 = value is T6 item6 ? item6 : default!;
+            break;
+        case 7:
+            _item7 = value is T7 item7 ? item7 : default!;
+            break;
+        case 8:
+            _item8 = value is T8 item8 ? item8 : default!;
+            break;
+        case 9:
+            _item9 = value is T9 item9 ? item9 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    public override void SetItemUntyped(int index, object? value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = value is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = value is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = value is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = value is T4 item4 ? item4 : default!;
+            break;
+        case 5:
+            _item5 = value is T5 item5 ? item5 : default!;
+            break;
+        case 6:
+            _item6 = value is T6 item6 ? item6 : default!;
+            break;
+        case 7:
+            _item7 = value is T7 item7 ? item7 : default!;
+            break;
+        case 8:
+            _item8 = value is T8 item8 ? item8 : default!;
+            break;
+        case 9:
+            _item9 = value is T9 item9 ? item9 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>? other)
     {
         if (other == null)
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5)) return false;
-        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6)) return false;
-        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7)) return false;
-        if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8)) return false;
-        if (Item9 is not CancellationToken && !EqualityComparer<T9>.Default.Equals(Item9, other.Item9)) return false;
+
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+            return false;
+        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+            return false;
+        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+            return false;
+        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+            return false;
+        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+            return false;
+        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
+            return false;
+        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
+            return false;
+        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
+            return false;
+        if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8))
+            return false;
+        if (Item9 is not CancellationToken && !EqualityComparer<T9>.Default.Equals(Item9, other.Item9))
+            return false;
         return true;
     }
 
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken || Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = (hashCode * 397) + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = (hashCode * 397) + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-            hashCode = (hashCode * 397) + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-            hashCode = (hashCode * 397) + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
-            hashCode = (hashCode * 397) + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
-            hashCode = (hashCode * 397) + (Item6 is CancellationToken || Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
-            hashCode = (hashCode * 397) + (Item7 is CancellationToken || Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
-            hashCode = (hashCode * 397) + (Item8 is CancellationToken || Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
-            hashCode = (hashCode * 397) + (Item9 is CancellationToken || Item9 is null ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9));
+            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+            hashCode = 397*hashCode + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+            hashCode = 397*hashCode + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
+            hashCode = 397*hashCode + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
+            hashCode = 397*hashCode + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
+            hashCode = 397*hashCode + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
+            hashCode = 397*hashCode + (Item6 is CancellationToken || Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
+            hashCode = 397*hashCode + (Item7 is CancellationToken || Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
+            hashCode = 397*hashCode + (Item8 is CancellationToken || Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
+            hashCode = 397*hashCode + (Item9 is CancellationToken || Item9 is null ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9));
             return hashCode;
         }
     }
 
-    public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>? other, Delegate?[] equalDelegates)
+    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
     {
-        if (equalDelegates.Length != 10)
-            throw new ArgumentOutOfRangeException(nameof(equalDelegates));
-        if (other == null)
+        if (equalsDelegates.Length < 10)
+            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
+        if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> vOther)
             return false;
-        if (equalDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, other.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) {
-            return false;
-        }
 
-        if (equalDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, other.Item1))
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
                 return false;
         }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) {
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
-        }
 
-        if (equalDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, other.Item2))
+        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
+            if (!func1.Invoke(Item1, vOther.Item1))
                 return false;
         }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) {
+        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
             return false;
-        }
 
-        if (equalDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, other.Item3))
+        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
+            if (!func2.Invoke(Item2, vOther.Item2))
                 return false;
         }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) {
+        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
             return false;
-        }
 
-        if (equalDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, other.Item4))
+        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
+            if (!func3.Invoke(Item3, vOther.Item3))
                 return false;
         }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) {
+        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
             return false;
-        }
 
-        if (equalDelegates[5] is Func<T5, T5, bool> func5) {
-            if (!func5.Invoke(Item5, other.Item5))
+        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
+            if (!func4.Invoke(Item4, vOther.Item4))
                 return false;
         }
-        else if (!EqualityComparer<T5>.Default.Equals(Item5, other.Item5)) {
+        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
             return false;
-        }
 
-        if (equalDelegates[6] is Func<T6, T6, bool> func6) {
-            if (!func6.Invoke(Item6, other.Item6))
+        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
+            if (!func5.Invoke(Item5, vOther.Item5))
                 return false;
         }
-        else if (!EqualityComparer<T6>.Default.Equals(Item6, other.Item6)) {
+        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
             return false;
-        }
 
-        if (equalDelegates[7] is Func<T7, T7, bool> func7) {
-            if (!func7.Invoke(Item7, other.Item7))
+        if (equalsDelegates[6] is Func<T6, T6, bool> func6) {
+            if (!func6.Invoke(Item6, vOther.Item6))
                 return false;
         }
-        else if (!EqualityComparer<T7>.Default.Equals(Item7, other.Item7)) {
+        else if (!EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
             return false;
-        }
 
-        if (equalDelegates[8] is Func<T8, T8, bool> func8) {
-            if (!func8.Invoke(Item8, other.Item8))
+        if (equalsDelegates[7] is Func<T7, T7, bool> func7) {
+            if (!func7.Invoke(Item7, vOther.Item7))
                 return false;
         }
-        else if (!EqualityComparer<T8>.Default.Equals(Item8, other.Item8)) {
+        else if (!EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
             return false;
-        }
 
-        if (equalDelegates[9] is Func<T9, T9, bool> func9) {
-            if (!func9.Invoke(Item9, other.Item9))
+        if (equalsDelegates[8] is Func<T8, T8, bool> func8) {
+            if (!func8.Invoke(Item8, vOther.Item8))
                 return false;
         }
-        else if (!EqualityComparer<T9>.Default.Equals(Item9, other.Item9)) {
+        else if (!EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
             return false;
+
+        if (equalsDelegates[9] is Func<T9, T9, bool> func9) {
+            if (!func9.Invoke(Item9, vOther.Item9))
+                return false;
         }
+        else if (!EqualityComparer<T9>.Default.Equals(Item9, vOther.Item9))
+            return false;
 
         return true;
     }
 
-    public int GetHashCode(Delegate?[] getHashCodeDelegates)
+    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
     {
-        if (getHashCodeDelegates.Length != 10)
+        if (getHashCodeDelegates.Length < 10)
             throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
         unchecked {
             int hashCode;
@@ -1526,190 +2295,318 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> : Argu
             return hashCode;
         }
     }
-
-    public ArgumentList(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8, T9 item9)
-    {
-        Item0 = item0;
-        Item1 = item1;
-        Item2 = item2;
-        Item3 = item3;
-        Item4 = item4;
-        Item5 = item5;
-        Item6 = item6;
-        Item7 = item7;
-        Item8 = item8;
-        Item9 = item9;
-    }
 }
 
-public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> : ArgumentList, IEquatable<ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>>
+public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
+    T0 Item0,
+    T1 Item1,
+    T2 Item2,
+    T3 Item3,
+    T4 Item4,
+    T5 Item5,
+    T6 Item6,
+    T7 Item7,
+    T8 Item8,
+    T9 Item9,
+    T10 Item10
+) : ArgumentList
 {
+    private T0 _item0 = Item0;
+    private T1 _item1 = Item1;
+    private T2 _item2 = Item2;
+    private T3 _item3 = Item3;
+    private T4 _item4 = Item4;
+    private T5 _item5 = Item5;
+    private T6 _item6 = Item6;
+    private T7 _item7 = Item7;
+    private T8 _item8 = Item8;
+    private T9 _item9 = Item9;
+    private T10 _item10 = Item10;
+
+    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [property: DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+    [property: DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
+    [property: DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
+    [property: DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
+    [property: DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
+    [property: DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
+    [property: DataMember(Order = 7)] public T7 Item7 { get => _item7; init => _item7 = value; }
+    [property: DataMember(Order = 8)] public T8 Item8 { get => _item8; init => _item8 = value; }
+    [property: DataMember(Order = 9)] public T9 Item9 { get => _item9; init => _item9 = value; }
+    [property: DataMember(Order = 10)] public T10 Item10 { get => _item10; init => _item10 = value; }
+
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 11;
 
-    public T0 Item0 { get; }
-    public T1 Item1 { get; }
-    public T2 Item2 { get; }
-    public T3 Item3 { get; }
-    public T4 Item4 { get; }
-    public T5 Item5 { get; }
-    public T6 Item6 { get; }
-    public T7 Item7 { get; }
-    public T8 Item8 { get; }
-    public T9 Item9 { get; }
-    public T10 Item10 { get; }
+    // GetItem
 
-    protected override object? GetItem(int index)
+    public override T GetItem<T>(int index)
         => index switch {
+            0 => Item0 is T value ? value : default!,
+            1 => Item1 is T value ? value : default!,
+            2 => Item2 is T value ? value : default!,
+            3 => Item3 is T value ? value : default!,
+            4 => Item4 is T value ? value : default!,
+            5 => Item5 is T value ? value : default!,
+            6 => Item6 is T value ? value : default!,
+            7 => Item7 is T value ? value : default!,
+            8 => Item8 is T value ? value : default!,
+            9 => Item9 is T value ? value : default!,
+            10 => Item10 is T value ? value : default!,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override object? GetItemUntyped(int index)
+        => index switch {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             0 => Item0,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             1 => Item1,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             2 => Item2,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             3 => Item3,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             4 => Item4,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             5 => Item5,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             6 => Item6,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             7 => Item7,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             8 => Item8,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             9 => Item9,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             10 => Item10,
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
+
+    // SetItem
+
+    public override void SetItem<T>(int index, T value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = value is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = value is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = value is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = value is T4 item4 ? item4 : default!;
+            break;
+        case 5:
+            _item5 = value is T5 item5 ? item5 : default!;
+            break;
+        case 6:
+            _item6 = value is T6 item6 ? item6 : default!;
+            break;
+        case 7:
+            _item7 = value is T7 item7 ? item7 : default!;
+            break;
+        case 8:
+            _item8 = value is T8 item8 ? item8 : default!;
+            break;
+        case 9:
+            _item9 = value is T9 item9 ? item9 : default!;
+            break;
+        case 10:
+            _item10 = value is T10 item10 ? item10 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    public override void SetItemUntyped(int index, object? value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = value is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = value is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = value is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = value is T4 item4 ? item4 : default!;
+            break;
+        case 5:
+            _item5 = value is T5 item5 ? item5 : default!;
+            break;
+        case 6:
+            _item6 = value is T6 item6 ? item6 : default!;
+            break;
+        case 7:
+            _item7 = value is T7 item7 ? item7 : default!;
+            break;
+        case 8:
+            _item8 = value is T8 item8 ? item8 : default!;
+            break;
+        case 9:
+            _item9 = value is T9 item9 ? item9 : default!;
+            break;
+        case 10:
+            _item10 = value is T10 item10 ? item10 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>? other)
     {
         if (other == null)
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5)) return false;
-        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6)) return false;
-        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7)) return false;
-        if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8)) return false;
-        if (Item9 is not CancellationToken && !EqualityComparer<T9>.Default.Equals(Item9, other.Item9)) return false;
-        if (Item10 is not CancellationToken && !EqualityComparer<T10>.Default.Equals(Item10, other.Item10)) return false;
+
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+            return false;
+        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+            return false;
+        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+            return false;
+        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+            return false;
+        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+            return false;
+        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
+            return false;
+        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
+            return false;
+        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
+            return false;
+        if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8))
+            return false;
+        if (Item9 is not CancellationToken && !EqualityComparer<T9>.Default.Equals(Item9, other.Item9))
+            return false;
+        if (Item10 is not CancellationToken && !EqualityComparer<T10>.Default.Equals(Item10, other.Item10))
+            return false;
         return true;
     }
 
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken || Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = (hashCode * 397) + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = (hashCode * 397) + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-            hashCode = (hashCode * 397) + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-            hashCode = (hashCode * 397) + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
-            hashCode = (hashCode * 397) + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
-            hashCode = (hashCode * 397) + (Item6 is CancellationToken || Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
-            hashCode = (hashCode * 397) + (Item7 is CancellationToken || Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
-            hashCode = (hashCode * 397) + (Item8 is CancellationToken || Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
-            hashCode = (hashCode * 397) + (Item9 is CancellationToken || Item9 is null ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9));
-            hashCode = (hashCode * 397) + (Item10 is CancellationToken || Item10 is null ? 0 : EqualityComparer<T10>.Default.GetHashCode(Item10));
+            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+            hashCode = 397*hashCode + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+            hashCode = 397*hashCode + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
+            hashCode = 397*hashCode + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
+            hashCode = 397*hashCode + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
+            hashCode = 397*hashCode + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
+            hashCode = 397*hashCode + (Item6 is CancellationToken || Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
+            hashCode = 397*hashCode + (Item7 is CancellationToken || Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
+            hashCode = 397*hashCode + (Item8 is CancellationToken || Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
+            hashCode = 397*hashCode + (Item9 is CancellationToken || Item9 is null ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9));
+            hashCode = 397*hashCode + (Item10 is CancellationToken || Item10 is null ? 0 : EqualityComparer<T10>.Default.GetHashCode(Item10));
             return hashCode;
         }
     }
 
-    public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>? other, Delegate?[] equalDelegates)
+    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
     {
-        if (equalDelegates.Length != 11)
-            throw new ArgumentOutOfRangeException(nameof(equalDelegates));
-        if (other == null)
+        if (equalsDelegates.Length < 11)
+            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
+        if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> vOther)
             return false;
-        if (equalDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, other.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) {
-            return false;
-        }
 
-        if (equalDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, other.Item1))
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
                 return false;
         }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) {
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
-        }
 
-        if (equalDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, other.Item2))
+        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
+            if (!func1.Invoke(Item1, vOther.Item1))
                 return false;
         }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) {
+        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
             return false;
-        }
 
-        if (equalDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, other.Item3))
+        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
+            if (!func2.Invoke(Item2, vOther.Item2))
                 return false;
         }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) {
+        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
             return false;
-        }
 
-        if (equalDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, other.Item4))
+        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
+            if (!func3.Invoke(Item3, vOther.Item3))
                 return false;
         }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) {
+        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
             return false;
-        }
 
-        if (equalDelegates[5] is Func<T5, T5, bool> func5) {
-            if (!func5.Invoke(Item5, other.Item5))
+        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
+            if (!func4.Invoke(Item4, vOther.Item4))
                 return false;
         }
-        else if (!EqualityComparer<T5>.Default.Equals(Item5, other.Item5)) {
+        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
             return false;
-        }
 
-        if (equalDelegates[6] is Func<T6, T6, bool> func6) {
-            if (!func6.Invoke(Item6, other.Item6))
+        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
+            if (!func5.Invoke(Item5, vOther.Item5))
                 return false;
         }
-        else if (!EqualityComparer<T6>.Default.Equals(Item6, other.Item6)) {
+        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
             return false;
-        }
 
-        if (equalDelegates[7] is Func<T7, T7, bool> func7) {
-            if (!func7.Invoke(Item7, other.Item7))
+        if (equalsDelegates[6] is Func<T6, T6, bool> func6) {
+            if (!func6.Invoke(Item6, vOther.Item6))
                 return false;
         }
-        else if (!EqualityComparer<T7>.Default.Equals(Item7, other.Item7)) {
+        else if (!EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
             return false;
-        }
 
-        if (equalDelegates[8] is Func<T8, T8, bool> func8) {
-            if (!func8.Invoke(Item8, other.Item8))
+        if (equalsDelegates[7] is Func<T7, T7, bool> func7) {
+            if (!func7.Invoke(Item7, vOther.Item7))
                 return false;
         }
-        else if (!EqualityComparer<T8>.Default.Equals(Item8, other.Item8)) {
+        else if (!EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
             return false;
-        }
 
-        if (equalDelegates[9] is Func<T9, T9, bool> func9) {
-            if (!func9.Invoke(Item9, other.Item9))
+        if (equalsDelegates[8] is Func<T8, T8, bool> func8) {
+            if (!func8.Invoke(Item8, vOther.Item8))
                 return false;
         }
-        else if (!EqualityComparer<T9>.Default.Equals(Item9, other.Item9)) {
+        else if (!EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
             return false;
-        }
 
-        if (equalDelegates[10] is Func<T10, T10, bool> func10) {
-            if (!func10.Invoke(Item10, other.Item10))
+        if (equalsDelegates[9] is Func<T9, T9, bool> func9) {
+            if (!func9.Invoke(Item9, vOther.Item9))
                 return false;
         }
-        else if (!EqualityComparer<T10>.Default.Equals(Item10, other.Item10)) {
+        else if (!EqualityComparer<T9>.Default.Equals(Item9, vOther.Item9))
             return false;
+
+        if (equalsDelegates[10] is Func<T10, T10, bool> func10) {
+            if (!func10.Invoke(Item10, vOther.Item10))
+                return false;
         }
+        else if (!EqualityComparer<T10>.Default.Equals(Item10, vOther.Item10))
+            return false;
 
         return true;
     }
 
-    public int GetHashCode(Delegate?[] getHashCodeDelegates)
+    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
     {
-        if (getHashCodeDelegates.Length != 11)
+        if (getHashCodeDelegates.Length < 11)
             throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
         unchecked {
             int hashCode;
@@ -1771,203 +2668,340 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> :
             return hashCode;
         }
     }
-
-    public ArgumentList(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8, T9 item9, T10 item10)
-    {
-        Item0 = item0;
-        Item1 = item1;
-        Item2 = item2;
-        Item3 = item3;
-        Item4 = item4;
-        Item5 = item5;
-        Item6 = item6;
-        Item7 = item7;
-        Item8 = item8;
-        Item9 = item9;
-        Item10 = item10;
-    }
 }
 
-public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> : ArgumentList, IEquatable<ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>>
+public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(
+    T0 Item0,
+    T1 Item1,
+    T2 Item2,
+    T3 Item3,
+    T4 Item4,
+    T5 Item5,
+    T6 Item6,
+    T7 Item7,
+    T8 Item8,
+    T9 Item9,
+    T10 Item10,
+    T11 Item11
+) : ArgumentList
 {
+    private T0 _item0 = Item0;
+    private T1 _item1 = Item1;
+    private T2 _item2 = Item2;
+    private T3 _item3 = Item3;
+    private T4 _item4 = Item4;
+    private T5 _item5 = Item5;
+    private T6 _item6 = Item6;
+    private T7 _item7 = Item7;
+    private T8 _item8 = Item8;
+    private T9 _item9 = Item9;
+    private T10 _item10 = Item10;
+    private T11 _item11 = Item11;
+
+    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [property: DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+    [property: DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
+    [property: DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
+    [property: DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
+    [property: DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
+    [property: DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
+    [property: DataMember(Order = 7)] public T7 Item7 { get => _item7; init => _item7 = value; }
+    [property: DataMember(Order = 8)] public T8 Item8 { get => _item8; init => _item8 = value; }
+    [property: DataMember(Order = 9)] public T9 Item9 { get => _item9; init => _item9 = value; }
+    [property: DataMember(Order = 10)] public T10 Item10 { get => _item10; init => _item10 = value; }
+    [property: DataMember(Order = 11)] public T11 Item11 { get => _item11; init => _item11 = value; }
+
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 12;
 
-    public T0 Item0 { get; }
-    public T1 Item1 { get; }
-    public T2 Item2 { get; }
-    public T3 Item3 { get; }
-    public T4 Item4 { get; }
-    public T5 Item5 { get; }
-    public T6 Item6 { get; }
-    public T7 Item7 { get; }
-    public T8 Item8 { get; }
-    public T9 Item9 { get; }
-    public T10 Item10 { get; }
-    public T11 Item11 { get; }
+    // GetItem
 
-    protected override object? GetItem(int index)
+    public override T GetItem<T>(int index)
         => index switch {
+            0 => Item0 is T value ? value : default!,
+            1 => Item1 is T value ? value : default!,
+            2 => Item2 is T value ? value : default!,
+            3 => Item3 is T value ? value : default!,
+            4 => Item4 is T value ? value : default!,
+            5 => Item5 is T value ? value : default!,
+            6 => Item6 is T value ? value : default!,
+            7 => Item7 is T value ? value : default!,
+            8 => Item8 is T value ? value : default!,
+            9 => Item9 is T value ? value : default!,
+            10 => Item10 is T value ? value : default!,
+            11 => Item11 is T value ? value : default!,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override object? GetItemUntyped(int index)
+        => index switch {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             0 => Item0,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             1 => Item1,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             2 => Item2,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             3 => Item3,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             4 => Item4,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             5 => Item5,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             6 => Item6,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             7 => Item7,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             8 => Item8,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             9 => Item9,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             10 => Item10,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
             11 => Item11,
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
+
+    // SetItem
+
+    public override void SetItem<T>(int index, T value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = value is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = value is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = value is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = value is T4 item4 ? item4 : default!;
+            break;
+        case 5:
+            _item5 = value is T5 item5 ? item5 : default!;
+            break;
+        case 6:
+            _item6 = value is T6 item6 ? item6 : default!;
+            break;
+        case 7:
+            _item7 = value is T7 item7 ? item7 : default!;
+            break;
+        case 8:
+            _item8 = value is T8 item8 ? item8 : default!;
+            break;
+        case 9:
+            _item9 = value is T9 item9 ? item9 : default!;
+            break;
+        case 10:
+            _item10 = value is T10 item10 ? item10 : default!;
+            break;
+        case 11:
+            _item11 = value is T11 item11 ? item11 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    public override void SetItemUntyped(int index, object? value)
+    {
+        switch (index) {
+        case 0:
+            _item0 = value is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = value is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = value is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = value is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = value is T4 item4 ? item4 : default!;
+            break;
+        case 5:
+            _item5 = value is T5 item5 ? item5 : default!;
+            break;
+        case 6:
+            _item6 = value is T6 item6 ? item6 : default!;
+            break;
+        case 7:
+            _item7 = value is T7 item7 ? item7 : default!;
+            break;
+        case 8:
+            _item8 = value is T8 item8 ? item8 : default!;
+            break;
+        case 9:
+            _item9 = value is T9 item9 ? item9 : default!;
+            break;
+        case 10:
+            _item10 = value is T10 item10 ? item10 : default!;
+            break;
+        case 11:
+            _item11 = value is T11 item11 ? item11 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>? other)
     {
         if (other == null)
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5)) return false;
-        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6)) return false;
-        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7)) return false;
-        if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8)) return false;
-        if (Item9 is not CancellationToken && !EqualityComparer<T9>.Default.Equals(Item9, other.Item9)) return false;
-        if (Item10 is not CancellationToken && !EqualityComparer<T10>.Default.Equals(Item10, other.Item10)) return false;
-        if (Item11 is not CancellationToken && !EqualityComparer<T11>.Default.Equals(Item11, other.Item11)) return false;
+
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+            return false;
+        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+            return false;
+        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+            return false;
+        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+            return false;
+        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+            return false;
+        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
+            return false;
+        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
+            return false;
+        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
+            return false;
+        if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8))
+            return false;
+        if (Item9 is not CancellationToken && !EqualityComparer<T9>.Default.Equals(Item9, other.Item9))
+            return false;
+        if (Item10 is not CancellationToken && !EqualityComparer<T10>.Default.Equals(Item10, other.Item10))
+            return false;
+        if (Item11 is not CancellationToken && !EqualityComparer<T11>.Default.Equals(Item11, other.Item11))
+            return false;
         return true;
     }
 
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken || Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = (hashCode * 397) + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = (hashCode * 397) + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-            hashCode = (hashCode * 397) + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-            hashCode = (hashCode * 397) + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
-            hashCode = (hashCode * 397) + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
-            hashCode = (hashCode * 397) + (Item6 is CancellationToken || Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
-            hashCode = (hashCode * 397) + (Item7 is CancellationToken || Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
-            hashCode = (hashCode * 397) + (Item8 is CancellationToken || Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
-            hashCode = (hashCode * 397) + (Item9 is CancellationToken || Item9 is null ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9));
-            hashCode = (hashCode * 397) + (Item10 is CancellationToken || Item10 is null ? 0 : EqualityComparer<T10>.Default.GetHashCode(Item10));
-            hashCode = (hashCode * 397) + (Item11 is CancellationToken || Item11 is null ? 0 : EqualityComparer<T11>.Default.GetHashCode(Item11));
+            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+            hashCode = 397*hashCode + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+            hashCode = 397*hashCode + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
+            hashCode = 397*hashCode + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
+            hashCode = 397*hashCode + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
+            hashCode = 397*hashCode + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
+            hashCode = 397*hashCode + (Item6 is CancellationToken || Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
+            hashCode = 397*hashCode + (Item7 is CancellationToken || Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
+            hashCode = 397*hashCode + (Item8 is CancellationToken || Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
+            hashCode = 397*hashCode + (Item9 is CancellationToken || Item9 is null ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9));
+            hashCode = 397*hashCode + (Item10 is CancellationToken || Item10 is null ? 0 : EqualityComparer<T10>.Default.GetHashCode(Item10));
+            hashCode = 397*hashCode + (Item11 is CancellationToken || Item11 is null ? 0 : EqualityComparer<T11>.Default.GetHashCode(Item11));
             return hashCode;
         }
     }
 
-    public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>? other, Delegate?[] equalDelegates)
+    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
     {
-        if (equalDelegates.Length != 12)
-            throw new ArgumentOutOfRangeException(nameof(equalDelegates));
-        if (other == null)
+        if (equalsDelegates.Length < 12)
+            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
+        if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> vOther)
             return false;
-        if (equalDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, other.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) {
-            return false;
-        }
 
-        if (equalDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, other.Item1))
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
                 return false;
         }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) {
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
-        }
 
-        if (equalDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, other.Item2))
+        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
+            if (!func1.Invoke(Item1, vOther.Item1))
                 return false;
         }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) {
+        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
             return false;
-        }
 
-        if (equalDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, other.Item3))
+        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
+            if (!func2.Invoke(Item2, vOther.Item2))
                 return false;
         }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) {
+        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
             return false;
-        }
 
-        if (equalDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, other.Item4))
+        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
+            if (!func3.Invoke(Item3, vOther.Item3))
                 return false;
         }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) {
+        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
             return false;
-        }
 
-        if (equalDelegates[5] is Func<T5, T5, bool> func5) {
-            if (!func5.Invoke(Item5, other.Item5))
+        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
+            if (!func4.Invoke(Item4, vOther.Item4))
                 return false;
         }
-        else if (!EqualityComparer<T5>.Default.Equals(Item5, other.Item5)) {
+        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
             return false;
-        }
 
-        if (equalDelegates[6] is Func<T6, T6, bool> func6) {
-            if (!func6.Invoke(Item6, other.Item6))
+        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
+            if (!func5.Invoke(Item5, vOther.Item5))
                 return false;
         }
-        else if (!EqualityComparer<T6>.Default.Equals(Item6, other.Item6)) {
+        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
             return false;
-        }
 
-        if (equalDelegates[7] is Func<T7, T7, bool> func7) {
-            if (!func7.Invoke(Item7, other.Item7))
+        if (equalsDelegates[6] is Func<T6, T6, bool> func6) {
+            if (!func6.Invoke(Item6, vOther.Item6))
                 return false;
         }
-        else if (!EqualityComparer<T7>.Default.Equals(Item7, other.Item7)) {
+        else if (!EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
             return false;
-        }
 
-        if (equalDelegates[8] is Func<T8, T8, bool> func8) {
-            if (!func8.Invoke(Item8, other.Item8))
+        if (equalsDelegates[7] is Func<T7, T7, bool> func7) {
+            if (!func7.Invoke(Item7, vOther.Item7))
                 return false;
         }
-        else if (!EqualityComparer<T8>.Default.Equals(Item8, other.Item8)) {
+        else if (!EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
             return false;
-        }
 
-        if (equalDelegates[9] is Func<T9, T9, bool> func9) {
-            if (!func9.Invoke(Item9, other.Item9))
+        if (equalsDelegates[8] is Func<T8, T8, bool> func8) {
+            if (!func8.Invoke(Item8, vOther.Item8))
                 return false;
         }
-        else if (!EqualityComparer<T9>.Default.Equals(Item9, other.Item9)) {
+        else if (!EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
             return false;
-        }
 
-        if (equalDelegates[10] is Func<T10, T10, bool> func10) {
-            if (!func10.Invoke(Item10, other.Item10))
+        if (equalsDelegates[9] is Func<T9, T9, bool> func9) {
+            if (!func9.Invoke(Item9, vOther.Item9))
                 return false;
         }
-        else if (!EqualityComparer<T10>.Default.Equals(Item10, other.Item10)) {
+        else if (!EqualityComparer<T9>.Default.Equals(Item9, vOther.Item9))
             return false;
-        }
 
-        if (equalDelegates[11] is Func<T11, T11, bool> func11) {
-            if (!func11.Invoke(Item11, other.Item11))
+        if (equalsDelegates[10] is Func<T10, T10, bool> func10) {
+            if (!func10.Invoke(Item10, vOther.Item10))
                 return false;
         }
-        else if (!EqualityComparer<T11>.Default.Equals(Item11, other.Item11)) {
+        else if (!EqualityComparer<T10>.Default.Equals(Item10, vOther.Item10))
             return false;
+
+        if (equalsDelegates[11] is Func<T11, T11, bool> func11) {
+            if (!func11.Invoke(Item11, vOther.Item11))
+                return false;
         }
+        else if (!EqualityComparer<T11>.Default.Equals(Item11, vOther.Item11))
+            return false;
 
         return true;
     }
 
-    public int GetHashCode(Delegate?[] getHashCodeDelegates)
+    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
     {
-        if (getHashCodeDelegates.Length != 12)
+        if (getHashCodeDelegates.Length < 12)
             throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
         unchecked {
             int hashCode;
@@ -2033,1258 +3067,6 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
 
             return hashCode;
         }
-    }
-
-    public ArgumentList(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8, T9 item9, T10 item10, T11 item11)
-    {
-        Item0 = item0;
-        Item1 = item1;
-        Item2 = item2;
-        Item3 = item3;
-        Item4 = item4;
-        Item5 = item5;
-        Item6 = item6;
-        Item7 = item7;
-        Item8 = item8;
-        Item9 = item9;
-        Item10 = item10;
-        Item11 = item11;
-    }
-}
-
-public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12> : ArgumentList, IEquatable<ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>>
-{
-    public override int Length => 13;
-
-    public T0 Item0 { get; }
-    public T1 Item1 { get; }
-    public T2 Item2 { get; }
-    public T3 Item3 { get; }
-    public T4 Item4 { get; }
-    public T5 Item5 { get; }
-    public T6 Item6 { get; }
-    public T7 Item7 { get; }
-    public T8 Item8 { get; }
-    public T9 Item9 { get; }
-    public T10 Item10 { get; }
-    public T11 Item11 { get; }
-    public T12 Item12 { get; }
-
-    protected override object? GetItem(int index)
-        => index switch {
-            0 => Item0,
-            1 => Item1,
-            2 => Item2,
-            3 => Item3,
-            4 => Item4,
-            5 => Item5,
-            6 => Item6,
-            7 => Item7,
-            8 => Item8,
-            9 => Item9,
-            10 => Item10,
-            11 => Item11,
-            12 => Item12,
-            _ => throw new ArgumentOutOfRangeException(nameof(index))
-        };
-
-    public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>? other)
-    {
-        if (other == null)
-            return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5)) return false;
-        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6)) return false;
-        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7)) return false;
-        if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8)) return false;
-        if (Item9 is not CancellationToken && !EqualityComparer<T9>.Default.Equals(Item9, other.Item9)) return false;
-        if (Item10 is not CancellationToken && !EqualityComparer<T10>.Default.Equals(Item10, other.Item10)) return false;
-        if (Item11 is not CancellationToken && !EqualityComparer<T11>.Default.Equals(Item11, other.Item11)) return false;
-        if (Item12 is not CancellationToken && !EqualityComparer<T12>.Default.Equals(Item12, other.Item12)) return false;
-        return true;
-    }
-
-    public override int GetHashCode()
-    {
-        unchecked {
-            var hashCode = Item0 is CancellationToken || Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = (hashCode * 397) + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = (hashCode * 397) + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-            hashCode = (hashCode * 397) + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-            hashCode = (hashCode * 397) + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
-            hashCode = (hashCode * 397) + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
-            hashCode = (hashCode * 397) + (Item6 is CancellationToken || Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
-            hashCode = (hashCode * 397) + (Item7 is CancellationToken || Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
-            hashCode = (hashCode * 397) + (Item8 is CancellationToken || Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
-            hashCode = (hashCode * 397) + (Item9 is CancellationToken || Item9 is null ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9));
-            hashCode = (hashCode * 397) + (Item10 is CancellationToken || Item10 is null ? 0 : EqualityComparer<T10>.Default.GetHashCode(Item10));
-            hashCode = (hashCode * 397) + (Item11 is CancellationToken || Item11 is null ? 0 : EqualityComparer<T11>.Default.GetHashCode(Item11));
-            hashCode = (hashCode * 397) + (Item12 is CancellationToken || Item12 is null ? 0 : EqualityComparer<T12>.Default.GetHashCode(Item12));
-            return hashCode;
-        }
-    }
-
-    public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12>? other, Delegate?[] equalDelegates)
-    {
-        if (equalDelegates.Length != 13)
-            throw new ArgumentOutOfRangeException(nameof(equalDelegates));
-        if (other == null)
-            return false;
-        if (equalDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, other.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) {
-            return false;
-        }
-
-        if (equalDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, other.Item1))
-                return false;
-        }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) {
-            return false;
-        }
-
-        if (equalDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, other.Item2))
-                return false;
-        }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) {
-            return false;
-        }
-
-        if (equalDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, other.Item3))
-                return false;
-        }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) {
-            return false;
-        }
-
-        if (equalDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, other.Item4))
-                return false;
-        }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) {
-            return false;
-        }
-
-        if (equalDelegates[5] is Func<T5, T5, bool> func5) {
-            if (!func5.Invoke(Item5, other.Item5))
-                return false;
-        }
-        else if (!EqualityComparer<T5>.Default.Equals(Item5, other.Item5)) {
-            return false;
-        }
-
-        if (equalDelegates[6] is Func<T6, T6, bool> func6) {
-            if (!func6.Invoke(Item6, other.Item6))
-                return false;
-        }
-        else if (!EqualityComparer<T6>.Default.Equals(Item6, other.Item6)) {
-            return false;
-        }
-
-        if (equalDelegates[7] is Func<T7, T7, bool> func7) {
-            if (!func7.Invoke(Item7, other.Item7))
-                return false;
-        }
-        else if (!EqualityComparer<T7>.Default.Equals(Item7, other.Item7)) {
-            return false;
-        }
-
-        if (equalDelegates[8] is Func<T8, T8, bool> func8) {
-            if (!func8.Invoke(Item8, other.Item8))
-                return false;
-        }
-        else if (!EqualityComparer<T8>.Default.Equals(Item8, other.Item8)) {
-            return false;
-        }
-
-        if (equalDelegates[9] is Func<T9, T9, bool> func9) {
-            if (!func9.Invoke(Item9, other.Item9))
-                return false;
-        }
-        else if (!EqualityComparer<T9>.Default.Equals(Item9, other.Item9)) {
-            return false;
-        }
-
-        if (equalDelegates[10] is Func<T10, T10, bool> func10) {
-            if (!func10.Invoke(Item10, other.Item10))
-                return false;
-        }
-        else if (!EqualityComparer<T10>.Default.Equals(Item10, other.Item10)) {
-            return false;
-        }
-
-        if (equalDelegates[11] is Func<T11, T11, bool> func11) {
-            if (!func11.Invoke(Item11, other.Item11))
-                return false;
-        }
-        else if (!EqualityComparer<T11>.Default.Equals(Item11, other.Item11)) {
-            return false;
-        }
-
-        if (equalDelegates[12] is Func<T12, T12, bool> func12) {
-            if (!func12.Invoke(Item12, other.Item12))
-                return false;
-        }
-        else if (!EqualityComparer<T12>.Default.Equals(Item12, other.Item12)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    public int GetHashCode(Delegate?[] getHashCodeDelegates)
-    {
-        if (getHashCodeDelegates.Length != 13)
-            throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
-        unchecked {
-            int hashCode;
-            if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0(Item0);
-            else
-                hashCode = Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-
-            if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1(Item1);
-            else
-                hashCode = (hashCode * 397) + (Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-
-            if (getHashCodeDelegates[2] is Func<T2, int> func2)
-                hashCode = (hashCode * 397) + func2(Item2);
-            else
-                hashCode = (hashCode * 397) + (Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-
-            if (getHashCodeDelegates[3] is Func<T3, int> func3)
-                hashCode = (hashCode * 397) + func3(Item3);
-            else
-                hashCode = (hashCode * 397) + (Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-
-            if (getHashCodeDelegates[4] is Func<T4, int> func4)
-                hashCode = (hashCode * 397) + func4(Item4);
-            else
-                hashCode = (hashCode * 397) + (Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
-
-            if (getHashCodeDelegates[5] is Func<T5, int> func5)
-                hashCode = (hashCode * 397) + func5(Item5);
-            else
-                hashCode = (hashCode * 397) + (Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
-
-            if (getHashCodeDelegates[6] is Func<T6, int> func6)
-                hashCode = (hashCode * 397) + func6(Item6);
-            else
-                hashCode = (hashCode * 397) + (Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
-
-            if (getHashCodeDelegates[7] is Func<T7, int> func7)
-                hashCode = (hashCode * 397) + func7(Item7);
-            else
-                hashCode = (hashCode * 397) + (Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
-
-            if (getHashCodeDelegates[8] is Func<T8, int> func8)
-                hashCode = (hashCode * 397) + func8(Item8);
-            else
-                hashCode = (hashCode * 397) + (Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
-
-            if (getHashCodeDelegates[9] is Func<T9, int> func9)
-                hashCode = (hashCode * 397) + func9(Item9);
-            else
-                hashCode = (hashCode * 397) + (Item9 is null ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9));
-
-            if (getHashCodeDelegates[10] is Func<T10, int> func10)
-                hashCode = (hashCode * 397) + func10(Item10);
-            else
-                hashCode = (hashCode * 397) + (Item10 is null ? 0 : EqualityComparer<T10>.Default.GetHashCode(Item10));
-
-            if (getHashCodeDelegates[11] is Func<T11, int> func11)
-                hashCode = (hashCode * 397) + func11(Item11);
-            else
-                hashCode = (hashCode * 397) + (Item11 is null ? 0 : EqualityComparer<T11>.Default.GetHashCode(Item11));
-
-            if (getHashCodeDelegates[12] is Func<T12, int> func12)
-                hashCode = (hashCode * 397) + func12(Item12);
-            else
-                hashCode = (hashCode * 397) + (Item12 is null ? 0 : EqualityComparer<T12>.Default.GetHashCode(Item12));
-
-            return hashCode;
-        }
-    }
-
-    public ArgumentList(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8, T9 item9, T10 item10, T11 item11, T12 item12)
-    {
-        Item0 = item0;
-        Item1 = item1;
-        Item2 = item2;
-        Item3 = item3;
-        Item4 = item4;
-        Item5 = item5;
-        Item6 = item6;
-        Item7 = item7;
-        Item8 = item8;
-        Item9 = item9;
-        Item10 = item10;
-        Item11 = item11;
-        Item12 = item12;
-    }
-}
-
-public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13> : ArgumentList, IEquatable<ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>>
-{
-    public override int Length => 14;
-
-    public T0 Item0 { get; }
-    public T1 Item1 { get; }
-    public T2 Item2 { get; }
-    public T3 Item3 { get; }
-    public T4 Item4 { get; }
-    public T5 Item5 { get; }
-    public T6 Item6 { get; }
-    public T7 Item7 { get; }
-    public T8 Item8 { get; }
-    public T9 Item9 { get; }
-    public T10 Item10 { get; }
-    public T11 Item11 { get; }
-    public T12 Item12 { get; }
-    public T13 Item13 { get; }
-
-    protected override object? GetItem(int index)
-        => index switch {
-            0 => Item0,
-            1 => Item1,
-            2 => Item2,
-            3 => Item3,
-            4 => Item4,
-            5 => Item5,
-            6 => Item6,
-            7 => Item7,
-            8 => Item8,
-            9 => Item9,
-            10 => Item10,
-            11 => Item11,
-            12 => Item12,
-            13 => Item13,
-            _ => throw new ArgumentOutOfRangeException(nameof(index))
-        };
-
-    public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>? other)
-    {
-        if (other == null)
-            return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5)) return false;
-        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6)) return false;
-        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7)) return false;
-        if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8)) return false;
-        if (Item9 is not CancellationToken && !EqualityComparer<T9>.Default.Equals(Item9, other.Item9)) return false;
-        if (Item10 is not CancellationToken && !EqualityComparer<T10>.Default.Equals(Item10, other.Item10)) return false;
-        if (Item11 is not CancellationToken && !EqualityComparer<T11>.Default.Equals(Item11, other.Item11)) return false;
-        if (Item12 is not CancellationToken && !EqualityComparer<T12>.Default.Equals(Item12, other.Item12)) return false;
-        if (Item13 is not CancellationToken && !EqualityComparer<T13>.Default.Equals(Item13, other.Item13)) return false;
-        return true;
-    }
-
-    public override int GetHashCode()
-    {
-        unchecked {
-            var hashCode = Item0 is CancellationToken || Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = (hashCode * 397) + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = (hashCode * 397) + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-            hashCode = (hashCode * 397) + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-            hashCode = (hashCode * 397) + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
-            hashCode = (hashCode * 397) + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
-            hashCode = (hashCode * 397) + (Item6 is CancellationToken || Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
-            hashCode = (hashCode * 397) + (Item7 is CancellationToken || Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
-            hashCode = (hashCode * 397) + (Item8 is CancellationToken || Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
-            hashCode = (hashCode * 397) + (Item9 is CancellationToken || Item9 is null ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9));
-            hashCode = (hashCode * 397) + (Item10 is CancellationToken || Item10 is null ? 0 : EqualityComparer<T10>.Default.GetHashCode(Item10));
-            hashCode = (hashCode * 397) + (Item11 is CancellationToken || Item11 is null ? 0 : EqualityComparer<T11>.Default.GetHashCode(Item11));
-            hashCode = (hashCode * 397) + (Item12 is CancellationToken || Item12 is null ? 0 : EqualityComparer<T12>.Default.GetHashCode(Item12));
-            hashCode = (hashCode * 397) + (Item13 is CancellationToken || Item13 is null ? 0 : EqualityComparer<T13>.Default.GetHashCode(Item13));
-            return hashCode;
-        }
-    }
-
-    public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>? other, Delegate?[] equalDelegates)
-    {
-        if (equalDelegates.Length != 14)
-            throw new ArgumentOutOfRangeException(nameof(equalDelegates));
-        if (other == null)
-            return false;
-        if (equalDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, other.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) {
-            return false;
-        }
-
-        if (equalDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, other.Item1))
-                return false;
-        }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) {
-            return false;
-        }
-
-        if (equalDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, other.Item2))
-                return false;
-        }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) {
-            return false;
-        }
-
-        if (equalDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, other.Item3))
-                return false;
-        }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) {
-            return false;
-        }
-
-        if (equalDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, other.Item4))
-                return false;
-        }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) {
-            return false;
-        }
-
-        if (equalDelegates[5] is Func<T5, T5, bool> func5) {
-            if (!func5.Invoke(Item5, other.Item5))
-                return false;
-        }
-        else if (!EqualityComparer<T5>.Default.Equals(Item5, other.Item5)) {
-            return false;
-        }
-
-        if (equalDelegates[6] is Func<T6, T6, bool> func6) {
-            if (!func6.Invoke(Item6, other.Item6))
-                return false;
-        }
-        else if (!EqualityComparer<T6>.Default.Equals(Item6, other.Item6)) {
-            return false;
-        }
-
-        if (equalDelegates[7] is Func<T7, T7, bool> func7) {
-            if (!func7.Invoke(Item7, other.Item7))
-                return false;
-        }
-        else if (!EqualityComparer<T7>.Default.Equals(Item7, other.Item7)) {
-            return false;
-        }
-
-        if (equalDelegates[8] is Func<T8, T8, bool> func8) {
-            if (!func8.Invoke(Item8, other.Item8))
-                return false;
-        }
-        else if (!EqualityComparer<T8>.Default.Equals(Item8, other.Item8)) {
-            return false;
-        }
-
-        if (equalDelegates[9] is Func<T9, T9, bool> func9) {
-            if (!func9.Invoke(Item9, other.Item9))
-                return false;
-        }
-        else if (!EqualityComparer<T9>.Default.Equals(Item9, other.Item9)) {
-            return false;
-        }
-
-        if (equalDelegates[10] is Func<T10, T10, bool> func10) {
-            if (!func10.Invoke(Item10, other.Item10))
-                return false;
-        }
-        else if (!EqualityComparer<T10>.Default.Equals(Item10, other.Item10)) {
-            return false;
-        }
-
-        if (equalDelegates[11] is Func<T11, T11, bool> func11) {
-            if (!func11.Invoke(Item11, other.Item11))
-                return false;
-        }
-        else if (!EqualityComparer<T11>.Default.Equals(Item11, other.Item11)) {
-            return false;
-        }
-
-        if (equalDelegates[12] is Func<T12, T12, bool> func12) {
-            if (!func12.Invoke(Item12, other.Item12))
-                return false;
-        }
-        else if (!EqualityComparer<T12>.Default.Equals(Item12, other.Item12)) {
-            return false;
-        }
-
-        if (equalDelegates[13] is Func<T13, T13, bool> func13) {
-            if (!func13.Invoke(Item13, other.Item13))
-                return false;
-        }
-        else if (!EqualityComparer<T13>.Default.Equals(Item13, other.Item13)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    public int GetHashCode(Delegate?[] getHashCodeDelegates)
-    {
-        if (getHashCodeDelegates.Length != 14)
-            throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
-        unchecked {
-            int hashCode;
-            if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0(Item0);
-            else
-                hashCode = Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-
-            if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1(Item1);
-            else
-                hashCode = (hashCode * 397) + (Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-
-            if (getHashCodeDelegates[2] is Func<T2, int> func2)
-                hashCode = (hashCode * 397) + func2(Item2);
-            else
-                hashCode = (hashCode * 397) + (Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-
-            if (getHashCodeDelegates[3] is Func<T3, int> func3)
-                hashCode = (hashCode * 397) + func3(Item3);
-            else
-                hashCode = (hashCode * 397) + (Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-
-            if (getHashCodeDelegates[4] is Func<T4, int> func4)
-                hashCode = (hashCode * 397) + func4(Item4);
-            else
-                hashCode = (hashCode * 397) + (Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
-
-            if (getHashCodeDelegates[5] is Func<T5, int> func5)
-                hashCode = (hashCode * 397) + func5(Item5);
-            else
-                hashCode = (hashCode * 397) + (Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
-
-            if (getHashCodeDelegates[6] is Func<T6, int> func6)
-                hashCode = (hashCode * 397) + func6(Item6);
-            else
-                hashCode = (hashCode * 397) + (Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
-
-            if (getHashCodeDelegates[7] is Func<T7, int> func7)
-                hashCode = (hashCode * 397) + func7(Item7);
-            else
-                hashCode = (hashCode * 397) + (Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
-
-            if (getHashCodeDelegates[8] is Func<T8, int> func8)
-                hashCode = (hashCode * 397) + func8(Item8);
-            else
-                hashCode = (hashCode * 397) + (Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
-
-            if (getHashCodeDelegates[9] is Func<T9, int> func9)
-                hashCode = (hashCode * 397) + func9(Item9);
-            else
-                hashCode = (hashCode * 397) + (Item9 is null ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9));
-
-            if (getHashCodeDelegates[10] is Func<T10, int> func10)
-                hashCode = (hashCode * 397) + func10(Item10);
-            else
-                hashCode = (hashCode * 397) + (Item10 is null ? 0 : EqualityComparer<T10>.Default.GetHashCode(Item10));
-
-            if (getHashCodeDelegates[11] is Func<T11, int> func11)
-                hashCode = (hashCode * 397) + func11(Item11);
-            else
-                hashCode = (hashCode * 397) + (Item11 is null ? 0 : EqualityComparer<T11>.Default.GetHashCode(Item11));
-
-            if (getHashCodeDelegates[12] is Func<T12, int> func12)
-                hashCode = (hashCode * 397) + func12(Item12);
-            else
-                hashCode = (hashCode * 397) + (Item12 is null ? 0 : EqualityComparer<T12>.Default.GetHashCode(Item12));
-
-            if (getHashCodeDelegates[13] is Func<T13, int> func13)
-                hashCode = (hashCode * 397) + func13(Item13);
-            else
-                hashCode = (hashCode * 397) + (Item13 is null ? 0 : EqualityComparer<T13>.Default.GetHashCode(Item13));
-
-            return hashCode;
-        }
-    }
-
-    public ArgumentList(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8, T9 item9, T10 item10, T11 item11, T12 item12, T13 item13)
-    {
-        Item0 = item0;
-        Item1 = item1;
-        Item2 = item2;
-        Item3 = item3;
-        Item4 = item4;
-        Item5 = item5;
-        Item6 = item6;
-        Item7 = item7;
-        Item8 = item8;
-        Item9 = item9;
-        Item10 = item10;
-        Item11 = item11;
-        Item12 = item12;
-        Item13 = item13;
-    }
-}
-
-public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14> : ArgumentList, IEquatable<ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>>
-{
-    public override int Length => 15;
-
-    public T0 Item0 { get; }
-    public T1 Item1 { get; }
-    public T2 Item2 { get; }
-    public T3 Item3 { get; }
-    public T4 Item4 { get; }
-    public T5 Item5 { get; }
-    public T6 Item6 { get; }
-    public T7 Item7 { get; }
-    public T8 Item8 { get; }
-    public T9 Item9 { get; }
-    public T10 Item10 { get; }
-    public T11 Item11 { get; }
-    public T12 Item12 { get; }
-    public T13 Item13 { get; }
-    public T14 Item14 { get; }
-
-    protected override object? GetItem(int index)
-        => index switch {
-            0 => Item0,
-            1 => Item1,
-            2 => Item2,
-            3 => Item3,
-            4 => Item4,
-            5 => Item5,
-            6 => Item6,
-            7 => Item7,
-            8 => Item8,
-            9 => Item9,
-            10 => Item10,
-            11 => Item11,
-            12 => Item12,
-            13 => Item13,
-            14 => Item14,
-            _ => throw new ArgumentOutOfRangeException(nameof(index))
-        };
-
-    public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>? other)
-    {
-        if (other == null)
-            return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5)) return false;
-        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6)) return false;
-        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7)) return false;
-        if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8)) return false;
-        if (Item9 is not CancellationToken && !EqualityComparer<T9>.Default.Equals(Item9, other.Item9)) return false;
-        if (Item10 is not CancellationToken && !EqualityComparer<T10>.Default.Equals(Item10, other.Item10)) return false;
-        if (Item11 is not CancellationToken && !EqualityComparer<T11>.Default.Equals(Item11, other.Item11)) return false;
-        if (Item12 is not CancellationToken && !EqualityComparer<T12>.Default.Equals(Item12, other.Item12)) return false;
-        if (Item13 is not CancellationToken && !EqualityComparer<T13>.Default.Equals(Item13, other.Item13)) return false;
-        if (Item14 is not CancellationToken && !EqualityComparer<T14>.Default.Equals(Item14, other.Item14)) return false;
-        return true;
-    }
-
-    public override int GetHashCode()
-    {
-        unchecked {
-            var hashCode = Item0 is CancellationToken || Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = (hashCode * 397) + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = (hashCode * 397) + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-            hashCode = (hashCode * 397) + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-            hashCode = (hashCode * 397) + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
-            hashCode = (hashCode * 397) + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
-            hashCode = (hashCode * 397) + (Item6 is CancellationToken || Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
-            hashCode = (hashCode * 397) + (Item7 is CancellationToken || Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
-            hashCode = (hashCode * 397) + (Item8 is CancellationToken || Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
-            hashCode = (hashCode * 397) + (Item9 is CancellationToken || Item9 is null ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9));
-            hashCode = (hashCode * 397) + (Item10 is CancellationToken || Item10 is null ? 0 : EqualityComparer<T10>.Default.GetHashCode(Item10));
-            hashCode = (hashCode * 397) + (Item11 is CancellationToken || Item11 is null ? 0 : EqualityComparer<T11>.Default.GetHashCode(Item11));
-            hashCode = (hashCode * 397) + (Item12 is CancellationToken || Item12 is null ? 0 : EqualityComparer<T12>.Default.GetHashCode(Item12));
-            hashCode = (hashCode * 397) + (Item13 is CancellationToken || Item13 is null ? 0 : EqualityComparer<T13>.Default.GetHashCode(Item13));
-            hashCode = (hashCode * 397) + (Item14 is CancellationToken || Item14 is null ? 0 : EqualityComparer<T14>.Default.GetHashCode(Item14));
-            return hashCode;
-        }
-    }
-
-    public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>? other, Delegate?[] equalDelegates)
-    {
-        if (equalDelegates.Length != 15)
-            throw new ArgumentOutOfRangeException(nameof(equalDelegates));
-        if (other == null)
-            return false;
-        if (equalDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, other.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) {
-            return false;
-        }
-
-        if (equalDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, other.Item1))
-                return false;
-        }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) {
-            return false;
-        }
-
-        if (equalDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, other.Item2))
-                return false;
-        }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) {
-            return false;
-        }
-
-        if (equalDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, other.Item3))
-                return false;
-        }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) {
-            return false;
-        }
-
-        if (equalDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, other.Item4))
-                return false;
-        }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) {
-            return false;
-        }
-
-        if (equalDelegates[5] is Func<T5, T5, bool> func5) {
-            if (!func5.Invoke(Item5, other.Item5))
-                return false;
-        }
-        else if (!EqualityComparer<T5>.Default.Equals(Item5, other.Item5)) {
-            return false;
-        }
-
-        if (equalDelegates[6] is Func<T6, T6, bool> func6) {
-            if (!func6.Invoke(Item6, other.Item6))
-                return false;
-        }
-        else if (!EqualityComparer<T6>.Default.Equals(Item6, other.Item6)) {
-            return false;
-        }
-
-        if (equalDelegates[7] is Func<T7, T7, bool> func7) {
-            if (!func7.Invoke(Item7, other.Item7))
-                return false;
-        }
-        else if (!EqualityComparer<T7>.Default.Equals(Item7, other.Item7)) {
-            return false;
-        }
-
-        if (equalDelegates[8] is Func<T8, T8, bool> func8) {
-            if (!func8.Invoke(Item8, other.Item8))
-                return false;
-        }
-        else if (!EqualityComparer<T8>.Default.Equals(Item8, other.Item8)) {
-            return false;
-        }
-
-        if (equalDelegates[9] is Func<T9, T9, bool> func9) {
-            if (!func9.Invoke(Item9, other.Item9))
-                return false;
-        }
-        else if (!EqualityComparer<T9>.Default.Equals(Item9, other.Item9)) {
-            return false;
-        }
-
-        if (equalDelegates[10] is Func<T10, T10, bool> func10) {
-            if (!func10.Invoke(Item10, other.Item10))
-                return false;
-        }
-        else if (!EqualityComparer<T10>.Default.Equals(Item10, other.Item10)) {
-            return false;
-        }
-
-        if (equalDelegates[11] is Func<T11, T11, bool> func11) {
-            if (!func11.Invoke(Item11, other.Item11))
-                return false;
-        }
-        else if (!EqualityComparer<T11>.Default.Equals(Item11, other.Item11)) {
-            return false;
-        }
-
-        if (equalDelegates[12] is Func<T12, T12, bool> func12) {
-            if (!func12.Invoke(Item12, other.Item12))
-                return false;
-        }
-        else if (!EqualityComparer<T12>.Default.Equals(Item12, other.Item12)) {
-            return false;
-        }
-
-        if (equalDelegates[13] is Func<T13, T13, bool> func13) {
-            if (!func13.Invoke(Item13, other.Item13))
-                return false;
-        }
-        else if (!EqualityComparer<T13>.Default.Equals(Item13, other.Item13)) {
-            return false;
-        }
-
-        if (equalDelegates[14] is Func<T14, T14, bool> func14) {
-            if (!func14.Invoke(Item14, other.Item14))
-                return false;
-        }
-        else if (!EqualityComparer<T14>.Default.Equals(Item14, other.Item14)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    public int GetHashCode(Delegate?[] getHashCodeDelegates)
-    {
-        if (getHashCodeDelegates.Length != 15)
-            throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
-        unchecked {
-            int hashCode;
-            if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0(Item0);
-            else
-                hashCode = Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-
-            if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1(Item1);
-            else
-                hashCode = (hashCode * 397) + (Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-
-            if (getHashCodeDelegates[2] is Func<T2, int> func2)
-                hashCode = (hashCode * 397) + func2(Item2);
-            else
-                hashCode = (hashCode * 397) + (Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-
-            if (getHashCodeDelegates[3] is Func<T3, int> func3)
-                hashCode = (hashCode * 397) + func3(Item3);
-            else
-                hashCode = (hashCode * 397) + (Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-
-            if (getHashCodeDelegates[4] is Func<T4, int> func4)
-                hashCode = (hashCode * 397) + func4(Item4);
-            else
-                hashCode = (hashCode * 397) + (Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
-
-            if (getHashCodeDelegates[5] is Func<T5, int> func5)
-                hashCode = (hashCode * 397) + func5(Item5);
-            else
-                hashCode = (hashCode * 397) + (Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
-
-            if (getHashCodeDelegates[6] is Func<T6, int> func6)
-                hashCode = (hashCode * 397) + func6(Item6);
-            else
-                hashCode = (hashCode * 397) + (Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
-
-            if (getHashCodeDelegates[7] is Func<T7, int> func7)
-                hashCode = (hashCode * 397) + func7(Item7);
-            else
-                hashCode = (hashCode * 397) + (Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
-
-            if (getHashCodeDelegates[8] is Func<T8, int> func8)
-                hashCode = (hashCode * 397) + func8(Item8);
-            else
-                hashCode = (hashCode * 397) + (Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
-
-            if (getHashCodeDelegates[9] is Func<T9, int> func9)
-                hashCode = (hashCode * 397) + func9(Item9);
-            else
-                hashCode = (hashCode * 397) + (Item9 is null ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9));
-
-            if (getHashCodeDelegates[10] is Func<T10, int> func10)
-                hashCode = (hashCode * 397) + func10(Item10);
-            else
-                hashCode = (hashCode * 397) + (Item10 is null ? 0 : EqualityComparer<T10>.Default.GetHashCode(Item10));
-
-            if (getHashCodeDelegates[11] is Func<T11, int> func11)
-                hashCode = (hashCode * 397) + func11(Item11);
-            else
-                hashCode = (hashCode * 397) + (Item11 is null ? 0 : EqualityComparer<T11>.Default.GetHashCode(Item11));
-
-            if (getHashCodeDelegates[12] is Func<T12, int> func12)
-                hashCode = (hashCode * 397) + func12(Item12);
-            else
-                hashCode = (hashCode * 397) + (Item12 is null ? 0 : EqualityComparer<T12>.Default.GetHashCode(Item12));
-
-            if (getHashCodeDelegates[13] is Func<T13, int> func13)
-                hashCode = (hashCode * 397) + func13(Item13);
-            else
-                hashCode = (hashCode * 397) + (Item13 is null ? 0 : EqualityComparer<T13>.Default.GetHashCode(Item13));
-
-            if (getHashCodeDelegates[14] is Func<T14, int> func14)
-                hashCode = (hashCode * 397) + func14(Item14);
-            else
-                hashCode = (hashCode * 397) + (Item14 is null ? 0 : EqualityComparer<T14>.Default.GetHashCode(Item14));
-
-            return hashCode;
-        }
-    }
-
-    public ArgumentList(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8, T9 item9, T10 item10, T11 item11, T12 item12, T13 item13, T14 item14)
-    {
-        Item0 = item0;
-        Item1 = item1;
-        Item2 = item2;
-        Item3 = item3;
-        Item4 = item4;
-        Item5 = item5;
-        Item6 = item6;
-        Item7 = item7;
-        Item8 = item8;
-        Item9 = item9;
-        Item10 = item10;
-        Item11 = item11;
-        Item12 = item12;
-        Item13 = item13;
-        Item14 = item14;
-    }
-}
-
-public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15> : ArgumentList, IEquatable<ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>>
-{
-    public override int Length => 16;
-
-    public T0 Item0 { get; }
-    public T1 Item1 { get; }
-    public T2 Item2 { get; }
-    public T3 Item3 { get; }
-    public T4 Item4 { get; }
-    public T5 Item5 { get; }
-    public T6 Item6 { get; }
-    public T7 Item7 { get; }
-    public T8 Item8 { get; }
-    public T9 Item9 { get; }
-    public T10 Item10 { get; }
-    public T11 Item11 { get; }
-    public T12 Item12 { get; }
-    public T13 Item13 { get; }
-    public T14 Item14 { get; }
-    public T15 Item15 { get; }
-
-    protected override object? GetItem(int index)
-        => index switch {
-            0 => Item0,
-            1 => Item1,
-            2 => Item2,
-            3 => Item3,
-            4 => Item4,
-            5 => Item5,
-            6 => Item6,
-            7 => Item7,
-            8 => Item8,
-            9 => Item9,
-            10 => Item10,
-            11 => Item11,
-            12 => Item12,
-            13 => Item13,
-            14 => Item14,
-            15 => Item15,
-            _ => throw new ArgumentOutOfRangeException(nameof(index))
-        };
-
-    public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>? other)
-    {
-        if (other == null)
-            return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5)) return false;
-        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6)) return false;
-        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7)) return false;
-        if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8)) return false;
-        if (Item9 is not CancellationToken && !EqualityComparer<T9>.Default.Equals(Item9, other.Item9)) return false;
-        if (Item10 is not CancellationToken && !EqualityComparer<T10>.Default.Equals(Item10, other.Item10)) return false;
-        if (Item11 is not CancellationToken && !EqualityComparer<T11>.Default.Equals(Item11, other.Item11)) return false;
-        if (Item12 is not CancellationToken && !EqualityComparer<T12>.Default.Equals(Item12, other.Item12)) return false;
-        if (Item13 is not CancellationToken && !EqualityComparer<T13>.Default.Equals(Item13, other.Item13)) return false;
-        if (Item14 is not CancellationToken && !EqualityComparer<T14>.Default.Equals(Item14, other.Item14)) return false;
-        if (Item15 is not CancellationToken && !EqualityComparer<T15>.Default.Equals(Item15, other.Item15)) return false;
-        return true;
-    }
-
-    public override int GetHashCode()
-    {
-        unchecked {
-            var hashCode = Item0 is CancellationToken || Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = (hashCode * 397) + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = (hashCode * 397) + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-            hashCode = (hashCode * 397) + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-            hashCode = (hashCode * 397) + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
-            hashCode = (hashCode * 397) + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
-            hashCode = (hashCode * 397) + (Item6 is CancellationToken || Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
-            hashCode = (hashCode * 397) + (Item7 is CancellationToken || Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
-            hashCode = (hashCode * 397) + (Item8 is CancellationToken || Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
-            hashCode = (hashCode * 397) + (Item9 is CancellationToken || Item9 is null ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9));
-            hashCode = (hashCode * 397) + (Item10 is CancellationToken || Item10 is null ? 0 : EqualityComparer<T10>.Default.GetHashCode(Item10));
-            hashCode = (hashCode * 397) + (Item11 is CancellationToken || Item11 is null ? 0 : EqualityComparer<T11>.Default.GetHashCode(Item11));
-            hashCode = (hashCode * 397) + (Item12 is CancellationToken || Item12 is null ? 0 : EqualityComparer<T12>.Default.GetHashCode(Item12));
-            hashCode = (hashCode * 397) + (Item13 is CancellationToken || Item13 is null ? 0 : EqualityComparer<T13>.Default.GetHashCode(Item13));
-            hashCode = (hashCode * 397) + (Item14 is CancellationToken || Item14 is null ? 0 : EqualityComparer<T14>.Default.GetHashCode(Item14));
-            hashCode = (hashCode * 397) + (Item15 is CancellationToken || Item15 is null ? 0 : EqualityComparer<T15>.Default.GetHashCode(Item15));
-            return hashCode;
-        }
-    }
-
-    public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15>? other, Delegate?[] equalDelegates)
-    {
-        if (equalDelegates.Length != 16)
-            throw new ArgumentOutOfRangeException(nameof(equalDelegates));
-        if (other == null)
-            return false;
-        if (equalDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, other.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0)) {
-            return false;
-        }
-
-        if (equalDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, other.Item1))
-                return false;
-        }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1)) {
-            return false;
-        }
-
-        if (equalDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, other.Item2))
-                return false;
-        }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2)) {
-            return false;
-        }
-
-        if (equalDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, other.Item3))
-                return false;
-        }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, other.Item3)) {
-            return false;
-        }
-
-        if (equalDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, other.Item4))
-                return false;
-        }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, other.Item4)) {
-            return false;
-        }
-
-        if (equalDelegates[5] is Func<T5, T5, bool> func5) {
-            if (!func5.Invoke(Item5, other.Item5))
-                return false;
-        }
-        else if (!EqualityComparer<T5>.Default.Equals(Item5, other.Item5)) {
-            return false;
-        }
-
-        if (equalDelegates[6] is Func<T6, T6, bool> func6) {
-            if (!func6.Invoke(Item6, other.Item6))
-                return false;
-        }
-        else if (!EqualityComparer<T6>.Default.Equals(Item6, other.Item6)) {
-            return false;
-        }
-
-        if (equalDelegates[7] is Func<T7, T7, bool> func7) {
-            if (!func7.Invoke(Item7, other.Item7))
-                return false;
-        }
-        else if (!EqualityComparer<T7>.Default.Equals(Item7, other.Item7)) {
-            return false;
-        }
-
-        if (equalDelegates[8] is Func<T8, T8, bool> func8) {
-            if (!func8.Invoke(Item8, other.Item8))
-                return false;
-        }
-        else if (!EqualityComparer<T8>.Default.Equals(Item8, other.Item8)) {
-            return false;
-        }
-
-        if (equalDelegates[9] is Func<T9, T9, bool> func9) {
-            if (!func9.Invoke(Item9, other.Item9))
-                return false;
-        }
-        else if (!EqualityComparer<T9>.Default.Equals(Item9, other.Item9)) {
-            return false;
-        }
-
-        if (equalDelegates[10] is Func<T10, T10, bool> func10) {
-            if (!func10.Invoke(Item10, other.Item10))
-                return false;
-        }
-        else if (!EqualityComparer<T10>.Default.Equals(Item10, other.Item10)) {
-            return false;
-        }
-
-        if (equalDelegates[11] is Func<T11, T11, bool> func11) {
-            if (!func11.Invoke(Item11, other.Item11))
-                return false;
-        }
-        else if (!EqualityComparer<T11>.Default.Equals(Item11, other.Item11)) {
-            return false;
-        }
-
-        if (equalDelegates[12] is Func<T12, T12, bool> func12) {
-            if (!func12.Invoke(Item12, other.Item12))
-                return false;
-        }
-        else if (!EqualityComparer<T12>.Default.Equals(Item12, other.Item12)) {
-            return false;
-        }
-
-        if (equalDelegates[13] is Func<T13, T13, bool> func13) {
-            if (!func13.Invoke(Item13, other.Item13))
-                return false;
-        }
-        else if (!EqualityComparer<T13>.Default.Equals(Item13, other.Item13)) {
-            return false;
-        }
-
-        if (equalDelegates[14] is Func<T14, T14, bool> func14) {
-            if (!func14.Invoke(Item14, other.Item14))
-                return false;
-        }
-        else if (!EqualityComparer<T14>.Default.Equals(Item14, other.Item14)) {
-            return false;
-        }
-
-        if (equalDelegates[15] is Func<T15, T15, bool> func15) {
-            if (!func15.Invoke(Item15, other.Item15))
-                return false;
-        }
-        else if (!EqualityComparer<T15>.Default.Equals(Item15, other.Item15)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    public int GetHashCode(Delegate?[] getHashCodeDelegates)
-    {
-        if (getHashCodeDelegates.Length != 16)
-            throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
-        unchecked {
-            int hashCode;
-            if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0(Item0);
-            else
-                hashCode = Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-
-            if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1(Item1);
-            else
-                hashCode = (hashCode * 397) + (Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-
-            if (getHashCodeDelegates[2] is Func<T2, int> func2)
-                hashCode = (hashCode * 397) + func2(Item2);
-            else
-                hashCode = (hashCode * 397) + (Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-
-            if (getHashCodeDelegates[3] is Func<T3, int> func3)
-                hashCode = (hashCode * 397) + func3(Item3);
-            else
-                hashCode = (hashCode * 397) + (Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-
-            if (getHashCodeDelegates[4] is Func<T4, int> func4)
-                hashCode = (hashCode * 397) + func4(Item4);
-            else
-                hashCode = (hashCode * 397) + (Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
-
-            if (getHashCodeDelegates[5] is Func<T5, int> func5)
-                hashCode = (hashCode * 397) + func5(Item5);
-            else
-                hashCode = (hashCode * 397) + (Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
-
-            if (getHashCodeDelegates[6] is Func<T6, int> func6)
-                hashCode = (hashCode * 397) + func6(Item6);
-            else
-                hashCode = (hashCode * 397) + (Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
-
-            if (getHashCodeDelegates[7] is Func<T7, int> func7)
-                hashCode = (hashCode * 397) + func7(Item7);
-            else
-                hashCode = (hashCode * 397) + (Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
-
-            if (getHashCodeDelegates[8] is Func<T8, int> func8)
-                hashCode = (hashCode * 397) + func8(Item8);
-            else
-                hashCode = (hashCode * 397) + (Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
-
-            if (getHashCodeDelegates[9] is Func<T9, int> func9)
-                hashCode = (hashCode * 397) + func9(Item9);
-            else
-                hashCode = (hashCode * 397) + (Item9 is null ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9));
-
-            if (getHashCodeDelegates[10] is Func<T10, int> func10)
-                hashCode = (hashCode * 397) + func10(Item10);
-            else
-                hashCode = (hashCode * 397) + (Item10 is null ? 0 : EqualityComparer<T10>.Default.GetHashCode(Item10));
-
-            if (getHashCodeDelegates[11] is Func<T11, int> func11)
-                hashCode = (hashCode * 397) + func11(Item11);
-            else
-                hashCode = (hashCode * 397) + (Item11 is null ? 0 : EqualityComparer<T11>.Default.GetHashCode(Item11));
-
-            if (getHashCodeDelegates[12] is Func<T12, int> func12)
-                hashCode = (hashCode * 397) + func12(Item12);
-            else
-                hashCode = (hashCode * 397) + (Item12 is null ? 0 : EqualityComparer<T12>.Default.GetHashCode(Item12));
-
-            if (getHashCodeDelegates[13] is Func<T13, int> func13)
-                hashCode = (hashCode * 397) + func13(Item13);
-            else
-                hashCode = (hashCode * 397) + (Item13 is null ? 0 : EqualityComparer<T13>.Default.GetHashCode(Item13));
-
-            if (getHashCodeDelegates[14] is Func<T14, int> func14)
-                hashCode = (hashCode * 397) + func14(Item14);
-            else
-                hashCode = (hashCode * 397) + (Item14 is null ? 0 : EqualityComparer<T14>.Default.GetHashCode(Item14));
-
-            if (getHashCodeDelegates[15] is Func<T15, int> func15)
-                hashCode = (hashCode * 397) + func15(Item15);
-            else
-                hashCode = (hashCode * 397) + (Item15 is null ? 0 : EqualityComparer<T15>.Default.GetHashCode(Item15));
-
-            return hashCode;
-        }
-    }
-
-    public ArgumentList(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8, T9 item9, T10 item10, T11 item11, T12 item12, T13 item13, T14 item14, T15 item15)
-    {
-        Item0 = item0;
-        Item1 = item1;
-        Item2 = item2;
-        Item3 = item3;
-        Item4 = item4;
-        Item5 = item5;
-        Item6 = item6;
-        Item7 = item7;
-        Item8 = item8;
-        Item9 = item9;
-        Item10 = item10;
-        Item11 = item11;
-        Item12 = item12;
-        Item13 = item13;
-        Item14 = item14;
-        Item15 = item15;
     }
 }
 
