@@ -173,7 +173,7 @@ public class ProxyTypeGenerator
                 VarStatement(InvocationVarName.Identifier,
                     CreateInvocationInstance(
                         ThisExpression(),
-                        PostfixUnaryExpression(SyntaxKind.SuppressNullableWarningExpression, MethodInfoVarName),
+                        SuppressNullWarning(MethodInfoVarName),
                         NewArgumentList(newArgumentList),
                         InterceptedVarName)),
                 InvokeProxyIntercept(returnType, InvocationVarName)
@@ -357,7 +357,7 @@ public class ProxyTypeGenerator
         }
 
         var baseRef = IsInterfaceProxy
-            ? PostfixUnaryExpression(SyntaxKind.SuppressNullableWarningExpression, ProxyTargetFieldName)
+            ? SuppressNullWarning(ProxyTargetFieldName)
             : (ExpressionSyntax) BaseExpression();
         var baseInvocation = InvocationExpression(
             MemberAccessExpression(
@@ -384,7 +384,7 @@ public class ProxyTypeGenerator
         return InvocationExpression(
                 MemberAccessExpression(
                     SyntaxKind.SimpleMemberAccessExpression,
-                    InterceptorPropertyName,
+                    SuppressNullWarning(InterceptorFieldName),
                     methodName))
             .WithArgumentList(
                 ArgumentList(CommaSeparatedList(arguments.Select(Argument))));
@@ -402,10 +402,7 @@ public class ProxyTypeGenerator
     private void AddProxyInterfaceImplementation()
     {
         ProxyFields.Add(
-            FieldDeclaration(
-                VariableDeclaration(NullableType(InterceptorTypeName))
-                    .WithVariables(SingletonSeparatedList(VariableDeclarator(InterceptorFieldName.Identifier))))
-            .WithModifiers(TokenList(Token(SyntaxKind.PrivateKeyword))));
+            PrivateFieldDef(NullableType(InterceptorTypeName), InterceptorFieldName.Identifier));
 
         var interceptorGetterDef = Block(
             IfStatement(
@@ -419,7 +416,7 @@ public class ProxyTypeGenerator
 
         ProxyProperties.Add(
             PropertyDeclaration(InterceptorTypeName, InterceptorPropertyName.Identifier)
-                .WithModifiers(TokenList(Token(SyntaxKind.PrivateKeyword)))
+                .WithExplicitInterfaceSpecifier(ExplicitInterfaceSpecifier(ProxyInterfaceTypeName))
                 .WithAccessorList(
                     AccessorList(
                         SingletonList(
@@ -427,31 +424,28 @@ public class ProxyTypeGenerator
                                 .WithBody(interceptorGetterDef)))));
 
         ProxyMethods.Add(
-            MethodDeclaration(
-                PredefinedType(Token(SyntaxKind.VoidKeyword)),
-                ProxyInterfaceBindMethodName.Identifier)
-            .WithExplicitInterfaceSpecifier(
-                ExplicitInterfaceSpecifier(ProxyInterfaceTypeName))
-            .WithParameterList(ParameterList(
-                    SingletonSeparatedList(
+            MethodDeclaration(PredefinedType(Token(SyntaxKind.VoidKeyword)), ProxyInterfaceBindMethodName.Identifier)
+                .WithExplicitInterfaceSpecifier(ExplicitInterfaceSpecifier(ProxyInterfaceTypeName))
+                .WithParameterList(
+                    ParameterList(SingletonSeparatedList(
                         Parameter(InterceptorParameterName.Identifier)
                             .WithType(InterceptorTypeName))))
-            .WithBody(
-                Block(
-                    IfStatement(
-                        BinaryExpression(
-                            SyntaxKind.NotEqualsExpression,
-                            InterceptorFieldName,
-                            LiteralExpression(
-                                SyntaxKind.NullLiteralExpression)),
-                        ThrowStatement<InvalidOperationException>("Interceptor is already bound.")),
-                    ExpressionStatement(
-                        AssignmentExpression(
-                            SyntaxKind.SimpleAssignmentExpression,
-                            InterceptorFieldName,
+                .WithBody(
+                    Block(
+                        IfStatement(
                             BinaryExpression(
-                                SyntaxKind.CoalesceExpression,
-                                InterceptorParameterName,
-                                ThrowExpression<ArgumentNullException>(InterceptorParameterName.Identifier.Text)))))));
+                                SyntaxKind.NotEqualsExpression,
+                                InterceptorFieldName,
+                                LiteralExpression(
+                                    SyntaxKind.NullLiteralExpression)),
+                            ThrowStatement<InvalidOperationException>("Interceptor is already bound.")),
+                        ExpressionStatement(
+                            AssignmentExpression(
+                                SyntaxKind.SimpleAssignmentExpression,
+                                InterceptorFieldName,
+                                BinaryExpression(
+                                    SyntaxKind.CoalesceExpression,
+                                    InterceptorParameterName,
+                                    ThrowExpression<ArgumentNullException>(InterceptorParameterName.Identifier.Text)))))));
     }
 }

@@ -104,6 +104,9 @@ public static class GenerationHelpers
                             Argument(
                                 LiteralExpression(SyntaxKind.StringLiteralExpression, Literal(message)))))));
 
+    public static PostfixUnaryExpressionSyntax SuppressNullWarning(ExpressionSyntax expression)
+        => PostfixUnaryExpression(SyntaxKind.SuppressNullableWarningExpression, expression);
+
     public static AssignmentExpressionSyntax CoalesceAssignmentExpression(ExpressionSyntax left, ExpressionSyntax right)
         => AssignmentExpression(SyntaxKind.CoalesceAssignmentExpression, left, right);
 
