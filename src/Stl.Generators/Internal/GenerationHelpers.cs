@@ -1,8 +1,43 @@
+using System.Reflection;
+
 namespace Stl.Generators.Internal;
 using static SyntaxFactory;
 
-public static class SyntaxHelpers
+public static class GenerationHelpers
 {
+    public const string StlInterceptionNs = "Stl.Interception";
+    public const string StlInterceptionGns = $"global::{StlInterceptionNs}";
+    public const string RequiresFullProxyInterfaceName = $"{StlInterceptionNs}.IRequiresFullProxy";
+    public const string RequireAsyncProxyInterfaceName = $"{StlInterceptionNs}.IRequiresAsyncProxy";
+    public const string ProxyIgnoreAttributeName = $"{StlInterceptionNs}.ProxyIgnoreAttribute";
+    public const string ProxyClassSuffix = "Proxy";
+    public const string ProxyNamespaceSuffix = "StlInterceptionProxies";
+
+    // Types
+    public static readonly IdentifierNameSyntax ProxyInterfaceTypeName = IdentifierName($"{StlInterceptionGns}.IProxy");
+    public static readonly IdentifierNameSyntax InterceptorTypeName = IdentifierName($"{StlInterceptionGns}.Interceptor");
+    public static readonly IdentifierNameSyntax ProxyHelperTypeName = IdentifierName($"{StlInterceptionGns}.ProxyHelper");
+    public static readonly IdentifierNameSyntax ArgumentListTypeName = IdentifierName($"{StlInterceptionGns}.ArgumentList");
+    public static readonly GenericNameSyntax ArgumentListGenericTypeName = GenericName(ArgumentListTypeName.Identifier.Text);
+    public static readonly TypeSyntax NullableMethodInfoType = NullableType(typeof(MethodInfo).ToTypeRef());
+    // Methods
+    public static readonly IdentifierNameSyntax ArgumentListNewMethodName = IdentifierName("New");
+    public static readonly IdentifierNameSyntax ProxyHelperGetMethodInfoName = IdentifierName("GetMethodInfo");
+    public static readonly IdentifierNameSyntax ProxyInterceptMethodName = IdentifierName("Intercept");
+    public static readonly GenericNameSyntax ProxyInterceptGenericMethodName = GenericName(ProxyInterceptMethodName.Identifier.Text);
+    public static readonly IdentifierNameSyntax ProxyInterfaceBindMethodName = IdentifierName("Bind");
+    // Properties, fields, locals
+    public static readonly IdentifierNameSyntax InterceptorPropertyName = IdentifierName("Interceptor");
+    public static readonly IdentifierNameSyntax InterceptorFieldName = IdentifierName("_interceptor");
+    public static readonly IdentifierNameSyntax InterceptorParameterName = IdentifierName("interceptor");
+    public static readonly IdentifierNameSyntax ProxyTargetFieldName = IdentifierName("_proxyTarget");
+    public static readonly IdentifierNameSyntax ProxyTargetParameterName = IdentifierName("proxyTarget");
+    public static readonly IdentifierNameSyntax InterceptedVarName = IdentifierName("intercepted");
+    public static readonly IdentifierNameSyntax MethodInfoVarName = IdentifierName("methodInfo");
+    public static readonly IdentifierNameSyntax InvocationVarName = IdentifierName("invocation");
+
+    // Helpers
+
     public static InvocationExpressionSyntax EmptyArrayExpression<TItem>()
         => EmptyArrayExpression(typeof(TItem).ToTypeRef());
     public static InvocationExpressionSyntax EmptyArrayExpression(TypeSyntax itemTypeRef)

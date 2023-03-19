@@ -2,7 +2,12 @@ namespace Stl.Generators.Internal;
 
 public static class DiagnosticsHelpers
 {
-    private static bool IsDebugOutputEnabled { get; } = true;
+    public static readonly bool IsDebugOutputEnabled =
+#if DEBUG
+        false;
+#else
+        false;
+#endif
 
     private static readonly DiagnosticDescriptor DebugDescriptor = new(
         id: "STLGDEBUG",
@@ -22,20 +27,20 @@ public static class DiagnosticsHelpers
 
     // Diagnostics
 
+    public static readonly Action<string>? WriteDebug = IsDebugOutputEnabled
+        ? WriteDebugImpl
+        : null;
+
     public static void ReportDebug(this SourceProductionContext context, string text, Location? location = null)
     {
-#if DEBUG
         if (IsDebugOutputEnabled)
             context.ReportDiagnostic(DebugWarning(text, location));
-#endif
     }
 
     public static void ReportDebug(this SourceProductionContext context, Exception error)
     {
-#if DEBUG
         if (IsDebugOutputEnabled)
             context.ReportDiagnostic(DebugWarning(error));
-#endif
     }
 
     public static Diagnostic DebugWarning(string text, Location? location = null)
@@ -51,4 +56,12 @@ public static class DiagnosticsHelpers
 
     public static Diagnostic GenerateProxyTypeProcessedInfo(TypeDeclarationSyntax typeDef)
         => Diagnostic.Create(GenerateProxyTypeProcessedDescriptor, typeDef.GetLocation(), typeDef.Identifier.Text);
+
+    // Private methods
+
+    private static void WriteDebugImpl(string message)
+    {
+        using var f = File.AppendText("C:/Temp/Stl.Generators.txt");
+        f.WriteLine(message);
+    }
 }

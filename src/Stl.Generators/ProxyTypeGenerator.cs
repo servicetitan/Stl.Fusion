@@ -1,40 +1,10 @@
-using System.Reflection;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-using static Stl.Generators.Internal.SyntaxHelpers;
 
 namespace Stl.Generators;
+using static GenerationHelpers;
 
 public class ProxyTypeGenerator
 {
-    private const string StlInterception = "global::Stl.Interception";
-    private const string ProxyClassSuffix = "Proxy";
-    private const string ProxyNamespaceSuffix = "StlInterceptionProxies";
-
-    // Types
-    private static readonly IdentifierNameSyntax ProxyInterfaceTypeName = IdentifierName($"{StlInterception}.IProxy");
-    private static readonly IdentifierNameSyntax InterceptorTypeName = IdentifierName($"{StlInterception}.Interceptor");
-    private static readonly IdentifierNameSyntax ProxyHelperTypeName = IdentifierName($"{StlInterception}.ProxyHelper");
-    private static readonly IdentifierNameSyntax ArgumentListTypeName = IdentifierName($"{StlInterception}.ArgumentList");
-    private static readonly GenericNameSyntax ArgumentListGenericTypeName = GenericName(ArgumentListTypeName.Identifier.Text);
-    private static readonly TypeSyntax NullableMethodInfoType = NullableType(typeof(MethodInfo).ToTypeRef());
-    // Methods
-    private static readonly IdentifierNameSyntax ArgumentListNewMethodName = IdentifierName("New");
-    private static readonly IdentifierNameSyntax ProxyHelperGetMethodInfoName = IdentifierName("GetMethodInfo");
-    private static readonly IdentifierNameSyntax ProxyInterceptMethodName = IdentifierName("Intercept");
-    private static readonly GenericNameSyntax ProxyInterceptGenericMethodName = GenericName(ProxyInterceptMethodName.Identifier.Text);
-    private static readonly IdentifierNameSyntax ProxyInterfaceBindMethodName = IdentifierName("Bind");
-    // Properties, fields, locals
-    private static readonly IdentifierNameSyntax InterceptorPropertyName = IdentifierName("Interceptor");
-    private static readonly IdentifierNameSyntax InterceptorFieldName = IdentifierName("_interceptor");
-    private static readonly IdentifierNameSyntax InterceptorParameterName = IdentifierName("interceptor");
-    private static readonly IdentifierNameSyntax ProxyTargetFieldName = IdentifierName("_proxyTarget");
-    private static readonly IdentifierNameSyntax ProxyTargetParameterName = IdentifierName("proxyTarget");
-    private static readonly IdentifierNameSyntax InterceptedVarName = IdentifierName("intercepted");
-    private static readonly IdentifierNameSyntax MethodInfoVarName = IdentifierName("methodInfo");
-    private static readonly IdentifierNameSyntax InvocationVarName = IdentifierName("invocation");
-
-    public string GeneratedCode { get; } = "";
-
     private SourceProductionContext Context { get; }
     private SemanticModel SemanticModel { get; }
     private TypeDeclarationSyntax TypeDef { get; }
@@ -43,6 +13,8 @@ public class ProxyTypeGenerator
     private ClassDeclarationSyntax? ClassDef { get; }
     private InterfaceDeclarationSyntax? InterfaceDef { get; }
     private bool IsInterfaceProxy => InterfaceDef != null;
+    private bool IsFullProxy { get; }
+    private bool IsAsyncProxy => !IsFullProxy;
 
     private string ProxyTypeName { get; } = "";
     private ClassDeclarationSyntax ProxyDef { get; } = null!;
@@ -50,6 +22,8 @@ public class ProxyTypeGenerator
     private List<MemberDeclarationSyntax> ProxyProperties { get; } = new();
     private List<MemberDeclarationSyntax> ProxyConstructors { get; } = new();
     private List<MemberDeclarationSyntax> ProxyMethods { get; } = new();
+
+    public string GeneratedCode { get; } = "";
 
     public ProxyTypeGenerator(SourceProductionContext context, SemanticModel semanticModel, TypeDeclarationSyntax typeDef)
     {
@@ -61,19 +35,19 @@ public class ProxyTypeGenerator
         if (TypeDef.GetNamespaceRef() is not { } namespaceRef)
             return;
 
-        Context.ReportDebug($"Generating proxy for '{typeDef.Identifier.Text}'...");
         TypeSymbol = typeSymbol;
         NamespaceRef = namespaceRef;
         ClassDef = TypeDef as ClassDeclarationSyntax;
         InterfaceDef = TypeDef as InterfaceDeclarationSyntax;
+        IsFullProxy = typeSymbol.AllInterfaces.Any(t => Equals(t.ToFullName(), RequiresFullProxyInterfaceName));
+        WriteDebug?.Invoke($"{TypeSymbol.ToFullName()}: {(IsFullProxy ? "full" : "async")} proxy");
 
-        var typeFullNameDef = TypeDef.ToTypeRef();
         ProxyTypeName = TypeDef.Identifier.Text + ProxyClassSuffix;
         ProxyDef = ClassDeclaration(ProxyTypeName)
             .AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.SealedKeyword))
             .WithTypeParameterList(TypeDef.TypeParameterList)
             .WithBaseList(BaseList(CommaSeparatedList<BaseTypeSyntax>(
-                SimpleBaseType(typeFullNameDef),
+                SimpleBaseType(TypeDef.ToTypeRef()),
                 SimpleBaseType(ProxyInterfaceTypeName))
             ))
             .WithConstraintClauses(TypeDef.ConstraintClauses);
@@ -220,18 +194,25 @@ public class ProxyTypeGenerator
         var hierarchy = IsInterfaceProxy
             ? TypeSymbol.GetAllInterfaces(true)
             : TypeSymbol.GetAllBaseTypes(true);
+        WriteDebug?.Invoke($"Hierarchy: {string.Join(", ", hierarchy.Select(t => t.ToFullName()))}");
         var processedMethods = new HashSet<IMethodSymbol>(SymbolEqualityComparer.Default);
-        foreach (var baseType in hierarchy) {
-            if (baseType.ToTypeRef().IsObject())
+        foreach (var type in hierarchy) {
+            if (type.ToTypeRef().IsObject())
                 continue;
 
-            foreach (var method in GetDeclaredProxyMethods(baseType)) {
-                if (processedMethods.Contains(method))
+            foreach (var method in GetDeclaredProxyMethods(type)) {
+                if (!processedMethods.Add(method)) {
+                    WriteDebug?.Invoke("  [-] Already processed");
                     continue;
+                }
 
+                WriteDebug?.Invoke("  [+]");
                 processedMethods.Add(method);
-                if (method.OverriddenMethod != null)
-                    processedMethods.Add(method.OverriddenMethod);
+                var overriddenMethod = method.OverriddenMethod;
+                while (overriddenMethod != null) {
+                    processedMethods.Add(overriddenMethod);
+                    overriddenMethod = overriddenMethod.OverriddenMethod;
+                }
                 yield return method;
             }
         }
@@ -242,17 +223,61 @@ public class ProxyTypeGenerator
         foreach (var member in type.GetMembers()) {
             if (member is not IMethodSymbol method)
                 continue;
-            if (method.MethodKind is not MethodKind.Ordinary)
+            if (IsDebugOutputEnabled) {
+                var returnTypeName = method.ReturnType.ToFullName();
+                WriteDebug?.Invoke($"- {method.Name}({method.Parameters.Length}) -> {returnTypeName}");
+            }
+            if (method.MethodKind is not MethodKind.Ordinary) {
+                WriteDebug?.Invoke($"  [-] Non-ordinary: {method.MethodKind}");
                 continue;
-            if (method.IsSealed || method.IsStatic || method.IsGenericMethod)
+            }
+            if (method.IsSealed || method.IsStatic || method.IsGenericMethod) {
+                WriteDebug?.Invoke("  [-] Sealed, static, or generic");
                 continue;
+            }
             if (!(method.DeclaredAccessibility.HasFlag(Accessibility.Public)
-                    || method.DeclaredAccessibility.HasFlag(Accessibility.Protected)))
+                    || method.DeclaredAccessibility.HasFlag(Accessibility.Protected))) {
+                WriteDebug?.Invoke($"  [-] Private: {method.DeclaredAccessibility}");
                 continue;
+            }
 
             if (!IsInterfaceProxy) {
-                if (method.IsAbstract || !method.IsVirtual)
+                if (method.IsAbstract || !method.IsVirtual) {
+                    WriteDebug?.Invoke("  [-] Non-virtual or abstract");
                     continue;
+                }
+            }
+            if (IsAsyncProxy) {
+                var returnTypeName = method.ReturnType.ToFullName();
+                if (!returnTypeName.StartsWith("System.Threading.Tasks.", StringComparison.Ordinal)) {
+                    WriteDebug?.Invoke("  [-] Non-async (1)");
+                    continue;
+                }
+
+                var isAsync = false;
+                isAsync |= Equals(returnTypeName, "System.Threading.Tasks.Task");
+                isAsync |= Equals(returnTypeName, "System.Threading.Tasks.ValueTask");
+                isAsync |= returnTypeName.StartsWith("System.Threading.Tasks.Task<", StringComparison.Ordinal);
+                isAsync |= returnTypeName.StartsWith("System.Threading.Tasks.ValueTask<", StringComparison.Ordinal);
+                if (!isAsync) {
+                    WriteDebug?.Invoke("  [-] Non-async (2)");
+                    continue;
+                }
+            }
+
+            // Check for [ProxyIgnore]
+            var m = method;
+            var mustIgnore = false;
+            while (m != null) {
+                if (m.GetAttributes().Any(a => Equals(a.AttributeClass?.ToFullName(), ProxyIgnoreAttributeName))) {
+                    mustIgnore = true;
+                    break;
+                }
+                m = m.OverriddenMethod;
+            }
+            if (mustIgnore) {
+                WriteDebug?.Invoke("  [-] Has [ProxyIgnore]");
+                continue;
             }
 
             yield return method;
@@ -387,19 +412,9 @@ public class ProxyTypeGenerator
                 BinaryExpression(
                     SyntaxKind.EqualsExpression,
                     InterceptorFieldName,
-                    LiteralExpression(
-                        SyntaxKind.NullLiteralExpression)),
-                ThrowStatement(
-                    ObjectCreationExpression(
-                            IdentifierName(nameof(InvalidOperationException)))
-                        .WithArgumentList(
-                            ArgumentList(
-                                SingletonSeparatedList(
-                                    Argument(
-                                        LiteralExpression(
-                                            SyntaxKind.StringLiteralExpression,
-                                            Literal("This proxy has no interceptor - you must call Bind method first."))
-                                    )))))),
+                    LiteralExpression(SyntaxKind.NullLiteralExpression)),
+                ThrowStatement<InvalidOperationException>(
+                    "This proxy has no interceptor - you must call Bind method first.")),
             ReturnStatement(InterceptorFieldName));
 
         ProxyProperties.Add(

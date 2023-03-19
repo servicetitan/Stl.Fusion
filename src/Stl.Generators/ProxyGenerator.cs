@@ -1,36 +1,28 @@
-using ITypeSymbol = Microsoft.CodeAnalysis.ITypeSymbol;
-
 namespace Stl.Generators;
+using static DiagnosticsHelpers;
+using static GenerationHelpers;
 
 [Generator]
 public class ProxyGenerator : IIncrementalGenerator
 {
-    private const string AbstractionsNamespaceName = "Stl.Interception";
-    private const string GenerateProxyAttributeFullName = $"{AbstractionsNamespaceName}.GenerateProxyAttribute";
-
-    private ITypeSymbol? _generateProxyAttributeType;
-
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         var items = context.SyntaxProvider
             .CreateSyntaxProvider(CouldBeAugmented, MustAugment)
             .Where(i => i.TypeDef != null)
             .Collect();
-        context.RegisterSourceOutput(items, Generate!);
+        context.RegisterSourceOutput(items, Generate);
     }
 
     private bool CouldBeAugmented(SyntaxNode node, CancellationToken cancellationToken)
         => node is ClassDeclarationSyntax or InterfaceDeclarationSyntax {
             Parent: FileScopedNamespaceDeclarationSyntax or NamespaceDeclarationSyntax
-        }; // Top-level type
+        };
 
     private (SemanticModel SemanticModel, TypeDeclarationSyntax? TypeDef)
         MustAugment(GeneratorSyntaxContext context, CancellationToken cancellationToken)
     {
         var semanticModel = context.SemanticModel;
-        var compilation = semanticModel.Compilation;
-        _generateProxyAttributeType ??= compilation.GetTypeByMetadataName(GenerateProxyAttributeFullName)!;
-
         var typeDef = (TypeDeclarationSyntax) context.Node;
         var typeSymbol = semanticModel.GetDeclaredSymbol(typeDef);
         if (typeSymbol == null || typeSymbol.IsSealed || !typeSymbol.DeclaredAccessibility.HasFlag(Accessibility.Public))
@@ -38,19 +30,22 @@ public class ProxyGenerator : IIncrementalGenerator
         if (typeDef is ClassDeclarationSyntax && typeSymbol.IsAbstract)
             return default;
 
-        var generateCtorAttrDef = semanticModel.GetAttribute(_generateProxyAttributeType!, typeDef.AttributeLists);
-        return generateCtorAttrDef == null ? default : (semanticModel, typeDef);
+        var requiresProxy = typeSymbol.AllInterfaces.Any(t => Equals(t.ToFullName(), RequireAsyncProxyInterfaceName));
+        return requiresProxy ? (semanticModel, typeDef) : default;
     }
 
     private void Generate(
         SourceProductionContext context,
-        ImmutableArray<(SemanticModel SemanticModel, TypeDeclarationSyntax TypeDef)> items)
+        ImmutableArray<(SemanticModel SemanticModel, TypeDeclarationSyntax? TypeDef)> items)
     {
         if (items.Length == 0)
             return;
         try {
-            context.ReportDebug($"Found {items.Length} type(s) to generate proxies.");
+            WriteDebug?.Invoke($"Found {items.Length} type(s) to generate proxies.");
             foreach (var (semanticModel, typeDef) in items) {
+                if (typeDef == null)
+                    continue;
+
                 var typeGenerator = new ProxyTypeGenerator(context, semanticModel, typeDef);
                 var code = typeGenerator.GeneratedCode;
                 if (string.IsNullOrEmpty(code))

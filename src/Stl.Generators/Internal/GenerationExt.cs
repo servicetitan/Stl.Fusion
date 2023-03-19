@@ -1,37 +1,39 @@
-using System.Globalization;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-using static Stl.Generators.Internal.SyntaxHelpers;
+using static Stl.Generators.Internal.GenerationHelpers;
 
 namespace Stl.Generators.Internal;
 
 public static class GenerationExt
 {
-    public static IEnumerable<ITypeSymbol> GetAllBaseTypes(this ITypeSymbol typeSymbol, bool includingSelf = false)
+    public static List<ITypeSymbol> GetAllBaseTypes(this ITypeSymbol typeSymbol, bool includingSelf = false)
+        => typeSymbol.GetAllBaseTypes(includingSelf, new());
+    public static List<ITypeSymbol> GetAllBaseTypes(this ITypeSymbol typeSymbol, bool includingSelf, List<ITypeSymbol> output)
     {
         var current = typeSymbol;
         while (current != null) {
             if (includingSelf || !ReferenceEquals(current, typeSymbol))
-                yield return current;
+                output.Add(current);
             current = current.BaseType;
         }
+        return output;
     }
 
-    public static IEnumerable<ITypeSymbol> GetAllInterfaces(this ITypeSymbol typeSymbol, bool includingSelf = false)
+    public static List<ITypeSymbol> GetAllInterfaces(this ITypeSymbol typeSymbol, bool includingSelf = false)
+        => typeSymbol.GetAllInterfaces(includingSelf, new(), new HashSet<ITypeSymbol>(SymbolEqualityComparer.Default));
+    public static List<ITypeSymbol> GetAllInterfaces(
+        this ITypeSymbol typeSymbol, bool includingSelf,
+        List<ITypeSymbol> output, HashSet<ITypeSymbol> traversed)
     {
-        if (includingSelf && typeSymbol.TypeKind == TypeKind.Interface)
-            yield return typeSymbol;
+        if (includingSelf && typeSymbol.TypeKind == TypeKind.Interface) {
+            if (!traversed.Add(typeSymbol))
+                return output;
+            output.Add(typeSymbol);
+        }
 
         // DFS traversal
-        foreach (var i in typeSymbol.Interfaces)
-            foreach (var iBase in i.GetAllInterfaces(true))
-                yield return iBase;
-    }
-
-    public static INamedTypeSymbol? GetTypeFor<T>(this Compilation compilation)
-    {
-        var type = typeof(T);
-        var fullName = $"{type.Namespace}.{type.Name}";
-        return compilation.GetTypeByMetadataName(fullName);
+        foreach (var baseInterface in typeSymbol.Interfaces)
+            baseInterface.GetAllInterfaces(true, output, traversed);
+        return output;
     }
 
     public static (string? Name, TypeSyntax TypeRef) GetMemberNameAndTypeRef(this MemberDeclarationSyntax memberDef)
@@ -50,29 +52,6 @@ public static class GenerationExt
             return (name, typeDef);
         }
         return default;
-    }
-
-    public static AttributeSyntax? GetAttribute(
-        this SemanticModel semanticModel,
-        ITypeSymbol attributeType,
-        SyntaxList<AttributeListSyntax> attributeLists)
-    {
-        var attributes =
-            from l in attributeLists
-            from a in l.Attributes
-            let aType = semanticModel.GetTypeInfo(a).Type
-            where SymbolEqualityComparer.Default.Equals(aType, attributeType)
-            select a;
-        return attributes.FirstOrDefault();
-    }
-
-    public static AttributeArgumentSyntax? GetNamedArgument(this AttributeSyntax attributeDef, string argumentName)
-    {
-        var arguments =
-            from a in attributeDef.ArgumentList?.Arguments ?? default
-            where Equals(argumentName, a?.NameEquals?.Name.Identifier.Text)
-            select a;
-        return arguments.SingleOrDefault();
     }
 
     public static NameSyntax? GetNamespaceRef(this TypeDeclarationSyntax typeDef)
@@ -112,9 +91,23 @@ public static class GenerationExt
     }
 
     public static TypeSyntax ToTypeRef(this ITypeSymbol typeSymbol)
-        => ParseTypeName(typeSymbol.ToFullName());
+        => ParseTypeName(typeSymbol.ToGlobalName());
 
     public static string ToFullName(this ITypeSymbol typeSymbol)
+    {
+        var name = typeSymbol.ToDisplayString(new SymbolDisplayFormat(
+            SymbolDisplayGlobalNamespaceStyle.Omitted,
+            SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
+            SymbolDisplayGenericsOptions.IncludeTypeParameters,
+            miscellaneousOptions: SymbolDisplayMiscellaneousOptions.ExpandNullable
+        ));
+        const string systemPrefix = "System.";
+        return name.StartsWith(systemPrefix, StringComparison.Ordinal)
+            ? Simplify(name.Substring(systemPrefix.Length), name)
+            : name;
+    }
+
+    public static string ToGlobalName(this ITypeSymbol typeSymbol)
     {
         var name = typeSymbol.ToDisplayString(new SymbolDisplayFormat(
             SymbolDisplayGlobalNamespaceStyle.Included,
@@ -122,37 +115,11 @@ public static class GenerationExt
             SymbolDisplayGenericsOptions.IncludeTypeParameters,
             miscellaneousOptions: SymbolDisplayMiscellaneousOptions.ExpandNullable
         ));
-        const string globalSystem = "global::System.";
-        return name.StartsWith(globalSystem, StringComparison.Ordinal)
-            ? Simplify(name.Substring(globalSystem.Length), name)
+        const string globalSystemPrefix = "global::System.";
+        return name.StartsWith(globalSystemPrefix, StringComparison.Ordinal)
+            ? Simplify(name.Substring(globalSystemPrefix.Length), name)
             : name;
     }
-
-    public static string ToVariableName(this string? s)
-    {
-        if (s == null)
-            return null!;
-        var sb = new StringBuilder("@");
-        var mustChangeCase = true;
-        foreach (var c in s) {
-            if (mustChangeCase && !char.IsUpper(c)) {
-                mustChangeCase = false;
-                var lastIndex = sb.Length - 1;
-                if (lastIndex >= 2)
-                    sb[lastIndex] = char.ToUpper(sb[lastIndex], CultureInfo.InvariantCulture);
-            }
-            if (c == '@' && sb.Length <= 1)
-                continue;
-            sb.Append(mustChangeCase ? char.ToLower(c, CultureInfo.InvariantCulture) : c);
-        }
-        return sb.ToString();
-    }
-
-    public static bool IsVoid(this TypeSyntax typeSyntax)
-        => typeSyntax is PredefinedTypeSyntax pts && pts.Keyword.IsKind(SyntaxKind.VoidKeyword);
-
-    public static bool IsObject(this TypeSyntax typeSyntax)
-        => typeSyntax is PredefinedTypeSyntax pts && pts.Keyword.IsKind(SyntaxKind.ObjectKeyword);
 
     public static LocalDeclarationStatementSyntax ToVarStatement(this VariableDeclaratorSyntax variable)
         => LocalDeclarationStatement(VariableDeclaration(VarIdentifierDef())
@@ -171,6 +138,12 @@ public static class GenerationExt
             return ns;
         return "global::" + ns;
     }
+
+    public static bool IsVoid(this TypeSyntax typeSyntax)
+        => typeSyntax is PredefinedTypeSyntax pts && pts.Keyword.IsKind(SyntaxKind.VoidKeyword);
+
+    public static bool IsObject(this TypeSyntax typeSyntax)
+        => typeSyntax is PredefinedTypeSyntax pts && pts.Keyword.IsKind(SyntaxKind.ObjectKeyword);
 
     // Helpers
 

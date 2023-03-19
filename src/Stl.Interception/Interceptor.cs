@@ -1,7 +1,10 @@
 namespace Stl.Interception;
 
-public abstract class Interceptor
+public class Interceptor
 {
+    public void BindTo(object proxy)
+        => ((IProxy)proxy).Bind(this);
+
     public virtual TResult Intercept<TResult>(Invocation invocation)
     {
         return invocation.Delegate is Func<ArgumentList, TResult> func

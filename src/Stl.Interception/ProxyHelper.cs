@@ -2,7 +2,7 @@ namespace Stl.Interception;
 
 public static class ProxyHelper
 {
-    public static readonly BindingFlags GetMethodBindingFlags =
+    private static readonly BindingFlags GetMethodBindingFlags =
         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
