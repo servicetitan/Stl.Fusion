@@ -2,6 +2,8 @@ namespace Stl.Generators.Internal;
 
 public static class DiagnosticsHelpers
 {
+    private static bool IsDebugOutputEnabled { get; } = true;
+
     private static readonly DiagnosticDescriptor DebugDescriptor = new(
         id: "STLGDEBUG",
         title: "Debug warning",
@@ -23,14 +25,16 @@ public static class DiagnosticsHelpers
     public static void ReportDebug(this SourceProductionContext context, string text, Location? location = null)
     {
 #if DEBUG
-        context.ReportDiagnostic(DebugWarning(text, location));
+        if (IsDebugOutputEnabled)
+            context.ReportDiagnostic(DebugWarning(text, location));
 #endif
     }
 
     public static void ReportDebug(this SourceProductionContext context, Exception error)
     {
 #if DEBUG
-        context.ReportDiagnostic(DebugWarning(error));
+        if (IsDebugOutputEnabled)
+            context.ReportDiagnostic(DebugWarning(error));
 #endif
     }
 
