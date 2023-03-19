@@ -125,21 +125,21 @@ public class ClockTest : TestBase
             // Infinity
             await ((Func<Task>) (async () => {
                 var cts = new CancellationTokenSource(100);
-                await clock1.Delay(Timeout.Infinite, cts.Token).SuppressCancellation();
+                await clock1.Delay(Timeout.Infinite, cts.Token).SuppressCancellationAwait();
             })).Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(1000));
             await ((Func<Task>) (async () => {
                 var cts = new CancellationTokenSource(100);
-                await clock1.Delay(Timeout.InfiniteTimeSpan, cts.Token).SuppressCancellation();
+                await clock1.Delay(Timeout.InfiniteTimeSpan, cts.Token).SuppressCancellationAwait();
             })).Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(1000));
 
             // Zero
             await ((Func<Task>) (async () => {
                 var cts = new CancellationTokenSource(1000);
-                await clock1.Delay(0, cts.Token).SuppressCancellation();
+                await clock1.Delay(0, cts.Token).SuppressCancellationAwait();
             })).Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(500));
             await ((Func<Task>) (async () => {
                 var cts = new CancellationTokenSource(1000);
-                await clock1.Delay(TimeSpan.Zero, cts.Token).SuppressCancellation();
+                await clock1.Delay(TimeSpan.Zero, cts.Token).SuppressCancellationAwait();
             })).Should().CompleteWithinAsync(TimeSpan.FromMilliseconds(500));
         }
 

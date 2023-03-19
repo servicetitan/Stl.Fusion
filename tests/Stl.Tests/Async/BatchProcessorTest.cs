@@ -67,10 +67,9 @@ public class BatchProcessorTest
         using var cts2 = new CancellationTokenSource();
         tasks = Enumerable.Range(0, 4)
             .Select(i => processor.Process(i, i % 2 == 0 ? cts1.Token : cts2.Token))
-            .Select(t => t.SuppressCancellation())
             .ToArray();
         cts1.Cancel();
-        await Task.WhenAll(tasks);
+        await Task.WhenAll(tasks).SuppressCancellationAwait();
         tasks.Count(t => t.Result == (0, 0)).Should().Be(2);
         tasks.Count(t => t.Result.Item1 == 1).Should().Be(1);
         tasks.Count(t => t.Result.Item1 == 2).Should().Be(1);

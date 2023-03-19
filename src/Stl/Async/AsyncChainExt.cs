@@ -4,6 +4,32 @@ namespace Stl.Async;
 
 public static class AsyncChainExt
 {
+    // RunXxx
+
+    public static Task Run(
+        this IEnumerable<AsyncChain> chains,
+        CancellationToken cancellationToken = default)
+        => chains.Run(false, cancellationToken);
+
+    public static Task RunIsolated(
+        this IEnumerable<AsyncChain> chains,
+        CancellationToken cancellationToken = default)
+        => chains.Run(true, cancellationToken);
+
+    public static Task Run(
+        this IEnumerable<AsyncChain> chains,
+        bool isolate,
+        CancellationToken cancellationToken = default)
+    {
+        var tasks = new List<Task>();
+        using (isolate ? ExecutionContextExt.SuppressFlow() : default)
+            foreach (var chain in chains)
+                tasks.Add(chain.Run(cancellationToken));
+        return Task.WhenAll(tasks);
+    }
+
+    // Construction primitives
+
     public static AsyncChain Rename(this AsyncChain asyncChain, string name)
         => asyncChain with { Name = name };
 
