@@ -63,9 +63,11 @@ public static class GenerationHelpers
                 SyntaxKind.ArrayInitializerExpression,
                 CommaSeparatedList(itemExpressions)));
 
-    public static FieldDeclarationSyntax PrivateFieldDef(TypeSyntax type, SyntaxToken name, bool isReadonly = false)
-        => PrivateFieldDef(type, name, null, isReadonly);
-    public static FieldDeclarationSyntax PrivateFieldDef(TypeSyntax type, SyntaxToken name, ExpressionSyntax? initializer, bool isReadonly = false)
+    public static FieldDeclarationSyntax PrivateFieldDef(TypeSyntax type, SyntaxToken name, ExpressionSyntax? initializer = null)
+        => PrivateFieldDef(type, name, false, initializer);
+    public static FieldDeclarationSyntax PrivateStaticFieldDef(TypeSyntax type, SyntaxToken name, ExpressionSyntax? initializer = null)
+        => PrivateFieldDef(type, name, true, initializer);
+    public static FieldDeclarationSyntax PrivateFieldDef(TypeSyntax type, SyntaxToken name, bool isStatic, ExpressionSyntax? initializer = null)
     {
         var initializerClause = initializer == null
             ? null
@@ -74,8 +76,8 @@ public static class GenerationHelpers
             VariableDeclaration(type)
                 .WithVariables(SingletonSeparatedList(
                     VariableDeclarator(name, null, initializerClause))));
-        return fieldDeclaration.WithModifiers(isReadonly
-            ? TokenList(Token(SyntaxKind.PrivateKeyword), Token(SyntaxKind.ReadOnlyKeyword))
+        return fieldDeclaration.WithModifiers(isStatic
+            ? TokenList(Token(SyntaxKind.PrivateKeyword), Token(SyntaxKind.StaticKeyword))
             : TokenList(Token(SyntaxKind.PrivateKeyword)));
     }
 

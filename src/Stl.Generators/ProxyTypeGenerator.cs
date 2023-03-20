@@ -18,6 +18,7 @@ public class ProxyTypeGenerator
 
     private string ProxyTypeName { get; } = "";
     private ClassDeclarationSyntax ProxyDef { get; } = null!;
+    private List<MemberDeclarationSyntax> StaticFields { get; } = new();
     private List<MemberDeclarationSyntax> Fields { get; } = new();
     private List<MemberDeclarationSyntax> Properties { get; } = new();
     private List<MemberDeclarationSyntax> Constructors { get; } = new();
@@ -63,7 +64,8 @@ public class ProxyTypeGenerator
 
         ProxyDef = ProxyDef
             .WithMembers(List(
-                Fields
+                StaticFields
+                .Concat(Fields)
                 .Concat(Properties)
                 .Concat(Constructors)
                 .Concat(Methods)));
@@ -159,9 +161,10 @@ public class ProxyTypeGenerator
 
             // __cachedMethodInfoN field 
             var cachedMethodInfoFieldName = "__cachedMethodInfo" + methodIndex;
-            Fields.Add(PrivateFieldDef(NullableMethodInfoType, Identifier(cachedMethodInfoFieldName)));
-            BindMethodStatements.Add(
-                ExpressionStatement(
+            StaticFields.Add(
+                PrivateStaticFieldDef(
+                    NullableMethodInfoType,
+                    Identifier(cachedMethodInfoFieldName),
                     AssignmentExpression(
                         SyntaxKind.SimpleAssignmentExpression,
                         IdentifierName(cachedMethodInfoFieldName),

@@ -8,6 +8,7 @@ public class ProxyTest : TestBase
     public ProxyTest(ITestOutputHelper @out) : base(@out) { }
 
     [Theory]
+    [InlineData(100_000)]
     [InlineData(1000_000)]
     [InlineData(25_000_000)]
     public void BenchmarkAll(int baseOpCount)
