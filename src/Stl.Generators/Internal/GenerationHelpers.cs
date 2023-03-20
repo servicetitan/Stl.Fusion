@@ -38,6 +38,10 @@ public static class GenerationHelpers
 
     // Helpers
 
+    public static ObjectCreationExpressionSyntax NewExpression(TypeSyntax type, params ExpressionSyntax[] arguments)
+        => ObjectCreationExpression(type)
+            .WithArgumentList(ArgumentList(CommaSeparatedList(arguments.Select(Argument))));
+
     public static InvocationExpressionSyntax EmptyArrayExpression<TItem>()
         => EmptyArrayExpression(typeof(TItem).ToTypeRef());
     public static InvocationExpressionSyntax EmptyArrayExpression(TypeSyntax itemTypeRef)

@@ -1,12 +1,10 @@
-using Castle.DynamicProxy;
-
 namespace Stl.Interception.Interceptors;
 
 public abstract record MethodDef
 {
     private string? _fullName;
 
-    public IInterceptor Interceptor { get; init; }
+    public Interceptor Interceptor { get; init; }
     public MethodInfo MethodInfo { get; init; }
     public string Name => MethodInfo.Name;
     public string FullName => _fullName ??= $"{MethodInfo.DeclaringType!.GetName()}.{MethodInfo.Name}";
@@ -18,7 +16,7 @@ public abstract record MethodDef
     public bool IsValid { get; init; }
 
     protected MethodDef(
-        IInterceptor interceptor,
+        Interceptor interceptor,
         MethodInfo methodInfo)
     {
         Interceptor = interceptor;

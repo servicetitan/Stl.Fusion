@@ -14,7 +14,7 @@ public static class TypeExt
 
     public static readonly string SymbolPrefix = "@";
     public static Func<Type, bool> ProxyTypeDetector { get; set; } =
-        type => "Castle.Proxies".Equals(type.Namespace, StringComparison.Ordinal);
+        type => (type.Namespace ?? "").EndsWith("StlInterceptionProxies", StringComparison.Ordinal);
 
     public static Type NonProxyType(this Type type)
         => ProxyTypeDetector(type) ? NonProxyType(type.BaseType!) : type;

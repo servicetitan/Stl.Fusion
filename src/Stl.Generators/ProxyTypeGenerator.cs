@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Stl.Generators;
@@ -159,15 +160,15 @@ public class ProxyTypeGenerator
                     Parameter(Identifier(p.Name))
                         .WithType(p.Type.ToTypeRef()))));
 
-            // __cachedMethodInfoN field 
-            var cachedMethodInfoFieldName = "__cachedMethodInfo" + methodIndex;
+            // __cachedMethodN field 
+            var cachedMethodFieldName = "__cachedMethod" + methodIndex;
             StaticFields.Add(
                 PrivateStaticFieldDef(
                     NullableMethodInfoType,
-                    Identifier(cachedMethodInfoFieldName),
+                    Identifier(cachedMethodFieldName),
                     AssignmentExpression(
                         SyntaxKind.SimpleAssignmentExpression,
-                        IdentifierName(cachedMethodInfoFieldName),
+                        IdentifierName(cachedMethodFieldName),
                         GetMethodInfoExpression(TypeDef, method, parameters))));
 
             // __cachedInterceptedN field 
@@ -201,19 +202,25 @@ public class ProxyTypeGenerator
                             GetMethodInfoExpression(TypeDef, method, parameters)));
             }
 
-            var interceptedLambda = CreateInterceptedLambda(method, parameters);
-            var newArgumentList = method.Parameters
-                .Select(p => Argument(IdentifierName(p.Name)))
-                .ToArray();
-
+            var proxyTarget = IsInterfaceProxy
+                ? (ExpressionSyntax)ProxyTargetFieldName
+                : ThisExpression();
+            var argumentList = CreateArgumentList(
+                method.Parameters
+                    .Select(p => Argument(IdentifierName(p.Name)))
+                    .ToArray());
             var body = Block(
                 VarStatement(InterceptedVarName.Identifier,
-                    CoalesceAssignmentExpression(IdentifierName(cachedInterceptedFieldName), interceptedLambda)),
+                    CoalesceAssignmentExpression(
+                        IdentifierName(cachedInterceptedFieldName),
+                        CreateInterceptedLambda(method, parameters))),
                 VarStatement(InvocationVarName.Identifier,
-                    CreateInvocationInstance(
+                    NewExpression(
+                        IdentifierName("Invocation"),
                         ThisExpression(),
-                        SuppressNullWarning(IdentifierName(cachedMethodInfoFieldName)),
-                        NewArgumentList(newArgumentList),
+                        proxyTarget,
+                        SuppressNullWarning(IdentifierName(cachedMethodFieldName)),
+                        argumentList,
                         InterceptedVarName)),
                 IfStatement(
                     BinaryExpression(
@@ -336,11 +343,6 @@ public class ProxyTypeGenerator
         }
     }
 
-    private static ObjectCreationExpressionSyntax CreateInvocationInstance(params ExpressionSyntax[] ctorArguments)
-        => ObjectCreationExpression(IdentifierName("Invocation"))
-            .WithArgumentList(
-                ArgumentList(CommaSeparatedList(ctorArguments.Select(c => Argument(c)))));
-
     private ExpressionSyntax GetMethodInfoExpression(
         TypeDeclarationSyntax typeDeclaration,
         IMethodSymbol method,
@@ -446,7 +448,7 @@ public class ProxyTypeGenerator
             .WithBlock(baseInvocationBlock);
     }
 
-    private InvocationExpressionSyntax NewArgumentList(IEnumerable<ArgumentSyntax> newArgumentListParams)
+    private InvocationExpressionSyntax CreateArgumentList(params ArgumentSyntax[] newArgumentListParams)
         => InvocationExpression(
                 MemberAccessExpression(
                     SyntaxKind.SimpleMemberAccessExpression,

@@ -60,7 +60,6 @@
     <PackageReference Update="Blazorise.Icons.FontAwesome" Version="$(BlazoriseVersion)" />
     <PackageReference Update="Blazorise.Sidebar" Version="$(BlazoriseVersion)" />
     <PackageReference Update="Bullseye" Version="4.2.*" />
-    <PackageReference Update="Castle.Core" Version="5.1.*" />
     <PackageReference Update="CliWrap" Version="3.6.*" />
     <PackageReference Update="DataAnnotationsValidatorNetStandard" Version="1.0.*" />
     <PackageReference Update="EFCore.CheckConstraints" Version="$(EntityFrameworkCoreVersion)" />

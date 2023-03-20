@@ -9,10 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Castle.Core" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\Stl\Stl.csproj" />
   </ItemGroup>
 
