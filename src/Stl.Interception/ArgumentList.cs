@@ -51,6 +51,9 @@ public record ArgumentList
     public static ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> New<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8, T9 item9, T10 item10, T11 item11)
         => new (item0, item1, item2, item3, item4, item5, item6, item7, item8, item9, item10, item11);
 
+    public virtual object?[] ToArray()
+        => Array.Empty<object?>();
+
     public virtual T GetItem<T>(int index)
         => throw new ArgumentOutOfRangeException(nameof(index));
     public virtual object? GetItemUntyped(int index)
@@ -83,6 +86,14 @@ public sealed record ArgumentList<T0>(
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 1;
+
+    // ToArray
+
+    public override object?[] ToArray()
+        => new object?[] {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item0,
+        };
 
     // GetItem
 
@@ -208,6 +219,16 @@ public sealed record ArgumentList<T0, T1>(
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 2;
+
+    // ToArray
+
+    public override object?[] ToArray()
+        => new object?[] {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item0,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item1,
+        };
 
     // GetItem
 
@@ -363,6 +384,18 @@ public sealed record ArgumentList<T0, T1, T2>(
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 3;
+
+    // ToArray
+
+    public override object?[] ToArray()
+        => new object?[] {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item0,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item1,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item2,
+        };
 
     // GetItem
 
@@ -548,6 +581,20 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 4;
+
+    // ToArray
+
+    public override object?[] ToArray()
+        => new object?[] {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item0,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item1,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item2,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item3,
+        };
 
     // GetItem
 
@@ -763,6 +810,22 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 5;
+
+    // ToArray
+
+    public override object?[] ToArray()
+        => new object?[] {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item0,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item1,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item2,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item3,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item4,
+        };
 
     // GetItem
 
@@ -1008,6 +1071,24 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 6;
+
+    // ToArray
+
+    public override object?[] ToArray()
+        => new object?[] {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item0,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item1,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item2,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item3,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item4,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item5,
+        };
 
     // GetItem
 
@@ -1283,6 +1364,26 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 7;
+
+    // ToArray
+
+    public override object?[] ToArray()
+        => new object?[] {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item0,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item1,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item2,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item3,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item4,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item5,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item6,
+        };
 
     // GetItem
 
@@ -1588,6 +1689,28 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 8;
+
+    // ToArray
+
+    public override object?[] ToArray()
+        => new object?[] {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item0,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item1,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item2,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item3,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item4,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item5,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item6,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item7,
+        };
 
     // GetItem
 
@@ -1923,6 +2046,30 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 9;
+
+    // ToArray
+
+    public override object?[] ToArray()
+        => new object?[] {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item0,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item1,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item2,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item3,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item4,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item5,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item6,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item7,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item8,
+        };
 
     // GetItem
 
@@ -2288,6 +2435,32 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 10;
+
+    // ToArray
+
+    public override object?[] ToArray()
+        => new object?[] {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item0,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item1,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item2,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item3,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item4,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item5,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item6,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item7,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item8,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item9,
+        };
 
     // GetItem
 
@@ -2683,6 +2856,34 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 11;
+
+    // ToArray
+
+    public override object?[] ToArray()
+        => new object?[] {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item0,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item1,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item2,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item3,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item4,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item5,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item6,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item7,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item8,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item9,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item10,
+        };
 
     // GetItem
 
@@ -3108,6 +3309,36 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 12;
+
+    // ToArray
+
+    public override object?[] ToArray()
+        => new object?[] {
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item0,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item1,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item2,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item3,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item4,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item5,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item6,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item7,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item8,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item9,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item10,
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item11,
+        };
 
     // GetItem
 

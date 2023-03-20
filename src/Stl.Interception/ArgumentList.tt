@@ -48,6 +48,9 @@ public record ArgumentList
         => new (<#=argumentUsage#>);
 <#}#>
 
+    public virtual object?[] ToArray()
+        => Array.Empty<object?>();
+
     public virtual T GetItem<T>(int index)
         => throw new ArgumentOutOfRangeException(nameof(index));
     public virtual object? GetItemUntyped(int index)
@@ -99,6 +102,16 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => <#=itemCount#>;
+
+    // ToArray
+
+    public override object?[] ToArray()
+        => new object?[] {
+<#for (var t = 0; t < itemCount; t++) {#>
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item<#=t#>,
+<#}#>
+        };
 
     // GetItem
 
