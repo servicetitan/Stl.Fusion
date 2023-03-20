@@ -61,19 +61,25 @@ public record ArgumentList
     public virtual void SetItemUntyped(int index, object? value)
          => throw new ArgumentOutOfRangeException(nameof(index));
 
+    public virtual bool Equals(ArgumentList? other, int ignoredIndex)
+        => other?.GetType() == typeof(ArgumentList);
+    public virtual int GetHashCode(int ignoredIndex)
+        => 1;
+
     public virtual bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
         => other?.GetType() == typeof(ArgumentList);
     public virtual int GetHashCode(Delegate?[] equalsDelegates)
-        => 0;
+        => 1;
 }
 
+[DataContract]
 public sealed record ArgumentList<T0>(
     T0 Item0
 ) : ArgumentList
 {
     private T0 _item0 = Item0;
 
-    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 1;
@@ -132,7 +138,25 @@ public sealed record ArgumentList<T0>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            return hashCode;
+        }
+    }
+
+    public override bool Equals(ArgumentList? other, int ignoredIndex)
+    {
+        if (other is not ArgumentList<T0> vOther)
+            return false;
+
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
+            return false;
+        return true;
+    }
+
+    public override int GetHashCode(int ignoredIndex)
+    {
+        unchecked {
+            var hashCode = ignoredIndex == 0 ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
             return hashCode;
         }
     }
@@ -161,15 +185,16 @@ public sealed record ArgumentList<T0>(
         unchecked {
             int hashCode;
             if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0(Item0);
+                hashCode = func0.Invoke(Item0!);
             else
-                hashCode = Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
 
             return hashCode;
         }
     }
 }
 
+[DataContract]
 public sealed record ArgumentList<T0, T1>(
     T0 Item0,
     T1 Item1
@@ -178,8 +203,8 @@ public sealed record ArgumentList<T0, T1>(
     private T0 _item0 = Item0;
     private T1 _item1 = Item1;
 
-    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
-    [property: DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+    [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 2;
@@ -249,8 +274,29 @@ public sealed record ArgumentList<T0, T1>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = 397*hashCode + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + (Item1 is CancellationToken ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
+            return hashCode;
+        }
+    }
+
+    public override bool Equals(ArgumentList? other, int ignoredIndex)
+    {
+        if (other is not ArgumentList<T0, T1> vOther)
+            return false;
+
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
+            return false;
+        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+        return true;
+    }
+
+    public override int GetHashCode(int ignoredIndex)
+    {
+        unchecked {
+            var hashCode = ignoredIndex == 0 ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + (ignoredIndex == 1 ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
             return hashCode;
         }
     }
@@ -286,20 +332,21 @@ public sealed record ArgumentList<T0, T1>(
         unchecked {
             int hashCode;
             if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0(Item0);
+                hashCode = func0.Invoke(Item0!);
             else
-                hashCode = Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
 
             if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1(Item1);
+                hashCode = (hashCode * 397) + func1.Invoke(Item1!);
             else
-                hashCode = (hashCode * 397) + (Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+                hashCode = (hashCode * 397) + EqualityComparer<T1>.Default.GetHashCode(Item1!);
 
             return hashCode;
         }
     }
 }
 
+[DataContract]
 public sealed record ArgumentList<T0, T1, T2>(
     T0 Item0,
     T1 Item1,
@@ -310,9 +357,9 @@ public sealed record ArgumentList<T0, T1, T2>(
     private T1 _item1 = Item1;
     private T2 _item2 = Item2;
 
-    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
-    [property: DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
-    [property: DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
+    [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+    [DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 3;
@@ -393,9 +440,33 @@ public sealed record ArgumentList<T0, T1, T2>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = 397*hashCode + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = 397*hashCode + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
+            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + (Item1 is CancellationToken ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
+            hashCode = 397*hashCode + (Item2 is CancellationToken ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
+            return hashCode;
+        }
+    }
+
+    public override bool Equals(ArgumentList? other, int ignoredIndex)
+    {
+        if (other is not ArgumentList<T0, T1, T2> vOther)
+            return false;
+
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
+            return false;
+        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+        return true;
+    }
+
+    public override int GetHashCode(int ignoredIndex)
+    {
+        unchecked {
+            var hashCode = ignoredIndex == 0 ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + (ignoredIndex == 1 ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
+            hashCode = 397*hashCode + (ignoredIndex == 2 ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
             return hashCode;
         }
     }
@@ -438,25 +509,26 @@ public sealed record ArgumentList<T0, T1, T2>(
         unchecked {
             int hashCode;
             if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0(Item0);
+                hashCode = func0.Invoke(Item0!);
             else
-                hashCode = Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
 
             if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1(Item1);
+                hashCode = (hashCode * 397) + func1.Invoke(Item1!);
             else
-                hashCode = (hashCode * 397) + (Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+                hashCode = (hashCode * 397) + EqualityComparer<T1>.Default.GetHashCode(Item1!);
 
             if (getHashCodeDelegates[2] is Func<T2, int> func2)
-                hashCode = (hashCode * 397) + func2(Item2);
+                hashCode = (hashCode * 397) + func2.Invoke(Item2!);
             else
-                hashCode = (hashCode * 397) + (Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
+                hashCode = (hashCode * 397) + EqualityComparer<T2>.Default.GetHashCode(Item2!);
 
             return hashCode;
         }
     }
 }
 
+[DataContract]
 public sealed record ArgumentList<T0, T1, T2, T3>(
     T0 Item0,
     T1 Item1,
@@ -469,10 +541,10 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
     private T2 _item2 = Item2;
     private T3 _item3 = Item3;
 
-    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
-    [property: DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
-    [property: DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
-    [property: DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
+    [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+    [DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
+    [DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 4;
@@ -564,10 +636,37 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = 397*hashCode + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = 397*hashCode + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-            hashCode = 397*hashCode + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
+            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + (Item1 is CancellationToken ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
+            hashCode = 397*hashCode + (Item2 is CancellationToken ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
+            hashCode = 397*hashCode + (Item3 is CancellationToken ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
+            return hashCode;
+        }
+    }
+
+    public override bool Equals(ArgumentList? other, int ignoredIndex)
+    {
+        if (other is not ArgumentList<T0, T1, T2, T3> vOther)
+            return false;
+
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
+            return false;
+        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+        return true;
+    }
+
+    public override int GetHashCode(int ignoredIndex)
+    {
+        unchecked {
+            var hashCode = ignoredIndex == 0 ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + (ignoredIndex == 1 ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
+            hashCode = 397*hashCode + (ignoredIndex == 2 ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
+            hashCode = 397*hashCode + (ignoredIndex == 3 ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
             return hashCode;
         }
     }
@@ -617,30 +716,31 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
         unchecked {
             int hashCode;
             if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0(Item0);
+                hashCode = func0.Invoke(Item0!);
             else
-                hashCode = Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
 
             if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1(Item1);
+                hashCode = (hashCode * 397) + func1.Invoke(Item1!);
             else
-                hashCode = (hashCode * 397) + (Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+                hashCode = (hashCode * 397) + EqualityComparer<T1>.Default.GetHashCode(Item1!);
 
             if (getHashCodeDelegates[2] is Func<T2, int> func2)
-                hashCode = (hashCode * 397) + func2(Item2);
+                hashCode = (hashCode * 397) + func2.Invoke(Item2!);
             else
-                hashCode = (hashCode * 397) + (Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
+                hashCode = (hashCode * 397) + EqualityComparer<T2>.Default.GetHashCode(Item2!);
 
             if (getHashCodeDelegates[3] is Func<T3, int> func3)
-                hashCode = (hashCode * 397) + func3(Item3);
+                hashCode = (hashCode * 397) + func3.Invoke(Item3!);
             else
-                hashCode = (hashCode * 397) + (Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
+                hashCode = (hashCode * 397) + EqualityComparer<T3>.Default.GetHashCode(Item3!);
 
             return hashCode;
         }
     }
 }
 
+[DataContract]
 public sealed record ArgumentList<T0, T1, T2, T3, T4>(
     T0 Item0,
     T1 Item1,
@@ -655,11 +755,11 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
     private T3 _item3 = Item3;
     private T4 _item4 = Item4;
 
-    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
-    [property: DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
-    [property: DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
-    [property: DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
-    [property: DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
+    [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+    [DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
+    [DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
+    [DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 5;
@@ -762,11 +862,41 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = 397*hashCode + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = 397*hashCode + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-            hashCode = 397*hashCode + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-            hashCode = 397*hashCode + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
+            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + (Item1 is CancellationToken ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
+            hashCode = 397*hashCode + (Item2 is CancellationToken ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
+            hashCode = 397*hashCode + (Item3 is CancellationToken ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
+            hashCode = 397*hashCode + (Item4 is CancellationToken ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
+            return hashCode;
+        }
+    }
+
+    public override bool Equals(ArgumentList? other, int ignoredIndex)
+    {
+        if (other is not ArgumentList<T0, T1, T2, T3, T4> vOther)
+            return false;
+
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
+            return false;
+        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+        if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+            return false;
+        return true;
+    }
+
+    public override int GetHashCode(int ignoredIndex)
+    {
+        unchecked {
+            var hashCode = ignoredIndex == 0 ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + (ignoredIndex == 1 ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
+            hashCode = 397*hashCode + (ignoredIndex == 2 ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
+            hashCode = 397*hashCode + (ignoredIndex == 3 ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
+            hashCode = 397*hashCode + (ignoredIndex == 4 ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
             return hashCode;
         }
     }
@@ -823,35 +953,36 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
         unchecked {
             int hashCode;
             if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0(Item0);
+                hashCode = func0.Invoke(Item0!);
             else
-                hashCode = Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
 
             if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1(Item1);
+                hashCode = (hashCode * 397) + func1.Invoke(Item1!);
             else
-                hashCode = (hashCode * 397) + (Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+                hashCode = (hashCode * 397) + EqualityComparer<T1>.Default.GetHashCode(Item1!);
 
             if (getHashCodeDelegates[2] is Func<T2, int> func2)
-                hashCode = (hashCode * 397) + func2(Item2);
+                hashCode = (hashCode * 397) + func2.Invoke(Item2!);
             else
-                hashCode = (hashCode * 397) + (Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
+                hashCode = (hashCode * 397) + EqualityComparer<T2>.Default.GetHashCode(Item2!);
 
             if (getHashCodeDelegates[3] is Func<T3, int> func3)
-                hashCode = (hashCode * 397) + func3(Item3);
+                hashCode = (hashCode * 397) + func3.Invoke(Item3!);
             else
-                hashCode = (hashCode * 397) + (Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
+                hashCode = (hashCode * 397) + EqualityComparer<T3>.Default.GetHashCode(Item3!);
 
             if (getHashCodeDelegates[4] is Func<T4, int> func4)
-                hashCode = (hashCode * 397) + func4(Item4);
+                hashCode = (hashCode * 397) + func4.Invoke(Item4!);
             else
-                hashCode = (hashCode * 397) + (Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
+                hashCode = (hashCode * 397) + EqualityComparer<T4>.Default.GetHashCode(Item4!);
 
             return hashCode;
         }
     }
 }
 
+[DataContract]
 public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
     T0 Item0,
     T1 Item1,
@@ -868,12 +999,12 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
     private T4 _item4 = Item4;
     private T5 _item5 = Item5;
 
-    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
-    [property: DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
-    [property: DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
-    [property: DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
-    [property: DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
-    [property: DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
+    [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+    [DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
+    [DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
+    [DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
+    [DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 6;
@@ -987,12 +1118,45 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = 397*hashCode + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = 397*hashCode + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-            hashCode = 397*hashCode + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-            hashCode = 397*hashCode + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
-            hashCode = 397*hashCode + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
+            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + (Item1 is CancellationToken ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
+            hashCode = 397*hashCode + (Item2 is CancellationToken ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
+            hashCode = 397*hashCode + (Item3 is CancellationToken ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
+            hashCode = 397*hashCode + (Item4 is CancellationToken ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
+            hashCode = 397*hashCode + (Item5 is CancellationToken ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5!));
+            return hashCode;
+        }
+    }
+
+    public override bool Equals(ArgumentList? other, int ignoredIndex)
+    {
+        if (other is not ArgumentList<T0, T1, T2, T3, T4, T5> vOther)
+            return false;
+
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
+            return false;
+        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+        if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+            return false;
+        if (ignoredIndex != 5 && !EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
+            return false;
+        return true;
+    }
+
+    public override int GetHashCode(int ignoredIndex)
+    {
+        unchecked {
+            var hashCode = ignoredIndex == 0 ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + (ignoredIndex == 1 ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
+            hashCode = 397*hashCode + (ignoredIndex == 2 ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
+            hashCode = 397*hashCode + (ignoredIndex == 3 ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
+            hashCode = 397*hashCode + (ignoredIndex == 4 ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
+            hashCode = 397*hashCode + (ignoredIndex == 5 ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5!));
             return hashCode;
         }
     }
@@ -1056,40 +1220,41 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
         unchecked {
             int hashCode;
             if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0(Item0);
+                hashCode = func0.Invoke(Item0!);
             else
-                hashCode = Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
 
             if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1(Item1);
+                hashCode = (hashCode * 397) + func1.Invoke(Item1!);
             else
-                hashCode = (hashCode * 397) + (Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+                hashCode = (hashCode * 397) + EqualityComparer<T1>.Default.GetHashCode(Item1!);
 
             if (getHashCodeDelegates[2] is Func<T2, int> func2)
-                hashCode = (hashCode * 397) + func2(Item2);
+                hashCode = (hashCode * 397) + func2.Invoke(Item2!);
             else
-                hashCode = (hashCode * 397) + (Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
+                hashCode = (hashCode * 397) + EqualityComparer<T2>.Default.GetHashCode(Item2!);
 
             if (getHashCodeDelegates[3] is Func<T3, int> func3)
-                hashCode = (hashCode * 397) + func3(Item3);
+                hashCode = (hashCode * 397) + func3.Invoke(Item3!);
             else
-                hashCode = (hashCode * 397) + (Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
+                hashCode = (hashCode * 397) + EqualityComparer<T3>.Default.GetHashCode(Item3!);
 
             if (getHashCodeDelegates[4] is Func<T4, int> func4)
-                hashCode = (hashCode * 397) + func4(Item4);
+                hashCode = (hashCode * 397) + func4.Invoke(Item4!);
             else
-                hashCode = (hashCode * 397) + (Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
+                hashCode = (hashCode * 397) + EqualityComparer<T4>.Default.GetHashCode(Item4!);
 
             if (getHashCodeDelegates[5] is Func<T5, int> func5)
-                hashCode = (hashCode * 397) + func5(Item5);
+                hashCode = (hashCode * 397) + func5.Invoke(Item5!);
             else
-                hashCode = (hashCode * 397) + (Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
+                hashCode = (hashCode * 397) + EqualityComparer<T5>.Default.GetHashCode(Item5!);
 
             return hashCode;
         }
     }
 }
 
+[DataContract]
 public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
     T0 Item0,
     T1 Item1,
@@ -1108,13 +1273,13 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
     private T5 _item5 = Item5;
     private T6 _item6 = Item6;
 
-    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
-    [property: DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
-    [property: DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
-    [property: DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
-    [property: DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
-    [property: DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
-    [property: DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
+    [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+    [DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
+    [DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
+    [DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
+    [DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
+    [DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 7;
@@ -1239,13 +1404,49 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = 397*hashCode + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = 397*hashCode + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-            hashCode = 397*hashCode + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-            hashCode = 397*hashCode + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
-            hashCode = 397*hashCode + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
-            hashCode = 397*hashCode + (Item6 is CancellationToken || Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
+            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + (Item1 is CancellationToken ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
+            hashCode = 397*hashCode + (Item2 is CancellationToken ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
+            hashCode = 397*hashCode + (Item3 is CancellationToken ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
+            hashCode = 397*hashCode + (Item4 is CancellationToken ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
+            hashCode = 397*hashCode + (Item5 is CancellationToken ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5!));
+            hashCode = 397*hashCode + (Item6 is CancellationToken ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6!));
+            return hashCode;
+        }
+    }
+
+    public override bool Equals(ArgumentList? other, int ignoredIndex)
+    {
+        if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6> vOther)
+            return false;
+
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
+            return false;
+        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+        if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+            return false;
+        if (ignoredIndex != 5 && !EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
+            return false;
+        if (ignoredIndex != 6 && !EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
+            return false;
+        return true;
+    }
+
+    public override int GetHashCode(int ignoredIndex)
+    {
+        unchecked {
+            var hashCode = ignoredIndex == 0 ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + (ignoredIndex == 1 ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
+            hashCode = 397*hashCode + (ignoredIndex == 2 ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
+            hashCode = 397*hashCode + (ignoredIndex == 3 ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
+            hashCode = 397*hashCode + (ignoredIndex == 4 ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
+            hashCode = 397*hashCode + (ignoredIndex == 5 ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5!));
+            hashCode = 397*hashCode + (ignoredIndex == 6 ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6!));
             return hashCode;
         }
     }
@@ -1316,45 +1517,46 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
         unchecked {
             int hashCode;
             if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0(Item0);
+                hashCode = func0.Invoke(Item0!);
             else
-                hashCode = Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
 
             if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1(Item1);
+                hashCode = (hashCode * 397) + func1.Invoke(Item1!);
             else
-                hashCode = (hashCode * 397) + (Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+                hashCode = (hashCode * 397) + EqualityComparer<T1>.Default.GetHashCode(Item1!);
 
             if (getHashCodeDelegates[2] is Func<T2, int> func2)
-                hashCode = (hashCode * 397) + func2(Item2);
+                hashCode = (hashCode * 397) + func2.Invoke(Item2!);
             else
-                hashCode = (hashCode * 397) + (Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
+                hashCode = (hashCode * 397) + EqualityComparer<T2>.Default.GetHashCode(Item2!);
 
             if (getHashCodeDelegates[3] is Func<T3, int> func3)
-                hashCode = (hashCode * 397) + func3(Item3);
+                hashCode = (hashCode * 397) + func3.Invoke(Item3!);
             else
-                hashCode = (hashCode * 397) + (Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
+                hashCode = (hashCode * 397) + EqualityComparer<T3>.Default.GetHashCode(Item3!);
 
             if (getHashCodeDelegates[4] is Func<T4, int> func4)
-                hashCode = (hashCode * 397) + func4(Item4);
+                hashCode = (hashCode * 397) + func4.Invoke(Item4!);
             else
-                hashCode = (hashCode * 397) + (Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
+                hashCode = (hashCode * 397) + EqualityComparer<T4>.Default.GetHashCode(Item4!);
 
             if (getHashCodeDelegates[5] is Func<T5, int> func5)
-                hashCode = (hashCode * 397) + func5(Item5);
+                hashCode = (hashCode * 397) + func5.Invoke(Item5!);
             else
-                hashCode = (hashCode * 397) + (Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
+                hashCode = (hashCode * 397) + EqualityComparer<T5>.Default.GetHashCode(Item5!);
 
             if (getHashCodeDelegates[6] is Func<T6, int> func6)
-                hashCode = (hashCode * 397) + func6(Item6);
+                hashCode = (hashCode * 397) + func6.Invoke(Item6!);
             else
-                hashCode = (hashCode * 397) + (Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
+                hashCode = (hashCode * 397) + EqualityComparer<T6>.Default.GetHashCode(Item6!);
 
             return hashCode;
         }
     }
 }
 
+[DataContract]
 public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
     T0 Item0,
     T1 Item1,
@@ -1375,14 +1577,14 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
     private T6 _item6 = Item6;
     private T7 _item7 = Item7;
 
-    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
-    [property: DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
-    [property: DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
-    [property: DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
-    [property: DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
-    [property: DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
-    [property: DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
-    [property: DataMember(Order = 7)] public T7 Item7 { get => _item7; init => _item7 = value; }
+    [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+    [DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
+    [DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
+    [DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
+    [DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
+    [DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
+    [DataMember(Order = 7)] public T7 Item7 { get => _item7; init => _item7 = value; }
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 8;
@@ -1518,14 +1720,53 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = 397*hashCode + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = 397*hashCode + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-            hashCode = 397*hashCode + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-            hashCode = 397*hashCode + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
-            hashCode = 397*hashCode + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
-            hashCode = 397*hashCode + (Item6 is CancellationToken || Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
-            hashCode = 397*hashCode + (Item7 is CancellationToken || Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
+            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + (Item1 is CancellationToken ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
+            hashCode = 397*hashCode + (Item2 is CancellationToken ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
+            hashCode = 397*hashCode + (Item3 is CancellationToken ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
+            hashCode = 397*hashCode + (Item4 is CancellationToken ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
+            hashCode = 397*hashCode + (Item5 is CancellationToken ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5!));
+            hashCode = 397*hashCode + (Item6 is CancellationToken ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6!));
+            hashCode = 397*hashCode + (Item7 is CancellationToken ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7!));
+            return hashCode;
+        }
+    }
+
+    public override bool Equals(ArgumentList? other, int ignoredIndex)
+    {
+        if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7> vOther)
+            return false;
+
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
+            return false;
+        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+        if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+            return false;
+        if (ignoredIndex != 5 && !EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
+            return false;
+        if (ignoredIndex != 6 && !EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
+            return false;
+        if (ignoredIndex != 7 && !EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
+            return false;
+        return true;
+    }
+
+    public override int GetHashCode(int ignoredIndex)
+    {
+        unchecked {
+            var hashCode = ignoredIndex == 0 ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + (ignoredIndex == 1 ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
+            hashCode = 397*hashCode + (ignoredIndex == 2 ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
+            hashCode = 397*hashCode + (ignoredIndex == 3 ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
+            hashCode = 397*hashCode + (ignoredIndex == 4 ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
+            hashCode = 397*hashCode + (ignoredIndex == 5 ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5!));
+            hashCode = 397*hashCode + (ignoredIndex == 6 ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6!));
+            hashCode = 397*hashCode + (ignoredIndex == 7 ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7!));
             return hashCode;
         }
     }
@@ -1603,50 +1844,51 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
         unchecked {
             int hashCode;
             if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0(Item0);
+                hashCode = func0.Invoke(Item0!);
             else
-                hashCode = Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
 
             if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1(Item1);
+                hashCode = (hashCode * 397) + func1.Invoke(Item1!);
             else
-                hashCode = (hashCode * 397) + (Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+                hashCode = (hashCode * 397) + EqualityComparer<T1>.Default.GetHashCode(Item1!);
 
             if (getHashCodeDelegates[2] is Func<T2, int> func2)
-                hashCode = (hashCode * 397) + func2(Item2);
+                hashCode = (hashCode * 397) + func2.Invoke(Item2!);
             else
-                hashCode = (hashCode * 397) + (Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
+                hashCode = (hashCode * 397) + EqualityComparer<T2>.Default.GetHashCode(Item2!);
 
             if (getHashCodeDelegates[3] is Func<T3, int> func3)
-                hashCode = (hashCode * 397) + func3(Item3);
+                hashCode = (hashCode * 397) + func3.Invoke(Item3!);
             else
-                hashCode = (hashCode * 397) + (Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
+                hashCode = (hashCode * 397) + EqualityComparer<T3>.Default.GetHashCode(Item3!);
 
             if (getHashCodeDelegates[4] is Func<T4, int> func4)
-                hashCode = (hashCode * 397) + func4(Item4);
+                hashCode = (hashCode * 397) + func4.Invoke(Item4!);
             else
-                hashCode = (hashCode * 397) + (Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
+                hashCode = (hashCode * 397) + EqualityComparer<T4>.Default.GetHashCode(Item4!);
 
             if (getHashCodeDelegates[5] is Func<T5, int> func5)
-                hashCode = (hashCode * 397) + func5(Item5);
+                hashCode = (hashCode * 397) + func5.Invoke(Item5!);
             else
-                hashCode = (hashCode * 397) + (Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
+                hashCode = (hashCode * 397) + EqualityComparer<T5>.Default.GetHashCode(Item5!);
 
             if (getHashCodeDelegates[6] is Func<T6, int> func6)
-                hashCode = (hashCode * 397) + func6(Item6);
+                hashCode = (hashCode * 397) + func6.Invoke(Item6!);
             else
-                hashCode = (hashCode * 397) + (Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
+                hashCode = (hashCode * 397) + EqualityComparer<T6>.Default.GetHashCode(Item6!);
 
             if (getHashCodeDelegates[7] is Func<T7, int> func7)
-                hashCode = (hashCode * 397) + func7(Item7);
+                hashCode = (hashCode * 397) + func7.Invoke(Item7!);
             else
-                hashCode = (hashCode * 397) + (Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
+                hashCode = (hashCode * 397) + EqualityComparer<T7>.Default.GetHashCode(Item7!);
 
             return hashCode;
         }
     }
 }
 
+[DataContract]
 public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
     T0 Item0,
     T1 Item1,
@@ -1669,15 +1911,15 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
     private T7 _item7 = Item7;
     private T8 _item8 = Item8;
 
-    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
-    [property: DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
-    [property: DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
-    [property: DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
-    [property: DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
-    [property: DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
-    [property: DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
-    [property: DataMember(Order = 7)] public T7 Item7 { get => _item7; init => _item7 = value; }
-    [property: DataMember(Order = 8)] public T8 Item8 { get => _item8; init => _item8 = value; }
+    [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+    [DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
+    [DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
+    [DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
+    [DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
+    [DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
+    [DataMember(Order = 7)] public T7 Item7 { get => _item7; init => _item7 = value; }
+    [DataMember(Order = 8)] public T8 Item8 { get => _item8; init => _item8 = value; }
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 9;
@@ -1824,15 +2066,57 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = 397*hashCode + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = 397*hashCode + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-            hashCode = 397*hashCode + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-            hashCode = 397*hashCode + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
-            hashCode = 397*hashCode + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
-            hashCode = 397*hashCode + (Item6 is CancellationToken || Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
-            hashCode = 397*hashCode + (Item7 is CancellationToken || Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
-            hashCode = 397*hashCode + (Item8 is CancellationToken || Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
+            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + (Item1 is CancellationToken ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
+            hashCode = 397*hashCode + (Item2 is CancellationToken ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
+            hashCode = 397*hashCode + (Item3 is CancellationToken ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
+            hashCode = 397*hashCode + (Item4 is CancellationToken ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
+            hashCode = 397*hashCode + (Item5 is CancellationToken ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5!));
+            hashCode = 397*hashCode + (Item6 is CancellationToken ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6!));
+            hashCode = 397*hashCode + (Item7 is CancellationToken ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7!));
+            hashCode = 397*hashCode + (Item8 is CancellationToken ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8!));
+            return hashCode;
+        }
+    }
+
+    public override bool Equals(ArgumentList? other, int ignoredIndex)
+    {
+        if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8> vOther)
+            return false;
+
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
+            return false;
+        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+        if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+            return false;
+        if (ignoredIndex != 5 && !EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
+            return false;
+        if (ignoredIndex != 6 && !EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
+            return false;
+        if (ignoredIndex != 7 && !EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
+            return false;
+        if (ignoredIndex != 8 && !EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
+            return false;
+        return true;
+    }
+
+    public override int GetHashCode(int ignoredIndex)
+    {
+        unchecked {
+            var hashCode = ignoredIndex == 0 ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + (ignoredIndex == 1 ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
+            hashCode = 397*hashCode + (ignoredIndex == 2 ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
+            hashCode = 397*hashCode + (ignoredIndex == 3 ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
+            hashCode = 397*hashCode + (ignoredIndex == 4 ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
+            hashCode = 397*hashCode + (ignoredIndex == 5 ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5!));
+            hashCode = 397*hashCode + (ignoredIndex == 6 ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6!));
+            hashCode = 397*hashCode + (ignoredIndex == 7 ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7!));
+            hashCode = 397*hashCode + (ignoredIndex == 8 ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8!));
             return hashCode;
         }
     }
@@ -1917,55 +2201,56 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
         unchecked {
             int hashCode;
             if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0(Item0);
+                hashCode = func0.Invoke(Item0!);
             else
-                hashCode = Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
 
             if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1(Item1);
+                hashCode = (hashCode * 397) + func1.Invoke(Item1!);
             else
-                hashCode = (hashCode * 397) + (Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+                hashCode = (hashCode * 397) + EqualityComparer<T1>.Default.GetHashCode(Item1!);
 
             if (getHashCodeDelegates[2] is Func<T2, int> func2)
-                hashCode = (hashCode * 397) + func2(Item2);
+                hashCode = (hashCode * 397) + func2.Invoke(Item2!);
             else
-                hashCode = (hashCode * 397) + (Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
+                hashCode = (hashCode * 397) + EqualityComparer<T2>.Default.GetHashCode(Item2!);
 
             if (getHashCodeDelegates[3] is Func<T3, int> func3)
-                hashCode = (hashCode * 397) + func3(Item3);
+                hashCode = (hashCode * 397) + func3.Invoke(Item3!);
             else
-                hashCode = (hashCode * 397) + (Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
+                hashCode = (hashCode * 397) + EqualityComparer<T3>.Default.GetHashCode(Item3!);
 
             if (getHashCodeDelegates[4] is Func<T4, int> func4)
-                hashCode = (hashCode * 397) + func4(Item4);
+                hashCode = (hashCode * 397) + func4.Invoke(Item4!);
             else
-                hashCode = (hashCode * 397) + (Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
+                hashCode = (hashCode * 397) + EqualityComparer<T4>.Default.GetHashCode(Item4!);
 
             if (getHashCodeDelegates[5] is Func<T5, int> func5)
-                hashCode = (hashCode * 397) + func5(Item5);
+                hashCode = (hashCode * 397) + func5.Invoke(Item5!);
             else
-                hashCode = (hashCode * 397) + (Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
+                hashCode = (hashCode * 397) + EqualityComparer<T5>.Default.GetHashCode(Item5!);
 
             if (getHashCodeDelegates[6] is Func<T6, int> func6)
-                hashCode = (hashCode * 397) + func6(Item6);
+                hashCode = (hashCode * 397) + func6.Invoke(Item6!);
             else
-                hashCode = (hashCode * 397) + (Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
+                hashCode = (hashCode * 397) + EqualityComparer<T6>.Default.GetHashCode(Item6!);
 
             if (getHashCodeDelegates[7] is Func<T7, int> func7)
-                hashCode = (hashCode * 397) + func7(Item7);
+                hashCode = (hashCode * 397) + func7.Invoke(Item7!);
             else
-                hashCode = (hashCode * 397) + (Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
+                hashCode = (hashCode * 397) + EqualityComparer<T7>.Default.GetHashCode(Item7!);
 
             if (getHashCodeDelegates[8] is Func<T8, int> func8)
-                hashCode = (hashCode * 397) + func8(Item8);
+                hashCode = (hashCode * 397) + func8.Invoke(Item8!);
             else
-                hashCode = (hashCode * 397) + (Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
+                hashCode = (hashCode * 397) + EqualityComparer<T8>.Default.GetHashCode(Item8!);
 
             return hashCode;
         }
     }
 }
 
+[DataContract]
 public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
     T0 Item0,
     T1 Item1,
@@ -1990,16 +2275,16 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
     private T8 _item8 = Item8;
     private T9 _item9 = Item9;
 
-    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
-    [property: DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
-    [property: DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
-    [property: DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
-    [property: DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
-    [property: DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
-    [property: DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
-    [property: DataMember(Order = 7)] public T7 Item7 { get => _item7; init => _item7 = value; }
-    [property: DataMember(Order = 8)] public T8 Item8 { get => _item8; init => _item8 = value; }
-    [property: DataMember(Order = 9)] public T9 Item9 { get => _item9; init => _item9 = value; }
+    [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+    [DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
+    [DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
+    [DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
+    [DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
+    [DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
+    [DataMember(Order = 7)] public T7 Item7 { get => _item7; init => _item7 = value; }
+    [DataMember(Order = 8)] public T8 Item8 { get => _item8; init => _item8 = value; }
+    [DataMember(Order = 9)] public T9 Item9 { get => _item9; init => _item9 = value; }
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 10;
@@ -2157,16 +2442,61 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = 397*hashCode + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = 397*hashCode + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-            hashCode = 397*hashCode + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-            hashCode = 397*hashCode + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
-            hashCode = 397*hashCode + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
-            hashCode = 397*hashCode + (Item6 is CancellationToken || Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
-            hashCode = 397*hashCode + (Item7 is CancellationToken || Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
-            hashCode = 397*hashCode + (Item8 is CancellationToken || Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
-            hashCode = 397*hashCode + (Item9 is CancellationToken || Item9 is null ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9));
+            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + (Item1 is CancellationToken ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
+            hashCode = 397*hashCode + (Item2 is CancellationToken ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
+            hashCode = 397*hashCode + (Item3 is CancellationToken ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
+            hashCode = 397*hashCode + (Item4 is CancellationToken ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
+            hashCode = 397*hashCode + (Item5 is CancellationToken ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5!));
+            hashCode = 397*hashCode + (Item6 is CancellationToken ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6!));
+            hashCode = 397*hashCode + (Item7 is CancellationToken ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7!));
+            hashCode = 397*hashCode + (Item8 is CancellationToken ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8!));
+            hashCode = 397*hashCode + (Item9 is CancellationToken ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9!));
+            return hashCode;
+        }
+    }
+
+    public override bool Equals(ArgumentList? other, int ignoredIndex)
+    {
+        if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> vOther)
+            return false;
+
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
+            return false;
+        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+        if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+            return false;
+        if (ignoredIndex != 5 && !EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
+            return false;
+        if (ignoredIndex != 6 && !EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
+            return false;
+        if (ignoredIndex != 7 && !EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
+            return false;
+        if (ignoredIndex != 8 && !EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
+            return false;
+        if (ignoredIndex != 9 && !EqualityComparer<T9>.Default.Equals(Item9, vOther.Item9))
+            return false;
+        return true;
+    }
+
+    public override int GetHashCode(int ignoredIndex)
+    {
+        unchecked {
+            var hashCode = ignoredIndex == 0 ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + (ignoredIndex == 1 ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
+            hashCode = 397*hashCode + (ignoredIndex == 2 ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
+            hashCode = 397*hashCode + (ignoredIndex == 3 ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
+            hashCode = 397*hashCode + (ignoredIndex == 4 ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
+            hashCode = 397*hashCode + (ignoredIndex == 5 ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5!));
+            hashCode = 397*hashCode + (ignoredIndex == 6 ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6!));
+            hashCode = 397*hashCode + (ignoredIndex == 7 ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7!));
+            hashCode = 397*hashCode + (ignoredIndex == 8 ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8!));
+            hashCode = 397*hashCode + (ignoredIndex == 9 ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9!));
             return hashCode;
         }
     }
@@ -2258,60 +2588,61 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
         unchecked {
             int hashCode;
             if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0(Item0);
+                hashCode = func0.Invoke(Item0!);
             else
-                hashCode = Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
 
             if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1(Item1);
+                hashCode = (hashCode * 397) + func1.Invoke(Item1!);
             else
-                hashCode = (hashCode * 397) + (Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+                hashCode = (hashCode * 397) + EqualityComparer<T1>.Default.GetHashCode(Item1!);
 
             if (getHashCodeDelegates[2] is Func<T2, int> func2)
-                hashCode = (hashCode * 397) + func2(Item2);
+                hashCode = (hashCode * 397) + func2.Invoke(Item2!);
             else
-                hashCode = (hashCode * 397) + (Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
+                hashCode = (hashCode * 397) + EqualityComparer<T2>.Default.GetHashCode(Item2!);
 
             if (getHashCodeDelegates[3] is Func<T3, int> func3)
-                hashCode = (hashCode * 397) + func3(Item3);
+                hashCode = (hashCode * 397) + func3.Invoke(Item3!);
             else
-                hashCode = (hashCode * 397) + (Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
+                hashCode = (hashCode * 397) + EqualityComparer<T3>.Default.GetHashCode(Item3!);
 
             if (getHashCodeDelegates[4] is Func<T4, int> func4)
-                hashCode = (hashCode * 397) + func4(Item4);
+                hashCode = (hashCode * 397) + func4.Invoke(Item4!);
             else
-                hashCode = (hashCode * 397) + (Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
+                hashCode = (hashCode * 397) + EqualityComparer<T4>.Default.GetHashCode(Item4!);
 
             if (getHashCodeDelegates[5] is Func<T5, int> func5)
-                hashCode = (hashCode * 397) + func5(Item5);
+                hashCode = (hashCode * 397) + func5.Invoke(Item5!);
             else
-                hashCode = (hashCode * 397) + (Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
+                hashCode = (hashCode * 397) + EqualityComparer<T5>.Default.GetHashCode(Item5!);
 
             if (getHashCodeDelegates[6] is Func<T6, int> func6)
-                hashCode = (hashCode * 397) + func6(Item6);
+                hashCode = (hashCode * 397) + func6.Invoke(Item6!);
             else
-                hashCode = (hashCode * 397) + (Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
+                hashCode = (hashCode * 397) + EqualityComparer<T6>.Default.GetHashCode(Item6!);
 
             if (getHashCodeDelegates[7] is Func<T7, int> func7)
-                hashCode = (hashCode * 397) + func7(Item7);
+                hashCode = (hashCode * 397) + func7.Invoke(Item7!);
             else
-                hashCode = (hashCode * 397) + (Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
+                hashCode = (hashCode * 397) + EqualityComparer<T7>.Default.GetHashCode(Item7!);
 
             if (getHashCodeDelegates[8] is Func<T8, int> func8)
-                hashCode = (hashCode * 397) + func8(Item8);
+                hashCode = (hashCode * 397) + func8.Invoke(Item8!);
             else
-                hashCode = (hashCode * 397) + (Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
+                hashCode = (hashCode * 397) + EqualityComparer<T8>.Default.GetHashCode(Item8!);
 
             if (getHashCodeDelegates[9] is Func<T9, int> func9)
-                hashCode = (hashCode * 397) + func9(Item9);
+                hashCode = (hashCode * 397) + func9.Invoke(Item9!);
             else
-                hashCode = (hashCode * 397) + (Item9 is null ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9));
+                hashCode = (hashCode * 397) + EqualityComparer<T9>.Default.GetHashCode(Item9!);
 
             return hashCode;
         }
     }
 }
 
+[DataContract]
 public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
     T0 Item0,
     T1 Item1,
@@ -2338,17 +2669,17 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
     private T9 _item9 = Item9;
     private T10 _item10 = Item10;
 
-    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
-    [property: DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
-    [property: DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
-    [property: DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
-    [property: DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
-    [property: DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
-    [property: DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
-    [property: DataMember(Order = 7)] public T7 Item7 { get => _item7; init => _item7 = value; }
-    [property: DataMember(Order = 8)] public T8 Item8 { get => _item8; init => _item8 = value; }
-    [property: DataMember(Order = 9)] public T9 Item9 { get => _item9; init => _item9 = value; }
-    [property: DataMember(Order = 10)] public T10 Item10 { get => _item10; init => _item10 = value; }
+    [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+    [DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
+    [DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
+    [DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
+    [DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
+    [DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
+    [DataMember(Order = 7)] public T7 Item7 { get => _item7; init => _item7 = value; }
+    [DataMember(Order = 8)] public T8 Item8 { get => _item8; init => _item8 = value; }
+    [DataMember(Order = 9)] public T9 Item9 { get => _item9; init => _item9 = value; }
+    [DataMember(Order = 10)] public T10 Item10 { get => _item10; init => _item10 = value; }
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 11;
@@ -2517,17 +2848,65 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = 397*hashCode + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = 397*hashCode + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-            hashCode = 397*hashCode + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-            hashCode = 397*hashCode + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
-            hashCode = 397*hashCode + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
-            hashCode = 397*hashCode + (Item6 is CancellationToken || Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
-            hashCode = 397*hashCode + (Item7 is CancellationToken || Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
-            hashCode = 397*hashCode + (Item8 is CancellationToken || Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
-            hashCode = 397*hashCode + (Item9 is CancellationToken || Item9 is null ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9));
-            hashCode = 397*hashCode + (Item10 is CancellationToken || Item10 is null ? 0 : EqualityComparer<T10>.Default.GetHashCode(Item10));
+            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + (Item1 is CancellationToken ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
+            hashCode = 397*hashCode + (Item2 is CancellationToken ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
+            hashCode = 397*hashCode + (Item3 is CancellationToken ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
+            hashCode = 397*hashCode + (Item4 is CancellationToken ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
+            hashCode = 397*hashCode + (Item5 is CancellationToken ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5!));
+            hashCode = 397*hashCode + (Item6 is CancellationToken ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6!));
+            hashCode = 397*hashCode + (Item7 is CancellationToken ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7!));
+            hashCode = 397*hashCode + (Item8 is CancellationToken ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8!));
+            hashCode = 397*hashCode + (Item9 is CancellationToken ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9!));
+            hashCode = 397*hashCode + (Item10 is CancellationToken ? 0 : EqualityComparer<T10>.Default.GetHashCode(Item10!));
+            return hashCode;
+        }
+    }
+
+    public override bool Equals(ArgumentList? other, int ignoredIndex)
+    {
+        if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> vOther)
+            return false;
+
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
+            return false;
+        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+        if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+            return false;
+        if (ignoredIndex != 5 && !EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
+            return false;
+        if (ignoredIndex != 6 && !EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
+            return false;
+        if (ignoredIndex != 7 && !EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
+            return false;
+        if (ignoredIndex != 8 && !EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
+            return false;
+        if (ignoredIndex != 9 && !EqualityComparer<T9>.Default.Equals(Item9, vOther.Item9))
+            return false;
+        if (ignoredIndex != 10 && !EqualityComparer<T10>.Default.Equals(Item10, vOther.Item10))
+            return false;
+        return true;
+    }
+
+    public override int GetHashCode(int ignoredIndex)
+    {
+        unchecked {
+            var hashCode = ignoredIndex == 0 ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + (ignoredIndex == 1 ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
+            hashCode = 397*hashCode + (ignoredIndex == 2 ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
+            hashCode = 397*hashCode + (ignoredIndex == 3 ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
+            hashCode = 397*hashCode + (ignoredIndex == 4 ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
+            hashCode = 397*hashCode + (ignoredIndex == 5 ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5!));
+            hashCode = 397*hashCode + (ignoredIndex == 6 ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6!));
+            hashCode = 397*hashCode + (ignoredIndex == 7 ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7!));
+            hashCode = 397*hashCode + (ignoredIndex == 8 ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8!));
+            hashCode = 397*hashCode + (ignoredIndex == 9 ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9!));
+            hashCode = 397*hashCode + (ignoredIndex == 10 ? 0 : EqualityComparer<T10>.Default.GetHashCode(Item10!));
             return hashCode;
         }
     }
@@ -2626,65 +3005,66 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
         unchecked {
             int hashCode;
             if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0(Item0);
+                hashCode = func0.Invoke(Item0!);
             else
-                hashCode = Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
 
             if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1(Item1);
+                hashCode = (hashCode * 397) + func1.Invoke(Item1!);
             else
-                hashCode = (hashCode * 397) + (Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+                hashCode = (hashCode * 397) + EqualityComparer<T1>.Default.GetHashCode(Item1!);
 
             if (getHashCodeDelegates[2] is Func<T2, int> func2)
-                hashCode = (hashCode * 397) + func2(Item2);
+                hashCode = (hashCode * 397) + func2.Invoke(Item2!);
             else
-                hashCode = (hashCode * 397) + (Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
+                hashCode = (hashCode * 397) + EqualityComparer<T2>.Default.GetHashCode(Item2!);
 
             if (getHashCodeDelegates[3] is Func<T3, int> func3)
-                hashCode = (hashCode * 397) + func3(Item3);
+                hashCode = (hashCode * 397) + func3.Invoke(Item3!);
             else
-                hashCode = (hashCode * 397) + (Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
+                hashCode = (hashCode * 397) + EqualityComparer<T3>.Default.GetHashCode(Item3!);
 
             if (getHashCodeDelegates[4] is Func<T4, int> func4)
-                hashCode = (hashCode * 397) + func4(Item4);
+                hashCode = (hashCode * 397) + func4.Invoke(Item4!);
             else
-                hashCode = (hashCode * 397) + (Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
+                hashCode = (hashCode * 397) + EqualityComparer<T4>.Default.GetHashCode(Item4!);
 
             if (getHashCodeDelegates[5] is Func<T5, int> func5)
-                hashCode = (hashCode * 397) + func5(Item5);
+                hashCode = (hashCode * 397) + func5.Invoke(Item5!);
             else
-                hashCode = (hashCode * 397) + (Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
+                hashCode = (hashCode * 397) + EqualityComparer<T5>.Default.GetHashCode(Item5!);
 
             if (getHashCodeDelegates[6] is Func<T6, int> func6)
-                hashCode = (hashCode * 397) + func6(Item6);
+                hashCode = (hashCode * 397) + func6.Invoke(Item6!);
             else
-                hashCode = (hashCode * 397) + (Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
+                hashCode = (hashCode * 397) + EqualityComparer<T6>.Default.GetHashCode(Item6!);
 
             if (getHashCodeDelegates[7] is Func<T7, int> func7)
-                hashCode = (hashCode * 397) + func7(Item7);
+                hashCode = (hashCode * 397) + func7.Invoke(Item7!);
             else
-                hashCode = (hashCode * 397) + (Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
+                hashCode = (hashCode * 397) + EqualityComparer<T7>.Default.GetHashCode(Item7!);
 
             if (getHashCodeDelegates[8] is Func<T8, int> func8)
-                hashCode = (hashCode * 397) + func8(Item8);
+                hashCode = (hashCode * 397) + func8.Invoke(Item8!);
             else
-                hashCode = (hashCode * 397) + (Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
+                hashCode = (hashCode * 397) + EqualityComparer<T8>.Default.GetHashCode(Item8!);
 
             if (getHashCodeDelegates[9] is Func<T9, int> func9)
-                hashCode = (hashCode * 397) + func9(Item9);
+                hashCode = (hashCode * 397) + func9.Invoke(Item9!);
             else
-                hashCode = (hashCode * 397) + (Item9 is null ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9));
+                hashCode = (hashCode * 397) + EqualityComparer<T9>.Default.GetHashCode(Item9!);
 
             if (getHashCodeDelegates[10] is Func<T10, int> func10)
-                hashCode = (hashCode * 397) + func10(Item10);
+                hashCode = (hashCode * 397) + func10.Invoke(Item10!);
             else
-                hashCode = (hashCode * 397) + (Item10 is null ? 0 : EqualityComparer<T10>.Default.GetHashCode(Item10));
+                hashCode = (hashCode * 397) + EqualityComparer<T10>.Default.GetHashCode(Item10!);
 
             return hashCode;
         }
     }
 }
 
+[DataContract]
 public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(
     T0 Item0,
     T1 Item1,
@@ -2713,18 +3093,18 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     private T10 _item10 = Item10;
     private T11 _item11 = Item11;
 
-    [property: DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
-    [property: DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
-    [property: DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
-    [property: DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
-    [property: DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
-    [property: DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
-    [property: DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
-    [property: DataMember(Order = 7)] public T7 Item7 { get => _item7; init => _item7 = value; }
-    [property: DataMember(Order = 8)] public T8 Item8 { get => _item8; init => _item8 = value; }
-    [property: DataMember(Order = 9)] public T9 Item9 { get => _item9; init => _item9 = value; }
-    [property: DataMember(Order = 10)] public T10 Item10 { get => _item10; init => _item10 = value; }
-    [property: DataMember(Order = 11)] public T11 Item11 { get => _item11; init => _item11 = value; }
+    [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+    [DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
+    [DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
+    [DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
+    [DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
+    [DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
+    [DataMember(Order = 7)] public T7 Item7 { get => _item7; init => _item7 = value; }
+    [DataMember(Order = 8)] public T8 Item8 { get => _item8; init => _item8 = value; }
+    [DataMember(Order = 9)] public T9 Item9 { get => _item9; init => _item9 = value; }
+    [DataMember(Order = 10)] public T10 Item10 { get => _item10; init => _item10 = value; }
+    [DataMember(Order = 11)] public T11 Item11 { get => _item11; init => _item11 = value; }
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 12;
@@ -2904,18 +3284,69 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
-            hashCode = 397*hashCode + (Item1 is CancellationToken || Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
-            hashCode = 397*hashCode + (Item2 is CancellationToken || Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
-            hashCode = 397*hashCode + (Item3 is CancellationToken || Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
-            hashCode = 397*hashCode + (Item4 is CancellationToken || Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
-            hashCode = 397*hashCode + (Item5 is CancellationToken || Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
-            hashCode = 397*hashCode + (Item6 is CancellationToken || Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
-            hashCode = 397*hashCode + (Item7 is CancellationToken || Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
-            hashCode = 397*hashCode + (Item8 is CancellationToken || Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
-            hashCode = 397*hashCode + (Item9 is CancellationToken || Item9 is null ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9));
-            hashCode = 397*hashCode + (Item10 is CancellationToken || Item10 is null ? 0 : EqualityComparer<T10>.Default.GetHashCode(Item10));
-            hashCode = 397*hashCode + (Item11 is CancellationToken || Item11 is null ? 0 : EqualityComparer<T11>.Default.GetHashCode(Item11));
+            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + (Item1 is CancellationToken ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
+            hashCode = 397*hashCode + (Item2 is CancellationToken ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
+            hashCode = 397*hashCode + (Item3 is CancellationToken ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
+            hashCode = 397*hashCode + (Item4 is CancellationToken ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
+            hashCode = 397*hashCode + (Item5 is CancellationToken ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5!));
+            hashCode = 397*hashCode + (Item6 is CancellationToken ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6!));
+            hashCode = 397*hashCode + (Item7 is CancellationToken ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7!));
+            hashCode = 397*hashCode + (Item8 is CancellationToken ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8!));
+            hashCode = 397*hashCode + (Item9 is CancellationToken ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9!));
+            hashCode = 397*hashCode + (Item10 is CancellationToken ? 0 : EqualityComparer<T10>.Default.GetHashCode(Item10!));
+            hashCode = 397*hashCode + (Item11 is CancellationToken ? 0 : EqualityComparer<T11>.Default.GetHashCode(Item11!));
+            return hashCode;
+        }
+    }
+
+    public override bool Equals(ArgumentList? other, int ignoredIndex)
+    {
+        if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> vOther)
+            return false;
+
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
+            return false;
+        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+        if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+            return false;
+        if (ignoredIndex != 5 && !EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
+            return false;
+        if (ignoredIndex != 6 && !EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
+            return false;
+        if (ignoredIndex != 7 && !EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
+            return false;
+        if (ignoredIndex != 8 && !EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
+            return false;
+        if (ignoredIndex != 9 && !EqualityComparer<T9>.Default.Equals(Item9, vOther.Item9))
+            return false;
+        if (ignoredIndex != 10 && !EqualityComparer<T10>.Default.Equals(Item10, vOther.Item10))
+            return false;
+        if (ignoredIndex != 11 && !EqualityComparer<T11>.Default.Equals(Item11, vOther.Item11))
+            return false;
+        return true;
+    }
+
+    public override int GetHashCode(int ignoredIndex)
+    {
+        unchecked {
+            var hashCode = ignoredIndex == 0 ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + (ignoredIndex == 1 ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
+            hashCode = 397*hashCode + (ignoredIndex == 2 ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
+            hashCode = 397*hashCode + (ignoredIndex == 3 ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
+            hashCode = 397*hashCode + (ignoredIndex == 4 ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
+            hashCode = 397*hashCode + (ignoredIndex == 5 ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5!));
+            hashCode = 397*hashCode + (ignoredIndex == 6 ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6!));
+            hashCode = 397*hashCode + (ignoredIndex == 7 ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7!));
+            hashCode = 397*hashCode + (ignoredIndex == 8 ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8!));
+            hashCode = 397*hashCode + (ignoredIndex == 9 ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9!));
+            hashCode = 397*hashCode + (ignoredIndex == 10 ? 0 : EqualityComparer<T10>.Default.GetHashCode(Item10!));
+            hashCode = 397*hashCode + (ignoredIndex == 11 ? 0 : EqualityComparer<T11>.Default.GetHashCode(Item11!));
             return hashCode;
         }
     }
@@ -3021,64 +3452,64 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
         unchecked {
             int hashCode;
             if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0(Item0);
+                hashCode = func0.Invoke(Item0!);
             else
-                hashCode = Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
 
             if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1(Item1);
+                hashCode = (hashCode * 397) + func1.Invoke(Item1!);
             else
-                hashCode = (hashCode * 397) + (Item1 is null ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1));
+                hashCode = (hashCode * 397) + EqualityComparer<T1>.Default.GetHashCode(Item1!);
 
             if (getHashCodeDelegates[2] is Func<T2, int> func2)
-                hashCode = (hashCode * 397) + func2(Item2);
+                hashCode = (hashCode * 397) + func2.Invoke(Item2!);
             else
-                hashCode = (hashCode * 397) + (Item2 is null ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2));
+                hashCode = (hashCode * 397) + EqualityComparer<T2>.Default.GetHashCode(Item2!);
 
             if (getHashCodeDelegates[3] is Func<T3, int> func3)
-                hashCode = (hashCode * 397) + func3(Item3);
+                hashCode = (hashCode * 397) + func3.Invoke(Item3!);
             else
-                hashCode = (hashCode * 397) + (Item3 is null ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3));
+                hashCode = (hashCode * 397) + EqualityComparer<T3>.Default.GetHashCode(Item3!);
 
             if (getHashCodeDelegates[4] is Func<T4, int> func4)
-                hashCode = (hashCode * 397) + func4(Item4);
+                hashCode = (hashCode * 397) + func4.Invoke(Item4!);
             else
-                hashCode = (hashCode * 397) + (Item4 is null ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4));
+                hashCode = (hashCode * 397) + EqualityComparer<T4>.Default.GetHashCode(Item4!);
 
             if (getHashCodeDelegates[5] is Func<T5, int> func5)
-                hashCode = (hashCode * 397) + func5(Item5);
+                hashCode = (hashCode * 397) + func5.Invoke(Item5!);
             else
-                hashCode = (hashCode * 397) + (Item5 is null ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5));
+                hashCode = (hashCode * 397) + EqualityComparer<T5>.Default.GetHashCode(Item5!);
 
             if (getHashCodeDelegates[6] is Func<T6, int> func6)
-                hashCode = (hashCode * 397) + func6(Item6);
+                hashCode = (hashCode * 397) + func6.Invoke(Item6!);
             else
-                hashCode = (hashCode * 397) + (Item6 is null ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6));
+                hashCode = (hashCode * 397) + EqualityComparer<T6>.Default.GetHashCode(Item6!);
 
             if (getHashCodeDelegates[7] is Func<T7, int> func7)
-                hashCode = (hashCode * 397) + func7(Item7);
+                hashCode = (hashCode * 397) + func7.Invoke(Item7!);
             else
-                hashCode = (hashCode * 397) + (Item7 is null ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7));
+                hashCode = (hashCode * 397) + EqualityComparer<T7>.Default.GetHashCode(Item7!);
 
             if (getHashCodeDelegates[8] is Func<T8, int> func8)
-                hashCode = (hashCode * 397) + func8(Item8);
+                hashCode = (hashCode * 397) + func8.Invoke(Item8!);
             else
-                hashCode = (hashCode * 397) + (Item8 is null ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8));
+                hashCode = (hashCode * 397) + EqualityComparer<T8>.Default.GetHashCode(Item8!);
 
             if (getHashCodeDelegates[9] is Func<T9, int> func9)
-                hashCode = (hashCode * 397) + func9(Item9);
+                hashCode = (hashCode * 397) + func9.Invoke(Item9!);
             else
-                hashCode = (hashCode * 397) + (Item9 is null ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9));
+                hashCode = (hashCode * 397) + EqualityComparer<T9>.Default.GetHashCode(Item9!);
 
             if (getHashCodeDelegates[10] is Func<T10, int> func10)
-                hashCode = (hashCode * 397) + func10(Item10);
+                hashCode = (hashCode * 397) + func10.Invoke(Item10!);
             else
-                hashCode = (hashCode * 397) + (Item10 is null ? 0 : EqualityComparer<T10>.Default.GetHashCode(Item10));
+                hashCode = (hashCode * 397) + EqualityComparer<T10>.Default.GetHashCode(Item10!);
 
             if (getHashCodeDelegates[11] is Func<T11, int> func11)
-                hashCode = (hashCode * 397) + func11(Item11);
+                hashCode = (hashCode * 397) + func11.Invoke(Item11!);
             else
-                hashCode = (hashCode * 397) + (Item11 is null ? 0 : EqualityComparer<T11>.Default.GetHashCode(Item11));
+                hashCode = (hashCode * 397) + EqualityComparer<T11>.Default.GetHashCode(Item11!);
 
             return hashCode;
         }

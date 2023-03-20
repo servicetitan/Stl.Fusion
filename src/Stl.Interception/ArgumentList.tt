@@ -58,10 +58,15 @@ public record ArgumentList
     public virtual void SetItemUntyped(int index, object? value)
          => throw new ArgumentOutOfRangeException(nameof(index));
 
+    public virtual bool Equals(ArgumentList? other, int ignoredIndex)
+        => other?.GetType() == typeof(ArgumentList);
+    public virtual int GetHashCode(int ignoredIndex)
+        => 1;
+
     public virtual bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
         => other?.GetType() == typeof(ArgumentList);
     public virtual int GetHashCode(Delegate?[] equalsDelegates)
-        => 0;
+        => 1;
 }
 
 <# for (var itemCount = 1; itemCount <= maxItemCount; itemCount++) {
@@ -72,6 +77,7 @@ public record ArgumentList
        argumentTypes += "T" + t;
    }
 #>
+[DataContract]
 public sealed record ArgumentList<<#=argumentTypes#>>(
 <# 
     for (var t = 0; t < itemCount; t++) {
@@ -88,7 +94,7 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
 <#}#>
 
 <#for (var t = 0; t < itemCount; t++) {#>
-    [property: DataMember(Order = <#=t#>)] public T<#=t#> Item<#=t#> { get => _item<#=t#>; init => _item<#=t#> = value; }
+    [DataMember(Order = <#=t#>)] public T<#=t#> Item<#=t#> { get => _item<#=t#>; init => _item<#=t#> = value; }
 <#}#>
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
@@ -158,9 +164,32 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken or null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
 <#for (var t = 1; t < itemCount; t++) {#>
-            hashCode = 397*hashCode + (Item<#=t#> is CancellationToken || Item<#=t#> is null ? 0 : EqualityComparer<T<#=t#>>.Default.GetHashCode(Item<#=t#>));
+            hashCode = 397*hashCode + (Item<#=t#> is CancellationToken ? 0 : EqualityComparer<T<#=t#>>.Default.GetHashCode(Item<#=t#>!));
+<#}#>
+            return hashCode;
+        }
+    }
+
+    public override bool Equals(ArgumentList? other, int ignoredIndex)
+    {
+        if (other is not ArgumentList<<#=argumentTypes#>> vOther)
+            return false;
+
+<#for (var t = 0; t < itemCount; t++) {#>
+        if (ignoredIndex != <#=t#> && !EqualityComparer<T<#=t#>>.Default.Equals(Item<#=t#>, vOther.Item<#=t#>))
+            return false;
+<#}#>
+        return true;
+    }
+
+    public override int GetHashCode(int ignoredIndex)
+    {
+        unchecked {
+            var hashCode = ignoredIndex == 0 ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+<#for (var t = 1; t < itemCount; t++) {#>
+            hashCode = 397*hashCode + (ignoredIndex == <#=t#> ? 0 : EqualityComparer<T<#=t#>>.Default.GetHashCode(Item<#=t#>!));
 <#}#>
             return hashCode;
         }
@@ -192,15 +221,15 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
         unchecked {
             int hashCode;
             if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0(Item0);
+                hashCode = func0.Invoke(Item0!);
             else
-                hashCode = Item0 is null ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0);
+                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
 
 <#for (var t = 1; t < itemCount; t++) {#>
             if (getHashCodeDelegates[<#=t#>] is Func<T<#=t#>, int> func<#=t#>)
-                hashCode = (hashCode * 397) + func<#=t#>(Item<#=t#>);
+                hashCode = (hashCode * 397) + func<#=t#>.Invoke(Item<#=t#>!);
             else
-                hashCode = (hashCode * 397) + (Item<#=t#> is null ? 0 : EqualityComparer<T<#=t#>>.Default.GetHashCode(Item<#=t#>));
+                hashCode = (hashCode * 397) + EqualityComparer<T<#=t#>>.Default.GetHashCode(Item<#=t#>!);
 
 <#}#>
             return hashCode;
