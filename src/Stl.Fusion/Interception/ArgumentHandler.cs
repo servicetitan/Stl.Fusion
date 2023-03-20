@@ -1,4 +1,4 @@
-using Castle.DynamicProxy;
+using Stl.Interception;
 
 namespace Stl.Fusion.Interception;
 
@@ -12,5 +12,5 @@ public class ArgumentHandler
         (objA, objB) => objA == objB || (objA?.Equals(objB) ?? false);
     public Func<object?, string> ToStringFunc { get; init; } =
         o => o?.ToString() ?? "␀";
-    public Action<ComputeMethodDef, IInvocation, int>? PreprocessFunc { get; init; } = null;
+    public Action<ComputeMethodDef, Invocation, int>? PreprocessFunc { get; init; } = null;
 }

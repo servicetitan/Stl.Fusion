@@ -1,6 +1,5 @@
-using Castle.DynamicProxy;
 using Cysharp.Text;
-using Stl.Fusion.Interception.Internal;
+using Stl.Interception;
 
 namespace Stl.Fusion.Interception;
 
@@ -10,17 +9,15 @@ public sealed class ComputeMethodInput : ComputedInput, IEquatable<ComputeMethod
     private static readonly object BoxedDefaultCancellationToken = default(CancellationToken);
 
     public readonly ComputeMethodDef MethodDef;
-    public readonly AbstractInvocation Invocation;
-    public readonly int NextInterceptorIndex;
+    public readonly Invocation Invocation;
     // Shortcuts
-    public object Target => Invocation.InvocationTarget;
-    public object[] Arguments => Invocation.Arguments;
+    public object Target => Invocation.Proxy;
+    public ArgumentList Arguments => Invocation.Arguments;
 
-    public ComputeMethodInput(IFunction function, ComputeMethodDef methodDef, AbstractInvocation invocation)
+    public ComputeMethodInput(IFunction function, ComputeMethodDef methodDef, Invocation invocation)
     {
         MethodDef = methodDef;
         Invocation = invocation;
-        NextInterceptorIndex = invocation.GetCurrentInterceptorIndex();
 
         var arguments = invocation.Arguments;
         var argumentHandlers = methodDef.ArgumentHandlers;
@@ -51,14 +48,13 @@ public sealed class ComputeMethodInput : ComputedInput, IEquatable<ComputeMethod
         var methodDef = MethodDef;
         var arguments = Arguments;
         var ctIndex = methodDef.CancellationTokenArgumentIndex;
-        Invocation.SetCurrentInterceptorIndex(NextInterceptorIndex);
         if (ctIndex >= 0) {
             var currentCancellationToken = (CancellationToken) arguments[ctIndex];
             // Comparison w/ the existing one to avoid boxing when possible
             if (currentCancellationToken != cancellationToken) {
                 // ReSharper disable once HeapView.BoxingAllocation
                 arguments[ctIndex] = cancellationToken;
-                Invocation.Proceed();
+                Invocation.Intercepted();
                 arguments[ctIndex] = BoxedDefaultCancellationToken;
             }
             else

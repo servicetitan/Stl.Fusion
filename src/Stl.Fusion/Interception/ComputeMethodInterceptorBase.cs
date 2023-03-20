@@ -1,4 +1,5 @@
 using Castle.DynamicProxy;
+using Stl.Interception;
 using Stl.Interception.Interceptors;
 
 namespace Stl.Fusion.Interception;
@@ -26,8 +27,7 @@ public abstract class ComputeMethodInterceptorBase : InterceptorBase
             ?? services.GetRequiredService<IArgumentHandlerProvider>();
     }
 
-    protected override Action<IInvocation> CreateHandler<T>(
-        IInvocation initialInvocation, MethodDef methodDef)
+    protected override Func<Invocation, object?> CreateHandler<T>(Invocation initialInvocation, MethodDef methodDef)
     {
         var computeMethodDef = (ComputeMethodDef) methodDef;
         var function = CreateFunction<T>(computeMethodDef);

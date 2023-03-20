@@ -1,6 +1,6 @@
 namespace Stl.Interception.Interceptors;
 
-public abstract class InterceptorBase : IHasServices
+public abstract class InterceptorBase : Interceptor, IHasServices
 {
     public record Options
     {
@@ -11,10 +11,10 @@ public abstract class InterceptorBase : IHasServices
         .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
         .Single(m => StringComparer.Ordinal.Equals(m.Name, nameof(CreateHandler)));
 
-    private readonly Func<MethodInfo, Invocation, Action<Invocation>?> _createHandlerUntyped;
+    private readonly Func<MethodInfo, Invocation, Func<Invocation, object?>?> _createHandlerUntyped;
     private readonly Func<MethodInfo, Invocation, MethodDef?> _createMethodDef;
     private readonly ConcurrentDictionary<MethodInfo, MethodDef?> _methodDefCache = new();
-    private readonly ConcurrentDictionary<MethodInfo, Action<Invocation>?> _handlerCache = new();
+    private readonly ConcurrentDictionary<MethodInfo, Func<Invocation, object?>?> _handlerCache = new();
     private readonly ConcurrentDictionary<Type, Unit> _validateTypeCache = new();
 
     protected ILogger Log { get; }
@@ -34,7 +34,7 @@ public abstract class InterceptorBase : IHasServices
         _createMethodDef = CreateMethodDef;
     }
 
-    public void Intercept(Invocation invocation)
+    public override void Intercept(Invocation invocation)
     {
         var handler = GetHandler(invocation);
         if (handler == null)
@@ -43,7 +43,15 @@ public abstract class InterceptorBase : IHasServices
             handler(invocation);
     }
 
-    public Action<Invocation>? GetHandler(Invocation invocation)
+    public override TResult Intercept<TResult>(Invocation invocation)
+    {
+        var handler = GetHandler(invocation);
+        return handler == null
+            ? invocation.Intercepted<TResult>()
+            : (TResult)handler.Invoke(invocation)!;
+    }
+
+    public Func<Invocation, object?>? GetHandler(Invocation invocation)
         => _handlerCache.GetOrAdd(invocation.Method, _createHandlerUntyped, invocation);
 
     public void ValidateType(Type type)
@@ -61,21 +69,21 @@ public abstract class InterceptorBase : IHasServices
         }, this);
     }
 
-    protected virtual Action<Invocation>? CreateHandlerUntyped(MethodInfo methodInfo, Invocation initialInvocation)
+    protected virtual Func<Invocation, object?>? CreateHandlerUntyped(MethodInfo methodInfo, Invocation initialInvocation)
     {
         var proxyMethodInfo = initialInvocation.Method;
         var methodDef = _methodDefCache.GetOrAdd(proxyMethodInfo, _createMethodDef, initialInvocation);
         if (methodDef == null)
             return null;
 
-        return (Action<Invocation>) CreateTypedHandlerMethod
+        return (Func<Invocation, object?>) CreateTypedHandlerMethod
             .MakeGenericMethod(methodDef.UnwrappedReturnType)
             .Invoke(this, new object[] { initialInvocation, methodDef })!;
     }
 
     // Abstract methods
 
-    protected abstract Action<Invocation> CreateHandler<T>(
+    protected abstract Func<Invocation, object?> CreateHandler<T>(
         Invocation initialInvocation, MethodDef methodDef);
     protected abstract MethodDef? CreateMethodDef(
         MethodInfo methodInfo, Invocation initialInvocation);

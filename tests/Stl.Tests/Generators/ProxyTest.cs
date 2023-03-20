@@ -16,10 +16,10 @@ public class ProxyTest : TestBase
         var interceptor = new Interceptor();
         var noProxy = new ClassProxy();
         var altProxy = new AltClassProxy(interceptor);
-        var classProxy = (ClassProxy)typeof(ClassProxy).GetProxyType()!.CreateInstance();
-        interceptor.BindTo(classProxy);
-        var interfaceProxy = (IInterfaceProxy)typeof(IInterfaceProxy).GetProxyType()!.CreateInstance(noProxy);
-        interceptor.BindTo(interfaceProxy);
+        var classProxy = (ClassProxy)typeof(ClassProxy).TryGetProxyType()!.CreateInstance();
+        interceptor.AttachTo(classProxy);
+        var interfaceProxy = (IInterfaceProxy)typeof(IInterfaceProxy).TryGetProxyType()!.CreateInstance(noProxy);
+        interceptor.AttachTo(interfaceProxy);
 
         RunOne("NoProxy.VoidMethod", baseOpCount, opCount => {
             for (; opCount > 0; opCount--)

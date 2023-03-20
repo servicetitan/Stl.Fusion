@@ -1,12 +1,12 @@
-using Castle.DynamicProxy;
 using Stl.CommandR.Internal;
+using Stl.Interception;
 using Stl.Interception.Interceptors;
 
 namespace Stl.CommandR.Interception;
 
 public record CommandHandlerMethodDef : MethodDef
 {
-    public CommandHandlerMethodDef(IInterceptor interceptor, MethodInfo methodInfo)
+    public CommandHandlerMethodDef(Interceptor interceptor, MethodInfo methodInfo)
         : base(interceptor, methodInfo)
     {
         var commandHandler = MethodCommandHandler.TryNew(methodInfo.ReflectedType!, methodInfo);

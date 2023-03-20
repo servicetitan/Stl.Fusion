@@ -1,5 +1,5 @@
-using Castle.DynamicProxy;
 using Stl.Fusion.Swapping;
+using Stl.Interception;
 using Stl.Interception.Interceptors;
 
 namespace Stl.Fusion.Interception;
@@ -57,6 +57,6 @@ public record ComputeMethodDef : MethodDef
                 }
             };
 
-    public virtual ComputeMethodInput CreateInput(IFunction function, AbstractInvocation invocation)
+    public virtual ComputeMethodInput CreateInput(IFunction function, Invocation invocation)
         => new(function, this, invocation);
 }

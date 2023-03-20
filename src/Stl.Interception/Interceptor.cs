@@ -2,8 +2,11 @@ namespace Stl.Interception;
 
 public class Interceptor
 {
-    public void BindTo(object proxy)
-        => ((IProxy)proxy).Bind(this);
+    public T AttachTo<T>(T proxy)
+    {
+        ((IProxy)proxy!).Bind(this);
+        return proxy;
+    }
 
     public virtual TResult Intercept<TResult>(Invocation invocation)
         => invocation.Intercepted<TResult>();
