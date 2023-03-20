@@ -121,15 +121,6 @@ public static class GenerationExt
             : name;
     }
 
-    public static LocalDeclarationStatementSyntax ToVarStatement(this VariableDeclaratorSyntax variable)
-        => LocalDeclarationStatement(VariableDeclaration(VarIdentifierDef())
-            .WithVariables(SingletonSeparatedList(variable)));
-
-    public static StatementSyntax ToStatement(this ExpressionSyntax expression, bool isReturnStatement = false)
-        => isReturnStatement
-            ? ReturnStatement(expression)
-            : ExpressionStatement(expression);
-
     public static string WithGlobalPrefix(this string ns)
     {
         if (string.IsNullOrEmpty(ns))

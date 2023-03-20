@@ -18,10 +18,12 @@ public class ProxyTypeGenerator
 
     private string ProxyTypeName { get; } = "";
     private ClassDeclarationSyntax ProxyDef { get; } = null!;
-    private List<MemberDeclarationSyntax> ProxyFields { get; } = new();
-    private List<MemberDeclarationSyntax> ProxyProperties { get; } = new();
-    private List<MemberDeclarationSyntax> ProxyConstructors { get; } = new();
-    private List<MemberDeclarationSyntax> ProxyMethods { get; } = new();
+    private List<MemberDeclarationSyntax> Fields { get; } = new();
+    private List<MemberDeclarationSyntax> Properties { get; } = new();
+    private List<MemberDeclarationSyntax> Constructors { get; } = new();
+    private List<MemberDeclarationSyntax> Methods { get; } = new();
+    private Dictionary<ITypeSymbol, string> CachedInterceptFieldNames { get; } = new(SymbolEqualityComparer.Default);
+    private List<StatementSyntax> BindMethodStatements { get; } = new();
 
     public string GeneratedCode { get; } = "";
 
@@ -52,19 +54,19 @@ public class ProxyTypeGenerator
             ))
             .WithConstraintClauses(TypeDef.ConstraintClauses);
 
-        AddProxyInterfaceImplementation();
         if (ClassDef != null)
             AddClassConstructors();
         else
             AddInterfaceConstructors();
         AddProxyMethods();
+        AddProxyInterfaceImplementation(); // Must be the last one
 
         ProxyDef = ProxyDef
             .WithMembers(List(
-                ProxyFields
-                .Concat(ProxyProperties)
-                .Concat(ProxyConstructors)
-                .Concat(ProxyMethods)));
+                Fields
+                .Concat(Properties)
+                .Concat(Constructors)
+                .Concat(Methods)));
 
         // Building Compilation unit
 
@@ -84,18 +86,18 @@ public class ProxyTypeGenerator
     {
         var proxyTargetType = NullableType(TypeDef.ToTypeRef());
 
-        ProxyFields.Add(
+        Fields.Add(
             PrivateFieldDef(proxyTargetType,
                 ProxyTargetFieldName.Identifier,
                 LiteralExpression(SyntaxKind.NullLiteralExpression)));
 
-        ProxyConstructors.Add(
+        Constructors.Add(
             ConstructorDeclaration(Identifier(ProxyTypeName))
                 .WithModifiers(TokenList(Token(SyntaxKind.PublicKeyword)))
                 .WithParameterList(ParameterList())
                 .WithBody(Block()));
 
-        ProxyConstructors.Add(
+        Constructors.Add(
             ConstructorDeclaration(Identifier(ProxyTypeName))
                 .WithModifiers(TokenList(Token(SyntaxKind.PublicKeyword)))
                 .WithParameterList(
@@ -126,7 +128,7 @@ public class ProxyTypeGenerator
                 parameters.Add(Argument(IdentifierName(parameter.Identifier.Text)));
             }
 
-            ProxyConstructors.Add(
+            Constructors.Add(
                 ConstructorDeclaration(Identifier(ProxyTypeName))
                     .WithModifiers(TokenList(Token(SyntaxKind.PublicKeyword)))
                     .WithParameterList(originalCtor.ParameterList)
@@ -149,18 +151,54 @@ public class ProxyTypeGenerator
                 modifiers = modifiers.Add(Token(SyntaxKind.OverrideKeyword));
 
             var returnType = method.ReturnType.ToTypeRef();
+            var returnTypeIsVoid = returnType.IsVoid();
             var parameters = ParameterList(CommaSeparatedList(
                 method.Parameters.Select(p =>
                     Parameter(Identifier(p.Name))
                         .WithType(p.Type.ToTypeRef()))));
 
-            var cachedInterceptedFieldName = "_cachedIntercepted" + methodIndex;
-            var cachedMethodInfoFieldName = "_cachedMethodInfo" + methodIndex;
-            ProxyFields.Add(CachedInterceptedFieldDef(Identifier(cachedInterceptedFieldName), returnType));
-            ProxyFields.Add(PrivateFieldDef(NullableMethodInfoType, Identifier(cachedMethodInfoFieldName)));
+            // __cachedMethodInfoN field 
+            var cachedMethodInfoFieldName = "__cachedMethodInfo" + methodIndex;
+            Fields.Add(PrivateFieldDef(NullableMethodInfoType, Identifier(cachedMethodInfoFieldName)));
+            BindMethodStatements.Add(
+                ExpressionStatement(
+                    AssignmentExpression(
+                        SyntaxKind.SimpleAssignmentExpression,
+                        IdentifierName(cachedMethodInfoFieldName),
+                        GetMethodInfoExpression(TypeDef, method, parameters))));
+
+            // __cachedInterceptedN field 
+            var cachedInterceptedFieldName = "__cachedIntercepted" + methodIndex;
+            Fields.Add(CachedInterceptedFieldDef(Identifier(cachedInterceptedFieldName), returnType));
+
+            // __cachedInterceptN field 
+            if (!CachedInterceptFieldNames.TryGetValue(method.ReturnType, out var cachedInterceptFieldName)) {
+                cachedInterceptFieldName = "__cachedIntercept" + methodIndex;
+                CachedInterceptFieldNames.Add(method.ReturnType, cachedInterceptFieldName);
+                Fields.Add(CachedInterceptFieldDef(Identifier(cachedInterceptFieldName), returnType));
+
+                var interceptMethod = returnTypeIsVoid
+                    ? (SimpleNameSyntax)ProxyInterceptMethodName
+                    : ProxyInterceptGenericMethodName
+                        .WithTypeArgumentList(TypeArgumentList(SingletonSeparatedList(returnType)));
+
+                BindMethodStatements.Add(
+                    ExpressionStatement(
+                        AssignmentExpression(
+                            SyntaxKind.SimpleAssignmentExpression,
+                            IdentifierName(cachedInterceptFieldName),
+                            MemberAccessExpression(
+                                SyntaxKind.SimpleMemberAccessExpression,
+                                InterceptorFieldName,
+                                interceptMethod))));
+                    ExpressionStatement(
+                        AssignmentExpression(
+                            SyntaxKind.SimpleAssignmentExpression,
+                            IdentifierName(cachedInterceptFieldName),
+                            GetMethodInfoExpression(TypeDef, method, parameters)));
+            }
 
             var interceptedLambda = CreateInterceptedLambda(method, parameters);
-            var getMethodInfo = GetMethodInfoExpression(TypeDef, method, parameters);
             var newArgumentList = method.Parameters
                 .Select(p => Argument(IdentifierName(p.Name)))
                 .ToArray();
@@ -168,19 +206,30 @@ public class ProxyTypeGenerator
             var body = Block(
                 VarStatement(InterceptedVarName.Identifier,
                     CoalesceAssignmentExpression(IdentifierName(cachedInterceptedFieldName), interceptedLambda)),
-                VarStatement(MethodInfoVarName.Identifier,
-                    CoalesceAssignmentExpression(IdentifierName(cachedMethodInfoFieldName), getMethodInfo)),
                 VarStatement(InvocationVarName.Identifier,
                     CreateInvocationInstance(
                         ThisExpression(),
-                        SuppressNullWarning(MethodInfoVarName),
+                        SuppressNullWarning(IdentifierName(cachedMethodInfoFieldName)),
                         NewArgumentList(newArgumentList),
                         InterceptedVarName)),
-                InvokeProxyIntercept(returnType, InvocationVarName)
-                    .ToStatement(!returnType.IsVoid())
+                IfStatement(
+                    BinaryExpression(
+                        SyntaxKind.EqualsExpression,
+                        IdentifierName(cachedInterceptFieldName),
+                        LiteralExpression(SyntaxKind.NullLiteralExpression)),
+                    ThrowStatement<InvalidOperationException>(
+                        "This proxy has no interceptor - you must call Bind method first.")),
+                MaybeReturnStatement(
+                    !returnTypeIsVoid,
+                    InvocationExpression(
+                        MemberAccessExpression(
+                                SyntaxKind.SimpleMemberAccessExpression,
+                                IdentifierName(cachedInterceptFieldName),
+                                IdentifierName("Invoke")))
+                            .WithArgumentList(ArgumentList(SingletonSeparatedList(Argument(InvocationVarName)))))
             );
 
-            ProxyMethods.Add(
+            Methods.Add(
                 MethodDeclaration(returnType, Identifier(method.Name))
                     .WithModifiers(modifiers)
                     .WithParameterList(parameters)
@@ -334,6 +383,22 @@ public class ProxyTypeGenerator
         return PrivateFieldDef(NullableType(fieldTypeDef), name);
     }
 
+    private FieldDeclarationSyntax CachedInterceptFieldDef(SyntaxToken name, TypeSyntax returnTypeDef)
+    {
+        TypeSyntax fieldTypeDef;
+        if (!returnTypeDef.IsVoid()) {
+            fieldTypeDef = GenericName(Identifier("global::System.Func"))
+                .WithTypeArgumentList(
+                    TypeArgumentList(CommaSeparatedList(InvocationTypeName, returnTypeDef)));
+        }
+        else {
+            fieldTypeDef = GenericName(Identifier("global::System.Action"))
+                .WithTypeArgumentList(
+                    TypeArgumentList(SingletonSeparatedList<TypeSyntax>(InvocationTypeName)));
+        }
+        return PrivateFieldDef(NullableType(fieldTypeDef), name);
+    }
+
     private SimpleLambdaExpressionSyntax CreateInterceptedLambda(IMethodSymbol method, ParameterListSyntax parameters)
     {
         var typedArgsVarGenericArguments = parameters.Parameters.Select(p => p.Type!).ToArray();
@@ -367,27 +432,15 @@ public class ProxyTypeGenerator
             ArgumentList(CommaSeparatedList(proxyTargetCallArguments))
         );
 
+        var returnTypeRef = method.ReturnType.ToTypeRef();
         var baseInvocationBlock = Block(
             VarStatement(typedArgs.Identifier, CastExpression(typeArgsVariableType, args)),
-            baseInvocation.ToStatement(!method.ReturnType.ToTypeRef().IsVoid()));
+            MaybeReturnStatement(
+                !returnTypeRef.IsVoid(),
+                baseInvocation));
 
         return SimpleLambdaExpression(Parameter(args.Identifier))
             .WithBlock(baseInvocationBlock);
-    }
-
-    private InvocationExpressionSyntax InvokeProxyIntercept(TypeSyntax genericArguments, params ExpressionSyntax[] arguments)
-    {
-        var methodName = genericArguments.IsVoid()
-            ? (SimpleNameSyntax)ProxyInterceptMethodName
-            : ProxyInterceptGenericMethodName
-                .WithTypeArgumentList(TypeArgumentList(SingletonSeparatedList(genericArguments)));
-        return InvocationExpression(
-                MemberAccessExpression(
-                    SyntaxKind.SimpleMemberAccessExpression,
-                    SuppressNullWarning(InterceptorFieldName),
-                    methodName))
-            .WithArgumentList(
-                ArgumentList(CommaSeparatedList(arguments.Select(Argument))));
     }
 
     private InvocationExpressionSyntax NewArgumentList(IEnumerable<ArgumentSyntax> newArgumentListParams)
@@ -401,7 +454,7 @@ public class ProxyTypeGenerator
 
     private void AddProxyInterfaceImplementation()
     {
-        ProxyFields.Add(
+        Fields.Add(
             PrivateFieldDef(NullableType(InterceptorTypeName), InterceptorFieldName.Identifier));
 
         var interceptorGetterDef = Block(
@@ -414,7 +467,7 @@ public class ProxyTypeGenerator
                     "This proxy has no interceptor - you must call Bind method first.")),
             ReturnStatement(InterceptorFieldName));
 
-        ProxyProperties.Add(
+        Properties.Add(
             PropertyDeclaration(InterceptorTypeName, InterceptorPropertyName.Identifier)
                 .WithExplicitInterfaceSpecifier(ExplicitInterfaceSpecifier(ProxyInterfaceTypeName))
                 .WithAccessorList(
@@ -423,29 +476,31 @@ public class ProxyTypeGenerator
                             AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
                                 .WithBody(interceptorGetterDef)))));
 
-        ProxyMethods.Add(
+        var bindMethodBody = Block(
+            IfStatement(
+                BinaryExpression(
+                    SyntaxKind.NotEqualsExpression,
+                    InterceptorFieldName,
+                    LiteralExpression(
+                        SyntaxKind.NullLiteralExpression)),
+                ThrowStatement<InvalidOperationException>("Interceptor is already bound.")),
+            ExpressionStatement(
+                AssignmentExpression(
+                    SyntaxKind.SimpleAssignmentExpression,
+                    InterceptorFieldName,
+                    BinaryExpression(
+                        SyntaxKind.CoalesceExpression,
+                        InterceptorParameterName,
+                        ThrowExpression<ArgumentNullException>(InterceptorParameterName.Identifier.Text)))));
+        bindMethodBody = bindMethodBody.AddStatements(BindMethodStatements.ToArray());
+
+        Methods.Add(
             MethodDeclaration(PredefinedType(Token(SyntaxKind.VoidKeyword)), ProxyInterfaceBindMethodName.Identifier)
                 .WithExplicitInterfaceSpecifier(ExplicitInterfaceSpecifier(ProxyInterfaceTypeName))
                 .WithParameterList(
                     ParameterList(SingletonSeparatedList(
                         Parameter(InterceptorParameterName.Identifier)
                             .WithType(InterceptorTypeName))))
-                .WithBody(
-                    Block(
-                        IfStatement(
-                            BinaryExpression(
-                                SyntaxKind.NotEqualsExpression,
-                                InterceptorFieldName,
-                                LiteralExpression(
-                                    SyntaxKind.NullLiteralExpression)),
-                            ThrowStatement<InvalidOperationException>("Interceptor is already bound.")),
-                        ExpressionStatement(
-                            AssignmentExpression(
-                                SyntaxKind.SimpleAssignmentExpression,
-                                InterceptorFieldName,
-                                BinaryExpression(
-                                    SyntaxKind.CoalesceExpression,
-                                    InterceptorParameterName,
-                                    ThrowExpression<ArgumentNullException>(InterceptorParameterName.Identifier.Text)))))));
+                .WithBody(bindMethodBody));
     }
 }

@@ -6,12 +6,13 @@ public static class ProxyHelper
         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static MethodInfo? GetMethodInfo(Type type, string name, Type[] types)
+    public static MethodInfo GetMethodInfo(Type type, string name, Type[] types)
     {
 #if NETSTANDARD || NETCOREAPP
-        return type.GetMethod(name, GetMethodBindingFlags, null, types, null);
+        var result = type.GetMethod(name, GetMethodBindingFlags, null, types, null);
 #else
-        return type.GetMethod(name, GetMethodBindingFlags, types);
+        var result = type.GetMethod(name, GetMethodBindingFlags, types);
 #endif
+        return result ?? throw new MissingMethodException(type.Name, name);
     }
 }

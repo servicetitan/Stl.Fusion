@@ -8,11 +8,13 @@ public class ProxyTest : TestBase
     public ProxyTest(ITestOutputHelper @out) : base(@out) { }
 
     [Theory]
+    [InlineData(1000_000)]
     [InlineData(25_000_000)]
     public void BenchmarkAll(int baseOpCount)
     {
         var interceptor = new Interceptor();
         var noProxy = new ClassProxy();
+        var altProxy = new AltClassProxy(interceptor);
         var classProxy = (ClassProxy)typeof(ClassProxy).GetProxyType()!.CreateInstance();
         interceptor.BindTo(classProxy);
         var interfaceProxy = (IInterfaceProxy)typeof(IInterfaceProxy).GetProxyType()!.CreateInstance(noProxy);
@@ -57,6 +59,11 @@ public class ProxyTest : TestBase
         RunOne("ClassProxy.Method2", baseOpCount, opCount => {
             for (; opCount > 0; opCount--)
                 classProxy.Method2(0, default);
+            return 0;
+        });
+        RunOne("AltClassProxy.Method2", baseOpCount, opCount => {
+            for (; opCount > 0; opCount--)
+                altProxy.Method2(0, default);
             return 0;
         });
 

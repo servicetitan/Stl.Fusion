@@ -19,6 +19,7 @@ public static class GenerationHelpers
     public static readonly IdentifierNameSyntax ProxyHelperTypeName = IdentifierName($"{StlInterceptionGns}.ProxyHelper");
     public static readonly IdentifierNameSyntax ArgumentListTypeName = IdentifierName($"{StlInterceptionGns}.ArgumentList");
     public static readonly GenericNameSyntax ArgumentListGenericTypeName = GenericName(ArgumentListTypeName.Identifier.Text);
+    public static readonly IdentifierNameSyntax InvocationTypeName = IdentifierName($"{StlInterceptionGns}.Invocation");
     public static readonly TypeSyntax NullableMethodInfoType = NullableType(typeof(MethodInfo).ToTypeRef());
     // Methods
     public static readonly IdentifierNameSyntax ArgumentListNewMethodName = IdentifierName("New");
@@ -28,12 +29,11 @@ public static class GenerationHelpers
     public static readonly IdentifierNameSyntax ProxyInterfaceBindMethodName = IdentifierName("Bind");
     // Properties, fields, locals
     public static readonly IdentifierNameSyntax InterceptorPropertyName = IdentifierName("Interceptor");
-    public static readonly IdentifierNameSyntax InterceptorFieldName = IdentifierName("_interceptor");
+    public static readonly IdentifierNameSyntax InterceptorFieldName = IdentifierName("__interceptor");
     public static readonly IdentifierNameSyntax InterceptorParameterName = IdentifierName("interceptor");
-    public static readonly IdentifierNameSyntax ProxyTargetFieldName = IdentifierName("_proxyTarget");
+    public static readonly IdentifierNameSyntax ProxyTargetFieldName = IdentifierName("__proxyTarget");
     public static readonly IdentifierNameSyntax ProxyTargetParameterName = IdentifierName("proxyTarget");
     public static readonly IdentifierNameSyntax InterceptedVarName = IdentifierName("intercepted");
-    public static readonly IdentifierNameSyntax MethodInfoVarName = IdentifierName("methodInfo");
     public static readonly IdentifierNameSyntax InvocationVarName = IdentifierName("invocation");
 
     // Helpers
@@ -80,9 +80,16 @@ public static class GenerationHelpers
     }
 
     public static LocalDeclarationStatementSyntax VarStatement(SyntaxToken name, ExpressionSyntax initializer)
-        => VariableDeclarator(name)
-            .WithInitializer(EqualsValueClause(initializer))
-            .ToVarStatement();
+        => LocalDeclarationStatement(
+            VariableDeclaration(VarIdentifierDef())
+                .WithVariables(SingletonSeparatedList(
+                    VariableDeclarator(name)
+                        .WithInitializer(EqualsValueClause(initializer)))));
+
+    public static StatementSyntax MaybeReturnStatement(bool mustReturn, ExpressionSyntax expression)
+        => mustReturn
+            ? ReturnStatement(expression)
+            : ExpressionStatement(expression);
 
     public static ThrowStatementSyntax ThrowStatement<TException>(string message)
         where TException : Exception

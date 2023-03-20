@@ -11,30 +11,43 @@ public record ArgumentList
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public virtual int Length => 0;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ArgumentList New()
         => Empty;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ArgumentList<T0> New<T0>(T0 item0)
         => new (item0);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ArgumentList<T0, T1> New<T0, T1>(T0 item0, T1 item1)
         => new (item0, item1);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ArgumentList<T0, T1, T2> New<T0, T1, T2>(T0 item0, T1 item1, T2 item2)
         => new (item0, item1, item2);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ArgumentList<T0, T1, T2, T3> New<T0, T1, T2, T3>(T0 item0, T1 item1, T2 item2, T3 item3)
         => new (item0, item1, item2, item3);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ArgumentList<T0, T1, T2, T3, T4> New<T0, T1, T2, T3, T4>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4)
         => new (item0, item1, item2, item3, item4);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ArgumentList<T0, T1, T2, T3, T4, T5> New<T0, T1, T2, T3, T4, T5>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5)
         => new (item0, item1, item2, item3, item4, item5);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ArgumentList<T0, T1, T2, T3, T4, T5, T6> New<T0, T1, T2, T3, T4, T5, T6>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6)
         => new (item0, item1, item2, item3, item4, item5, item6);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7> New<T0, T1, T2, T3, T4, T5, T6, T7>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7)
         => new (item0, item1, item2, item3, item4, item5, item6, item7);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8> New<T0, T1, T2, T3, T4, T5, T6, T7, T8>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8)
         => new (item0, item1, item2, item3, item4, item5, item6, item7, item8);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> New<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8, T9 item9)
         => new (item0, item1, item2, item3, item4, item5, item6, item7, item8, item9);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> New<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8, T9 item9, T10 item10)
         => new (item0, item1, item2, item3, item4, item5, item6, item7, item8, item9, item10);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> New<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8, T9 item9, T10 item10, T11 item11)
         => new (item0, item1, item2, item3, item4, item5, item6, item7, item8, item9, item10, item11);
 

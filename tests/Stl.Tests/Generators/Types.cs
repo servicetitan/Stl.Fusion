@@ -1,3 +1,4 @@
+using System.Reflection;
 using Stl.Interception;
 
 namespace Stl.Tests.Generators;
@@ -60,4 +61,37 @@ public class ClassProxy : IInterfaceProxy
     public virtual Task Method0() => Task.CompletedTask;
     public virtual Task Method1(CancellationToken cancellationToken) => Task.CompletedTask;
     public virtual Task Method2(int x, CancellationToken cancellationToken) => Task.CompletedTask;
+}
+
+public class AltClassProxy
+{
+    private MethodInfo? _cachedMethodInfo;
+    private Func<ArgumentList, Task>? _cachedIntercepted;
+    private Func<Invocation, Task>? _cachedIntercept;
+    private Interceptor _interceptor;
+
+    public AltClassProxy(Interceptor interceptor)
+    {
+        _interceptor = interceptor;
+        _cachedIntercept = _interceptor.Intercept<Task>;
+        _cachedMethodInfo = ProxyHelper.GetMethodInfo(typeof(ClassProxy), "Method2", new[] { typeof(int), typeof(CancellationToken) });
+    }
+
+    public virtual Task Method2(int x, CancellationToken cancellationToken)
+    {
+        var intercepted = _cachedIntercepted ??= args =>
+        {
+            var typedArgs = (ArgumentList<int, CancellationToken>)args;
+            return Method2Base(typedArgs.Item0, typedArgs.Item1);
+        };
+        var invocation = new Invocation(this, _cachedMethodInfo!,
+            ArgumentList.New(x, cancellationToken),
+            intercepted);
+        if (_cachedIntercept == null)
+            throw new InvalidOperationException("You must call Bind first.");
+        return _cachedIntercept.Invoke(invocation);
+    }
+
+    public Task Method2Base(int x, CancellationToken cancellationToken)
+        => Task.CompletedTask;
 }
