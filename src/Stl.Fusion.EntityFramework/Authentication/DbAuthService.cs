@@ -1,4 +1,3 @@
-using System.Data;
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Authentication.Commands;

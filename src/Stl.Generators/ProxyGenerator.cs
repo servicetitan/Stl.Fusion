@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+
 namespace Stl.Generators;
 using static DiagnosticsHelpers;
 using static GenerationHelpers;
@@ -5,8 +7,11 @@ using static GenerationHelpers;
 [Generator]
 public class ProxyGenerator : IIncrementalGenerator
 {
+    private ConcurrentDictionary<ITypeSymbol, bool> processedTypes = new(SymbolEqualityComparer.Default);
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
+        processedTypes.Clear();
         var items = context.SyntaxProvider
             .CreateSyntaxProvider(CouldBeAugmented, MustAugment)
             .Where(i => i.TypeDef != null)
@@ -24,14 +29,30 @@ public class ProxyGenerator : IIncrementalGenerator
     {
         var semanticModel = context.SemanticModel;
         var typeDef = (TypeDeclarationSyntax) context.Node;
+
         var typeSymbol = semanticModel.GetDeclaredSymbol(typeDef);
-        if (typeSymbol == null || typeSymbol.IsSealed || !typeSymbol.DeclaredAccessibility.HasFlag(Accessibility.Public))
+        if (typeSymbol == null || !typeSymbol.DeclaredAccessibility.HasFlag(Accessibility.Public))
             return default;
-        if (typeDef is ClassDeclarationSyntax && typeSymbol.IsAbstract)
+        if (typeSymbol.IsSealed)
+            return default;
+        if (typeSymbol is { TypeKind: TypeKind.Class, IsAbstract: true })
             return default;
 
         var requiresProxy = typeSymbol.AllInterfaces.Any(t => Equals(t.ToFullName(), RequireAsyncProxyInterfaceName));
-        return requiresProxy ? (semanticModel, typeDef) : default;
+        if (!requiresProxy)
+            return default;
+
+        // It might be a partial class w/o generic constraint clauses (even though the type has ones),
+        // so we might need to "wait" for the one with generic constraint clauses
+        var hasConstraints = typeSymbol.TypeParameters.Any(p => p.HasConstraints());
+        if (hasConstraints && !typeDef.ConstraintClauses.Any())
+            return default;
+
+        // There might be a few parts of the same class
+        if (!processedTypes.TryAdd(typeSymbol, true))
+            return default;
+
+        return (semanticModel, typeDef);
     }
 
     private void Generate(
@@ -52,7 +73,7 @@ public class ProxyGenerator : IIncrementalGenerator
                     continue;
 
                 var typeType = (ITypeSymbol)semanticModel.GetDeclaredSymbol(typeDef)!;
-                context.AddSource($"{typeType.ContainingNamespace}.{typeType.Name}Proxy.g.cs", code);
+                context.AddSource($"{typeType.ContainingNamespace}.{typeType.Name}{ProxyClassSuffix}.g.cs", code);
                 context.ReportDiagnostic(GenerateProxyTypeProcessedInfo(typeDef));
             }
         }

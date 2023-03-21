@@ -1,5 +1,4 @@
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-using static Stl.Generators.Internal.GenerationHelpers;
 
 namespace Stl.Generators.Internal;
 
@@ -36,6 +35,14 @@ public static class GenerationExt
         return output;
     }
 
+    public static bool HasConstraints(this ITypeParameterSymbol parameter)
+        => parameter.HasNotNullConstraint
+            || parameter.HasConstructorConstraint
+            || parameter.HasReferenceTypeConstraint
+            || parameter.HasValueTypeConstraint
+            || parameter.HasUnmanagedTypeConstraint
+            || parameter.ConstraintTypes.Any();
+
     public static (string? Name, TypeSyntax TypeRef) GetMemberNameAndTypeRef(this MemberDeclarationSyntax memberDef)
     {
         if (memberDef is FieldDeclarationSyntax f) {
@@ -66,10 +73,13 @@ public static class GenerationExt
     public static TypeSyntax ToTypeRef(this TypeDeclarationSyntax typeDef)
     {
         var ns = typeDef.GetNamespaceRef()?.ToString() ?? "";
-        return ParseTypeName(
-            string.IsNullOrEmpty(ns)
-                ? typeDef.Identifier.Text
-                : $"{ns.WithGlobalPrefix()}.{typeDef.Identifier.Text}");
+        var name = typeDef.Identifier.Text;
+        if (typeDef.TypeParameterList is { } p && p.Parameters.Count != 0) {
+            var typeParameters = string.Join(", ", p.Parameters.Select(x => x.Identifier.Text));
+            name = $"{name}<{typeParameters}>";
+        }
+        var fullName = ns == "" ? name : $"{ns.WithGlobalPrefix()}.{name}";
+        return ParseTypeName(fullName);
     }
 
     public static TypeSyntax ToTypeRef(this Type type)
