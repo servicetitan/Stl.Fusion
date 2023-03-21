@@ -22,4 +22,8 @@ public record CommandHandlerMethodDef : MethodDef
 
         IsValid = true;
     }
+
+    // All XxxMethodDef records should rely on reference-based equality
+    public virtual bool Equals(CommandHandlerMethodDef? other) => ReferenceEquals(this, other);
+    public override int GetHashCode() => RuntimeHelpers.GetHashCode(this);
 }

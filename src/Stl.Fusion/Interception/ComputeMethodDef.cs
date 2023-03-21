@@ -43,4 +43,8 @@ public record ComputeMethodDef : MethodDef
 
     public virtual ComputeMethodInput CreateInput(IFunction function, Invocation invocation)
         => new(function, this, invocation);
+
+    // All XxxMethodDef records should rely on reference-based equality
+    public virtual bool Equals(ComputeMethodDef? other) => ReferenceEquals(this, other);
+    public override int GetHashCode() => RuntimeHelpers.GetHashCode(this);
 }

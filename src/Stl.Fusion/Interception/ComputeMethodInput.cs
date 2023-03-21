@@ -17,10 +17,9 @@ public sealed class ComputeMethodInput : ComputedInput, IEquatable<ComputeMethod
         Invocation = invocation;
 
         var arguments = invocation.Arguments;
-        var hashCode = unchecked(
-            arguments.GetHashCode(methodDef.CancellationTokenArgumentIndex) +
-            367*invocation.Proxy.GetHashCode() +
-            7817*HashCode);
+        var hashCode = methodDef.GetHashCode()
+            ^ invocation.Proxy.GetHashCode()
+            ^ arguments.GetHashCode(methodDef.CancellationTokenArgumentIndex);
         Initialize(function, hashCode);
     }
 
@@ -51,13 +50,13 @@ public sealed class ComputeMethodInput : ComputedInput, IEquatable<ComputeMethod
             return false;
         if (HashCode != other.HashCode)
             return false;
-        var methodDef = MethodDef;
-        if (!ReferenceEquals(methodDef, other.MethodDef))
-            return false;
-        // GetType() & other.GetType() are the same here, because
-        // Method & other.Method are the same
 
-        return Arguments.Equals(other.Arguments, methodDef.CancellationTokenArgumentIndex);
+        if (!ReferenceEquals(Service, other.Service))
+            return false;
+        if (!ReferenceEquals(MethodDef, other.MethodDef))
+            return false;
+
+        return Arguments.Equals(other.Arguments, MethodDef.CancellationTokenArgumentIndex);
     }
     public override bool Equals(ComputedInput? obj)
         => obj is ComputeMethodInput other && Equals(other);

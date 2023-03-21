@@ -5,7 +5,7 @@ using Stl.RegisterAttributes;
 
 namespace Stl.Fusion.Tests.Services;
 
-public interface IUserService : ICommandService
+public interface IUserService : IComputeService
 {
     [DataContract]
     public record AddCommand(

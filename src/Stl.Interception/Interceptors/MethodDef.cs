@@ -41,4 +41,8 @@ public abstract record MethodDef
 
     public virtual MethodDef ToReplicaMethodDef()
         => this;
+
+    // All XxxMethodDef records should rely on reference-based equality
+    public virtual bool Equals(MethodDef? other) => ReferenceEquals(this, other);
+    public override int GetHashCode() => RuntimeHelpers.GetHashCode(this);
 }

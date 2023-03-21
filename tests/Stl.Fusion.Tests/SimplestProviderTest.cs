@@ -140,6 +140,7 @@ public class SimplestProviderTest : FusionTestBase
     public async Task CommandTest()
     {
         var p = Services.GetRequiredService<ISimplestProvider>();
+        // (await p.GetValue()).Should().Be("");
         await Services.Commander().Run(new SetValueCommand() { Value = "1" });
         (await p.GetValue()).Should().Be("1");
         await Services.Commander().Run(new SetValueCommand() { Value = "2" });

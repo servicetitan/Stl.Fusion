@@ -32,6 +32,8 @@ public interface IView : IRequiresFullProxy
     ValueTask<string> ThreeXAsync();
 }
 
+#pragma warning disable VSTHRD103
+
 public class Service : IService
 {
     public string One(string source)
