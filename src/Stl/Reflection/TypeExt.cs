@@ -24,18 +24,22 @@ public static class TypeExt
         if (type == null)
             throw new ArgumentNullException(nameof(type));
 
-        if (addSelf)
+        if (addSelf) {
             yield return type;
-        var baseType = type.BaseType;
-        if (baseType == null)
-            yield break; // type == typeof(Object)
+            if (type == typeof(object))
+                yield break;
+        }
 
-        while (baseType != typeof(object)) {
-            yield return baseType!;
-            baseType = baseType!.BaseType;
+        var baseType = type.BaseType;
+        while (baseType != typeof(object) && baseType != null) {
+            yield return baseType;
+            baseType = baseType.BaseType;
         }
         if (addInterfaces) {
             var interfaces = type.GetInterfaces();
+            if (interfaces.Length == 0)
+                yield break;
+
             var orderedInterfaces = interfaces
                 .OrderBy(i => -i.GetInterfaces().Length)
                 .OrderByDependency(i => interfaces.Where(j => i != j && j.IsAssignableFrom(i)))
@@ -43,6 +47,7 @@ public static class TypeExt
             foreach (var @interface in orderedInterfaces)
                 yield return @interface;
         }
+
         yield return typeof(object);
     }
 
