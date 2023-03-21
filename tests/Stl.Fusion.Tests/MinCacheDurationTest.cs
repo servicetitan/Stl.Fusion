@@ -2,30 +2,30 @@ using Stl.Testing.Collections;
 
 namespace Stl.Fusion.Tests;
 
+public class MinCacheDurationTestService : IComputeService
+{
+    public ThreadSafe<int> CallCount { get; } = 0;
+
+    [ComputeMethod(MinCacheDuration = 0.5)]
+    public virtual async Task<double> Sum(double a, double b)
+    {
+        await Task.Yield();
+        CallCount.Value++;
+        return a + b;
+    }
+
+    [ComputeMethod]
+    public virtual async Task<double> Multiply(double a, double b)
+    {
+        await Task.Yield();
+        CallCount.Value++;
+        return a * b;
+    }
+}
+
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public class MinCacheDurationTest : TestBase
 {
-    public class Service
-    {
-        public ThreadSafe<int> CallCount { get; } = 0;
-
-        [ComputeMethod(MinCacheDuration = 0.5)]
-        public virtual async Task<double> Sum(double a, double b)
-        {
-            await Task.Yield();
-            CallCount.Value++;
-            return a + b;
-        }
-
-        [ComputeMethod]
-        public virtual async Task<double> Multiply(double a, double b)
-        {
-            await Task.Yield();
-            CallCount.Value++;
-            return a * b;
-        }
-    }
-
     public MinCacheDurationTest(ITestOutputHelper @out) : base(@out) { }
 
     public static IServiceProvider CreateProviderFor<TService>()
@@ -42,8 +42,8 @@ public class MinCacheDurationTest : TestBase
     [Fact]
     public async Task TestNoKeepAlive()
     {
-        var services = CreateProviderFor<Service>();
-        var service = services.GetRequiredService<Service>();
+        var services = CreateProviderFor<MinCacheDurationTestService>();
+        var service = services.GetRequiredService<MinCacheDurationTestService>();
 
         service.CallCount.Value = 0;
         await service.Multiply(1, 1);
@@ -63,8 +63,8 @@ public class MinCacheDurationTest : TestBase
     [Fact]
     public async Task TestKeepAlive()
     {
-        var services = CreateProviderFor<Service>();
-        var service = services.GetRequiredService<Service>();
+        var services = CreateProviderFor<MinCacheDurationTestService>();
+        var service = services.GetRequiredService<MinCacheDurationTestService>();
 
         service.CallCount.Value = 0;
         await service.Sum(1, 1);
