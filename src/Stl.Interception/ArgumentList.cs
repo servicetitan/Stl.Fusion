@@ -65,6 +65,8 @@ public record ArgumentList
          => throw new ArgumentOutOfRangeException(nameof(index));
     public virtual void SetItemUntyped(int index, object? value)
          => throw new ArgumentOutOfRangeException(nameof(index));
+    public virtual void SetCancellationToken(int index, CancellationToken cancellationToken)
+         => throw new ArgumentOutOfRangeException(nameof(index));
 
     public virtual bool Equals(ArgumentList? other, int ignoredIndex)
         => other?.GetType() == typeof(ArgumentList);
@@ -145,6 +147,17 @@ public sealed record ArgumentList<T0>(
         }
     }
 
+    public override void SetCancellationToken(int index, CancellationToken cancellationToken)
+    {
+        switch (index) {
+        case 0:
+            _item0 = cancellationToken is T0 item0 ? item0 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
     // Equality
 
     public bool Equals(ArgumentList<T0>? other)
@@ -152,7 +165,7 @@ public sealed record ArgumentList<T0>(
         if (other == null)
             return false;
 
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+        if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -160,7 +173,7 @@ public sealed record ArgumentList<T0>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
             return hashCode;
         }
     }
@@ -300,6 +313,20 @@ public sealed record ArgumentList<T0, T1>(
         }
     }
 
+    public override void SetCancellationToken(int index, CancellationToken cancellationToken)
+    {
+        switch (index) {
+        case 0:
+            _item0 = cancellationToken is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = cancellationToken is T1 item1 ? item1 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
     // Equality
 
     public bool Equals(ArgumentList<T0, T1>? other)
@@ -307,9 +334,9 @@ public sealed record ArgumentList<T0, T1>(
         if (other == null)
             return false;
 
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+        if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+        if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -317,8 +344,8 @@ public sealed record ArgumentList<T0, T1>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
-            hashCode = 397*hashCode + (Item1 is CancellationToken ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
             return hashCode;
         }
     }
@@ -489,6 +516,23 @@ public sealed record ArgumentList<T0, T1, T2>(
         }
     }
 
+    public override void SetCancellationToken(int index, CancellationToken cancellationToken)
+    {
+        switch (index) {
+        case 0:
+            _item0 = cancellationToken is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = cancellationToken is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = cancellationToken is T2 item2 ? item2 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
     // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2>? other)
@@ -496,11 +540,11 @@ public sealed record ArgumentList<T0, T1, T2>(
         if (other == null)
             return false;
 
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+        if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
             return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+        if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+        if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -508,9 +552,9 @@ public sealed record ArgumentList<T0, T1, T2>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
-            hashCode = 397*hashCode + (Item1 is CancellationToken ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
-            hashCode = 397*hashCode + (Item2 is CancellationToken ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
+            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
             return hashCode;
         }
     }
@@ -712,6 +756,26 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
         }
     }
 
+    public override void SetCancellationToken(int index, CancellationToken cancellationToken)
+    {
+        switch (index) {
+        case 0:
+            _item0 = cancellationToken is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = cancellationToken is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = cancellationToken is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = cancellationToken is T3 item3 ? item3 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
     // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3>? other)
@@ -719,13 +783,13 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
         if (other == null)
             return false;
 
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+        if (!EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
             return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+        if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
             return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+        if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+        if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -733,10 +797,10 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
-            hashCode = 397*hashCode + (Item1 is CancellationToken ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
-            hashCode = 397*hashCode + (Item2 is CancellationToken ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
-            hashCode = 397*hashCode + (Item3 is CancellationToken ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
+            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
+            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
             return hashCode;
         }
     }
@@ -969,6 +1033,29 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
         }
     }
 
+    public override void SetCancellationToken(int index, CancellationToken cancellationToken)
+    {
+        switch (index) {
+        case 0:
+            _item0 = cancellationToken is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = cancellationToken is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = cancellationToken is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = cancellationToken is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = cancellationToken is T4 item4 ? item4 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
     // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3, T4>? other)
@@ -976,15 +1063,15 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
         if (other == null)
             return false;
 
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+        if (!EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
             return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+        if (!EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
             return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+        if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
             return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+        if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+        if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -992,11 +1079,11 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
-            hashCode = 397*hashCode + (Item1 is CancellationToken ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
-            hashCode = 397*hashCode + (Item2 is CancellationToken ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
-            hashCode = 397*hashCode + (Item3 is CancellationToken ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
-            hashCode = 397*hashCode + (Item4 is CancellationToken ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
+            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
+            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
+            hashCode = 397*hashCode + EqualityComparer<T4>.Default.GetHashCode(Item4!);
             return hashCode;
         }
     }
@@ -1260,6 +1347,32 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
         }
     }
 
+    public override void SetCancellationToken(int index, CancellationToken cancellationToken)
+    {
+        switch (index) {
+        case 0:
+            _item0 = cancellationToken is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = cancellationToken is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = cancellationToken is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = cancellationToken is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = cancellationToken is T4 item4 ? item4 : default!;
+            break;
+        case 5:
+            _item5 = cancellationToken is T5 item5 ? item5 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
     // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5>? other)
@@ -1267,17 +1380,17 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
         if (other == null)
             return false;
 
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
+        if (!EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
             return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+        if (!EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
             return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+        if (!EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
             return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+        if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
             return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+        if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+        if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -1285,12 +1398,12 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
-            hashCode = 397*hashCode + (Item1 is CancellationToken ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
-            hashCode = 397*hashCode + (Item2 is CancellationToken ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
-            hashCode = 397*hashCode + (Item3 is CancellationToken ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
-            hashCode = 397*hashCode + (Item4 is CancellationToken ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
-            hashCode = 397*hashCode + (Item5 is CancellationToken ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5!));
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
+            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
+            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
+            hashCode = 397*hashCode + EqualityComparer<T4>.Default.GetHashCode(Item4!);
+            hashCode = 397*hashCode + EqualityComparer<T5>.Default.GetHashCode(Item5!);
             return hashCode;
         }
     }
@@ -1585,6 +1698,35 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
         }
     }
 
+    public override void SetCancellationToken(int index, CancellationToken cancellationToken)
+    {
+        switch (index) {
+        case 0:
+            _item0 = cancellationToken is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = cancellationToken is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = cancellationToken is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = cancellationToken is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = cancellationToken is T4 item4 ? item4 : default!;
+            break;
+        case 5:
+            _item5 = cancellationToken is T5 item5 ? item5 : default!;
+            break;
+        case 6:
+            _item6 = cancellationToken is T6 item6 ? item6 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
     // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6>? other)
@@ -1592,19 +1734,19 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
         if (other == null)
             return false;
 
-        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
+        if (!EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
             return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
+        if (!EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
             return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+        if (!EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
             return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+        if (!EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
             return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+        if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
             return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+        if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+        if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -1612,13 +1754,13 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
-            hashCode = 397*hashCode + (Item1 is CancellationToken ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
-            hashCode = 397*hashCode + (Item2 is CancellationToken ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
-            hashCode = 397*hashCode + (Item3 is CancellationToken ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
-            hashCode = 397*hashCode + (Item4 is CancellationToken ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
-            hashCode = 397*hashCode + (Item5 is CancellationToken ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5!));
-            hashCode = 397*hashCode + (Item6 is CancellationToken ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6!));
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
+            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
+            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
+            hashCode = 397*hashCode + EqualityComparer<T4>.Default.GetHashCode(Item4!);
+            hashCode = 397*hashCode + EqualityComparer<T5>.Default.GetHashCode(Item5!);
+            hashCode = 397*hashCode + EqualityComparer<T6>.Default.GetHashCode(Item6!);
             return hashCode;
         }
     }
@@ -1944,6 +2086,38 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
         }
     }
 
+    public override void SetCancellationToken(int index, CancellationToken cancellationToken)
+    {
+        switch (index) {
+        case 0:
+            _item0 = cancellationToken is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = cancellationToken is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = cancellationToken is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = cancellationToken is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = cancellationToken is T4 item4 ? item4 : default!;
+            break;
+        case 5:
+            _item5 = cancellationToken is T5 item5 ? item5 : default!;
+            break;
+        case 6:
+            _item6 = cancellationToken is T6 item6 ? item6 : default!;
+            break;
+        case 7:
+            _item7 = cancellationToken is T7 item7 ? item7 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
     // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>? other)
@@ -1951,21 +2125,21 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
         if (other == null)
             return false;
 
-        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
+        if (!EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
             return false;
-        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
+        if (!EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
             return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
+        if (!EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
             return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+        if (!EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
             return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+        if (!EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
             return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+        if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
             return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+        if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+        if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -1973,14 +2147,14 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
-            hashCode = 397*hashCode + (Item1 is CancellationToken ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
-            hashCode = 397*hashCode + (Item2 is CancellationToken ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
-            hashCode = 397*hashCode + (Item3 is CancellationToken ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
-            hashCode = 397*hashCode + (Item4 is CancellationToken ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
-            hashCode = 397*hashCode + (Item5 is CancellationToken ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5!));
-            hashCode = 397*hashCode + (Item6 is CancellationToken ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6!));
-            hashCode = 397*hashCode + (Item7 is CancellationToken ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7!));
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
+            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
+            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
+            hashCode = 397*hashCode + EqualityComparer<T4>.Default.GetHashCode(Item4!);
+            hashCode = 397*hashCode + EqualityComparer<T5>.Default.GetHashCode(Item5!);
+            hashCode = 397*hashCode + EqualityComparer<T6>.Default.GetHashCode(Item6!);
+            hashCode = 397*hashCode + EqualityComparer<T7>.Default.GetHashCode(Item7!);
             return hashCode;
         }
     }
@@ -2337,6 +2511,41 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
         }
     }
 
+    public override void SetCancellationToken(int index, CancellationToken cancellationToken)
+    {
+        switch (index) {
+        case 0:
+            _item0 = cancellationToken is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = cancellationToken is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = cancellationToken is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = cancellationToken is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = cancellationToken is T4 item4 ? item4 : default!;
+            break;
+        case 5:
+            _item5 = cancellationToken is T5 item5 ? item5 : default!;
+            break;
+        case 6:
+            _item6 = cancellationToken is T6 item6 ? item6 : default!;
+            break;
+        case 7:
+            _item7 = cancellationToken is T7 item7 ? item7 : default!;
+            break;
+        case 8:
+            _item8 = cancellationToken is T8 item8 ? item8 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
     // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>? other)
@@ -2344,23 +2553,23 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
         if (other == null)
             return false;
 
-        if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8))
+        if (!EqualityComparer<T8>.Default.Equals(Item8, other.Item8))
             return false;
-        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
+        if (!EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
             return false;
-        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
+        if (!EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
             return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
+        if (!EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
             return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+        if (!EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
             return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+        if (!EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
             return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+        if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
             return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+        if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+        if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -2368,15 +2577,15 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
-            hashCode = 397*hashCode + (Item1 is CancellationToken ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
-            hashCode = 397*hashCode + (Item2 is CancellationToken ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
-            hashCode = 397*hashCode + (Item3 is CancellationToken ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
-            hashCode = 397*hashCode + (Item4 is CancellationToken ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
-            hashCode = 397*hashCode + (Item5 is CancellationToken ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5!));
-            hashCode = 397*hashCode + (Item6 is CancellationToken ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6!));
-            hashCode = 397*hashCode + (Item7 is CancellationToken ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7!));
-            hashCode = 397*hashCode + (Item8 is CancellationToken ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8!));
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
+            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
+            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
+            hashCode = 397*hashCode + EqualityComparer<T4>.Default.GetHashCode(Item4!);
+            hashCode = 397*hashCode + EqualityComparer<T5>.Default.GetHashCode(Item5!);
+            hashCode = 397*hashCode + EqualityComparer<T6>.Default.GetHashCode(Item6!);
+            hashCode = 397*hashCode + EqualityComparer<T7>.Default.GetHashCode(Item7!);
+            hashCode = 397*hashCode + EqualityComparer<T8>.Default.GetHashCode(Item8!);
             return hashCode;
         }
     }
@@ -2764,6 +2973,44 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
         }
     }
 
+    public override void SetCancellationToken(int index, CancellationToken cancellationToken)
+    {
+        switch (index) {
+        case 0:
+            _item0 = cancellationToken is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = cancellationToken is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = cancellationToken is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = cancellationToken is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = cancellationToken is T4 item4 ? item4 : default!;
+            break;
+        case 5:
+            _item5 = cancellationToken is T5 item5 ? item5 : default!;
+            break;
+        case 6:
+            _item6 = cancellationToken is T6 item6 ? item6 : default!;
+            break;
+        case 7:
+            _item7 = cancellationToken is T7 item7 ? item7 : default!;
+            break;
+        case 8:
+            _item8 = cancellationToken is T8 item8 ? item8 : default!;
+            break;
+        case 9:
+            _item9 = cancellationToken is T9 item9 ? item9 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
     // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>? other)
@@ -2771,25 +3018,25 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
         if (other == null)
             return false;
 
-        if (Item9 is not CancellationToken && !EqualityComparer<T9>.Default.Equals(Item9, other.Item9))
+        if (!EqualityComparer<T9>.Default.Equals(Item9, other.Item9))
             return false;
-        if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8))
+        if (!EqualityComparer<T8>.Default.Equals(Item8, other.Item8))
             return false;
-        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
+        if (!EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
             return false;
-        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
+        if (!EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
             return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
+        if (!EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
             return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+        if (!EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
             return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+        if (!EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
             return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+        if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
             return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+        if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+        if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -2797,16 +3044,16 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
-            hashCode = 397*hashCode + (Item1 is CancellationToken ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
-            hashCode = 397*hashCode + (Item2 is CancellationToken ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
-            hashCode = 397*hashCode + (Item3 is CancellationToken ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
-            hashCode = 397*hashCode + (Item4 is CancellationToken ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
-            hashCode = 397*hashCode + (Item5 is CancellationToken ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5!));
-            hashCode = 397*hashCode + (Item6 is CancellationToken ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6!));
-            hashCode = 397*hashCode + (Item7 is CancellationToken ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7!));
-            hashCode = 397*hashCode + (Item8 is CancellationToken ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8!));
-            hashCode = 397*hashCode + (Item9 is CancellationToken ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9!));
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
+            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
+            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
+            hashCode = 397*hashCode + EqualityComparer<T4>.Default.GetHashCode(Item4!);
+            hashCode = 397*hashCode + EqualityComparer<T5>.Default.GetHashCode(Item5!);
+            hashCode = 397*hashCode + EqualityComparer<T6>.Default.GetHashCode(Item6!);
+            hashCode = 397*hashCode + EqualityComparer<T7>.Default.GetHashCode(Item7!);
+            hashCode = 397*hashCode + EqualityComparer<T8>.Default.GetHashCode(Item8!);
+            hashCode = 397*hashCode + EqualityComparer<T9>.Default.GetHashCode(Item9!);
             return hashCode;
         }
     }
@@ -3225,6 +3472,47 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
         }
     }
 
+    public override void SetCancellationToken(int index, CancellationToken cancellationToken)
+    {
+        switch (index) {
+        case 0:
+            _item0 = cancellationToken is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = cancellationToken is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = cancellationToken is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = cancellationToken is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = cancellationToken is T4 item4 ? item4 : default!;
+            break;
+        case 5:
+            _item5 = cancellationToken is T5 item5 ? item5 : default!;
+            break;
+        case 6:
+            _item6 = cancellationToken is T6 item6 ? item6 : default!;
+            break;
+        case 7:
+            _item7 = cancellationToken is T7 item7 ? item7 : default!;
+            break;
+        case 8:
+            _item8 = cancellationToken is T8 item8 ? item8 : default!;
+            break;
+        case 9:
+            _item9 = cancellationToken is T9 item9 ? item9 : default!;
+            break;
+        case 10:
+            _item10 = cancellationToken is T10 item10 ? item10 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
     // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>? other)
@@ -3232,27 +3520,27 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
         if (other == null)
             return false;
 
-        if (Item10 is not CancellationToken && !EqualityComparer<T10>.Default.Equals(Item10, other.Item10))
+        if (!EqualityComparer<T10>.Default.Equals(Item10, other.Item10))
             return false;
-        if (Item9 is not CancellationToken && !EqualityComparer<T9>.Default.Equals(Item9, other.Item9))
+        if (!EqualityComparer<T9>.Default.Equals(Item9, other.Item9))
             return false;
-        if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8))
+        if (!EqualityComparer<T8>.Default.Equals(Item8, other.Item8))
             return false;
-        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
+        if (!EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
             return false;
-        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
+        if (!EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
             return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
+        if (!EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
             return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+        if (!EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
             return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+        if (!EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
             return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+        if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
             return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+        if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+        if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -3260,17 +3548,17 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
-            hashCode = 397*hashCode + (Item1 is CancellationToken ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
-            hashCode = 397*hashCode + (Item2 is CancellationToken ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
-            hashCode = 397*hashCode + (Item3 is CancellationToken ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
-            hashCode = 397*hashCode + (Item4 is CancellationToken ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
-            hashCode = 397*hashCode + (Item5 is CancellationToken ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5!));
-            hashCode = 397*hashCode + (Item6 is CancellationToken ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6!));
-            hashCode = 397*hashCode + (Item7 is CancellationToken ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7!));
-            hashCode = 397*hashCode + (Item8 is CancellationToken ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8!));
-            hashCode = 397*hashCode + (Item9 is CancellationToken ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9!));
-            hashCode = 397*hashCode + (Item10 is CancellationToken ? 0 : EqualityComparer<T10>.Default.GetHashCode(Item10!));
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
+            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
+            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
+            hashCode = 397*hashCode + EqualityComparer<T4>.Default.GetHashCode(Item4!);
+            hashCode = 397*hashCode + EqualityComparer<T5>.Default.GetHashCode(Item5!);
+            hashCode = 397*hashCode + EqualityComparer<T6>.Default.GetHashCode(Item6!);
+            hashCode = 397*hashCode + EqualityComparer<T7>.Default.GetHashCode(Item7!);
+            hashCode = 397*hashCode + EqualityComparer<T8>.Default.GetHashCode(Item8!);
+            hashCode = 397*hashCode + EqualityComparer<T9>.Default.GetHashCode(Item9!);
+            hashCode = 397*hashCode + EqualityComparer<T10>.Default.GetHashCode(Item10!);
             return hashCode;
         }
     }
@@ -3720,6 +4008,50 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
         }
     }
 
+    public override void SetCancellationToken(int index, CancellationToken cancellationToken)
+    {
+        switch (index) {
+        case 0:
+            _item0 = cancellationToken is T0 item0 ? item0 : default!;
+            break;
+        case 1:
+            _item1 = cancellationToken is T1 item1 ? item1 : default!;
+            break;
+        case 2:
+            _item2 = cancellationToken is T2 item2 ? item2 : default!;
+            break;
+        case 3:
+            _item3 = cancellationToken is T3 item3 ? item3 : default!;
+            break;
+        case 4:
+            _item4 = cancellationToken is T4 item4 ? item4 : default!;
+            break;
+        case 5:
+            _item5 = cancellationToken is T5 item5 ? item5 : default!;
+            break;
+        case 6:
+            _item6 = cancellationToken is T6 item6 ? item6 : default!;
+            break;
+        case 7:
+            _item7 = cancellationToken is T7 item7 ? item7 : default!;
+            break;
+        case 8:
+            _item8 = cancellationToken is T8 item8 ? item8 : default!;
+            break;
+        case 9:
+            _item9 = cancellationToken is T9 item9 ? item9 : default!;
+            break;
+        case 10:
+            _item10 = cancellationToken is T10 item10 ? item10 : default!;
+            break;
+        case 11:
+            _item11 = cancellationToken is T11 item11 ? item11 : default!;
+            break;
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
     // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>? other)
@@ -3727,29 +4059,29 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
         if (other == null)
             return false;
 
-        if (Item11 is not CancellationToken && !EqualityComparer<T11>.Default.Equals(Item11, other.Item11))
+        if (!EqualityComparer<T11>.Default.Equals(Item11, other.Item11))
             return false;
-        if (Item10 is not CancellationToken && !EqualityComparer<T10>.Default.Equals(Item10, other.Item10))
+        if (!EqualityComparer<T10>.Default.Equals(Item10, other.Item10))
             return false;
-        if (Item9 is not CancellationToken && !EqualityComparer<T9>.Default.Equals(Item9, other.Item9))
+        if (!EqualityComparer<T9>.Default.Equals(Item9, other.Item9))
             return false;
-        if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8))
+        if (!EqualityComparer<T8>.Default.Equals(Item8, other.Item8))
             return false;
-        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
+        if (!EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
             return false;
-        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
+        if (!EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
             return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
+        if (!EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
             return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+        if (!EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
             return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+        if (!EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
             return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+        if (!EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
             return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+        if (!EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
             return false;
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+        if (!EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -3757,18 +4089,18 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     public override int GetHashCode()
     {
         unchecked {
-            var hashCode = Item0 is CancellationToken ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
-            hashCode = 397*hashCode + (Item1 is CancellationToken ? 0 : EqualityComparer<T1>.Default.GetHashCode(Item1!));
-            hashCode = 397*hashCode + (Item2 is CancellationToken ? 0 : EqualityComparer<T2>.Default.GetHashCode(Item2!));
-            hashCode = 397*hashCode + (Item3 is CancellationToken ? 0 : EqualityComparer<T3>.Default.GetHashCode(Item3!));
-            hashCode = 397*hashCode + (Item4 is CancellationToken ? 0 : EqualityComparer<T4>.Default.GetHashCode(Item4!));
-            hashCode = 397*hashCode + (Item5 is CancellationToken ? 0 : EqualityComparer<T5>.Default.GetHashCode(Item5!));
-            hashCode = 397*hashCode + (Item6 is CancellationToken ? 0 : EqualityComparer<T6>.Default.GetHashCode(Item6!));
-            hashCode = 397*hashCode + (Item7 is CancellationToken ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7!));
-            hashCode = 397*hashCode + (Item8 is CancellationToken ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8!));
-            hashCode = 397*hashCode + (Item9 is CancellationToken ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9!));
-            hashCode = 397*hashCode + (Item10 is CancellationToken ? 0 : EqualityComparer<T10>.Default.GetHashCode(Item10!));
-            hashCode = 397*hashCode + (Item11 is CancellationToken ? 0 : EqualityComparer<T11>.Default.GetHashCode(Item11!));
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
+            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
+            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
+            hashCode = 397*hashCode + EqualityComparer<T4>.Default.GetHashCode(Item4!);
+            hashCode = 397*hashCode + EqualityComparer<T5>.Default.GetHashCode(Item5!);
+            hashCode = 397*hashCode + EqualityComparer<T6>.Default.GetHashCode(Item6!);
+            hashCode = 397*hashCode + EqualityComparer<T7>.Default.GetHashCode(Item7!);
+            hashCode = 397*hashCode + EqualityComparer<T8>.Default.GetHashCode(Item8!);
+            hashCode = 397*hashCode + EqualityComparer<T9>.Default.GetHashCode(Item9!);
+            hashCode = 397*hashCode + EqualityComparer<T10>.Default.GetHashCode(Item10!);
+            hashCode = 397*hashCode + EqualityComparer<T11>.Default.GetHashCode(Item11!);
             return hashCode;
         }
     }

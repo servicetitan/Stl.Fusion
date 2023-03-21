@@ -36,9 +36,9 @@ public sealed class ComputeMethodInput : ComputedInput, IEquatable<ComputeMethod
         if (ctIndex < 0)
             return Invocation.InterceptedUntyped()!;
 
-        Arguments.SetItem(ctIndex, cancellationToken);
+        Arguments.SetCancellationToken(ctIndex, cancellationToken);
         var result = Invocation.InterceptedUntyped()!;
-        Arguments.SetItem(ctIndex, default(CancellationToken));
+        Arguments.SetCancellationToken(ctIndex, default);
         return result;
     }
 
@@ -63,5 +63,5 @@ public sealed class ComputeMethodInput : ComputedInput, IEquatable<ComputeMethod
     public override bool Equals(object? obj)
         => obj is ComputeMethodInput other && Equals(other);
     public override int GetHashCode()
-        => base.GetHashCode();
+        => HashCode;
 }

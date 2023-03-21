@@ -149,7 +149,9 @@ public class UserService : DbServiceBase<TestDbContext>, IUserService
         var dbContext = CreateDbContext();
         await using var _ = dbContext.ConfigureAwait(false);
 
-        var count = await dbContext.Users.AsQueryable().LongCountAsync(cancellationToken).ConfigureAwait(false);
+        var count = await dbContext.Users.AsQueryable()
+            .LongCountAsync(cancellationToken)
+            .ConfigureAwait(false);
         // _log.LogDebug($"Users.Count query: {count}");
         return count;
     }
