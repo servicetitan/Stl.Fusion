@@ -85,11 +85,27 @@ public static class Proxies
 
     public static Type? TryGetProxyType(Type type)
         => Cache.GetOrAdd(type, static type1 => {
+            if (type1.IsConstructedGenericType) {
+                var genericType = TryGetProxyType(type1.GetGenericTypeDefinition());
+                return genericType?.MakeGenericType(type1.GenericTypeArguments);
+            }
+
+            var name = type1.Name;
+            var namePrefix = name;
+            var nameSuffix = "";
+            if (type1.IsGenericTypeDefinition) {
+                var backTrickIndex = name.IndexOf('`');
+                if (backTrickIndex < 0)
+                    return null;
+                namePrefix = name[..backTrickIndex];
+                nameSuffix = name[backTrickIndex..];
+            }
             var proxyTypeName = ZString.Concat(
                 type1.Namespace,
                 ".StlInterceptionProxies.",
-                type1.Name,
-                "Proxy");
+                namePrefix,
+                "Proxy",
+                nameSuffix);
             return type1.Assembly.GetType(proxyTypeName);
         });
 }

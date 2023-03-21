@@ -58,8 +58,10 @@ public class ProxyTypeGenerator
                 baseTypes.Select(t => (BaseTypeSyntax)SimpleBaseType(t)).ToArray())))
             .WithConstraintClauses(TypeDef.ConstraintClauses);
 
-        if (ClassDef != null && !AddClassConstructors())
+        if (ClassDef != null && !AddClassConstructors()) {
+            WriteDebug?.Invoke($"[- Type] No constructors: {typeSymbol}");
             return; // No public constructors
+        }
 
         AddProxyMethods();
         AddProxyInterfaceImplementation(); // Must be the last one

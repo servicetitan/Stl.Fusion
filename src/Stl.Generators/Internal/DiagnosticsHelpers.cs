@@ -61,7 +61,14 @@ public static class DiagnosticsHelpers
 
     private static void WriteDebugImpl(string message)
     {
-        using var f = File.AppendText("C:/Temp/Stl.Generators.txt");
-        f.WriteLine(message);
+        for (var i = 0; i < 5; i++) {
+            try {
+                File.AppendAllText("C:/Temp/Stl.Generators.txt", message + Environment.NewLine, Encoding.UTF8);
+                return;
+            }
+            catch (IOException) {
+                // Intended
+            }
+        }
     }
 }

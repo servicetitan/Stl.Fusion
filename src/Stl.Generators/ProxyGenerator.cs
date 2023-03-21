@@ -7,16 +7,17 @@ using static GenerationHelpers;
 [Generator]
 public class ProxyGenerator : IIncrementalGenerator
 {
-    private ConcurrentDictionary<ITypeSymbol, bool> processedTypes = new(SymbolEqualityComparer.Default);
+    private readonly ConcurrentDictionary<ITypeSymbol, bool> _processedTypes = new(SymbolEqualityComparer.Default);
 
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        processedTypes.Clear();
+        _processedTypes.Clear();
         var items = context.SyntaxProvider
             .CreateSyntaxProvider(CouldBeAugmented, MustAugment)
             .Where(i => i.TypeDef != null)
             .Collect();
         context.RegisterSourceOutput(items, Generate);
+        _processedTypes.Clear();
     }
 
     private bool CouldBeAugmented(SyntaxNode node, CancellationToken cancellationToken)
@@ -45,12 +46,16 @@ public class ProxyGenerator : IIncrementalGenerator
         // It might be a partial class w/o generic constraint clauses (even though the type has ones),
         // so we might need to "wait" for the one with generic constraint clauses
         var hasConstraints = typeSymbol.TypeParameters.Any(p => p.HasConstraints());
-        if (hasConstraints && !typeDef.ConstraintClauses.Any())
+        if (hasConstraints && !typeDef.ConstraintClauses.Any()) {
+            WriteDebug?.Invoke($"[- Type] No constraints: {typeSymbol}");
             return default;
+        }
 
         // There might be a few parts of the same class
-        if (!processedTypes.TryAdd(typeSymbol, true))
+        if (typeDef.Modifiers.Any(SyntaxKind.PartialKeyword) && !_processedTypes.TryAdd(typeSymbol, true)) {
+            WriteDebug?.Invoke($"[- Type] Already processed: {typeSymbol}");
             return default;
+        }
 
         return (semanticModel, typeDef);
     }

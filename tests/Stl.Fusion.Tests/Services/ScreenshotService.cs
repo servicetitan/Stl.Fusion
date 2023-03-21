@@ -14,7 +14,7 @@ public record Screenshot
     [DataMember] public Base64Encoded Image { get; init; } = "";
 }
 
-public interface IScreenshotService
+public interface IScreenshotService : IComputeService
 {
     [ComputeMethod(MinCacheDuration = 0.3)]
     Task<Screenshot> GetScreenshot(int width, CancellationToken cancellationToken = default);

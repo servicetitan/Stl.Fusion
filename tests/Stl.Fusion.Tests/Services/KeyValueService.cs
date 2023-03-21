@@ -3,7 +3,7 @@ using Stl.Reflection;
 
 namespace Stl.Fusion.Tests.Services;
 
-public interface IKeyValueService<TValue>
+public interface IKeyValueService<TValue> : IComputeService
 {
     [DataContract]
     public record SetCommand(
