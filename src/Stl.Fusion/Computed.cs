@@ -35,7 +35,7 @@ public interface IAsyncComputed<T> : IAsyncComputed, IResult<T>
     new ValueTask<ResultBox<T>?> GetOutput(CancellationToken cancellationToken = default);
 }
 
-public abstract class Computed<T> : IComputed, IComputedImpl, IResult<T>
+public abstract class Computed<T> : IComputedImpl, IResult<T>
 {
     private readonly ComputedOptions _options;
     private volatile int _state;
@@ -218,8 +218,10 @@ public abstract class Computed<T> : IComputed, IComputedImpl, IResult<T>
             return; // We shouldn't register miss here, since it's going to be counted as hit anyway
 
         var options = Options;
-        if (options.KeepAliveTime > TimeSpan.Zero)
-            Timeouts.KeepAlive.AddOrUpdateToLater(this, Timeouts.Clock.Now + options.KeepAliveTime);
+        if (options.MinCacheDuration > TimeSpan.Zero) {
+            var keepAliveUntil = Timeouts.Clock.Now + options.MinCacheDuration;
+            Timeouts.KeepAlive.AddOrUpdateToLater(this, keepAliveUntil);
+        }
 
         ComputedRegistry.Instance.ReportAccess(this, isNew);
     }
@@ -227,7 +229,7 @@ public abstract class Computed<T> : IComputed, IComputedImpl, IResult<T>
     public virtual void CancelTimeouts()
     {
         var options = Options;
-        if (options.KeepAliveTime > TimeSpan.Zero)
+        if (options.MinCacheDuration > TimeSpan.Zero)
             Timeouts.KeepAlive.Remove(this);
     }
 
