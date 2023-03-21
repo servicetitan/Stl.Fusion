@@ -26,7 +26,7 @@ public sealed record RemoveTodoCommand(Session Session, string Id) : ISessionCom
     public RemoveTodoCommand() : this(Session.Null, "") { }
 }
 
-public interface ITodoService
+public interface ITodoService : IComputeService
 {
     // Commands
     [CommandHandler]
