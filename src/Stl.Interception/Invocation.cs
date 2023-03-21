@@ -5,7 +5,6 @@ namespace Stl.Interception;
 
 public readonly record struct Invocation(
     object Proxy,
-    object? ProxyTarget,
     MethodInfo Method,
     ArgumentList Arguments,
     Delegate InterceptedDelegate)
@@ -15,6 +14,8 @@ public readonly record struct Invocation(
         .Single(m => StringComparer.Ordinal.Equals(m.Name, nameof(InterceptedAsObject)));
     private static readonly ConcurrentDictionary<Type, Func<Invocation, object?>> InterceptedUntypedCache 
         = new(HardwareInfo.GetProcessorCountPo2Factor(4), 256);
+
+    public object? ProxyTarget => (Proxy as InterfaceProxy)?.ProxyTargetUntyped;
 
     public void Intercepted()
     {

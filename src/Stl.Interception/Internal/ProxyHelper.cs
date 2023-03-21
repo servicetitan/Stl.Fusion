@@ -1,4 +1,4 @@
-namespace Stl.Interception;
+namespace Stl.Interception.Internal;
 
 public static class ProxyHelper
 {

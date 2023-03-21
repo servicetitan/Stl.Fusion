@@ -1,7 +1,7 @@
 namespace Stl.Tests.CommandR.Services;
 
 [RegisterCommandService]
-public class MathService : ServiceBase
+public class MathService : ServiceBase, ICommandService
 {
     private readonly object _lock = new();
 

@@ -1,5 +1,4 @@
 using System.Globalization;
-using Castle.DynamicProxy;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using RestEase;
@@ -170,12 +169,8 @@ public readonly struct FusionRestEaseClientBuilder
             var client = clientAccessor.Client;
 
             // 4. Create Replica Client
-            var proxyGenerator = c.GetRequiredService<ReplicaServiceProxyGenerator>();
-            var proxyType = proxyGenerator.GetProxyType(serviceType);
             var interceptor = c.GetRequiredService<ReplicaServiceInterceptor>();
-            var interceptors = new IInterceptor[] { interceptor };
-            client = Activator.CreateInstance(proxyType, interceptors, client)!;
-            return client;
+            return c.ActivateProxy(serviceType, interceptor, clientType);
         }
 
         Services.AddSingleton(clientAccessorType, ClientAccessorFactory);

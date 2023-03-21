@@ -7,9 +7,6 @@ namespace Stl.Fusion.Interception;
 public record ComputeMethodDef : MethodDef
 {
     public ComputedOptions ComputedOptions { get; init; } = ComputedOptions.Default;
-    public ArgumentHandler InvocationTargetHandler { get; init; } = null!;
-    public ArgumentHandler[] ArgumentHandlers { get; init; } = null!;
-    public (ArgumentHandler Handler, int Index)[]? PreprocessingArgumentHandlers { get; init; }
     public int CancellationTokenArgumentIndex { get; init; } = -1;
 
     public ComputeMethodDef(
@@ -26,25 +23,12 @@ public record ComputeMethodDef : MethodDef
             return;
 
         ComputedOptions = computedOptions;
-        var invocationTargetType = methodInfo.ReflectedType;
         var parameters = methodInfo.GetParameters();
-        var argumentHandlerProvider = interceptor.ArgumentHandlerProvider;
-        InvocationTargetHandler = argumentHandlerProvider.GetInvocationTargetHandler(methodInfo, invocationTargetType!);
-        ArgumentHandlers = new ArgumentHandler[parameters.Length];
-        var preprocessingArgumentHandlers = new List<(ArgumentHandler Handler, int Index)>();
         for (var i = 0; i < parameters.Length; i++) {
             var p = parameters[i];
-            var argumentHandler = argumentHandlerProvider.GetArgumentHandler(methodInfo, p);
-            ArgumentHandlers[i] = argumentHandler;
-            if (argumentHandler.PreprocessFunc != null)
-                preprocessingArgumentHandlers.Add((argumentHandler, i));
-            var parameterType = p.ParameterType;
-            if (typeof(CancellationToken).IsAssignableFrom(parameterType))
+            if (typeof(CancellationToken).IsAssignableFrom(p.ParameterType))
                 CancellationTokenArgumentIndex = i;
         }
-        if (preprocessingArgumentHandlers.Count != 0)
-            PreprocessingArgumentHandlers = preprocessingArgumentHandlers.ToArray();
-
         IsValid = true;
     }
 

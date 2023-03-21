@@ -8,7 +8,7 @@ public sealed class ComputeMethodInput : ComputedInput, IEquatable<ComputeMethod
     public readonly ComputeMethodDef MethodDef;
     public readonly Invocation Invocation;
     // Shortcuts
-    public object Target => Invocation.Proxy;
+    public object Service => Invocation.Proxy;
     public ArgumentList Arguments => Invocation.Arguments;
 
     public ComputeMethodInput(IFunction function, ComputeMethodDef methodDef, Invocation invocation)
@@ -17,18 +17,10 @@ public sealed class ComputeMethodInput : ComputedInput, IEquatable<ComputeMethod
         Invocation = invocation;
 
         var arguments = invocation.Arguments;
-        var argumentHandlers = methodDef.ArgumentHandlers;
-        var preprocessingArgumentHandlers = methodDef.PreprocessingArgumentHandlers;
-        if (preprocessingArgumentHandlers != null) {
-            foreach (var (handler, index) in preprocessingArgumentHandlers)
-                handler.PreprocessFunc!.Invoke(methodDef, invocation, index);
-        }
-
-        var hashCode = System.HashCode.Combine(
-            HashCode,
-            methodDef.InvocationTargetHandler.GetHashCodeFunc(invocation.InvocationTarget));
-        for (var i = 0; i < arguments.Length; i++)
-            hashCode ^= argumentHandlers[i].GetHashCodeFunc(arguments[i]);
+        var hashCode = unchecked(
+            arguments.GetHashCode(methodDef.CancellationTokenArgumentIndex) +
+            367*invocation.Proxy.GetHashCode() +
+            7817*HashCode);
         Initialize(function, hashCode);
     }
 
@@ -41,16 +33,13 @@ public sealed class ComputeMethodInput : ComputedInput, IEquatable<ComputeMethod
         // CancellationToken is set to the correct one and CallOptions are reset.
         // In addition, it processes CallOptions.Capture, though note that
         // it's also processed in InterceptedFunction.TryGetExisting.
-
-        var methodDef = MethodDef;
-        var arguments = Arguments;
-        var ctIndex = methodDef.CancellationTokenArgumentIndex;
+        var ctIndex = MethodDef.CancellationTokenArgumentIndex;
         if (ctIndex < 0)
             return Invocation.InterceptedUntyped()!;
 
-        arguments.SetItem(ctIndex, cancellationToken);
+        Arguments.SetItem(ctIndex, cancellationToken);
         var result = Invocation.InterceptedUntyped()!;
-        arguments.SetItem(ctIndex, default(CancellationToken));
+        Arguments.SetItem(ctIndex, default(CancellationToken));
         return result;
     }
 
@@ -68,18 +57,7 @@ public sealed class ComputeMethodInput : ComputedInput, IEquatable<ComputeMethod
         // GetType() & other.GetType() are the same here, because
         // Method & other.Method are the same
 
-        var arguments = Arguments;
-        var otherArguments = other.Arguments;
-        var argumentHandlers = methodDef.ArgumentHandlers;
-        // Backward direction is intended: tail arguments
-        // are more likely to differ.
-        for (var i = arguments.Length - 1; i >= 0; i--) {
-            if (!argumentHandlers[i].EqualsFunc(arguments[i], otherArguments[i]))
-                return false;
-        }
-        if (!methodDef.InvocationTargetHandler.EqualsFunc(Target, other.Target))
-            return false;
-        return true;
+        return Arguments.Equals(other.Arguments, methodDef.CancellationTokenArgumentIndex);
     }
     public override bool Equals(ComputedInput? obj)
         => obj is ComputeMethodInput other && Equals(other);

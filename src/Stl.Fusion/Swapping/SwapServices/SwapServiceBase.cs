@@ -37,14 +37,9 @@ public abstract class SwapServiceBase : ISwapService
     protected virtual string SerializeKey(ComputeMethodInput input, LTag version)
     {
         using var f = ListFormat.Default.CreateFormatter();
-        var methodDef = input.MethodDef;
-        f.Append(methodDef.InvocationTargetHandler.ToStringFunc(input.Target));
+        f.Append(input.Service.ToString()!);
+        f.Append(input.Arguments.ToString());
         f.Append(version.ToString());
-        var arguments = input.Arguments;
-        for (var i = 0; i < methodDef.ArgumentHandlers.Length; i++) {
-            var handler = methodDef.ArgumentHandlers[i];
-            f.Append(handler.ToStringFunc(arguments[i]));
-        }
         f.AppendEnd();
         return f.Output;
     }

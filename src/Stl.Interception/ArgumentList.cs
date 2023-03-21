@@ -1,6 +1,8 @@
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable ArrangeConstructorOrDestructorBody
+using Cysharp.Text;
+
 namespace Stl.Interception;
 
 [DataContract]
@@ -51,8 +53,8 @@ public record ArgumentList
     public static ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> New<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8, T9 item9, T10 item10, T11 item11)
         => new (item0, item1, item2, item3, item4, item5, item6, item7, item8, item9, item10, item11);
 
-    public virtual object?[] ToArray()
-        => Array.Empty<object?>();
+    public override string ToString() => "()";
+    public virtual object?[] ToArray() => Array.Empty<object?>();
 
     public virtual T GetItem<T>(int index)
         => throw new ArgumentOutOfRangeException(nameof(index));
@@ -87,7 +89,16 @@ public sealed record ArgumentList<T0>(
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 1;
 
-    // ToArray
+    // ToString & ToArray
+
+    public override string ToString()
+    {
+        using var sb = ZString.CreateStringBuilder();
+        sb.Append('(');
+        sb.Append(Item0);
+        sb.Append(')');
+        return sb.ToString();
+    }
 
     public override object?[] ToArray()
         => new object?[] {
@@ -220,7 +231,18 @@ public sealed record ArgumentList<T0, T1>(
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 2;
 
-    // ToArray
+    // ToString & ToArray
+
+    public override string ToString()
+    {
+        using var sb = ZString.CreateStringBuilder();
+        sb.Append('(');
+        sb.Append(Item0);
+        sb.Append(", ");
+        sb.Append(Item1);
+        sb.Append(')');
+        return sb.ToString();
+    }
 
     public override object?[] ToArray()
         => new object?[] {
@@ -285,9 +307,9 @@ public sealed record ArgumentList<T0, T1>(
         if (other == null)
             return false;
 
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
-            return false;
         if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+            return false;
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -306,9 +328,9 @@ public sealed record ArgumentList<T0, T1>(
         if (other is not ArgumentList<T0, T1> vOther)
             return false;
 
-        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
         if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
         return true;
     }
@@ -329,18 +351,18 @@ public sealed record ArgumentList<T0, T1>(
         if (other is not ArgumentList<T0, T1> vOther)
             return false;
 
-        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, vOther.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-
         if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
             if (!func1.Invoke(Item1, vOther.Item1))
                 return false;
         }
         else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
+                return false;
+        }
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
 
         return true;
@@ -385,7 +407,20 @@ public sealed record ArgumentList<T0, T1, T2>(
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 3;
 
-    // ToArray
+    // ToString & ToArray
+
+    public override string ToString()
+    {
+        using var sb = ZString.CreateStringBuilder();
+        sb.Append('(');
+        sb.Append(Item0);
+        sb.Append(", ");
+        sb.Append(Item1);
+        sb.Append(", ");
+        sb.Append(Item2);
+        sb.Append(')');
+        return sb.ToString();
+    }
 
     public override object?[] ToArray()
         => new object?[] {
@@ -461,11 +496,11 @@ public sealed record ArgumentList<T0, T1, T2>(
         if (other == null)
             return false;
 
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
+        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
             return false;
         if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
             return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -485,11 +520,11 @@ public sealed record ArgumentList<T0, T1, T2>(
         if (other is not ArgumentList<T0, T1, T2> vOther)
             return false;
 
-        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
+        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
             return false;
         if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
             return false;
-        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
         return true;
     }
@@ -511,11 +546,11 @@ public sealed record ArgumentList<T0, T1, T2>(
         if (other is not ArgumentList<T0, T1, T2> vOther)
             return false;
 
-        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, vOther.Item0))
+        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
+            if (!func2.Invoke(Item2, vOther.Item2))
                 return false;
         }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
+        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
             return false;
 
         if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
@@ -525,11 +560,11 @@ public sealed record ArgumentList<T0, T1, T2>(
         else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
             return false;
 
-        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, vOther.Item2))
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
                 return false;
         }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
 
         return true;
@@ -582,7 +617,22 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 4;
 
-    // ToArray
+    // ToString & ToArray
+
+    public override string ToString()
+    {
+        using var sb = ZString.CreateStringBuilder();
+        sb.Append('(');
+        sb.Append(Item0);
+        sb.Append(", ");
+        sb.Append(Item1);
+        sb.Append(", ");
+        sb.Append(Item2);
+        sb.Append(", ");
+        sb.Append(Item3);
+        sb.Append(')');
+        return sb.ToString();
+    }
 
     public override object?[] ToArray()
         => new object?[] {
@@ -669,13 +719,13 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
         if (other == null)
             return false;
 
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
-            return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
             return false;
         if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
             return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+            return false;
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -696,13 +746,13 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
         if (other is not ArgumentList<T0, T1, T2, T3> vOther)
             return false;
 
-        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
             return false;
         if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
             return false;
-        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
         return true;
     }
@@ -725,18 +775,11 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
         if (other is not ArgumentList<T0, T1, T2, T3> vOther)
             return false;
 
-        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, vOther.Item0))
+        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
+            if (!func3.Invoke(Item3, vOther.Item3))
                 return false;
         }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-
-        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, vOther.Item1))
-                return false;
-        }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
             return false;
 
         if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
@@ -746,11 +789,18 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
         else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
             return false;
 
-        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, vOther.Item3))
+        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
+            if (!func1.Invoke(Item1, vOther.Item1))
                 return false;
         }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
+                return false;
+        }
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
 
         return true;
@@ -811,7 +861,24 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 5;
 
-    // ToArray
+    // ToString & ToArray
+
+    public override string ToString()
+    {
+        using var sb = ZString.CreateStringBuilder();
+        sb.Append('(');
+        sb.Append(Item0);
+        sb.Append(", ");
+        sb.Append(Item1);
+        sb.Append(", ");
+        sb.Append(Item2);
+        sb.Append(", ");
+        sb.Append(Item3);
+        sb.Append(", ");
+        sb.Append(Item4);
+        sb.Append(')');
+        return sb.ToString();
+    }
 
     public override object?[] ToArray()
         => new object?[] {
@@ -909,15 +976,15 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
         if (other == null)
             return false;
 
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
-            return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
-            return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
             return false;
         if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
             return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+            return false;
+        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+            return false;
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -939,15 +1006,15 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
         if (other is not ArgumentList<T0, T1, T2, T3, T4> vOther)
             return false;
 
-        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+        if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
             return false;
         if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
             return false;
-        if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
         return true;
     }
@@ -971,25 +1038,11 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
         if (other is not ArgumentList<T0, T1, T2, T3, T4> vOther)
             return false;
 
-        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, vOther.Item0))
+        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
+            if (!func4.Invoke(Item4, vOther.Item4))
                 return false;
         }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-
-        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, vOther.Item1))
-                return false;
-        }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-
-        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, vOther.Item2))
-                return false;
-        }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
             return false;
 
         if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
@@ -999,11 +1052,25 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
         else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
             return false;
 
-        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, vOther.Item4))
+        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
+            if (!func2.Invoke(Item2, vOther.Item2))
                 return false;
         }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+
+        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
+            if (!func1.Invoke(Item1, vOther.Item1))
+                return false;
+        }
+        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
+                return false;
+        }
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
 
         return true;
@@ -1072,7 +1139,26 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 6;
 
-    // ToArray
+    // ToString & ToArray
+
+    public override string ToString()
+    {
+        using var sb = ZString.CreateStringBuilder();
+        sb.Append('(');
+        sb.Append(Item0);
+        sb.Append(", ");
+        sb.Append(Item1);
+        sb.Append(", ");
+        sb.Append(Item2);
+        sb.Append(", ");
+        sb.Append(Item3);
+        sb.Append(", ");
+        sb.Append(Item4);
+        sb.Append(", ");
+        sb.Append(Item5);
+        sb.Append(')');
+        return sb.ToString();
+    }
 
     public override object?[] ToArray()
         => new object?[] {
@@ -1181,17 +1267,17 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
         if (other == null)
             return false;
 
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
-            return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
-            return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
-            return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
             return false;
         if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
             return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
+        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+            return false;
+        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+            return false;
+        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+            return false;
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -1214,17 +1300,17 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
         if (other is not ArgumentList<T0, T1, T2, T3, T4, T5> vOther)
             return false;
 
-        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
-            return false;
-        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+        if (ignoredIndex != 5 && !EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
             return false;
         if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
             return false;
-        if (ignoredIndex != 5 && !EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
+        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
         return true;
     }
@@ -1249,32 +1335,11 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
         if (other is not ArgumentList<T0, T1, T2, T3, T4, T5> vOther)
             return false;
 
-        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, vOther.Item0))
+        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
+            if (!func5.Invoke(Item5, vOther.Item5))
                 return false;
         }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-
-        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, vOther.Item1))
-                return false;
-        }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-
-        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, vOther.Item2))
-                return false;
-        }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
-            return false;
-
-        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, vOther.Item3))
-                return false;
-        }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
             return false;
 
         if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
@@ -1284,11 +1349,32 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
         else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
             return false;
 
-        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
-            if (!func5.Invoke(Item5, vOther.Item5))
+        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
+            if (!func3.Invoke(Item3, vOther.Item3))
                 return false;
         }
-        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
+        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+
+        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
+            if (!func2.Invoke(Item2, vOther.Item2))
+                return false;
+        }
+        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+
+        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
+            if (!func1.Invoke(Item1, vOther.Item1))
+                return false;
+        }
+        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
+                return false;
+        }
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
 
         return true;
@@ -1365,7 +1451,28 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 7;
 
-    // ToArray
+    // ToString & ToArray
+
+    public override string ToString()
+    {
+        using var sb = ZString.CreateStringBuilder();
+        sb.Append('(');
+        sb.Append(Item0);
+        sb.Append(", ");
+        sb.Append(Item1);
+        sb.Append(", ");
+        sb.Append(Item2);
+        sb.Append(", ");
+        sb.Append(Item3);
+        sb.Append(", ");
+        sb.Append(Item4);
+        sb.Append(", ");
+        sb.Append(Item5);
+        sb.Append(", ");
+        sb.Append(Item6);
+        sb.Append(')');
+        return sb.ToString();
+    }
 
     public override object?[] ToArray()
         => new object?[] {
@@ -1485,19 +1592,19 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
         if (other == null)
             return false;
 
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
-            return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
-            return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
-            return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
-            return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
             return false;
         if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
             return false;
-        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
+        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+            return false;
+        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+            return false;
+        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+            return false;
+        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+            return false;
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -1521,19 +1628,19 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
         if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6> vOther)
             return false;
 
-        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
-            return false;
-        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
-            return false;
-        if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+        if (ignoredIndex != 6 && !EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
             return false;
         if (ignoredIndex != 5 && !EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
             return false;
-        if (ignoredIndex != 6 && !EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
+        if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+            return false;
+        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
         return true;
     }
@@ -1559,39 +1666,11 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
         if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6> vOther)
             return false;
 
-        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, vOther.Item0))
+        if (equalsDelegates[6] is Func<T6, T6, bool> func6) {
+            if (!func6.Invoke(Item6, vOther.Item6))
                 return false;
         }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-
-        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, vOther.Item1))
-                return false;
-        }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-
-        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, vOther.Item2))
-                return false;
-        }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
-            return false;
-
-        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, vOther.Item3))
-                return false;
-        }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
-            return false;
-
-        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, vOther.Item4))
-                return false;
-        }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+        else if (!EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
             return false;
 
         if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
@@ -1601,11 +1680,39 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
         else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
             return false;
 
-        if (equalsDelegates[6] is Func<T6, T6, bool> func6) {
-            if (!func6.Invoke(Item6, vOther.Item6))
+        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
+            if (!func4.Invoke(Item4, vOther.Item4))
                 return false;
         }
-        else if (!EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
+        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+            return false;
+
+        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
+            if (!func3.Invoke(Item3, vOther.Item3))
+                return false;
+        }
+        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+
+        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
+            if (!func2.Invoke(Item2, vOther.Item2))
+                return false;
+        }
+        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+
+        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
+            if (!func1.Invoke(Item1, vOther.Item1))
+                return false;
+        }
+        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
+                return false;
+        }
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
 
         return true;
@@ -1690,7 +1797,30 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 8;
 
-    // ToArray
+    // ToString & ToArray
+
+    public override string ToString()
+    {
+        using var sb = ZString.CreateStringBuilder();
+        sb.Append('(');
+        sb.Append(Item0);
+        sb.Append(", ");
+        sb.Append(Item1);
+        sb.Append(", ");
+        sb.Append(Item2);
+        sb.Append(", ");
+        sb.Append(Item3);
+        sb.Append(", ");
+        sb.Append(Item4);
+        sb.Append(", ");
+        sb.Append(Item5);
+        sb.Append(", ");
+        sb.Append(Item6);
+        sb.Append(", ");
+        sb.Append(Item7);
+        sb.Append(')');
+        return sb.ToString();
+    }
 
     public override object?[] ToArray()
         => new object?[] {
@@ -1821,21 +1951,21 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
         if (other == null)
             return false;
 
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
-            return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
-            return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
-            return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
-            return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
-            return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
+        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
             return false;
         if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
             return false;
-        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
+        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
+            return false;
+        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+            return false;
+        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+            return false;
+        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+            return false;
+        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+            return false;
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -1860,21 +1990,21 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
         if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7> vOther)
             return false;
 
-        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
-            return false;
-        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
-            return false;
-        if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
-            return false;
-        if (ignoredIndex != 5 && !EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
+        if (ignoredIndex != 7 && !EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
             return false;
         if (ignoredIndex != 6 && !EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
             return false;
-        if (ignoredIndex != 7 && !EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
+        if (ignoredIndex != 5 && !EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
+            return false;
+        if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+            return false;
+        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
         return true;
     }
@@ -1901,46 +2031,11 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
         if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7> vOther)
             return false;
 
-        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, vOther.Item0))
+        if (equalsDelegates[7] is Func<T7, T7, bool> func7) {
+            if (!func7.Invoke(Item7, vOther.Item7))
                 return false;
         }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-
-        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, vOther.Item1))
-                return false;
-        }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-
-        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, vOther.Item2))
-                return false;
-        }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
-            return false;
-
-        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, vOther.Item3))
-                return false;
-        }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
-            return false;
-
-        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, vOther.Item4))
-                return false;
-        }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
-            return false;
-
-        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
-            if (!func5.Invoke(Item5, vOther.Item5))
-                return false;
-        }
-        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
+        else if (!EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
             return false;
 
         if (equalsDelegates[6] is Func<T6, T6, bool> func6) {
@@ -1950,11 +2045,46 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
         else if (!EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
             return false;
 
-        if (equalsDelegates[7] is Func<T7, T7, bool> func7) {
-            if (!func7.Invoke(Item7, vOther.Item7))
+        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
+            if (!func5.Invoke(Item5, vOther.Item5))
                 return false;
         }
-        else if (!EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
+        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
+            return false;
+
+        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
+            if (!func4.Invoke(Item4, vOther.Item4))
+                return false;
+        }
+        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+            return false;
+
+        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
+            if (!func3.Invoke(Item3, vOther.Item3))
+                return false;
+        }
+        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+
+        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
+            if (!func2.Invoke(Item2, vOther.Item2))
+                return false;
+        }
+        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+
+        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
+            if (!func1.Invoke(Item1, vOther.Item1))
+                return false;
+        }
+        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
+                return false;
+        }
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
 
         return true;
@@ -2047,7 +2177,32 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 9;
 
-    // ToArray
+    // ToString & ToArray
+
+    public override string ToString()
+    {
+        using var sb = ZString.CreateStringBuilder();
+        sb.Append('(');
+        sb.Append(Item0);
+        sb.Append(", ");
+        sb.Append(Item1);
+        sb.Append(", ");
+        sb.Append(Item2);
+        sb.Append(", ");
+        sb.Append(Item3);
+        sb.Append(", ");
+        sb.Append(Item4);
+        sb.Append(", ");
+        sb.Append(Item5);
+        sb.Append(", ");
+        sb.Append(Item6);
+        sb.Append(", ");
+        sb.Append(Item7);
+        sb.Append(", ");
+        sb.Append(Item8);
+        sb.Append(')');
+        return sb.ToString();
+    }
 
     public override object?[] ToArray()
         => new object?[] {
@@ -2189,23 +2344,23 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
         if (other == null)
             return false;
 
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
-            return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
-            return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
-            return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
-            return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
-            return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
-            return false;
-        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
+        if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8))
             return false;
         if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
             return false;
-        if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8))
+        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
+            return false;
+        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
+            return false;
+        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+            return false;
+        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+            return false;
+        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+            return false;
+        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+            return false;
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -2231,23 +2386,23 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
         if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8> vOther)
             return false;
 
-        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
-            return false;
-        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
-            return false;
-        if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
-            return false;
-        if (ignoredIndex != 5 && !EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
-            return false;
-        if (ignoredIndex != 6 && !EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
+        if (ignoredIndex != 8 && !EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
             return false;
         if (ignoredIndex != 7 && !EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
             return false;
-        if (ignoredIndex != 8 && !EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
+        if (ignoredIndex != 6 && !EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
+            return false;
+        if (ignoredIndex != 5 && !EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
+            return false;
+        if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+            return false;
+        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
         return true;
     }
@@ -2275,53 +2430,11 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
         if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8> vOther)
             return false;
 
-        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, vOther.Item0))
+        if (equalsDelegates[8] is Func<T8, T8, bool> func8) {
+            if (!func8.Invoke(Item8, vOther.Item8))
                 return false;
         }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-
-        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, vOther.Item1))
-                return false;
-        }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-
-        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, vOther.Item2))
-                return false;
-        }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
-            return false;
-
-        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, vOther.Item3))
-                return false;
-        }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
-            return false;
-
-        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, vOther.Item4))
-                return false;
-        }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
-            return false;
-
-        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
-            if (!func5.Invoke(Item5, vOther.Item5))
-                return false;
-        }
-        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
-            return false;
-
-        if (equalsDelegates[6] is Func<T6, T6, bool> func6) {
-            if (!func6.Invoke(Item6, vOther.Item6))
-                return false;
-        }
-        else if (!EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
+        else if (!EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
             return false;
 
         if (equalsDelegates[7] is Func<T7, T7, bool> func7) {
@@ -2331,11 +2444,53 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
         else if (!EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
             return false;
 
-        if (equalsDelegates[8] is Func<T8, T8, bool> func8) {
-            if (!func8.Invoke(Item8, vOther.Item8))
+        if (equalsDelegates[6] is Func<T6, T6, bool> func6) {
+            if (!func6.Invoke(Item6, vOther.Item6))
                 return false;
         }
-        else if (!EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
+        else if (!EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
+            return false;
+
+        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
+            if (!func5.Invoke(Item5, vOther.Item5))
+                return false;
+        }
+        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
+            return false;
+
+        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
+            if (!func4.Invoke(Item4, vOther.Item4))
+                return false;
+        }
+        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+            return false;
+
+        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
+            if (!func3.Invoke(Item3, vOther.Item3))
+                return false;
+        }
+        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+
+        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
+            if (!func2.Invoke(Item2, vOther.Item2))
+                return false;
+        }
+        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+
+        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
+            if (!func1.Invoke(Item1, vOther.Item1))
+                return false;
+        }
+        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
+                return false;
+        }
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
 
         return true;
@@ -2436,7 +2591,34 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 10;
 
-    // ToArray
+    // ToString & ToArray
+
+    public override string ToString()
+    {
+        using var sb = ZString.CreateStringBuilder();
+        sb.Append('(');
+        sb.Append(Item0);
+        sb.Append(", ");
+        sb.Append(Item1);
+        sb.Append(", ");
+        sb.Append(Item2);
+        sb.Append(", ");
+        sb.Append(Item3);
+        sb.Append(", ");
+        sb.Append(Item4);
+        sb.Append(", ");
+        sb.Append(Item5);
+        sb.Append(", ");
+        sb.Append(Item6);
+        sb.Append(", ");
+        sb.Append(Item7);
+        sb.Append(", ");
+        sb.Append(Item8);
+        sb.Append(", ");
+        sb.Append(Item9);
+        sb.Append(')');
+        return sb.ToString();
+    }
 
     public override object?[] ToArray()
         => new object?[] {
@@ -2589,25 +2771,25 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
         if (other == null)
             return false;
 
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
-            return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
-            return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
-            return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
-            return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
-            return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
-            return false;
-        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
-            return false;
-        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
+        if (Item9 is not CancellationToken && !EqualityComparer<T9>.Default.Equals(Item9, other.Item9))
             return false;
         if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8))
             return false;
-        if (Item9 is not CancellationToken && !EqualityComparer<T9>.Default.Equals(Item9, other.Item9))
+        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
+            return false;
+        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
+            return false;
+        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
+            return false;
+        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+            return false;
+        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+            return false;
+        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+            return false;
+        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+            return false;
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -2634,25 +2816,25 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
         if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> vOther)
             return false;
 
-        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
-            return false;
-        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
-            return false;
-        if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
-            return false;
-        if (ignoredIndex != 5 && !EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
-            return false;
-        if (ignoredIndex != 6 && !EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
-            return false;
-        if (ignoredIndex != 7 && !EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
+        if (ignoredIndex != 9 && !EqualityComparer<T9>.Default.Equals(Item9, vOther.Item9))
             return false;
         if (ignoredIndex != 8 && !EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
             return false;
-        if (ignoredIndex != 9 && !EqualityComparer<T9>.Default.Equals(Item9, vOther.Item9))
+        if (ignoredIndex != 7 && !EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
+            return false;
+        if (ignoredIndex != 6 && !EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
+            return false;
+        if (ignoredIndex != 5 && !EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
+            return false;
+        if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+            return false;
+        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
         return true;
     }
@@ -2681,60 +2863,11 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
         if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> vOther)
             return false;
 
-        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, vOther.Item0))
+        if (equalsDelegates[9] is Func<T9, T9, bool> func9) {
+            if (!func9.Invoke(Item9, vOther.Item9))
                 return false;
         }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-
-        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, vOther.Item1))
-                return false;
-        }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-
-        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, vOther.Item2))
-                return false;
-        }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
-            return false;
-
-        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, vOther.Item3))
-                return false;
-        }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
-            return false;
-
-        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, vOther.Item4))
-                return false;
-        }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
-            return false;
-
-        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
-            if (!func5.Invoke(Item5, vOther.Item5))
-                return false;
-        }
-        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
-            return false;
-
-        if (equalsDelegates[6] is Func<T6, T6, bool> func6) {
-            if (!func6.Invoke(Item6, vOther.Item6))
-                return false;
-        }
-        else if (!EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
-            return false;
-
-        if (equalsDelegates[7] is Func<T7, T7, bool> func7) {
-            if (!func7.Invoke(Item7, vOther.Item7))
-                return false;
-        }
-        else if (!EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
+        else if (!EqualityComparer<T9>.Default.Equals(Item9, vOther.Item9))
             return false;
 
         if (equalsDelegates[8] is Func<T8, T8, bool> func8) {
@@ -2744,11 +2877,60 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
         else if (!EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
             return false;
 
-        if (equalsDelegates[9] is Func<T9, T9, bool> func9) {
-            if (!func9.Invoke(Item9, vOther.Item9))
+        if (equalsDelegates[7] is Func<T7, T7, bool> func7) {
+            if (!func7.Invoke(Item7, vOther.Item7))
                 return false;
         }
-        else if (!EqualityComparer<T9>.Default.Equals(Item9, vOther.Item9))
+        else if (!EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
+            return false;
+
+        if (equalsDelegates[6] is Func<T6, T6, bool> func6) {
+            if (!func6.Invoke(Item6, vOther.Item6))
+                return false;
+        }
+        else if (!EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
+            return false;
+
+        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
+            if (!func5.Invoke(Item5, vOther.Item5))
+                return false;
+        }
+        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
+            return false;
+
+        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
+            if (!func4.Invoke(Item4, vOther.Item4))
+                return false;
+        }
+        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+            return false;
+
+        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
+            if (!func3.Invoke(Item3, vOther.Item3))
+                return false;
+        }
+        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+
+        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
+            if (!func2.Invoke(Item2, vOther.Item2))
+                return false;
+        }
+        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+
+        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
+            if (!func1.Invoke(Item1, vOther.Item1))
+                return false;
+        }
+        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
+                return false;
+        }
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
 
         return true;
@@ -2857,7 +3039,36 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 11;
 
-    // ToArray
+    // ToString & ToArray
+
+    public override string ToString()
+    {
+        using var sb = ZString.CreateStringBuilder();
+        sb.Append('(');
+        sb.Append(Item0);
+        sb.Append(", ");
+        sb.Append(Item1);
+        sb.Append(", ");
+        sb.Append(Item2);
+        sb.Append(", ");
+        sb.Append(Item3);
+        sb.Append(", ");
+        sb.Append(Item4);
+        sb.Append(", ");
+        sb.Append(Item5);
+        sb.Append(", ");
+        sb.Append(Item6);
+        sb.Append(", ");
+        sb.Append(Item7);
+        sb.Append(", ");
+        sb.Append(Item8);
+        sb.Append(", ");
+        sb.Append(Item9);
+        sb.Append(", ");
+        sb.Append(Item10);
+        sb.Append(')');
+        return sb.ToString();
+    }
 
     public override object?[] ToArray()
         => new object?[] {
@@ -3021,27 +3232,27 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
         if (other == null)
             return false;
 
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
-            return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
-            return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
-            return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
-            return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
-            return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
-            return false;
-        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
-            return false;
-        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
-            return false;
-        if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8))
+        if (Item10 is not CancellationToken && !EqualityComparer<T10>.Default.Equals(Item10, other.Item10))
             return false;
         if (Item9 is not CancellationToken && !EqualityComparer<T9>.Default.Equals(Item9, other.Item9))
             return false;
-        if (Item10 is not CancellationToken && !EqualityComparer<T10>.Default.Equals(Item10, other.Item10))
+        if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8))
+            return false;
+        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
+            return false;
+        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
+            return false;
+        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
+            return false;
+        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+            return false;
+        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+            return false;
+        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+            return false;
+        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+            return false;
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -3069,27 +3280,27 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
         if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> vOther)
             return false;
 
-        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
-            return false;
-        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
-            return false;
-        if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
-            return false;
-        if (ignoredIndex != 5 && !EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
-            return false;
-        if (ignoredIndex != 6 && !EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
-            return false;
-        if (ignoredIndex != 7 && !EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
-            return false;
-        if (ignoredIndex != 8 && !EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
+        if (ignoredIndex != 10 && !EqualityComparer<T10>.Default.Equals(Item10, vOther.Item10))
             return false;
         if (ignoredIndex != 9 && !EqualityComparer<T9>.Default.Equals(Item9, vOther.Item9))
             return false;
-        if (ignoredIndex != 10 && !EqualityComparer<T10>.Default.Equals(Item10, vOther.Item10))
+        if (ignoredIndex != 8 && !EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
+            return false;
+        if (ignoredIndex != 7 && !EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
+            return false;
+        if (ignoredIndex != 6 && !EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
+            return false;
+        if (ignoredIndex != 5 && !EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
+            return false;
+        if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+            return false;
+        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
         return true;
     }
@@ -3119,67 +3330,11 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
         if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> vOther)
             return false;
 
-        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, vOther.Item0))
+        if (equalsDelegates[10] is Func<T10, T10, bool> func10) {
+            if (!func10.Invoke(Item10, vOther.Item10))
                 return false;
         }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-
-        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, vOther.Item1))
-                return false;
-        }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-
-        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, vOther.Item2))
-                return false;
-        }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
-            return false;
-
-        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, vOther.Item3))
-                return false;
-        }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
-            return false;
-
-        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, vOther.Item4))
-                return false;
-        }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
-            return false;
-
-        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
-            if (!func5.Invoke(Item5, vOther.Item5))
-                return false;
-        }
-        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
-            return false;
-
-        if (equalsDelegates[6] is Func<T6, T6, bool> func6) {
-            if (!func6.Invoke(Item6, vOther.Item6))
-                return false;
-        }
-        else if (!EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
-            return false;
-
-        if (equalsDelegates[7] is Func<T7, T7, bool> func7) {
-            if (!func7.Invoke(Item7, vOther.Item7))
-                return false;
-        }
-        else if (!EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
-            return false;
-
-        if (equalsDelegates[8] is Func<T8, T8, bool> func8) {
-            if (!func8.Invoke(Item8, vOther.Item8))
-                return false;
-        }
-        else if (!EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
+        else if (!EqualityComparer<T10>.Default.Equals(Item10, vOther.Item10))
             return false;
 
         if (equalsDelegates[9] is Func<T9, T9, bool> func9) {
@@ -3189,11 +3344,67 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(
         else if (!EqualityComparer<T9>.Default.Equals(Item9, vOther.Item9))
             return false;
 
-        if (equalsDelegates[10] is Func<T10, T10, bool> func10) {
-            if (!func10.Invoke(Item10, vOther.Item10))
+        if (equalsDelegates[8] is Func<T8, T8, bool> func8) {
+            if (!func8.Invoke(Item8, vOther.Item8))
                 return false;
         }
-        else if (!EqualityComparer<T10>.Default.Equals(Item10, vOther.Item10))
+        else if (!EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
+            return false;
+
+        if (equalsDelegates[7] is Func<T7, T7, bool> func7) {
+            if (!func7.Invoke(Item7, vOther.Item7))
+                return false;
+        }
+        else if (!EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
+            return false;
+
+        if (equalsDelegates[6] is Func<T6, T6, bool> func6) {
+            if (!func6.Invoke(Item6, vOther.Item6))
+                return false;
+        }
+        else if (!EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
+            return false;
+
+        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
+            if (!func5.Invoke(Item5, vOther.Item5))
+                return false;
+        }
+        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
+            return false;
+
+        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
+            if (!func4.Invoke(Item4, vOther.Item4))
+                return false;
+        }
+        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+            return false;
+
+        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
+            if (!func3.Invoke(Item3, vOther.Item3))
+                return false;
+        }
+        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+
+        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
+            if (!func2.Invoke(Item2, vOther.Item2))
+                return false;
+        }
+        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+
+        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
+            if (!func1.Invoke(Item1, vOther.Item1))
+                return false;
+        }
+        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
+                return false;
+        }
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
 
         return true;
@@ -3310,7 +3521,38 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 12;
 
-    // ToArray
+    // ToString & ToArray
+
+    public override string ToString()
+    {
+        using var sb = ZString.CreateStringBuilder();
+        sb.Append('(');
+        sb.Append(Item0);
+        sb.Append(", ");
+        sb.Append(Item1);
+        sb.Append(", ");
+        sb.Append(Item2);
+        sb.Append(", ");
+        sb.Append(Item3);
+        sb.Append(", ");
+        sb.Append(Item4);
+        sb.Append(", ");
+        sb.Append(Item5);
+        sb.Append(", ");
+        sb.Append(Item6);
+        sb.Append(", ");
+        sb.Append(Item7);
+        sb.Append(", ");
+        sb.Append(Item8);
+        sb.Append(", ");
+        sb.Append(Item9);
+        sb.Append(", ");
+        sb.Append(Item10);
+        sb.Append(", ");
+        sb.Append(Item11);
+        sb.Append(')');
+        return sb.ToString();
+    }
 
     public override object?[] ToArray()
         => new object?[] {
@@ -3485,29 +3727,29 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
         if (other == null)
             return false;
 
-        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
-            return false;
-        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
-            return false;
-        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
-            return false;
-        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
-            return false;
-        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
-            return false;
-        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
-            return false;
-        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
-            return false;
-        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
-            return false;
-        if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8))
-            return false;
-        if (Item9 is not CancellationToken && !EqualityComparer<T9>.Default.Equals(Item9, other.Item9))
+        if (Item11 is not CancellationToken && !EqualityComparer<T11>.Default.Equals(Item11, other.Item11))
             return false;
         if (Item10 is not CancellationToken && !EqualityComparer<T10>.Default.Equals(Item10, other.Item10))
             return false;
-        if (Item11 is not CancellationToken && !EqualityComparer<T11>.Default.Equals(Item11, other.Item11))
+        if (Item9 is not CancellationToken && !EqualityComparer<T9>.Default.Equals(Item9, other.Item9))
+            return false;
+        if (Item8 is not CancellationToken && !EqualityComparer<T8>.Default.Equals(Item8, other.Item8))
+            return false;
+        if (Item7 is not CancellationToken && !EqualityComparer<T7>.Default.Equals(Item7, other.Item7))
+            return false;
+        if (Item6 is not CancellationToken && !EqualityComparer<T6>.Default.Equals(Item6, other.Item6))
+            return false;
+        if (Item5 is not CancellationToken && !EqualityComparer<T5>.Default.Equals(Item5, other.Item5))
+            return false;
+        if (Item4 is not CancellationToken && !EqualityComparer<T4>.Default.Equals(Item4, other.Item4))
+            return false;
+        if (Item3 is not CancellationToken && !EqualityComparer<T3>.Default.Equals(Item3, other.Item3))
+            return false;
+        if (Item2 is not CancellationToken && !EqualityComparer<T2>.Default.Equals(Item2, other.Item2))
+            return false;
+        if (Item1 is not CancellationToken && !EqualityComparer<T1>.Default.Equals(Item1, other.Item1))
+            return false;
+        if (Item0 is not CancellationToken && !EqualityComparer<T0>.Default.Equals(Item0, other.Item0))
             return false;
         return true;
     }
@@ -3536,29 +3778,29 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
         if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> vOther)
             return false;
 
-        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
-            return false;
-        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
-            return false;
-        if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
-            return false;
-        if (ignoredIndex != 5 && !EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
-            return false;
-        if (ignoredIndex != 6 && !EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
-            return false;
-        if (ignoredIndex != 7 && !EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
-            return false;
-        if (ignoredIndex != 8 && !EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
-            return false;
-        if (ignoredIndex != 9 && !EqualityComparer<T9>.Default.Equals(Item9, vOther.Item9))
+        if (ignoredIndex != 11 && !EqualityComparer<T11>.Default.Equals(Item11, vOther.Item11))
             return false;
         if (ignoredIndex != 10 && !EqualityComparer<T10>.Default.Equals(Item10, vOther.Item10))
             return false;
-        if (ignoredIndex != 11 && !EqualityComparer<T11>.Default.Equals(Item11, vOther.Item11))
+        if (ignoredIndex != 9 && !EqualityComparer<T9>.Default.Equals(Item9, vOther.Item9))
+            return false;
+        if (ignoredIndex != 8 && !EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
+            return false;
+        if (ignoredIndex != 7 && !EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
+            return false;
+        if (ignoredIndex != 6 && !EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
+            return false;
+        if (ignoredIndex != 5 && !EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
+            return false;
+        if (ignoredIndex != 4 && !EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+            return false;
+        if (ignoredIndex != 3 && !EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+        if (ignoredIndex != 2 && !EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+        if (ignoredIndex != 1 && !EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+        if (ignoredIndex != 0 && !EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
         return true;
     }
@@ -3589,74 +3831,11 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
         if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11> vOther)
             return false;
 
-        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, vOther.Item0))
+        if (equalsDelegates[11] is Func<T11, T11, bool> func11) {
+            if (!func11.Invoke(Item11, vOther.Item11))
                 return false;
         }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-
-        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, vOther.Item1))
-                return false;
-        }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-
-        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, vOther.Item2))
-                return false;
-        }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
-            return false;
-
-        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, vOther.Item3))
-                return false;
-        }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
-            return false;
-
-        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, vOther.Item4))
-                return false;
-        }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
-            return false;
-
-        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
-            if (!func5.Invoke(Item5, vOther.Item5))
-                return false;
-        }
-        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
-            return false;
-
-        if (equalsDelegates[6] is Func<T6, T6, bool> func6) {
-            if (!func6.Invoke(Item6, vOther.Item6))
-                return false;
-        }
-        else if (!EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
-            return false;
-
-        if (equalsDelegates[7] is Func<T7, T7, bool> func7) {
-            if (!func7.Invoke(Item7, vOther.Item7))
-                return false;
-        }
-        else if (!EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
-            return false;
-
-        if (equalsDelegates[8] is Func<T8, T8, bool> func8) {
-            if (!func8.Invoke(Item8, vOther.Item8))
-                return false;
-        }
-        else if (!EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
-            return false;
-
-        if (equalsDelegates[9] is Func<T9, T9, bool> func9) {
-            if (!func9.Invoke(Item9, vOther.Item9))
-                return false;
-        }
-        else if (!EqualityComparer<T9>.Default.Equals(Item9, vOther.Item9))
+        else if (!EqualityComparer<T11>.Default.Equals(Item11, vOther.Item11))
             return false;
 
         if (equalsDelegates[10] is Func<T10, T10, bool> func10) {
@@ -3666,11 +3845,74 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T
         else if (!EqualityComparer<T10>.Default.Equals(Item10, vOther.Item10))
             return false;
 
-        if (equalsDelegates[11] is Func<T11, T11, bool> func11) {
-            if (!func11.Invoke(Item11, vOther.Item11))
+        if (equalsDelegates[9] is Func<T9, T9, bool> func9) {
+            if (!func9.Invoke(Item9, vOther.Item9))
                 return false;
         }
-        else if (!EqualityComparer<T11>.Default.Equals(Item11, vOther.Item11))
+        else if (!EqualityComparer<T9>.Default.Equals(Item9, vOther.Item9))
+            return false;
+
+        if (equalsDelegates[8] is Func<T8, T8, bool> func8) {
+            if (!func8.Invoke(Item8, vOther.Item8))
+                return false;
+        }
+        else if (!EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
+            return false;
+
+        if (equalsDelegates[7] is Func<T7, T7, bool> func7) {
+            if (!func7.Invoke(Item7, vOther.Item7))
+                return false;
+        }
+        else if (!EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
+            return false;
+
+        if (equalsDelegates[6] is Func<T6, T6, bool> func6) {
+            if (!func6.Invoke(Item6, vOther.Item6))
+                return false;
+        }
+        else if (!EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
+            return false;
+
+        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
+            if (!func5.Invoke(Item5, vOther.Item5))
+                return false;
+        }
+        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
+            return false;
+
+        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
+            if (!func4.Invoke(Item4, vOther.Item4))
+                return false;
+        }
+        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
+            return false;
+
+        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
+            if (!func3.Invoke(Item3, vOther.Item3))
+                return false;
+        }
+        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
+            return false;
+
+        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
+            if (!func2.Invoke(Item2, vOther.Item2))
+                return false;
+        }
+        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
+            return false;
+
+        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
+            if (!func1.Invoke(Item1, vOther.Item1))
+                return false;
+        }
+        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
+            return false;
+
+        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
+            if (!func0.Invoke(Item0, vOther.Item0))
+                return false;
+        }
+        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
             return false;
 
         return true;

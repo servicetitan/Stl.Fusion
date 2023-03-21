@@ -1,5 +1,6 @@
 using System.Reflection;
 using Stl.Interception;
+using Stl.Interception.Internal;
 
 namespace Stl.Tests.Generators;
 

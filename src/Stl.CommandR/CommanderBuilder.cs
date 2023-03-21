@@ -184,8 +184,7 @@ public readonly struct CommanderBuilder
             // will be intercepted, so no error will be thrown later.
             var interceptor = c.GetRequiredService<CommandServiceInterceptor>();
             interceptor.ValidateType(implementationType);
-            var proxy = c.Activate(implementationType.GetProxyType());
-            return interceptor.AttachTo(proxy);
+            return c.ActivateProxy(implementationType, interceptor);
         }
 
         var descriptor = new ServiceDescriptor(serviceType, Factory, lifetime);

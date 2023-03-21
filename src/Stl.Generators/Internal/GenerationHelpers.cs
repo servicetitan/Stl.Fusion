@@ -6,7 +6,9 @@ using static SyntaxFactory;
 public static class GenerationHelpers
 {
     public const string StlInterceptionNs = "Stl.Interception";
+    public const string StlInterceptionInternalNs = "Stl.Interception.Internal";
     public const string StlInterceptionGns = $"global::{StlInterceptionNs}";
+    public const string StlInterceptionInternalGns = $"global::{StlInterceptionInternalNs}";
     public const string RequiresFullProxyInterfaceName = $"{StlInterceptionNs}.IRequiresFullProxy";
     public const string RequireAsyncProxyInterfaceName = $"{StlInterceptionNs}.IRequiresAsyncProxy";
     public const string ProxyIgnoreAttributeName = $"{StlInterceptionNs}.ProxyIgnoreAttribute";
@@ -15,24 +17,27 @@ public static class GenerationHelpers
 
     // Types
     public static readonly IdentifierNameSyntax ProxyInterfaceTypeName = IdentifierName($"{StlInterceptionGns}.IProxy");
+    public static readonly GenericNameSyntax InterfaceProxyBaseGenericTypeName = GenericName($"{StlInterceptionInternalGns}.InterfaceProxy");
     public static readonly IdentifierNameSyntax InterceptorTypeName = IdentifierName($"{StlInterceptionGns}.Interceptor");
-    public static readonly IdentifierNameSyntax ProxyHelperTypeName = IdentifierName($"{StlInterceptionGns}.ProxyHelper");
+    public static readonly IdentifierNameSyntax ProxyHelperTypeName = IdentifierName($"{StlInterceptionInternalGns}.ProxyHelper");
     public static readonly IdentifierNameSyntax ArgumentListTypeName = IdentifierName($"{StlInterceptionGns}.ArgumentList");
     public static readonly GenericNameSyntax ArgumentListGenericTypeName = GenericName(ArgumentListTypeName.Identifier.Text);
     public static readonly IdentifierNameSyntax InvocationTypeName = IdentifierName($"{StlInterceptionGns}.Invocation");
+    public static readonly IdentifierNameSyntax ErrorsTypeName = IdentifierName($"{StlInterceptionInternalGns}.Errors");
     public static readonly TypeSyntax NullableMethodInfoType = NullableType(typeof(MethodInfo).ToTypeRef());
     // Methods
     public static readonly IdentifierNameSyntax ArgumentListNewMethodName = IdentifierName("New");
-    public static readonly IdentifierNameSyntax ProxyHelperGetMethodInfoName = IdentifierName("GetMethodInfo");
-    public static readonly IdentifierNameSyntax ProxyInterceptMethodName = IdentifierName("Intercept");
-    public static readonly GenericNameSyntax ProxyInterceptGenericMethodName = GenericName(ProxyInterceptMethodName.Identifier.Text);
-    public static readonly IdentifierNameSyntax ProxyInterfaceBindMethodName = IdentifierName("Bind");
+    public static readonly IdentifierNameSyntax GetMethodInfoMethodName = IdentifierName("GetMethodInfo");
+    public static readonly IdentifierNameSyntax InterceptMethodName = IdentifierName("Intercept");
+    public static readonly GenericNameSyntax InterceptGenericMethodName = GenericName(InterceptMethodName.Identifier.Text);
+    public static readonly IdentifierNameSyntax BindMethodName = IdentifierName("Bind");
+    public static readonly IdentifierNameSyntax NoInterceptorMethodName = IdentifierName("NoInterceptor");
+    public static readonly IdentifierNameSyntax InterceptorIsAlreadyBoundMethodName = IdentifierName("InterceptorIsAlreadyBound");
     // Properties, fields, locals
+    public static readonly IdentifierNameSyntax ProxyTargetPropertyName = IdentifierName("ProxyTarget");
     public static readonly IdentifierNameSyntax InterceptorPropertyName = IdentifierName("Interceptor");
     public static readonly IdentifierNameSyntax InterceptorFieldName = IdentifierName("__interceptor");
     public static readonly IdentifierNameSyntax InterceptorParameterName = IdentifierName("interceptor");
-    public static readonly IdentifierNameSyntax ProxyTargetFieldName = IdentifierName("__proxyTarget");
-    public static readonly IdentifierNameSyntax ProxyTargetParameterName = IdentifierName("proxyTarget");
     public static readonly IdentifierNameSyntax InterceptedVarName = IdentifierName("intercepted");
     public static readonly IdentifierNameSyntax InvocationVarName = IdentifierName("invocation");
 
@@ -97,15 +102,14 @@ public static class GenerationHelpers
             ? ReturnStatement(expression)
             : ExpressionStatement(expression);
 
-    public static ThrowStatementSyntax ThrowStatement<TException>(string message)
-        where TException : Exception
+    public static ThrowStatementSyntax ThrowStatement(IdentifierNameSyntax methodName)
         => SyntaxFactory.ThrowStatement(
-            ObjectCreationExpression(typeof(TException).ToTypeRef())
-                .WithArgumentList(
-                    ArgumentList(
-                        SingletonSeparatedList(
-                            Argument(
-                                LiteralExpression(SyntaxKind.StringLiteralExpression, Literal(message)))))));
+            InvocationExpression(
+                    MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        ErrorsTypeName,
+                        methodName))
+                .WithArgumentList(ArgumentList()));
 
     public static ThrowExpressionSyntax ThrowExpression<TException>(string message)
         where TException : Exception

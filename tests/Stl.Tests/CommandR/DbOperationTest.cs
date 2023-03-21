@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework;
-using Stl.Multitenancy;
 using Stl.Tests.CommandR.Services;
 
 namespace Stl.Tests.CommandR;

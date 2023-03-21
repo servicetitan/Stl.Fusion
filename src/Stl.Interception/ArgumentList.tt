@@ -12,6 +12,8 @@
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable ArrangeConstructorOrDestructorBody
+using Cysharp.Text;
+
 namespace Stl.Interception;
 
 [DataContract]
@@ -48,8 +50,8 @@ public record ArgumentList
         => new (<#=argumentUsage#>);
 <#}#>
 
-    public virtual object?[] ToArray()
-        => Array.Empty<object?>();
+    public override string ToString() => "()";
+    public virtual object?[] ToArray() => Array.Empty<object?>();
 
     public virtual T GetItem<T>(int index)
         => throw new ArgumentOutOfRangeException(nameof(index));
@@ -103,7 +105,20 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => <#=itemCount#>;
 
-    // ToArray
+    // ToString & ToArray
+
+    public override string ToString()
+    {
+        using var sb = ZString.CreateStringBuilder();
+        sb.Append('(');
+        sb.Append(Item<#=0#>);
+<#for (var t = 1; t < itemCount; t++) {#>
+        sb.Append(", ");
+        sb.Append(Item<#=t#>);
+<#}#>
+        sb.Append(')');
+        return sb.ToString();
+    }
 
     public override object?[] ToArray()
         => new object?[] {
@@ -167,7 +182,7 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
         if (other == null)
             return false;
 
-<#for (var t = 0; t < itemCount; t++) {#>
+<#for (var t = itemCount - 1; t >= 0; t--) {#>
         if (Item<#=t#> is not CancellationToken && !EqualityComparer<T<#=t#>>.Default.Equals(Item<#=t#>, other.Item<#=t#>))
             return false;
 <#}#>
@@ -190,7 +205,7 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
         if (other is not ArgumentList<<#=argumentTypes#>> vOther)
             return false;
 
-<#for (var t = 0; t < itemCount; t++) {#>
+<#for (var t = itemCount - 1; t >= 0; t--) {#>
         if (ignoredIndex != <#=t#> && !EqualityComparer<T<#=t#>>.Default.Equals(Item<#=t#>, vOther.Item<#=t#>))
             return false;
 <#}#>
@@ -215,7 +230,7 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
         if (other is not ArgumentList<<#=argumentTypes#>> vOther)
             return false;
 
-<#for (var t = 0; t < itemCount; t++) {#>
+<#for (var t = itemCount - 1; t >= 0; t--) {#>
         if (equalsDelegates[<#=t#>] is Func<T<#=t#>, T<#=t#>, bool> func<#=t#>) {
             if (!func<#=t#>.Invoke(Item<#=t#>, vOther.Item<#=t#>))
                 return false;

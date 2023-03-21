@@ -1,5 +1,3 @@
-using Castle.DynamicProxy;
-using Castle.DynamicProxy.Generators;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Conversion;
 using Stl.Extensibility;
@@ -12,6 +10,7 @@ using Stl.Fusion.Multitenancy;
 using Stl.Fusion.Operations.Internal;
 using Stl.Fusion.Operations.Reprocessing;
 using Stl.Fusion.UI;
+using Stl.Interception;
 using Stl.Multitenancy;
 using Stl.Versioning.Providers;
 
@@ -47,10 +46,8 @@ public readonly struct FusionBuilder
         Services.TryAddSingleton(ClockBasedVersionGenerator.DefaultCoarse);
 
         // Compute services & their dependencies
-        Services.TryAddSingleton(ComputeServiceProxyGenerator.Default);
         Services.TryAddSingleton<IComputedOptionsProvider, ComputedOptionsProvider>();
         Services.TryAddSingleton<IMatchingTypeFinder>(_ => new MatchingTypeFinder());
-        Services.TryAddSingleton<IArgumentHandlerProvider, ArgumentHandlerProvider>();
         Services.TryAddSingleton(TransientErrorDetector.DefaultPreferTransient.For<IComputed>());
         Services.TryAddSingleton(new ComputeMethodInterceptor.Options());
         Services.TryAddSingleton<ComputeMethodInterceptor>();
@@ -118,17 +115,6 @@ public readonly struct FusionBuilder
         configure?.Invoke(this);
     }
 
-    static FusionBuilder()
-    {
-        var nonReplicableAttributeTypes = new HashSet<Type>() {
-            typeof(AsyncStateMachineAttribute),
-            typeof(ComputeMethodAttribute),
-        };
-        foreach (var type in nonReplicableAttributeTypes)
-            if (!AttributesToAvoidReplicating.Contains(type))
-                AttributesToAvoidReplicating.Add(type);
-    }
-
     // AddPublisher, AddReplicator
 
     public FusionBuilder AddPublisher(
@@ -136,7 +122,7 @@ public readonly struct FusionBuilder
     {
         if (optionsFactory != null)
             Services.AddSingleton(optionsFactory);
-        else 
+        else
             Services.TryAddSingleton<PublisherOptions>();
 
         Services.TryAddSingleton<IPublisher, Publisher>();
@@ -154,7 +140,6 @@ public readonly struct FusionBuilder
             return this;
 
         // ReplicaServiceProxyGenerator
-        Services.TryAddSingleton(ReplicaServiceProxyGenerator.Default);
         Services.TryAddSingleton(new ReplicaMethodInterceptor.Options());
         Services.TryAddSingleton<ReplicaMethodInterceptor>();
         Services.TryAddSingleton(new ReplicaServiceInterceptor.Options());
@@ -196,9 +181,7 @@ public readonly struct FusionBuilder
             // will be intercepted, so no error will be thrown later.
             var interceptor = c.GetRequiredService<ComputeServiceInterceptor>();
             interceptor.ValidateType(implementationType);
-            var proxyGenerator = c.GetRequiredService<ComputeServiceProxyGenerator>();
-            var proxyType = proxyGenerator.GetProxyType(implementationType);
-            return c.Activate(proxyType, new object[] { new IInterceptor[] { interceptor } });
+            return c.ActivateProxy(implementationType, interceptor);
         }
 
         var descriptor = new ServiceDescriptor(serviceType, Factory, lifetime);
