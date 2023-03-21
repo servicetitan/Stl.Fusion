@@ -13,8 +13,6 @@ public class TimeController : ControllerBase, ITimeService
 {
     protected ITimeService Service { get; }
 
-    public DateTime Time => Service.Time;
-
     public TimeController(ITimeService service) => Service = service;
 
     [HttpGet, Publish]

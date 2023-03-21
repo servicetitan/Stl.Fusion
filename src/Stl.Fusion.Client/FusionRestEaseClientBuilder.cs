@@ -134,9 +134,9 @@ public readonly struct FusionRestEaseClientBuilder
         Type serviceType, Type clientType,
         string? clientName = null)
     {
-        if (!(serviceType.IsInterface && serviceType.IsVisible))
+        if (!(serviceType is { IsInterface: true, IsVisible: true }))
             throw Errors.InterfaceTypeExpected(serviceType, true, nameof(serviceType));
-        if (!(clientType.IsInterface && clientType.IsVisible))
+        if (!(clientType is { IsInterface: true, IsVisible: true }))
             throw Errors.InterfaceTypeExpected(clientType, true, nameof(clientType));
         clientName ??= clientType.FullName ?? "";
         if (Services.Any(d => d.ServiceType == serviceType))
@@ -170,7 +170,7 @@ public readonly struct FusionRestEaseClientBuilder
 
             // 4. Create Replica Client
             var interceptor = c.GetRequiredService<ReplicaServiceInterceptor>();
-            return c.ActivateProxy(serviceType, interceptor, clientType);
+            return c.ActivateProxy(serviceType, interceptor, client);
         }
 
         Services.AddSingleton(clientAccessorType, ClientAccessorFactory);

@@ -81,7 +81,10 @@ public class ProxyTypeGenerator
 
         // Building Compilation unit
         var syntaxRoot = SemanticModel.SyntaxTree.GetRoot();
-        var usingDirectives = syntaxRoot.ChildNodes().OfType<UsingDirectiveSyntax>().ToArray();
+        var usingDirectives = syntaxRoot.ChildNodes()
+            .OfType<UsingDirectiveSyntax>()
+            .Select(d => d.WithoutTrivia()) // Removes #ifdef, etc.
+            .ToArray();
         var unit = CompilationUnit()
             .AddUsings(usingDirectives)
             .AddMembers(proxyNamespaceDef)

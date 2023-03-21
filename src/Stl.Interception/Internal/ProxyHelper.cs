@@ -2,14 +2,14 @@ namespace Stl.Interception.Internal;
 
 public static class ProxyHelper
 {
-    private static readonly BindingFlags GetMethodBindingFlags =
+    private static readonly BindingFlags BindingFlags =
         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static MethodInfo GetMethodInfo(Type type, string name, Type[] types)
+    public static MethodInfo GetMethodInfo(Type type, string name, Type[] argumentTypes)
     {
 #if NETSTANDARD || NETCOREAPP
-        var result = type.GetMethod(name, GetMethodBindingFlags, null, types, null);
+        var result = type.GetMethod(name, BindingFlags, null, argumentTypes, null);
 #else
         var result = type.GetMethod(name, GetMethodBindingFlags, types);
 #endif
