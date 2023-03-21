@@ -15,7 +15,7 @@ public readonly record struct Invocation(
     private static readonly ConcurrentDictionary<Type, Func<Invocation, object?>> InterceptedUntypedCache 
         = new(HardwareInfo.GetProcessorCountPo2Factor(4), 256);
 
-    public object? ProxyTarget => (Proxy as InterfaceProxy)?.ProxyTargetUntyped;
+    public object? ProxyTarget => (Proxy as InterfaceProxy)?.ProxyTarget;
 
     public void Intercepted()
     {

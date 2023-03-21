@@ -19,11 +19,11 @@ public class CommandServiceInterceptor : InterceptorBase
         => invocation => {
             var arguments = invocation.Arguments;
             var command = arguments.GetItem<ICommand>(0);
-            var cancellationToken = arguments.GetItem<CancellationToken>(arguments.Length);
+            var cancellationToken = arguments.GetItem<CancellationToken>(arguments.Length - 1);
             var context = CommandContext.Current;
             if (ReferenceEquals(command, context?.UntypedCommand)) {
                 // We're already inside the ICommander pipeline created for exactly this command
-                return invocation.Intercepted<T>();
+                return invocation.InterceptedUntyped();
             }
 
             // We're outside the ICommander pipeline, so we either have to block this call...

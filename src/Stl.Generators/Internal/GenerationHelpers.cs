@@ -17,7 +17,7 @@ public static class GenerationHelpers
 
     // Types
     public static readonly IdentifierNameSyntax ProxyInterfaceTypeName = IdentifierName($"{StlInterceptionGns}.IProxy");
-    public static readonly GenericNameSyntax InterfaceProxyBaseGenericTypeName = GenericName($"{StlInterceptionInternalGns}.InterfaceProxy");
+    public static readonly IdentifierNameSyntax InterfaceProxyBaseTypeName = IdentifierName($"{StlInterceptionInternalGns}.InterfaceProxy");
     public static readonly IdentifierNameSyntax InterceptorTypeName = IdentifierName($"{StlInterceptionGns}.Interceptor");
     public static readonly IdentifierNameSyntax ProxyHelperTypeName = IdentifierName($"{StlInterceptionInternalGns}.ProxyHelper");
     public static readonly IdentifierNameSyntax ArgumentListTypeName = IdentifierName($"{StlInterceptionGns}.ArgumentList");

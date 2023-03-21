@@ -8,15 +8,15 @@ public class Interceptor
     {
         Cast<T, IProxy>(proxy).Bind(this);
         if (proxyTarget != null)
-            Cast<T, InterfaceProxy>(proxy).ProxyTargetUntyped = proxyTarget;
+            Cast<T, InterfaceProxy>(proxy).ProxyTarget = proxyTarget;
         return proxy;
     }
 
-    public virtual TResult Intercept<TResult>(Invocation invocation)
-        => invocation.Intercepted<TResult>();
-
     public virtual void Intercept(Invocation invocation)
         => invocation.Intercepted();
+
+    public virtual TResult Intercept<TResult>(Invocation invocation)
+        => invocation.Intercepted<TResult>();
 
     // Private methods
 

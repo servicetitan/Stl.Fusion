@@ -48,11 +48,9 @@ public class ProxyTypeGenerator
         ProxyTypeName = TypeDef.Identifier.Text + ProxyClassSuffix;
         var typeRef = TypeDef.ToTypeRef();
         var baseTypes = new List<TypeSyntax>() { typeRef, ProxyInterfaceTypeName };
-        if (IsInterfaceProxy) {
-            var baseType = InterfaceProxyBaseGenericTypeName
-                .WithTypeArgumentList(TypeArgumentList(CommaSeparatedList(typeRef)));
-            baseTypes.Insert(0, baseType);
-        }
+        if (IsInterfaceProxy)
+            baseTypes.Insert(0, InterfaceProxyBaseTypeName);
+
         ProxyDef = ClassDeclaration(ProxyTypeName)
             .AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.SealedKeyword))
             .WithTypeParameterList(TypeDef.TypeParameterList)
@@ -400,12 +398,15 @@ public class ProxyTypeGenerator
                     argumentList)));
         }
 
+        var baseOrProxyTargetCall = IsInterfaceProxy
+            ? (ExpressionSyntax)ParenthesizedExpression(
+                SuppressNullWarning(
+                    CastExpression(TypeDef.ToTypeRef(), ProxyTargetPropertyName)))
+            : BaseExpression();
         var baseInvocation = InvocationExpression(
             MemberAccessExpression(
                 SyntaxKind.SimpleMemberAccessExpression,
-                IsInterfaceProxy
-                    ? SuppressNullWarning(ProxyTargetPropertyName)
-                    : BaseExpression(),
+                baseOrProxyTargetCall,
                 IdentifierName(method.Name)),
             ArgumentList(CommaSeparatedList(proxyTargetCallArguments))
         );
