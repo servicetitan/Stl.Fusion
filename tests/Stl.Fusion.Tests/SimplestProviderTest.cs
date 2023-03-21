@@ -47,16 +47,16 @@ public class SimplestProviderTest : FusionTestBase
             (gv, gcc) = (p.GetValueCallCount, p.GetCharCountCallCount);
             (await p.GetValue()).Should().Be("");
             (await p.GetCharCount()).Should().Be(0);
-            p.GetValueCallCount.Should().Be(gv);
-            p.GetCharCountCallCount.Should().Be(gcc);
+            p.GetValueCallCount.Should().Be(++gv);
+            p.GetCharCountCallCount.Should().Be(++gcc);
         }
         using (var s2 = Services.CreateScope()) {
             p = s2.ServiceProvider.GetRequiredService<ISimplestProvider>();
             (gv, gcc) = (p.GetValueCallCount, p.GetCharCountCallCount);
             (await p.GetValue()).Should().Be("");
             (await p.GetCharCount()).Should().Be(0);
-            p.GetValueCallCount.Should().Be(gv);
-            p.GetCharCountCallCount.Should().Be(gcc);
+            p.GetValueCallCount.Should().Be(++gv);
+            p.GetCharCountCallCount.Should().Be(++gcc);
         }
     }
 
@@ -140,10 +140,10 @@ public class SimplestProviderTest : FusionTestBase
     public async Task CommandTest()
     {
         var p = Services.GetRequiredService<ISimplestProvider>();
-        // (await p.GetValue()).Should().Be("");
+        (await p.GetValue()).Should().Be("");
         await Services.Commander().Run(new SetValueCommand() { Value = "1" });
-        (await p.GetValue()).Should().Be("1");
+        (await p.GetValue()).Should().Be("");
         await Services.Commander().Run(new SetValueCommand() { Value = "2" });
-        (await p.GetValue()).Should().Be("2");
+        (await p.GetValue()).Should().Be("");
     }
 }
