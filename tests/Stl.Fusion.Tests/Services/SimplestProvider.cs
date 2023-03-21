@@ -26,7 +26,7 @@ public interface ISimplestProvider
 }
 
 [RegisterComputeService(typeof(ISimplestProvider), Lifetime = ServiceLifetime.Scoped, Scope = ServiceScope.Services)]
-public class SimplestProvider : ISimplestProvider, IHasId<Type>
+public class SimplestProvider : ISimplestProvider, IHasId<Type>, IComputeService
 {
     private static volatile string _value = "";
     private readonly bool _isCaching;

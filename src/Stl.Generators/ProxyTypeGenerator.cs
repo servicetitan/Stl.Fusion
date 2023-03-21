@@ -282,7 +282,7 @@ public class ProxyTypeGenerator
             }
 
             if (!IsInterfaceProxy) {
-                if (method.IsAbstract || !method.IsVirtual) {
+                if (method.IsAbstract || !(method.IsVirtual || method.IsOverride)) {
                     WriteDebug?.Invoke("  [-] Non-virtual or abstract");
                     continue;
                 }

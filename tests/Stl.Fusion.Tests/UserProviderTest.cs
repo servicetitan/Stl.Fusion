@@ -20,7 +20,7 @@ public class UserProviderTest : FusionTestBase
         var u1 = await users.Get(int.MaxValue);
         var c1 = await Computed.Capture(() => users.Count());
 
-        users.Invalidate();
+        await users.Invalidate();
 
         var u2 = await users.Get(int.MaxValue);
         var c2 = await Computed.Capture(() => users.Count());

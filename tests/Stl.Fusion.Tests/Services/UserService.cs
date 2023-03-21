@@ -5,7 +5,7 @@ using Stl.RegisterAttributes;
 
 namespace Stl.Fusion.Tests.Services;
 
-public interface IUserService
+public interface IUserService : ICommandService
 {
     [DataContract]
     public record AddCommand(
@@ -43,7 +43,7 @@ public interface IUserService
     Task<User?> Get(long userId, CancellationToken cancellationToken = default);
     [ComputeMethod(MinCacheDuration = 1)]
     Task<long> Count(CancellationToken cancellationToken = default);
-    void Invalidate();
+    Task Invalidate();
 }
 
 [RegisterComputeService(typeof(IUserService), Scope = ServiceScope.Services)] // Fusion version
@@ -154,14 +154,14 @@ public class UserService : DbServiceBase<TestDbContext>, IUserService
         return count;
     }
 
-    public virtual void Invalidate()
+    public virtual Task Invalidate()
     {
         if (!IsProxy)
-            return;
+            return Task.CompletedTask;
 
-        using (Computed.Invalidate()) {
+        using (Computed.Invalidate())
             Everything().AssertCompleted();
-        }
+        return Task.CompletedTask;
     }
 
     // Protected & private methods
