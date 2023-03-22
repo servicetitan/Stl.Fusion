@@ -36,35 +36,42 @@ public abstract class PerformanceTestBase : FusionTestBase
         var users = Services.GetRequiredService<IUserService>();
         var plainUsers = Services.GetRequiredService<UserService>();
         var opCountPerCore = 4_000_000;
-        var readersPerCore = 5;
+        var readersPerCore = 8;
         var readerCount = HardwareInfo.GetProcessorCountFactor(readersPerCore);
-        var cachingIterationCount = opCountPerCore / readersPerCore;
-        var nonCachingIterationCount = cachingIterationCount / 2000;
+        var fusionIterationCount = opCountPerCore / readersPerCore;
+        var nonFusionIterationCount = fusionIterationCount / 4000;
 
-        var withoutSerialization = (Action<User>) (u => { });
+        var withoutSerialization = (Action<User>) (_ => { });
         var withSerialization = (Action<User>) (u => JsonSerializer.Serialize(u)); // STJ serializer
+        var enableSerialization = false;
 
         Out.WriteLine($".NET: {RuntimeInfo.DotNetCore.VersionString}");
         Out.WriteLine($"Database: {Options.DbType}");
         Out.WriteLine("With Stl.Fusion:");
-        await Test("Standard test", users, withoutSerialization,
-            readerCount, cachingIterationCount);
-        await Test("Standard test + serialization", users, withSerialization,
-            readerCount, cachingIterationCount / 3);
+        if (enableSerialization)
+            await Test("Multiple readers + serialization, 1 mutator", users, withSerialization, true, 
+                readerCount, fusionIterationCount / 2);
+        await Test("Multiple readers, 1 mutator", users, withoutSerialization, true, 
+            readerCount, fusionIterationCount);
+        await Test("Single reader, no mutators", users, withoutSerialization, false,
+            1, fusionIterationCount * 20);
 
         Out.WriteLine("Without Stl.Fusion:");
-        await Test("Standard test", plainUsers, withoutSerialization,
-            readerCount, nonCachingIterationCount);
-        await Test("Standard test + serialization", plainUsers, withSerialization,
-            readerCount, nonCachingIterationCount);
+        if (enableSerialization)
+            await Test("Multiple readers + serialization, 1 mutator", plainUsers, withSerialization, true,
+                readerCount, nonFusionIterationCount);
+        await Test("Multiple readers, 1 mutator", plainUsers, withoutSerialization, true,
+            readerCount, nonFusionIterationCount);
+        await Test("Single reader, no mutators", plainUsers, withoutSerialization, false,
+            1, nonFusionIterationCount * 20);
     }
 
     private async Task Test(string title,
-        IUserService users, Action<User> extraAction,
+        IUserService users, Action<User> extraAction, bool enableMutations,
         int threadCount, int iterationCount, bool isWarmup = false)
     {
         if (!isWarmup)
-            await Test(title, users, extraAction, threadCount, iterationCount / 10, true);
+            await Test(title, users, extraAction, enableMutations, threadCount, iterationCount / 4, true);
 
         async Task Mutator(string name, CancellationToken cancellationToken)
         {
@@ -113,7 +120,9 @@ public abstract class PerformanceTestBase : FusionTestBase
         WriteLine($"    Operations: {operationCount} ({threadCount} readers x {iterationCount})");
 
         var startTime = CpuClock.Now;
-        var mutatorTask = Task.Run(() => Mutator("W", stopCts.Token));
+        var mutatorTask = enableMutations 
+            ? Task.Run(() => Mutator("W", stopCts.Token))
+            : Task.CompletedTask;
         var tasks = Enumerable
             .Range(0, threadCount)
             .Select(i => Task.Run(() => Reader($"R{i}", iterationCount)))
@@ -124,8 +133,7 @@ public abstract class PerformanceTestBase : FusionTestBase
         stopCts.Cancel();
         await mutatorTask.VoidAwait(false);
 
-        WriteLine($"    Duration:   {elapsed.TotalSeconds:F3} sec");
-        WriteLine($"    Speed:      {operationCount / 1000.0 / elapsed.TotalSeconds:F3} K Ops/sec");
+        WriteLine($"    Speed:      {operationCount / 1000.0 / elapsed.TotalSeconds:F3} K Ops/sec (took {elapsed.TotalSeconds:F3} sec)");
 
         results.Length.Should().Be(threadCount);
         results.All(r => r == iterationCount).Should().BeTrue();
