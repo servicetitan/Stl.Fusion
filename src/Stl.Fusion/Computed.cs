@@ -67,8 +67,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
     }
 
     // IResult<T> properties
-    [MaybeNull]
-    public T ValueOrDefault => Output.ValueOrDefault;
+    public T? ValueOrDefault => Output.ValueOrDefault;
     public T Value => Output.Value;
     public Exception? Error => Output.Error;
     public bool HasValue => Output.HasValue;
@@ -127,7 +126,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
     public override string ToString()
         => $"{GetType().GetName()}({Input} {Version}, State: {ConsistencyState})";
 
-    public virtual bool TrySetOutput(Result<T> output)
+    public bool TrySetOutput(Result<T> output)
     {
         if (ConsistencyState != ConsistencyState.Computing)
             return false;
@@ -139,22 +138,19 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
             SetStateUnsafe(ConsistencyState.Consistent);
             _output = output;
         }
-        OnOutputSet(output);
-        return true;
-    }
 
-    protected void OnOutputSet(Result<T> output)
-    {
         if ((Flags & ComputedFlags.InvalidateOnSetOutput) != 0) {
             Invalidate();
-            return;
+            return true;
         }
+
         var hasTransientError = output.Error is { } error && IsTransientError(error);
         var timeout = hasTransientError
             ? _options.TransientErrorInvalidationDelay
             : _options.AutoInvalidationDelay;
         if (timeout != TimeSpan.MaxValue)
             this.Invalidate(timeout);
+        return true;
     }
 
     public void Invalidate(bool immediately = false)
@@ -220,7 +216,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
         CancelTimeouts();
     }
 
-    public virtual void RenewTimeouts(bool isNew)
+    public void RenewTimeouts(bool isNew)
     {
         if (ConsistencyState == ConsistencyState.Invalidated)
             return; // We shouldn't register miss here, since it's going to be counted as hit anyway
@@ -234,7 +230,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
         ComputedRegistry.Instance.ReportAccess(this, isNew);
     }
 
-    public virtual void CancelTimeouts()
+    public void CancelTimeouts()
     {
         var options = Options;
         if (options.MinCacheDuration != default)
@@ -391,11 +387,11 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
     // Protected & private methods
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    protected void SetStateUnsafe(ConsistencyState newState)
+    private void SetStateUnsafe(ConsistencyState newState)
         => _state = (int) newState;
 
     bool IComputedImpl.IsTransientError(Exception error) => IsTransientError(error);
-    protected bool IsTransientError(Exception error)
+    private bool IsTransientError(Exception error)
     {
         ITransientErrorDetector? transientErrorDetector = null;
         try {
