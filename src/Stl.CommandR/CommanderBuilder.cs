@@ -31,24 +31,25 @@ public readonly struct CommanderBuilder
         Services.Insert(0, AddedTagDescriptor);
 
         // Common services
-        Services.TryAddSingleton<CommanderOptions>();
-        Services.TryAddSingleton<ICommander, Commander>();
+        Services.TryAddSingleton(new CommanderOptions());
+        Services.TryAddSingleton<ICommander>(c => new Commander(c));
         Services.TryAddSingleton<ICommandHandlerRegistry>(new CommandHandlerRegistry());
-        Services.TryAddSingleton<ICommandHandlerResolver, CommandHandlerResolver>();
+        Services.TryAddSingleton<ICommandHandlerResolver>(c => new CommandHandlerResolver(c));
 
         // Command services & their dependencies
         Services.TryAddSingleton(new CommandServiceInterceptor.Options());
-        Services.TryAddSingleton<CommandServiceInterceptor>();
+        Services.TryAddSingleton(c => new CommandServiceInterceptor(
+            c.GetRequiredService<CommandServiceInterceptor.Options>(), c));
 
         Handlers = GetCommandHandlerRegistry(services)
             ?? throw Errors.CommandHandlerRegistryInstanceIsNotRegistered();
 
         // Default handlers
-        Services.AddSingleton<PreparedCommandHandler>();
+        Services.AddSingleton(_ => new PreparedCommandHandler());
         AddHandlers<PreparedCommandHandler>();
-        Services.AddSingleton<CommandTracer>();
+        Services.AddSingleton(c => new CommandTracer(c));
         AddHandlers<CommandTracer>();
-        Services.AddSingleton<LocalCommandRunner>();
+        Services.AddSingleton(_ => new LocalCommandRunner());
         AddHandlers<LocalCommandRunner>();
 
         configure?.Invoke(this);

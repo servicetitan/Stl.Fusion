@@ -34,8 +34,9 @@ public readonly struct FusionRestEaseClientBuilder
         Services.Insert(0, AddedTagDescriptor);
 
         Fusion.AddReplicator();
-        Services.TryAddSingleton<WebSocketChannelProvider.Options>();
-        Services.TryAddSingleton<IChannelProvider, WebSocketChannelProvider>();
+        Services.TryAddSingleton(new WebSocketChannelProvider.Options());
+        Services.TryAddSingleton<IChannelProvider>(c => new WebSocketChannelProvider(
+            c.GetRequiredService<WebSocketChannelProvider.Options>(), c));
 
         // FusionHttpMessageHandler (handles Fusion headers)
         Services.AddHttpClient();
@@ -44,13 +45,16 @@ public readonly struct FusionRestEaseClientBuilder
             FusionHttpMessageHandlerBuilderFilter>());
 
         // ResponseDeserializer & RequestBodySerializer
-        Services.TryAddTransient<RequestQueryParamSerializer, FusionRequestQueryParamSerializer>();
-        Services.TryAddTransient<RequestBodySerializer, FusionRequestBodySerializer>();
-        Services.TryAddTransient<ResponseDeserializer, FusionResponseDeserializer>();
+        Services.TryAddTransient<RequestQueryParamSerializer>(
+            _ => new FusionRequestQueryParamSerializer());
+        Services.TryAddTransient<RequestBodySerializer>(
+            _ => new FusionRequestBodySerializer());
+        Services.TryAddTransient<ResponseDeserializer>(
+            _ => new FusionResponseDeserializer());
 
         // BackendUnreachableDetector - makes "TypeError: Failed to fetch" errors more descriptive
         var commander = Services.AddCommander();
-        Services.TryAddSingleton<BackendUnreachableDetector>();
+        Services.TryAddSingleton(_ => new BackendUnreachableDetector());
         commander.AddHandlers<BackendUnreachableDetector>();
 
         configure?.Invoke(this);

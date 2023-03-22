@@ -15,16 +15,14 @@ public class PostCompletionInvalidator : ICommandHandler<ICompletion>
     protected ILogger Log { get; }
     protected bool IsLoggingEnabled { get; }
 
-    public PostCompletionInvalidator(Options settings,
-        InvalidationInfoProvider invalidationInfoProvider,
-        ILogger<PostCompletionInvalidator>? log = null)
+    public PostCompletionInvalidator(Options settings, IServiceProvider services)
     {
         Settings = settings;
-        Log = log ?? NullLogger<PostCompletionInvalidator>.Instance;
+        Log = services.LogFor(GetType());
         IsLoggingEnabled = Log.IsLogging(settings.LogLevel);
 
         ActivitySource = GetType().GetActivitySource();
-        InvalidationInfoProvider = invalidationInfoProvider;
+        InvalidationInfoProvider = services.GetRequiredService<InvalidationInfoProvider>();
     }
 
     [CommandFilter(Priority = FusionOperationsCommandHandlerPriority.PostCompletionInvalidator)]

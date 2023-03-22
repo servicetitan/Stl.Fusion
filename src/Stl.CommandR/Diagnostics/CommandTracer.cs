@@ -14,12 +14,10 @@ public class CommandTracer : ICommandHandler<ICommand>
         init => _activitySource = value;
     }
 
-    public CommandTracer(
-        IServiceProvider services,
-        ILogger<CommandTracer>? log = null)
+    public CommandTracer(IServiceProvider services)
     {
-        Log = log ?? NullLogger<CommandTracer>.Instance;
         Services = services;
+        Log = services.LogFor(GetType());
     }
 
     [CommandFilter(Priority = CommanderCommandHandlerPriority.CommandTracer)]

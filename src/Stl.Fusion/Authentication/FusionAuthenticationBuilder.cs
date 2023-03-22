@@ -19,13 +19,14 @@ public readonly struct FusionAuthenticationBuilder
             return;
         }
 
-        Services.TryAddScoped<ISessionProvider, SessionProvider>();
+        Services.TryAddScoped<ISessionProvider>(c => new SessionProvider(c));
         Services.TryAddScoped(c => (ISessionResolver) c.GetRequiredService<ISessionProvider>());
         Services.TryAddScoped(c => c.GetRequiredService<ISessionProvider>().Session);
-        Services.TryAddSingleton<ISessionFactory, SessionFactory>();
+        Services.TryAddSingleton<ISessionFactory>(_ => new SessionFactory());
 
-        Services.TryAddSingleton<PresenceReporter.Options>();
-        Services.TryAddScoped<PresenceReporter>();
+        Services.TryAddSingleton(new PresenceReporter.Options());
+        Services.TryAddScoped(c => new PresenceReporter(
+            c.GetRequiredService<PresenceReporter.Options>(), c));
 
         configure?.Invoke(this);
     }

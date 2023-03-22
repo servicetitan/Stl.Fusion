@@ -10,12 +10,10 @@ public class NestedCommandLogger : ICommandHandler<ICommand>
     protected InvalidationInfoProvider InvalidationInfoProvider { get; }
     protected ILogger Log { get; }
 
-    public NestedCommandLogger(
-        InvalidationInfoProvider invalidationInfoProvider,
-        ILogger<NestedCommandLogger>? log = null)
+    public NestedCommandLogger(IServiceProvider services)
     {
-        Log = log ?? NullLogger<NestedCommandLogger>.Instance;
-        InvalidationInfoProvider = invalidationInfoProvider;
+        Log = services.LogFor(GetType());
+        InvalidationInfoProvider = services.GetRequiredService<InvalidationInfoProvider>();
     }
 
     [CommandFilter(Priority = FusionOperationsCommandHandlerPriority.NestedCommandLogger)]

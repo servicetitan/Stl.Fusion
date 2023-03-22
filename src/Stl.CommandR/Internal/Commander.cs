@@ -9,11 +9,11 @@ public class Commander : ICommander
     public CommanderOptions Options { get; }
     public IServiceProvider Services { get; }
 
-    public Commander(CommanderOptions options, IServiceProvider services)
+    public Commander(IServiceProvider services)
     {
-        Options = options;
         Services = services;
-        Log = Services.LogFor(GetType());
+        Options = services.GetRequiredService<CommanderOptions>();
+        Log = services.LogFor(GetType());
         HandlerResolver = services.GetRequiredService<ICommandHandlerResolver>();
         ChainIdSetter = typeof(IEventCommand)
             .GetProperty(nameof(IEventCommand.ChainId))!

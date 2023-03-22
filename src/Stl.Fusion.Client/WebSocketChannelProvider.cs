@@ -78,9 +78,7 @@ public class WebSocketChannelProvider : IChannelProvider, IHasServices
     public Options Settings { get; }
     public IServiceProvider Services { get; }
 
-    public WebSocketChannelProvider(Options settings,
-        IServiceProvider services,
-        ILogger<WebSocketChannelProvider>? log = null)
+    public WebSocketChannelProvider(Options settings, IServiceProvider services)
     {
         Settings = settings;
         Services = services;

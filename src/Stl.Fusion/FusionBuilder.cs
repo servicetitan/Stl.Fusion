@@ -24,7 +24,7 @@ public readonly struct FusionBuilder
     public IServiceCollection Services { get; }
 
     internal FusionBuilder(
-        IServiceCollection services, 
+        IServiceCollection services,
         Action<FusionBuilder>? configure)
     {
         Services = services;
@@ -50,9 +50,11 @@ public readonly struct FusionBuilder
         Services.TryAddSingleton<IMatchingTypeFinder>(_ => new MatchingTypeFinder());
         Services.TryAddSingleton(TransientErrorDetector.DefaultPreferTransient.For<IComputed>());
         Services.TryAddSingleton(new ComputeMethodInterceptor.Options());
-        Services.TryAddSingleton<ComputeMethodInterceptor>();
+        Services.TryAddSingleton(c => new ComputeMethodInterceptor(
+            c.GetRequiredService<ComputeMethodInterceptor.Options>(), c));
         Services.TryAddSingleton(new ComputeServiceInterceptor.Options());
-        Services.TryAddSingleton<ComputeServiceInterceptor>();
+        Services.TryAddSingleton(c => new ComputeServiceInterceptor(
+            c.GetRequiredService<ComputeServiceInterceptor.Options>(), c));
 
         // States
         Services.TryAddSingleton(c => new MixedModeService<IStateFactory>.Singleton(new StateFactory(c), c));
@@ -62,52 +64,57 @@ public readonly struct FusionBuilder
         Services.TryAddTransient(typeof(IMutableState<>), typeof(MutableState<>));
 
         // Update delayer & UI action tracker
-        Services.TryAddScoped<UIActionTracker, UIActionTracker>();
+        Services.TryAddSingleton(new UIActionTracker.Options());
+        Services.TryAddScoped<UIActionTracker>(c => new UIActionTracker(
+            c.GetRequiredService<UIActionTracker.Options>(), c));
         Services.TryAddScoped<IUpdateDelayer>(c => new UpdateDelayer(c.UIActionTracker()));
-        Services.TryAddSingleton<UIActionTracker.Options>();
 
         // CommandR, command completion and invalidation
         var commander = Services.AddCommander();
-        Services.TryAddSingleton<AgentInfo>();
-        Services.TryAddSingleton<InvalidationInfoProvider>();
+        Services.TryAddSingleton(_ => new AgentInfo());
+        Services.TryAddSingleton(c => new InvalidationInfoProvider(
+            c.Commander(), c.GetRequiredService<ICommandHandlerResolver>()));
 
         // Transient operation scope & its provider
         if (!Services.HasService<TransientOperationScopeProvider>()) {
-            Services.AddSingleton<TransientOperationScopeProvider>();
+            Services.AddSingleton(c => new TransientOperationScopeProvider(c));
             commander.AddHandlers<TransientOperationScopeProvider>();
         }
 
         // Nested command logger
         if (!Services.HasService<NestedCommandLogger>()) {
-            Services.AddSingleton<NestedCommandLogger>();
+            Services.AddSingleton(c => new NestedCommandLogger(c));
             commander.AddHandlers<NestedCommandLogger>();
         }
 
         // Operation completion - notifier & producer
-        Services.TryAddSingleton<OperationCompletionNotifier.Options>();
-        Services.TryAddSingleton<IOperationCompletionNotifier, OperationCompletionNotifier>();
-        Services.TryAddSingleton<CompletionProducer.Options>();
+        Services.TryAddSingleton(new OperationCompletionNotifier.Options());
+        Services.TryAddSingleton<IOperationCompletionNotifier>(c => new OperationCompletionNotifier(
+            c.GetRequiredService<OperationCompletionNotifier.Options>(), c));
+        Services.TryAddSingleton(new CompletionProducer.Options());
         Services.TryAddEnumerable(ServiceDescriptor.Singleton(
             typeof(IOperationCompletionListener),
             typeof(CompletionProducer)));
 
         // Command completion handler performing invalidations
-        Services.TryAddSingleton<PostCompletionInvalidator.Options>();
+        Services.TryAddSingleton(new PostCompletionInvalidator.Options());
         if (!Services.HasService<PostCompletionInvalidator>()) {
-            Services.AddSingleton<PostCompletionInvalidator>();
+            Services.AddSingleton(c => new PostCompletionInvalidator(
+                c.GetRequiredService<PostCompletionInvalidator.Options>(), c));
             commander.AddHandlers<PostCompletionInvalidator>();
         }
 
         // Completion terminator
         if (!Services.HasService<CompletionTerminator>()) {
-            Services.AddSingleton<CompletionTerminator>();
+            Services.AddSingleton(_ => new CompletionTerminator());
             commander.AddHandlers<CompletionTerminator>();
         }
 
         // Core multitenancy services
-        Services.TryAddSingleton<ITenantRegistry<Unit>, SingleTenantRegistry<Unit>>();
+        Services.TryAddSingleton<ITenantRegistry<Unit>>(_ => new SingleTenantRegistry<Unit>());
         Services.TryAddSingleton<DefaultTenantResolver<Unit>.Options>();
-        Services.TryAddSingleton<ITenantResolver<Unit>, DefaultTenantResolver<Unit>>();
+        Services.TryAddSingleton<ITenantResolver<Unit>>(c => new DefaultTenantResolver<Unit>(
+            c.GetRequiredService<DefaultTenantResolver<Unit>.Options>(), c));
         // And make it default
         Services.TryAddSingleton<ITenantRegistry>(c => c.GetRequiredService<ITenantRegistry<Unit>>());
         Services.TryAddSingleton<ITenantResolver>(c => c.GetRequiredService<ITenantResolver<Unit>>());
@@ -123,9 +130,9 @@ public readonly struct FusionBuilder
         if (optionsFactory != null)
             Services.AddSingleton(optionsFactory);
         else
-            Services.TryAddSingleton<PublisherOptions>();
+            Services.TryAddSingleton(_ => new PublisherOptions());
 
-        Services.TryAddSingleton<IPublisher, Publisher>();
+        Services.TryAddSingleton<IPublisher>(c => new Publisher(c.GetRequiredService<PublisherOptions>(), c));
         return this;
     }
 
@@ -134,18 +141,21 @@ public readonly struct FusionBuilder
     {
         if (optionsFactory != null)
             Services.AddSingleton(optionsFactory);
-        else 
-            Services.TryAddSingleton<ReplicatorOptions>();
+        else
+            Services.TryAddSingleton(_ => new ReplicatorOptions());
         if (Services.HasService<IReplicator>())
             return this;
 
         // ReplicaServiceProxyGenerator
         Services.TryAddSingleton(new ReplicaMethodInterceptor.Options());
-        Services.TryAddSingleton<ReplicaMethodInterceptor>();
+        Services.TryAddSingleton(c => new ReplicaMethodInterceptor(
+            c.GetRequiredService<ReplicaMethodInterceptor.Options>(), c));
         Services.TryAddSingleton(new ReplicaServiceInterceptor.Options());
-        Services.TryAddSingleton<ReplicaServiceInterceptor>();
+        Services.TryAddSingleton(c => new ReplicaServiceInterceptor(
+            c.GetRequiredService<ReplicaServiceInterceptor.Options>(), c));
         // Replicator
-        Services.TryAddSingleton<IReplicator, Replicator>();
+        Services.TryAddSingleton<IReplicator>(c => new Replicator(
+            c.GetRequiredService<ReplicatorOptions>(), c));
         return this;
     }
 
@@ -230,9 +240,10 @@ public readonly struct FusionBuilder
         if (optionsFactory != null)
             Services.AddSingleton(optionsFactory);
         else
-            Services.TryAddSingleton<ComputedGraphPruner.Options>();
+            Services.TryAddSingleton(new ComputedGraphPruner.Options());
 
-        Services.TryAddSingleton<ComputedGraphPruner>();
+        Services.TryAddSingleton(c => new ComputedGraphPruner(
+            c.GetRequiredService<ComputedGraphPruner.Options>(), c));
         Services.AddHostedService(c => c.GetRequiredService<ComputedGraphPruner>());
         return this;
     }

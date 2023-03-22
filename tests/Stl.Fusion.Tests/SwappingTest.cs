@@ -3,23 +3,23 @@ using Stl.Testing.Collections;
 
 namespace Stl.Fusion.Tests;
 
+public class SwappingTestService : IComputeService
+{
+    public ThreadSafe<int> CallCount { get; } = 0;
+
+    [ComputeMethod(MinCacheDuration = 0.5)]
+    [Swap(1)]
+    public virtual async Task<object> SameValue(object x)
+    {
+        await Task.Yield();
+        CallCount.Value++;
+        return x;
+    }
+}
+
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public class SwappingTest : SimpleFusionTestBase
 {
-    public class Service
-    {
-        public ThreadSafe<int> CallCount { get; } = 0;
-
-        [ComputeMethod(MinCacheDuration = 0.5)]
-        [Swap(1)]
-        public virtual async Task<object> SameValue(object x)
-        {
-            await Task.Yield();
-            CallCount.Value++;
-            return x;
-        }
-    }
-
     public class SwapService : SimpleSwapService
     {
         public ThreadSafe<int> LoadCallCount { get; } = 0;
@@ -64,9 +64,9 @@ public class SwappingTest : SimpleFusionTestBase
     [SkipOnGitHubFact]
     public async Task BasicTest()
     {
-        var services = CreateServiceProviderFor<Service>();
+        var services = CreateServiceProviderFor<SwappingTestService>();
         var swapService = services.GetRequiredService<SwapService>();
-        var service = services.GetRequiredService<Service>();
+        var service = services.GetRequiredService<SwappingTestService>();
 
         service.CallCount.Value = 0;
         var a = "a";

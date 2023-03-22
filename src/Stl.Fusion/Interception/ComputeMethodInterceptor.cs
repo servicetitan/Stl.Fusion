@@ -4,14 +4,14 @@ using Stl.Versioning;
 
 namespace Stl.Fusion.Interception;
 
-public class ComputeMethodInterceptor : ComputeMethodInterceptorBase
+public sealed class ComputeMethodInterceptor : ComputeMethodInterceptorBase
 {
     public new record Options : ComputeMethodInterceptorBase.Options
     {
         public VersionGenerator<LTag>? VersionGenerator { get; init; }
     }
 
-    protected readonly VersionGenerator<LTag> VersionGenerator;
+    private VersionGenerator<LTag> VersionGenerator { get; }
 
     public ComputeMethodInterceptor(Options options, IServiceProvider services)
         : base(options, services)
