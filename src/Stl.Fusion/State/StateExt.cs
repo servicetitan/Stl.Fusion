@@ -1,5 +1,3 @@
-using Stl.Fusion.Internal;
-
 namespace Stl.Fusion;
 
 public static class StateExt
@@ -10,8 +8,8 @@ public static class StateExt
         this IState<T> state, CancellationToken cancellationToken = default)
         => state.Computed.Use(cancellationToken);
 
-    public static bool Invalidate(this IState state)
-        => state.Computed.Invalidate();
+    public static void Invalidate(this IState state, bool immediately = false)
+        => state.Computed.Invalidate(immediately);
 
     public static async ValueTask<TState> Update<TState>(
         this TState state, CancellationToken cancellationToken = default)

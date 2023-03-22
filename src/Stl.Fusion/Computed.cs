@@ -3,7 +3,9 @@ using Stl.Collections.Slim;
 using Stl.Conversion;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
+using Stl.Fusion.Operations.Internal;
 using Stl.Versioning;
+using Errors = Stl.Fusion.Internal.Errors;
 
 namespace Stl.Fusion;
 
@@ -16,7 +18,7 @@ public interface IComputed : IHasConsistencyState, IResult, IHasVersion<LTag>
     Task OutputAsTask { get; }
     event Action<IComputed> Invalidated;
 
-    bool Invalidate();
+    void Invalidate(bool immediately = false);
     TResult Apply<TArg, TResult>(IComputedApplyHandler<TArg, TResult> handler, TArg arg);
 
     ValueTask<IComputed> Update(CancellationToken cancellationToken = default);
@@ -39,15 +41,15 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
 {
     private readonly ComputedOptions _options;
     private volatile int _state;
+    private volatile ComputedFlags _flags;
     private Result<T> _output;
     private Task<T>? _outputAsTask;
     private RefHashSetSlim3<IComputedImpl> _used;
     private HashSetSlim3<(ComputedInput Input, LTag Version)> _usedBy;
     // ReSharper disable once InconsistentNaming
     private event Action<IComputed>? _invalidated;
-    private bool _invalidateOnSetOutput;
 
-    protected bool InvalidateOnSetOutput => _invalidateOnSetOutput;
+    protected ComputedFlags Flags => _flags;
     protected object Lock => this;
 
     public ComputedOptions Options => _options;
@@ -141,9 +143,11 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
     {
         if (ConsistencyState != ConsistencyState.Computing)
             return false;
+
         lock (Lock) {
             if (ConsistencyState != ConsistencyState.Computing)
                 return false;
+
             SetStateUnsafe(ConsistencyState.Consistent);
             _output = output;
         }
@@ -153,7 +157,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
 
     protected void OnOutputSet(Result<T> output)
     {
-        if (InvalidateOnSetOutput) {
+        if ((Flags & ComputedFlags.InvalidateOnSetOutput) != 0) {
             Invalidate();
             return;
         }
@@ -165,19 +169,36 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
             this.Invalidate(timeout);
     }
 
-    public bool Invalidate()
+    public void Invalidate(bool immediately = false)
     {
         if (ConsistencyState == ConsistencyState.Invalidated)
-            return false;
+            return;
+
         // Debug.WriteLine($"{nameof(Invalidate)}: {this}");
         lock (Lock) {
             switch (ConsistencyState) {
             case ConsistencyState.Invalidated:
-                return false;
+                return;
             case ConsistencyState.Computing:
-                _invalidateOnSetOutput = true;
-                return true;
+                var extraFlags = ComputedFlags.InvalidateOnSetOutput;
+                if (immediately && Options.InvalidationDelay != default)
+                    extraFlags |= ComputedFlags.InvalidationDelayStarted;
+                // ReSharper disable once NonAtomicCompoundOperator
+                _flags |= extraFlags;
+                return;
             }
+
+            // Maybe start invalidation delay
+            if (Options.InvalidationDelay != default && !immediately) {
+                if ((_flags & ComputedFlags.InvalidationDelayStarted) != 0)
+                    return; // Already started
+
+                // ReSharper disable once NonAtomicCompoundOperator
+                _flags |= ComputedFlags.InvalidationDelayStarted;
+                this.Invalidate(Options.InvalidationDelay);
+                return;
+            }
+
             SetStateUnsafe(ConsistencyState.Invalidated);
         }
         try {
@@ -203,7 +224,6 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
             }
         }
         _invalidated = null;
-        return true;
     }
 
     protected virtual void OnInvalidated()
@@ -218,7 +238,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
             return; // We shouldn't register miss here, since it's going to be counted as hit anyway
 
         var options = Options;
-        if (options.MinCacheDuration > TimeSpan.Zero) {
+        if (options.MinCacheDuration != default) {
             var keepAliveUntil = Timeouts.Clock.Now + options.MinCacheDuration;
             Timeouts.KeepAlive.AddOrUpdateToLater(this, keepAliveUntil);
         }
@@ -229,7 +249,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
     public virtual void CancelTimeouts()
     {
         var options = Options;
-        if (options.MinCacheDuration > TimeSpan.Zero)
+        if (options.MinCacheDuration != default)
             Timeouts.KeepAlive.Remove(this);
     }
 
@@ -241,6 +261,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
     {
         if (IsConsistent())
             return this;
+
         using var scope = ComputeContext.Suppress();
         return await Function
             .Invoke(Input, null, scope.Context, cancellationToken)

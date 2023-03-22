@@ -32,6 +32,6 @@ public static class Timeouts
                 ConcurrencyLevel = HardwareInfo.GetProcessorCountPo2Factor(),
                 Clock = Clock,
             },
-            t => t.Invalidate());
+            t => t.Invalidate(true));
     }
 }

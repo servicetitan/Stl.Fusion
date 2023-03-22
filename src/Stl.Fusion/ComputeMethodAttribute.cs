@@ -36,4 +36,10 @@ public class ComputeMethodAttribute : Attribute
     /// <code>double.NaN</code> means "use default".
     /// </summary>
     public double AutoInvalidationDelay { get; set; } = double.NaN;
+
+    /// <summary>
+    /// Invalidation delay (in seconds) for any produced <see cref="IComputed"/> instance.
+    /// <code>double.NaN</code> means "use default".
+    /// </summary>
+    public double InvalidationDelay { get; set; } = double.NaN;
 }
