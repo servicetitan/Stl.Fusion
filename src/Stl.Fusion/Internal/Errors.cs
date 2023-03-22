@@ -77,8 +77,6 @@ public static class Errors
 
     public static Exception UnsupportedComputedOptions(Type unsupportedBy)
         => new NotSupportedException($"Specified {nameof(ComputedOptions)} aren't supported by '{unsupportedBy}'.");
-    public static Exception OutputIsUnloaded()
-        => new InvalidOperationException($"{nameof(IAsyncComputed.MaybeOutput)} is unloaded.");
 
     public static Exception InvalidContextCallOptions(CallOptions callOptions)
         => new InvalidOperationException(

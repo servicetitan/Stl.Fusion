@@ -4,7 +4,6 @@ public interface IComputedOptionsProvider
 {
     ComputedOptions? GetComputedOptions(MethodInfo methodInfo, Type proxyType);
     ComputeMethodAttribute? GetComputeMethodAttribute(MethodInfo methodInfo, Type proxyType);
-    SwapAttribute? GetSwapAttribute(MethodInfo methodInfo, Type proxyType);
 }
 
 public record ComputedOptionsProvider : IComputedOptionsProvider
@@ -15,16 +14,12 @@ public record ComputedOptionsProvider : IComputedOptionsProvider
         if (attribute == null)
             return null;
 
-        var swapAttribute = GetSwapAttribute(methodInfo, proxyType);
         var defaultOptions = typeof(IReplicaService).IsAssignableFrom(proxyType)
             ? ComputedOptions.ReplicaDefault
             : ComputedOptions.Default;
-        return ComputedOptions.FromAttribute(defaultOptions, attribute, swapAttribute);
+        return ComputedOptions.FromAttribute(defaultOptions, attribute);
     }
 
     public virtual ComputeMethodAttribute? GetComputeMethodAttribute(MethodInfo methodInfo, Type proxyType)
         => methodInfo.GetAttribute<ComputeMethodAttribute>(true, true);
-
-    public virtual SwapAttribute? GetSwapAttribute(MethodInfo methodInfo, Type proxyType)
-        => methodInfo.GetAttribute<SwapAttribute>(true, true);
 }

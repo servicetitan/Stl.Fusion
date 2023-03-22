@@ -1,5 +1,4 @@
 using Stl.Fusion.Interception;
-using Stl.Fusion.Swapping;
 
 namespace Stl.Fusion;
 
@@ -17,14 +16,11 @@ public record ComputedOptions
     public TimeSpan TransientErrorInvalidationDelay { get; init; } = TimeSpan.FromSeconds(1);
     public TimeSpan AutoInvalidationDelay { get; init; } = TimeSpan.MaxValue; // No auto invalidation
     public TimeSpan InvalidationDelay { get; init; }
-    public SwappingOptions SwappingOptions { get; init; } = SwappingOptions.NoSwapping;
     public Type ComputeMethodDefType { get; init; } = typeof(ComputeMethodDef);
-    public bool IsAsyncComputed => SwappingOptions.IsEnabled;
 
     public static ComputedOptions? FromAttribute(
         ComputedOptions defaultOptions,
-        ComputeMethodAttribute? attribute,
-        SwapAttribute? swapAttribute)
+        ComputeMethodAttribute? attribute)
     {
         if (attribute == null)
             return null;
@@ -33,7 +29,6 @@ public record ComputedOptions
             TransientErrorInvalidationDelay = ToTimeSpan(attribute.TransientErrorInvalidationDelay) ?? defaultOptions.TransientErrorInvalidationDelay,
             AutoInvalidationDelay = ToTimeSpan(attribute.AutoInvalidationDelay) ?? defaultOptions.AutoInvalidationDelay,
             InvalidationDelay = ToTimeSpan(attribute.InvalidationDelay) ?? defaultOptions.InvalidationDelay,
-            SwappingOptions = SwappingOptions.FromAttribute(defaultOptions.SwappingOptions, swapAttribute),
             ComputeMethodDefType = attribute.ComputeMethodDefType ?? defaultOptions.ComputeMethodDefType,
         };
         return options == defaultOptions ? defaultOptions : options;

@@ -1,4 +1,3 @@
-using Stl.Fusion.Swapping;
 using Stl.Interception;
 using Stl.Interception.Interceptors;
 
@@ -32,14 +31,8 @@ public record ComputeMethodDef : MethodDef
         IsValid = true;
     }
 
-    public override MethodDef ToReplicaMethodDef() =>
-        ReferenceEquals(ComputedOptions.SwappingOptions, SwappingOptions.NoSwapping)
-            ? this
-            : this with {
-                ComputedOptions = ComputedOptions with {
-                    SwappingOptions = SwappingOptions.NoSwapping
-                }
-            };
+    public override MethodDef ToReplicaMethodDef()
+        => this;
 
     public virtual ComputeMethodInput CreateInput(IFunction function, Invocation invocation)
         => new(function, this, invocation);

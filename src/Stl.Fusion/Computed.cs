@@ -25,18 +25,6 @@ public interface IComputed : IHasConsistencyState, IResult, IHasVersion<LTag>
     ValueTask<object> Use(CancellationToken cancellationToken = default);
 }
 
-public interface IAsyncComputed : IComputed, IResult
-{
-    IResult? MaybeOutput { get; }
-    ValueTask<IResult?> GetOutput(CancellationToken cancellationToken = default);
-}
-
-public interface IAsyncComputed<T> : IAsyncComputed, IResult<T>
-{
-    new ResultBox<T>? MaybeOutput { get; }
-    new ValueTask<ResultBox<T>?> GetOutput(CancellationToken cancellationToken = default);
-}
-
 public abstract class Computed<T> : IComputedImpl, IResult<T>
 {
     private readonly ComputedOptions _options;

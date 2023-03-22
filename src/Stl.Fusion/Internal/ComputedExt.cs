@@ -30,39 +30,6 @@ public static class ComputedExt
         return true;
     }
 
-    internal static async ValueTask<ResultBox<T>?> TryUseExisting<T>(
-        this IAsyncComputed<T>? existing, ComputeContext context, IComputed? usedBy,
-        CancellationToken cancellationToken)
-    {
-        var callOptions = context.CallOptions;
-        var mustUseExisting = (callOptions & CallOptions.GetExisting) != 0;
-
-        if (existing == null)
-            return mustUseExisting ? ResultBox<T>.Default : null;
-        if (!(mustUseExisting || existing.IsConsistent()))
-            return null;
-
-        var invalidate = (callOptions & CallOptions.Invalidate) == CallOptions.Invalidate;
-        if (invalidate) {
-            existing.Invalidate();
-            context.TryCapture(existing);
-            return existing.MaybeOutput ?? ResultBox<T>.Default;
-        }
-
-        var result = existing.MaybeOutput;
-        if (result == null) {
-            result = await existing.GetOutput(cancellationToken).ConfigureAwait(false);
-            if (result == null)
-                return null;
-        }
-
-        context.TryCapture(existing);
-        if (!mustUseExisting)
-            ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) existing!);
-        ((IComputedImpl?) existing)?.RenewTimeouts(false);
-        return result;
-    }
-
     internal static bool TryUseExistingFromUse<T>(this Computed<T>? existing, ComputeContext context, IComputed? usedBy)
     {
         if (existing == null || !existing.IsConsistent())
@@ -72,26 +39,6 @@ public static class ComputedExt
         ((IComputedImpl?) usedBy)?.AddUsed(existing);
         ((IComputedImpl?) existing)?.RenewTimeouts(false);
         return true;
-    }
-
-    internal static async ValueTask<ResultBox<T>?> TryUseExistingFromUse<T>(
-        this IAsyncComputed<T>? existing, ComputeContext context, IComputed? usedBy,
-        CancellationToken cancellationToken)
-    {
-        if (existing == null || !existing.IsConsistent())
-            return null;
-
-        var result = existing.MaybeOutput;
-        if (result == null) {
-            result = await existing.GetOutput(cancellationToken).ConfigureAwait(false);
-            if (result == null)
-                return null;
-        }
-
-        context.TryCapture(existing);
-        ((IComputedImpl?) usedBy)?.AddUsed((IComputedImpl) existing!);
-        ((IComputedImpl?) existing)?.RenewTimeouts(false);
-        return result;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
