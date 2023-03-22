@@ -216,8 +216,6 @@ public abstract class State<T> : ComputedInput,
     {
         if (prevSnapshot == null) {
             // First assignment / initialization
-            if (snapshot.Computed.Options.IsAsyncComputed)
-                throw Errors.UnsupportedComputedOptions(snapshot.Computed.GetType());
             return;
         }
 
