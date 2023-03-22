@@ -20,14 +20,7 @@ public class ReplicaMethodComputed<T> : ComputeMethodComputed<T>, IReplicaMethod
         : base(options, input, state.Output!.Value, state.Version, state.IsConsistent)
     {
         Replica = replica;
-        State = state;
-    }
-
-    public ReplicaMethodComputed(ComputedOptions options, ComputeMethodInput input, Exception error, LTag version)
-        : base(options, input, new Result<T>(default!, error), version, false)
-    {
-        Replica = null;
-        State = null;
+        State = state.PublicationRef.IsNone ? null : state;
     }
 
     protected override void OnInvalidated()
