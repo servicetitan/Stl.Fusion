@@ -45,7 +45,7 @@ public static class ServiceCollectionExt
         IConnectionMultiplexer connectionMultiplexer,
         string? keyPrefix = null)
     {
-        services.AddSingleton(new RedisDb(connectionMultiplexer, keyPrefix));
+        services.AddSingleton(_ => new RedisDb(connectionMultiplexer, keyPrefix));
         return services;
     }
 
@@ -97,7 +97,7 @@ public static class ServiceCollectionExt
         string? keyPrefix = null)
     {
         keyPrefix ??= typeof(TContext).Name;
-        services.AddSingleton(new RedisDb<TContext>(connectionMultiplexer, keyPrefix));
+        services.AddSingleton(_ => new RedisDb<TContext>(connectionMultiplexer, keyPrefix));
         return services;
     }
 }
