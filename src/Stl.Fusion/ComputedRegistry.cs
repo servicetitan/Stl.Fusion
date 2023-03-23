@@ -150,6 +150,9 @@ public sealed class ComputedRegistry : IDisposable
         _gcHandlePool.Release(handle, random);
     }
 
+    public void PseudoRegister(IComputed computed)
+        => OnRegister?.Invoke(computed);
+
     public void PseudoUnregister(IComputed computed)
         => OnUnregister?.Invoke(computed);
 
