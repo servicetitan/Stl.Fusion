@@ -48,9 +48,11 @@ public static class DiagnosticsHelpers
 
     public static Diagnostic DebugWarning(Exception error)
     {
+#pragma warning disable MA0074
         var text = (error.ToString() ?? "")
             .Replace("\r\n", " | ")
             .Replace("\n", " | ");
+#pragma warning restore MA0074
         return DebugWarning(text);
     }
 
