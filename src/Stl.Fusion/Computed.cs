@@ -1,7 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Stl.Collections.Slim;
 using Stl.Conversion;
-using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
 using Stl.Fusion.Operations.Internal;
 using Stl.Versioning;
@@ -109,7 +108,6 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
         _options = options;
         Input = input;
         Version = version;
-        ComputedRegistry.Instance.Register(this);
     }
 
     protected Computed(ComputedOptions options, ComputedInput input, Result<T> output, LTag version, bool isConsistent)
@@ -119,8 +117,6 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
         _state = (int) (isConsistent ? ConsistencyState.Consistent : ConsistencyState.Invalidated);
         _output = output;
         Version = version;
-        if (isConsistent)
-            ComputedRegistry.Instance.Register(this);
     }
 
     public override string ToString()
@@ -189,8 +185,8 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
             _used.Apply(this, (self, c) => c.RemoveUsedBy(self));
             _used.Clear();
             _invalidated?.Invoke(this);
-            _usedBy.Apply(default(Unit), (_, usedByEntry) => {
-                var c = ComputedRegistry.Instance.Get(usedByEntry.Input);
+            _usedBy.Apply(default(Unit), static (_, usedByEntry) => {
+                var c = usedByEntry.Input.GetExistingComputed();
                 if (c != null && c.Version == usedByEntry.Version)
                     c.Invalidate();
             });
@@ -211,10 +207,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
     }
 
     protected virtual void OnInvalidated()
-    {
-        ComputedRegistry.Instance.Unregister(this);
-        CancelTimeouts();
-    }
+        => CancelTimeouts();
 
     public void RenewTimeouts(bool isNew)
     {
@@ -375,7 +368,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
             var replacement = new HashSetSlim3<(ComputedInput Input, LTag Version)>();
             var oldCount = _usedBy.Count;
             foreach (var entry in _usedBy.Items) {
-                var c = ComputedRegistry.Instance.Get(entry.Input);
+                var c = entry.Input.GetExistingComputed();
                 if (c != null && c.Version == entry.Version)
                     replacement.Add(entry);
             }
@@ -404,13 +397,4 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
         transientErrorDetector ??= TransientErrorDetector.DefaultPreferTransient;
         return transientErrorDetector.IsTransient(error);
     }
-}
-
-public class ComputeMethodComputed<T> : Computed<T>
-{
-    public ComputeMethodComputed(ComputedOptions options, ComputeMethodInput input, LTag version)
-        : base(options, input, version) { }
-
-    protected ComputeMethodComputed(ComputedOptions options, ComputeMethodInput input, Result<T> output, LTag version, bool isConsistent = true)
-        : base(options, input, output, version, isConsistent) { }
 }

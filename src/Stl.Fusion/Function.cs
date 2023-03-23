@@ -109,10 +109,7 @@ public abstract class FunctionBase<T> : IFunction<T>
     }
 
     protected Computed<T>? GetExisting(ComputedInput input)
-    {
-        var computed = ComputedRegistry.Instance.Get(input);
-        return computed as Computed<T>;
-    }
+        => input.GetExistingComputed() as Computed<T>;
 
     // Protected & private
 

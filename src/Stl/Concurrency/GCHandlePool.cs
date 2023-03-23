@@ -49,11 +49,12 @@ public sealed class GCHandlePool : IDisposable
         if (_queue.TryDequeue(out var handle)) {
             if (random == 0)
                 random = handle.GetHashCode();
-            _opCounter.Decrement(random, out _);
+            _opCounter.Decrement(random);
             if (target != null)
                 handle.Target = target;
             return handle;
         }
+
         _opCounter.Reset();
         return GCHandle.Alloc(target, HandleType);
     }
@@ -68,9 +69,10 @@ public sealed class GCHandlePool : IDisposable
         }
         if (!handle.IsAllocated)
             return false;
+
         if (random == 0)
             random = handle.GetHashCode();
-        _opCounter.Increment(random, out _);
+        _opCounter.Increment(random);
         _queue.Enqueue(handle);
         handle.Target = null;
         return true;

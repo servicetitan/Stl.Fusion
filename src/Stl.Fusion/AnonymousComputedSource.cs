@@ -68,6 +68,10 @@ public class AnonymousComputedSource<T> : ComputedInput,
         Initialize(this, RuntimeHelpers.GetHashCode(this));
     }
 
+    // ComputedInput
+
+    public override IComputed? GetExistingComputed() => Computed;
+
     // Update & Use
 
     public async ValueTask<Computed<T>> Update(CancellationToken cancellationToken = default)

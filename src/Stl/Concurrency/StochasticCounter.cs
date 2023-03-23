@@ -46,6 +46,15 @@ public sealed class StochasticCounter
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Increment(int random)
+    {
+        if ((_approximationMask & (uint) random) != 0)
+            return;
+
+        Interlocked.Increment(ref _value);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Decrement(int random, out long approximateValue)
     {
         if ((_approximationMask & (uint) random) != 0) {
@@ -59,5 +68,16 @@ public sealed class StochasticCounter
         }
         approximateValue = value << ApproximationStepLog2;
         return true;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Decrement(int random)
+    {
+        if ((_approximationMask & (uint) random) != 0)
+            return;
+
+        var value = Interlocked.Decrement(ref _value);
+        if (value < 0)
+            Interlocked.CompareExchange(ref _value, 0, value);
     }
 }

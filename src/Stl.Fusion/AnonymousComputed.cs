@@ -12,11 +12,15 @@ public sealed class AnonymousComputed<T> : Computed<T>, IAnonymousComputed
         ComputedOptions options,
         AnonymousComputedSource<T> source, LTag version)
         : base(options, source, version)
-        => Source = source;
+    {
+        Source = source;
+        ComputedRegistry.Instance.PseudoRegister(this);
+    }
 
     protected override void OnInvalidated()
     {
         Source.OnInvalidated(this);
-        base.OnInvalidated();
+        ComputedRegistry.Instance.PseudoUnregister(this);
+        CancelTimeouts();
     }
 }

@@ -8,18 +8,26 @@ public class StateBoundComputed<T> : Computed<T>
         ComputedOptions options,
         State<T> state, LTag version)
         : base(options, state, version)
-        => State = state;
+    {
+        State = state;
+        ComputedRegistry.Instance.PseudoRegister(this);
+    }
 
     protected StateBoundComputed(
         ComputedOptions options,
         State<T> state,
         Result<T> output, LTag version, bool isConsistent)
         : base(options, state, output, version, isConsistent)
-        => State = state;
+    {
+        State = state;
+        if (isConsistent)
+            ComputedRegistry.Instance.PseudoRegister(this);
+    }
 
     protected override void OnInvalidated()
     {
         State.OnInvalidated(this);
-        base.OnInvalidated();
+        ComputedRegistry.Instance.PseudoUnregister(this);
+        CancelTimeouts();
     }
 }

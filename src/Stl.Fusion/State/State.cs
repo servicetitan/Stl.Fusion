@@ -229,6 +229,10 @@ public abstract class State<T> : ComputedInput,
         }
     }
 
+    // ComputedInput
+
+    public override IComputed? GetExistingComputed() => Computed;
+
     // IFunction<T> & IFunction
 
     ValueTask<Computed<T>> IFunction<T>.Invoke(ComputedInput input, IComputed? usedBy, ComputeContext? context,

@@ -134,6 +134,7 @@ public sealed class ReplicaRegistry : IDisposable
     {
         if (!_opCounter.Increment(random, out var opCounterValue))
             return;
+
         if (opCounterValue > _pruneCounterThreshold)
             TryPrune();
     }
