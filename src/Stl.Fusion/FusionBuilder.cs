@@ -163,12 +163,12 @@ public readonly struct FusionBuilder
 
     public FusionBuilder AddComputeService<TService>(
         ServiceLifetime lifetime = ServiceLifetime.Singleton)
-        where TService : class
-        => AddComputeService(typeof(TService), lifetime);
+        where TService : class, IComputeService
+        => AddComputeService(typeof(TService), typeof(TService), lifetime);
     public FusionBuilder AddComputeService<TService, TImplementation>(
         ServiceLifetime lifetime = ServiceLifetime.Singleton)
         where TService : class
-        where TImplementation : class, TService
+        where TImplementation : class, TService, IComputeService
         => AddComputeService(typeof(TService), typeof(TImplementation), lifetime);
 
     public FusionBuilder AddComputeService(
@@ -181,6 +181,8 @@ public readonly struct FusionBuilder
     {
         if (!serviceType.IsAssignableFrom(implementationType))
             throw new ArgumentOutOfRangeException(nameof(implementationType));
+        if (!typeof(IComputeService).IsAssignableFrom(implementationType))
+            throw Stl.Internal.Errors.MustImplement<IComputeService>(implementationType, nameof(implementationType));
         if (Services.Any(d => d.ServiceType == serviceType))
             return this;
 

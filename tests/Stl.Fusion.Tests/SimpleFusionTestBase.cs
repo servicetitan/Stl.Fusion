@@ -27,7 +27,7 @@ public abstract class SimpleFusionTestBase : TestBase
     }
 
     protected IServiceProvider CreateServiceProviderFor<TService>()
-        where TService : class
+        where TService : class, IComputeService
         => CreateServiceProvider(
             services => services.AddFusion().AddComputeService<TService>());
 

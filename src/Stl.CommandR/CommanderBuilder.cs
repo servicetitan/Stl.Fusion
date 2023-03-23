@@ -156,13 +156,13 @@ public readonly struct CommanderBuilder
     public CommanderBuilder AddCommandService<TService>(
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         double? priorityOverride = null)
-        where TService : class
+        where TService : class, ICommandService
         => AddCommandService(typeof(TService), lifetime, priorityOverride);
     public CommanderBuilder AddCommandService<TService, TImplementation>(
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         double? priorityOverride = null)
         where TService : class
-        where TImplementation : class, TService
+        where TImplementation : class, TService, ICommandService
         => AddCommandService(typeof(TService), typeof(TImplementation), lifetime, priorityOverride);
 
     public CommanderBuilder AddCommandService(
@@ -177,6 +177,8 @@ public readonly struct CommanderBuilder
     {
         if (!serviceType.IsAssignableFrom(implementationType))
             throw new ArgumentOutOfRangeException(nameof(implementationType));
+        if (!typeof(ICommandService).IsAssignableFrom(implementationType))
+            throw Stl.Internal.Errors.MustImplement<ICommandService>(implementationType, nameof(implementationType));
 
         object Factory(IServiceProvider c)
         {

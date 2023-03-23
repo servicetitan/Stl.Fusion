@@ -4,7 +4,7 @@ namespace Stl.Interception;
 
 public interface ITypeViewFactory
 {
-    object CreateView(object implementation, Type implementationType, Type viewType);
+    object CreateView(object implementation, Type viewType);
     TypeViewFactory<TView> For<TView>()
         where TView : class;
 }
@@ -19,10 +19,8 @@ public class TypeViewFactory : ITypeViewFactory
     public TypeViewFactory(TypeViewInterceptor interceptor)
         => Interceptor = interceptor;
 
-    public object CreateView(object implementation, Type implementationType, Type viewType)
+    public object CreateView(object implementation, Type viewType)
     {
-        if (!(implementationType.IsClass || implementationType.IsInterface))
-            throw new ArgumentOutOfRangeException(nameof(implementationType));
         if (!viewType.IsInterface)
             throw new ArgumentOutOfRangeException(nameof(viewType));
 
@@ -41,10 +39,6 @@ public readonly struct TypeViewFactory<TView>
 
     public TypeViewFactory(ITypeViewFactory factory) => Factory = factory;
 
-    public TView CreateView(Type implementationType, object implementation)
-        => (TView) Factory.CreateView(implementation, implementationType, typeof(TView));
-
-    public TView CreateView<TImplementation>(TImplementation implementation)
-        where TImplementation : class
-        => (TView) Factory.CreateView(implementation, typeof(TImplementation), typeof(TView));
+    public TView CreateView(object implementation)
+        => (TView) Factory.CreateView(implementation, typeof(TView));
 }

@@ -1,3 +1,5 @@
+using Stl.Interception.Internal;
+
 namespace Stl.Fusion.Interception;
 
 public interface IComputedOptionsProvider
@@ -14,7 +16,7 @@ public record ComputedOptionsProvider : IComputedOptionsProvider
         if (attribute == null)
             return null;
 
-        var defaultOptions = typeof(IReplicaService).IsAssignableFrom(proxyType)
+        var defaultOptions = typeof(InterfaceProxy).IsAssignableFrom(proxyType)
             ? ComputedOptions.ReplicaDefault
             : ComputedOptions.Default;
         return ComputedOptions.FromAttribute(defaultOptions, attribute);

@@ -20,7 +20,9 @@ public class TodoService : ITodoService
 
     public virtual async Task<Todo> AddOrUpdate(AddOrUpdateTodoCommand command, CancellationToken cancellationToken = default)
     {
-        if (Computed.IsInvalidating()) return default!;
+        if (Computed.IsInvalidating()) 
+            return default!;
+
         var (session, todo) = command;
         var user = await _auth.GetUser(session, cancellationToken).Require();
 

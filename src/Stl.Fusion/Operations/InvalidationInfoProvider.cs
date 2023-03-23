@@ -1,3 +1,5 @@
+using Stl.Interception.Internal;
+
 namespace Stl.Fusion.Operations;
 
 public class InvalidationInfoProvider
@@ -21,6 +23,7 @@ public class InvalidationInfoProvider
     {
         if (command == null)
             return false;
+
         return IsComputeServiceCommandCache.GetOrAdd(command.GetType(), static (_, arg) => {
             var (self, command1) = arg;
             var finalHandlerServiceType = self.GetFinalHandlerServiceType(command1);
@@ -32,10 +35,12 @@ public class InvalidationInfoProvider
     {
         if (command == null)
             return false;
+
         return IsReplicaServiceCommandCache.GetOrAdd(command.GetType(), static (_, arg) => {
             var (self, command1) = arg;
             var finalHandlerServiceType = self.GetFinalHandlerServiceType(command1);
-            return typeof(IReplicaService).IsAssignableFrom(finalHandlerServiceType);
+            return typeof(IComputeService).IsAssignableFrom(finalHandlerServiceType)
+                && typeof(InterfaceProxy).IsAssignableFrom(finalHandlerServiceType);
         }, (this, command));
     }
 
@@ -43,6 +48,7 @@ public class InvalidationInfoProvider
     {
         if (command == null)
             return null;
+
         return FinalHandlerServiceTypeCache.GetOrAdd(command.GetType(), static (type, arg) => {
             var (self, command1) = arg;
             var context = CommandContext.New(self.Commander, command1, isOutermost: true);

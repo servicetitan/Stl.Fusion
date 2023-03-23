@@ -10,35 +10,35 @@ public static class Proxies
     // New
 
     public static TType New<TType>(Interceptor interceptor, object? proxyTarget = null)
-        where TType : class
+        where TType : class, IRequiresAsyncProxy
     {
         var proxy = (TType)GetProxyType(typeof(TType)).CreateInstance();
         return interceptor.AttachTo(proxy, proxyTarget);
     }
 
     public static TType New<TType, T1>(T1 arg1, Interceptor interceptor, object? proxyTarget = null)
-        where TType : class
+        where TType : class, IRequiresAsyncProxy
     {
         var proxy = (TType)GetProxyType(typeof(TType)).CreateInstance(arg1);
         return interceptor.AttachTo(proxy, proxyTarget);
     }
 
     public static TType New<TType, T1, T2>(T1 arg1, T2 arg2, Interceptor interceptor, object? proxyTarget = null)
-        where TType : class
+        where TType : class, IRequiresAsyncProxy
     {
         var proxy = (TType)GetProxyType(typeof(TType)).CreateInstance(arg1, arg2);
         return interceptor.AttachTo(proxy, proxyTarget);
     }
 
     public static TType New<TType, T1, T2, T3>(T1 arg1, T2 arg2, T3 arg3, Interceptor interceptor, object? proxyTarget = null)
-        where TType : class
+        where TType : class, IRequiresAsyncProxy
     {
         var proxy = (TType)GetProxyType(typeof(TType)).CreateInstance(arg1, arg2, arg3);
         return interceptor.AttachTo(proxy, proxyTarget);
     }
 
     public static TType New<TType, T1, T2, T3, T4>(T1 arg1, T2 arg2, T3 arg3, T4 arg4, Interceptor interceptor, object? proxyTarget = null)
-        where TType : class
+        where TType : class, IRequiresAsyncProxy
     {
         var proxy = (TType)GetProxyType(typeof(TType)).CreateInstance(arg1, arg2, arg3, arg4);
         return interceptor.AttachTo(proxy, proxyTarget);
@@ -77,7 +77,7 @@ public static class Proxies
     // GetProxyType
 
     public static Type GetProxyType<TType>()
-        where TType : class
+        where TType : class, IRequiresAsyncProxy
         => GetProxyType(typeof(TType));
 
     public static Type GetProxyType(Type type)

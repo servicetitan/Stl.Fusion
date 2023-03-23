@@ -1,4 +1,4 @@
-using Stl.Fusion.Bridge.Interception;
+using Stl.Interception.Internal;
 
 namespace Stl.Fusion.Client.Internal;
 
@@ -15,7 +15,8 @@ public class BackendUnreachableDetector : ICommandHandler<ICommand>
         if (command is IMetaCommand) goto Skip;
 
         var finalHandler = context.ExecutionState.FindFinalHandler();
-        if (finalHandler?.GetHandlerService(command, context) is not IReplicaService)
+        var finalHandlerService = finalHandler?.GetHandlerService(command, context);
+        if (finalHandlerService is not IComputeService cs || !cs.IsReplicaService())
             goto Skip;
 
         try {

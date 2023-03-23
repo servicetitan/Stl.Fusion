@@ -29,7 +29,7 @@ public class MinCacheDurationTest : TestBase
     public MinCacheDurationTest(ITestOutputHelper @out) : base(@out) { }
 
     public static IServiceProvider CreateProviderFor<TService>()
-        where TService : class
+        where TService : class, IComputeService
     {
         ComputedRegistry.Instance = new ComputedRegistry(new ComputedRegistry.Options() {
             InitialCapacity = 16,

@@ -7,7 +7,7 @@ public static class ServiceProviderExt
     public static TType ActivateProxy<TType>(
         this IServiceProvider services,
         Interceptor interceptor, TType? proxyTarget = null)
-        where TType : class
+        where TType : class, IRequiresAsyncProxy
     {
         var proxyType = Proxies.GetProxyType<TType>();
         var proxy = (TType)services.Activate(proxyType);

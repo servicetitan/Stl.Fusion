@@ -1,6 +1,6 @@
 namespace Stl.Interception;
 
-public interface IProxy
+public interface IProxy : IRequiresAsyncProxy
 {
     Interceptor Interceptor { get; }
 
