@@ -150,9 +150,11 @@ public sealed class ComputedRegistry : IDisposable
         _gcHandlePool.Release(handle, random);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void PseudoRegister(IComputed computed)
         => OnRegister?.Invoke(computed);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void PseudoUnregister(IComputed computed)
         => OnUnregister?.Invoke(computed);
 
