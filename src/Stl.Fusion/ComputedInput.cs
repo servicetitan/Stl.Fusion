@@ -21,6 +21,8 @@ public abstract class ComputedInput : IEquatable<ComputedInput>
     public override string ToString()
         => $"{Category} #{HashCode}";
 
+    public abstract IComputed? GetExistingComputed();
+
     // Equality
 
     public abstract bool Equals(ComputedInput? other);

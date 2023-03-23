@@ -123,7 +123,7 @@ public sealed class ComputedRegistry : IDisposable
         }
     }
 
-    public bool Unregister(IComputed computed)
+    public void Unregister(IComputed computed)
     {
         // We can't remove what still could be invalidated,
         // since "usedBy" links are resolved via this registry
@@ -136,17 +136,18 @@ public sealed class ComputedRegistry : IDisposable
         OnOperation(random);
 
         if (!_storage.TryGetValue(key, out var handle))
-            return false;
+            return;
         var target = handle.Target;
         if (target != null && !ReferenceEquals(target, computed))
-            return false;
+            return;
+
         // gcHandle.Target == null (is gone, i.e. to be pruned)
         // or pointing to the right computation object
         if (!_storage.TryRemove(key, handle))
             // If another thread removed the entry, it also released the handle
-            return false;
+            return;
+
         _gcHandlePool.Release(handle, random);
-        return true;
     }
 
     public void PseudoUnregister(IComputed computed)
@@ -195,6 +196,7 @@ public sealed class ComputedRegistry : IDisposable
     {
         if (!_opCounter.Increment(random, out var opCounterValue))
             return;
+
         if (opCounterValue > _pruneCounterThreshold)
             TryPrune();
     }

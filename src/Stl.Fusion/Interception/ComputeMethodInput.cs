@@ -41,12 +41,14 @@ public sealed class ComputeMethodInput : ComputedInput, IEquatable<ComputeMethod
     public override string ToString()
         => ZString.Concat(Category, "(", ZString.Join(", ", Arguments), ") #", HashCode);
 
+    public override IComputed? GetExistingComputed()
+        => ComputedRegistry.Instance.Get(this);
+
     public object InvokeOriginalFunction(CancellationToken cancellationToken)
     {
         // This method fixes up the arguments before the invocation so that
         // CancellationToken is set to the correct one and CallOptions are reset.
-        // In addition, it processes CallOptions.Capture, though note that
-        // it's also processed in InterceptedFunction.TryGetExisting.
+        // In addition, it processes CallOptions.Capture.
 
         var methodDef = MethodDef;
         var arguments = Arguments;
