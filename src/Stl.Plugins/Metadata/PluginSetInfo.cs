@@ -96,9 +96,10 @@ public class PluginSetInfo
         var assemblyNames = assemblies.ToDictionary(a => a.GetName(), a => a);
         return assemblies.ToDictionary(
             a => a,
-            a => ToHashSet(a.GetReferencedAssemblies()
-                .Select(assemblyNames.GetValueOrDefault)
-                .Where(x => x != null)));
+            a => ToHashSet(
+                a.GetReferencedAssemblies()
+                    .Select(assemblyNames.GetValueOrDefault)
+                    .Where(x => x != null)))!;
     }
 
     private static HashSet<Assembly> GetAssemblyDependencies(Assembly assembly, HashSet<Assembly>? result = null)
