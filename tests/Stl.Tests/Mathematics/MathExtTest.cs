@@ -31,10 +31,13 @@ public class MathExtTest : TestBase
     [Fact]
     public void FactorialTest()
     {
+        Assert.Throws<ArgumentOutOfRangeException>(() => MathExt.Factorial(-1));
         Assert.Equal(1, MathExt.Factorial(0));
         Assert.Equal(1, MathExt.Factorial(1));
         Assert.Equal(2, MathExt.Factorial(2));
         Assert.Equal(6, MathExt.Factorial(3));
         Assert.Equal(24, MathExt.Factorial(4));
+        MathExt.Factorial(1000);
+        Assert.Throws<ArgumentOutOfRangeException>(() => MathExt.Factorial(10_001));
     }
 }

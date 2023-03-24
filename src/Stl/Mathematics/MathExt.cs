@@ -4,8 +4,7 @@ namespace Stl.Mathematics;
 
 public static class MathExt
 {
-    private static readonly ConcurrentDictionary<int, BigInteger> _factorials =
-        new ConcurrentDictionary<int, BigInteger>();
+    private static readonly Dictionary<int, BigInteger> Factorials = new();
 
     public static double Clamp(this double value, double min, double max) => Math.Min(Math.Max(value, min), max);
     public static float Clamp(this float value, float min, float max) => Math.Min(Math.Max(value, min), max);
@@ -28,33 +27,36 @@ public static class MathExt
 
     public static long ExtendedGcd(long a, long b, ref long x, ref long y)
     {
-        if (b==0) {
+        if (b == 0) {
             x = 1;
             y = 0;
             return a;
-        } else {
-            var g = ExtendedGcd(b, a%b, ref y, ref x);
-            y -= a/b*x;
-            return g;
         }
+
+        var g = ExtendedGcd(b, a%b, ref y, ref x);
+        y -= a/b*x;
+        return g;
     }
 
     public static BigInteger Factorial(int n)
     {
-        if (n < 0)
+        if (n is < 0 or > 10_000)
             throw new ArgumentOutOfRangeException(nameof(n));
         if (n <= 1)
             return BigInteger.One;
+
         var i = n;
         var f = BigInteger.One;
-        while (i >= 1 && !_factorials.TryGetValue(n, out f)) i--;
-        if (i <= 1)
-            f = BigInteger.One;
-        for (i++; i <= n; i++) {
-            f *= i;
-            _factorials.TryAdd(i, f);
+        lock (Factorials) {
+            while (i >= 1 && !Factorials.TryGetValue(n, out f)) i--;
+            if (i <= 1)
+                f = BigInteger.One;
+            for (i++; i <= n; i++) {
+                f *= i;
+                Factorials.TryAdd(i, f);
+            }
+            return f;
         }
-        return f;
     }
 
     public static T FastPower<T>(T n, long power, T one, Func<T, T, T> multiply)
