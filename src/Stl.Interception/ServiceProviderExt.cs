@@ -11,7 +11,7 @@ public static class ServiceProviderExt
     {
         var proxyType = Proxies.GetProxyType<TType>();
         var proxy = (TType)services.Activate(proxyType);
-        return interceptor.AttachTo(proxy, proxyTarget);
+        return interceptor.BindTo(proxy, proxyTarget);
     }
 
     public static IProxy ActivateProxy(
@@ -20,7 +20,7 @@ public static class ServiceProviderExt
     {
         var proxyType = Proxies.GetProxyType(type);
         var proxy = (IProxy)services.Activate(proxyType);
-        return interceptor.AttachTo(proxy, proxyTarget);
+        return InterceptorExt.BindTo(interceptor, proxy, proxyTarget);
     }
 
     // GetTypeViewFactory

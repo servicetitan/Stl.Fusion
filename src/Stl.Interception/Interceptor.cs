@@ -4,15 +4,13 @@ namespace Stl.Interception;
 
 public class Interceptor
 {
-    public T AttachTo<T>(T proxy, object? proxyTarget = null)
-        where T : class, IRequiresAsyncProxy
+    public virtual void BindTo(IProxy proxy, object? proxyTarget = null)
     {
-        proxy.RequireProxy().SetInterceptor(this);
+        proxy.SetInterceptor(this);
         if (proxyTarget != null)
             proxy.RequireProxy<InterfaceProxy>().ProxyTarget = proxyTarget;
         if (proxy is INotifyInitialized notifyInitialized)
             notifyInitialized.Initialized();
-        return proxy;
     }
 
     public virtual void Intercept(Invocation invocation)
