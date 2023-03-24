@@ -31,7 +31,7 @@ public class TestClassBase : IRequiresAsyncProxy
     public virtual Task<int> NoProxy4(int a) => Task.FromResult(a);
 }
 
-public class TestClass : TestClassBase, ITestInterface
+internal class TestClass : TestClassBase, ITestInterface
 {
     public TestClass(int x) : base(x) { }
 
@@ -56,8 +56,20 @@ public interface IInterfaceProxy : IRequiresFullProxy
     Task Method2(int x, CancellationToken cancellationToken);
 }
 
-public class ClassProxy : IInterfaceProxy
+public class ClassProxy : IInterfaceProxy, INotifyInitialized
 {
+    public bool IsInitialized { get; private set; }
+
+    public ClassProxy()
+    {
+        IsInitialized.Should().BeFalse();
+    }
+
+    public void Initialized()
+    {
+        IsInitialized = true;
+    }
+
     public virtual void VoidMethod() { }
     public virtual Task Method0() => Task.CompletedTask;
     public virtual Task Method1(CancellationToken cancellationToken) => Task.CompletedTask;
@@ -89,7 +101,7 @@ public class AltClassProxy
             ArgumentList.New(x, cancellationToken),
             intercepted);
         if (_cachedIntercept == null)
-            throw new InvalidOperationException("You must call Bind first.");
+            throw new InvalidOperationException("No interceptor!.");
         return _cachedIntercept.Invoke(invocation);
     }
 

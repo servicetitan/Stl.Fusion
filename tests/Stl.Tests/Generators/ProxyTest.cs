@@ -1,5 +1,4 @@
 using Stl.Interception;
-using Stl.Reflection;
 
 namespace Stl.Tests.Generators;
 
@@ -18,6 +17,7 @@ public class ProxyTest : TestBase
         var altProxy = new AltClassProxy(interceptor);
         var classProxy = Proxies.New<ClassProxy>(interceptor);
         var interfaceProxy = Proxies.New<IInterfaceProxy>(interceptor, noProxy);
+        classProxy.IsInitialized.Should().BeTrue();
 
         RunOne("NoProxy.VoidMethod", baseOpCount, opCount => {
             for (; opCount > 0; opCount--)

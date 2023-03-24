@@ -32,11 +32,15 @@ public class ProxyGenerator : IIncrementalGenerator
         var typeDef = (TypeDeclarationSyntax) context.Node;
 
         var typeSymbol = semanticModel.GetDeclaredSymbol(typeDef);
-        if (typeSymbol == null || !typeSymbol.DeclaredAccessibility.HasFlag(Accessibility.Public))
+        if (typeSymbol == null)
             return default;
         if (typeSymbol.IsSealed)
             return default;
         if (typeSymbol is { TypeKind: TypeKind.Class, IsAbstract: true })
+            return default;
+
+        var declaredAccessibility = typeSymbol.DeclaredAccessibility;
+        if (declaredAccessibility != Accessibility.Public && declaredAccessibility != Accessibility.Internal)
             return default;
 
         var requiresProxy = typeSymbol.AllInterfaces.Any(t => Equals(t.ToFullName(), RequireAsyncProxyInterfaceName));

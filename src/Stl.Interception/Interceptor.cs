@@ -7,9 +7,11 @@ public class Interceptor
     public T AttachTo<T>(T proxy, object? proxyTarget = null)
         where T : class, IRequiresAsyncProxy
     {
-        proxy.RequireProxy().Bind(this);
+        proxy.RequireProxy().SetInterceptor(this);
         if (proxyTarget != null)
             proxy.RequireProxy<InterfaceProxy>().ProxyTarget = proxyTarget;
+        if (proxy is INotifyInitialized notifyInitialized)
+            notifyInitialized.Initialized();
         return proxy;
     }
 

@@ -30,7 +30,7 @@ public static class GenerationHelpers
     public static readonly IdentifierNameSyntax GetMethodInfoMethodName = IdentifierName("GetMethodInfo");
     public static readonly IdentifierNameSyntax InterceptMethodName = IdentifierName("Intercept");
     public static readonly GenericNameSyntax InterceptGenericMethodName = GenericName(InterceptMethodName.Identifier.Text);
-    public static readonly IdentifierNameSyntax BindMethodName = IdentifierName("Bind");
+    public static readonly IdentifierNameSyntax SetInterceptorMethodName = IdentifierName("SetInterceptor");
     public static readonly IdentifierNameSyntax NoInterceptorMethodName = IdentifierName("NoInterceptor");
     public static readonly IdentifierNameSyntax InterceptorIsAlreadyBoundMethodName = IdentifierName("InterceptorIsAlreadyBound");
     // Properties, fields, locals

@@ -4,5 +4,5 @@ public interface IProxy : IRequiresAsyncProxy
 {
     Interceptor Interceptor { get; }
 
-    void Bind(Interceptor interceptor);
+    void SetInterceptor(Interceptor interceptor);
 }

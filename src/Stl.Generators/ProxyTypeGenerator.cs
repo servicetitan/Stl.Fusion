@@ -51,8 +51,16 @@ public class ProxyTypeGenerator
         if (IsInterfaceProxy)
             baseTypes.Insert(0, InterfaceProxyBaseTypeName);
 
+        SyntaxToken accessibilityModifier;
+        if (typeSymbol.DeclaredAccessibility == Accessibility.Public)
+            accessibilityModifier = Token(SyntaxKind.PublicKeyword);
+        else if (typeSymbol.DeclaredAccessibility == Accessibility.Internal)
+            accessibilityModifier = Token(SyntaxKind.InternalKeyword);
+        else
+            return;
+
         ProxyDef = ClassDeclaration(ProxyTypeName)
-            .AddModifiers(Token(SyntaxKind.PublicKeyword), Token(SyntaxKind.SealedKeyword))
+            .AddModifiers(accessibilityModifier, Token(SyntaxKind.SealedKeyword))
             .WithTypeParameterList(TypeDef.TypeParameterList)
             .WithBaseList(BaseList(CommaSeparatedList(
                 baseTypes.Select(t => (BaseTypeSyntax)SimpleBaseType(t)).ToArray())))
@@ -478,7 +486,7 @@ public class ProxyTypeGenerator
         bindMethodBody = bindMethodBody.AddStatements(BindMethodStatements.ToArray());
 
         Methods.Add(
-            MethodDeclaration(PredefinedType(Token(SyntaxKind.VoidKeyword)), BindMethodName.Identifier)
+            MethodDeclaration(PredefinedType(Token(SyntaxKind.VoidKeyword)), SetInterceptorMethodName.Identifier)
                 .WithExplicitInterfaceSpecifier(ExplicitInterfaceSpecifier(ProxyInterfaceTypeName))
                 .WithParameterList(
                     ParameterList(SingletonSeparatedList(
