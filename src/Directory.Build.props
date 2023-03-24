@@ -121,11 +121,8 @@
   </PropertyGroup>
   <ItemGroup Condition="'$(EnableSourceLink)' =='true'">
     <SourceRoot Include="$(RepoRoot)" RepositoryUrl="$(RepositoryUrl)" SourceControl="git" RevisionId="$(GitCommitId)" />
-  </ItemGroup>
-  <!--
-  <ItemGroup Condition="'$(EnableSourceLink)' =='true'">
+    <!-- Embed the code of generated source files -->
     <EmbeddedFiles Include="$(BaseIntermediateOutputPath)$(Configuration)\**\*.cs" />
   </ItemGroup>
-  -->
 
 </Project>
