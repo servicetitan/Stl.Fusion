@@ -169,7 +169,7 @@
     <PackageReference Update="Meziantou.Analyzer" Version="2.0.*" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers"/>
     
     <!-- Generators -->
-    <PackageReference Update="Microsoft.CodeAnalysis.Analyzers" Version="3.3.3">
+    <PackageReference Update="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
