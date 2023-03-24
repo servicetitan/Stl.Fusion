@@ -9,7 +9,6 @@ public static partial class TaskExt
     private static readonly MethodInfo FromTypedTaskInternalMethod =
         typeof(TaskExt).GetMethod(nameof(FromTypedTaskInternal), BindingFlags.Static | BindingFlags.NonPublic)!;
     private static readonly ConcurrentDictionary<Type, Func<Task, IResult>> ToTypedResultCache = new();
-    private static readonly TaskCompletionSource<Unit> UnitTaskCompletionSource;
 
     public static readonly Task NeverEndingTask;
     public static readonly Task<Unit> NeverEndingUnitTask;
@@ -21,9 +20,6 @@ public static partial class TaskExt
     {
         NeverEndingUnitTask = NeverEnding();
         NeverEndingTask = NeverEndingUnitTask;
-        var unitTcs = new TaskCompletionSource<Unit>();
-        unitTcs.SetResult(default);
-        UnitTaskCompletionSource = unitTcs;
 
         async Task<Unit> NeverEnding()
             => await TaskSource.New<Unit>(true).Task.ConfigureAwait(false);
