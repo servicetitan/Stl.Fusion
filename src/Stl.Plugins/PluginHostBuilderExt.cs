@@ -22,30 +22,35 @@ public static class PluginHostBuilderExt
         return builder;
     }
 
-    public static TBuilder UsePlugins<TBuilder>(this TBuilder builder, params Type[] pluginTypes)
+    public static TBuilder UsePlugins<TBuilder>(this TBuilder builder,
+        bool resolveIndirectDependencies,
+        params Type[] pluginTypes)
         where TBuilder : PluginHostBuilder
-        => builder.UsePlugins((IEnumerable<Type>) pluginTypes);
+        => builder.UsePlugins(resolveIndirectDependencies, (IEnumerable<Type>) pluginTypes);
 
-    public static TBuilder UsePlugins<TBuilder>(this TBuilder builder, IEnumerable<Type> pluginTypes)
+    public static TBuilder UsePlugins<TBuilder>(this TBuilder builder,
+        bool resolveIndirectDependencies,
+        IEnumerable<Type> pluginTypes)
         where TBuilder : PluginHostBuilder
     {
         var services = builder.Services;
         services.RemoveAll(typeof(IPluginFinder));
         services.RemoveAll(typeof(PredefinedPluginFinder.Options));
 
-        services.AddSingleton<IPluginFinder, PredefinedPluginFinder>();
-        services.AddSingleton(_ =>
-            new PredefinedPluginFinder.Options() {
-                PluginTypes = pluginTypes,
-            });
+        services.AddSingleton(new PredefinedPluginFinder.Options() {
+            PluginTypes = pluginTypes,
+            ResolveIndirectDependencies = resolveIndirectDependencies,
+        });
+        services.AddSingleton<IPluginFinder>(c => new PredefinedPluginFinder(
+            c.GetRequiredService<PredefinedPluginFinder.Options>(),
+            c.GetRequiredService<IPluginInfoProvider>()));
         return builder;
     }
 
     public static TBuilder UsePluginFilter<TBuilder>(this TBuilder builder, Func<PluginInfo, bool> predicate)
         where TBuilder : PluginHostBuilder
     {
-        builder.Services.AddSingleton<IPluginFilter>(
-            new PredicatePluginFilter(predicate));
+        builder.Services.AddSingleton<IPluginFilter>(new PredicatePluginFilter(predicate));
         return builder;
     }
 

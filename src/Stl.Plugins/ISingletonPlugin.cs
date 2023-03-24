@@ -1,3 +1,4 @@
 namespace Stl.Plugins;
 
-public interface ISingletonPlugin { }
+public interface ISingletonPlugin
+{ }

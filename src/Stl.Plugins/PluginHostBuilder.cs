@@ -17,25 +17,28 @@ public class PluginHostBuilder
     {
         services ??= new ServiceCollection();
         Services = services;
-        if (!Services.HasService<ILoggerFactory>())
-            Services.AddLogging();
+        if (!services.HasService<ILoggerFactory>())
+            services.AddLogging();
 
         // Own services
-        Services.TryAddSingleton<IPluginHost, PluginHost>();
-        Services.TryAddSingleton<IPluginFactory, PluginFactory>();
-        Services.TryAddSingleton<IPluginCache, PluginCache>();
-        services.TryAddSingleton<IPluginInfoProvider, PluginInfoProvider>();
-        Services.TryAddSingleton(typeof(IPluginInstanceHandle<>), typeof(PluginInstanceHandle<>));
-        Services.TryAddSingleton(typeof(IPluginHandle<>), typeof(PluginHandle<>));
-        Services.TryAddSingleton(services1 => {
-            var pluginFinder = services1.GetRequiredService<IPluginFinder>();
+        services.TryAddSingleton<IPluginHost>(c => new PluginHost(c));
+        services.TryAddSingleton<IPluginFactory>(c => new PluginFactory(c));
+        services.TryAddSingleton<IPluginCache>(c => new PluginCache(c));
+        services.TryAddSingleton<IPluginInfoProvider>(_ => new PluginInfoProvider());
+        services.TryAddSingleton(typeof(IPluginInstanceHandle<>), typeof(PluginInstanceHandle<>));
+        services.TryAddSingleton(typeof(IPluginHandle<>), typeof(PluginHandle<>));
+        services.TryAddSingleton(c => {
+            var pluginFinder = c.GetRequiredService<IPluginFinder>();
             return pluginFinder.FoundPlugins
                 ?? throw Errors.PluginFinderRunFailed(pluginFinder.GetType());
         });
 
         // FileSystemPluginFinder is the default IPluginFinder
-        Services.TryAddSingleton<IPluginFinder, FileSystemPluginFinder>();
-        Services.TryAddSingleton<FileSystemPluginFinder.Options>();
+        services.TryAddSingleton(_ => new FileSystemPluginFinder.Options());
+        services.TryAddSingleton<IPluginFinder>(c => new FileSystemPluginFinder(
+            c.GetRequiredService<FileSystemPluginFinder.Options>(),
+            c.GetRequiredService<IPluginInfoProvider>(),
+            c.LogFor<FileSystemPluginFinder>()));
     }
 
     public IPluginHost Build()

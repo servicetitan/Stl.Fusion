@@ -49,7 +49,7 @@ public class PluginInfo
             Ancestors.AddRange(Interfaces).Add(type).ToArray());
         Capabilities = pluginInfoProvider.GetCapabilities(type);
         Dependencies = pluginInfoProvider.GetDependencies(type);
-        var allAssemblyRefs = constructionInfo.AllAssemblyRefs[type.Assembly];
+        var allAssemblyRefs = constructionInfo.AssemblyDependencies[type.Assembly];
         AllDependencies = constructionInfo.Plugins
             .Where(p => p != type && (
                 allAssemblyRefs.Contains(p.Assembly) ||

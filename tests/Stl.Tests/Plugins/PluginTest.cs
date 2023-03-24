@@ -25,7 +25,7 @@ public class PluginTest : TestBase
     {
         await Assert.ThrowsAsync<InvalidOperationException>(async () => {
             await new PluginHostBuilder()
-                .UsePlugins(typeof(ITestPlugin))
+                .UsePlugins(false, typeof(ITestPlugin))
                 .BuildAsync();
         });
     }
@@ -120,7 +120,7 @@ public class PluginTest : TestBase
         testPlugin2Deps.Count.Should().Be(0);
 
         hostBuilder = CreateHostBuilder()
-            .UsePlugins(plugins.InfoByType.Keys.Select(t => t.Resolve()));
+            .UsePlugins(false, plugins.InfoByType.Keys.Select(t => t.Resolve()));
         host = await hostBuilder.BuildAsync();
 
         RunPluginHostTests(host);
