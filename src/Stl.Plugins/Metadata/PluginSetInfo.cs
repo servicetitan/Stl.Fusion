@@ -58,7 +58,8 @@ public class PluginSetInfo
             }
         }
 
-        var orderedPlugins = dPlugins.Values
+        var orderedPlugins = ci.Plugins
+            .Select(t => dPlugins[t])
             .OrderByDependency(p => p.AllDependencies.Select(t => dPlugins[t]))
             .ToArray();
         for (var i = 0; i < orderedPlugins.Length; i++)

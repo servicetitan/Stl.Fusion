@@ -12,13 +12,11 @@ public class PredefinedPluginFinder : IPluginFinder
 
     public PluginSetInfo FoundPlugins { get; }
 
-    public PredefinedPluginFinder(Options options, IPluginInfoProvider pluginInfoProvider)
-    {
-        var pluginTypes = new HashSet<Type>(options.PluginTypes);
-        FoundPlugins = new PluginSetInfo(pluginTypes,
+    public PredefinedPluginFinder(Options options, IPluginInfoProvider pluginInfoProvider) 
+        => FoundPlugins = new PluginSetInfo(
+            options.PluginTypes.Distinct(),
             pluginInfoProvider,
             options.ResolveIndirectDependencies);
-    }
 
     public Task Run(CancellationToken cancellationToken = default)
         => Task.CompletedTask;
