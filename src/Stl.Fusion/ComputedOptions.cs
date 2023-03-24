@@ -1,5 +1,4 @@
 using Stl.Fusion.Interception;
-using Stl.Fusion.Swapping;
 
 namespace Stl.Fusion;
 
@@ -7,31 +6,29 @@ public record ComputedOptions
 {
     public static ComputedOptions Default { get; set; } = new();
     public static ComputedOptions ReplicaDefault { get; set; } = new() {
-        KeepAliveTime = TimeSpan.FromMinutes(1),
+        MinCacheDuration = TimeSpan.FromMinutes(1),
     };
     public static ComputedOptions MutableStateDefault { get; set; } = new() {
         TransientErrorInvalidationDelay = TimeSpan.MaxValue,
     };
 
-    public TimeSpan KeepAliveTime { get; init; }
+    public TimeSpan MinCacheDuration { get; init; }
     public TimeSpan TransientErrorInvalidationDelay { get; init; } = TimeSpan.FromSeconds(1);
     public TimeSpan AutoInvalidationDelay { get; init; } = TimeSpan.MaxValue; // No auto invalidation
-    public SwappingOptions SwappingOptions { get; init; } = SwappingOptions.NoSwapping;
+    public TimeSpan InvalidationDelay { get; init; }
     public Type ComputeMethodDefType { get; init; } = typeof(ComputeMethodDef);
-    public bool IsAsyncComputed => SwappingOptions.IsEnabled;
 
     public static ComputedOptions? FromAttribute(
         ComputedOptions defaultOptions,
-        ComputeMethodAttribute? attribute,
-        SwapAttribute? swapAttribute)
+        ComputeMethodAttribute? attribute)
     {
         if (attribute == null)
             return null;
         var options = new ComputedOptions() {
-            KeepAliveTime = ToTimeSpan(attribute.MinCacheDuration) ?? defaultOptions.KeepAliveTime,
+            MinCacheDuration = ToTimeSpan(attribute.MinCacheDuration) ?? defaultOptions.MinCacheDuration,
             TransientErrorInvalidationDelay = ToTimeSpan(attribute.TransientErrorInvalidationDelay) ?? defaultOptions.TransientErrorInvalidationDelay,
             AutoInvalidationDelay = ToTimeSpan(attribute.AutoInvalidationDelay) ?? defaultOptions.AutoInvalidationDelay,
-            SwappingOptions = SwappingOptions.FromAttribute(defaultOptions.SwappingOptions, swapAttribute),
+            InvalidationDelay = ToTimeSpan(attribute.InvalidationDelay) ?? defaultOptions.InvalidationDelay,
             ComputeMethodDefType = attribute.ComputeMethodDefType ?? defaultOptions.ComputeMethodDefType,
         };
         return options == defaultOptions ? defaultOptions : options;

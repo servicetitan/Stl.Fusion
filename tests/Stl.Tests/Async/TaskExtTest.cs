@@ -124,13 +124,13 @@ public class TaskExtTest : TestBase
             var collectTask = tasks.Collect(cl);
             // ReSharper disable once PossibleMultipleEnumeration
             var whenAllTask = Task.WhenAll(tasks);
-            var collect = await collectTask.SuppressExceptions();
-            var whenAll = await whenAllTask.SuppressExceptions();
+            var collect = await collectTask.ResultAwait();
+            var whenAll = await whenAllTask.ResultAwait();
 
             collectTask.IsCompletedSuccessfully().Should().Be(whenAllTask.IsCompletedSuccessfully());
             if (whenAllTask.IsCompletedSuccessfully()) {
-                var s1 = collect.ToDelimitedString();
-                var s2 = whenAll.ToDelimitedString();
+                var s1 = collect.Value.ToDelimitedString();
+                var s2 = whenAll.Value.ToDelimitedString();
                 Out.WriteLine($"CL={cl}, Size={size} -> {s1}");
                 s1.Should().Be(s2);
             }
@@ -149,8 +149,8 @@ public class TaskExtTest : TestBase
             var collectTask = tasks.Collect(cl);
             // ReSharper disable once PossibleMultipleEnumeration
             var whenAllTask = Task.WhenAll(tasks);
-            await collectTask.SuppressExceptions();
-            await whenAllTask.SuppressExceptions();
+            await collectTask.VoidAwait();
+            await whenAllTask.VoidAwait();
 
             collectTask.IsCompletedSuccessfully().Should().Be(whenAllTask.IsCompletedSuccessfully());
         }

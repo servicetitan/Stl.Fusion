@@ -1,11 +1,10 @@
-using Castle.DynamicProxy;
 using Stl.Interception.Interceptors;
 
 namespace Stl.Interception;
 
 public interface ITypeViewFactory
 {
-    object CreateView(object implementation, Type implementationType, Type viewType);
+    object CreateView(object implementation, Type viewType);
     TypeViewFactory<TView> For<TView>()
         where TView : class;
 }
@@ -13,31 +12,19 @@ public interface ITypeViewFactory
 public class TypeViewFactory : ITypeViewFactory
 {
     public static ITypeViewFactory Default { get; } =
-        new TypeViewFactory(
-            TypeViewProxyGenerator.Default,
-            new TypeViewInterceptor(DependencyInjection.ServiceProviderExt.Empty));
+        new TypeViewFactory(new TypeViewInterceptor(DependencyInjection.ServiceProviderExt.Empty));
 
-    protected TypeViewProxyGenerator ProxyGenerator { get; }
-    protected IInterceptor[] Interceptors { get; }
+    protected Interceptor Interceptor { get; }
 
-    public TypeViewFactory(
-        TypeViewProxyGenerator proxyGenerator,
-        TypeViewInterceptor interceptor)
+    public TypeViewFactory(TypeViewInterceptor interceptor)
+        => Interceptor = interceptor;
+
+    public object CreateView(object implementation, Type viewType)
     {
-        ProxyGenerator = proxyGenerator;
-        Interceptors = new IInterceptor[] { interceptor };
-    }
-
-    public object CreateView(object implementation, Type implementationType, Type viewType)
-    {
-        if (!(implementationType.IsClass || implementationType.IsInterface))
-            throw new ArgumentOutOfRangeException(nameof(implementationType));
         if (!viewType.IsInterface)
             throw new ArgumentOutOfRangeException(nameof(viewType));
-        var proxyType = ProxyGenerator.GetProxyType(implementationType, viewType);
-        var view = (TypeView) proxyType.CreateInstance(Interceptors, (object?) null);
-        view.ViewTarget = implementation;
-        return view;
+
+        return Proxies.New(viewType, Interceptor, implementation);
     }
 
     public TypeViewFactory<TView> For<TView>()
@@ -52,10 +39,6 @@ public readonly struct TypeViewFactory<TView>
 
     public TypeViewFactory(ITypeViewFactory factory) => Factory = factory;
 
-    public TView CreateView(Type implementationType, object implementation)
-        => (TView) Factory.CreateView(implementation, implementationType, typeof(TView));
-
-    public TView CreateView<TImplementation>(TImplementation implementation)
-        where TImplementation : class
-        => (TView) Factory.CreateView(implementation, typeof(TImplementation), typeof(TView));
+    public TView CreateView(object implementation)
+        => (TView) Factory.CreateView(implementation, typeof(TView));
 }

@@ -7,6 +7,7 @@ public class PredefinedPluginFinder : IPluginFinder
     public record Options
     {
         public IEnumerable<Type> PluginTypes { get; init; } = Enumerable.Empty<Type>();
+        public bool ResolveIndirectDependencies { get; init; }
     }
 
     public PluginSetInfo FoundPlugins { get; }
@@ -14,7 +15,9 @@ public class PredefinedPluginFinder : IPluginFinder
     public PredefinedPluginFinder(Options options, IPluginInfoProvider pluginInfoProvider)
     {
         var pluginTypes = new HashSet<Type>(options.PluginTypes);
-        FoundPlugins = new PluginSetInfo(pluginTypes, pluginInfoProvider);
+        FoundPlugins = new PluginSetInfo(pluginTypes,
+            pluginInfoProvider,
+            options.ResolveIndirectDependencies);
     }
 
     public Task Run(CancellationToken cancellationToken = default)

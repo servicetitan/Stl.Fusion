@@ -1,5 +1,5 @@
-using Castle.DynamicProxy;
 using Stl.CommandR.Internal;
+using Stl.Interception;
 using Stl.Interception.Interceptors;
 
 namespace Stl.CommandR.Interception;
@@ -15,16 +15,15 @@ public class CommandServiceInterceptor : InterceptorBase
         : base(options, services)
         => Commander = services.GetRequiredService<ICommander>();
 
-    protected override Action<IInvocation> CreateHandler<T>(
-        IInvocation initialInvocation, MethodDef methodDef)
+    protected override Func<Invocation, object?> CreateHandler<T>(Invocation initialInvocation, MethodDef methodDef)
         => invocation => {
-            var command = (ICommand) invocation.Arguments[0];
-            var cancellationToken = (CancellationToken) invocation.Arguments[^1];
+            var arguments = invocation.Arguments;
+            var command = arguments.GetItem<ICommand>(0);
+            var cancellationToken = arguments.GetItem<CancellationToken>(arguments.Length - 1);
             var context = CommandContext.Current;
             if (ReferenceEquals(command, context?.UntypedCommand)) {
                 // We're already inside the ICommander pipeline created for exactly this command
-                invocation.Proceed();
-                return;
+                return invocation.InterceptedUntyped();
             }
 
             // We're outside the ICommander pipeline, so we either have to block this call...
@@ -32,12 +31,12 @@ public class CommandServiceInterceptor : InterceptorBase
                 throw Errors.DirectCommandHandlerCallsAreNotAllowed();
 
             // Or route it via ICommander
-            invocation.ReturnValue = methodDef.IsAsyncVoidMethod
+            return methodDef.IsAsyncVoidMethod
                 ? Commander.Call(command, cancellationToken)
                 : Commander.Call((ICommand<T>)command, cancellationToken);
         };
 
-    protected override MethodDef? CreateMethodDef(MethodInfo methodInfo, IInvocation initialInvocation)
+    protected override MethodDef? CreateMethodDef(MethodInfo methodInfo, Invocation initialInvocation)
     {
         try {
             var methodDef = new CommandHandlerMethodDef(this, methodInfo);

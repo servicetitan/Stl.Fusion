@@ -1,9 +1,7 @@
 namespace Stl.Fusion.Tests.Services;
 
-public interface ITimeService
+public interface ITimeService : IComputeService
 {
-    DateTime Time { get; }
-
     [ComputeMethod]
     Task<DateTime> GetTime(CancellationToken cancellationToken = default);
     [ComputeMethod]

@@ -16,7 +16,7 @@ public static class ComputedExt
             return;
         }
 
-        var bPrecise = usePreciseTimer ?? delay <= TimeSpan.FromSeconds(1);
+        var bPrecise = usePreciseTimer ?? delay <= Computed.PreciseInvalidationDelayThreshold;
         if (!bPrecise) {
             Timeouts.Invalidate.AddOrUpdateToEarlier(computed, Timeouts.Clock.Now + delay);
             computed.Invalidated += c => Timeouts.Invalidate.Remove(c);
@@ -31,14 +31,15 @@ public static class ComputedExt
             // so Invalidate() call will do nothing & return immediately,
             // or it's invoked via one of timer threads, i.e. where it's
             // totally fine to invoke Invalidate directly as well.
-            computed.Invalidate();
+            computed.Invalidate(true);
             cts.Dispose();
         });
         computed.Invalidated += _ => {
             try {
                 if (!cts.IsCancellationRequested)
                     cts.Cancel(true);
-            } catch {
+            }
+            catch {
                 // Intended: this method should never throw any exceptions
             }
             finally {

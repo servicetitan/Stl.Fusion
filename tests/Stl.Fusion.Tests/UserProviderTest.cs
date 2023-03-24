@@ -20,7 +20,7 @@ public class UserProviderTest : FusionTestBase
         var u1 = await users.Get(int.MaxValue);
         var c1 = await Computed.Capture(() => users.Count());
 
-        users.Invalidate();
+        await users.Invalidate();
 
         var u2 = await users.Get(int.MaxValue);
         var c2 = await Computed.Capture(() => users.Count());
@@ -150,8 +150,8 @@ public class UserProviderTest : FusionTestBase
         var cUser0 = await Computed.Capture(() => users.Get(0));
         var cCount = await Computed.Capture(() => users.Count());
 
-        cUser0!.Options.KeepAliveTime.Should().Be(TimeSpan.FromSeconds(1));
-        cCount!.Options.KeepAliveTime.Should().Be(TimeSpan.FromSeconds(1));
+        cUser0!.Options.MinCacheDuration.Should().Be(TimeSpan.FromSeconds(60));
+        cCount!.Options.MinCacheDuration.Should().Be(TimeSpan.FromSeconds(60));
     }
 
     [Fact]

@@ -17,10 +17,10 @@ public static class FusionBuilderExt
     public static FusionBuilder AddBackendStatus(this FusionBuilder fusion)
         => fusion.AddBackendStatus<BackendStatus>();
     public static FusionBuilder AddBackendStatus<TBackendStatus>(this FusionBuilder fusion)
-        where TBackendStatus : class, IBackendStatus
+        where TBackendStatus : BackendStatus
     {
         fusion.AddComputeService<TBackendStatus>();
-        fusion.Services.TryAddSingleton<IBackendStatus>(c => c.GetRequiredService<TBackendStatus>());
+        fusion.Services.TryAddSingleton<BackendStatus>(c => c.GetRequiredService<TBackendStatus>());
         return fusion;
     }
 

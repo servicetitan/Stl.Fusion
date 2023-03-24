@@ -1,6 +1,6 @@
 namespace Stl.Fusion.Tests.Services;
 
-public interface IEdgeCaseService
+public interface IEdgeCaseService : IComputeService
 {
     [ComputeMethod(MinCacheDuration = 10)]
     Task<string> GetSuffix(CancellationToken cancellationToken = default);

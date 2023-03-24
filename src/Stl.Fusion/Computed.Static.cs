@@ -6,6 +6,8 @@ public static class Computed
 {
     private static readonly AsyncLocal<IComputed?> CurrentLocal = new();
 
+    public static TimeSpan PreciseInvalidationDelayThreshold { get; set; } = TimeSpan.FromSeconds(1);
+
     // GetCurrent & ChangeCurrent
 
     public static IComputed? GetCurrent() => CurrentLocal.Value;

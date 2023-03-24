@@ -5,7 +5,7 @@ using Stl.Fusion.Internal;
 
 namespace Stl.Fusion.Extensions;
 
-public class BackendStatus : IBackendStatus
+public class BackendStatus : IComputeService
 {
     private static FieldInfo UsedField { get; } = typeof(Computed<Unit>)
         .GetField("_used", BindingFlags.Instance | BindingFlags.NonPublic)!;

@@ -45,7 +45,7 @@ public static class TestExt
                 if (!cancellationToken.IsCancellationRequested)
                     scope.Discard();
             }
-            await Task.Delay(timeout, cancellationToken).SuppressCancellation().ConfigureAwait(false);
+            await Task.Delay(timeout, cancellationToken).SuppressCancellationAwait(false);
         }
     }
 }

@@ -3,7 +3,7 @@ using Stl.Interception.Interceptors;
 
 namespace Stl.Fusion.Interception;
 
-public class ComputeServiceInterceptor : SelectingInterceptorBase
+public sealed class ComputeServiceInterceptor : SelectingInterceptorBase
 {
     public new record Options : SelectingInterceptorBase.Options
     {

@@ -3,9 +3,9 @@ using Stl.Fusion.Authentication;
 
 namespace Stl.Fusion.Tests.Services;
 
-public class PerUserCounterService
+public class PerUserCounterService : IComputeService
 {
-    private readonly ConcurrentDictionary<(string, string), int> _counters = new ConcurrentDictionary<(string, string), int>();
+    private readonly ConcurrentDictionary<(string, string), int> _counters = new();
 
     [ComputeMethod]
     public virtual Task<int> Get(string key, Session session, CancellationToken cancellationToken = default)
@@ -16,7 +16,7 @@ public class PerUserCounterService
 
     public Task Increment(string key, Session session, CancellationToken cancellationToken = default)
     {
-        _counters.AddOrUpdate((session.Id, key), k => 1, (k, v) => v + 1);
+        _counters.AddOrUpdate((session.Id, key), _ => 1, (_, v) => v + 1);
 
         using (Computed.Invalidate()) {
             Get(key, session, default).AssertCompleted();

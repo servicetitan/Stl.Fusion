@@ -4,16 +4,31 @@ namespace Stl.Time;
 
 public static class ClockExt
 {
+    // Delay
+
     public static Task Delay(this IMomentClock clock, Moment dueAt, CancellationToken cancellationToken = default)
         => clock.Delay((dueAt - clock.Now).Positive(), cancellationToken);
     public static Task Delay(this IMomentClock clock, long dueInMilliseconds, CancellationToken cancellationToken = default)
     {
-        if (dueInMilliseconds == Timeout.Infinite)
-            return clock.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+        if (dueInMilliseconds == System.Threading.Timeout.Infinite)
+            return clock.Delay(System.Threading.Timeout.InfiniteTimeSpan, cancellationToken);
         if (dueInMilliseconds < 0)
             throw new ArgumentOutOfRangeException(nameof(dueInMilliseconds));
         return clock.Delay(TimeSpan.FromMilliseconds(dueInMilliseconds), cancellationToken);
     }
+
+    // Timeout
+
+    public static ClockTimeout Timeout(this IMomentClock clock, TimeSpan duration)
+        => new (clock, duration);
+    public static ClockTimeout Timeout(this IMomentClock clock, double duration)
+        => new (clock, TimeSpan.FromSeconds(duration));
+    public static ClockTimeout Timeout(this MomentClockSet clocks, TimeSpan duration)
+        => new (clocks.CpuClock, duration);
+    public static ClockTimeout Timeout(this MomentClockSet clocks, double duration)
+        => new (clocks.CpuClock, TimeSpan.FromSeconds(duration));
+
+    // Timer
 
     public static IObservable<long> Timer(this IMomentClock clock, long delayInMilliseconds)
         => clock.Timer(TimeSpan.FromMilliseconds(delayInMilliseconds));
@@ -40,6 +55,8 @@ public static class ClockExt
     public static IAsyncEnumerable<long> TimerAsync(this IMomentClock clock, TimeSpan dueIn)
         => clock.Timer(dueIn).ToAsyncEnumerable();
 
+    // Interval
+
     public static IObservable<long> Interval(this IMomentClock clock, long intervalInMilliseconds)
         => clock.Interval(TimeSpan.FromMilliseconds(intervalInMilliseconds));
     public static IObservable<long> Interval(this IMomentClock clock, TimeSpan interval)
@@ -55,7 +72,7 @@ public static class ClockExt
                 var index = 0L;
                 while (e.MoveNext()) {
                     var dueAt = clock.Now + e.Current;
-                    await clock.Delay(dueAt, ct).SuppressCancellation().ConfigureAwait(false);
+                    await clock.Delay(dueAt, ct).SuppressCancellationAwait();
                     if (ct.IsCancellationRequested)
                         break;
                     observer.OnNext(index++);

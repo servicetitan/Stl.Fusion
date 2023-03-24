@@ -1,0 +1,283 @@
+<#@ template debug="false" hostspecific="true" language="C#" #>
+<#@ output extension=".cs" encoding="utf-8" #>
+<#@ assembly Name="System.Core.dll" #>
+<#@ assembly Name="System.Xml.dll" #>
+<#@ assembly Name="System.Xml.Linq.dll" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Xml.Linq" #>
+<#@ import namespace="System.Linq" #>
+<# const int maxItemCount = 12; #>
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable ArrangeConstructorOrDestructorBody
+using Cysharp.Text;
+
+namespace Stl.Interception;
+
+[DataContract]
+public record ArgumentList
+{
+    public static ArgumentList Empty { get; } = new();
+
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public virtual int Length => 0;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ArgumentList New()
+        => Empty;
+<# for (var itemCount = 1; itemCount <= maxItemCount; itemCount++) {
+    var argumentTypes = "" ;
+    var argumentDeclaration = "";
+    var argumentUsage = "";
+    for (var t = 0; t < itemCount; t++) {
+        if (t > 0)
+            argumentTypes += ", ";
+        argumentTypes += "T" + t;
+
+        if (t > 0)
+            argumentDeclaration += ", ";
+        argumentDeclaration += "T" + t + " item" + t;
+
+        if (t > 0)
+            argumentUsage += ", ";
+        argumentUsage += "item" + t;
+    }
+#>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ArgumentList<<#=argumentTypes#>> New<<#=argumentTypes#>>(<#=argumentDeclaration#>)
+        => new (<#=argumentUsage#>);
+<#}#>
+
+    public override string ToString() => "()";
+    public virtual object?[] ToArray() => Array.Empty<object?>();
+
+    public virtual T GetItem<T>(int index)
+        => throw new ArgumentOutOfRangeException(nameof(index));
+    public virtual object? GetItemUntyped(int index)
+        => throw new ArgumentOutOfRangeException(nameof(index));
+
+    public virtual void SetItem<T>(int index, T value)
+         => throw new ArgumentOutOfRangeException(nameof(index));
+    public virtual void SetItemUntyped(int index, object? value)
+         => throw new ArgumentOutOfRangeException(nameof(index));
+    public virtual void SetCancellationToken(int index, CancellationToken cancellationToken)
+         => throw new ArgumentOutOfRangeException(nameof(index));
+
+    public virtual bool Equals(ArgumentList? other, int ignoredIndex)
+        => other?.GetType() == typeof(ArgumentList);
+    public virtual int GetHashCode(int ignoredIndex)
+        => 1;
+
+    public virtual bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
+        => other?.GetType() == typeof(ArgumentList);
+    public virtual int GetHashCode(Delegate?[] equalsDelegates)
+        => 1;
+}
+
+<# for (var itemCount = 1; itemCount <= maxItemCount; itemCount++) {
+   var argumentTypes = "" ;
+   for (var t = 0; t < itemCount; t++) {
+       if (t > 0)
+           argumentTypes += ", ";
+       argumentTypes += "T" + t;
+   }
+#>
+[DataContract]
+public sealed record ArgumentList<<#=argumentTypes#>>(
+<# 
+    for (var t = 0; t < itemCount; t++) {
+        var comma = t < (itemCount - 1) ? "," : "";
+#>
+    T<#=t#> Item<#=t#><#=comma#>
+<#
+    } 
+#>
+) : ArgumentList
+{
+<#for (var t = 0; t < itemCount; t++) {#>
+    private T<#=t#> _item<#=t#> = Item<#=t#>;
+<#}#>
+
+<#for (var t = 0; t < itemCount; t++) {#>
+    [DataMember(Order = <#=t#>)] public T<#=t#> Item<#=t#> { get => _item<#=t#>; init => _item<#=t#> = value; }
+<#}#>
+
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public override int Length => <#=itemCount#>;
+
+    // ToString & ToArray
+
+    public override string ToString()
+    {
+        using var sb = ZString.CreateStringBuilder();
+        sb.Append('(');
+        sb.Append(Item<#=0#>);
+<#for (var t = 1; t < itemCount; t++) {#>
+        sb.Append(", ");
+        sb.Append(Item<#=t#>);
+<#}#>
+        sb.Append(')');
+        return sb.ToString();
+    }
+
+    public override object?[] ToArray()
+        => new object?[] {
+<#for (var t = 0; t < itemCount; t++) {#>
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            Item<#=t#>,
+<#}#>
+        };
+
+    // GetItem
+
+    public override T GetItem<T>(int index)
+        => index switch {
+<#for (var t = 0; t < itemCount; t++) {#>
+            <#=t#> => Item<#=t#> is T value ? value : default!,
+<#}#>
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override object? GetItemUntyped(int index)
+        => index switch {
+<#for (var t = 0; t < itemCount; t++) {#>
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            <#=t#> => Item<#=t#>,
+<#}#>
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    // SetItem
+
+    public override void SetItem<T>(int index, T value)
+    {
+        switch (index) {
+<#for (var t = 0; t < itemCount; t++) {#>
+        case <#=t#>:
+            _item<#=t#> = value is T<#=t#> item<#=t#> ? item<#=t#> : default!;
+            break;
+<#}#>
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    public override void SetItemUntyped(int index, object? value)
+    {
+        switch (index) {
+<#for (var t = 0; t < itemCount; t++) {#>
+        case <#=t#>:
+            _item<#=t#> = value is T<#=t#> item<#=t#> ? item<#=t#> : default!;
+            break;
+<#}#>
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    public override void SetCancellationToken(int index, CancellationToken cancellationToken)
+    {
+        switch (index) {
+<#for (var t = 0; t < itemCount; t++) {#>
+        case <#=t#>:
+            _item<#=t#> = cancellationToken is T<#=t#> item<#=t#> ? item<#=t#> : default!;
+            break;
+<#}#>
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    // Equality
+
+    public bool Equals(ArgumentList<<#=argumentTypes#>>? other)
+    {
+        if (other == null)
+            return false;
+
+<#for (var t = itemCount - 1; t >= 0; t--) {#>
+        if (!EqualityComparer<T<#=t#>>.Default.Equals(Item<#=t#>, other.Item<#=t#>))
+            return false;
+<#}#>
+        return true;
+    }
+
+    public override int GetHashCode()
+    {
+        unchecked {
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+<#for (var t = 1; t < itemCount; t++) {#>
+            hashCode = 397*hashCode + EqualityComparer<T<#=t#>>.Default.GetHashCode(Item<#=t#>!);
+<#}#>
+            return hashCode;
+        }
+    }
+
+    public override bool Equals(ArgumentList? other, int ignoredIndex)
+    {
+        if (other is not ArgumentList<<#=argumentTypes#>> vOther)
+            return false;
+
+<#for (var t = itemCount - 1; t >= 0; t--) {#>
+        if (ignoredIndex != <#=t#> && !EqualityComparer<T<#=t#>>.Default.Equals(Item<#=t#>, vOther.Item<#=t#>))
+            return false;
+<#}#>
+        return true;
+    }
+
+    public override int GetHashCode(int ignoredIndex)
+    {
+        unchecked {
+            var hashCode = ignoredIndex == 0 ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+<#for (var t = 1; t < itemCount; t++) {#>
+            hashCode = 397*hashCode + (ignoredIndex == <#=t#> ? 0 : EqualityComparer<T<#=t#>>.Default.GetHashCode(Item<#=t#>!));
+<#}#>
+            return hashCode;
+        }
+    }
+
+    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
+    {
+        if (equalsDelegates.Length < <#=itemCount#>)
+            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
+        if (other is not ArgumentList<<#=argumentTypes#>> vOther)
+            return false;
+
+<#for (var t = itemCount - 1; t >= 0; t--) {#>
+        if (equalsDelegates[<#=t#>] is Func<T<#=t#>, T<#=t#>, bool> func<#=t#>) {
+            if (!func<#=t#>.Invoke(Item<#=t#>, vOther.Item<#=t#>))
+                return false;
+        }
+        else if (!EqualityComparer<T<#=t#>>.Default.Equals(Item<#=t#>, vOther.Item<#=t#>))
+            return false;
+
+<#}#>
+        return true;
+    }
+
+    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
+    {
+        if (getHashCodeDelegates.Length < <#=itemCount#>)
+            throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
+        unchecked {
+            int hashCode;
+            if (getHashCodeDelegates[0] is Func<T0, int> func0)
+                hashCode = func0.Invoke(Item0!);
+            else
+                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+
+<#for (var t = 1; t < itemCount; t++) {#>
+            if (getHashCodeDelegates[<#=t#>] is Func<T<#=t#>, int> func<#=t#>)
+                hashCode = (hashCode * 397) + func<#=t#>.Invoke(Item<#=t#>!);
+            else
+                hashCode = (hashCode * 397) + EqualityComparer<T<#=t#>>.Default.GetHashCode(Item<#=t#>!);
+
+<#}#>
+            return hashCode;
+        }
+    }
+}
+
+<#}#>

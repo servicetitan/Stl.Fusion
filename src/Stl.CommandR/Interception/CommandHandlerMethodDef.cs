@@ -1,12 +1,12 @@
-using Castle.DynamicProxy;
 using Stl.CommandR.Internal;
+using Stl.Interception;
 using Stl.Interception.Interceptors;
 
 namespace Stl.CommandR.Interception;
 
 public record CommandHandlerMethodDef : MethodDef
 {
-    public CommandHandlerMethodDef(IInterceptor interceptor, MethodInfo methodInfo)
+    public CommandHandlerMethodDef(Interceptor interceptor, MethodInfo methodInfo)
         : base(interceptor, methodInfo)
     {
         var commandHandler = MethodCommandHandler.TryNew(methodInfo.ReflectedType!, methodInfo);
@@ -22,4 +22,8 @@ public record CommandHandlerMethodDef : MethodDef
 
         IsValid = true;
     }
+
+    // All XxxMethodDef records should rely on reference-based equality
+    public virtual bool Equals(CommandHandlerMethodDef? other) => ReferenceEquals(this, other);
+    public override int GetHashCode() => RuntimeHelpers.GetHashCode(this);
 }

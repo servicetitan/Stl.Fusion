@@ -7,7 +7,7 @@ namespace Stl.Fusion.Tests.Services;
 [RegisterRestEaseReplicaService(Scope = ServiceScope.ClientServices)]
 [BasePath("RestEase")]
 [SerializationMethods(Query = QuerySerializationMethod.Serialized)]
-public interface IRestEaseClient
+public interface IRestEaseClient : IComputeService
 {
     [Get("getFromQueryImplicit")]
     Task<string> GetFromQueryImplicit(string str, CancellationToken cancellationToken = default);

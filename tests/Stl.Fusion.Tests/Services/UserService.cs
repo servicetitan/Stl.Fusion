@@ -5,7 +5,7 @@ using Stl.RegisterAttributes;
 
 namespace Stl.Fusion.Tests.Services;
 
-public interface IUserService
+public interface IUserService : IComputeService
 {
     [DataContract]
     public record AddCommand(
@@ -39,11 +39,11 @@ public interface IUserService
     [CommandHandler]
     Task<bool> Delete(DeleteCommand command, CancellationToken cancellationToken = default);
 
-    [ComputeMethod(MinCacheDuration = 1)]
+    [ComputeMethod(MinCacheDuration = 60)]
     Task<User?> Get(long userId, CancellationToken cancellationToken = default);
-    [ComputeMethod(MinCacheDuration = 1)]
+    [ComputeMethod(MinCacheDuration = 60)]
     Task<long> Count(CancellationToken cancellationToken = default);
-    void Invalidate();
+    Task Invalidate();
 }
 
 [RegisterComputeService(typeof(IUserService), Scope = ServiceScope.Services)] // Fusion version
@@ -149,19 +149,21 @@ public class UserService : DbServiceBase<TestDbContext>, IUserService
         var dbContext = CreateDbContext();
         await using var _ = dbContext.ConfigureAwait(false);
 
-        var count = await dbContext.Users.AsQueryable().LongCountAsync(cancellationToken).ConfigureAwait(false);
+        var count = await dbContext.Users.AsQueryable()
+            .LongCountAsync(cancellationToken)
+            .ConfigureAwait(false);
         // _log.LogDebug($"Users.Count query: {count}");
         return count;
     }
 
-    public virtual void Invalidate()
+    public virtual Task Invalidate()
     {
         if (!IsProxy)
-            return;
+            return Task.CompletedTask;
 
-        using (Computed.Invalidate()) {
+        using (Computed.Invalidate())
             Everything().AssertCompleted();
-        }
+        return Task.CompletedTask;
     }
 
     // Protected & private methods

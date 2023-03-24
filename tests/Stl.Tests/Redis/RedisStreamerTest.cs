@@ -47,7 +47,7 @@ public class RedisStreamerTest : RedisTestBase
         });
         (await streamer.Read().Take(2).CountAsync()).Should().Be(2);
 
-        await writeTask.SuppressCancellation();
+        await writeTask.SuppressCancellationAwait();
         writeTask.IsCanceled.Should().BeTrue();
     }
 

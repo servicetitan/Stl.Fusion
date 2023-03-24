@@ -20,7 +20,7 @@ public record EditCommand<TValue>(string Id, TValue? Value = null) : ICommand<Un
     public EditCommand() : this("") { }
 }
 
-public interface IProductService
+public interface IProductService: IComputeService
 {
     [CommandHandler]
     Task Edit(EditCommand<Product> command, CancellationToken cancellationToken = default);
@@ -28,7 +28,7 @@ public interface IProductService
     Task<Product?> Get(string id, CancellationToken cancellationToken = default);
 }
 
-public interface ICartService
+public interface ICartService: IComputeService
 {
     [CommandHandler]
     Task Edit(EditCommand<Cart> command, CancellationToken cancellationToken = default);

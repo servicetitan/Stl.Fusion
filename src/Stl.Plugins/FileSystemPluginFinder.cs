@@ -21,6 +21,7 @@ public class FileSystemPluginFinder : CachingPluginFinderBase
             @"((System)|(Microsoft)|(Google)|(WindowsBase)|(mscorlib))\.(.*)\.dll",
             RegexOptions.Singleline | RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture);
         public bool UseCache { get; init; } = true;
+        public bool DetectIndirectAssemblyDependencies { get; init; } = true;
         public FilePath CacheDir { get; init; } = FilePath.GetApplicationTempDirectory();
     }
 
@@ -96,7 +97,9 @@ public class FileSystemPluginFinder : CachingPluginFinderBase
             }
         }
 
-        return new PluginSetInfo(plugins, PluginInfoProvider);
+        return new PluginSetInfo(plugins,
+            PluginInfoProvider,
+            Settings.DetectIndirectAssemblyDependencies);
     }
 
 #if !NETFRAMEWORK

@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 
 namespace Stl.Fusion.Tests.Services;
 
-public class CounterService
+public class CounterService : IComputeService
 {
     private readonly ConcurrentDictionary<string, int> _counters = new(StringComparer.Ordinal);
     private readonly IMutableState<int> _offset;

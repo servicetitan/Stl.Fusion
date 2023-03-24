@@ -1,5 +1,4 @@
 using System.Globalization;
-using Castle.DynamicProxy;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
 using RestEase;
@@ -35,8 +34,9 @@ public readonly struct FusionRestEaseClientBuilder
         Services.Insert(0, AddedTagDescriptor);
 
         Fusion.AddReplicator();
-        Services.TryAddSingleton<WebSocketChannelProvider.Options>();
-        Services.TryAddSingleton<IChannelProvider, WebSocketChannelProvider>();
+        Services.TryAddSingleton(new WebSocketChannelProvider.Options());
+        Services.TryAddSingleton<IChannelProvider>(c => new WebSocketChannelProvider(
+            c.GetRequiredService<WebSocketChannelProvider.Options>(), c));
 
         // FusionHttpMessageHandler (handles Fusion headers)
         Services.AddHttpClient();
@@ -45,13 +45,16 @@ public readonly struct FusionRestEaseClientBuilder
             FusionHttpMessageHandlerBuilderFilter>());
 
         // ResponseDeserializer & RequestBodySerializer
-        Services.TryAddTransient<RequestQueryParamSerializer, FusionRequestQueryParamSerializer>();
-        Services.TryAddTransient<RequestBodySerializer, FusionRequestBodySerializer>();
-        Services.TryAddTransient<ResponseDeserializer, FusionResponseDeserializer>();
+        Services.TryAddTransient<RequestQueryParamSerializer>(
+            _ => new FusionRequestQueryParamSerializer());
+        Services.TryAddTransient<RequestBodySerializer>(
+            _ => new FusionRequestBodySerializer());
+        Services.TryAddTransient<ResponseDeserializer>(
+            _ => new FusionResponseDeserializer());
 
         // BackendUnreachableDetector - makes "TypeError: Failed to fetch" errors more descriptive
         var commander = Services.AddCommander();
-        Services.TryAddSingleton<BackendUnreachableDetector>();
+        Services.TryAddSingleton(_ => new BackendUnreachableDetector());
         commander.AddHandlers<BackendUnreachableDetector>();
 
         configure?.Invoke(this);
@@ -89,57 +92,43 @@ public readonly struct FusionRestEaseClientBuilder
 
     public FusionRestEaseClientBuilder AddClientService<TClient>(string? clientName = null)
         => AddClientService(typeof(TClient), clientName);
-    public FusionRestEaseClientBuilder AddClientService<TService, TClient>(string? clientName = null)
-        => AddClientService(typeof(TService), typeof(TClient), clientName);
+
     public FusionRestEaseClientBuilder AddClientService(Type clientType, string? clientName = null)
-        => AddClientService(clientType, clientType, clientName);
-    public FusionRestEaseClientBuilder AddClientService(Type serviceType, Type clientType, string? clientName = null)
     {
-        if (!(serviceType.IsInterface && serviceType.IsVisible))
-            throw Errors.InterfaceTypeExpected(serviceType, true, nameof(serviceType));
-        if (!(clientType.IsInterface && clientType.IsVisible))
+        if (!(clientType is { IsInterface: true, IsVisible: true }))
             throw Errors.InterfaceTypeExpected(clientType, true, nameof(clientType));
         clientName ??= clientType.FullName ?? "";
 
         object Factory(IServiceProvider c)
         {
-            // 1. Create REST client (of clientType)
             var httpClientFactory = c.GetRequiredService<IHttpClientFactory>();
             var httpClient = httpClientFactory.CreateClient(clientName);
             var client = CreateRestClient(c, httpClient).For(clientType);
-
-            // 2. Create view mapping clientType to serviceType
-            if (clientType != serviceType)
-                client = c.TypeViewFactory().CreateView(client, clientType, serviceType);
-
             return client;
         }
 
-        Services.TryAddSingleton(serviceType, Factory);
+        Services.TryAddSingleton(clientType, Factory);
         return this;
     }
 
-    public FusionRestEaseClientBuilder AddReplicaService<TClient>(
+    public FusionRestEaseClientBuilder AddReplicaService<TService, TClientDef>(
         string? clientName = null)
-        where TClient : class
-        => AddReplicaService(typeof(TClient), clientName);
-    public FusionRestEaseClientBuilder AddReplicaService<TService, TClient>(
-        string? clientName = null)
-        where TClient : class
-        => AddReplicaService(typeof(TService), typeof(TClient), clientName);
+        where TService : class, IComputeService
+        where TClientDef : class
+        => AddReplicaService(typeof(TService), typeof(TClientDef), clientName);
+
     public FusionRestEaseClientBuilder AddReplicaService(
-        Type clientType,
-        string? clientName = null)
-        => AddReplicaService(clientType, clientType, clientName);
-    public FusionRestEaseClientBuilder AddReplicaService(
-        Type serviceType, Type clientType,
+        Type serviceType, Type clientDefType,
         string? clientName = null)
     {
-        if (!(serviceType.IsInterface && serviceType.IsVisible))
+        if (!(serviceType is { IsInterface: true, IsVisible: true }))
             throw Errors.InterfaceTypeExpected(serviceType, true, nameof(serviceType));
-        if (!(clientType.IsInterface && clientType.IsVisible))
-            throw Errors.InterfaceTypeExpected(clientType, true, nameof(clientType));
-        clientName ??= clientType.FullName ?? "";
+        if (!(clientDefType is { IsInterface: true, IsVisible: true }))
+            throw Errors.InterfaceTypeExpected(clientDefType, true, nameof(clientDefType));
+        if (!typeof(IComputeService).IsAssignableFrom(serviceType))
+            throw Stl.Internal.Errors.MustImplement<IComputeService>(serviceType, nameof(serviceType));
+
+        clientName ??= clientDefType.FullName ?? "";
         if (Services.Any(d => d.ServiceType == serviceType))
             return this;
         var clientAccessorType = typeof(ClientAccessor<>).MakeGenericType(serviceType);
@@ -148,18 +137,18 @@ public readonly struct FusionRestEaseClientBuilder
         {
             // 1. Validate types
             var replicaMethodInterceptor = c.GetRequiredService<ReplicaMethodInterceptor>();
-            replicaMethodInterceptor.ValidateType(clientType);
+            replicaMethodInterceptor.ValidateType(clientDefType);
             var computeMethodInterceptor = c.GetRequiredService<ComputeMethodInterceptor>();
             computeMethodInterceptor.ValidateType(serviceType);
 
             // 2. Create REST client (of clientType)
             var httpClientFactory = c.GetRequiredService<IHttpClientFactory>();
             var httpClient = httpClientFactory.CreateClient(clientName);
-            var client = CreateRestClient(c, httpClient).For(clientType);
+            var client = CreateRestClient(c, httpClient).For(clientDefType);
 
             // 3. Create view mapping clientType to serviceType
-            if (clientType != serviceType)
-                client = c.TypeViewFactory().CreateView(client, clientType, serviceType);
+            if (clientDefType != serviceType)
+                client = c.TypeViewFactory().CreateView(client, serviceType);
 
             return clientAccessorType.CreateInstance(client);
         }
@@ -170,12 +159,8 @@ public readonly struct FusionRestEaseClientBuilder
             var client = clientAccessor.Client;
 
             // 4. Create Replica Client
-            var proxyGenerator = c.GetRequiredService<ReplicaServiceProxyGenerator>();
-            var proxyType = proxyGenerator.GetProxyType(serviceType);
             var interceptor = c.GetRequiredService<ReplicaServiceInterceptor>();
-            var interceptors = new IInterceptor[] { interceptor };
-            client = Activator.CreateInstance(proxyType, interceptors, client)!;
-            return client;
+            return c.ActivateProxy(serviceType, interceptor, client);
         }
 
         Services.AddSingleton(clientAccessorType, ClientAccessorFactory);

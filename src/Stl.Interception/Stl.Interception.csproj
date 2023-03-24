@@ -9,11 +9,20 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Castle.Core" />
+    <ProjectReference Include="..\Stl\Stl.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Stl\Stl.csproj" />
+    <None Update="ArgumentList.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>ArgumentList.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="ArgumentList.cs">
+      <DependentUpon>ArgumentList.tt</DependentUpon>
+    </Compile>
   </ItemGroup>
 
 </Project>

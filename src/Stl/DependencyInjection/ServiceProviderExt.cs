@@ -18,8 +18,8 @@ public static class ServiceProviderExt
         }
     }
 
-    public static ILogger LogFor<T>(this IServiceProvider services)
-        => services.LogFor(typeof(T));
+    public static ILogger<T> LogFor<T>(this IServiceProvider services)
+        => services.Logs().CreateLogger<T>();
     public static ILogger LogFor(this IServiceProvider services, Type type)
         => services.Logs().CreateLogger(type.NonProxyType());
     public static ILogger LogFor(this IServiceProvider services, string category)
@@ -52,7 +52,7 @@ public static class ServiceProviderExt
         where T : class
     {
         var singleton = services.GetRequiredService<MixedModeService<T>.Singleton>();
-        if (ReferenceEquals(singleton.Provider, services))
+        if (ReferenceEquals(singleton.Services, services))
             return singleton.Service;
         var scoped = services.GetRequiredService<MixedModeService<T>.Scoped>();
         return scoped.Service;

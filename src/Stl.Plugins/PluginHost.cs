@@ -12,7 +12,7 @@ public interface IPluginHost : IServiceProvider, IAsyncDisposable, IDisposable
 public class PluginHost : IPluginHost
 {
     public PluginSetInfo FoundPlugins { get; }
-    public IServiceProvider Services { get; private set; }
+    public IServiceProvider Services { get; }
 
     public PluginHost(IServiceProvider services)
     {

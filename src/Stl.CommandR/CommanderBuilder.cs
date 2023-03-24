@@ -1,8 +1,8 @@
-using Castle.DynamicProxy;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.CommandR.Diagnostics;
 using Stl.CommandR.Interception;
 using Stl.CommandR.Internal;
+using Stl.Interception;
 
 namespace Stl.CommandR;
 
@@ -15,7 +15,7 @@ public readonly struct CommanderBuilder
     public ICommandHandlerRegistry Handlers { get; }
 
     internal CommanderBuilder(
-        IServiceCollection services, 
+        IServiceCollection services,
         Action<CommanderBuilder>? configure)
     {
         Services = services;
@@ -31,25 +31,25 @@ public readonly struct CommanderBuilder
         Services.Insert(0, AddedTagDescriptor);
 
         // Common services
-        Services.TryAddSingleton<CommanderOptions>();
-        Services.TryAddSingleton<ICommander, Commander>();
+        Services.TryAddSingleton(new CommanderOptions());
+        Services.TryAddSingleton<ICommander>(c => new Commander(c));
         Services.TryAddSingleton<ICommandHandlerRegistry>(new CommandHandlerRegistry());
-        Services.TryAddSingleton<ICommandHandlerResolver, CommandHandlerResolver>();
+        Services.TryAddSingleton<ICommandHandlerResolver>(c => new CommandHandlerResolver(c));
 
         // Command services & their dependencies
-        Services.TryAddSingleton(CommandServiceProxyGenerator.Default);
         Services.TryAddSingleton(new CommandServiceInterceptor.Options());
-        Services.TryAddSingleton<CommandServiceInterceptor>();
+        Services.TryAddSingleton(c => new CommandServiceInterceptor(
+            c.GetRequiredService<CommandServiceInterceptor.Options>(), c));
 
         Handlers = GetCommandHandlerRegistry(services)
             ?? throw Errors.CommandHandlerRegistryInstanceIsNotRegistered();
 
         // Default handlers
-        Services.AddSingleton<PreparedCommandHandler>();
+        Services.AddSingleton(_ => new PreparedCommandHandler());
         AddHandlers<PreparedCommandHandler>();
-        Services.AddSingleton<CommandTracer>();
+        Services.AddSingleton(c => new CommandTracer(c));
         AddHandlers<CommandTracer>();
-        Services.AddSingleton<LocalCommandRunner>();
+        Services.AddSingleton(_ => new LocalCommandRunner());
         AddHandlers<LocalCommandRunner>();
 
         configure?.Invoke(this);
@@ -156,13 +156,13 @@ public readonly struct CommanderBuilder
     public CommanderBuilder AddCommandService<TService>(
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         double? priorityOverride = null)
-        where TService : class
+        where TService : class, ICommandService
         => AddCommandService(typeof(TService), lifetime, priorityOverride);
     public CommanderBuilder AddCommandService<TService, TImplementation>(
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         double? priorityOverride = null)
         where TService : class
-        where TImplementation : class, TService
+        where TImplementation : class, TService, ICommandService
         => AddCommandService(typeof(TService), typeof(TImplementation), lifetime, priorityOverride);
 
     public CommanderBuilder AddCommandService(
@@ -177,6 +177,8 @@ public readonly struct CommanderBuilder
     {
         if (!serviceType.IsAssignableFrom(implementationType))
             throw new ArgumentOutOfRangeException(nameof(implementationType));
+        if (!typeof(ICommandService).IsAssignableFrom(implementationType))
+            throw Stl.Internal.Errors.MustImplement<ICommandService>(implementationType, nameof(implementationType));
 
         object Factory(IServiceProvider c)
         {
@@ -185,9 +187,7 @@ public readonly struct CommanderBuilder
             // will be intercepted, so no error will be thrown later.
             var interceptor = c.GetRequiredService<CommandServiceInterceptor>();
             interceptor.ValidateType(implementationType);
-            var proxyGenerator = c.GetRequiredService<CommandServiceProxyGenerator>();
-            var proxyType = proxyGenerator.GetProxyType(implementationType);
-            return c.Activate(proxyType, new object[] { new IInterceptor[] { interceptor } });
+            return c.ActivateProxy(implementationType, interceptor);
         }
 
         var descriptor = new ServiceDescriptor(serviceType, Factory, lifetime);

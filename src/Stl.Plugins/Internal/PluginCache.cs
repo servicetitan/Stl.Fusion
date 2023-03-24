@@ -13,10 +13,8 @@ public class PluginCache : IPluginCache
     public PluginCache(IServiceProvider services) => _services = services;
 
     public IPluginInstanceHandle GetOrCreate(Type pluginImplementationType)
-        => _cache.GetOrAdd(
-            pluginImplementationType,
-            (pit, self) => {
-                var handleType = typeof(IPluginInstanceHandle<>).MakeGenericType(pit);
-                return (IPluginInstanceHandle) self._services.GetRequiredService(handleType);
-            }, this);
+        => _cache.GetOrAdd(pluginImplementationType, static (pluginImplementationType1, self) => {
+            var handleType = typeof(IPluginInstanceHandle<>).MakeGenericType(pluginImplementationType1);
+            return (IPluginInstanceHandle) self._services.GetRequiredService(handleType);
+        }, this);
 }

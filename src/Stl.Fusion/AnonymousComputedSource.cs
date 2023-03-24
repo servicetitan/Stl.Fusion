@@ -97,10 +97,14 @@ public class AnonymousComputedSource<T> : ComputedInput,
 
     // Equality
 
-    public bool Equals(AnonymousComputedSource<T>? other) => ReferenceEquals(this, other);
-    public override bool Equals(ComputedInput? other) => ReferenceEquals(this, other);
-    public override bool Equals(object? other) => ReferenceEquals(this, other);
-    public override int GetHashCode() => HashCode;
+    public bool Equals(AnonymousComputedSource<T>? other)
+        => ReferenceEquals(this, other);
+    public override bool Equals(ComputedInput? other)
+        => ReferenceEquals(this, other);
+    public override bool Equals(object? other)
+        => ReferenceEquals(this, other);
+    public override int GetHashCode()
+        => HashCode;
 
     // Private methods
 

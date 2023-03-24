@@ -47,16 +47,16 @@ public class SimplestProviderTest : FusionTestBase
             (gv, gcc) = (p.GetValueCallCount, p.GetCharCountCallCount);
             (await p.GetValue()).Should().Be("");
             (await p.GetCharCount()).Should().Be(0);
-            p.GetValueCallCount.Should().Be(gv);
-            p.GetCharCountCallCount.Should().Be(gcc);
+            p.GetValueCallCount.Should().Be(++gv);
+            p.GetCharCountCallCount.Should().Be(++gcc);
         }
         using (var s2 = Services.CreateScope()) {
             p = s2.ServiceProvider.GetRequiredService<ISimplestProvider>();
             (gv, gcc) = (p.GetValueCallCount, p.GetCharCountCallCount);
             (await p.GetValue()).Should().Be("");
             (await p.GetCharCount()).Should().Be(0);
-            p.GetValueCallCount.Should().Be(gv);
-            p.GetCharCountCallCount.Should().Be(gcc);
+            p.GetValueCallCount.Should().Be(++gv);
+            p.GetCharCountCallCount.Should().Be(++gcc);
         }
     }
 
@@ -107,12 +107,12 @@ public class SimplestProviderTest : FusionTestBase
         p.SetValue("");
 
         var c1 = await Computed.Capture(() => p.GetValue());
-        c1.Options.KeepAliveTime.Should().Be(TimeSpan.FromSeconds(10));
+        c1.Options.MinCacheDuration.Should().Be(TimeSpan.FromSeconds(10));
         c1.Options.TransientErrorInvalidationDelay.Should().Be(d.TransientErrorInvalidationDelay);
         c1.Options.AutoInvalidationDelay.Should().Be(d.AutoInvalidationDelay);
 
         var c2 = await Computed.Capture(() => p.GetCharCount());
-        c2.Options.KeepAliveTime.Should().Be(TimeSpan.FromSeconds(0.5));
+        c2.Options.MinCacheDuration.Should().Be(TimeSpan.FromSeconds(0.5));
         c2.Options.TransientErrorInvalidationDelay.Should().Be(TimeSpan.FromSeconds(0.5));
         c2.Options.AutoInvalidationDelay.Should().Be(d.AutoInvalidationDelay);
     }
@@ -140,9 +140,10 @@ public class SimplestProviderTest : FusionTestBase
     public async Task CommandTest()
     {
         var p = Services.GetRequiredService<ISimplestProvider>();
+        (await p.GetValue()).Should().Be("");
         await Services.Commander().Run(new SetValueCommand() { Value = "1" });
-        (await p.GetValue()).Should().Be("1");
+        (await p.GetValue()).Should().Be("");
         await Services.Commander().Run(new SetValueCommand() { Value = "2" });
-        (await p.GetValue()).Should().Be("2");
+        (await p.GetValue()).Should().Be("");
     }
 }

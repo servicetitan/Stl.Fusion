@@ -5,7 +5,7 @@ namespace Stl.Fusion.Tests.Services;
 
 [RegisterRestEaseReplicaService(Scope = ServiceScope.ClientServices)]
 [BasePath("EdgeCase")]
-public interface IEdgeCaseClient
+public interface IEdgeCaseClient : IComputeService
 {
     [ComputeMethod(MinCacheDuration = 10)]
     [Get(nameof(GetSuffix))]

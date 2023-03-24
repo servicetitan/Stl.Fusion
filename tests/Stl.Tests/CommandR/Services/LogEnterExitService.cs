@@ -3,7 +3,7 @@ using Stl.RegisterAttributes;
 namespace Stl.Tests.CommandR.Services;
 
 [RegisterService, RegisterCommandHandlers]
-public class LogEnterExitService : ServiceBase
+public class LogEnterExitService : ServiceBase, ICommandService
 {
     public LogEnterExitService(IServiceProvider services) : base(services) { }
 

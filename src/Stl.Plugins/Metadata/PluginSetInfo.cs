@@ -22,7 +22,10 @@ public class PluginSetInfo
         TypesByBaseTypeOrderedByDependency = typesByBaseTypeOrderedByDependency;
     }
 
-    public PluginSetInfo(IEnumerable<Type> plugins, IPluginInfoProvider pluginInfoProvider)
+    public PluginSetInfo(
+        IEnumerable<Type> plugins,
+        IPluginInfoProvider pluginInfoProvider,
+        bool resolveIndirectDependencies)
     {
         var ci = new PluginSetConstructionInfo() {
             Plugins = plugins.ToArray(),
@@ -38,45 +41,9 @@ public class PluginSetInfo
             return;
         }
 
-        HashSet<Assembly> GetAllDependencies(Assembly assembly, HashSet<Assembly>? result = null)
-        {
-            result ??= new HashSet<Assembly>();
-            foreach (var referenceName in assembly.GetReferencedAssemblies()) {
-                Assembly reference;
-                try {
-                    reference = Assembly.Load(referenceName);
-                }
-                catch {
-                    continue; // No assembly -> we simply skip it
-                }
-                if (result.Add(reference))
-                    GetAllDependencies(reference, result);
-            }
-            return result;
-        }
-
-#if NETSTANDARD2_0 || NETFRAMEWORK
-        var hAssemblies = EnumerableCompatExt.ToHashSet(ci.Plugins.Select(t => t.Assembly));
-#else
-        var hAssemblies = ci.Plugins.Select(t => t.Assembly).ToHashSet();
-#endif
-        ci.AllAssemblyRefs = hAssemblies
-            .Select(a => (
-                Assembly: a,
-#if NETSTANDARD2_0 || NETFRAMEWORK
-                Refs: EnumerableCompatExt.ToHashSet(
-                    GetAllDependencies(a)
-                        .Where(a => hAssemblies.Contains(a)))
-#else
-                Refs: GetAllDependencies(a)
-                    .Where(a => hAssemblies.Contains(a))
-                    .ToHashSet()
-#endif
-            )).ToDictionary(p => p.Assembly, p => p.Refs);
-        ci.Assemblies = hAssemblies
-            .OrderByDependency(a =>
-                ci.AllAssemblyRefs.GetValueOrDefault(a) ?? Enumerable.Empty<Assembly>())
-            .ToArray();
+        var assemblies = ToHashSet(ci.Plugins.Select(t => t.Assembly));
+        ci.AssemblyDependencies = GetAssemblyDependencies(assemblies, resolveIndirectDependencies);
+        ci.Assemblies = assemblies.OrderByDependency(a => ci.AssemblyDependencies[a]).ToArray();
 
         var dPlugins = new Dictionary<TypeRef, PluginInfo>();
         var dTypesByBaseType = new Dictionary<TypeRef, ImmutableHashSet<TypeRef>>();
@@ -110,4 +77,44 @@ public class PluginSetInfo
 
     public override string ToString()
         => $"{GetType().GetName()} of [{InfoByType.Values.ToDelimitedString()}]";
+
+    // Private methods
+
+    // This method is used instead of .ToHashSet to eliminate #if NETFRAMEWORK 
+    private static HashSet<TSource> ToHashSet<TSource>(IEnumerable<TSource> source)
+        => new(source);
+
+    private static Dictionary<Assembly, HashSet<Assembly>> GetAssemblyDependencies(
+        HashSet<Assembly> assemblies,
+        bool resolveIndirectDependencies)
+    {
+        if (resolveIndirectDependencies)
+            return assemblies.ToDictionary(
+                a => a,
+                a => ToHashSet(GetAssemblyDependencies(a).Where(assemblies.Contains)));
+
+        var assemblyNames = assemblies.ToDictionary(a => a.GetName(), a => a);
+        return assemblies.ToDictionary(
+            a => a,
+            a => ToHashSet(a.GetReferencedAssemblies()
+                .Select(assemblyNames.GetValueOrDefault)
+                .Where(x => x != null)));
+    }
+
+    private static HashSet<Assembly> GetAssemblyDependencies(Assembly assembly, HashSet<Assembly>? result = null)
+    {
+        result ??= new HashSet<Assembly>();
+        foreach (var referenceName in assembly.GetReferencedAssemblies()) {
+            Assembly reference;
+            try {
+                reference = Assembly.Load(referenceName);
+            }
+            catch {
+                continue; // No assembly -> we simply skip it
+            }
+            if (result.Add(reference))
+                GetAssemblyDependencies(reference, result);
+        }
+        return result;
+    }
 }

@@ -73,8 +73,10 @@ public sealed class Replica<T> : Replica
     ~Replica() => Dispose();
 #pragma warning restore MA0055
 
-    public Computed<T>? RenewComputed<TArg>(
-        TArg arg, Func<Replica<T>, PublicationStateInfo<T>, TArg, Computed<T>> computedFactory)
+    public TComputed? RenewComputed<TArg, TComputed>(
+        TArg arg, 
+        Func<Replica<T>, PublicationStateInfo<T>, TArg, TComputed> computedFactory)
+        where TComputed : Computed<T>
     {
         Computed<T>? oldComputed;
         Computed<T>? computed;
@@ -84,7 +86,7 @@ public sealed class Replica<T> : Replica
             Computed = computed = state?.Output == null ? null : computedFactory.Invoke(this, state, arg);
         }
         oldComputed?.Invalidate();
-        return computed;
+        return (TComputed?)computed;
     }
 
     public override Task RequestUpdateUntyped(bool force = false)

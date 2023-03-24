@@ -1,42 +1,34 @@
-using Castle.DynamicProxy;
+using Stl.Interception;
 using Stl.Interception.Interceptors;
 
 namespace Stl.Fusion.Interception;
 
 public abstract class ComputeMethodInterceptorBase : InterceptorBase
 {
-    // ReSharper disable once HeapView.BoxingAllocation
-    private static readonly object NoCancellationTokenBoxed = CancellationToken.None;
-
     public new record Options : InterceptorBase.Options
     {
         public IComputedOptionsProvider? ComputedOptionsProvider { get; init; }
-        public IArgumentHandlerProvider? ArgumentHandlerProvider { get; init; }
     }
 
     public IComputedOptionsProvider ComputedOptionsProvider { get; }
-    public IArgumentHandlerProvider ArgumentHandlerProvider { get; }
 
     protected ComputeMethodInterceptorBase(Options options, IServiceProvider services)
         : base(options, services)
     {
         ComputedOptionsProvider = options.ComputedOptionsProvider
             ?? services.GetRequiredService<IComputedOptionsProvider>();
-        ArgumentHandlerProvider = options.ArgumentHandlerProvider
-            ?? services.GetRequiredService<IArgumentHandlerProvider>();
     }
 
-    protected override Action<IInvocation> CreateHandler<T>(
-        IInvocation initialInvocation, MethodDef methodDef)
+    protected override Func<Invocation, object?> CreateHandler<T>(Invocation initialInvocation, MethodDef methodDef)
     {
         var computeMethodDef = (ComputeMethodDef) methodDef;
         var function = CreateFunction<T>(computeMethodDef);
         return invocation => {
-            var input = computeMethodDef.CreateInput(function, (AbstractInvocation) invocation);
+            var input = computeMethodDef.CreateInput(function, invocation);
             var arguments = input.Arguments;
             var cancellationTokenIndex = computeMethodDef.CancellationTokenArgumentIndex;
             var cancellationToken = cancellationTokenIndex >= 0
-                ? (CancellationToken) arguments[cancellationTokenIndex]
+                ? arguments.GetItem<CancellationToken>(cancellationTokenIndex)
                 : default;
 
             // Invoking the function
@@ -47,21 +39,18 @@ public abstract class ComputeMethodInterceptorBase : InterceptorBase
             var task = function.InvokeAndStrip(input, usedBy, null, cancellationToken);
             if (cancellationTokenIndex >= 0)
                 // We don't want memory leaks + unexpected cancellation later
-                arguments[cancellationTokenIndex] = NoCancellationTokenBoxed;
+                arguments.SetItem(cancellationTokenIndex, default(CancellationToken));
 
-            if (methodDef.ReturnsValueTask)
-                // ReSharper disable once HeapView.BoxingAllocation
-                invocation.ReturnValue = new ValueTask<T>(task);
-            else
-                invocation.ReturnValue = task;
+            // ReSharper disable once HeapView.BoxingAllocation
+            return methodDef.ReturnsValueTask ? new ValueTask<T>(task) : task;
         };
     }
 
     protected abstract ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method);
 
-    protected override MethodDef? CreateMethodDef(MethodInfo methodInfo, IInvocation initialInvocation)
+    protected override MethodDef? CreateMethodDef(MethodInfo methodInfo, Invocation initialInvocation)
     {
-        ValidateType(initialInvocation.TargetType);
+        ValidateType(initialInvocation.Proxy.GetType().NonProxyType());
 
         var proxyType = initialInvocation.Proxy.GetType();
         var options = ComputedOptionsProvider.GetComputedOptions(methodInfo, proxyType);

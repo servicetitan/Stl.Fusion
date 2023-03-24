@@ -1,7 +1,7 @@
 @using Stl
 @inherits ComputedStateComponent<ImmutableList<(string Backend, Exception Error)>>
 @inject Session Session
-@inject IBackendStatus BackendStatus
+@inject BackendStatus BackendStatus
 
 @{
     var errors = State.ValueOrDefault ?? ImmutableList<(string Backend, Exception Error)>.Empty;

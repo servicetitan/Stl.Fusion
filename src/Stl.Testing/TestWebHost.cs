@@ -68,7 +68,7 @@ public abstract class TestWebHostBase : ITestWebHost
             var host1 = self.Host;
             // 100ms for graceful shutdown 
             using var cts = new CancellationTokenSource(100);
-            await host1.StopAsync(cts.Token).SuppressExceptions().ConfigureAwait(false);
+            await host1.StopAsync(cts.Token).VoidAwait(false);
             if (disposeOnStop)
                 _ = Task.Run(() => host1.Dispose());
             self.HostLazy = new Lazy<IHost>(CreateHost);

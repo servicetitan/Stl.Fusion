@@ -14,15 +14,12 @@ public class CommandHandlerResolver : ICommandHandlerResolver
     protected Func<CommandHandler, Type, bool> Filter { get; }
     protected ConcurrentDictionary<Type, CommandHandlerSet> Cache { get; } = new();
 
-    public CommandHandlerResolver(
-        ICommandHandlerRegistry registry,
-        IEnumerable<CommandHandlerFilter>? filters = null,
-        ILogger<CommandHandlerResolver>? log = null)
+    public CommandHandlerResolver(IServiceProvider services)
     {
-        Log = log ?? new NullLogger<CommandHandlerResolver>();
-        Registry = registry;
-        var aFilters = filters?.ToArray() ?? Array.Empty<CommandHandlerFilter>();
-        Filter = (commandHandler, type) => aFilters.All(f => f.IsCommandHandlerUsed(commandHandler, type));
+        Log = services.LogFor(GetType());
+        Registry = services.GetRequiredService<ICommandHandlerRegistry>();
+        var filters = services.GetRequiredService<IEnumerable<CommandHandlerFilter>>().ToArray();
+        Filter = (commandHandler, type) => filters.All(f => f.IsCommandHandlerUsed(commandHandler, type));
     }
 
     public CommandHandlerSet GetCommandHandlers(Type commandType)
