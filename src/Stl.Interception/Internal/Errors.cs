@@ -3,7 +3,7 @@ namespace Stl.Interception.Internal;
 public static class Errors
 {
     public static Exception NoProxyType(Type type)
-        => new InvalidOperationException($"Type '{type.GetName()}' doesn't have a proxy type generated for it.");
+        => new InvalidOperationException($"Type '{type.GetName()}' doesn't have a proxy type generated for it. Please verify that the package 'Stl.Generators' is installed.");
 
     public static Exception InvalidProxyType(Type? type, Type expectedType)
         => new InvalidOperationException(
