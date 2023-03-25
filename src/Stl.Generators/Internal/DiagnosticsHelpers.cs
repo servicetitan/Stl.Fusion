@@ -1,5 +1,8 @@
 namespace Stl.Generators.Internal;
 
+// [RS2008] Enable analyzer release tracking for the analyzer project containing rule 'STLG0001'
+#pragma warning disable RS2008
+
 public static class DiagnosticsHelpers
 {
     public static readonly bool IsDebugOutputEnabled =
@@ -19,8 +22,8 @@ public static class DiagnosticsHelpers
 
     private static readonly DiagnosticDescriptor GenerateProxyTypeProcessedDescriptor = new(
         id: "STLG0001",
-        title: "[GenerateProxy]: type processed.",
-        messageFormat: "[GenerateProxy]: type '{0}' is processed.",
+        title: "[GenerateProxy]: type processed",
+        messageFormat: "[GenerateProxy]: type '{0}' is processed",
         category: nameof(ProxyGenerator),
         DiagnosticSeverity.Info,
         isEnabledByDefault: true);
@@ -63,6 +66,7 @@ public static class DiagnosticsHelpers
 
     private static void WriteDebugImpl(string message)
     {
+        /*
         for (var i = 0; i < 5; i++) {
             try {
                 File.AppendAllText("C:/Temp/Stl.Generators.txt", message + Environment.NewLine, Encoding.UTF8);
@@ -72,5 +76,6 @@ public static class DiagnosticsHelpers
                 // Intended
             }
         }
+        */
     }
 }
