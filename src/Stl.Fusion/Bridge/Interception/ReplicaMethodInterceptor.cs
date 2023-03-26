@@ -14,16 +14,18 @@ public class ReplicaMethodInterceptor : ComputeMethodInterceptorBase
 
     protected readonly IReplicator Replicator;
     protected readonly VersionGenerator<LTag> VersionGenerator;
+    protected readonly ReplicaCache ReplicaCache;
 
     public ReplicaMethodInterceptor(Options options, IServiceProvider services)
         : base(options, services)
     {
         Replicator = services.GetRequiredService<IReplicator>();
         VersionGenerator = options.VersionGenerator ?? services.VersionGenerator<LTag>();
+        ReplicaCache = services.GetRequiredService<ReplicaCache>();
     }
 
     protected override ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method)
-        => new ReplicaMethodFunction<T>(method, Replicator, VersionGenerator);
+        => new ReplicaMethodFunction<T>(method, Replicator, VersionGenerator, ReplicaCache);
 
     protected override MethodDef? CreateMethodDef(MethodInfo methodInfo, Invocation initialInvocation)
         => base.CreateMethodDef(methodInfo, initialInvocation)?.ToReplicaMethodDef();

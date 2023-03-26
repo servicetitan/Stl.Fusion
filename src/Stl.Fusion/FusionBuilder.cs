@@ -146,13 +146,17 @@ public readonly struct FusionBuilder
         if (Services.HasService<IReplicator>())
             return this;
 
-        // ReplicaServiceProxyGenerator
+        // ReplicaCache
+        Services.TryAddSingleton<ReplicaCache>(c => new NoReplicaCache(c));
+
+        // Interceptors
         Services.TryAddSingleton(new ReplicaMethodInterceptor.Options());
         Services.TryAddSingleton(c => new ReplicaMethodInterceptor(
             c.GetRequiredService<ReplicaMethodInterceptor.Options>(), c));
         Services.TryAddSingleton(new ReplicaServiceInterceptor.Options());
         Services.TryAddSingleton(c => new ReplicaServiceInterceptor(
             c.GetRequiredService<ReplicaServiceInterceptor.Options>(), c));
+
         // Replicator
         Services.TryAddSingleton<IReplicator>(c => new Replicator(
             c.GetRequiredService<ReplicatorOptions>(), c));

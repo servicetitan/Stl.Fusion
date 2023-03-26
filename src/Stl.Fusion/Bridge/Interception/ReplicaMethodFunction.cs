@@ -15,17 +15,20 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>, IReplicaMethodFu
 {
     private string? _toString;
 
-    public VersionGenerator<LTag> VersionGenerator { get; }
     public IReplicator Replicator { get; }
+    public VersionGenerator<LTag> VersionGenerator { get; }
+    public ReplicaCache ReplicaCache { get; }
 
     public ReplicaMethodFunction(
         ComputeMethodDef methodDef,
         IReplicator replicator,
-        VersionGenerator<LTag> versionGenerator)
-        : base(methodDef, ((IReplicatorImpl) replicator).Services)
+        VersionGenerator<LTag> versionGenerator,
+        ReplicaCache replicaCache)
+        : base(methodDef, replicator.Services)
     {
         Replicator = replicator;
         VersionGenerator = versionGenerator;
+        ReplicaCache = replicaCache;
     }
 
     public override string ToString()
@@ -35,10 +38,13 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>, IReplicaMethodFu
         ComputedInput input, Computed<T>? existing,
         CancellationToken cancellationToken)
     {
-        var typedInput = (ComputeMethodInput) input;
-        if (existing is not ReplicaMethodComputed<T> { Replica: { State: { } state } replica }) {
-            // No ReplicaMethodComputed or it doesn't have a replica or state  
-            return await RenewReplica(typedInput, cancellationToken).ConfigureAwait(false);
+        var typedInput = (ComputeMethodInput)input;
+        var typedExisting = (ReplicaMethodComputed<T>?)existing;
+        if (typedExisting is not { Replica: { State: { } state } replica }) {
+            // typedExisting == null: no cached computed
+            // typedExisting.Replica == null: no replica
+            // typedExisting.Replica.State == null: replica is disposed
+            return await Compute(typedInput, typedExisting, cancellationToken).ConfigureAwait(false);
         }
 
         if (!state.IsConsistent) {
@@ -57,24 +63,54 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>, IReplicaMethodFu
             //   update that contains it & had no Output from the very beginning
             //   (they retain the output while possible).
             // In any of these cases all we can do is to renew it.
-            return await RenewReplica(typedInput, cancellationToken).ConfigureAwait(false);
+            return await Compute(typedInput, typedExisting, cancellationToken).ConfigureAwait(false);
         }
 
         ComputeContext.Current.TryCapture(computed);
         return computed;
     }
 
-    private async Task<Computed<T>> RenewReplica(
-        ComputeMethodInput input, CancellationToken cancellationToken)
+    private Task<Computed<T>> Compute(
+        ComputeMethodInput input,
+        ReplicaMethodComputed<T>? existing,
+        CancellationToken cancellationToken)
+        => existing is { State.PublicationRef.IsNone: false } // State has valid PublicationRef -> it's an actual one
+            ? RemoteCompute(input, true, cancellationToken)
+            : CachedCompute(input, cancellationToken);
+
+    private async Task<Computed<T>> CachedCompute(
+        ComputeMethodInput input,
+        CancellationToken cancellationToken)
+    {
+        var outputOpt = await ReplicaCache.Get<T>(input, cancellationToken).ConfigureAwait(false);
+        if (outputOpt is not { } output)
+            return await RemoteCompute(input, true, cancellationToken).ConfigureAwait(false);
+
+        var publicationState = CreateFakePublicationState(output);
+        var computed = new ReplicaMethodComputed<T>(input.MethodDef.ComputedOptions, input, null, publicationState);
+        ComputeContext.Current.TryCapture(computed);
+
+        // Start the task to retrieve the actual value
+        using var _1 = ExecutionContextExt.SuppressFlow();
+        _ = Task.Run(() => RemoteCompute(input, false, cancellationToken), CancellationToken.None);
+        return computed;
+    }
+
+    private async Task<Computed<T>> RemoteCompute(
+        ComputeMethodInput input,
+        bool isCurrent,
+        CancellationToken cancellationToken)
     {
         while (true) {
             var publicationState = await InvokeRemoteFunction(input, cancellationToken).ConfigureAwait(false);
-
-            var computed = publicationState.PublicationRef.IsNone 
-                ? new ReplicaMethodComputed<T>(input.MethodDef.ComputedOptions, input, null, publicationState) 
+            var computed = publicationState.PublicationRef.IsNone
+                ? new ReplicaMethodComputed<T>(input.MethodDef.ComputedOptions, input, null, publicationState)
                 : Replicator.AddOrUpdate(publicationState).RenewComputed(input, CreateComputed);
             if (computed != null) {
-                ComputeContext.Current.TryCapture(computed);
+                if (isCurrent)
+                    ComputeContext.Current.TryCapture(computed);
+                // We don't await the next call to speed up returning the result
+                _ = ReplicaCache.Set(input, computed.Output, cancellationToken);
                 return computed;
             }
 
@@ -110,15 +146,20 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>, IReplicaMethodFu
             return new PublicationStateInfo<T>(publicationState, output);
 
         // No PublicationStateInfo is captured, so... 
-        output = new Result<T>(default!, Errors.NoPublicationStateInfo());
+        output = Result.Error<T>(Errors.NoPublicationStateInfo());
+        return CreateFakePublicationState(output);
+    }
+
+    private PublicationStateInfo<T> CreateFakePublicationState(Result<T> output)
+    {
         // A unique version tha cannot be generated by LTagGenerators
         var version = new LTag(VersionGenerator.NextVersion().Value ^ (1L << 62));
-        return new PublicationStateInfo<T>(PublicationRef.None, version, false, output);
+        return new PublicationStateInfo<T>(PublicationRef.None, version, true, output);
     }
 
     private static ReplicaMethodComputed<T> CreateComputed(
-        Replica<T> replica, 
-        PublicationStateInfo<T> state, 
-        ComputeMethodInput input) 
+        Replica<T> replica,
+        PublicationStateInfo<T> state,
+        ComputeMethodInput input)
         => new (input.MethodDef.ComputedOptions, input, replica, state);
 }
