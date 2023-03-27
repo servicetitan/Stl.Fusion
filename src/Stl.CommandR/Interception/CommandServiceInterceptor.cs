@@ -18,8 +18,8 @@ public class CommandServiceInterceptor : InterceptorBase
     protected override Func<Invocation, object?> CreateHandler<T>(Invocation initialInvocation, MethodDef methodDef)
         => invocation => {
             var arguments = invocation.Arguments;
-            var command = arguments.GetItem<ICommand>(0);
-            var cancellationToken = arguments.GetItem<CancellationToken>(arguments.Length - 1);
+            var command = arguments.Get<ICommand>(0);
+            var cancellationToken = arguments.GetCancellationToken(arguments.Length - 1);
             var context = CommandContext.Current;
             if (ReferenceEquals(command, context?.UntypedCommand)) {
                 // We're already inside the ICommander pipeline created for exactly this command
@@ -36,10 +36,11 @@ public class CommandServiceInterceptor : InterceptorBase
                 : Commander.Call((ICommand<T>)command, cancellationToken);
         };
 
-    protected override MethodDef? CreateMethodDef(MethodInfo methodInfo, Invocation initialInvocation)
+    protected override MethodDef? CreateMethodDef(MethodInfo method, Invocation initialInvocation)
     {
         try {
-            var methodDef = new CommandHandlerMethodDef(this, methodInfo);
+            var type = initialInvocation.Proxy.GetType().NonProxyType();
+            var methodDef = new CommandHandlerMethodDef(type, method, this);
             return methodDef.IsValid ? methodDef : null;
         }
         catch {
@@ -61,7 +62,7 @@ public class CommandServiceInterceptor : InterceptorBase
             if (attr == null)
                 continue;
 
-            var methodDef = new CommandHandlerMethodDef(this, method);
+            var methodDef = new CommandHandlerMethodDef(type, method, this);
             var attributeName = attr.GetType().GetName()
 #if NETSTANDARD2_0
                 .Replace(nameof(Attribute), "");

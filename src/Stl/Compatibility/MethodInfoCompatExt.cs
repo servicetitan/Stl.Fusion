@@ -3,10 +3,10 @@ namespace System.Reflection;
 
 public static class MethodInfoCompatExt
 {
-    public static bool IsConstructedGenericMethod(this MethodInfo methodInfo)
+    public static bool IsConstructedGenericMethod(this MethodInfo method)
 #if !NETSTANDARD2_0
-        => methodInfo.IsConstructedGenericMethod;
+        => method.IsConstructedGenericMethod;
 #else
-        => methodInfo.IsGenericMethod && !methodInfo.IsGenericMethodDefinition;
+        => method is { IsGenericMethod: true, IsGenericMethodDefinition: false };
 #endif
 }

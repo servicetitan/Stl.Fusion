@@ -19,7 +19,7 @@ public abstract class SelectingInterceptorBase : InterceptorBase
             Interceptors[i] = (InterceptorBase) services.GetRequiredService(options.InterceptorTypes[i]);
     }
 
-    protected override Func<Invocation, object?>? CreateHandlerUntyped(MethodInfo methodInfo, Invocation initialInvocation)
+    protected override Func<Invocation, object?>? CreateHandlerUntyped(MethodInfo method, Invocation initialInvocation)
     {
         foreach (var interceptor in Interceptors) {
             var handler = interceptor.GetHandler(initialInvocation);
@@ -37,6 +37,6 @@ public abstract class SelectingInterceptorBase : InterceptorBase
 
     protected override Func<Invocation, object?> CreateHandler<T>(Invocation initialInvocation, MethodDef methodDef)
         => throw Errors.InternalError("This method shouldn't be called.");
-    protected override MethodDef? CreateMethodDef(MethodInfo methodInfo, Invocation initialInvocation)
+    protected override MethodDef? CreateMethodDef(MethodInfo method, Invocation initialInvocation)
         => throw Errors.InternalError("This method shouldn't be called.");
 }

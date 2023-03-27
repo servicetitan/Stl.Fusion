@@ -8,7 +8,35 @@
 <#@ import namespace="System.Collections.Generic" #>
 <#@ import namespace="System.Xml.Linq" #>
 <#@ import namespace="System.Linq" #>
-<# const int maxItemCount = 12; #>
+<# 
+    const int maxItemCount = 10;
+
+    IEnumerable<int> AllBut(int count, int exceptIndex)
+    {
+        for (var i = 0; i < count; i++)
+            if (i != exceptIndex)
+                yield return i;
+    }
+
+    IEnumerable<int?> AllAnd(int count, int insertIndex)
+    {
+        for (var i = 0; i < count; i++) {
+            if (i == insertIndex)
+                yield return null;
+            yield return i;
+
+        }
+    }
+
+    string ItemList(string format, int count)
+        => RemoveList(format, count, -1);
+
+    string RemoveList(string format, int count, int index)
+        => string.Join(", ", AllBut(count, index).Select(i => string.Format(format, i)));
+
+    string InsertList(string format, int count, int index, string replacement)
+        => string.Join(", ", AllAnd(count, index).Select(i => i.HasValue ? string.Format(format, i) : replacement));
+#>
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable ArrangeConstructorOrDestructorBody
@@ -28,46 +56,52 @@ public record ArgumentList
     public static ArgumentList New()
         => Empty;
 <# for (var itemCount = 1; itemCount <= maxItemCount; itemCount++) {
-    var argumentTypes = "" ;
-    var argumentDeclaration = "";
-    var argumentUsage = "";
-    for (var t = 0; t < itemCount; t++) {
-        if (t > 0)
-            argumentTypes += ", ";
-        argumentTypes += "T" + t;
-
-        if (t > 0)
-            argumentDeclaration += ", ";
-        argumentDeclaration += "T" + t + " item" + t;
-
-        if (t > 0)
-            argumentUsage += ", ";
-        argumentUsage += "item" + t;
-    }
+    var argumentTypes = ItemList("T{0}", itemCount);
+    var argumentDeclaration = ItemList("T{0} item{0}", itemCount);
+    var argumentUsage = ItemList("item{0}", itemCount);
 #>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ArgumentList<<#=argumentTypes#>> New<<#=argumentTypes#>>(<#=argumentDeclaration#>)
         => new (<#=argumentUsage#>);
-<#}#>
+<# } #>
 
     public override string ToString() => "()";
     public virtual object?[] ToArray() => Array.Empty<object?>();
+    public virtual object?[] ToArray(int skipIndex) => Array.Empty<object?>();
 
-    public virtual T GetItem<T>(int index)
+    public virtual T Get<T>(int index)
         => throw new ArgumentOutOfRangeException(nameof(index));
-    public virtual object? GetItemUntyped(int index)
+    public virtual object? GetUntyped(int index)
+        => throw new ArgumentOutOfRangeException(nameof(index));
+    // Virtual non-generic method for frequent operation
+    public virtual CancellationToken GetCancellationToken(int index)
         => throw new ArgumentOutOfRangeException(nameof(index));
 
-    public virtual void SetItem<T>(int index, T value)
+    public virtual void Set<T>(int index, T value)
          => throw new ArgumentOutOfRangeException(nameof(index));
-    public virtual void SetItemUntyped(int index, object? value)
+    public virtual void SetUntyped(int index, object? value)
          => throw new ArgumentOutOfRangeException(nameof(index));
-    public virtual void SetCancellationToken(int index, CancellationToken cancellationToken)
+    // Virtual non-generic method for frequent operation
+    public virtual void SetCancellationToken(int index, CancellationToken item)
          => throw new ArgumentOutOfRangeException(nameof(index));
 
-    public virtual bool Equals(ArgumentList? other, int ignoredIndex)
+    public virtual ArgumentList Insert<T>(int index, T item)
+        => index == 0
+            ? New(item)
+            : throw new ArgumentOutOfRangeException(nameof(index));
+
+    // Virtual non-generic method for frequent operation
+    public virtual ArgumentList InsertCancellationToken(int index, CancellationToken item)
+        => index == 0
+            ? New(item)
+            : throw new ArgumentOutOfRangeException(nameof(index));
+
+    public virtual ArgumentList Remove(int index)
+        => throw new ArgumentOutOfRangeException(nameof(index));
+
+    public virtual bool Equals(ArgumentList? other, int skipIndex)
         => other?.GetType() == typeof(ArgumentList);
-    public virtual int GetHashCode(int ignoredIndex)
+    public virtual int GetHashCode(int skipIndex)
         => 1;
 
     public virtual bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
@@ -77,12 +111,7 @@ public record ArgumentList
 }
 
 <# for (var itemCount = 1; itemCount <= maxItemCount; itemCount++) {
-   var argumentTypes = "" ;
-   for (var t = 0; t < itemCount; t++) {
-       if (t > 0)
-           argumentTypes += ", ";
-       argumentTypes += "T" + t;
-   }
+    var argumentTypes = ItemList("T{0}", itemCount);
 #>
 [DataContract]
 public sealed record ArgumentList<<#=argumentTypes#>>(
@@ -96,13 +125,13 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
 #>
 ) : ArgumentList
 {
-<#for (var t = 0; t < itemCount; t++) {#>
+<# for (var t = 0; t < itemCount; t++) { #>
     private T<#=t#> _item<#=t#> = Item<#=t#>;
-<#}#>
+<# } #>
 
-<#for (var t = 0; t < itemCount; t++) {#>
+<# for (var t = 0; t < itemCount; t++) { #>
     [DataMember(Order = <#=t#>)] public T<#=t#> Item<#=t#> { get => _item<#=t#>; init => _item<#=t#> = value; }
-<#}#>
+<# } #>
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => <#=itemCount#>;
@@ -114,81 +143,136 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
         using var sb = ZString.CreateStringBuilder();
         sb.Append('(');
         sb.Append(Item<#=0#>);
-<#for (var t = 1; t < itemCount; t++) {#>
+<# for (var t = 1; t < itemCount; t++) { #>
         sb.Append(", ");
         sb.Append(Item<#=t#>);
-<#}#>
+<# } #>
         sb.Append(')');
         return sb.ToString();
     }
 
     public override object?[] ToArray()
-        => new object?[] {
-<#for (var t = 0; t < itemCount; t++) {#>
-            // ReSharper disable once HeapView.PossibleBoxingAllocation
-            Item<#=t#>,
-<#}#>
+        => new object?[] { <# Write(ItemList("Item{0}", itemCount)); #> };
+
+    public override object?[] ToArray(int skipIndex)
+<# if (itemCount == 1) { #>
+        => skipIndex == 0
+            ? Array.Empty<object?>()
+            : throw new ArgumentOutOfRangeException(nameof(skipIndex));
+<# } else { #>
+        => skipIndex switch {
+<# for (var t = 0; t < itemCount; t++) { #>
+            <#=t#> => new object?[] { <# Write(RemoveList("Item{0}", itemCount, t)); #> },
+<# } #>
+            _ => throw new ArgumentOutOfRangeException(nameof(skipIndex))
         };
+<# } #>
 
-    // GetItem
+    // Get
 
-    public override T GetItem<T>(int index)
+    public override T Get<T>(int index)
         => index switch {
-<#for (var t = 0; t < itemCount; t++) {#>
+<# for (var t = 0; t < itemCount; t++) { #>
             <#=t#> => Item<#=t#> is T value ? value : default!,
-<#}#>
+<# } #>
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
 
-    public override object? GetItemUntyped(int index)
+    public override object? GetUntyped(int index)
         => index switch {
-<#for (var t = 0; t < itemCount; t++) {#>
+<# for (var t = 0; t < itemCount; t++) { #>
             // ReSharper disable once HeapView.PossibleBoxingAllocation
             <#=t#> => Item<#=t#>,
-<#}#>
+<# } #>
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
 
-    // SetItem
+    public override CancellationToken GetCancellationToken(int index)
+        => index switch {
+<# for (var t = 0; t < itemCount; t++) { #>
+            <#=t#> => Item<#=t#> is CancellationToken value ? value : default!,
+<# } #>
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
 
-    public override void SetItem<T>(int index, T value)
+    // Set
+
+    public override void Set<T>(int index, T value)
     {
         switch (index) {
-<#for (var t = 0; t < itemCount; t++) {#>
+<# for (var t = 0; t < itemCount; t++) { #>
         case <#=t#>:
             _item<#=t#> = value is T<#=t#> item<#=t#> ? item<#=t#> : default!;
             break;
-<#}#>
+<# } #>
         default:
             throw new ArgumentOutOfRangeException(nameof(index));
         }
     }
 
-    public override void SetItemUntyped(int index, object? value)
+    public override void SetUntyped(int index, object? value)
     {
         switch (index) {
-<#for (var t = 0; t < itemCount; t++) {#>
+<# for (var t = 0; t < itemCount; t++) { #>
         case <#=t#>:
             _item<#=t#> = value is T<#=t#> item<#=t#> ? item<#=t#> : default!;
             break;
-<#}#>
+<# } #>
         default:
             throw new ArgumentOutOfRangeException(nameof(index));
         }
     }
 
-    public override void SetCancellationToken(int index, CancellationToken cancellationToken)
+    public override void SetCancellationToken(int index, CancellationToken item)
     {
         switch (index) {
-<#for (var t = 0; t < itemCount; t++) {#>
+<# for (var t = 0; t < itemCount; t++) { #>
         case <#=t#>:
-            _item<#=t#> = cancellationToken is T<#=t#> item<#=t#> ? item<#=t#> : default!;
+            _item<#=t#> = item is T<#=t#> item<#=t#> ? item<#=t#> : default!;
             break;
-<#}#>
+<# } #>
         default:
             throw new ArgumentOutOfRangeException(nameof(index));
         }
     }
+
+    // Insert
+
+    public override ArgumentList Insert<T>(int index, T item)
+<# if (itemCount == maxItemCount) { #>
+        => throw new ArgumentOutOfRangeException(nameof(index));
+<# } else { #>
+        => index switch {
+<# for (var t = 0; t < itemCount; t++) { #>
+            <#=t#> => New(<# Write(InsertList("Item{0}", itemCount, t, "item")); #>),
+<# }#>
+            <#=itemCount#> => New(<# Write(ItemList("Item{0}", itemCount)); #>, item),
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+<# }#>
+
+    public override ArgumentList InsertCancellationToken(int index, CancellationToken item)
+<# if (itemCount == maxItemCount) { #>
+        => throw new ArgumentOutOfRangeException(nameof(index));
+<# } else { #>
+        => index switch {
+<# for (var t = 0; t < itemCount; t++) { #>
+            <#=t#> => New(<# Write(InsertList("Item{0}", itemCount, t, "item")); #>),
+<# }#>
+            <#=itemCount#> => New(<# Write(ItemList("Item{0}", itemCount)); #>, item),
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+<# }#>
+
+    // Remove
+
+    public override ArgumentList Remove(int index)
+        => index switch {
+<# for (var t = 0; t < itemCount; t++) { #>
+            <#=t#> => New(<# Write(RemoveList("Item{0}", itemCount, t)); #>),
+<# } #>
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
 
     // Equality
 
@@ -197,10 +281,10 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
         if (other == null)
             return false;
 
-<#for (var t = itemCount - 1; t >= 0; t--) {#>
+<# for (var t = itemCount - 1; t >= 0; t--) { #>
         if (!EqualityComparer<T<#=t#>>.Default.Equals(Item<#=t#>, other.Item<#=t#>))
             return false;
-<#}#>
+<# } #>
         return true;
     }
 
@@ -208,32 +292,32 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
     {
         unchecked {
             var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-<#for (var t = 1; t < itemCount; t++) {#>
+<# for (var t = 1; t < itemCount; t++) { #>
             hashCode = 397*hashCode + EqualityComparer<T<#=t#>>.Default.GetHashCode(Item<#=t#>!);
-<#}#>
+<# } #>
             return hashCode;
         }
     }
 
-    public override bool Equals(ArgumentList? other, int ignoredIndex)
+    public override bool Equals(ArgumentList? other, int skipIndex)
     {
         if (other is not ArgumentList<<#=argumentTypes#>> vOther)
             return false;
 
-<#for (var t = itemCount - 1; t >= 0; t--) {#>
-        if (ignoredIndex != <#=t#> && !EqualityComparer<T<#=t#>>.Default.Equals(Item<#=t#>, vOther.Item<#=t#>))
+<# for (var t = itemCount - 1; t >= 0; t--) { #>
+        if (skipIndex != <#=t#> && !EqualityComparer<T<#=t#>>.Default.Equals(Item<#=t#>, vOther.Item<#=t#>))
             return false;
-<#}#>
+<# } #>
         return true;
     }
 
-    public override int GetHashCode(int ignoredIndex)
+    public override int GetHashCode(int skipIndex)
     {
         unchecked {
-            var hashCode = ignoredIndex == 0 ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
-<#for (var t = 1; t < itemCount; t++) {#>
-            hashCode = 397*hashCode + (ignoredIndex == <#=t#> ? 0 : EqualityComparer<T<#=t#>>.Default.GetHashCode(Item<#=t#>!));
-<#}#>
+            var hashCode = skipIndex == 0 ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+<# for (var t = 1; t < itemCount; t++) { #>
+            hashCode = 397*hashCode + (skipIndex == <#=t#> ? 0 : EqualityComparer<T<#=t#>>.Default.GetHashCode(Item<#=t#>!));
+<# } #>
             return hashCode;
         }
     }
@@ -245,7 +329,7 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
         if (other is not ArgumentList<<#=argumentTypes#>> vOther)
             return false;
 
-<#for (var t = itemCount - 1; t >= 0; t--) {#>
+<# for (var t = itemCount - 1; t >= 0; t--) { #>
         if (equalsDelegates[<#=t#>] is Func<T<#=t#>, T<#=t#>, bool> func<#=t#>) {
             if (!func<#=t#>.Invoke(Item<#=t#>, vOther.Item<#=t#>))
                 return false;
@@ -253,7 +337,7 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
         else if (!EqualityComparer<T<#=t#>>.Default.Equals(Item<#=t#>, vOther.Item<#=t#>))
             return false;
 
-<#}#>
+<# } #>
         return true;
     }
 
@@ -268,16 +352,16 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
             else
                 hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
 
-<#for (var t = 1; t < itemCount; t++) {#>
+<# for (var t = 1; t < itemCount; t++) { #>
             if (getHashCodeDelegates[<#=t#>] is Func<T<#=t#>, int> func<#=t#>)
                 hashCode = (hashCode * 397) + func<#=t#>.Invoke(Item<#=t#>!);
             else
                 hashCode = (hashCode * 397) + EqualityComparer<T<#=t#>>.Default.GetHashCode(Item<#=t#>!);
 
-<#}#>
+<# } #>
             return hashCode;
         }
     }
 }
 
-<#}#>
+<# } #>

@@ -7,16 +7,16 @@ public abstract class ComputeMethodInterceptorBase : InterceptorBase
 {
     public new record Options : InterceptorBase.Options
     {
-        public IComputedOptionsProvider? ComputedOptionsProvider { get; init; }
+        public ComputedOptionsProvider? ComputedOptionsProvider { get; init; }
     }
 
-    public IComputedOptionsProvider ComputedOptionsProvider { get; }
+    public ComputedOptionsProvider ComputedOptionsProvider { get; }
 
     protected ComputeMethodInterceptorBase(Options options, IServiceProvider services)
         : base(options, services)
     {
         ComputedOptionsProvider = options.ComputedOptionsProvider
-            ?? services.GetRequiredService<IComputedOptionsProvider>();
+            ?? services.GetRequiredService<ComputedOptionsProvider>();
     }
 
     protected override Func<Invocation, object?> CreateHandler<T>(Invocation initialInvocation, MethodDef methodDef)
@@ -26,9 +26,9 @@ public abstract class ComputeMethodInterceptorBase : InterceptorBase
         return invocation => {
             var input = computeMethodDef.CreateInput(function, invocation);
             var arguments = input.Arguments;
-            var cancellationTokenIndex = computeMethodDef.CancellationTokenArgumentIndex;
-            var cancellationToken = cancellationTokenIndex >= 0
-                ? arguments.GetItem<CancellationToken>(cancellationTokenIndex)
+            var ctIndex = computeMethodDef.CancellationTokenArgumentIndex;
+            var cancellationToken = ctIndex >= 0
+                ? arguments.GetCancellationToken(ctIndex)
                 : default;
 
             // Invoking the function
@@ -37,9 +37,9 @@ public abstract class ComputeMethodInterceptorBase : InterceptorBase
             // InvokeAndStrip allows to get rid of one extra allocation
             // of a task stripping the result of regular Invoke.
             var task = function.InvokeAndStrip(input, usedBy, null, cancellationToken);
-            if (cancellationTokenIndex >= 0)
+            if (ctIndex >= 0)
                 // We don't want memory leaks + unexpected cancellation later
-                arguments.SetItem(cancellationTokenIndex, default(CancellationToken));
+                arguments.SetCancellationToken(ctIndex, default);
 
             // ReSharper disable once HeapView.BoxingAllocation
             return methodDef.ReturnsValueTask ? new ValueTask<T>(task) : task;
@@ -48,16 +48,14 @@ public abstract class ComputeMethodInterceptorBase : InterceptorBase
 
     protected abstract ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method);
 
-    protected override MethodDef? CreateMethodDef(MethodInfo methodInfo, Invocation initialInvocation)
+    protected override MethodDef? CreateMethodDef(MethodInfo method, Invocation initialInvocation)
     {
-        ValidateType(initialInvocation.Proxy.GetType().NonProxyType());
-
-        var proxyType = initialInvocation.Proxy.GetType();
-        var options = ComputedOptionsProvider.GetComputedOptions(methodInfo, proxyType);
+        var type = initialInvocation.Proxy.GetType().NonProxyType();
+        var options = ComputedOptionsProvider.GetComputedOptions(type, method);
         if (options == null)
             return null;
 
-        var methodDef = (ComputeMethodDef) Services.Activate(options.ComputeMethodDefType, this, methodInfo, proxyType);
+        var methodDef = new ComputeMethodDef(type, method, this);
         return methodDef.IsValid ? methodDef : null;
     }
 }

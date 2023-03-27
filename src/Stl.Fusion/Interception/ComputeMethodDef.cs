@@ -3,26 +3,26 @@ using Stl.Interception.Interceptors;
 
 namespace Stl.Fusion.Interception;
 
-public record ComputeMethodDef : MethodDef
+public sealed record ComputeMethodDef : MethodDef
 {
     public ComputedOptions ComputedOptions { get; init; } = ComputedOptions.Default;
     public int CancellationTokenArgumentIndex { get; init; } = -1;
 
     public ComputeMethodDef(
-        ComputeMethodInterceptorBase interceptor,
-        MethodInfo methodInfo,
-        Type proxyType)
-        : base(interceptor, methodInfo)
+        Type type,
+        MethodInfo method,
+        ComputeMethodInterceptorBase interceptor)
+        : base(type, method, interceptor)
     {
         if (!IsAsyncMethod)
             return;
 
-        var computedOptions = interceptor.ComputedOptionsProvider.GetComputedOptions(methodInfo, proxyType);
+        var computedOptions = interceptor.ComputedOptionsProvider.GetComputedOptions(type, method);
         if (computedOptions == null)
             return;
 
         ComputedOptions = computedOptions;
-        var parameters = methodInfo.GetParameters();
+        var parameters = method.GetParameters();
         for (var i = 0; i < parameters.Length; i++) {
             var p = parameters[i];
             if (typeof(CancellationToken).IsAssignableFrom(p.ParameterType))
@@ -34,10 +34,10 @@ public record ComputeMethodDef : MethodDef
     public override MethodDef ToReplicaMethodDef()
         => this;
 
-    public virtual ComputeMethodInput CreateInput(IFunction function, Invocation invocation)
+    public ComputeMethodInput CreateInput(IFunction function, Invocation invocation)
         => new(function, this, invocation);
 
     // All XxxMethodDef records should rely on reference-based equality
-    public virtual bool Equals(ComputeMethodDef? other) => ReferenceEquals(this, other);
+    public bool Equals(ComputeMethodDef? other) => ReferenceEquals(this, other);
     public override int GetHashCode() => RuntimeHelpers.GetHashCode(this);
 }

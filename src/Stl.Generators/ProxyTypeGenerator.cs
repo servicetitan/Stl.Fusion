@@ -138,6 +138,7 @@ public class ProxyTypeGenerator
 
     private void AddProxyMethods()
     {
+        var typeRef = TypeDef.ToTypeRef();
         var methodIndex = 0;
         foreach (var method in GetProxyMethods()) {
             var modifiers = TokenList(
@@ -163,7 +164,7 @@ public class ProxyTypeGenerator
                     AssignmentExpression(
                         SyntaxKind.SimpleAssignmentExpression,
                         IdentifierName(cachedMethodFieldName),
-                        GetMethodInfoExpression(TypeDef, method, parameters))));
+                        GetMethodInfoExpression(typeRef, method, parameters))));
 
             // __cachedInterceptedN field 
             var cachedInterceptedFieldName = "__cachedIntercepted" + methodIndex;
@@ -193,7 +194,7 @@ public class ProxyTypeGenerator
                         AssignmentExpression(
                             SyntaxKind.SimpleAssignmentExpression,
                             IdentifierName(cachedInterceptFieldName),
-                            GetMethodInfoExpression(TypeDef, method, parameters)));
+                            GetMethodInfoExpression(typeRef, method, parameters)));
             }
 
             var argumentList = CreateArgumentList(
@@ -333,7 +334,7 @@ public class ProxyTypeGenerator
     }
 
     private ExpressionSyntax GetMethodInfoExpression(
-        TypeDeclarationSyntax typeDeclaration,
+        TypeSyntax typeRef,
         IMethodSymbol method,
         ParameterListSyntax parameters)
     {
@@ -341,7 +342,6 @@ public class ProxyTypeGenerator
             .Select(p => TypeOfExpression(p.Type!))
             .ToArray<ExpressionSyntax>();
 
-        var typeFullNameDef = typeDeclaration.ToTypeRef();
         return InvocationExpression(
             MemberAccessExpression(
                 SyntaxKind.SimpleMemberAccessExpression,
@@ -351,7 +351,7 @@ public class ProxyTypeGenerator
                 ArgumentList(
                     CommaSeparatedList(
                         Argument(
-                            TypeOfExpression(typeFullNameDef)),
+                            TypeOfExpression(typeRef)),
                         Argument(
                             LiteralExpression(SyntaxKind.StringLiteralExpression, Literal(method.Name))),
                         Argument(

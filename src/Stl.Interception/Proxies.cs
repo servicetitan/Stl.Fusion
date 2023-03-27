@@ -96,7 +96,8 @@ public static class Proxies
             if (type1.IsGenericTypeDefinition) {
                 var backTrickIndex = name.IndexOf('`');
                 if (backTrickIndex < 0)
-                    return null;
+                    return null; // Weird case, shouldn't happen
+
                 namePrefix = name[..backTrickIndex];
                 nameSuffix = name[backTrickIndex..];
             }

@@ -59,7 +59,7 @@ public class BridgeTest : FusionTestBase
         var kvs = WebServices.GetRequiredService<IKeyValueService<string>>();
         await kvs.Set("a", "b");
         var c = (ReplicaMethodComputed<string>) await Computed.Capture(() => kvsClient.Get("a"));
-        var pub = c.State!.PublicationRef;
+        var pub = c.State.PublicationRef;
         c.Value.Should().Be("b");
         c.IsConsistent().Should().BeTrue();
 
@@ -113,7 +113,7 @@ public class BridgeTest : FusionTestBase
         updateTask.IsCompleted.Should().BeTrue();
         c = (ReplicaMethodComputed<string>) await c.Update();
         c.IsConsistent().Should().BeTrue();
-        if (c.State!.PublicationRef == pub)
+        if (c.State.PublicationRef == pub)
             c.Value.Should().Be("c");
         else
             c.Value.Should().BeNull();

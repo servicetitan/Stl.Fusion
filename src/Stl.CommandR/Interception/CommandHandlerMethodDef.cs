@@ -4,26 +4,26 @@ using Stl.Interception.Interceptors;
 
 namespace Stl.CommandR.Interception;
 
-public record CommandHandlerMethodDef : MethodDef
+public sealed record CommandHandlerMethodDef : MethodDef
 {
-    public CommandHandlerMethodDef(Interceptor interceptor, MethodInfo methodInfo)
-        : base(interceptor, methodInfo)
+    public CommandHandlerMethodDef(Type type, MethodInfo method, Interceptor interceptor)
+        : base(type, method, interceptor)
     {
-        var commandHandler = MethodCommandHandler.TryNew(methodInfo.ReflectedType!, methodInfo);
+        var commandHandler = MethodCommandHandler.TryNew(method.ReflectedType!, method);
         if (commandHandler == null)
             return; // Can be only when attr.IsEnabled == false
 
-        if (!methodInfo.IsVirtual || methodInfo.IsFinal)
-            throw Errors.WrongInterceptedCommandHandlerMethodSignature(methodInfo);
+        if (!method.IsVirtual || method.IsFinal)
+            throw Errors.WrongInterceptedCommandHandlerMethodSignature(method);
 
-        var parameters = methodInfo.GetParameters();
+        var parameters = method.GetParameters();
         if (parameters.Length != 2)
-            throw Errors.WrongInterceptedCommandHandlerMethodSignature(methodInfo);
+            throw Errors.WrongInterceptedCommandHandlerMethodSignature(method);
 
         IsValid = true;
     }
 
     // All XxxMethodDef records should rely on reference-based equality
-    public virtual bool Equals(CommandHandlerMethodDef? other) => ReferenceEquals(this, other);
+    public bool Equals(CommandHandlerMethodDef? other) => ReferenceEquals(this, other);
     public override int GetHashCode() => RuntimeHelpers.GetHashCode(this);
 }
