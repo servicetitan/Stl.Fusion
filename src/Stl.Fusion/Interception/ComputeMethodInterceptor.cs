@@ -1,4 +1,3 @@
-using System.Globalization;
 using Stl.Fusion.Internal;
 using Stl.Versioning;
 

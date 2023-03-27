@@ -29,6 +29,7 @@ using Stl.Fusion.Operations.Reprocessing;
 using Stl.Fusion.Server.Authentication;
 using Stl.Fusion.Server.Controllers;
 using Stl.Generators;
+using Stl.Interception.Interceptors;
 using Stl.IO;
 using Stl.Multitenancy;
 using Stl.OS;
@@ -69,6 +70,11 @@ public class Startup
                 logging.AddFilter("Stl.Fusion.EntityFramework.Operations", LogLevel.Debug);
             }
         });
+
+        // ComputedService/ReplicaService/etc. type validation should be off in release 
+#if !DEBUG
+        InterceptorBase.Options.Defaults.IsValidationEnabled = true;
+#endif
 
         services.AddSettings<HostSettings>();
 #pragma warning disable ASP0000

@@ -46,13 +46,13 @@ public readonly struct FusionBuilder
         Services.TryAddSingleton(ClockBasedVersionGenerator.DefaultCoarse);
 
         // Compute services & their dependencies
-        Services.TryAddSingleton(new ComputedOptionsProvider());
+        Services.TryAddSingleton(_ => new ComputedOptionsProvider());
         Services.TryAddSingleton<IMatchingTypeFinder>(_ => new MatchingTypeFinder());
         Services.TryAddSingleton(TransientErrorDetector.DefaultPreferTransient.For<IComputed>());
-        Services.TryAddSingleton(new ComputeMethodInterceptor.Options());
+        Services.TryAddSingleton(_ => new ComputeMethodInterceptor.Options());
         Services.TryAddSingleton(c => new ComputeMethodInterceptor(
             c.GetRequiredService<ComputeMethodInterceptor.Options>(), c));
-        Services.TryAddSingleton(new ComputeServiceInterceptor.Options());
+        Services.TryAddSingleton(_ => new ComputeServiceInterceptor.Options());
         Services.TryAddSingleton(c => new ComputeServiceInterceptor(
             c.GetRequiredService<ComputeServiceInterceptor.Options>(), c));
 
@@ -64,7 +64,7 @@ public readonly struct FusionBuilder
         Services.TryAddTransient(typeof(IMutableState<>), typeof(MutableState<>));
 
         // Update delayer & UI action tracker
-        Services.TryAddSingleton(new UIActionTracker.Options());
+        Services.TryAddSingleton(_ => new UIActionTracker.Options());
         Services.TryAddScoped<UIActionTracker>(c => new UIActionTracker(
             c.GetRequiredService<UIActionTracker.Options>(), c));
         Services.TryAddScoped<IUpdateDelayer>(c => new UpdateDelayer(c.UIActionTracker()));
@@ -88,16 +88,16 @@ public readonly struct FusionBuilder
         }
 
         // Operation completion - notifier & producer
-        Services.TryAddSingleton(new OperationCompletionNotifier.Options());
+        Services.TryAddSingleton(_ => new OperationCompletionNotifier.Options());
         Services.TryAddSingleton<IOperationCompletionNotifier>(c => new OperationCompletionNotifier(
             c.GetRequiredService<OperationCompletionNotifier.Options>(), c));
-        Services.TryAddSingleton(new CompletionProducer.Options());
+        Services.TryAddSingleton(_ => new CompletionProducer.Options());
         Services.TryAddEnumerable(ServiceDescriptor.Singleton(
             typeof(IOperationCompletionListener),
             typeof(CompletionProducer)));
 
         // Command completion handler performing invalidations
-        Services.TryAddSingleton(new PostCompletionInvalidator.Options());
+        Services.TryAddSingleton(_ => new PostCompletionInvalidator.Options());
         if (!Services.HasService<PostCompletionInvalidator>()) {
             Services.AddSingleton(c => new PostCompletionInvalidator(
                 c.GetRequiredService<PostCompletionInvalidator.Options>(), c));
@@ -150,10 +150,10 @@ public readonly struct FusionBuilder
         Services.TryAddSingleton<ReplicaCache>(c => new NoReplicaCache(c));
 
         // Interceptors
-        Services.TryAddSingleton(new ReplicaMethodInterceptor.Options());
+        Services.TryAddSingleton(_ => new ReplicaMethodInterceptor.Options());
         Services.TryAddSingleton(c => new ReplicaMethodInterceptor(
             c.GetRequiredService<ReplicaMethodInterceptor.Options>(), c));
-        Services.TryAddSingleton(new ReplicaServiceInterceptor.Options());
+        Services.TryAddSingleton(_ => new ReplicaServiceInterceptor.Options());
         Services.TryAddSingleton(c => new ReplicaServiceInterceptor(
             c.GetRequiredService<ReplicaServiceInterceptor.Options>(), c));
 
@@ -246,7 +246,7 @@ public readonly struct FusionBuilder
         if (optionsFactory != null)
             Services.AddSingleton(optionsFactory);
         else
-            Services.TryAddSingleton(new ComputedGraphPruner.Options());
+            Services.TryAddSingleton(_ => new ComputedGraphPruner.Options());
 
         Services.TryAddSingleton(c => new ComputedGraphPruner(
             c.GetRequiredService<ComputedGraphPruner.Options>(), c));

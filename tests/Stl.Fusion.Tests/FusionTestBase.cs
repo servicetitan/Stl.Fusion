@@ -299,7 +299,7 @@ public class FusionTestBase : TestBase, IAsyncLifetime
             fusion.AddAuthentication(fusionAuth => fusionAuth.AddRestEaseClient());
 
             // Custom replica cache
-            services.AddSingleton(new InMemoryReplicaCache.Options() {
+            services.AddSingleton(_ => new InMemoryReplicaCache.Options() {
                 IsEnabled = Options.UseReplicaCache,
                 Cache = ReplicaCache,
             });

@@ -4,7 +4,14 @@ public abstract class InterceptorBase : Interceptor, IHasServices
 {
     public record Options
     {
-        public bool IsLoggingEnabled { get; init; } = true;
+        public static class Defaults
+        {
+            public static bool IsLoggingEnabled { get; set; } = true;
+            public static bool IsValidationEnabled { get; set; } = true;
+        }
+
+        public bool IsLoggingEnabled { get; init; } = Defaults.IsLoggingEnabled;
+        public bool IsValidationEnabled { get; init; } = Defaults.IsValidationEnabled;
     }
 
     private static readonly MethodInfo CreateTypedHandlerMethod = typeof(InterceptorBase)
@@ -22,6 +29,7 @@ public abstract class InterceptorBase : Interceptor, IHasServices
     protected LogLevel LogLevel { get; set; } = LogLevel.Debug;
     protected LogLevel ValidationLogLevel { get; set; } = LogLevel.Debug;
 
+    public bool IsValidationEnabled { get; }
     public IServiceProvider Services { get; }
 
     protected InterceptorBase(Options options, IServiceProvider services)
@@ -29,6 +37,7 @@ public abstract class InterceptorBase : Interceptor, IHasServices
         Services = services;
         Log = Services.LogFor(GetType());
         IsLoggingEnabled = options.IsLoggingEnabled && Log.IsLogging(LogLevel);
+        IsValidationEnabled = options.IsValidationEnabled;
 
         _createHandlerUntyped = CreateHandlerUntyped;
         _createMethodDef = CreateMethodDef;
@@ -56,13 +65,15 @@ public abstract class InterceptorBase : Interceptor, IHasServices
 
     public void ValidateType(Type type)
     {
-        _validateTypeCache.GetOrAdd(type, (type1, self) => {
-            Log.Log(ValidationLogLevel, "Validating: '{Type}'", type1);
+        if (!IsValidationEnabled)
+            return;
+
+        _validateTypeCache.GetOrAdd(type, static (type1, self) => {
+            self.Log.Log(self.ValidationLogLevel, "Validating: '{Type}'", type1);
             try {
-                self.ValidateTypeInternal(type1);
             }
             catch (Exception e) {
-                Log.LogCritical(e, "Validation of '{Type}' failed", type1);
+                self.Log.LogCritical(e, "Validation of '{Type}' failed", type1);
                 throw;
             }
             return default;

@@ -16,14 +16,17 @@ public record Screenshot
 
 public interface IScreenshotService : IComputeService
 {
+    [ComputeMethod]
+    Task<Screenshot> GetScreenshotAlt(int width, CancellationToken cancellationToken = default);
     [ComputeMethod(MinCacheDuration = 0.3)]
     Task<Screenshot> GetScreenshot(int width, CancellationToken cancellationToken = default);
 }
 
+#pragma warning disable CA1416
+
 [RegisterComputeService(typeof(IScreenshotService), Scope = ServiceScope.Services)]
 public class ScreenshotService : IScreenshotService
 {
-#pragma warning disable CA1416
     private readonly ImageCodecInfo _jpegEncoder;
     private readonly EncoderParameters _jpegEncoderParameters;
     private readonly Rectangle _displayDimensions;
@@ -39,6 +42,10 @@ public class ScreenshotService : IScreenshotService
         _displayDimensions = DisplayInfo.PrimaryDisplayDimensions
             ?? new Rectangle(0, 0, 1920, 1080);
     }
+
+    // [ComputeMethod]
+    public virtual Task<Screenshot> GetScreenshotAlt(int width, CancellationToken cancellationToken = default)
+        => GetScreenshot(width, cancellationToken);
 
     // [ComputeMethod(MinCacheDuration = 0.3)]
     public virtual async Task<Screenshot> GetScreenshot(int width, CancellationToken cancellationToken = default)
@@ -86,5 +93,4 @@ public class ScreenshotService : IScreenshotService
         };
         return Task.FromResult(bScreen);
     }
-#pragma warning restore CA1416
 }

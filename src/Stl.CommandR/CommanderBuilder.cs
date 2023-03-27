@@ -31,13 +31,13 @@ public readonly struct CommanderBuilder
         Services.Insert(0, AddedTagDescriptor);
 
         // Common services
-        Services.TryAddSingleton(new CommanderOptions());
+        Services.TryAddSingleton(_ => new CommanderOptions());
         Services.TryAddSingleton<ICommander>(c => new Commander(c));
         Services.TryAddSingleton<ICommandHandlerRegistry>(new CommandHandlerRegistry());
         Services.TryAddSingleton<ICommandHandlerResolver>(c => new CommandHandlerResolver(c));
 
         // Command services & their dependencies
-        Services.TryAddSingleton(new CommandServiceInterceptor.Options());
+        Services.TryAddSingleton(_ => new CommandServiceInterceptor.Options());
         Services.TryAddSingleton(c => new CommandServiceInterceptor(
             c.GetRequiredService<CommandServiceInterceptor.Options>(), c));
 

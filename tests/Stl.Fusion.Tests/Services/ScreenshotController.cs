@@ -11,11 +11,16 @@ namespace Stl.Fusion.Tests.Services;
 [JsonifyErrors, UseDefaultSession]
 public class ScreenshotController : ControllerBase
 {
-    public static int CallCount { get; set; }
     protected IScreenshotService Service { get; }
+
+    public static int CallCount { get; set; }
 
     public ScreenshotController(IScreenshotService service)
         => Service = service;
+
+    [HttpGet, Publish]
+    public Task<Screenshot> GetScreenshotAlt(int width, CancellationToken cancellationToken)
+        => Service.GetScreenshot(width, cancellationToken);
 
     [HttpGet, Publish]
     public Task<Screenshot> GetScreenshot(int width, CancellationToken cancellationToken)

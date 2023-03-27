@@ -24,7 +24,7 @@ public readonly struct FusionAuthenticationBuilder
         Services.TryAddScoped(c => c.GetRequiredService<ISessionProvider>().Session);
         Services.TryAddSingleton<ISessionFactory>(_ => new SessionFactory());
 
-        Services.TryAddSingleton(new PresenceReporter.Options());
+        Services.TryAddSingleton(_ => new PresenceReporter.Options());
         Services.TryAddScoped(c => new PresenceReporter(
             c.GetRequiredService<PresenceReporter.Options>(), c));
 

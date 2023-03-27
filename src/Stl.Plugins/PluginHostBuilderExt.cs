@@ -37,7 +37,7 @@ public static class PluginHostBuilderExt
         services.RemoveAll(typeof(IPluginFinder));
         services.RemoveAll(typeof(PredefinedPluginFinder.Options));
 
-        services.AddSingleton(new PredefinedPluginFinder.Options() {
+        services.AddSingleton(_ => new PredefinedPluginFinder.Options() {
             PluginTypes = pluginTypes,
             ResolveIndirectDependencies = resolveIndirectDependencies,
         });

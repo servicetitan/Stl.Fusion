@@ -34,7 +34,7 @@ public readonly struct FusionRestEaseClientBuilder
         Services.Insert(0, AddedTagDescriptor);
 
         Fusion.AddReplicator();
-        Services.TryAddSingleton(new WebSocketChannelProvider.Options());
+        Services.TryAddSingleton(_ => new WebSocketChannelProvider.Options());
         Services.TryAddSingleton<IChannelProvider>(c => new WebSocketChannelProvider(
             c.GetRequiredService<WebSocketChannelProvider.Options>(), c));
 

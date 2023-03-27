@@ -7,5 +7,5 @@ public class ReplicaMethodAttribute : ComputeMethodAttribute
     /// <see cref="Bridge.ReplicaCache"/> behavior.
     /// <code>null</code> means "use default".
     /// </summary>
-    public ReplicaCacheBehavior? CacheBehavior { get; set; } = null;
+    public ReplicaCacheBehavior CacheBehavior { get; set; }
 }
