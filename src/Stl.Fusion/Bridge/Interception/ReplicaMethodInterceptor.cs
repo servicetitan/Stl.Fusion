@@ -27,8 +27,8 @@ public class ReplicaMethodInterceptor : ComputeMethodInterceptorBase
     protected override ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method)
         => new ReplicaMethodFunction<T>(method, Replicator, VersionGenerator, ReplicaCache);
 
-    protected override MethodDef? CreateMethodDef(MethodInfo methodInfo, Invocation initialInvocation)
-        => base.CreateMethodDef(methodInfo, initialInvocation)?.ToReplicaMethodDef();
+    protected override MethodDef? CreateMethodDef(MethodInfo method, Invocation initialInvocation)
+        => base.CreateMethodDef(method, initialInvocation)?.ToReplicaMethodDef();
 
     protected override void ValidateTypeInternal(Type type) { }
 }

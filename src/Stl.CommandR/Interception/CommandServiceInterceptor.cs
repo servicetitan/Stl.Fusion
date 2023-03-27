@@ -36,10 +36,11 @@ public class CommandServiceInterceptor : InterceptorBase
                 : Commander.Call((ICommand<T>)command, cancellationToken);
         };
 
-    protected override MethodDef? CreateMethodDef(MethodInfo methodInfo, Invocation initialInvocation)
+    protected override MethodDef? CreateMethodDef(MethodInfo method, Invocation initialInvocation)
     {
         try {
-            var methodDef = new CommandHandlerMethodDef(this, methodInfo);
+            var type = initialInvocation.Proxy.GetType().NonProxyType();
+            var methodDef = new CommandHandlerMethodDef(type, method, this);
             return methodDef.IsValid ? methodDef : null;
         }
         catch {
@@ -61,7 +62,7 @@ public class CommandServiceInterceptor : InterceptorBase
             if (attr == null)
                 continue;
 
-            var methodDef = new CommandHandlerMethodDef(this, method);
+            var methodDef = new CommandHandlerMethodDef(type, method, this);
             var attributeName = attr.GetType().GetName()
 #if NETSTANDARD2_0
                 .Replace(nameof(Attribute), "");

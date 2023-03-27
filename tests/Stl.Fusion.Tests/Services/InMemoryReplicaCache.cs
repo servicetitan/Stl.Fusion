@@ -59,7 +59,7 @@ public class InMemoryReplicaCache : ReplicaCache
 
         var key = new Key(
             input.Service.GetType().GetName(true, true),
-            input.MethodDef.Name,
+            input.MethodDef.Method.Name,
             arguments);
         return KeySerializer.Write(key);
     }

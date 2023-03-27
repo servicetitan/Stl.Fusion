@@ -46,7 +46,7 @@ public readonly struct FusionBuilder
         Services.TryAddSingleton(ClockBasedVersionGenerator.DefaultCoarse);
 
         // Compute services & their dependencies
-        Services.TryAddSingleton<IComputedOptionsProvider, ComputedOptionsProvider>();
+        Services.TryAddSingleton(new ComputedOptionsProvider());
         Services.TryAddSingleton<IMatchingTypeFinder>(_ => new MatchingTypeFinder());
         Services.TryAddSingleton(TransientErrorDetector.DefaultPreferTransient.For<IComputed>());
         Services.TryAddSingleton(new ComputeMethodInterceptor.Options());

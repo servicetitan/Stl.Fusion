@@ -208,8 +208,8 @@ public readonly struct CommanderBuilder
         where TCommand : class, ICommand
         => AddHandler(InterfaceCommandHandler.New<TService, TCommand>(isFilter, priority));
 
-    public CommanderBuilder AddHandler(Type serviceType, MethodInfo methodInfo, double? priorityOverride = null)
-        => AddHandler(MethodCommandHandler.New(serviceType, methodInfo, priorityOverride));
+    public CommanderBuilder AddHandler(Type serviceType, MethodInfo method, double? priorityOverride = null)
+        => AddHandler(MethodCommandHandler.New(serviceType, method, priorityOverride));
 
     public CommanderBuilder AddHandler(CommandHandler handler)
     {

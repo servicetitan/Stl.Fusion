@@ -4,10 +4,10 @@ public abstract record MethodDef
 {
     private string? _fullName;
 
+    public Type Type { get; init; }
+    public MethodInfo Method { get; init; }
     public Interceptor Interceptor { get; init; }
-    public MethodInfo MethodInfo { get; init; }
-    public string Name => MethodInfo.Name;
-    public string FullName => _fullName ??= $"{MethodInfo.DeclaringType!.GetName()}.{MethodInfo.Name}";
+    public string FullName => _fullName ??= $"{Type.GetName()}.{Method.Name}";
     public bool IsAsyncMethod { get; init; }
     public bool IsAsyncVoidMethod { get; init; }
     public bool ReturnsTask { get; init; }
@@ -16,13 +16,15 @@ public abstract record MethodDef
     public bool IsValid { get; init; }
 
     protected MethodDef(
-        Interceptor interceptor,
-        MethodInfo methodInfo)
+        Type type,
+        MethodInfo method,
+        Interceptor interceptor)
     {
+        Type = type;
+        Method = method;
         Interceptor = interceptor;
-        MethodInfo = methodInfo;
 
-        var returnType = methodInfo.ReturnType;
+        var returnType = method.ReturnType;
         if (!returnType.IsGenericType) {
             ReturnsTask = returnType == typeof(Task);
             ReturnsValueTask = returnType == typeof(ValueTask);

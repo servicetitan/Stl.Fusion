@@ -69,7 +69,7 @@ public abstract class InterceptorBase : Interceptor, IHasServices
         }, this);
     }
 
-    protected virtual Func<Invocation, object?>? CreateHandlerUntyped(MethodInfo methodInfo, Invocation initialInvocation)
+    protected virtual Func<Invocation, object?>? CreateHandlerUntyped(MethodInfo method, Invocation initialInvocation)
     {
         var proxyMethodInfo = initialInvocation.Method;
         var methodDef = _methodDefCache.GetOrAdd(proxyMethodInfo, _createMethodDef, initialInvocation);
@@ -86,6 +86,6 @@ public abstract class InterceptorBase : Interceptor, IHasServices
     protected abstract Func<Invocation, object?> CreateHandler<T>(
         Invocation initialInvocation, MethodDef methodDef);
     protected abstract MethodDef? CreateMethodDef(
-        MethodInfo methodInfo, Invocation initialInvocation);
+        MethodInfo method, Invocation initialInvocation);
     protected abstract void ValidateTypeInternal(Type type);
 }

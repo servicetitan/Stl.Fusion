@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Cysharp.Text;
 
 namespace Stl.Reflection;
 
@@ -7,17 +8,25 @@ public static class TypeExt
     private static readonly Regex MethodNameRe = new("[^\\w\\d]+", RegexOptions.Compiled);
     private static readonly Regex MethodNameTailRe = new("_+$", RegexOptions.Compiled);
     private static readonly Regex GenericTypeNameTailRe = new("`.+$", RegexOptions.Compiled);
+    private static readonly ConcurrentDictionary<Type, Type> NonProxyTypeCache = new();
     private static readonly ConcurrentDictionary<(Type, bool, bool), Symbol> GetNameCache = new();
     private static readonly ConcurrentDictionary<(Type, bool, bool), Symbol> ToIdentifierNameCache = new();
     private static readonly ConcurrentDictionary<Type, Symbol> ToSymbolCache = new();
     private static readonly ConcurrentDictionary<Type, Type?> GetTaskOrValueTaskTypeCache = new();
+    private static Func<Type, Type> _nonProxyTypeResolver = DefaultNonProxyTypeResolver;
 
     public static readonly string SymbolPrefix = "@";
-    public static Func<Type, bool> ProxyTypeDetector { get; set; } =
-        type => (type.Namespace ?? "").EndsWith("StlInterceptionProxies", StringComparison.Ordinal);
+
+    public static Func<Type, Type> NonProxyTypeResolver {
+        get => _nonProxyTypeResolver;
+        set {
+            _nonProxyTypeResolver = value;
+            NonProxyTypeCache.Clear();
+        }
+    }
 
     public static Type NonProxyType(this Type type)
-        => ProxyTypeDetector(type) ? NonProxyType(type.BaseType!) : type;
+        => NonProxyTypeCache.GetOrAdd(type, NonProxyTypeResolver);
 
     public static IEnumerable<Type> GetAllBaseTypes(this Type type, bool addSelf = false, bool addInterfaces = false)
     {
@@ -154,5 +163,48 @@ public static class TypeExt
         return taskType.IsGenericType
             ? taskType.GenericTypeArguments.SingleOrDefault()
             : null;
+    }
+
+    public static Type DefaultNonProxyTypeResolver(Type type)
+    {
+        const string proxyNamespaceSuffix = ".StlInterceptionProxies";
+        const string proxy = "Proxy";
+
+        var @namespace = type.Namespace ?? "";
+        if (!@namespace.EndsWith(proxyNamespaceSuffix, StringComparison.Ordinal))
+            return type;
+
+        if (type.IsConstructedGenericType) {
+            var genericType = type.GetGenericTypeDefinition();
+            var genericProxyType = DefaultNonProxyTypeResolver(genericType);
+            return genericType == genericProxyType
+                ? type
+                : genericProxyType.MakeGenericType(type.GenericTypeArguments);
+        }
+
+        var name = type.Name;
+        var namePrefix = name;
+        var nameSuffix = "";
+        if (type.IsGenericTypeDefinition) {
+            var backTrickIndex = name.IndexOf('`');
+            if (backTrickIndex < 0)
+                return type; // Weird case, shouldn't happen
+
+            namePrefix = name[..backTrickIndex];
+            nameSuffix = name[backTrickIndex..];
+        }
+
+        if (!namePrefix.EndsWith(proxy, StringComparison.Ordinal))
+            return type;
+
+        var nonProxyNamespace = @namespace[..^proxyNamespaceSuffix.Length];
+        var nonProxyNamePrefix = namePrefix[..^proxy.Length];
+        var nonProxyName = ZString.Concat(nonProxyNamespace, nonProxyNamePrefix, nameSuffix);
+        try {
+            return type.Assembly.GetType(nonProxyName) ?? type;
+        }
+        catch {
+            return type;
+        }
     }
 }
