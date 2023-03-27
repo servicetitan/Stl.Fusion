@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Stl.IO;
@@ -37,6 +38,7 @@ public class FusionTestOptions
     public bool UseRedisOperationLogChangeTracking { get; set; } = !TestRunnerInfo.IsBuildAgent();
     public bool UseInMemoryKeyValueStore { get; set; }
     public bool UseInMemoryAuthService { get; set; }
+    public bool UseReplicaCache { get; set; }
     public bool UseTestClock { get; set; }
     public bool UseLogging { get; set; } = true;
 }
@@ -45,6 +47,7 @@ public class FusionTestOptions
 public class FusionTestBase : TestBase, IAsyncLifetime
 {
     private static readonly AsyncLock InitializeLock = new(ReentryMode.CheckedFail);
+    protected static readonly ConcurrentDictionary<Symbol, string> ReplicaCache = new();
 
     public FusionTestOptions Options { get; }
     public bool IsLoggingEnabled { get; set; } = true;
@@ -296,7 +299,10 @@ public class FusionTestBase : TestBase, IAsyncLifetime
             fusion.AddAuthentication(fusionAuth => fusionAuth.AddRestEaseClient());
 
             // Custom replica cache
-            services.AddSingleton(new InMemoryReplicaCache.Options());
+            services.AddSingleton(new InMemoryReplicaCache.Options() {
+                IsEnabled = Options.UseReplicaCache,
+                Cache = ReplicaCache,
+            });
             services.AddSingleton<ReplicaCache, InMemoryReplicaCache>();
 
             // Custom computed state
