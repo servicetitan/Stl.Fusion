@@ -295,6 +295,10 @@ public class FusionTestBase : TestBase, IAsyncLifetime
             });
             fusion.AddAuthentication(fusionAuth => fusionAuth.AddRestEaseClient());
 
+            // Custom replica cache
+            services.AddSingleton(new InMemoryReplicaCache.Options());
+            services.AddSingleton<ReplicaCache, InMemoryReplicaCache>();
+
             // Custom computed state
             services.AddSingleton(c => c.StateFactory().NewComputed<ServerTimeModel2>(
                 new() { InitialValue = new(default) },

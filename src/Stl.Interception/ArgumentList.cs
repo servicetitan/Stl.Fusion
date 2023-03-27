@@ -1,4 +1,4 @@
-﻿// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable ArrangeConstructorOrDestructorBody
 using Cysharp.Text;
@@ -55,14 +55,15 @@ public record ArgumentList
         => throw new ArgumentOutOfRangeException(nameof(index));
     public virtual object? GetUntyped(int index)
         => throw new ArgumentOutOfRangeException(nameof(index));
+    // Virtual non-generic method for frequent operation
+    public virtual CancellationToken GetCancellationToken(int index)
+        => throw new ArgumentOutOfRangeException(nameof(index));
 
     public virtual void Set<T>(int index, T value)
          => throw new ArgumentOutOfRangeException(nameof(index));
     public virtual void SetUntyped(int index, object? value)
          => throw new ArgumentOutOfRangeException(nameof(index));
-
-    // This operation is quite frequent, so it makes sense
-    // to create a dedicated virtual non-generic method for it
+    // Virtual non-generic method for frequent operation
     public virtual void SetCancellationToken(int index, CancellationToken item)
          => throw new ArgumentOutOfRangeException(nameof(index));
 
@@ -71,8 +72,7 @@ public record ArgumentList
             ? New(item)
             : throw new ArgumentOutOfRangeException(nameof(index));
 
-    // This operation is quite frequent, so it makes sense
-    // to create a dedicated virtual non-generic method for it
+    // Virtual non-generic method for frequent operation
     public virtual ArgumentList InsertCancellationToken(int index, CancellationToken item)
         => index == 0
             ? New(item)
@@ -135,6 +135,12 @@ public sealed record ArgumentList<T0>(
         => index switch {
             // ReSharper disable once HeapView.PossibleBoxingAllocation
             0 => Item0,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override CancellationToken GetCancellationToken(int index)
+        => index switch {
+            0 => Item0 is CancellationToken value ? value : default!,
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
 
@@ -321,6 +327,13 @@ public sealed record ArgumentList<T0, T1>(
             0 => Item0,
             // ReSharper disable once HeapView.PossibleBoxingAllocation
             1 => Item1,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override CancellationToken GetCancellationToken(int index)
+        => index switch {
+            0 => Item0 is CancellationToken value ? value : default!,
+            1 => Item1 is CancellationToken value ? value : default!,
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
 
@@ -546,6 +559,14 @@ public sealed record ArgumentList<T0, T1, T2>(
             1 => Item1,
             // ReSharper disable once HeapView.PossibleBoxingAllocation
             2 => Item2,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override CancellationToken GetCancellationToken(int index)
+        => index switch {
+            0 => Item0 is CancellationToken value ? value : default!,
+            1 => Item1 is CancellationToken value ? value : default!,
+            2 => Item2 is CancellationToken value ? value : default!,
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
 
@@ -810,6 +831,15 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
             2 => Item2,
             // ReSharper disable once HeapView.PossibleBoxingAllocation
             3 => Item3,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override CancellationToken GetCancellationToken(int index)
+        => index switch {
+            0 => Item0 is CancellationToken value ? value : default!,
+            1 => Item1 is CancellationToken value ? value : default!,
+            2 => Item2 is CancellationToken value ? value : default!,
+            3 => Item3 is CancellationToken value ? value : default!,
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
 
@@ -1113,6 +1143,16 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
             3 => Item3,
             // ReSharper disable once HeapView.PossibleBoxingAllocation
             4 => Item4,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override CancellationToken GetCancellationToken(int index)
+        => index switch {
+            0 => Item0 is CancellationToken value ? value : default!,
+            1 => Item1 is CancellationToken value ? value : default!,
+            2 => Item2 is CancellationToken value ? value : default!,
+            3 => Item3 is CancellationToken value ? value : default!,
+            4 => Item4 is CancellationToken value ? value : default!,
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
 
@@ -1455,6 +1495,17 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
             4 => Item4,
             // ReSharper disable once HeapView.PossibleBoxingAllocation
             5 => Item5,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override CancellationToken GetCancellationToken(int index)
+        => index switch {
+            0 => Item0 is CancellationToken value ? value : default!,
+            1 => Item1 is CancellationToken value ? value : default!,
+            2 => Item2 is CancellationToken value ? value : default!,
+            3 => Item3 is CancellationToken value ? value : default!,
+            4 => Item4 is CancellationToken value ? value : default!,
+            5 => Item5 is CancellationToken value ? value : default!,
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
 
@@ -1836,6 +1887,18 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
             5 => Item5,
             // ReSharper disable once HeapView.PossibleBoxingAllocation
             6 => Item6,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override CancellationToken GetCancellationToken(int index)
+        => index switch {
+            0 => Item0 is CancellationToken value ? value : default!,
+            1 => Item1 is CancellationToken value ? value : default!,
+            2 => Item2 is CancellationToken value ? value : default!,
+            3 => Item3 is CancellationToken value ? value : default!,
+            4 => Item4 is CancellationToken value ? value : default!,
+            5 => Item5 is CancellationToken value ? value : default!,
+            6 => Item6 is CancellationToken value ? value : default!,
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
 
@@ -2256,6 +2319,19 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
             6 => Item6,
             // ReSharper disable once HeapView.PossibleBoxingAllocation
             7 => Item7,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override CancellationToken GetCancellationToken(int index)
+        => index switch {
+            0 => Item0 is CancellationToken value ? value : default!,
+            1 => Item1 is CancellationToken value ? value : default!,
+            2 => Item2 is CancellationToken value ? value : default!,
+            3 => Item3 is CancellationToken value ? value : default!,
+            4 => Item4 is CancellationToken value ? value : default!,
+            5 => Item5 is CancellationToken value ? value : default!,
+            6 => Item6 is CancellationToken value ? value : default!,
+            7 => Item7 is CancellationToken value ? value : default!,
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
 
@@ -2715,6 +2791,20 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
             7 => Item7,
             // ReSharper disable once HeapView.PossibleBoxingAllocation
             8 => Item8,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override CancellationToken GetCancellationToken(int index)
+        => index switch {
+            0 => Item0 is CancellationToken value ? value : default!,
+            1 => Item1 is CancellationToken value ? value : default!,
+            2 => Item2 is CancellationToken value ? value : default!,
+            3 => Item3 is CancellationToken value ? value : default!,
+            4 => Item4 is CancellationToken value ? value : default!,
+            5 => Item5 is CancellationToken value ? value : default!,
+            6 => Item6 is CancellationToken value ? value : default!,
+            7 => Item7 is CancellationToken value ? value : default!,
+            8 => Item8 is CancellationToken value ? value : default!,
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
 
@@ -3213,6 +3303,21 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
             8 => Item8,
             // ReSharper disable once HeapView.PossibleBoxingAllocation
             9 => Item9,
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override CancellationToken GetCancellationToken(int index)
+        => index switch {
+            0 => Item0 is CancellationToken value ? value : default!,
+            1 => Item1 is CancellationToken value ? value : default!,
+            2 => Item2 is CancellationToken value ? value : default!,
+            3 => Item3 is CancellationToken value ? value : default!,
+            4 => Item4 is CancellationToken value ? value : default!,
+            5 => Item5 is CancellationToken value ? value : default!,
+            6 => Item6 is CancellationToken value ? value : default!,
+            7 => Item7 is CancellationToken value ? value : default!,
+            8 => Item8 is CancellationToken value ? value : default!,
+            9 => Item9 is CancellationToken value ? value : default!,
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
 

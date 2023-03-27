@@ -26,9 +26,9 @@ public abstract class ComputeMethodInterceptorBase : InterceptorBase
         return invocation => {
             var input = computeMethodDef.CreateInput(function, invocation);
             var arguments = input.Arguments;
-            var cancellationTokenIndex = computeMethodDef.CancellationTokenArgumentIndex;
-            var cancellationToken = cancellationTokenIndex >= 0
-                ? arguments.GetItem<CancellationToken>(cancellationTokenIndex)
+            var ctIndex = computeMethodDef.CancellationTokenArgumentIndex;
+            var cancellationToken = ctIndex >= 0
+                ? arguments.GetCancellationToken(ctIndex)
                 : default;
 
             // Invoking the function
@@ -37,9 +37,9 @@ public abstract class ComputeMethodInterceptorBase : InterceptorBase
             // InvokeAndStrip allows to get rid of one extra allocation
             // of a task stripping the result of regular Invoke.
             var task = function.InvokeAndStrip(input, usedBy, null, cancellationToken);
-            if (cancellationTokenIndex >= 0)
+            if (ctIndex >= 0)
                 // We don't want memory leaks + unexpected cancellation later
-                arguments.SetItem(cancellationTokenIndex, default(CancellationToken));
+                arguments.SetCancellationToken(ctIndex, default);
 
             // ReSharper disable once HeapView.BoxingAllocation
             return methodDef.ReturnsValueTask ? new ValueTask<T>(task) : task;

@@ -18,8 +18,8 @@ public class CommandServiceInterceptor : InterceptorBase
     protected override Func<Invocation, object?> CreateHandler<T>(Invocation initialInvocation, MethodDef methodDef)
         => invocation => {
             var arguments = invocation.Arguments;
-            var command = arguments.GetItem<ICommand>(0);
-            var cancellationToken = arguments.GetItem<CancellationToken>(arguments.Length - 1);
+            var command = arguments.Get<ICommand>(0);
+            var cancellationToken = arguments.GetCancellationToken(arguments.Length - 1);
             var context = CommandContext.Current;
             if (ReferenceEquals(command, context?.UntypedCommand)) {
                 // We're already inside the ICommander pipeline created for exactly this command

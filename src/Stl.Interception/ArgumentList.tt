@@ -73,14 +73,15 @@ public record ArgumentList
         => throw new ArgumentOutOfRangeException(nameof(index));
     public virtual object? GetUntyped(int index)
         => throw new ArgumentOutOfRangeException(nameof(index));
+    // Virtual non-generic method for frequent operation
+    public virtual CancellationToken GetCancellationToken(int index)
+        => throw new ArgumentOutOfRangeException(nameof(index));
 
     public virtual void Set<T>(int index, T value)
          => throw new ArgumentOutOfRangeException(nameof(index));
     public virtual void SetUntyped(int index, object? value)
          => throw new ArgumentOutOfRangeException(nameof(index));
-
-    // This operation is quite frequent, so it makes sense
-    // to create a dedicated virtual non-generic method for it
+    // Virtual non-generic method for frequent operation
     public virtual void SetCancellationToken(int index, CancellationToken item)
          => throw new ArgumentOutOfRangeException(nameof(index));
 
@@ -89,8 +90,7 @@ public record ArgumentList
             ? New(item)
             : throw new ArgumentOutOfRangeException(nameof(index));
 
-    // This operation is quite frequent, so it makes sense
-    // to create a dedicated virtual non-generic method for it
+    // Virtual non-generic method for frequent operation
     public virtual ArgumentList InsertCancellationToken(int index, CancellationToken item)
         => index == 0
             ? New(item)
@@ -183,6 +183,14 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
 <# for (var t = 0; t < itemCount; t++) { #>
             // ReSharper disable once HeapView.PossibleBoxingAllocation
             <#=t#> => Item<#=t#>,
+<# } #>
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override CancellationToken GetCancellationToken(int index)
+        => index switch {
+<# for (var t = 0; t < itemCount; t++) { #>
+            <#=t#> => Item<#=t#> is CancellationToken value ? value : default!,
 <# } #>
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
