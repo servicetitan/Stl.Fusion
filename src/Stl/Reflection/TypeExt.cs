@@ -199,7 +199,7 @@ public static class TypeExt
 
         var nonProxyNamespace = @namespace[..^proxyNamespaceSuffix.Length];
         var nonProxyNamePrefix = namePrefix[..^proxy.Length];
-        var nonProxyName = ZString.Concat(nonProxyNamespace, nonProxyNamePrefix, nameSuffix);
+        var nonProxyName = ZString.Concat(nonProxyNamespace, '.', nonProxyNamePrefix, nameSuffix);
         try {
             return type.Assembly.GetType(nonProxyName) ?? type;
         }

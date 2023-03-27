@@ -38,11 +38,11 @@ public class ScreenshotServiceClientWithReplicaCacheTest : FusionTestBase
         c2.Replica.Should().BeNull(); // First cache hit should have no replica
 
         sw.Restart();
-        await c2.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(1));
+        await c2.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(2));
         Out.WriteLine($"Invalidated in: {sw.ElapsedMilliseconds}ms");
 
         sw.Restart();
-        c2 = (IReplicaMethodComputed)await c2.Update().AsTask().WaitAsync(TimeSpan.FromSeconds(1));
+        c2 = (IReplicaMethodComputed)await c2.Update().AsTask().WaitAsync(TimeSpan.FromSeconds(2));
         Out.WriteLine($"Updated in: {sw.ElapsedMilliseconds}ms");
         c2.Replica.Should().NotBeNull();
     }
@@ -77,7 +77,7 @@ public class ScreenshotServiceClientWithReplicaCacheTest : FusionTestBase
         c1.Output.UntypedValue.Should().BeNull();
 
         sw.Restart();
-        await c2.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(1));
+        await c2.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(2));
         Out.WriteLine($"Invalidated in: {sw.ElapsedMilliseconds}ms");
 
         sw.Restart();

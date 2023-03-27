@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
+using Cysharp.Text;
+using Newtonsoft.Json;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Interception;
 using Stl.Interception;
@@ -13,15 +15,16 @@ public class InMemoryReplicaCache : ReplicaCache
     {
         public bool IsEnabled { get; init; }
         public ConcurrentDictionary<Symbol, string> Cache { get; init; } = new();
-        public ITextSerializer<Key> KeySerializer { get; } =
-            new SystemJsonSerializer(new JsonSerializerOptions() { WriteIndented = false }).ToTyped<Key>();
+        public ITextSerializer KeySerializer { get; } =
+            new SystemJsonSerializer(new JsonSerializerOptions() { WriteIndented = false });
+            // new NewtonsoftJsonSerializer(new JsonSerializerSettings() { Formatting = Formatting.None }).ToTyped<Key>();
         public ITextSerializer ValueSerializer { get; } = SystemJsonSerializer.Default;
     }
 
     private Options Settings { get; }
     private bool IsEnabled => Settings.IsEnabled;
     private ConcurrentDictionary<Symbol, string> Cache => Settings.Cache;
-    private ITextSerializer<Key> KeySerializer => Settings.KeySerializer;
+    private ITextSerializer KeySerializer => Settings.KeySerializer;
     private ITextSerializer ValueSerializer => Settings.ValueSerializer;
 
     public InMemoryReplicaCache(Options settings, IServiceProvider services)
@@ -30,10 +33,17 @@ public class InMemoryReplicaCache : ReplicaCache
 
     protected override ValueTask<Result<T>?> GetInternal<T>(ComputeMethodInput input, CancellationToken cancellationToken)
     {
-        if (!IsEnabled || !Cache.TryGetValue(GetKey(input), out var value))
+        if (!IsEnabled)
             return ValueTaskExt.FromResult((Result<T>?)null);
 
+        var key = GetKey(input);
+        if (!Cache.TryGetValue(key, out var value)) {
+            Log.LogInformation("Get({Key}) -> miss", key);
+            return ValueTaskExt.FromResult((Result<T>?)null);
+        }
+
         var output = ValueSerializer.Read<Result<T>>(value);
+        Log.LogInformation("Get({Key}) -> {Result}", key, output);
         return ValueTaskExt.FromResult((Result<T>?)output);
     }
 
@@ -57,16 +67,9 @@ public class InMemoryReplicaCache : ReplicaCache
         if (ctIndex >= 0)
             arguments = arguments.Remove(ctIndex);
 
-        var key = new Key(
-            input.Service.GetType().GetName(true, true),
-            input.MethodDef.Method.Name,
-            arguments);
-        return KeySerializer.Write(key);
+        var service = input.Service.GetType().NonProxyType().GetName(true, true);
+        var method = input.MethodDef.Method.Name;
+        var argumentsJson = KeySerializer.Write(arguments, arguments.GetType());
+        return $"{method} @ {service} <- {argumentsJson}";
     }
-
-    [DataContract]
-    public sealed record Key(
-        [property: DataMember(Order = 0)] string Service,
-        [property: DataMember(Order = 1)] string Method,
-        [property: DataMember(Order = 2)] ArgumentList ServiceType);
 }
