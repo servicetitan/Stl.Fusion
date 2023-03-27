@@ -2,6 +2,10 @@ using System.Security;
 using System.Security.Principal;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Authentication.Commands;
+using Stl.Fusion.EntityFramework.Authentication;
+using Stl.Fusion.Tests.Model;
+using Stl.Reflection;
+using User = Stl.Fusion.Authentication.User;
 
 namespace Stl.Fusion.Tests.Authentication;
 
@@ -78,6 +82,10 @@ public abstract class AuthServiceTestBase : FusionTestBase
         agentInfo1.Should().NotBe(agentInfo2);
         agentInfo1.Id.Should().NotBe(agentInfo2.Id);
         notifier1.Should().NotBe(notifier2);
+
+        var auth = Services.GetRequiredService<IAuth>();
+        var tAuthService = typeof(DbAuthService<TestDbContext, DbAuthSessionInfo, DbAuthUser, long>);
+        auth.GetType().NonProxyType().Should().Be(tAuthService);
     }
 
     [Fact]

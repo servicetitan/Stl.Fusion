@@ -19,6 +19,7 @@
     <SystemXxxVersion5>$(AspNetCoreVersion5)</SystemXxxVersion5>
     <MicrosoftExtensionsVersion>$(AspNetCoreVersion)</MicrosoftExtensionsVersion>
     <MicrosoftExtensionsVersion6>$(AspNetCoreVersion6)</MicrosoftExtensionsVersion6>
+    <CSharpVersion>4.4.*</CSharpVersion>
     <!-- EF Core -->
     <EntityFrameworkCoreVersion>7.*</EntityFrameworkCoreVersion>
     <EntityFrameworkCoreVersion6>$(AspNetCoreVersion6)</EntityFrameworkCoreVersion6>
@@ -75,7 +76,7 @@
     <PackageReference Update="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="$(BlazorVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="$(AspNetCoreVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="$(AspNetCoreNewtonsoftJsonVersion)" />
-    <PackageReference Update="Microsoft.CSharp" Version="4.*" />
+    <PackageReference Update="Microsoft.CSharp" Version="$(CSharpVersion)" />
     <PackageReference Update="Microsoft.Data.SqlClient" Version="5.1.*" />
     <PackageReference Update="Microsoft.Extensions.Caching.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
     <PackageReference Update="Microsoft.Extensions.Configuration.Abstractions" Version="$(MicrosoftExtensionsVersion)" />
