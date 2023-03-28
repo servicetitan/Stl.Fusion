@@ -281,7 +281,7 @@ public class WebSocketChannel : Channel<string>, IAsyncDisposable
                 var undecoded = readBytes.Slice(usedByteCount);
 
                 if (decodedPart != null) {
-                    decodedPart.Append(readChars);
+                    decodedPart.Append(readChars.Array, readChars.Offset, readChars.Count);
                     if (r.EndOfMessage) {
                         Debug.Assert(undecoded.Count == 0);
                         var message = decodedPart.ToString();
@@ -298,7 +298,7 @@ public class WebSocketChannel : Channel<string>, IAsyncDisposable
                     return ArraySegmentCompatExt.ToString(readChars);
 
                 decodedPart = new StringBuilder(readChars.Count);
-                decodedPart.Append(readChars);
+                decodedPart.Append(readChars.Array, readChars.Offset, readChars.Count);
                 undecoded.CopyTo(aBytes);
                 mFreeBytes = asBytes.Slice(undecoded.Count);
                 return null;
@@ -346,7 +346,6 @@ public class WebSocketChannel : Channel<string>, IAsyncDisposable
                     break;
             }
         }
-
     }
 
 #endif
