@@ -26,9 +26,7 @@ public class MomentClockSet
 
     public MomentClockSet(IMomentClock anyClock)
         : this(anyClock, anyClock, new ServerClock(anyClock), anyClock, anyClock)
-    {
-        ServerClock.Offset = default;
-    }
+    { }
 
     public MomentClockSet(
         IMomentClock systemClock,
