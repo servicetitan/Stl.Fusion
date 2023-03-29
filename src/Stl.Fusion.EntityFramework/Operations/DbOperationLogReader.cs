@@ -125,7 +125,7 @@ public class DbOperationLogReader<TDbContext> : DbTenantWorkerBase<TDbContext>
             .RetryForever(Settings.RetryDelays, Clocks.CpuClock, Log)
             .Append(waitForChangesChain)
             .CycleForever()
-            .LogBoundary(Log);
+            .Log(Log);
 
         return chain.Start(cancellationToken);
     }

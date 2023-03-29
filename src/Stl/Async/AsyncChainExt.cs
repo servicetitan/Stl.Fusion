@@ -45,7 +45,7 @@ public static class AsyncChainExt
             await asyncChain.Start(cancellationToken).ConfigureAwait(false);
         });
 
-    public static AsyncChain Log(this AsyncChain asyncChain, ILogger? log)
+    public static AsyncChain LogError(this AsyncChain asyncChain, ILogger? log)
     {
         if (log == null)
             return asyncChain;
@@ -62,9 +62,9 @@ public static class AsyncChainExt
         };
     }
 
-    public static AsyncChain LogBoundary(this AsyncChain asyncChain, ILogger? log)
-        => asyncChain.LogBoundary(LogLevel.Information, log);
-    public static AsyncChain LogBoundary(this AsyncChain asyncChain, LogLevel logLevel, ILogger? log)
+    public static AsyncChain Log(this AsyncChain asyncChain, ILogger? log)
+        => asyncChain.Log(LogLevel.Information, log);
+    public static AsyncChain Log(this AsyncChain asyncChain, LogLevel logLevel, ILogger? log)
     {
         if (log == null)
             return asyncChain;
@@ -96,21 +96,23 @@ public static class AsyncChainExt
     public static AsyncChain Trace(this AsyncChain asyncChain, Func<Activity?>? activityFactory, ILogger? log = null)
     {
         if (activityFactory == null)
-            return asyncChain.Log(log);
+            return asyncChain.LogError(log);
         return asyncChain with {
             Start = async cancellationToken => {
                 using var activity = activityFactory.Invoke();
-                await asyncChain.Log(log).Start(cancellationToken).ConfigureAwait(false);
+                await asyncChain.LogError(log).Start(cancellationToken).ConfigureAwait(false);
             }
         };
     }
 
-    public static AsyncChain Silence(this AsyncChain asyncChain)
+    public static AsyncChain Silence(this AsyncChain asyncChain, ILogger? log = null)
         => new($"{asyncChain.Name}.Silence()", async cancellationToken => {
             try {
                 await asyncChain.Start(cancellationToken).ConfigureAwait(false);
             }
-            catch (Exception e) when (!IsAlwaysThrowable(e)) { }
+            catch (Exception e) when (!IsAlwaysThrowable(e)) {
+                log?.LogError(e, "{ChainName} failed, the error is silenced", asyncChain.Name);
+            }
         });
 
     public static AsyncChain AppendDelay(this AsyncChain asyncChain, Func<RandomTimeSpan> delayFactory, IMomentClock? clock = null)
@@ -145,7 +147,8 @@ public static class AsyncChainExt
                     return;
                 }
                 catch (Exception e) {
-                    if (IsAlwaysThrowable(e)) throw;
+                    if (IsAlwaysThrowable(e))
+                        throw;
                 }
                 var retryDelay = retryDelays[failedTryCount];
                 await clock.Delay(retryDelay, cancellationToken).ConfigureAwait(false);
@@ -170,7 +173,8 @@ public static class AsyncChainExt
                         return;
                     }
                     catch (Exception e) {
-                        if (IsAlwaysThrowable(e) || failedTryCount >= maxCount) throw;
+                        if (IsAlwaysThrowable(e) || failedTryCount >= maxCount)
+                            throw;
                     }
                     var retryDelay = retryDelays[failedTryCount];
                     await clock.Delay(retryDelay, cancellationToken).ConfigureAwait(false);

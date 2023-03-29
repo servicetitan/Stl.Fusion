@@ -9,6 +9,7 @@ public sealed class ComputedGraphPruner : WorkerBase
         public bool AutoActivate { get; init; } = true;
         public RandomTimeSpan CheckPeriod { get; init; } = TimeSpan.FromMinutes(10).ToRandom(0.1);
         public RandomTimeSpan NextBatchDelay { get; init; } = TimeSpan.FromSeconds(0.1).ToRandom(0.25);
+        public RetryDelaySeq RetryDelays { get; init; } = new(60, 600);
         public int BatchSize { get; init; } = 1024 * HardwareInfo.GetProcessorCountPo2Factor();
     }
 
@@ -94,9 +95,11 @@ public sealed class ComputedGraphPruner : WorkerBase
                 consistentCount, computedCount, removedEdgeCount, edgeCount, batchCount + 1, Settings.BatchSize);
         }).Trace(() => activitySource.StartActivity("Prune"), Log).Silence();
 
-        var chain = runChain.AppendDelay(Settings.CheckPeriod, Clock)
+        var chain = runChain
+            .AppendDelay(Settings.CheckPeriod, Clock)
+            .RetryForever(Settings.RetryDelays, Clock)
             .CycleForever()
-            .LogBoundary(Log);
+            .Log(Log);
 
         cancellationToken.ThrowIfCancellationRequested();
         await chain.Start(cancellationToken).ConfigureAwait(false);

@@ -61,7 +61,7 @@ public class DbSessionInfoTrimmer<TDbContext, TDbSessionInfo, TDbUserId> : DbSes
                 () => lastTrimCount < Settings.BatchSize ? Settings.CheckPeriod : Settings.NextBatchDelay,
                 Clocks.CpuClock)
             .CycleForever()
-            .LogBoundary(Log);
+            .Log(Log);
 
         return chain.Start(cancellationToken);
     }
