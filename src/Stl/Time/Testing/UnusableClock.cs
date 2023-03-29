@@ -9,7 +9,6 @@ public sealed class UnusableClock : IMomentClock
 
     DateTimeOffset ISystemClock.UtcNow => Now;
     public Moment Now => throw Errors.UnusableClock();
-    public Moment HighResolutionNow => throw Errors.UnusableClock();
 
     public override string ToString() => $"{GetType().Name}()";
 

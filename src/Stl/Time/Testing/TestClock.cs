@@ -30,8 +30,8 @@ public sealed class TestClock : ITestClock, IDisposable
 
     // Operations
 
-    DateTimeOffset ISystemClock.UtcNow => Now;
     public Moment Now => ToLocalTime(SystemClock.Now);
+    DateTimeOffset ISystemClock.UtcNow => Now;
 
     public Moment ToRealTime(Moment localTime) => Settings.ToRealTime(localTime);
     public Moment ToLocalTime(Moment realTime) => Settings.ToLocalTime(realTime);
