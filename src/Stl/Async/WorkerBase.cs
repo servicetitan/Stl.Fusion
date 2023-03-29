@@ -31,10 +31,20 @@ public abstract class WorkerBase : ProcessorBase, IWorker
                 throw Errors.AlreadyStopped();
 
             using var _ = MustFlowExecutionContext ? default : ExecutionContextExt.SuppressFlow();
+            Task onStartTask;
+            try {
+                onStartTask = OnStart(StopToken);
+            }
+            catch (OperationCanceledException) {
+                onStartTask = Task.FromCanceled(StopToken);
+            }
+            catch (Exception e) {
+                onStartTask = Task.FromException(e);
+            }
             _whenRunning = Task.Run(async () => {
                 try {
                     try {
-                        await OnStart(StopToken).ConfigureAwait(false);
+                        await onStartTask.ConfigureAwait(false);
                         await OnRun(StopToken).ConfigureAwait(false);
                     }
                     finally {
