@@ -4,6 +4,8 @@ namespace Stl.Time;
 
 public interface IServerClock : IMomentClock
 {
+    IMomentClock BaseClock { get; }
+    TimeSpan Offset { get; set; }
     Task WhenReady { get; }
 }
 

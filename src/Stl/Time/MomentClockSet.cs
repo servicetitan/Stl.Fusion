@@ -24,6 +24,12 @@ public class MomentClockSet
         CoarseCpuClock = Default.CoarseCpuClock;
     }
 
+    public MomentClockSet(IMomentClock anyClock)
+        : this(anyClock, anyClock, new ServerClock(anyClock), anyClock, anyClock)
+    {
+        ServerClock.Offset = default;
+    }
+
     public MomentClockSet(
         IMomentClock systemClock,
         IMomentClock cpuClock,
