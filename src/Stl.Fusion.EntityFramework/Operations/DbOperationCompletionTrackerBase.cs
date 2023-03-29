@@ -16,10 +16,10 @@ public abstract class DbOperationCompletionTrackerBase : WorkerBase
         TenantWatchers = new();
     }
 
-    protected override Task RunInternal(CancellationToken cancellationToken) 
+    protected override Task OnRun(CancellationToken cancellationToken) 
         => TaskExt.NeverEndingTask.WaitAsync(cancellationToken);
 
-    protected override async Task OnStopping()
+    protected override async Task OnStop()
     {
         if (TenantWatchers == null)
             return;

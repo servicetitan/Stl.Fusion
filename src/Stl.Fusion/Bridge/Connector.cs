@@ -36,7 +36,7 @@ public sealed class Connector<TConnection> : WorkerBase
 
         async Task<TConnection> AwaitConnection()
         {
-            Start();
+            this.Start();
             while (true) {
                 try {
                     return await state.Value.ConnectionTask.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -72,7 +72,7 @@ public sealed class Connector<TConnection> : WorkerBase
 
     // Protected & private methods
 
-    protected override async Task RunInternal(CancellationToken cancellationToken)
+    protected override async Task OnRun(CancellationToken cancellationToken)
     {
         ManualAsyncEvent<State> state;
         lock (Lock) {
@@ -146,7 +146,7 @@ public sealed class Connector<TConnection> : WorkerBase
         }
     }
 
-    protected override Task OnStopping()
+    protected override Task OnStop()
     {
         lock (Lock) {
             var prevState = _state;

@@ -26,7 +26,7 @@ public class PresenceReporter : WorkerBase
         Clocks = Settings.Clocks ?? services.Clocks();
     }
 
-    protected override async Task RunInternal(CancellationToken cancellationToken)
+    protected override async Task OnRun(CancellationToken cancellationToken)
     {
         var session = await SessionResolver.GetSession(cancellationToken).ConfigureAwait(false);
         var retryCount = 0;

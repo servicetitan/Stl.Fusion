@@ -25,40 +25,34 @@ public abstract class WorkerBase : ProcessorBase, IWorker
         lock (Lock) {
             if (_whenRunning != null)
                 return _whenRunning;
+
             this.ThrowIfDisposedOrDisposing();
             if (StopToken.IsCancellationRequested)
                 throw Errors.AlreadyStopped();
 
-            var flowSuppressor =
-                (MustFlowExecutionContext && !ExecutionContext.IsFlowSuppressed())
-                    ? Disposable.NewClosed(ExecutionContext.SuppressFlow(), d => d.Dispose())
-                    : default;
-            using (flowSuppressor) {
-                var startingTask = OnStarting(StopToken);
-                _whenRunning = Task.Run(async () => {
-                        await startingTask.ConfigureAwait(false);
-                        await RunInternal(StopToken).ConfigureAwait(false);
-                    }, default)
-                    .ContinueWith(async _ => {
+            using var _ = MustFlowExecutionContext ? default : ExecutionContextExt.SuppressFlow();
+            _whenRunning = Task.Run(async () => {
+                try {
+                    try {
+                        await OnStart(StopToken).ConfigureAwait(false);
+                        await OnRun(StopToken).ConfigureAwait(false);
+                    }
+                    finally {
                         StopTokenSource.CancelAndDisposeSilently();
-                        try {
-                            await OnStopping().ConfigureAwait(false);
-                        }
-                        catch {
-                            // Intended
-                        }
-                    }, default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
-            }
+                        await OnStop().ConfigureAwait(false);
+                    }
+                }
+                catch {
+                    // Intended: WhenRunning is returned by DisposeAsyncCore, so it should never throw
+                }
+            }, default);
         }
         return _whenRunning;
     }
 
-    protected abstract Task RunInternal(CancellationToken cancellationToken);
-    protected virtual Task OnStarting(CancellationToken cancellationToken) => Task.CompletedTask;
-    protected virtual Task OnStopping() => Task.CompletedTask;
-
-    public void Start()
-        => Run();
+    protected abstract Task OnRun(CancellationToken cancellationToken);
+    protected virtual Task OnStart(CancellationToken cancellationToken) => Task.CompletedTask;
+    protected virtual Task OnStop() => Task.CompletedTask;
 
     public Task Stop()
     {
@@ -70,7 +64,7 @@ public abstract class WorkerBase : ProcessorBase, IWorker
 
     Task IHostedService.StartAsync(CancellationToken cancellationToken)
     {
-        Start();
+        _ = Run();
         return Task.CompletedTask;
     }
 

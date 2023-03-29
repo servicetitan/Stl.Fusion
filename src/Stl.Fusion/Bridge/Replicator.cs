@@ -8,7 +8,6 @@ public interface IReplicator : IHasId<Symbol>, IHasServices
 {
     ReplicatorOptions Options { get; }
 
-    Replica? Get(PublicationRef publicationRef);
     Replica<T> AddOrUpdate<T>(PublicationStateInfo<T> state);
 
     IState<bool> GetPublisherConnectionState(Symbol publisherId);
@@ -18,7 +17,7 @@ public interface IReplicatorImpl : IReplicator
 {
     IChannelProvider ChannelProvider { get; }
 
-    bool Subscribe(Replica replica);
+    ValueTask Subscribe(Replica replica);
     void OnReplicaDisposed(Replica replica);
 }
 
@@ -33,8 +32,11 @@ public record ReplicatorOptions
 
 public class Replicator : SafeAsyncDisposableBase, IReplicatorImpl
 {
+    protected readonly TimeSpan SubscribeRetryDelay = TimeSpan.FromMilliseconds(50);
+
     protected ConcurrentDictionary<Symbol, ReplicatorChannelProcessor> ChannelProcessors { get; }
     protected Func<Symbol, ReplicatorChannelProcessor> CreateChannelProcessorHandler { get; }
+    protected IMomentClock Clock { get; }
 
     public ReplicatorOptions Options { get; }
     public Symbol Id { get; }
@@ -46,14 +48,12 @@ public class Replicator : SafeAsyncDisposableBase, IReplicatorImpl
         Options = options;
         Id = Options.Id;
         Services = services;
+        Clock = services.Clocks().CpuClock;
         ChannelProvider = options.ChannelProvider ?? Services.GetRequiredService<IChannelProvider>();
 
         ChannelProcessors = new ConcurrentDictionary<Symbol, ReplicatorChannelProcessor>();
         CreateChannelProcessorHandler = CreateChannelProcessor;
     }
-
-    public Replica? Get(PublicationRef publicationRef)
-        => ReplicaRegistry.Instance.Get(publicationRef);
 
     public Replica<T> AddOrUpdate<T>(PublicationStateInfo<T> state)
     {
@@ -87,31 +87,45 @@ public class Replicator : SafeAsyncDisposableBase, IReplicatorImpl
         return channelProcessor;
     }
 
-    bool IReplicatorImpl.Subscribe(Replica replica)
+    ValueTask IReplicatorImpl.Subscribe(Replica replica)
         => Subscribe(replica);
-    protected virtual bool Subscribe(Replica replica)
+    protected virtual async ValueTask Subscribe(Replica replica)
     {
         if (replica.Replicator != this)
             throw new ArgumentOutOfRangeException(nameof(replica));
 
-        var state = replica.UntypedState;
-        if (state == null)
-            return false;
+        while (true) {
+            var state = replica.UntypedState;
+            if (state == null) // Replica is disposed, so no subscription is needed
+                break;
 
-        GetChannelProcessor(replica.PublicationRef.PublisherId).Subscribe(replica, state);
-        return true;
+            var channelProcessor = GetChannelProcessor(replica.PublicationRef.PublisherId);
+            if (channelProcessor.Subscribe(state))
+                break;
+
+            // If we're here, channelProcessor is either disposed or disposing, so we have to retry
+            await Clock.Delay(SubscribeRetryDelay).ConfigureAwait(false);
+            var whenRunning = channelProcessor.WhenRunning;
+            if (whenRunning != null)
+                await whenRunning.ConfigureAwait(false);
+            var whenDisposed = channelProcessor.WhenDisposed;
+            if (whenDisposed != null)
+                await whenDisposed.ConfigureAwait(false);
+        }
     }
 
     void IReplicatorImpl.OnReplicaDisposed(Replica replica)
         => OnReplicaDisposed(replica);
     protected virtual void OnReplicaDisposed(Replica replica)
     {
-        if (WhenDisposed != null)
-            return;
         if (replica.Replicator != this)
             throw new ArgumentOutOfRangeException(nameof(replica));
-        if (replica.IsUpdateRequested)
-            GetChannelProcessor(replica.PublicationRef.PublisherId).Unsubscribe(replica);
+
+        if (WhenDisposed != null)
+            return;
+
+        if (replica.IsUpdateRequested) // Otherwise it is invalidated / not subscribed anyway
+            GetChannelProcessor(replica.PublicationRef.PublisherId).Unsubscribe(replica.PublicationRef.PublicationId);
     }
 
     protected override async Task DisposeAsync(bool disposing)

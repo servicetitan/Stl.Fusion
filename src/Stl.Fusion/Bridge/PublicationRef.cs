@@ -11,6 +11,9 @@ public readonly record struct PublicationRef(
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public bool IsNone => PublicationId.IsEmpty;
 
+    public Replica? Resolve()
+        => ReplicaRegistry.Instance.Get(this);
+
     // Conversion
 
     public override string ToString() => $"{PublisherId.Value}/{PublicationId.Value}";

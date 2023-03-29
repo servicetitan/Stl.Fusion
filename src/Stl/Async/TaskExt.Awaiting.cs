@@ -6,12 +6,12 @@ public static partial class TaskExt
 {
     // VoidAwait
 
-    public static VoidTaskAwaiter<TTask> VoidAwait<TTask>(this TTask task, bool captureContext = true)
+    public static VoidTaskAwaiter<TTask> SilentAwait<TTask>(this TTask task, bool captureContext = true)
         where TTask : Task
         => new(task, captureContext);
-    public static VoidValueTaskAwaiter VoidAwait(this ValueTask task, bool captureContext = true)
+    public static VoidValueTaskAwaiter SilentAwait(this ValueTask task, bool captureContext = true)
         => new(task, captureContext);
-    public static VoidValueTaskAwaiter<T> VoidAwait<T>(this ValueTask<T> task, bool captureContext = true)
+    public static VoidValueTaskAwaiter<T> SilentAwait<T>(this ValueTask<T> task, bool captureContext = true)
         => new(task, captureContext);
 
     // ResultAwait

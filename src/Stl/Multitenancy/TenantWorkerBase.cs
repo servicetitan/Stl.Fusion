@@ -11,7 +11,7 @@ public abstract class TenantWorkerBase<TContext> : WorkerBase
         : base(stopTokenSource)
         => TenantRegistry = tenantRegistry;
 
-    protected override async Task RunInternal(CancellationToken cancellationToken)
+    protected override async Task OnRun(CancellationToken cancellationToken)
     {
         var tenantSet = TenantSet;
         var tasks = new Dictionary<Symbol, (CancellationTokenSource Cts, Task Task)>();

@@ -48,7 +48,7 @@ public class SubscriptionProcessor<T> : SubscriptionProcessor
         : base(publication, publisherChannelProcessor, expirationTime, clocks, services)
         => Publication = publication;
 
-    protected override async Task RunInternal(CancellationToken cancellationToken)
+    protected override async Task OnRun(CancellationToken cancellationToken)
     {
         var publicationUseScope = Publication.Use();
         var state = Publication.State;

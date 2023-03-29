@@ -149,8 +149,8 @@ public class TaskExtTest : TestBase
             var collectTask = tasks.Collect(cl);
             // ReSharper disable once PossibleMultipleEnumeration
             var whenAllTask = Task.WhenAll(tasks);
-            await collectTask.VoidAwait();
-            await whenAllTask.VoidAwait();
+            await collectTask.SilentAwait();
+            await whenAllTask.SilentAwait();
 
             collectTask.IsCompletedSuccessfully().Should().Be(whenAllTask.IsCompletedSuccessfully());
         }

@@ -7,11 +7,11 @@ public static class CancellationTokenSourceExt
     static CancellationTokenSourceExt()
     {
         var tCts = typeof(CancellationTokenSource);
-        var fIsDisposed = 
+        var fIsDisposed =
             tCts.GetField("_disposed", BindingFlags.Instance | BindingFlags.NonPublic)
-                ?? tCts.GetField("m_disposed", BindingFlags.Instance | BindingFlags.NonPublic); 
+                ?? tCts.GetField("m_disposed", BindingFlags.Instance | BindingFlags.NonPublic);
         IsDisposedGetter = fIsDisposed!.GetGetter<CancellationTokenSource, bool>();
-    } 
+    }
 
     public static void CancelAndDisposeSilently(this CancellationTokenSource? cancellationTokenSource)
     {

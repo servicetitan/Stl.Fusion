@@ -1,4 +1,5 @@
 using System.Runtime.ExceptionServices;
+using Microsoft.Toolkit.HighPerformance;
 using Stl.Extensibility;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Internal;
@@ -16,15 +17,11 @@ public class ReplicatorChannelProcessor : WorkerBase
             => arg.Item1.OnPublicationStateReply((PublicationStateReply<T>) target, arg.Item2);
     }
 
-    protected readonly TimeSpan SendTimeout = TimeSpan.FromSeconds(15);
-    protected readonly TimeSpan DisposeTimeout = TimeSpan.FromSeconds(60);
+    protected static readonly TimeSpan DelayedDisposeTimeout = TimeSpan.FromSeconds(60);
 
+    protected ILogger Log { get; }
     protected IReplicatorImpl ReplicatorImpl => (IReplicatorImpl) Replicator;
     protected readonly HashSet<Symbol> Subscriptions;
-    protected int Version;
-
-    protected Symbol ClientId => Replicator.Id;
-    protected ILogger Log { get; }
 
     public readonly IReplicator Replicator;
     public readonly Symbol PublisherId;
@@ -47,9 +44,10 @@ public class ReplicatorChannelProcessor : WorkerBase
             LogTag = $"Replicator '{Replicator.Id}' -> Publisher '{PublisherId}'",
             LogLevel = LogLevel.Information,
         };
+        StartDelayedDispose();
     }
 
-    protected override async Task RunInternal(CancellationToken cancellationToken)
+    protected override async Task OnRun(CancellationToken cancellationToken)
     {
         var channel = (Channel<BridgeMessage>) null!;
         while (true) {
@@ -72,34 +70,35 @@ public class ReplicatorChannelProcessor : WorkerBase
         }
     }
 
-    protected override async Task OnStopping()
+    protected override async Task OnStop()
     {
-        var hasSubscriptions = true;
-        while (hasSubscriptions) {
-            var publicationIds = GetSubscriptions();
-            hasSubscriptions = publicationIds.Count != 0;
-            foreach (var publicationId in publicationIds) {
+        var replicas = new List<Replica>();
+        lock (Lock) {
+            foreach (var publicationId in Subscriptions) {
                 var publicationRef = new PublicationRef(PublisherId, publicationId);
-                var replica = Replicator.Get(publicationRef);
-                if (replica != null)
-                    replica.Dispose();
-                else {
-                    lock (Lock) {
-                        Subscriptions.Remove(publicationId);
-                    }
-                }
+                if (publicationRef.Resolve() is { } replica)
+                    replicas.Add(replica);
             }
+            Subscriptions.Clear();
         }
+
+        foreach (var replica in replicas)
+            replica.Dispose();
         await Connector.DisposeAsync().ConfigureAwait(false);
     }
 
-    public virtual void Subscribe(Replica replica, PublicationStateInfo state)
+    public virtual bool Subscribe(PublicationStateInfo state)
     {
         // No checks, since they're done by the only caller of this method
-        var publicationId = replica.PublicationRef.PublicationId;
+        var publicationId = state.PublicationRef.PublicationId;
         lock (Lock) {
-            if (Subscriptions.Add(publicationId))
-                Version++;
+            if (StopToken.IsCancellationRequested)
+                return false;
+
+            if (Subscriptions.Add(publicationId)) {
+                if (Subscriptions.Count == 1)
+                    DelayedAction.Instances.Remove(new DelayedAction(this, null));
+            }
             _ = Send(new SubscribeRequest() {
                 PublisherId = PublisherId,
                 PublicationId = publicationId,
@@ -107,41 +106,45 @@ public class ReplicatorChannelProcessor : WorkerBase
                 IsConsistent = state.IsConsistent,
             }, StopToken);
         }
+        return true;
     }
 
-    public virtual void Unsubscribe(Replica replica)
+    public virtual bool Unsubscribe(Symbol publicationId)
     {
         // No checks, since they're done by the only caller of this method
-        var publicationId = replica.PublicationRef.PublicationId;
         lock (Lock) {
-            Subscriptions.Remove(publicationId);
-            if (Subscriptions.Count == 0)
-                StartDelayedDispose(Version, StopToken);
+            if (StopToken.IsCancellationRequested)
+                return false;
+
+            if (Subscriptions.Remove(publicationId)) {
+                if (Subscriptions.Count == 0)
+                    StartDelayedDispose();
+            }
             _ = Send(new UnsubscribeRequest() {
                 PublisherId = PublisherId,
                 PublicationId = publicationId,
             }, StopToken);
         }
+        return true;
     }
 
     // Protected methods
 
-    protected void StartDelayedDispose(int disposeVersion, CancellationToken cancellationToken)
+    protected void StartDelayedDispose()
     {
-        Task.Run(async () => {
-            await Clock.Delay(DisposeTimeout, cancellationToken).ConfigureAwait(false);
-            lock (Lock) {
-                if (Version == disposeVersion)
-                    _ = DisposeAsync();
-            }
-        }, cancellationToken);
-    }
+        var disposeAt = DelayedAction.Clock.Now + DelayedDisposeTimeout;
+        var delayedAction = new DelayedAction(this, static target => {
+            var self = (ReplicatorChannelProcessor) target;
+            lock (self.Lock) {
+                if (self.WhenDisposed != null)
+                    return;
+                if (self.Subscriptions.Count != 0)
+                    return;
 
-    protected List<Symbol> GetSubscriptions()
-    {
-        lock (Lock) {
-            return Subscriptions.ToList();
-        }
+                self.Dispose();
+            }
+        });
+        DelayedAction.Instances.AddOrUpdateToLater(delayedAction, disposeAt);
     }
 
     protected virtual Task OnReply(BridgeMessage reply, CancellationToken cancellationToken)
@@ -151,7 +154,8 @@ public class ReplicatorChannelProcessor : WorkerBase
             // Fast dispatch to OnStateMessage<T>
             return OnPublicationStateReplyHandlers[psr.GetResultType()].Handle(psr, (this, cancellationToken));
         case PublicationAbsentsReply pam:
-            var replica = Replicator.Get((PublisherId, pam.PublicationId));
+            var publicationRef = new PublicationRef(PublisherId, pam.PublicationId);
+            var replica = publicationRef.Resolve();
             replica?.Dispose();
             break;
         }
@@ -166,7 +170,7 @@ public class ReplicatorChannelProcessor : WorkerBase
             reply.Version, reply.IsConsistent,
             reply.Output);
 
-        var replica = Replicator.Get(psi.PublicationRef);
+        var replica = psi.PublicationRef.Resolve();
         replica?.UpdateUntyped(psi);
         return Task.CompletedTask;
     }
@@ -186,16 +190,16 @@ public class ReplicatorChannelProcessor : WorkerBase
 
     protected virtual Task OnConnected(Channel<BridgeMessage> channel, CancellationToken cancellationToken)
     {
-        foreach (var publicationId in GetSubscriptions()) {
-            var publicationRef = new PublicationRef(PublisherId, publicationId);
-            var replica = Replicator.Get(publicationRef);
-            if (replica != null)
-                _ = replica.RequestUpdateUntyped(true);
-            else {
-                lock (Lock) {
+        lock (Lock) {
+            foreach (var publicationId in Subscriptions) {
+                var publicationRef = new PublicationRef(PublisherId, publicationId);
+                if (publicationRef.Resolve() is { } replica)
+                    _ = replica.RequestUpdateUntyped(true);
+                else
                     Subscriptions.Remove(publicationId);
-                }
             }
+            if (Subscriptions.Count == 0)
+                StartDelayedDispose();
         }
         return Task.CompletedTask;
     }

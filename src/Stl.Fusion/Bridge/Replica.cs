@@ -1,5 +1,3 @@
-using Stl.Fusion.Internal;
-
 namespace Stl.Fusion.Bridge;
 
 public abstract class Replica : IEquatable<Replica>, IDisposable
@@ -53,7 +51,7 @@ public sealed class Replica<T> : Replica
     private volatile PublicationStateInfo<T>? _state;
 
     public Computed<T>? Computed { get; private set; }
-    public override PublicationStateInfo? UntypedState => State;
+    public override PublicationStateInfo? UntypedState => _state;
     public PublicationStateInfo<T>? State => _state;
     public override bool IsUpdateRequested => _updateRequestTask != null;
 
@@ -97,20 +95,23 @@ public sealed class Replica<T> : Replica
         if (updateRequestTask != null && !force)
             return updateRequestTask;
 
+        var mustSubscribe = force;
         // Double check locking
         lock (_lock) {
             updateRequestTask = _updateRequestTask;
-            if (updateRequestTask != null) {
-                if (force)
-                    ReplicatorImpl.Subscribe(this);
-                return updateRequestTask;
+            if (updateRequestTask == null) {
+                if (State != null) {
+                    updateRequestTask = _updateRequestTask = TaskSource.New<PublicationStateInfo<T>?>(true).Task;
+                    mustSubscribe = true;
+                }
+                else {
+                    updateRequestTask = _updateRequestTask = NullStateTask;
+                    mustSubscribe = false;
+                }
             }
-
-            _updateRequestTask = updateRequestTask = State != null
-                ? TaskSource.New<PublicationStateInfo<T>?>(true).Task
-                : NullStateTask;
-            ReplicatorImpl.Subscribe(this);
         }
+        if (mustSubscribe)
+            _ = ReplicatorImpl.Subscribe(this);
         return updateRequestTask;
     }
 
@@ -148,7 +149,7 @@ public sealed class Replica<T> : Replica
         // This is, in fact, Dispose logic
         if (state == null) {
             GC.SuppressFinalize(this);
-            ReplicaRegistry.Instance.Remove(this); // It's already unavailable there once State is set
+            ReplicaRegistry.Instance.Unregister(this); // It's already unavailable there once State is set
             ReplicatorImpl.OnReplicaDisposed(this);
             return;
         }

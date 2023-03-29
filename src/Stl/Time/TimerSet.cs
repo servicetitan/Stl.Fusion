@@ -70,7 +70,7 @@ public sealed class TimerSet<TTimer> : WorkerBase
 
     // Protected & private methods
 
-    protected override async Task RunInternal(CancellationToken cancellationToken)
+    protected override async Task OnRun(CancellationToken cancellationToken)
     {
         var dueAt = _start + Quanta;
         for (;; dueAt += Quanta) {

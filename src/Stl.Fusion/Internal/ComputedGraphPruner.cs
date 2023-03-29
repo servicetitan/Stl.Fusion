@@ -28,7 +28,7 @@ public sealed class ComputedGraphPruner : WorkerBase
         WhenActivated = TaskSource.New<Unit>(true).Task;
 
         if (settings.AutoActivate)
-            Start();
+            this.Start();
     }
 
     public ComputedGraphPruner(Options settings, IServiceProvider services)
@@ -39,10 +39,10 @@ public sealed class ComputedGraphPruner : WorkerBase
         WhenActivated = TaskSource.New<Unit>(true).Task;
 
         if (settings.AutoActivate)
-            Start();
+            this.Start();
     }
 
-    protected override async Task RunInternal(CancellationToken cancellationToken)
+    protected override async Task OnRun(CancellationToken cancellationToken)
     {
         var computedRegistry = ComputedRegistry.Instance;
         if (Settings.AutoActivate) {

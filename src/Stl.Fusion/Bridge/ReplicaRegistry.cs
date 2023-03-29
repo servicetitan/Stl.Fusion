@@ -53,6 +53,9 @@ public sealed class ReplicaRegistry : IDisposable
 
     public Replica? Get(PublicationRef publicationRef)
     {
+        if (publicationRef.IsNone)
+            return null;
+
         var random = publicationRef.PublicationId.HashCode;
         OnOperation(random);
         if (!_handles.TryGetValue(publicationRef, out var handle))
@@ -71,6 +74,9 @@ public sealed class ReplicaRegistry : IDisposable
 
     public (Replica Replica, bool IsNew) GetOrRegister(PublicationRef publicationRef, Func<Replica> replicaFactory)
     {
+        if (publicationRef.IsNone)
+            throw new ArgumentOutOfRangeException(nameof(publicationRef));
+
         var random = publicationRef.PublicationId.HashCode;
         OnOperation(random);
         var spinWait = new SpinWait();
@@ -97,23 +103,23 @@ public sealed class ReplicaRegistry : IDisposable
         }
     }
 
-    public bool Remove(Replica replica)
+    public void Unregister(Replica replica)
     {
         var publicationRef = replica.PublicationRef;
         var random = publicationRef.PublicationId.HashCode;
         OnOperation(random);
         if (!_handles.TryGetValue(publicationRef, out var handle))
-            return false;
+            return;
         var target = handle.Target;
         if (target != null && !ReferenceEquals(target, replica))
             // GCHandle target is pointing to another replica
-            return false;
+            return;
         if (!_handles.TryRemove(publicationRef, handle))
             // Some other thread already removed this entry
-            return false;
+            return;
+
         // The thread that succeeds in removal releases gcHandle as well
         _gcHandlePool.Release(handle, random);
-        return true;
     }
 
     public Task Prune()

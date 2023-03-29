@@ -39,7 +39,7 @@ public sealed class FusionMonitor : WorkerBase
         _onUnregister = input => OnRegistration(input, false);
     }
 
-    protected override async Task RunInternal(CancellationToken cancellationToken)
+    protected override async Task OnRun(CancellationToken cancellationToken)
     {
         try {
             Attach();

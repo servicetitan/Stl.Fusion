@@ -132,7 +132,7 @@ public class InMemoryKeyValueStore : WorkerBase, IKeyValueStore
 
     // Cleanup
 
-    protected override async Task RunInternal(CancellationToken cancellationToken)
+    protected override async Task OnRun(CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested) {
             await Clock.Delay(Settings.CleanupPeriod.Next(), cancellationToken).ConfigureAwait(false);

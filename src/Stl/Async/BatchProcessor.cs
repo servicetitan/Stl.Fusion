@@ -19,14 +19,14 @@ public abstract class BatchProcessorBase<TIn, TOut> : WorkerBase
 
     public async Task<TOut> Process(TIn input, CancellationToken cancellationToken = default)
     {
-        Start();
+        this.Start();
         var outputTask = TaskSource.New<TOut>(false).Task;
         var batchItem = new BatchItem<TIn, TOut>(input, cancellationToken, outputTask);
         await Queue.Writer.WriteAsync(batchItem, cancellationToken).ConfigureAwait(false);
         return await outputTask.ConfigureAwait(false);
     }
 
-    protected override Task RunInternal(CancellationToken cancellationToken)
+    protected override Task OnRun(CancellationToken cancellationToken)
     {
         var readLock = Queue;
         var concurrencyLevel = ConcurrencyLevel;

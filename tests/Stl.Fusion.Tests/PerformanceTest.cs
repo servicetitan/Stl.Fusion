@@ -131,7 +131,7 @@ public abstract class PerformanceTestBase : FusionTestBase
         var elapsed = CpuClock.Now - startTime;
 
         stopCts.Cancel();
-        await mutatorTask.VoidAwait(false);
+        await mutatorTask.SilentAwait(false);
 
         WriteLine($"    Speed:      {operationCount / 1000.0 / elapsed.TotalSeconds:F3} K Ops/sec (took {elapsed.TotalSeconds:F3} sec)");
 

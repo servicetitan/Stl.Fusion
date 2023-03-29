@@ -27,7 +27,7 @@ public class PublisherChannelProcessor : WorkerBase
         Channel = channel;
     }
 
-    protected override async Task RunInternal(CancellationToken cancellationToken)
+    protected override async Task OnRun(CancellationToken cancellationToken)
     {
         try {
             var reader = Channel.Reader;
@@ -118,8 +118,7 @@ public class PublisherChannelProcessor : WorkerBase
             if (!Subscriptions.Remove(publicationId, out subscriptionProcessor))
                 return;
         }
-        if (subscriptionProcessor != null)
-            await subscriptionProcessor.DisposeAsync().ConfigureAwait(false);
+        await subscriptionProcessor.DisposeAsync().ConfigureAwait(false);
     }
 
     public async ValueTask Reply(PublicationReply reply, CancellationToken cancellationToken)

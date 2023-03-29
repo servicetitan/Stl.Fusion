@@ -6,7 +6,6 @@ public interface IWorker : IAsyncDisposable, IDisposable, IHasWhenDisposed, IHos
 {
     Task? WhenRunning { get; }
 
-    void Start();
-    Task Stop();
     Task Run();
+    Task Stop();
 }
