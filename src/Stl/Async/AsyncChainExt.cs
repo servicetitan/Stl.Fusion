@@ -125,12 +125,31 @@ public static class AsyncChainExt
             await clock.Delay(delayFactory.Invoke(), cancellationToken).ConfigureAwait(false);
         });
     }
-    public static AsyncChain AppendDelay(this AsyncChain asyncChain, RandomTimeSpan sleepDelay, IMomentClock? clock = null)
+    public static AsyncChain AppendDelay(this AsyncChain asyncChain, RandomTimeSpan delay, IMomentClock? clock = null)
     {
         clock ??= MomentClockSet.Default.CpuClock;
-        return new($"{asyncChain.Name}.AppendDelay({sleepDelay})", async cancellationToken => {
+        return new($"{asyncChain.Name}.AppendDelay({delay})", async cancellationToken => {
             await asyncChain.Start(cancellationToken).ConfigureAwait(false);
-            await clock.Delay(sleepDelay.Next(), cancellationToken).ConfigureAwait(false);
+            await clock.Delay(delay.Next(), cancellationToken).ConfigureAwait(false);
+        });
+    }
+
+    public static AsyncChain PrependDelay(this AsyncChain asyncChain, Func<RandomTimeSpan> delayFactory, IMomentClock? clock = null)
+        => asyncChain.PrependDelay(() => delayFactory.Invoke().Next());
+    public static AsyncChain PrependDelay(this AsyncChain asyncChain, Func<TimeSpan> delayFactory, IMomentClock? clock = null)
+    {
+        clock ??= MomentClockSet.Default.CpuClock;
+        return new($"{asyncChain.Name}.PrependDelay(?)", async cancellationToken => {
+            await clock.Delay(delayFactory.Invoke(), cancellationToken).ConfigureAwait(false);
+            await asyncChain.Start(cancellationToken).ConfigureAwait(false);
+        });
+    }
+    public static AsyncChain PrependDelay(this AsyncChain asyncChain, RandomTimeSpan delay, IMomentClock? clock = null)
+    {
+        clock ??= MomentClockSet.Default.CpuClock;
+        return new($"{asyncChain.Name}.PrependDelay({delay})", async cancellationToken => {
+            await clock.Delay(delay.Next(), cancellationToken).ConfigureAwait(false);
+            await asyncChain.Start(cancellationToken).ConfigureAwait(false);
         });
     }
 
