@@ -24,14 +24,18 @@ public class ListArgumentTest : SimpleFusionTestBase
             var values = Enumerable.Range(0, i).ToArray();
             c1 = await Computed.Capture(() => math.Sum(values));
             c1.Value.Should().Be(values.Sum());
-            
+
             values = values.ToArray(); // Copy array
             c2 = await Computed.Capture(() => math.Sum(values));
             c2.Value.Should().Be(c1.Value);
+#if NETFRAMEWORK
+            c2.Should().NotBeSameAs(c1);
+#else
             if (values.Length == 0)
                 c2.Should().BeSameAs(c1);
             else
                 c2.Should().NotBeSameAs(c1);
+#endif
         }
     }
 }
