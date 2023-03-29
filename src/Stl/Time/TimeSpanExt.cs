@@ -23,13 +23,14 @@ public static class TimeSpanExt
 
     public static string ToShortString(this TimeSpan value)
     {
-        if (value < TimeSpan.FromMilliseconds(0.001))
+        var absValue = TimeSpan.FromTicks(Math.Abs(value.Ticks));
+        if (absValue < TimeSpan.FromMilliseconds(0.001))
             return $"{value.TotalMilliseconds * 1000:N3}μs";
-        if (value < TimeSpan.FromSeconds(1))
+        if (absValue < TimeSpan.FromSeconds(1))
             return $"{value.TotalMilliseconds:N3}ms";
-        if (value < TimeSpan.FromSeconds(60))
+        if (absValue < TimeSpan.FromSeconds(60))
             return $"{value.TotalSeconds:N3}s";
-        if (value < TimeSpan.FromMinutes(60))
+        if (absValue < TimeSpan.FromMinutes(60))
             return $"{value.TotalMinutes:N0}m {value.Seconds:N3}s";
         return $"{value.TotalHours:N0}h {value.Minutes:N0}m {value.Seconds:N3}s";
     } 
