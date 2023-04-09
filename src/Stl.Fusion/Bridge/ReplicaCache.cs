@@ -22,12 +22,12 @@ public abstract class ReplicaCache : IHasServices
             case ReplicaCacheBehavior.None:
                 return null;
             case ReplicaCacheBehavior.DefaultValue:
-                return default(Result<T>);
+                return Result.New(default(T)!);
             }
 
             var output = await GetInternal<T>(input, cancellationToken).ConfigureAwait(false);
             if (!output.HasValue && replicaCacheBehavior == ReplicaCacheBehavior.DefaultValueOnMiss)
-                return default(Result<T>);
+                return Result.New(default(T)!);
 
             return output;
         }
