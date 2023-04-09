@@ -5,7 +5,7 @@ namespace Samples.HelloCart.V4;
 
 [Route("api/[controller]/[action]")]
 [ApiController, JsonifyErrors, UseDefaultSession]
-public class ProductController : ControllerBase, IProductService
+public sealed class ProductController : ControllerBase, IProductService
 {
     private readonly IProductService _productService;
     private readonly ICommander _commander;

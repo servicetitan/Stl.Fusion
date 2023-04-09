@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Stl.Fusion.Server.Controllers;
 
 [Route("~/fusion/blazorMode")]
-public class BlazorModeController : ControllerBase
+public sealed class BlazorModeController : ControllerBase
 {
     public static bool IsServerSideBlazorDefault { get; set; } = true;
     public static CookieBuilder Cookie { get; set; } = new() {

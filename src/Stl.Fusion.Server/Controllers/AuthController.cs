@@ -6,7 +6,7 @@ namespace Stl.Fusion.Server.Controllers;
 
 [Route("fusion/auth/[action]")]
 [ApiController, JsonifyErrors, UseDefaultSession]
-public class AuthController : ControllerBase, IAuth
+public sealed class AuthController : ControllerBase, IAuth
 {
     private IAuth Auth { get; }
     private ICommander Commander { get; }

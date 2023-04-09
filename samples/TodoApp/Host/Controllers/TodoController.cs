@@ -7,7 +7,7 @@ namespace Templates.TodoApp.Host.Controllers;
 
 [Route("api/[controller]/[action]")]
 [ApiController, JsonifyErrors, UseDefaultSession]
-public class TodoController : ControllerBase, ITodoService
+public sealed class TodoController : ControllerBase, ITodoService
 {
     private readonly ITodoService _todos;
     private readonly ICommander _commander;

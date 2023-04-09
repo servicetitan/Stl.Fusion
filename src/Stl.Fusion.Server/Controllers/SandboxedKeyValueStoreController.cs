@@ -7,7 +7,7 @@ namespace Stl.Fusion.Server.Controllers;
 
 [Route("fusion/kvs/[action]")]
 [ApiController, JsonifyErrors, UseDefaultSession]
-public class SandboxedKeyValueStoreController : ControllerBase, ISandboxedKeyValueStore
+public sealed class SandboxedKeyValueStoreController : ControllerBase, ISandboxedKeyValueStore
 {
     private ISandboxedKeyValueStore Store { get; }
     private ICommander Commander { get; }

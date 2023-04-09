@@ -9,7 +9,7 @@ using Stl.Serialization;
 
 namespace Stl.Fusion.Tests.Services;
 
-public class RestEaseController : ControllerBase
+public sealed class RestEaseController : ControllerBase
 {
     [HttpGet]
     public Task<string> GetFromQueryImplicit(string str, CancellationToken cancellationToken) 
