@@ -3,11 +3,25 @@ using Cysharp.Text;
 
 namespace Stl.Reflection;
 
-public static class TypeExt
+public static partial class TypeExt
 {
+#if NET7_0_OR_GREATER
+    [GeneratedRegex("[^\\w\\d]+")]
+    private static partial Regex MethodNameReFactory();
+    [GeneratedRegex("_+$")]
+    private static partial Regex MethodNameTailReFactory();
+    [GeneratedRegex("`.+$")]
+    private static partial Regex GenericTypeNameTailReFactory();
+
+    private static readonly Regex MethodNameRe = MethodNameReFactory();
+    private static readonly Regex MethodNameTailRe = MethodNameTailReFactory();
+    private static readonly Regex GenericTypeNameTailRe = GenericTypeNameTailReFactory();
+#else
     private static readonly Regex MethodNameRe = new("[^\\w\\d]+", RegexOptions.Compiled);
     private static readonly Regex MethodNameTailRe = new("_+$", RegexOptions.Compiled);
     private static readonly Regex GenericTypeNameTailRe = new("`.+$", RegexOptions.Compiled);
+#endif
+
     private static readonly ConcurrentDictionary<Type, Type> NonProxyTypeCache = new();
     private static readonly ConcurrentDictionary<(Type, bool, bool), Symbol> GetNameCache = new();
     private static readonly ConcurrentDictionary<(Type, bool, bool), Symbol> ToIdentifierNameCache = new();

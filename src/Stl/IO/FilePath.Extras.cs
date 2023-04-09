@@ -4,12 +4,22 @@ namespace Stl.IO;
 
 public readonly partial struct FilePath
 {
-    private static readonly Regex NonAlphaOrNumberRe =
-        new("[^a-z0-9_]+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-    private static readonly Regex LeadingUnderscoresRe =
-        new("^_+", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-    private static readonly Regex TrailingUnderscoresRe =
-        new("_+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+#if NET7_0_OR_GREATER
+    [GeneratedRegex("[^A-Za-z0-9_]+")]
+    private static partial Regex NonAlphaOrNumberReFactory();
+    [GeneratedRegex("^_+")]
+    private static partial Regex LeadingUnderscoresReFactory();
+    [GeneratedRegex("_+$")]
+    private static partial Regex TrailingUnderscoresReFactory();
+
+    private static readonly Regex NonAlphaOrNumberRe = NonAlphaOrNumberReFactory();
+    private static readonly Regex LeadingUnderscoresRe = LeadingUnderscoresReFactory();
+    private static readonly Regex TrailingUnderscoresRe = TrailingUnderscoresReFactory();
+#else
+    private static readonly Regex NonAlphaOrNumberRe = new("[^A-Za-z0-9_]+", RegexOptions.Compiled);
+    private static readonly Regex LeadingUnderscoresRe = new("^_+", RegexOptions.Compiled);
+    private static readonly Regex TrailingUnderscoresRe = new("_+$", RegexOptions.Compiled);
+#endif
 
     public static FilePath GetHashedName(
         string key, string? prefix = null,
