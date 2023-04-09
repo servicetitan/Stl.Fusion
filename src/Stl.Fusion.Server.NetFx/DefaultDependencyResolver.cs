@@ -4,11 +4,18 @@ namespace Stl.Fusion.Server;
 
 public class DefaultDependencyResolver : IDependencyResolver
 {
-    private IServiceProvider serviceProvider;
+    private readonly IServiceProvider serviceProvider;
+    private readonly IServiceScope? scope;
 
     public DefaultDependencyResolver(IServiceProvider serviceProvider)
     {
         this.serviceProvider = serviceProvider;
+    }
+
+    private DefaultDependencyResolver(IServiceScope scope)
+    {
+        this.serviceProvider = scope.ServiceProvider;
+        this.scope = scope;
     }
 
     public object GetService(Type serviceType)
@@ -25,10 +32,14 @@ public class DefaultDependencyResolver : IDependencyResolver
 
     public void Dispose()
     {
+        if (serviceProvider is IDisposable disposable)
+            disposable.Dispose();
+
+        scope?.Dispose();
     }
 
     public IDependencyScope BeginScope()
     {
-        return this;
+        return new DefaultDependencyResolver(serviceProvider.CreateScope());
     }
 }
