@@ -9,6 +9,7 @@ namespace Stl.Fusion.Bridge.Interception;
 public interface IReplicaMethodFunction : IComputeMethodFunction
 {
     IReplicator Replicator { get; }
+    void OnInvalidated(IReplicaMethodComputed computed);
 }
 
 public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>, IReplicaMethodFunction
@@ -33,6 +34,9 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>, IReplicaMethodFu
 
     public override string ToString()
         => _toString ??= ZString.Concat('*', base.ToString());
+
+    public void OnInvalidated(IReplicaMethodComputed computed)
+        => _ = ReplicaCache.Set<T>((ComputeMethodInput)computed.Input, null, CancellationToken.None);
 
     protected override async ValueTask<Computed<T>> Compute(
         ComputedInput input, Computed<T>? existing,
@@ -67,6 +71,8 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>, IReplicaMethodFu
         }
 
         ComputeContext.Current.TryCapture(computed);
+        // We don't await the next call to speed up returning the result
+        _ = ReplicaCache.Set<T>(typedInput, computed.Output, CancellationToken.None);
         return computed;
     }
 
@@ -110,7 +116,7 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>, IReplicaMethodFu
                 if (isCurrent)
                     ComputeContext.Current.TryCapture(computed);
                 // We don't await the next call to speed up returning the result
-                _ = ReplicaCache.Set(input, computed.Output, cancellationToken);
+                _ = ReplicaCache.Set<T>(input, computed.Output, CancellationToken.None);
                 return computed;
             }
 

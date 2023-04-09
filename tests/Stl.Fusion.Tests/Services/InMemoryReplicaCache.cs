@@ -1,10 +1,7 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
-using Cysharp.Text;
-using Newtonsoft.Json;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Interception;
-using Stl.Interception;
 using Stl.Reflection;
 
 namespace Stl.Fusion.Tests.Services;
@@ -47,14 +44,18 @@ public class InMemoryReplicaCache : ReplicaCache
         return ValueTaskExt.FromResult((Result<T>?)output);
     }
 
-    protected override ValueTask SetInternal<T>(ComputeMethodInput input, Result<T> output, CancellationToken cancellationToken)
+    protected override ValueTask SetInternal<T>(ComputeMethodInput input, Result<T>? output, CancellationToken cancellationToken)
     {
         if (!IsEnabled )
             return ValueTaskExt.CompletedTask;
 
         var key = GetKey(input);
-        var value = ValueSerializer.Write(output);
-        Cache[key] = value;
+        if (output is { } vOutput) {
+            var value = ValueSerializer.Write(vOutput);
+            Cache[key] = value;
+        }
+        else
+            Cache.Remove(key, out _);
         return ValueTaskExt.CompletedTask;
     }
 

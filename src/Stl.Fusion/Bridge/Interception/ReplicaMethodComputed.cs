@@ -37,5 +37,7 @@ public class ReplicaMethodComputed<T> : ComputeMethodComputed<T>, IReplicaMethod
         // to replica method.
         ComputedRegistry.Instance.PseudoUnregister(this);
         CancelTimeouts();
+        if (Function is IReplicaMethodFunction fn)
+            fn.OnInvalidated(this);
     }
 }

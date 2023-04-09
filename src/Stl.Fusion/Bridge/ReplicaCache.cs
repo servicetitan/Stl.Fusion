@@ -37,7 +37,7 @@ public abstract class ReplicaCache : IHasServices
         }
     }
 
-    public async ValueTask Set<T>(ComputeMethodInput input, Result<T> output, CancellationToken cancellationToken)
+    public async ValueTask Set<T>(ComputeMethodInput input, Result<T>? output, CancellationToken cancellationToken)
     {
         try {
             var replicaCacheBehavior = input.MethodDef.ComputedOptions.ReplicaCacheBehavior;
@@ -56,7 +56,7 @@ public abstract class ReplicaCache : IHasServices
     }
 
     protected abstract ValueTask<Result<T>?> GetInternal<T>(ComputeMethodInput input, CancellationToken cancellationToken);
-    protected abstract ValueTask SetInternal<T>(ComputeMethodInput input, Result<T> output, CancellationToken cancellationToken);
+    protected abstract ValueTask SetInternal<T>(ComputeMethodInput input, Result<T>? output, CancellationToken cancellationToken);
 }
 
 public sealed class NoReplicaCache : ReplicaCache
@@ -66,6 +66,6 @@ public sealed class NoReplicaCache : ReplicaCache
     protected override ValueTask<Result<T>?> GetInternal<T>(ComputeMethodInput input, CancellationToken cancellationToken)
         => ValueTaskExt.FromResult((Result<T>?)null);
 
-    protected override ValueTask SetInternal<T>(ComputeMethodInput input, Result<T> output, CancellationToken cancellationToken) 
+    protected override ValueTask SetInternal<T>(ComputeMethodInput input, Result<T>? output, CancellationToken cancellationToken) 
         => ValueTaskExt.CompletedTask;
 }
