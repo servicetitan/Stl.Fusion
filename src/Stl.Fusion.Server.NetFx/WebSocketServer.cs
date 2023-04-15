@@ -4,8 +4,7 @@ using Microsoft.Owin;
 using Stl.Channels;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
-using Stl.Net;
-
+using Stl.Rpc;
 using WebSocketAccept = System.Action<
     System.Collections.Generic.IDictionary<string, object>, // WebSocket Accept parameters
     System.Func< // WebSocketFunc callback

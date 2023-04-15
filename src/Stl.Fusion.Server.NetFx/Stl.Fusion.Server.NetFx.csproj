@@ -28,7 +28,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Stl.Fusion\Stl.Fusion.csproj" />
-    <ProjectReference Include="..\Stl.Net\Stl.Net.csproj" />
+    <ProjectReference Include="..\Stl.Rpc\Stl.Rpc.csproj" />
     <ProjectReference Include="..\Stl\Stl.csproj" />
   </ItemGroup>
 
