@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Stl.Channels;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
-using Stl.Net;
+using Stl.Rpc;
 
 namespace Stl.Fusion.Server;
 

@@ -2,10 +2,13 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Runtime.ExceptionServices;
-using System.Text;
-using Stl.Pooling;
+using System.Text;                                  
 
-namespace Stl.Net;
+#if NETSTANDARD2_0
+using Stl.Pooling;
+#endif
+
+namespace Stl.Rpc;
 
 public class WebSocketChannel : Channel<string>, IAsyncDisposable
 {
