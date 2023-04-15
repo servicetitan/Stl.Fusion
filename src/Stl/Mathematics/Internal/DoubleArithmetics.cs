@@ -1,8 +1,5 @@
-using Stl.Extensibility;
-
 namespace Stl.Mathematics.Internal;
 
-[MatchFor(typeof(double), typeof(IArithmetics))]
 public sealed class DoubleArithmetics : Arithmetics<double>
 {
     public DoubleArithmetics() => One = 1d;

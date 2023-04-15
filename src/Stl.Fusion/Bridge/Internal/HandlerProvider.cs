@@ -1,4 +1,4 @@
-namespace Stl.Extensibility;
+namespace Stl.Fusion.Bridge.Internal;
 
 public class HandlerProvider<TArg, TResult>
 {
@@ -11,6 +11,7 @@ public class HandlerProvider<TArg, TResult>
     { }
 
     private readonly ConcurrentDictionary<Type, IHandler> _handlers;
+
     public Func<Type, IHandler> HandlerFactory { get; }
 
     public HandlerProvider(Type handlerType) : this(DefaultHandlerFactory(handlerType)) { }
