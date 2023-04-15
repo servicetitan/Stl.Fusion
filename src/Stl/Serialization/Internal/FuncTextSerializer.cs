@@ -16,12 +16,13 @@ public class FuncTextSerializer<T> : ITextSerializer<T>
         Writer = writer;
     }
 
-    public T Read(ReadOnlyMemory<byte> data)
+    public T Read(ReadOnlyMemory<byte> data, out int readLength)
     {
         var decoder = Encoding.UTF8.GetDecoder();
         var buffer = ZString.CreateStringBuilder();
         try {
             decoder.Convert(data.Span, ref buffer);
+            readLength = data.Length;
             return Reader.Invoke(buffer.ToString());
         }
         finally {

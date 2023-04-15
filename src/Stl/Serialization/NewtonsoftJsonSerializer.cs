@@ -36,8 +36,14 @@ public class NewtonsoftJsonSerializer : TextSerializerBase
 
     public override object? Read(string data, Type type)
         => _jsonSerializer.Deserialize(new StringReader(data), type);
-    public override object? Read(ReadOnlyMemory<byte> data, Type type)
-        => _jsonSerializer.Deserialize(new StreamReader(data.AsStream()), type);
+    public override object? Read(ReadOnlyMemory<byte> data, Type type, out int readLength)
+    {
+        using var stream = data.AsStream();
+        using var reader = new StreamReader(stream);
+        var result = _jsonSerializer.Deserialize(reader, type);
+        readLength = (int)stream.Position;
+        return result;
+    }
 
     public override string Write(object? value, Type type)
     {

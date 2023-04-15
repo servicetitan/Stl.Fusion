@@ -13,7 +13,7 @@ public sealed class NoneTextSerializer : ITextSerializer
 
     public object? Read(string data, Type type)
         => throw Errors.NoSerializer();
-    public object? Read(ReadOnlyMemory<byte> data, Type type)
+    public object? Read(ReadOnlyMemory<byte> data, Type type, out int readLength)
         => throw Errors.NoSerializer();
 
     public string Write(object? value, Type type)
@@ -38,7 +38,7 @@ public sealed class NoneTextSerializer<T> : ITextSerializer<T>
 
     public T Read(string data)
         => throw Errors.NoSerializer();
-    public T Read(ReadOnlyMemory<byte> data)
+    public T Read(ReadOnlyMemory<byte> data, out int readLength)
         => throw Errors.NoSerializer();
 
     public string Write(T value)

@@ -21,8 +21,11 @@ public class SystemJsonSerializer : TextSerializerBase
 
     public override object? Read(string data, Type type)
         => JsonSerializer.Deserialize(data, type, Options);
-    public override object? Read(ReadOnlyMemory<byte> data, Type type)
-        => JsonSerializer.Deserialize(data.Span, type);
+    public override object? Read(ReadOnlyMemory<byte> data, Type type, out int readLength)
+    {
+        readLength = data.Length;
+        return JsonSerializer.Deserialize(data.Span, type);
+    }
 
     public override string Write(object? value, Type type)
         => JsonSerializer.Serialize(value, type, Options);

@@ -20,8 +20,8 @@ public sealed class AsymmetricByteSerializer : IByteSerializer
 
     // IByteReader, IByteWriter impl.
 
-    public object? Read(ReadOnlyMemory<byte> data, Type type)
-        => Reader.Read(data, type);
+    public object? Read(ReadOnlyMemory<byte> data, Type type, out int readLength)
+        => Reader.Read(data, type, out readLength);
 
     public void Write(IBufferWriter<byte> bufferWriter, object? value, Type type)
         => Writer.Write(bufferWriter, value, type);
@@ -38,8 +38,8 @@ public sealed class AsymmetricByteSerializer<T> : IByteSerializer<T>
         Writer = writer;
     }
 
-    public T Read(ReadOnlyMemory<byte> data)
-        => Reader.Read(data);
+    public T Read(ReadOnlyMemory<byte> data, out int readLength)
+        => Reader.Read(data, out readLength);
 
     public void Write(IBufferWriter<byte> bufferWriter, T value)
         => Writer.Write(bufferWriter, value);

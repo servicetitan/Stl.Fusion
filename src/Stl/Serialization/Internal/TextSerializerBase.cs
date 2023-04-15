@@ -11,12 +11,13 @@ public abstract class TextSerializerBase : ITextSerializer
     public abstract object? Read(string data, Type type);
     public abstract string Write(object? value, Type type);
 
-    public virtual object? Read(ReadOnlyMemory<byte> data, Type type)
+    public virtual object? Read(ReadOnlyMemory<byte> data, Type type, out int readLength)
     {
         var decoder = Encoding.UTF8.GetDecoder();
         var buffer = ZString.CreateStringBuilder();
         try {
             decoder.Convert(data.Span, ref buffer);
+            readLength = data.Length;
             return Read(buffer.ToString(), type);
         }
         finally {

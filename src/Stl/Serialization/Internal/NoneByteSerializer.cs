@@ -9,7 +9,7 @@ public sealed class NoneByteSerializer : IByteSerializer
 {
     public static NoneByteSerializer Instance { get; } = new();
 
-    public object? Read(ReadOnlyMemory<byte> data, Type type)
+    public object? Read(ReadOnlyMemory<byte> data, Type type, out int readLength)
         => throw Errors.NoSerializer();
 
     public void Write(IBufferWriter<byte> bufferWriter, object? value, Type type)
@@ -26,7 +26,7 @@ public sealed class NoneByteSerializer<T> : IByteSerializer<T>
 {
     public static NoneByteSerializer<T> Instance { get; } = new();
 
-    public T Read(ReadOnlyMemory<byte> data)
+    public T Read(ReadOnlyMemory<byte> data, out int readLength)
         => throw Errors.NoSerializer();
 
     public void Write(IBufferWriter<byte> bufferWriter, T value)

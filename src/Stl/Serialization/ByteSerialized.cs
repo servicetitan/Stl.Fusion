@@ -64,7 +64,7 @@ public class ByteSerialized<T> : IEquatable<ByteSerialized<T>>
             throw new InvalidOperationException($"{nameof(Data)} isn't set.");
         var value = serializedValue.Length == 0
             ? default!
-            : GetSerializer().Read(serializedValue);
+            : GetSerializer().Read(serializedValue, out _);
         _valueOption = value;
         return value;
     }
