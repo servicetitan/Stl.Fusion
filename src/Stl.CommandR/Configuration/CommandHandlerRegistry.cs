@@ -1,24 +1,9 @@
 namespace Stl.CommandR.Configuration;
 
-public interface ICommandHandlerRegistry
+public sealed class CommandHandlerRegistry
 {
-    ImmutableHashSet<CommandHandler> Handlers { get; set; }
-    bool Add(CommandHandler handler);
-    void Clear();
-}
+    public IReadOnlyList<CommandHandler> Handlers { get; }
 
-public class CommandHandlerRegistry : ICommandHandlerRegistry
-{
-    public ImmutableHashSet<CommandHandler> Handlers { get; set; } =
-        ImmutableHashSet<CommandHandler>.Empty;
-
-    public bool Add(CommandHandler handler)
-    {
-        var oldHandlers = Handlers;
-        var newHandlers = Handlers = Handlers.Add(handler);
-        return oldHandlers != newHandlers;
-    }
-
-    public void Clear()
-        => Handlers = ImmutableHashSet<CommandHandler>.Empty;
+    public CommandHandlerRegistry(IServiceProvider services)
+        => Handlers = services.GetRequiredService<HashSet<CommandHandler>>().ToArray();
 }

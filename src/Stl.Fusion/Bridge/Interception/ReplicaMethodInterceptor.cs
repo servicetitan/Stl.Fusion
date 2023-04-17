@@ -1,6 +1,4 @@
 using Stl.Fusion.Interception;
-using Stl.Interception;
-using Stl.Interception.Interceptors;
 using Stl.Versioning;
 
 namespace Stl.Fusion.Bridge.Interception;
@@ -26,9 +24,6 @@ public class ReplicaMethodInterceptor : ComputeMethodInterceptorBase
 
     protected override ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method)
         => new ReplicaMethodFunction<T>(method, Replicator, VersionGenerator, ReplicaCache);
-
-    protected override MethodDef? CreateMethodDef(MethodInfo method, Invocation initialInvocation)
-        => base.CreateMethodDef(method, initialInvocation)?.ToReplicaMethodDef();
 
     protected override void ValidateTypeInternal(Type type) { }
 }

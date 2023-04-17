@@ -12,7 +12,7 @@ public readonly struct CommanderBuilder
     private static readonly ServiceDescriptor AddedTagDescriptor = new(typeof(AddedTag), new AddedTag());
 
     public IServiceCollection Services { get; }
-    public ICommandHandlerRegistry Handlers { get; }
+    public HashSet<CommandHandler> Handlers { get; }
 
     internal CommanderBuilder(
         IServiceCollection services,
@@ -21,8 +21,7 @@ public readonly struct CommanderBuilder
         Services = services;
         if (Services.Contains(AddedTagDescriptor)) {
             // Already configured
-            Handlers = GetCommandHandlerRegistry(services)
-                ?? throw Errors.CommandHandlerRegistryInstanceIsNotRegistered();
+            Handlers = GetCommandHandlers(services);
             configure?.Invoke(this);
             return;
         }
@@ -33,16 +32,15 @@ public readonly struct CommanderBuilder
         // Common services
         Services.TryAddSingleton(_ => new CommanderOptions());
         Services.TryAddSingleton<ICommander>(c => new Commander(c));
-        Services.TryAddSingleton<ICommandHandlerRegistry>(new CommandHandlerRegistry());
-        Services.TryAddSingleton<ICommandHandlerResolver>(c => new CommandHandlerResolver(c));
+        Services.TryAddSingleton(new HashSet<CommandHandler>());
+        Services.TryAddSingleton(c => new CommandHandlerRegistry(c));
+        Services.TryAddSingleton(c => new CommandHandlerResolver(c));
 
         // Command services & their dependencies
         Services.TryAddSingleton(_ => new CommandServiceInterceptor.Options());
         Services.TryAddSingleton(c => new CommandServiceInterceptor(
             c.GetRequiredService<CommandServiceInterceptor.Options>(), c));
-
-        Handlers = GetCommandHandlerRegistry(services)
-            ?? throw Errors.CommandHandlerRegistryInstanceIsNotRegistered();
+        Handlers = GetCommandHandlers(services);
 
         // Default handlers
         Services.AddSingleton(_ => new PreparedCommandHandler());
@@ -53,24 +51,6 @@ public readonly struct CommanderBuilder
         AddHandlers<LocalCommandRunner>();
 
         configure?.Invoke(this);
-    }
-
-    private static ICommandHandlerRegistry? GetCommandHandlerRegistry(IServiceCollection services)
-    {
-        for (var i = 0; i < services.Count; i++) {
-            var descriptor = services[i];
-            if (descriptor.ServiceType == typeof(ICommandHandlerRegistry)) {
-                if (i > 16) {
-                    // Let's move it to the beginning of the list
-                    // to speed up future searches
-                    services.RemoveAt(i);
-                    services.Insert(0, descriptor);
-                }
-                return (ICommandHandlerRegistry?) descriptor.ImplementationInstance
-                    ?? throw Errors.CommandHandlerRegistryMustBeRegisteredAsInstance();
-            }
-        }
-        return null;
     }
 
     // Options
@@ -260,5 +240,25 @@ public readonly struct CommanderBuilder
     {
         Services.RemoveAll<CommandHandlerFilter>();
         return this;
+    }
+
+    // Private methods
+
+    private static HashSet<CommandHandler> GetCommandHandlers(IServiceCollection services)
+    {
+        for (var i = 0; i < services.Count; i++) {
+            var descriptor = services[i];
+            if (descriptor.ServiceType == typeof(HashSet<CommandHandler>)) {
+                if (i > 16) {
+                    // Let's move it to the beginning of the list
+                    // to speed up future searches
+                    services.RemoveAt(i);
+                    services.Insert(0, descriptor);
+                }
+                return (HashSet<CommandHandler>?) descriptor.ImplementationInstance
+                    ?? throw Errors.CommandHandlerSetMustBeRegisteredAsInstance();
+            }
+        }
+        throw Errors.CommandHandlerSetIsNotRegistered();
     }
 }

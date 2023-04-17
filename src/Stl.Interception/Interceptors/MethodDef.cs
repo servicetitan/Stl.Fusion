@@ -4,25 +4,38 @@ public abstract record MethodDef
 {
     private string? _fullName;
 
-    public Type Type { get; init; }
-    public MethodInfo Method { get; init; }
-    public Interceptor Interceptor { get; init; }
+    public Type Type { get; }
+    public MethodInfo Method { get; }
+    public ParameterInfo[] Parameters { get; }
+    public Type[] ParameterTypes { get; }
+    public int CancellationTokenIndex { get; init; } = -1;
+
     public string FullName => _fullName ??= $"{Type.GetName()}.{Method.Name}";
-    public bool IsAsyncMethod { get; init; }
-    public bool IsAsyncVoidMethod { get; init; }
-    public bool ReturnsTask { get; init; }
-    public bool ReturnsValueTask { get; init; }
-    public Type UnwrappedReturnType { get; init; } = null!;
-    public bool IsValid { get; init; }
+    public bool IsAsyncMethod { get; }
+    public bool IsAsyncVoidMethod { get; }
+    public bool ReturnsTask { get; }
+    public bool ReturnsValueTask { get; }
+    public Type UnwrappedReturnType { get; } = null!;
+    public bool IsValid { get; init; } = true;
 
     protected MethodDef(
         Type type,
-        MethodInfo method,
-        Interceptor interceptor)
+        MethodInfo method)
     {
+        var parameters = method.GetParameters();
+        for (var i = 0; i < parameters.Length; i++) {
+            var p = parameters[i];
+            if (typeof(CancellationToken).IsAssignableFrom(p.ParameterType))
+                CancellationTokenIndex = i;
+        }
+        var parameterTypes = new Type[parameters.Length];
+        for (var i = 0; i < parameters.Length; i++)
+            parameterTypes[i] = parameters[i].ParameterType;
+
         Type = type;
         Method = method;
-        Interceptor = interceptor;
+        Parameters = parameters;
+        ParameterTypes = parameterTypes;
 
         var returnType = method.ReturnType;
         if (!returnType.IsGenericType) {
@@ -40,9 +53,6 @@ public abstract record MethodDef
             ? returnType.GetGenericArguments()[0]
             : returnType;
     }
-
-    public virtual MethodDef ToReplicaMethodDef()
-        => this;
 
     // All XxxMethodDef records should rely on reference-based equality
     public virtual bool Equals(MethodDef? other) => ReferenceEquals(this, other);

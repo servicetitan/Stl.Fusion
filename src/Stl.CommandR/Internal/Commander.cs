@@ -3,7 +3,7 @@ namespace Stl.CommandR.Internal;
 public class Commander : ICommander
 {
     protected ILogger Log { get; init; }
-    protected ICommandHandlerResolver HandlerResolver { get; }
+    protected CommandHandlerResolver HandlerResolver { get; }
     protected Action<IEventCommand, Symbol> ChainIdSetter { get; }
 
     public CommanderOptions Options { get; }
@@ -14,7 +14,7 @@ public class Commander : ICommander
         Services = services;
         Options = services.GetRequiredService<CommanderOptions>();
         Log = services.LogFor(GetType());
-        HandlerResolver = services.GetRequiredService<ICommandHandlerResolver>();
+        HandlerResolver = services.GetRequiredService<CommandHandlerResolver>();
         ChainIdSetter = typeof(IEventCommand)
             .GetProperty(nameof(IEventCommand.ChainId))!
             .GetSetter<Symbol>();

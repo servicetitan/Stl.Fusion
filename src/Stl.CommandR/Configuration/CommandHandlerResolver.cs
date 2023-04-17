@@ -2,27 +2,22 @@ using Stl.CommandR.Internal;
 
 namespace Stl.CommandR.Configuration;
 
-public interface ICommandHandlerResolver
-{
-    CommandHandlerSet GetCommandHandlers(Type commandType);
-}
-
-public class CommandHandlerResolver : ICommandHandlerResolver
+public class CommandHandlerResolver
 {
     protected ILogger Log { get; init; }
-    protected ICommandHandlerRegistry Registry { get; }
+    protected CommandHandlerRegistry Registry { get; }
     protected Func<CommandHandler, Type, bool> Filter { get; }
     protected ConcurrentDictionary<Type, CommandHandlerSet> Cache { get; } = new();
 
     public CommandHandlerResolver(IServiceProvider services)
     {
         Log = services.LogFor(GetType());
-        Registry = services.GetRequiredService<ICommandHandlerRegistry>();
+        Registry = services.GetRequiredService<CommandHandlerRegistry>();
         var filters = services.GetRequiredService<IEnumerable<CommandHandlerFilter>>().ToArray();
         Filter = (commandHandler, type) => filters.All(f => f.IsCommandHandlerUsed(commandHandler, type));
     }
 
-    public CommandHandlerSet GetCommandHandlers(Type commandType)
+    public virtual CommandHandlerSet GetCommandHandlers(Type commandType)
         => Cache.GetOrAdd(commandType, static (commandType1, self) => {
             if (!typeof(ICommand).IsAssignableFrom(commandType1))
                 throw new ArgumentOutOfRangeException(nameof(commandType1));

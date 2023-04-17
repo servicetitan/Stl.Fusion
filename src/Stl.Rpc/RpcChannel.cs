@@ -35,7 +35,10 @@ public class RpcChannel : Channel<RpcRequest>
         Options = optionsProvider.Invoke(this);
 
         // Resolving middlewares
-        Middlewares = Options.Middlewares
+        var middlewareRegistry = Services.GetRequiredService<RpcMiddlewareRegistry>();
+        var middlewareFilter = Options.MiddlewareFilter;
+        Middlewares = middlewareRegistry.MiddlewareTypes
+            .Where(type => middlewareFilter.Invoke(type))
             .Select(type => (RpcMiddleware)Services.GetRequiredService(type))
             .ToImmutableArray();
 

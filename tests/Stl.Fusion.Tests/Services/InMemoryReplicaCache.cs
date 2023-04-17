@@ -64,7 +64,7 @@ public class InMemoryReplicaCache : ReplicaCache
     private Symbol GetKey(ComputeMethodInput input)
     {
         var arguments = input.Arguments;
-        var ctIndex = input.MethodDef.CancellationTokenArgumentIndex;
+        var ctIndex = input.MethodDef.CancellationTokenIndex;
         if (ctIndex >= 0)
             arguments = arguments.Remove(ctIndex);
 

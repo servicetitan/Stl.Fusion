@@ -71,7 +71,7 @@ public readonly struct FusionBuilder
         var commander = Services.AddCommander();
         Services.TryAddSingleton(_ => new AgentInfo());
         Services.TryAddSingleton(c => new InvalidationInfoProvider(
-            c.Commander(), c.GetRequiredService<ICommandHandlerResolver>()));
+            c.Commander(), c.GetRequiredService<CommandHandlerResolver>()));
 
         // Transient operation scope & its provider
         if (!Services.HasService<TransientOperationScopeProvider>()) {
