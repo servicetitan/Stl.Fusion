@@ -22,7 +22,7 @@ public static class ActivatorExt
         var hasDefaultCtor = HasDefaultCtorCache.GetOrAdd(type,
             type1 => type1.GetConstructor(Array.Empty<Type>()) != null);
         if (hasDefaultCtor)
-            return (T) type.CreateInstance();
+            return (T)type.CreateInstance();
         if (failIfNoDefaultConstructor)
             throw Errors.NoDefaultConstructor(type);
         return default!;
@@ -31,16 +31,16 @@ public static class ActivatorExt
     public static Delegate? GetConstructorDelegate(this Type type)
         => CtorDelegate0Cache.GetOrAdd(
             type,
-            tObject => {
+            static tObject => {
                 var argTypes = Type.EmptyTypes;
                 var ctor = tObject.GetConstructor(argTypes);
                 if (ctor == null) return null;
 
-                var m = new DynamicMethod("_Create0", type, Type.EmptyTypes, false);
+                var m = new DynamicMethod("_Create0", tObject, Type.EmptyTypes, true);
                 var il = m.GetILGenerator();
                 il.Emit(OpCodes.Newobj, ctor);
                 il.Emit(OpCodes.Ret);
-                return m.CreateDelegate(typeof(Action<>).MakeGenericType(type));
+                return m.CreateDelegate(typeof(Func<>).MakeGenericType(tObject));
             });
 
     public static Delegate? GetConstructorDelegate(this Type type, Type argument1)
@@ -51,12 +51,12 @@ public static class ActivatorExt
                 var ctor = tObject.GetConstructor(new[] { tArg1 });
                 if (ctor == null) return null;
 
-                var m = new DynamicMethod("_Create1", tObject, new[] { tArg1 }, false);
+                var m = new DynamicMethod("_Create1", tObject, new[] { tArg1 }, true);
                 var il = m.GetILGenerator();
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Newobj, ctor);
                 il.Emit(OpCodes.Ret);
-                return m.CreateDelegate(typeof(Action<,>).MakeGenericType(tArg1, tObject));
+                return m.CreateDelegate(typeof(Func<,>).MakeGenericType(tArg1, tObject));
             });
 
     public static Delegate? GetConstructorDelegate(this Type type, Type argument1, Type argument2)
@@ -67,13 +67,13 @@ public static class ActivatorExt
                 var ctor = tObject.GetConstructor(new[] { tArg1, tArg2 });
                 if (ctor == null) return null;
 
-                var m = new DynamicMethod("_Create2", tObject, new[] { tArg1, tArg2 }, false);
+                var m = new DynamicMethod("_Create2", tObject, new[] { tArg1, tArg2 }, true);
                 var il = m.GetILGenerator();
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Ldarg_1);
                 il.Emit(OpCodes.Newobj, ctor);
                 il.Emit(OpCodes.Ret);
-                return m.CreateDelegate(typeof(Action<,,>).MakeGenericType(tArg1, tArg2, tObject));
+                return m.CreateDelegate(typeof(Func<,,>).MakeGenericType(tArg1, tArg2, tObject));
             });
 
     public static Delegate? GetConstructorDelegate(this Type type, Type argument1, Type argument2, Type argument3)
@@ -84,14 +84,14 @@ public static class ActivatorExt
                 var ctor = tObject.GetConstructor(new[] { tArg1, tArg2, tArg3 });
                 if (ctor == null) return null;
 
-                var m = new DynamicMethod("_Create3", tObject, new[] { tArg1, tArg2, tArg3 }, false);
+                var m = new DynamicMethod("_Create3", tObject, new[] { tArg1, tArg2, tArg3 }, true);
                 var il = m.GetILGenerator();
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Ldarg_1);
                 il.Emit(OpCodes.Ldarg_2);
                 il.Emit(OpCodes.Newobj, ctor);
                 il.Emit(OpCodes.Ret);
-                return m.CreateDelegate(typeof(Action<,,,>).MakeGenericType(tArg1, tArg2, tArg3, tObject));
+                return m.CreateDelegate(typeof(Func<,,,>).MakeGenericType(tArg1, tArg2, tArg3, tObject));
             });
 
     public static Delegate? GetConstructorDelegate(this Type type,
@@ -103,7 +103,7 @@ public static class ActivatorExt
                 var ctor = tObject.GetConstructor(new[] { tArg1, tArg2, tArg3, tArg4 });
                 if (ctor == null) return null;
 
-                var m = new DynamicMethod("_Create4", tObject, new[] { tArg1, tArg2, tArg3, tArg4 }, false);
+                var m = new DynamicMethod("_Create4", tObject, new[] { tArg1, tArg2, tArg3, tArg4 }, true);
                 var il = m.GetILGenerator();
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Ldarg_1);
@@ -111,7 +111,7 @@ public static class ActivatorExt
                 il.Emit(OpCodes.Ldarg_3);
                 il.Emit(OpCodes.Newobj, ctor);
                 il.Emit(OpCodes.Ret);
-                return m.CreateDelegate(typeof(Action<,,,,>).MakeGenericType(tArg1, tArg2, tArg3, tArg4, tObject));
+                return m.CreateDelegate(typeof(Func<,,,,>).MakeGenericType(tArg1, tArg2, tArg3, tArg4, tObject));
             });
 
     public static Delegate? GetConstructorDelegate(this Type type,
@@ -123,7 +123,7 @@ public static class ActivatorExt
                 var ctor = tObject.GetConstructor(new[] { tArg1, tArg2, tArg3, tArg4, tArg5 });
                 if (ctor == null) return null;
 
-                var m = new DynamicMethod("_Create5", tObject, new[] { tArg1, tArg2, tArg3, tArg4, tArg5 }, false);
+                var m = new DynamicMethod("_Create5", tObject, new[] { tArg1, tArg2, tArg3, tArg4, tArg5 }, true);
                 var il = m.GetILGenerator();
                 il.Emit(OpCodes.Ldarg_0);
                 il.Emit(OpCodes.Ldarg_1);
@@ -132,7 +132,7 @@ public static class ActivatorExt
                 il.Emit(OpCodes.Ldarg, 4);
                 il.Emit(OpCodes.Newobj, ctor);
                 il.Emit(OpCodes.Ret);
-                return m.CreateDelegate(typeof(Action<,,,,,>).MakeGenericType(tArg1, tArg2, tArg3, tArg4, tArg5, tObject));
+                return m.CreateDelegate(typeof(Func<,,,,,>).MakeGenericType(tArg1, tArg2, tArg3, tArg4, tArg5, tObject));
             });
 
     public static Func<T1, object> GetConstructorDelegate<T1>(this Type type, T1 argument1)
