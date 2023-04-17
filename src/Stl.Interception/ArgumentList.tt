@@ -129,15 +129,8 @@ public abstract record ArgumentList
 
     // Equality
 
-    public virtual bool Equals(ArgumentList? other, int skipIndex)
-        => other?.GetType() == typeof(ArgumentList);
-    public virtual int GetHashCode(int skipIndex)
-        => 1;
-
-    public virtual bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
-        => other?.GetType() == typeof(ArgumentList);
-    public virtual int GetHashCode(Delegate?[] equalsDelegates)
-        => 1;
+    public abstract bool Equals(ArgumentList? other, int skipIndex);
+    public abstract int GetHashCode(int skipIndex);
 }
 
 [DataContract]
@@ -180,6 +173,14 @@ public sealed record ArgumentList0 : ArgumentList
             il.Emit(OpCodes.Ret);
             return (Func<object, ArgumentList, object?>)m.CreateDelegate(typeof(Func<object, ArgumentList, object?>));
         });
+
+    public bool Equals(ArgumentList0? other)
+        => !ReferenceEquals(other, null);
+    public override bool Equals(ArgumentList? other, int skipIndex)
+        => other?.GetType() == typeof(ArgumentList0);
+
+    public override int GetHashCode() => 1;
+    public override int GetHashCode(int skipIndex) => 1;
 }
 
 <# for (var itemCount = 1; itemCount <= maxItemCount; itemCount++) {
@@ -461,17 +462,6 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
         return true;
     }
 
-    public override int GetHashCode()
-    {
-        unchecked {
-            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-<# for (var t = 1; t < itemCount; t++) { #>
-            hashCode = 397*hashCode + EqualityComparer<T<#=t#>>.Default.GetHashCode(Item<#=t#>!);
-<# } #>
-            return hashCode;
-        }
-    }
-
     public override bool Equals(ArgumentList? other, int skipIndex)
     {
         if (other is not ArgumentList<<#=argumentTypes#>> vOther)
@@ -484,53 +474,23 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
         return true;
     }
 
+    public override int GetHashCode()
+    {
+        unchecked {
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+<# for (var t = 1; t < itemCount; t++) { #>
+            hashCode = 397*hashCode + EqualityComparer<T<#=t#>>.Default.GetHashCode(Item<#=t#>!);
+<# } #>
+            return hashCode;
+        }
+    }
+
     public override int GetHashCode(int skipIndex)
     {
         unchecked {
             var hashCode = skipIndex == 0 ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
 <# for (var t = 1; t < itemCount; t++) { #>
             hashCode = 397*hashCode + (skipIndex == <#=t#> ? 0 : EqualityComparer<T<#=t#>>.Default.GetHashCode(Item<#=t#>!));
-<# } #>
-            return hashCode;
-        }
-    }
-
-    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
-    {
-        if (equalsDelegates.Length < <#=itemCount#>)
-            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
-        if (other is not ArgumentList<<#=argumentTypes#>> vOther)
-            return false;
-
-<# for (var t = itemCount - 1; t >= 0; t--) { #>
-        if (equalsDelegates[<#=t#>] is Func<T<#=t#>, T<#=t#>, bool> func<#=t#>) {
-            if (!func<#=t#>.Invoke(Item<#=t#>, vOther.Item<#=t#>))
-                return false;
-        }
-        else if (!EqualityComparer<T<#=t#>>.Default.Equals(Item<#=t#>, vOther.Item<#=t#>))
-            return false;
-
-<# } #>
-        return true;
-    }
-
-    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
-    {
-        if (getHashCodeDelegates.Length < <#=itemCount#>)
-            throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
-        unchecked {
-            int hashCode;
-            if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0.Invoke(Item0!);
-            else
-                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-
-<# for (var t = 1; t < itemCount; t++) { #>
-            if (getHashCodeDelegates[<#=t#>] is Func<T<#=t#>, int> func<#=t#>)
-                hashCode = (hashCode * 397) + func<#=t#>.Invoke(Item<#=t#>!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T<#=t#>>.Default.GetHashCode(Item<#=t#>!);
-
 <# } #>
             return hashCode;
         }

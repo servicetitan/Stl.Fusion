@@ -1,6 +1,6 @@
 namespace Stl.Interception.Interceptors;
 
-public abstract record MethodDef
+public abstract class MethodDef
 {
     private string? _fullName;
 
@@ -54,7 +54,6 @@ public abstract record MethodDef
             : returnType;
     }
 
-    // All XxxMethodDef records should rely on reference-based equality
-    public virtual bool Equals(MethodDef? other) => ReferenceEquals(this, other);
-    public override int GetHashCode() => RuntimeHelpers.GetHashCode(this);
+    public override string ToString()
+        => $"{GetType().Name}({FullName}){(IsValid ? "" : " - invalid")}";
 }

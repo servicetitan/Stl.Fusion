@@ -3,7 +3,7 @@ using Stl.Interception.Interceptors;
 
 namespace Stl.Rpc.Infrastructure;
 
-public sealed record RpcMethodDef : MethodDef
+public sealed class RpcMethodDef : MethodDef
 {
     public Type ArgumentListType { get; }
     public Type[] RemoteParameterTypes { get; }
@@ -11,11 +11,6 @@ public sealed record RpcMethodDef : MethodDef
 
     public RpcMethodDef(Type type, MethodInfo method) : base(type, method)
     {
-        if (!IsAsyncMethod) {
-            IsValid = false;
-            return;
-        }
-
         ArgumentListType = ArgumentList.Types[Parameters.Length].MakeGenericType(ParameterTypes);
         if (CancellationTokenIndex >= 0) {
             var remoteParameterTypes = new Type[ParameterTypes.Length - 1];
@@ -34,5 +29,8 @@ public sealed record RpcMethodDef : MethodDef
             RemoteParameterTypes = ParameterTypes;
             RemoteArgumentListType = ArgumentListType;
         }
+
+        if (!IsAsyncMethod)
+            IsValid = false;
     }
 }
