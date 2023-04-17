@@ -5,6 +5,12 @@ namespace Stl.Serialization;
 
 public static class ByteSerializerExt
 {
+    // Read w/o readLength argument
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static object? Read(this IByteSerializer serializer, ReadOnlyMemory<byte> data, Type type)
+        => serializer.Read(data, type, out _);
+
     // Read w/o Type & readLength arguments
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

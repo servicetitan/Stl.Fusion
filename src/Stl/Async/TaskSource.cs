@@ -191,10 +191,10 @@ public readonly struct TaskSource<T> : IEquatable<TaskSource<T>>
         // .NET Standard version fails even on above code,
         // so IL emit is used to generate private field assignment code.
         var setTaskMethod = new DynamicMethod(
-            ZString.Concat("_Set", fTask!.Name, "_"),
+            "_SetTask",
             typeof(void),
             new [] { typeof(TaskCompletionSource<T>), typeof(Task<T>) },
-            fTask.DeclaringType!,
+            fTask!.DeclaringType!,
             true);
         var il = setTaskMethod.GetILGenerator();
         il.Emit(OpCodes.Ldarg_0);
@@ -207,7 +207,7 @@ public readonly struct TaskSource<T> : IEquatable<TaskSource<T>>
             typeof(Action<TaskCompletionSource<T>, Task<T>>));
 
         var resetTaskMethod = new DynamicMethod(
-            ZString.Concat("_Reset", fTask!.Name, "_"),
+            "_ResetTask",
             typeof(void),
             new [] { typeof(TaskCompletionSource<T>) },
             fTask.DeclaringType!,

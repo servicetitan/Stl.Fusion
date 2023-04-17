@@ -1,4 +1,4 @@
-using System.Linq.Expressions;
+using System.Reflection.Emit;
 using Stl.Internal;
 
 namespace Stl.Reflection;
@@ -29,94 +29,110 @@ public static class ActivatorExt
     }
 
     public static Delegate? GetConstructorDelegate(this Type type)
-        => CtorDelegate0Cache.GetOrAdd(type, tObject => {
-            var argTypes = Type.EmptyTypes;
-            var ctor = tObject.GetConstructor(argTypes);
-            if (ctor == null) return null;
+        => CtorDelegate0Cache.GetOrAdd(
+            type,
+            tObject => {
+                var argTypes = Type.EmptyTypes;
+                var ctor = tObject.GetConstructor(argTypes);
+                if (ctor == null) return null;
 
-            var eCtor = Expression.New(ctor, Array.Empty<Expression>());
-            return Expression.Lambda(eCtor).Compile();
-        });
+                var m = new DynamicMethod("_Create0", type, Type.EmptyTypes, false);
+                var il = m.GetILGenerator();
+                il.Emit(OpCodes.Newobj, ctor);
+                il.Emit(OpCodes.Ret);
+                return m.CreateDelegate(typeof(Action<>).MakeGenericType(type));
+            });
 
     public static Delegate? GetConstructorDelegate(this Type type, Type argument1)
-        => CtorDelegate1Cache.GetOrAdd((type, argument1), key => {
-            var (tObject, tArg1) = key;
-            var ctor = tObject.GetConstructor(new[] {tArg1});
-            if (ctor == null) return null;
+        => CtorDelegate1Cache.GetOrAdd(
+            (type, argument1),
+            static key => {
+                var (tObject, tArg1) = key;
+                var ctor = tObject.GetConstructor(new[] { tArg1 });
+                if (ctor == null) return null;
 
-            var eArgs = new[] {
-                Expression.Parameter(tArg1, "arg1"),
-            };
-            var eCtor = Expression.New(ctor, eArgs);
-            return Expression.Lambda(eCtor, eArgs).Compile();
-        });
+                var m = new DynamicMethod("_Create1", tObject, new[] { tArg1 }, false);
+                var il = m.GetILGenerator();
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Newobj, ctor);
+                il.Emit(OpCodes.Ret);
+                return m.CreateDelegate(typeof(Action<,>).MakeGenericType(tArg1, tObject));
+            });
 
     public static Delegate? GetConstructorDelegate(this Type type, Type argument1, Type argument2)
-        => CtorDelegate2Cache.GetOrAdd((type, argument1, argument2), key => {
-            var (tObject, tArg1, tArg2) = key;
-            var ctor = tObject.GetConstructor(new[] {tArg1, tArg2});
-            if (ctor == null) return null;
+        => CtorDelegate2Cache.GetOrAdd(
+            (type, argument1, argument2),
+            static key => {
+                var (tObject, tArg1, tArg2) = key;
+                var ctor = tObject.GetConstructor(new[] { tArg1, tArg2 });
+                if (ctor == null) return null;
 
-            var eArgs = new[] {
-                Expression.Parameter(tArg1, "arg1"),
-                Expression.Parameter(tArg2, "arg2"),
-            };
-            var eCtor = Expression.New(ctor, eArgs);
-            return Expression.Lambda(eCtor, eArgs).Compile();
-        });
+                var m = new DynamicMethod("_Create2", tObject, new[] { tArg1, tArg2 }, false);
+                var il = m.GetILGenerator();
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Newobj, ctor);
+                il.Emit(OpCodes.Ret);
+                return m.CreateDelegate(typeof(Action<,,>).MakeGenericType(tArg1, tArg2, tObject));
+            });
 
     public static Delegate? GetConstructorDelegate(this Type type, Type argument1, Type argument2, Type argument3)
-        => CtorDelegate3Cache.GetOrAdd((type, argument1, argument2, argument3), key => {
-            var (tObject, tArg1, tArg2, tArg3) = key;
-            var ctor = tObject.GetConstructor(new[] {tArg1, tArg2, tArg3});
-            if (ctor == null) return null;
+        => CtorDelegate3Cache.GetOrAdd(
+            (type, argument1, argument2, argument3),
+            static key => {
+                var (tObject, tArg1, tArg2, tArg3) = key;
+                var ctor = tObject.GetConstructor(new[] { tArg1, tArg2, tArg3 });
+                if (ctor == null) return null;
 
-            var eArgs = new[] {
-                Expression.Parameter(tArg1, "arg1"),
-                Expression.Parameter(tArg2, "arg2"),
-                Expression.Parameter(tArg3, "arg3"),
-            };
-            var eCtor = Expression.New(ctor, eArgs);
-            return Expression.Lambda(eCtor, eArgs).Compile();
-        });
+                var m = new DynamicMethod("_Create3", tObject, new[] { tArg1, tArg2, tArg3 }, false);
+                var il = m.GetILGenerator();
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Ldarg_2);
+                il.Emit(OpCodes.Newobj, ctor);
+                il.Emit(OpCodes.Ret);
+                return m.CreateDelegate(typeof(Action<,,,>).MakeGenericType(tArg1, tArg2, tArg3, tObject));
+            });
 
     public static Delegate? GetConstructorDelegate(this Type type,
         Type argument1, Type argument2, Type argument3, Type argument4)
         => CtorDelegate4Cache.GetOrAdd(
             (type, argument1, argument2, argument3, argument4),
-            key => {
+            static key => {
                 var (tObject, tArg1, tArg2, tArg3, tArg4) = key;
-                var ctor = tObject.GetConstructor(new[] {tArg1, tArg2, tArg3, tArg4});
+                var ctor = tObject.GetConstructor(new[] { tArg1, tArg2, tArg3, tArg4 });
                 if (ctor == null) return null;
 
-                var eArgs = new[] {
-                    Expression.Parameter(tArg1, "arg1"),
-                    Expression.Parameter(tArg2, "arg2"),
-                    Expression.Parameter(tArg3, "arg3"),
-                    Expression.Parameter(tArg4, "arg4"),
-                };
-                var eCtor = Expression.New(ctor, eArgs);
-                return Expression.Lambda(eCtor, eArgs).Compile();
+                var m = new DynamicMethod("_Create4", tObject, new[] { tArg1, tArg2, tArg3, tArg4 }, false);
+                var il = m.GetILGenerator();
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Ldarg_2);
+                il.Emit(OpCodes.Ldarg_3);
+                il.Emit(OpCodes.Newobj, ctor);
+                il.Emit(OpCodes.Ret);
+                return m.CreateDelegate(typeof(Action<,,,,>).MakeGenericType(tArg1, tArg2, tArg3, tArg4, tObject));
             });
 
     public static Delegate? GetConstructorDelegate(this Type type,
         Type argument1, Type argument2, Type argument3, Type argument4, Type argument5)
         => CtorDelegate5Cache.GetOrAdd(
             (type, argument1, argument2, argument3, argument4, argument5),
-            key => {
+            static key => {
                 var (tObject, tArg1, tArg2, tArg3, tArg4, tArg5) = key;
-                var ctor = tObject.GetConstructor(new[] {tArg1, tArg2, tArg3, tArg4, tArg5});
+                var ctor = tObject.GetConstructor(new[] { tArg1, tArg2, tArg3, tArg4, tArg5 });
                 if (ctor == null) return null;
 
-                var eArgs = new[] {
-                    Expression.Parameter(tArg1, "arg1"),
-                    Expression.Parameter(tArg2, "arg2"),
-                    Expression.Parameter(tArg3, "arg3"),
-                    Expression.Parameter(tArg4, "arg4"),
-                    Expression.Parameter(tArg5, "arg5"),
-                };
-                var eCtor = Expression.New(ctor, eArgs);
-                return Expression.Lambda(eCtor, eArgs).Compile();
+                var m = new DynamicMethod("_Create5", tObject, new[] { tArg1, tArg2, tArg3, tArg4, tArg5 }, false);
+                var il = m.GetILGenerator();
+                il.Emit(OpCodes.Ldarg_0);
+                il.Emit(OpCodes.Ldarg_1);
+                il.Emit(OpCodes.Ldarg_2);
+                il.Emit(OpCodes.Ldarg_3);
+                il.Emit(OpCodes.Ldarg, 4);
+                il.Emit(OpCodes.Newobj, ctor);
+                il.Emit(OpCodes.Ret);
+                return m.CreateDelegate(typeof(Action<,,,,,>).MakeGenericType(tArg1, tArg2, tArg3, tArg4, tArg5, tObject));
             });
 
     public static Func<T1, object> GetConstructorDelegate<T1>(this Type type, T1 argument1)
