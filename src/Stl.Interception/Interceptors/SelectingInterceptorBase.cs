@@ -6,7 +6,7 @@ public abstract class SelectingInterceptorBase : InterceptorBase
 {
     public new record Options : InterceptorBase.Options
     {
-        public Type[] InterceptorTypes { get; init; } = Array.Empty<Type>();
+        public Type[] InterceptorTypes { get; init; } = Type.EmptyTypes;
     }
 
     protected InterceptorBase[] Interceptors { get; }

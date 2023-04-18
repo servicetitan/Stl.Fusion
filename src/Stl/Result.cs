@@ -245,15 +245,12 @@ public static class Result
     public static Result<T> Error<T>(Exception error) => new(default!, error);
 
     public static IResult Error(Type resultType, Exception error)
-        => ErrorCache.GetOrAdd(resultType, static tResult => {
-            var mErrorInternal = ErrorInternalMethod.MakeGenericMethod(tResult);
-            var pError = Expression.Parameter(typeof(Exception));
-            var fn = Expression.Lambda<Func<Exception, IResult>>(
-                Expression.Call(mErrorInternal, pError),
-                pError
-            ).Compile();
-            return fn;
-        }).Invoke(error);
+        => ErrorCache.GetOrAdd(
+            resultType,
+            static tResult => (Func<Exception, IResult>)ErrorInternalMethod
+                .MakeGenericMethod(tResult)
+                .CreateDelegate(typeof(Func<Exception, IResult>))
+            ).Invoke(error);
 
     public static Result<T> FromFunc<T, TState>(TState state, Func<TState, T> func)
     {

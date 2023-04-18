@@ -149,7 +149,6 @@ public sealed record ArgumentList0 : ArgumentList
             var m = new DynamicMethod("_Invoke",
                 typeof(object),
                 new [] { typeof(object), typeof(ArgumentList) },
-                declaringType,
                 true);
             var il = m.GetILGenerator();
 
@@ -417,7 +416,6 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
             var m = new DynamicMethod("_Invoke",
                 typeof(object),
                 new [] { typeof(object), typeof(ArgumentList) },
-                declaringType,
                 true);
             var il = m.GetILGenerator();
 

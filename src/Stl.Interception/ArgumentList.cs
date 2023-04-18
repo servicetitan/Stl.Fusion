@@ -140,7 +140,6 @@ public sealed record ArgumentList0 : ArgumentList
             var m = new DynamicMethod("_Invoke",
                 typeof(object),
                 new [] { typeof(object), typeof(ArgumentList) },
-                declaringType,
                 true);
             var il = m.GetILGenerator();
 
@@ -335,7 +334,6 @@ public sealed record ArgumentList<T0>(
             var m = new DynamicMethod("_Invoke",
                 typeof(object),
                 new [] { typeof(object), typeof(ArgumentList) },
-                declaringType,
                 true);
             var il = m.GetILGenerator();
 
@@ -596,7 +594,6 @@ public sealed record ArgumentList<T0, T1>(
             var m = new DynamicMethod("_Invoke",
                 typeof(object),
                 new [] { typeof(object), typeof(ArgumentList) },
-                declaringType,
                 true);
             var il = m.GetILGenerator();
 
@@ -896,7 +893,6 @@ public sealed record ArgumentList<T0, T1, T2>(
             var m = new DynamicMethod("_Invoke",
                 typeof(object),
                 new [] { typeof(object), typeof(ArgumentList) },
-                declaringType,
                 true);
             var il = m.GetILGenerator();
 
@@ -1235,7 +1231,6 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
             var m = new DynamicMethod("_Invoke",
                 typeof(object),
                 new [] { typeof(object), typeof(ArgumentList) },
-                declaringType,
                 true);
             var il = m.GetILGenerator();
 
@@ -1613,7 +1608,6 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
             var m = new DynamicMethod("_Invoke",
                 typeof(object),
                 new [] { typeof(object), typeof(ArgumentList) },
-                declaringType,
                 true);
             var il = m.GetILGenerator();
 
@@ -2030,7 +2024,6 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
             var m = new DynamicMethod("_Invoke",
                 typeof(object),
                 new [] { typeof(object), typeof(ArgumentList) },
-                declaringType,
                 true);
             var il = m.GetILGenerator();
 
@@ -2486,7 +2479,6 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
             var m = new DynamicMethod("_Invoke",
                 typeof(object),
                 new [] { typeof(object), typeof(ArgumentList) },
-                declaringType,
                 true);
             var il = m.GetILGenerator();
 
@@ -2981,7 +2973,6 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
             var m = new DynamicMethod("_Invoke",
                 typeof(object),
                 new [] { typeof(object), typeof(ArgumentList) },
-                declaringType,
                 true);
             var il = m.GetILGenerator();
 
@@ -3515,7 +3506,6 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
             var m = new DynamicMethod("_Invoke",
                 typeof(object),
                 new [] { typeof(object), typeof(ArgumentList) },
-                declaringType,
                 true);
             var il = m.GetILGenerator();
 
@@ -4062,7 +4052,6 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
             var m = new DynamicMethod("_Invoke",
                 typeof(object),
                 new [] { typeof(object), typeof(ArgumentList) },
-                declaringType,
                 true);
             var il = m.GetILGenerator();
 

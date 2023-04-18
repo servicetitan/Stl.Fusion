@@ -20,7 +20,7 @@ public static class ActivatorExt
         if (type.IsValueType)
             return default!;
         var hasDefaultCtor = HasDefaultCtorCache.GetOrAdd(type,
-            type1 => type1.GetConstructor(Array.Empty<Type>()) != null);
+            type1 => type1.GetConstructor(Type.EmptyTypes) != null);
         if (hasDefaultCtor)
             return (T)type.CreateInstance();
         if (failIfNoDefaultConstructor)
