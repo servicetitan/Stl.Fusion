@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Linq.Expressions;
 
 namespace Stl.Conversion.Internal;
 
@@ -73,8 +72,6 @@ public class DefaultSourceConverterProvider<TSource> : SourceConverterProvider<T
 
         // 5. Can we use static TryParse(string, out TTarget) or Parse(string)?
         if (tSource == typeof(string)) {
-            var pSource = Expression.Parameter(tSource, "source");
-
             // TryParse
             var mTryParse = tTarget.GetMethod(
                 nameof(bool.TryParse),
@@ -83,21 +80,14 @@ public class DefaultSourceConverterProvider<TSource> : SourceConverterProvider<T
                 new [] {typeof(string), typeof(TTarget).MakeByRefType()},
                 null);
             if (mTryParse != null && mTryParse.ReturnType == typeof(bool)) {
-                var vTarget = Expression.Variable(tTarget, "target");
-                var mOptionSome = typeof(Option).GetMethod(nameof(Option.Some))!.MakeGenericMethod(tTarget);
-                var mOptionNone = typeof(Option).GetMethod(nameof(Option.None))!.MakeGenericMethod(tTarget);
-                var fn = Expression
-                    .Lambda<Func<TSource, Option<TTarget>>>(
-                        Expression.Block(
-                            new [] {vTarget},
-                            Expression.Condition(
-                                Expression.Call(mTryParse, pSource, vTarget),
-                                Expression.Call(mOptionSome, vTarget),
-                                Expression.Call(mOptionNone))
-                            ),
-                        pSource)
-                    .Compile();
-                return FuncConverter<TSource>.New(fn, null);
+                var tryParseFn = (TryParseFunc<TTarget>)mTryParse.CreateDelegate(typeof(TryParseFunc<TTarget>));
+
+                Option<TTarget> TryConvert(TSource source) =>
+                    tryParseFn.Invoke(source, out var target)
+                        ? Option.Some(target)
+                        : Option.None<TTarget>();
+
+                return FuncConverter<TSource>.New(TryConvert, null);
             }
 
             // Parse
@@ -108,11 +98,7 @@ public class DefaultSourceConverterProvider<TSource> : SourceConverterProvider<T
                 new [] {typeof(string)},
                 null);
             if (mParse != null && mParse.ReturnType == tTarget) {
-                var fn = Expression
-                    .Lambda<Func<TSource, TTarget>>(
-                        Expression.Call(mParse, pSource),
-                        pSource)
-                    .Compile();
+                var fn = (Func<TSource, TTarget>)mParse.CreateDelegate(typeof(Func<TSource, TTarget>));
                 return FuncConverter<TSource>.New(fn);
             }
         }
@@ -124,4 +110,8 @@ public class DefaultSourceConverterProvider<TSource> : SourceConverterProvider<T
 
         return Converter<TSource, TTarget>.Unavailable;
     }
+
+    // Nested types
+
+    private delegate bool TryParseFunc<TTarget>(TSource source, out TTarget target);
 }
