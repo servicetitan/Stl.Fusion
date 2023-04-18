@@ -2,16 +2,32 @@
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable ArrangeConstructorOrDestructorBody
 using Cysharp.Text;
+using System.Reflection.Emit;
 
 namespace Stl.Interception;
 
 [DataContract]
-public record ArgumentList
+public abstract record ArgumentList
 {
-    public static ArgumentList Empty { get; } = new();
+    protected static readonly ConcurrentDictionary<(Type, MethodInfo), Func<object, ArgumentList, object?>> InvokerCache = new();
+
+    public static ArgumentList Empty { get; } = new ArgumentList0();
+    public static ImmutableArray<Type> Types { get; } = ImmutableArray.Create(new [] {
+        typeof(ArgumentList),
+        typeof(ArgumentList<>),
+        typeof(ArgumentList<, >),
+        typeof(ArgumentList<, , >),
+        typeof(ArgumentList<, , , >),
+        typeof(ArgumentList<, , , , >),
+        typeof(ArgumentList<, , , , , >),
+        typeof(ArgumentList<, , , , , , >),
+        typeof(ArgumentList<, , , , , , , >),
+        typeof(ArgumentList<, , , , , , , , >),
+        typeof(ArgumentList<, , , , , , , , , >),
+    });
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
-    public virtual int Length => 0;
+    public abstract int Length { get; }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ArgumentList New()
@@ -51,6 +67,22 @@ public record ArgumentList
     public virtual object?[] ToArray() => Array.Empty<object?>();
     public virtual object?[] ToArray(int skipIndex) => Array.Empty<object?>();
 
+    public virtual Type?[]? GetNonDefaultItemTypes()
+        => null;
+
+#pragma warning disable MA0012
+    public virtual T Get0<T>() => throw new IndexOutOfRangeException();
+    public virtual T Get1<T>() => throw new IndexOutOfRangeException();
+    public virtual T Get2<T>() => throw new IndexOutOfRangeException();
+    public virtual T Get3<T>() => throw new IndexOutOfRangeException();
+    public virtual T Get4<T>() => throw new IndexOutOfRangeException();
+    public virtual T Get5<T>() => throw new IndexOutOfRangeException();
+    public virtual T Get6<T>() => throw new IndexOutOfRangeException();
+    public virtual T Get7<T>() => throw new IndexOutOfRangeException();
+    public virtual T Get8<T>() => throw new IndexOutOfRangeException();
+    public virtual T Get9<T>() => throw new IndexOutOfRangeException();
+#pragma warning restore MA0012
+
     public virtual T Get<T>(int index)
         => throw new ArgumentOutOfRangeException(nameof(index));
     public virtual object? GetUntyped(int index)
@@ -67,6 +99,9 @@ public record ArgumentList
     public virtual void SetCancellationToken(int index, CancellationToken item)
          => throw new ArgumentOutOfRangeException(nameof(index));
 
+    public virtual void SetFrom(ArgumentList other)
+    { }
+
     public virtual ArgumentList Insert<T>(int index, T item)
         => index == 0
             ? New(item)
@@ -81,28 +116,87 @@ public record ArgumentList
     public virtual ArgumentList Remove(int index)
         => throw new ArgumentOutOfRangeException(nameof(index));
 
-    public virtual bool Equals(ArgumentList? other, int skipIndex)
-        => other?.GetType() == typeof(ArgumentList);
-    public virtual int GetHashCode(int skipIndex)
-        => 1;
+    public abstract Func<object, ArgumentList, object?> GetInvoker(MethodInfo method);
 
-    public virtual bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
-        => other?.GetType() == typeof(ArgumentList);
-    public virtual int GetHashCode(Delegate?[] equalsDelegates)
-        => 1;
+    // Equality
+
+    public abstract bool Equals(ArgumentList? other, int skipIndex);
+    public abstract int GetHashCode(int skipIndex);
+}
+
+[DataContract]
+public sealed record ArgumentList0 : ArgumentList
+{
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public override int Length => 0;
+
+    public override Func<object, ArgumentList, object?> GetInvoker(MethodInfo method)
+        => InvokerCache.GetOrAdd((GetType(), method), static key => {
+            var (listType, method1) = key;
+            if (method1.GetParameters().Length != 0)
+                throw new ArgumentOutOfRangeException(nameof(method));
+
+            var declaringType = method1.DeclaringType!;
+            var m = new DynamicMethod("_Invoke",
+                typeof(object),
+                new [] { typeof(object), typeof(ArgumentList) },
+                true);
+            var il = m.GetILGenerator();
+
+            // Cast ArgumentList to its actual type
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Castclass, listType);
+            il.Emit(OpCodes.Pop);
+
+            // Unbox target
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(declaringType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, declaringType);
+
+            // Call method
+            il.Emit(OpCodes.Callvirt, method1);
+
+            // Box return type
+            if (method1.ReturnType == typeof(void))
+                il.Emit(OpCodes.Ldnull);
+            else if (method1.ReturnType.IsValueType)
+                il.Emit(OpCodes.Box, method1.ReturnType);
+            il.Emit(OpCodes.Ret);
+            return (Func<object, ArgumentList, object?>)m.CreateDelegate(typeof(Func<object, ArgumentList, object?>));
+        });
+
+    public bool Equals(ArgumentList0? other)
+        => !ReferenceEquals(other, null);
+    public override bool Equals(ArgumentList? other, int skipIndex)
+        => other?.GetType() == typeof(ArgumentList0);
+
+    public override int GetHashCode() => 1;
+    public override int GetHashCode(int skipIndex) => 1;
+}
+
+[DataContract]
+public abstract record ArgumentList1 : ArgumentList
+{
+    protected static Type?[] CreateNonDefaultItemTypes()
+        => new Type?[1];
+
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public override int Length => 1;
 }
 
 [DataContract]
 public sealed record ArgumentList<T0>(
     T0 Item0
-) : ArgumentList
+) : ArgumentList1
 {
     private T0 _item0 = Item0;
 
     [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
-    public override int Length => 1;
+    // Default constructor
+
+    public ArgumentList()
+        : this(default(T0)!)
+    { }
 
     // ToString & ToArray
 
@@ -123,7 +217,22 @@ public sealed record ArgumentList<T0>(
             ? Array.Empty<object?>()
             : throw new ArgumentOutOfRangeException(nameof(skipIndex));
 
+    // GetNonDefaultItemTypes 
+
+    public override Type?[]? GetNonDefaultItemTypes() {
+        var itemTypes = (Type?[]?)null;
+        Type? itemType;
+        itemType = _item0?.GetType();
+        if (itemType != null && itemType != typeof(T0)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[0] = itemType;
+        }
+        return itemTypes;
+    }
+
     // Get
+
+    public override T Get0<T>() => Item0 is T value ? value : default!;
 
     public override T Get<T>(int index)
         => index switch {
@@ -179,6 +288,13 @@ public sealed record ArgumentList<T0>(
         }
     }
 
+    // SetFrom
+
+    public override void SetFrom(ArgumentList other)
+    {
+        _item0 = other.Get0<T0>();
+    }
+
     // Insert
 
     public override ArgumentList Insert<T>(int index, T item)
@@ -203,6 +319,49 @@ public sealed record ArgumentList<T0>(
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
 
+    // GetInvoker
+
+    public override Func<object, ArgumentList, object?> GetInvoker(MethodInfo method)
+        => InvokerCache.GetOrAdd((GetType(), method), static key => {
+            var (listType, method1) = key;
+            var parameters = method1.GetParameters();
+            if (parameters.Length != 1)
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[0].ParameterType != typeof(T0))
+                throw new ArgumentOutOfRangeException(nameof(method));
+
+            var declaringType = method1.DeclaringType!;
+            var m = new DynamicMethod("_Invoke",
+                typeof(object),
+                new [] { typeof(object), typeof(ArgumentList) },
+                true);
+            var il = m.GetILGenerator();
+
+            // Cast ArgumentList to its actual type
+            il.DeclareLocal(listType);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Castclass, listType);
+            il.Emit(OpCodes.Stloc_0);
+
+            // Unbox target
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(declaringType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, declaringType);
+
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item0")!.GetGetMethod()!);
+
+            // Call method
+            il.Emit(OpCodes.Callvirt, method1);
+
+            // Box return type
+            if (method1.ReturnType == typeof(void))
+                il.Emit(OpCodes.Ldnull);
+            else if (method1.ReturnType.IsValueType)
+                il.Emit(OpCodes.Box, method1.ReturnType);
+            il.Emit(OpCodes.Ret);
+            return (Func<object, ArgumentList, object?>)m.CreateDelegate(typeof(Func<object, ArgumentList, object?>));
+        });
+
     // Equality
 
     public bool Equals(ArgumentList<T0>? other)
@@ -215,14 +374,6 @@ public sealed record ArgumentList<T0>(
         return true;
     }
 
-    public override int GetHashCode()
-    {
-        unchecked {
-            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-            return hashCode;
-        }
-    }
-
     public override bool Equals(ArgumentList? other, int skipIndex)
     {
         if (other is not ArgumentList<T0> vOther)
@@ -233,6 +384,14 @@ public sealed record ArgumentList<T0>(
         return true;
     }
 
+    public override int GetHashCode()
+    {
+        unchecked {
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            return hashCode;
+        }
+    }
+
     public override int GetHashCode(int skipIndex)
     {
         unchecked {
@@ -240,45 +399,23 @@ public sealed record ArgumentList<T0>(
             return hashCode;
         }
     }
+}
 
-    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
-    {
-        if (equalsDelegates.Length < 1)
-            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
-        if (other is not ArgumentList<T0> vOther)
-            return false;
+[DataContract]
+public abstract record ArgumentList2 : ArgumentList
+{
+    protected static Type?[] CreateNonDefaultItemTypes()
+        => new Type?[2];
 
-        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, vOther.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-
-        return true;
-    }
-
-    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
-    {
-        if (getHashCodeDelegates.Length < 1)
-            throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
-        unchecked {
-            int hashCode;
-            if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0.Invoke(Item0!);
-            else
-                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-
-            return hashCode;
-        }
-    }
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public override int Length => 2;
 }
 
 [DataContract]
 public sealed record ArgumentList<T0, T1>(
     T0 Item0,
     T1 Item1
-) : ArgumentList
+) : ArgumentList2
 {
     private T0 _item0 = Item0;
     private T1 _item1 = Item1;
@@ -286,8 +423,11 @@ public sealed record ArgumentList<T0, T1>(
     [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
     [DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
-    public override int Length => 2;
+    // Default constructor
+
+    public ArgumentList()
+        : this(default(T0)!, default(T1)!)
+    { }
 
     // ToString & ToArray
 
@@ -312,7 +452,28 @@ public sealed record ArgumentList<T0, T1>(
             _ => throw new ArgumentOutOfRangeException(nameof(skipIndex))
         };
 
+    // GetNonDefaultItemTypes 
+
+    public override Type?[]? GetNonDefaultItemTypes() {
+        var itemTypes = (Type?[]?)null;
+        Type? itemType;
+        itemType = _item0?.GetType();
+        if (itemType != null && itemType != typeof(T0)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[0] = itemType;
+        }
+        itemType = _item1?.GetType();
+        if (itemType != null && itemType != typeof(T1)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[1] = itemType;
+        }
+        return itemTypes;
+    }
+
     // Get
+
+    public override T Get0<T>() => Item0 is T value ? value : default!;
+    public override T Get1<T>() => Item1 is T value ? value : default!;
 
     public override T Get<T>(int index)
         => index switch {
@@ -381,6 +542,14 @@ public sealed record ArgumentList<T0, T1>(
         }
     }
 
+    // SetFrom
+
+    public override void SetFrom(ArgumentList other)
+    {
+        _item0 = other.Get0<T0>();
+        _item1 = other.Get1<T1>();
+    }
+
     // Insert
 
     public override ArgumentList Insert<T>(int index, T item)
@@ -408,6 +577,53 @@ public sealed record ArgumentList<T0, T1>(
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
 
+    // GetInvoker
+
+    public override Func<object, ArgumentList, object?> GetInvoker(MethodInfo method)
+        => InvokerCache.GetOrAdd((GetType(), method), static key => {
+            var (listType, method1) = key;
+            var parameters = method1.GetParameters();
+            if (parameters.Length != 2)
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[0].ParameterType != typeof(T0))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[1].ParameterType != typeof(T1))
+                throw new ArgumentOutOfRangeException(nameof(method));
+
+            var declaringType = method1.DeclaringType!;
+            var m = new DynamicMethod("_Invoke",
+                typeof(object),
+                new [] { typeof(object), typeof(ArgumentList) },
+                true);
+            var il = m.GetILGenerator();
+
+            // Cast ArgumentList to its actual type
+            il.DeclareLocal(listType);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Castclass, listType);
+            il.Emit(OpCodes.Stloc_0);
+
+            // Unbox target
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(declaringType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, declaringType);
+
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item0")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item1")!.GetGetMethod()!);
+
+            // Call method
+            il.Emit(OpCodes.Callvirt, method1);
+
+            // Box return type
+            if (method1.ReturnType == typeof(void))
+                il.Emit(OpCodes.Ldnull);
+            else if (method1.ReturnType.IsValueType)
+                il.Emit(OpCodes.Box, method1.ReturnType);
+            il.Emit(OpCodes.Ret);
+            return (Func<object, ArgumentList, object?>)m.CreateDelegate(typeof(Func<object, ArgumentList, object?>));
+        });
+
     // Equality
 
     public bool Equals(ArgumentList<T0, T1>? other)
@@ -422,15 +638,6 @@ public sealed record ArgumentList<T0, T1>(
         return true;
     }
 
-    public override int GetHashCode()
-    {
-        unchecked {
-            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
-            return hashCode;
-        }
-    }
-
     public override bool Equals(ArgumentList? other, int skipIndex)
     {
         if (other is not ArgumentList<T0, T1> vOther)
@@ -443,6 +650,15 @@ public sealed record ArgumentList<T0, T1>(
         return true;
     }
 
+    public override int GetHashCode()
+    {
+        unchecked {
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
+            return hashCode;
+        }
+    }
+
     public override int GetHashCode(int skipIndex)
     {
         unchecked {
@@ -451,50 +667,16 @@ public sealed record ArgumentList<T0, T1>(
             return hashCode;
         }
     }
+}
 
-    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
-    {
-        if (equalsDelegates.Length < 2)
-            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
-        if (other is not ArgumentList<T0, T1> vOther)
-            return false;
+[DataContract]
+public abstract record ArgumentList3 : ArgumentList
+{
+    protected static Type?[] CreateNonDefaultItemTypes()
+        => new Type?[3];
 
-        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, vOther.Item1))
-                return false;
-        }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-
-        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, vOther.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-
-        return true;
-    }
-
-    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
-    {
-        if (getHashCodeDelegates.Length < 2)
-            throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
-        unchecked {
-            int hashCode;
-            if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0.Invoke(Item0!);
-            else
-                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-
-            if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1.Invoke(Item1!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T1>.Default.GetHashCode(Item1!);
-
-            return hashCode;
-        }
-    }
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public override int Length => 3;
 }
 
 [DataContract]
@@ -502,7 +684,7 @@ public sealed record ArgumentList<T0, T1, T2>(
     T0 Item0,
     T1 Item1,
     T2 Item2
-) : ArgumentList
+) : ArgumentList3
 {
     private T0 _item0 = Item0;
     private T1 _item1 = Item1;
@@ -512,8 +694,11 @@ public sealed record ArgumentList<T0, T1, T2>(
     [DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
     [DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
-    public override int Length => 3;
+    // Default constructor
+
+    public ArgumentList()
+        : this(default(T0)!, default(T1)!, default(T2)!)
+    { }
 
     // ToString & ToArray
 
@@ -541,7 +726,34 @@ public sealed record ArgumentList<T0, T1, T2>(
             _ => throw new ArgumentOutOfRangeException(nameof(skipIndex))
         };
 
+    // GetNonDefaultItemTypes 
+
+    public override Type?[]? GetNonDefaultItemTypes() {
+        var itemTypes = (Type?[]?)null;
+        Type? itemType;
+        itemType = _item0?.GetType();
+        if (itemType != null && itemType != typeof(T0)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[0] = itemType;
+        }
+        itemType = _item1?.GetType();
+        if (itemType != null && itemType != typeof(T1)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[1] = itemType;
+        }
+        itemType = _item2?.GetType();
+        if (itemType != null && itemType != typeof(T2)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[2] = itemType;
+        }
+        return itemTypes;
+    }
+
     // Get
+
+    public override T Get0<T>() => Item0 is T value ? value : default!;
+    public override T Get1<T>() => Item1 is T value ? value : default!;
+    public override T Get2<T>() => Item2 is T value ? value : default!;
 
     public override T Get<T>(int index)
         => index switch {
@@ -623,6 +835,15 @@ public sealed record ArgumentList<T0, T1, T2>(
         }
     }
 
+    // SetFrom
+
+    public override void SetFrom(ArgumentList other)
+    {
+        _item0 = other.Get0<T0>();
+        _item1 = other.Get1<T1>();
+        _item2 = other.Get2<T2>();
+    }
+
     // Insert
 
     public override ArgumentList Insert<T>(int index, T item)
@@ -653,6 +874,57 @@ public sealed record ArgumentList<T0, T1, T2>(
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
 
+    // GetInvoker
+
+    public override Func<object, ArgumentList, object?> GetInvoker(MethodInfo method)
+        => InvokerCache.GetOrAdd((GetType(), method), static key => {
+            var (listType, method1) = key;
+            var parameters = method1.GetParameters();
+            if (parameters.Length != 3)
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[0].ParameterType != typeof(T0))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[1].ParameterType != typeof(T1))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[2].ParameterType != typeof(T2))
+                throw new ArgumentOutOfRangeException(nameof(method));
+
+            var declaringType = method1.DeclaringType!;
+            var m = new DynamicMethod("_Invoke",
+                typeof(object),
+                new [] { typeof(object), typeof(ArgumentList) },
+                true);
+            var il = m.GetILGenerator();
+
+            // Cast ArgumentList to its actual type
+            il.DeclareLocal(listType);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Castclass, listType);
+            il.Emit(OpCodes.Stloc_0);
+
+            // Unbox target
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(declaringType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, declaringType);
+
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item0")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item1")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item2")!.GetGetMethod()!);
+
+            // Call method
+            il.Emit(OpCodes.Callvirt, method1);
+
+            // Box return type
+            if (method1.ReturnType == typeof(void))
+                il.Emit(OpCodes.Ldnull);
+            else if (method1.ReturnType.IsValueType)
+                il.Emit(OpCodes.Box, method1.ReturnType);
+            il.Emit(OpCodes.Ret);
+            return (Func<object, ArgumentList, object?>)m.CreateDelegate(typeof(Func<object, ArgumentList, object?>));
+        });
+
     // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2>? other)
@@ -669,16 +941,6 @@ public sealed record ArgumentList<T0, T1, T2>(
         return true;
     }
 
-    public override int GetHashCode()
-    {
-        unchecked {
-            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
-            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
-            return hashCode;
-        }
-    }
-
     public override bool Equals(ArgumentList? other, int skipIndex)
     {
         if (other is not ArgumentList<T0, T1, T2> vOther)
@@ -693,6 +955,16 @@ public sealed record ArgumentList<T0, T1, T2>(
         return true;
     }
 
+    public override int GetHashCode()
+    {
+        unchecked {
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
+            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
+            return hashCode;
+        }
+    }
+
     public override int GetHashCode(int skipIndex)
     {
         unchecked {
@@ -702,62 +974,16 @@ public sealed record ArgumentList<T0, T1, T2>(
             return hashCode;
         }
     }
+}
 
-    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
-    {
-        if (equalsDelegates.Length < 3)
-            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
-        if (other is not ArgumentList<T0, T1, T2> vOther)
-            return false;
+[DataContract]
+public abstract record ArgumentList4 : ArgumentList
+{
+    protected static Type?[] CreateNonDefaultItemTypes()
+        => new Type?[4];
 
-        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, vOther.Item2))
-                return false;
-        }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
-            return false;
-
-        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, vOther.Item1))
-                return false;
-        }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-
-        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, vOther.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-
-        return true;
-    }
-
-    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
-    {
-        if (getHashCodeDelegates.Length < 3)
-            throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
-        unchecked {
-            int hashCode;
-            if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0.Invoke(Item0!);
-            else
-                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-
-            if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1.Invoke(Item1!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T1>.Default.GetHashCode(Item1!);
-
-            if (getHashCodeDelegates[2] is Func<T2, int> func2)
-                hashCode = (hashCode * 397) + func2.Invoke(Item2!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T2>.Default.GetHashCode(Item2!);
-
-            return hashCode;
-        }
-    }
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public override int Length => 4;
 }
 
 [DataContract]
@@ -766,7 +992,7 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
     T1 Item1,
     T2 Item2,
     T3 Item3
-) : ArgumentList
+) : ArgumentList4
 {
     private T0 _item0 = Item0;
     private T1 _item1 = Item1;
@@ -778,8 +1004,11 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
     [DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
     [DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
-    public override int Length => 4;
+    // Default constructor
+
+    public ArgumentList()
+        : this(default(T0)!, default(T1)!, default(T2)!, default(T3)!)
+    { }
 
     // ToString & ToArray
 
@@ -810,7 +1039,40 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
             _ => throw new ArgumentOutOfRangeException(nameof(skipIndex))
         };
 
+    // GetNonDefaultItemTypes 
+
+    public override Type?[]? GetNonDefaultItemTypes() {
+        var itemTypes = (Type?[]?)null;
+        Type? itemType;
+        itemType = _item0?.GetType();
+        if (itemType != null && itemType != typeof(T0)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[0] = itemType;
+        }
+        itemType = _item1?.GetType();
+        if (itemType != null && itemType != typeof(T1)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[1] = itemType;
+        }
+        itemType = _item2?.GetType();
+        if (itemType != null && itemType != typeof(T2)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[2] = itemType;
+        }
+        itemType = _item3?.GetType();
+        if (itemType != null && itemType != typeof(T3)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[3] = itemType;
+        }
+        return itemTypes;
+    }
+
     // Get
+
+    public override T Get0<T>() => Item0 is T value ? value : default!;
+    public override T Get1<T>() => Item1 is T value ? value : default!;
+    public override T Get2<T>() => Item2 is T value ? value : default!;
+    public override T Get3<T>() => Item3 is T value ? value : default!;
 
     public override T Get<T>(int index)
         => index switch {
@@ -905,6 +1167,16 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
         }
     }
 
+    // SetFrom
+
+    public override void SetFrom(ArgumentList other)
+    {
+        _item0 = other.Get0<T0>();
+        _item1 = other.Get1<T1>();
+        _item2 = other.Get2<T2>();
+        _item3 = other.Get3<T3>();
+    }
+
     // Insert
 
     public override ArgumentList Insert<T>(int index, T item)
@@ -938,6 +1210,61 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
 
+    // GetInvoker
+
+    public override Func<object, ArgumentList, object?> GetInvoker(MethodInfo method)
+        => InvokerCache.GetOrAdd((GetType(), method), static key => {
+            var (listType, method1) = key;
+            var parameters = method1.GetParameters();
+            if (parameters.Length != 4)
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[0].ParameterType != typeof(T0))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[1].ParameterType != typeof(T1))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[2].ParameterType != typeof(T2))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[3].ParameterType != typeof(T3))
+                throw new ArgumentOutOfRangeException(nameof(method));
+
+            var declaringType = method1.DeclaringType!;
+            var m = new DynamicMethod("_Invoke",
+                typeof(object),
+                new [] { typeof(object), typeof(ArgumentList) },
+                true);
+            var il = m.GetILGenerator();
+
+            // Cast ArgumentList to its actual type
+            il.DeclareLocal(listType);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Castclass, listType);
+            il.Emit(OpCodes.Stloc_0);
+
+            // Unbox target
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(declaringType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, declaringType);
+
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item0")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item1")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item2")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item3")!.GetGetMethod()!);
+
+            // Call method
+            il.Emit(OpCodes.Callvirt, method1);
+
+            // Box return type
+            if (method1.ReturnType == typeof(void))
+                il.Emit(OpCodes.Ldnull);
+            else if (method1.ReturnType.IsValueType)
+                il.Emit(OpCodes.Box, method1.ReturnType);
+            il.Emit(OpCodes.Ret);
+            return (Func<object, ArgumentList, object?>)m.CreateDelegate(typeof(Func<object, ArgumentList, object?>));
+        });
+
     // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3>? other)
@@ -956,17 +1283,6 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
         return true;
     }
 
-    public override int GetHashCode()
-    {
-        unchecked {
-            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
-            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
-            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
-            return hashCode;
-        }
-    }
-
     public override bool Equals(ArgumentList? other, int skipIndex)
     {
         if (other is not ArgumentList<T0, T1, T2, T3> vOther)
@@ -983,6 +1299,17 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
         return true;
     }
 
+    public override int GetHashCode()
+    {
+        unchecked {
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
+            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
+            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
+            return hashCode;
+        }
+    }
+
     public override int GetHashCode(int skipIndex)
     {
         unchecked {
@@ -993,74 +1320,16 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
             return hashCode;
         }
     }
+}
 
-    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
-    {
-        if (equalsDelegates.Length < 4)
-            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
-        if (other is not ArgumentList<T0, T1, T2, T3> vOther)
-            return false;
+[DataContract]
+public abstract record ArgumentList5 : ArgumentList
+{
+    protected static Type?[] CreateNonDefaultItemTypes()
+        => new Type?[5];
 
-        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, vOther.Item3))
-                return false;
-        }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
-            return false;
-
-        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, vOther.Item2))
-                return false;
-        }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
-            return false;
-
-        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, vOther.Item1))
-                return false;
-        }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-
-        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, vOther.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-
-        return true;
-    }
-
-    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
-    {
-        if (getHashCodeDelegates.Length < 4)
-            throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
-        unchecked {
-            int hashCode;
-            if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0.Invoke(Item0!);
-            else
-                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-
-            if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1.Invoke(Item1!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T1>.Default.GetHashCode(Item1!);
-
-            if (getHashCodeDelegates[2] is Func<T2, int> func2)
-                hashCode = (hashCode * 397) + func2.Invoke(Item2!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T2>.Default.GetHashCode(Item2!);
-
-            if (getHashCodeDelegates[3] is Func<T3, int> func3)
-                hashCode = (hashCode * 397) + func3.Invoke(Item3!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T3>.Default.GetHashCode(Item3!);
-
-            return hashCode;
-        }
-    }
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public override int Length => 5;
 }
 
 [DataContract]
@@ -1070,7 +1339,7 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
     T2 Item2,
     T3 Item3,
     T4 Item4
-) : ArgumentList
+) : ArgumentList5
 {
     private T0 _item0 = Item0;
     private T1 _item1 = Item1;
@@ -1084,8 +1353,11 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
     [DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
     [DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
-    public override int Length => 5;
+    // Default constructor
+
+    public ArgumentList()
+        : this(default(T0)!, default(T1)!, default(T2)!, default(T3)!, default(T4)!)
+    { }
 
     // ToString & ToArray
 
@@ -1119,7 +1391,46 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
             _ => throw new ArgumentOutOfRangeException(nameof(skipIndex))
         };
 
+    // GetNonDefaultItemTypes 
+
+    public override Type?[]? GetNonDefaultItemTypes() {
+        var itemTypes = (Type?[]?)null;
+        Type? itemType;
+        itemType = _item0?.GetType();
+        if (itemType != null && itemType != typeof(T0)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[0] = itemType;
+        }
+        itemType = _item1?.GetType();
+        if (itemType != null && itemType != typeof(T1)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[1] = itemType;
+        }
+        itemType = _item2?.GetType();
+        if (itemType != null && itemType != typeof(T2)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[2] = itemType;
+        }
+        itemType = _item3?.GetType();
+        if (itemType != null && itemType != typeof(T3)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[3] = itemType;
+        }
+        itemType = _item4?.GetType();
+        if (itemType != null && itemType != typeof(T4)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[4] = itemType;
+        }
+        return itemTypes;
+    }
+
     // Get
+
+    public override T Get0<T>() => Item0 is T value ? value : default!;
+    public override T Get1<T>() => Item1 is T value ? value : default!;
+    public override T Get2<T>() => Item2 is T value ? value : default!;
+    public override T Get3<T>() => Item3 is T value ? value : default!;
+    public override T Get4<T>() => Item4 is T value ? value : default!;
 
     public override T Get<T>(int index)
         => index switch {
@@ -1227,6 +1538,17 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
         }
     }
 
+    // SetFrom
+
+    public override void SetFrom(ArgumentList other)
+    {
+        _item0 = other.Get0<T0>();
+        _item1 = other.Get1<T1>();
+        _item2 = other.Get2<T2>();
+        _item3 = other.Get3<T3>();
+        _item4 = other.Get4<T4>();
+    }
+
     // Insert
 
     public override ArgumentList Insert<T>(int index, T item)
@@ -1263,6 +1585,65 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
 
+    // GetInvoker
+
+    public override Func<object, ArgumentList, object?> GetInvoker(MethodInfo method)
+        => InvokerCache.GetOrAdd((GetType(), method), static key => {
+            var (listType, method1) = key;
+            var parameters = method1.GetParameters();
+            if (parameters.Length != 5)
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[0].ParameterType != typeof(T0))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[1].ParameterType != typeof(T1))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[2].ParameterType != typeof(T2))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[3].ParameterType != typeof(T3))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[4].ParameterType != typeof(T4))
+                throw new ArgumentOutOfRangeException(nameof(method));
+
+            var declaringType = method1.DeclaringType!;
+            var m = new DynamicMethod("_Invoke",
+                typeof(object),
+                new [] { typeof(object), typeof(ArgumentList) },
+                true);
+            var il = m.GetILGenerator();
+
+            // Cast ArgumentList to its actual type
+            il.DeclareLocal(listType);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Castclass, listType);
+            il.Emit(OpCodes.Stloc_0);
+
+            // Unbox target
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(declaringType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, declaringType);
+
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item0")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item1")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item2")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item3")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item4")!.GetGetMethod()!);
+
+            // Call method
+            il.Emit(OpCodes.Callvirt, method1);
+
+            // Box return type
+            if (method1.ReturnType == typeof(void))
+                il.Emit(OpCodes.Ldnull);
+            else if (method1.ReturnType.IsValueType)
+                il.Emit(OpCodes.Box, method1.ReturnType);
+            il.Emit(OpCodes.Ret);
+            return (Func<object, ArgumentList, object?>)m.CreateDelegate(typeof(Func<object, ArgumentList, object?>));
+        });
+
     // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3, T4>? other)
@@ -1283,18 +1664,6 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
         return true;
     }
 
-    public override int GetHashCode()
-    {
-        unchecked {
-            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
-            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
-            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
-            hashCode = 397*hashCode + EqualityComparer<T4>.Default.GetHashCode(Item4!);
-            return hashCode;
-        }
-    }
-
     public override bool Equals(ArgumentList? other, int skipIndex)
     {
         if (other is not ArgumentList<T0, T1, T2, T3, T4> vOther)
@@ -1313,6 +1682,18 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
         return true;
     }
 
+    public override int GetHashCode()
+    {
+        unchecked {
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
+            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
+            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
+            hashCode = 397*hashCode + EqualityComparer<T4>.Default.GetHashCode(Item4!);
+            return hashCode;
+        }
+    }
+
     public override int GetHashCode(int skipIndex)
     {
         unchecked {
@@ -1324,86 +1705,16 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
             return hashCode;
         }
     }
+}
 
-    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
-    {
-        if (equalsDelegates.Length < 5)
-            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
-        if (other is not ArgumentList<T0, T1, T2, T3, T4> vOther)
-            return false;
+[DataContract]
+public abstract record ArgumentList6 : ArgumentList
+{
+    protected static Type?[] CreateNonDefaultItemTypes()
+        => new Type?[6];
 
-        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, vOther.Item4))
-                return false;
-        }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
-            return false;
-
-        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, vOther.Item3))
-                return false;
-        }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
-            return false;
-
-        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, vOther.Item2))
-                return false;
-        }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
-            return false;
-
-        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, vOther.Item1))
-                return false;
-        }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-
-        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, vOther.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-
-        return true;
-    }
-
-    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
-    {
-        if (getHashCodeDelegates.Length < 5)
-            throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
-        unchecked {
-            int hashCode;
-            if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0.Invoke(Item0!);
-            else
-                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-
-            if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1.Invoke(Item1!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T1>.Default.GetHashCode(Item1!);
-
-            if (getHashCodeDelegates[2] is Func<T2, int> func2)
-                hashCode = (hashCode * 397) + func2.Invoke(Item2!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T2>.Default.GetHashCode(Item2!);
-
-            if (getHashCodeDelegates[3] is Func<T3, int> func3)
-                hashCode = (hashCode * 397) + func3.Invoke(Item3!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T3>.Default.GetHashCode(Item3!);
-
-            if (getHashCodeDelegates[4] is Func<T4, int> func4)
-                hashCode = (hashCode * 397) + func4.Invoke(Item4!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T4>.Default.GetHashCode(Item4!);
-
-            return hashCode;
-        }
-    }
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public override int Length => 6;
 }
 
 [DataContract]
@@ -1414,7 +1725,7 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
     T3 Item3,
     T4 Item4,
     T5 Item5
-) : ArgumentList
+) : ArgumentList6
 {
     private T0 _item0 = Item0;
     private T1 _item1 = Item1;
@@ -1430,8 +1741,11 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
     [DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
     [DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
-    public override int Length => 6;
+    // Default constructor
+
+    public ArgumentList()
+        : this(default(T0)!, default(T1)!, default(T2)!, default(T3)!, default(T4)!, default(T5)!)
+    { }
 
     // ToString & ToArray
 
@@ -1468,7 +1782,52 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
             _ => throw new ArgumentOutOfRangeException(nameof(skipIndex))
         };
 
+    // GetNonDefaultItemTypes 
+
+    public override Type?[]? GetNonDefaultItemTypes() {
+        var itemTypes = (Type?[]?)null;
+        Type? itemType;
+        itemType = _item0?.GetType();
+        if (itemType != null && itemType != typeof(T0)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[0] = itemType;
+        }
+        itemType = _item1?.GetType();
+        if (itemType != null && itemType != typeof(T1)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[1] = itemType;
+        }
+        itemType = _item2?.GetType();
+        if (itemType != null && itemType != typeof(T2)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[2] = itemType;
+        }
+        itemType = _item3?.GetType();
+        if (itemType != null && itemType != typeof(T3)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[3] = itemType;
+        }
+        itemType = _item4?.GetType();
+        if (itemType != null && itemType != typeof(T4)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[4] = itemType;
+        }
+        itemType = _item5?.GetType();
+        if (itemType != null && itemType != typeof(T5)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[5] = itemType;
+        }
+        return itemTypes;
+    }
+
     // Get
+
+    public override T Get0<T>() => Item0 is T value ? value : default!;
+    public override T Get1<T>() => Item1 is T value ? value : default!;
+    public override T Get2<T>() => Item2 is T value ? value : default!;
+    public override T Get3<T>() => Item3 is T value ? value : default!;
+    public override T Get4<T>() => Item4 is T value ? value : default!;
+    public override T Get5<T>() => Item5 is T value ? value : default!;
 
     public override T Get<T>(int index)
         => index switch {
@@ -1589,6 +1948,18 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
         }
     }
 
+    // SetFrom
+
+    public override void SetFrom(ArgumentList other)
+    {
+        _item0 = other.Get0<T0>();
+        _item1 = other.Get1<T1>();
+        _item2 = other.Get2<T2>();
+        _item3 = other.Get3<T3>();
+        _item4 = other.Get4<T4>();
+        _item5 = other.Get5<T5>();
+    }
+
     // Insert
 
     public override ArgumentList Insert<T>(int index, T item)
@@ -1628,6 +1999,69 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
 
+    // GetInvoker
+
+    public override Func<object, ArgumentList, object?> GetInvoker(MethodInfo method)
+        => InvokerCache.GetOrAdd((GetType(), method), static key => {
+            var (listType, method1) = key;
+            var parameters = method1.GetParameters();
+            if (parameters.Length != 6)
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[0].ParameterType != typeof(T0))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[1].ParameterType != typeof(T1))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[2].ParameterType != typeof(T2))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[3].ParameterType != typeof(T3))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[4].ParameterType != typeof(T4))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[5].ParameterType != typeof(T5))
+                throw new ArgumentOutOfRangeException(nameof(method));
+
+            var declaringType = method1.DeclaringType!;
+            var m = new DynamicMethod("_Invoke",
+                typeof(object),
+                new [] { typeof(object), typeof(ArgumentList) },
+                true);
+            var il = m.GetILGenerator();
+
+            // Cast ArgumentList to its actual type
+            il.DeclareLocal(listType);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Castclass, listType);
+            il.Emit(OpCodes.Stloc_0);
+
+            // Unbox target
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(declaringType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, declaringType);
+
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item0")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item1")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item2")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item3")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item4")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item5")!.GetGetMethod()!);
+
+            // Call method
+            il.Emit(OpCodes.Callvirt, method1);
+
+            // Box return type
+            if (method1.ReturnType == typeof(void))
+                il.Emit(OpCodes.Ldnull);
+            else if (method1.ReturnType.IsValueType)
+                il.Emit(OpCodes.Box, method1.ReturnType);
+            il.Emit(OpCodes.Ret);
+            return (Func<object, ArgumentList, object?>)m.CreateDelegate(typeof(Func<object, ArgumentList, object?>));
+        });
+
     // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5>? other)
@@ -1650,19 +2084,6 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
         return true;
     }
 
-    public override int GetHashCode()
-    {
-        unchecked {
-            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
-            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
-            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
-            hashCode = 397*hashCode + EqualityComparer<T4>.Default.GetHashCode(Item4!);
-            hashCode = 397*hashCode + EqualityComparer<T5>.Default.GetHashCode(Item5!);
-            return hashCode;
-        }
-    }
-
     public override bool Equals(ArgumentList? other, int skipIndex)
     {
         if (other is not ArgumentList<T0, T1, T2, T3, T4, T5> vOther)
@@ -1683,6 +2104,19 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
         return true;
     }
 
+    public override int GetHashCode()
+    {
+        unchecked {
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
+            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
+            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
+            hashCode = 397*hashCode + EqualityComparer<T4>.Default.GetHashCode(Item4!);
+            hashCode = 397*hashCode + EqualityComparer<T5>.Default.GetHashCode(Item5!);
+            return hashCode;
+        }
+    }
+
     public override int GetHashCode(int skipIndex)
     {
         unchecked {
@@ -1695,98 +2129,16 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
             return hashCode;
         }
     }
+}
 
-    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
-    {
-        if (equalsDelegates.Length < 6)
-            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
-        if (other is not ArgumentList<T0, T1, T2, T3, T4, T5> vOther)
-            return false;
+[DataContract]
+public abstract record ArgumentList7 : ArgumentList
+{
+    protected static Type?[] CreateNonDefaultItemTypes()
+        => new Type?[7];
 
-        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
-            if (!func5.Invoke(Item5, vOther.Item5))
-                return false;
-        }
-        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
-            return false;
-
-        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, vOther.Item4))
-                return false;
-        }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
-            return false;
-
-        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, vOther.Item3))
-                return false;
-        }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
-            return false;
-
-        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, vOther.Item2))
-                return false;
-        }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
-            return false;
-
-        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, vOther.Item1))
-                return false;
-        }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-
-        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, vOther.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-
-        return true;
-    }
-
-    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
-    {
-        if (getHashCodeDelegates.Length < 6)
-            throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
-        unchecked {
-            int hashCode;
-            if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0.Invoke(Item0!);
-            else
-                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-
-            if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1.Invoke(Item1!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T1>.Default.GetHashCode(Item1!);
-
-            if (getHashCodeDelegates[2] is Func<T2, int> func2)
-                hashCode = (hashCode * 397) + func2.Invoke(Item2!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T2>.Default.GetHashCode(Item2!);
-
-            if (getHashCodeDelegates[3] is Func<T3, int> func3)
-                hashCode = (hashCode * 397) + func3.Invoke(Item3!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T3>.Default.GetHashCode(Item3!);
-
-            if (getHashCodeDelegates[4] is Func<T4, int> func4)
-                hashCode = (hashCode * 397) + func4.Invoke(Item4!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T4>.Default.GetHashCode(Item4!);
-
-            if (getHashCodeDelegates[5] is Func<T5, int> func5)
-                hashCode = (hashCode * 397) + func5.Invoke(Item5!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T5>.Default.GetHashCode(Item5!);
-
-            return hashCode;
-        }
-    }
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public override int Length => 7;
 }
 
 [DataContract]
@@ -1798,7 +2150,7 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
     T4 Item4,
     T5 Item5,
     T6 Item6
-) : ArgumentList
+) : ArgumentList7
 {
     private T0 _item0 = Item0;
     private T1 _item1 = Item1;
@@ -1816,8 +2168,11 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
     [DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
     [DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
-    public override int Length => 7;
+    // Default constructor
+
+    public ArgumentList()
+        : this(default(T0)!, default(T1)!, default(T2)!, default(T3)!, default(T4)!, default(T5)!, default(T6)!)
+    { }
 
     // ToString & ToArray
 
@@ -1857,7 +2212,58 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
             _ => throw new ArgumentOutOfRangeException(nameof(skipIndex))
         };
 
+    // GetNonDefaultItemTypes 
+
+    public override Type?[]? GetNonDefaultItemTypes() {
+        var itemTypes = (Type?[]?)null;
+        Type? itemType;
+        itemType = _item0?.GetType();
+        if (itemType != null && itemType != typeof(T0)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[0] = itemType;
+        }
+        itemType = _item1?.GetType();
+        if (itemType != null && itemType != typeof(T1)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[1] = itemType;
+        }
+        itemType = _item2?.GetType();
+        if (itemType != null && itemType != typeof(T2)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[2] = itemType;
+        }
+        itemType = _item3?.GetType();
+        if (itemType != null && itemType != typeof(T3)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[3] = itemType;
+        }
+        itemType = _item4?.GetType();
+        if (itemType != null && itemType != typeof(T4)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[4] = itemType;
+        }
+        itemType = _item5?.GetType();
+        if (itemType != null && itemType != typeof(T5)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[5] = itemType;
+        }
+        itemType = _item6?.GetType();
+        if (itemType != null && itemType != typeof(T6)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[6] = itemType;
+        }
+        return itemTypes;
+    }
+
     // Get
+
+    public override T Get0<T>() => Item0 is T value ? value : default!;
+    public override T Get1<T>() => Item1 is T value ? value : default!;
+    public override T Get2<T>() => Item2 is T value ? value : default!;
+    public override T Get3<T>() => Item3 is T value ? value : default!;
+    public override T Get4<T>() => Item4 is T value ? value : default!;
+    public override T Get5<T>() => Item5 is T value ? value : default!;
+    public override T Get6<T>() => Item6 is T value ? value : default!;
 
     public override T Get<T>(int index)
         => index switch {
@@ -1991,6 +2397,19 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
         }
     }
 
+    // SetFrom
+
+    public override void SetFrom(ArgumentList other)
+    {
+        _item0 = other.Get0<T0>();
+        _item1 = other.Get1<T1>();
+        _item2 = other.Get2<T2>();
+        _item3 = other.Get3<T3>();
+        _item4 = other.Get4<T4>();
+        _item5 = other.Get5<T5>();
+        _item6 = other.Get6<T6>();
+    }
+
     // Insert
 
     public override ArgumentList Insert<T>(int index, T item)
@@ -2033,6 +2452,73 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
 
+    // GetInvoker
+
+    public override Func<object, ArgumentList, object?> GetInvoker(MethodInfo method)
+        => InvokerCache.GetOrAdd((GetType(), method), static key => {
+            var (listType, method1) = key;
+            var parameters = method1.GetParameters();
+            if (parameters.Length != 7)
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[0].ParameterType != typeof(T0))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[1].ParameterType != typeof(T1))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[2].ParameterType != typeof(T2))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[3].ParameterType != typeof(T3))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[4].ParameterType != typeof(T4))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[5].ParameterType != typeof(T5))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[6].ParameterType != typeof(T6))
+                throw new ArgumentOutOfRangeException(nameof(method));
+
+            var declaringType = method1.DeclaringType!;
+            var m = new DynamicMethod("_Invoke",
+                typeof(object),
+                new [] { typeof(object), typeof(ArgumentList) },
+                true);
+            var il = m.GetILGenerator();
+
+            // Cast ArgumentList to its actual type
+            il.DeclareLocal(listType);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Castclass, listType);
+            il.Emit(OpCodes.Stloc_0);
+
+            // Unbox target
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(declaringType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, declaringType);
+
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item0")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item1")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item2")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item3")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item4")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item5")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item6")!.GetGetMethod()!);
+
+            // Call method
+            il.Emit(OpCodes.Callvirt, method1);
+
+            // Box return type
+            if (method1.ReturnType == typeof(void))
+                il.Emit(OpCodes.Ldnull);
+            else if (method1.ReturnType.IsValueType)
+                il.Emit(OpCodes.Box, method1.ReturnType);
+            il.Emit(OpCodes.Ret);
+            return (Func<object, ArgumentList, object?>)m.CreateDelegate(typeof(Func<object, ArgumentList, object?>));
+        });
+
     // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6>? other)
@@ -2057,20 +2543,6 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
         return true;
     }
 
-    public override int GetHashCode()
-    {
-        unchecked {
-            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
-            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
-            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
-            hashCode = 397*hashCode + EqualityComparer<T4>.Default.GetHashCode(Item4!);
-            hashCode = 397*hashCode + EqualityComparer<T5>.Default.GetHashCode(Item5!);
-            hashCode = 397*hashCode + EqualityComparer<T6>.Default.GetHashCode(Item6!);
-            return hashCode;
-        }
-    }
-
     public override bool Equals(ArgumentList? other, int skipIndex)
     {
         if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6> vOther)
@@ -2093,6 +2565,20 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
         return true;
     }
 
+    public override int GetHashCode()
+    {
+        unchecked {
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
+            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
+            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
+            hashCode = 397*hashCode + EqualityComparer<T4>.Default.GetHashCode(Item4!);
+            hashCode = 397*hashCode + EqualityComparer<T5>.Default.GetHashCode(Item5!);
+            hashCode = 397*hashCode + EqualityComparer<T6>.Default.GetHashCode(Item6!);
+            return hashCode;
+        }
+    }
+
     public override int GetHashCode(int skipIndex)
     {
         unchecked {
@@ -2106,110 +2592,16 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
             return hashCode;
         }
     }
+}
 
-    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
-    {
-        if (equalsDelegates.Length < 7)
-            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
-        if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6> vOther)
-            return false;
+[DataContract]
+public abstract record ArgumentList8 : ArgumentList
+{
+    protected static Type?[] CreateNonDefaultItemTypes()
+        => new Type?[8];
 
-        if (equalsDelegates[6] is Func<T6, T6, bool> func6) {
-            if (!func6.Invoke(Item6, vOther.Item6))
-                return false;
-        }
-        else if (!EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
-            return false;
-
-        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
-            if (!func5.Invoke(Item5, vOther.Item5))
-                return false;
-        }
-        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
-            return false;
-
-        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, vOther.Item4))
-                return false;
-        }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
-            return false;
-
-        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, vOther.Item3))
-                return false;
-        }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
-            return false;
-
-        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, vOther.Item2))
-                return false;
-        }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
-            return false;
-
-        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, vOther.Item1))
-                return false;
-        }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-
-        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, vOther.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-
-        return true;
-    }
-
-    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
-    {
-        if (getHashCodeDelegates.Length < 7)
-            throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
-        unchecked {
-            int hashCode;
-            if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0.Invoke(Item0!);
-            else
-                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-
-            if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1.Invoke(Item1!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T1>.Default.GetHashCode(Item1!);
-
-            if (getHashCodeDelegates[2] is Func<T2, int> func2)
-                hashCode = (hashCode * 397) + func2.Invoke(Item2!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T2>.Default.GetHashCode(Item2!);
-
-            if (getHashCodeDelegates[3] is Func<T3, int> func3)
-                hashCode = (hashCode * 397) + func3.Invoke(Item3!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T3>.Default.GetHashCode(Item3!);
-
-            if (getHashCodeDelegates[4] is Func<T4, int> func4)
-                hashCode = (hashCode * 397) + func4.Invoke(Item4!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T4>.Default.GetHashCode(Item4!);
-
-            if (getHashCodeDelegates[5] is Func<T5, int> func5)
-                hashCode = (hashCode * 397) + func5.Invoke(Item5!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T5>.Default.GetHashCode(Item5!);
-
-            if (getHashCodeDelegates[6] is Func<T6, int> func6)
-                hashCode = (hashCode * 397) + func6.Invoke(Item6!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T6>.Default.GetHashCode(Item6!);
-
-            return hashCode;
-        }
-    }
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public override int Length => 8;
 }
 
 [DataContract]
@@ -2222,7 +2614,7 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
     T5 Item5,
     T6 Item6,
     T7 Item7
-) : ArgumentList
+) : ArgumentList8
 {
     private T0 _item0 = Item0;
     private T1 _item1 = Item1;
@@ -2242,8 +2634,11 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
     [DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
     [DataMember(Order = 7)] public T7 Item7 { get => _item7; init => _item7 = value; }
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
-    public override int Length => 8;
+    // Default constructor
+
+    public ArgumentList()
+        : this(default(T0)!, default(T1)!, default(T2)!, default(T3)!, default(T4)!, default(T5)!, default(T6)!, default(T7)!)
+    { }
 
     // ToString & ToArray
 
@@ -2286,7 +2681,64 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
             _ => throw new ArgumentOutOfRangeException(nameof(skipIndex))
         };
 
+    // GetNonDefaultItemTypes 
+
+    public override Type?[]? GetNonDefaultItemTypes() {
+        var itemTypes = (Type?[]?)null;
+        Type? itemType;
+        itemType = _item0?.GetType();
+        if (itemType != null && itemType != typeof(T0)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[0] = itemType;
+        }
+        itemType = _item1?.GetType();
+        if (itemType != null && itemType != typeof(T1)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[1] = itemType;
+        }
+        itemType = _item2?.GetType();
+        if (itemType != null && itemType != typeof(T2)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[2] = itemType;
+        }
+        itemType = _item3?.GetType();
+        if (itemType != null && itemType != typeof(T3)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[3] = itemType;
+        }
+        itemType = _item4?.GetType();
+        if (itemType != null && itemType != typeof(T4)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[4] = itemType;
+        }
+        itemType = _item5?.GetType();
+        if (itemType != null && itemType != typeof(T5)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[5] = itemType;
+        }
+        itemType = _item6?.GetType();
+        if (itemType != null && itemType != typeof(T6)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[6] = itemType;
+        }
+        itemType = _item7?.GetType();
+        if (itemType != null && itemType != typeof(T7)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[7] = itemType;
+        }
+        return itemTypes;
+    }
+
     // Get
+
+    public override T Get0<T>() => Item0 is T value ? value : default!;
+    public override T Get1<T>() => Item1 is T value ? value : default!;
+    public override T Get2<T>() => Item2 is T value ? value : default!;
+    public override T Get3<T>() => Item3 is T value ? value : default!;
+    public override T Get4<T>() => Item4 is T value ? value : default!;
+    public override T Get5<T>() => Item5 is T value ? value : default!;
+    public override T Get6<T>() => Item6 is T value ? value : default!;
+    public override T Get7<T>() => Item7 is T value ? value : default!;
 
     public override T Get<T>(int index)
         => index switch {
@@ -2433,6 +2885,20 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
         }
     }
 
+    // SetFrom
+
+    public override void SetFrom(ArgumentList other)
+    {
+        _item0 = other.Get0<T0>();
+        _item1 = other.Get1<T1>();
+        _item2 = other.Get2<T2>();
+        _item3 = other.Get3<T3>();
+        _item4 = other.Get4<T4>();
+        _item5 = other.Get5<T5>();
+        _item6 = other.Get6<T6>();
+        _item7 = other.Get7<T7>();
+    }
+
     // Insert
 
     public override ArgumentList Insert<T>(int index, T item)
@@ -2478,6 +2944,77 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
 
+    // GetInvoker
+
+    public override Func<object, ArgumentList, object?> GetInvoker(MethodInfo method)
+        => InvokerCache.GetOrAdd((GetType(), method), static key => {
+            var (listType, method1) = key;
+            var parameters = method1.GetParameters();
+            if (parameters.Length != 8)
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[0].ParameterType != typeof(T0))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[1].ParameterType != typeof(T1))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[2].ParameterType != typeof(T2))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[3].ParameterType != typeof(T3))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[4].ParameterType != typeof(T4))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[5].ParameterType != typeof(T5))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[6].ParameterType != typeof(T6))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[7].ParameterType != typeof(T7))
+                throw new ArgumentOutOfRangeException(nameof(method));
+
+            var declaringType = method1.DeclaringType!;
+            var m = new DynamicMethod("_Invoke",
+                typeof(object),
+                new [] { typeof(object), typeof(ArgumentList) },
+                true);
+            var il = m.GetILGenerator();
+
+            // Cast ArgumentList to its actual type
+            il.DeclareLocal(listType);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Castclass, listType);
+            il.Emit(OpCodes.Stloc_0);
+
+            // Unbox target
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(declaringType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, declaringType);
+
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item0")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item1")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item2")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item3")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item4")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item5")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item6")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item7")!.GetGetMethod()!);
+
+            // Call method
+            il.Emit(OpCodes.Callvirt, method1);
+
+            // Box return type
+            if (method1.ReturnType == typeof(void))
+                il.Emit(OpCodes.Ldnull);
+            else if (method1.ReturnType.IsValueType)
+                il.Emit(OpCodes.Box, method1.ReturnType);
+            il.Emit(OpCodes.Ret);
+            return (Func<object, ArgumentList, object?>)m.CreateDelegate(typeof(Func<object, ArgumentList, object?>));
+        });
+
     // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>? other)
@@ -2504,21 +3041,6 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
         return true;
     }
 
-    public override int GetHashCode()
-    {
-        unchecked {
-            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
-            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
-            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
-            hashCode = 397*hashCode + EqualityComparer<T4>.Default.GetHashCode(Item4!);
-            hashCode = 397*hashCode + EqualityComparer<T5>.Default.GetHashCode(Item5!);
-            hashCode = 397*hashCode + EqualityComparer<T6>.Default.GetHashCode(Item6!);
-            hashCode = 397*hashCode + EqualityComparer<T7>.Default.GetHashCode(Item7!);
-            return hashCode;
-        }
-    }
-
     public override bool Equals(ArgumentList? other, int skipIndex)
     {
         if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7> vOther)
@@ -2543,6 +3065,21 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
         return true;
     }
 
+    public override int GetHashCode()
+    {
+        unchecked {
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
+            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
+            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
+            hashCode = 397*hashCode + EqualityComparer<T4>.Default.GetHashCode(Item4!);
+            hashCode = 397*hashCode + EqualityComparer<T5>.Default.GetHashCode(Item5!);
+            hashCode = 397*hashCode + EqualityComparer<T6>.Default.GetHashCode(Item6!);
+            hashCode = 397*hashCode + EqualityComparer<T7>.Default.GetHashCode(Item7!);
+            return hashCode;
+        }
+    }
+
     public override int GetHashCode(int skipIndex)
     {
         unchecked {
@@ -2557,122 +3094,16 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
             return hashCode;
         }
     }
+}
 
-    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
-    {
-        if (equalsDelegates.Length < 8)
-            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
-        if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7> vOther)
-            return false;
+[DataContract]
+public abstract record ArgumentList9 : ArgumentList
+{
+    protected static Type?[] CreateNonDefaultItemTypes()
+        => new Type?[9];
 
-        if (equalsDelegates[7] is Func<T7, T7, bool> func7) {
-            if (!func7.Invoke(Item7, vOther.Item7))
-                return false;
-        }
-        else if (!EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
-            return false;
-
-        if (equalsDelegates[6] is Func<T6, T6, bool> func6) {
-            if (!func6.Invoke(Item6, vOther.Item6))
-                return false;
-        }
-        else if (!EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
-            return false;
-
-        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
-            if (!func5.Invoke(Item5, vOther.Item5))
-                return false;
-        }
-        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
-            return false;
-
-        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, vOther.Item4))
-                return false;
-        }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
-            return false;
-
-        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, vOther.Item3))
-                return false;
-        }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
-            return false;
-
-        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, vOther.Item2))
-                return false;
-        }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
-            return false;
-
-        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, vOther.Item1))
-                return false;
-        }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-
-        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, vOther.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-
-        return true;
-    }
-
-    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
-    {
-        if (getHashCodeDelegates.Length < 8)
-            throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
-        unchecked {
-            int hashCode;
-            if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0.Invoke(Item0!);
-            else
-                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-
-            if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1.Invoke(Item1!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T1>.Default.GetHashCode(Item1!);
-
-            if (getHashCodeDelegates[2] is Func<T2, int> func2)
-                hashCode = (hashCode * 397) + func2.Invoke(Item2!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T2>.Default.GetHashCode(Item2!);
-
-            if (getHashCodeDelegates[3] is Func<T3, int> func3)
-                hashCode = (hashCode * 397) + func3.Invoke(Item3!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T3>.Default.GetHashCode(Item3!);
-
-            if (getHashCodeDelegates[4] is Func<T4, int> func4)
-                hashCode = (hashCode * 397) + func4.Invoke(Item4!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T4>.Default.GetHashCode(Item4!);
-
-            if (getHashCodeDelegates[5] is Func<T5, int> func5)
-                hashCode = (hashCode * 397) + func5.Invoke(Item5!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T5>.Default.GetHashCode(Item5!);
-
-            if (getHashCodeDelegates[6] is Func<T6, int> func6)
-                hashCode = (hashCode * 397) + func6.Invoke(Item6!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T6>.Default.GetHashCode(Item6!);
-
-            if (getHashCodeDelegates[7] is Func<T7, int> func7)
-                hashCode = (hashCode * 397) + func7.Invoke(Item7!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T7>.Default.GetHashCode(Item7!);
-
-            return hashCode;
-        }
-    }
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public override int Length => 9;
 }
 
 [DataContract]
@@ -2686,7 +3117,7 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
     T6 Item6,
     T7 Item7,
     T8 Item8
-) : ArgumentList
+) : ArgumentList9
 {
     private T0 _item0 = Item0;
     private T1 _item1 = Item1;
@@ -2708,8 +3139,11 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
     [DataMember(Order = 7)] public T7 Item7 { get => _item7; init => _item7 = value; }
     [DataMember(Order = 8)] public T8 Item8 { get => _item8; init => _item8 = value; }
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
-    public override int Length => 9;
+    // Default constructor
+
+    public ArgumentList()
+        : this(default(T0)!, default(T1)!, default(T2)!, default(T3)!, default(T4)!, default(T5)!, default(T6)!, default(T7)!, default(T8)!)
+    { }
 
     // ToString & ToArray
 
@@ -2755,7 +3189,70 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
             _ => throw new ArgumentOutOfRangeException(nameof(skipIndex))
         };
 
+    // GetNonDefaultItemTypes 
+
+    public override Type?[]? GetNonDefaultItemTypes() {
+        var itemTypes = (Type?[]?)null;
+        Type? itemType;
+        itemType = _item0?.GetType();
+        if (itemType != null && itemType != typeof(T0)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[0] = itemType;
+        }
+        itemType = _item1?.GetType();
+        if (itemType != null && itemType != typeof(T1)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[1] = itemType;
+        }
+        itemType = _item2?.GetType();
+        if (itemType != null && itemType != typeof(T2)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[2] = itemType;
+        }
+        itemType = _item3?.GetType();
+        if (itemType != null && itemType != typeof(T3)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[3] = itemType;
+        }
+        itemType = _item4?.GetType();
+        if (itemType != null && itemType != typeof(T4)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[4] = itemType;
+        }
+        itemType = _item5?.GetType();
+        if (itemType != null && itemType != typeof(T5)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[5] = itemType;
+        }
+        itemType = _item6?.GetType();
+        if (itemType != null && itemType != typeof(T6)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[6] = itemType;
+        }
+        itemType = _item7?.GetType();
+        if (itemType != null && itemType != typeof(T7)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[7] = itemType;
+        }
+        itemType = _item8?.GetType();
+        if (itemType != null && itemType != typeof(T8)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[8] = itemType;
+        }
+        return itemTypes;
+    }
+
     // Get
+
+    public override T Get0<T>() => Item0 is T value ? value : default!;
+    public override T Get1<T>() => Item1 is T value ? value : default!;
+    public override T Get2<T>() => Item2 is T value ? value : default!;
+    public override T Get3<T>() => Item3 is T value ? value : default!;
+    public override T Get4<T>() => Item4 is T value ? value : default!;
+    public override T Get5<T>() => Item5 is T value ? value : default!;
+    public override T Get6<T>() => Item6 is T value ? value : default!;
+    public override T Get7<T>() => Item7 is T value ? value : default!;
+    public override T Get8<T>() => Item8 is T value ? value : default!;
 
     public override T Get<T>(int index)
         => index switch {
@@ -2915,6 +3412,21 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
         }
     }
 
+    // SetFrom
+
+    public override void SetFrom(ArgumentList other)
+    {
+        _item0 = other.Get0<T0>();
+        _item1 = other.Get1<T1>();
+        _item2 = other.Get2<T2>();
+        _item3 = other.Get3<T3>();
+        _item4 = other.Get4<T4>();
+        _item5 = other.Get5<T5>();
+        _item6 = other.Get6<T6>();
+        _item7 = other.Get7<T7>();
+        _item8 = other.Get8<T8>();
+    }
+
     // Insert
 
     public override ArgumentList Insert<T>(int index, T item)
@@ -2963,6 +3475,81 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
 
+    // GetInvoker
+
+    public override Func<object, ArgumentList, object?> GetInvoker(MethodInfo method)
+        => InvokerCache.GetOrAdd((GetType(), method), static key => {
+            var (listType, method1) = key;
+            var parameters = method1.GetParameters();
+            if (parameters.Length != 9)
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[0].ParameterType != typeof(T0))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[1].ParameterType != typeof(T1))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[2].ParameterType != typeof(T2))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[3].ParameterType != typeof(T3))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[4].ParameterType != typeof(T4))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[5].ParameterType != typeof(T5))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[6].ParameterType != typeof(T6))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[7].ParameterType != typeof(T7))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[8].ParameterType != typeof(T8))
+                throw new ArgumentOutOfRangeException(nameof(method));
+
+            var declaringType = method1.DeclaringType!;
+            var m = new DynamicMethod("_Invoke",
+                typeof(object),
+                new [] { typeof(object), typeof(ArgumentList) },
+                true);
+            var il = m.GetILGenerator();
+
+            // Cast ArgumentList to its actual type
+            il.DeclareLocal(listType);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Castclass, listType);
+            il.Emit(OpCodes.Stloc_0);
+
+            // Unbox target
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(declaringType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, declaringType);
+
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item0")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item1")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item2")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item3")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item4")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item5")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item6")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item7")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item8")!.GetGetMethod()!);
+
+            // Call method
+            il.Emit(OpCodes.Callvirt, method1);
+
+            // Box return type
+            if (method1.ReturnType == typeof(void))
+                il.Emit(OpCodes.Ldnull);
+            else if (method1.ReturnType.IsValueType)
+                il.Emit(OpCodes.Box, method1.ReturnType);
+            il.Emit(OpCodes.Ret);
+            return (Func<object, ArgumentList, object?>)m.CreateDelegate(typeof(Func<object, ArgumentList, object?>));
+        });
+
     // Equality
 
     public bool Equals(ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>? other)
@@ -2991,22 +3578,6 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
         return true;
     }
 
-    public override int GetHashCode()
-    {
-        unchecked {
-            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
-            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
-            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
-            hashCode = 397*hashCode + EqualityComparer<T4>.Default.GetHashCode(Item4!);
-            hashCode = 397*hashCode + EqualityComparer<T5>.Default.GetHashCode(Item5!);
-            hashCode = 397*hashCode + EqualityComparer<T6>.Default.GetHashCode(Item6!);
-            hashCode = 397*hashCode + EqualityComparer<T7>.Default.GetHashCode(Item7!);
-            hashCode = 397*hashCode + EqualityComparer<T8>.Default.GetHashCode(Item8!);
-            return hashCode;
-        }
-    }
-
     public override bool Equals(ArgumentList? other, int skipIndex)
     {
         if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8> vOther)
@@ -3033,6 +3604,22 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
         return true;
     }
 
+    public override int GetHashCode()
+    {
+        unchecked {
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
+            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
+            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
+            hashCode = 397*hashCode + EqualityComparer<T4>.Default.GetHashCode(Item4!);
+            hashCode = 397*hashCode + EqualityComparer<T5>.Default.GetHashCode(Item5!);
+            hashCode = 397*hashCode + EqualityComparer<T6>.Default.GetHashCode(Item6!);
+            hashCode = 397*hashCode + EqualityComparer<T7>.Default.GetHashCode(Item7!);
+            hashCode = 397*hashCode + EqualityComparer<T8>.Default.GetHashCode(Item8!);
+            return hashCode;
+        }
+    }
+
     public override int GetHashCode(int skipIndex)
     {
         unchecked {
@@ -3048,134 +3635,16 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
             return hashCode;
         }
     }
+}
 
-    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
-    {
-        if (equalsDelegates.Length < 9)
-            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
-        if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8> vOther)
-            return false;
+[DataContract]
+public abstract record ArgumentList10 : ArgumentList
+{
+    protected static Type?[] CreateNonDefaultItemTypes()
+        => new Type?[10];
 
-        if (equalsDelegates[8] is Func<T8, T8, bool> func8) {
-            if (!func8.Invoke(Item8, vOther.Item8))
-                return false;
-        }
-        else if (!EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
-            return false;
-
-        if (equalsDelegates[7] is Func<T7, T7, bool> func7) {
-            if (!func7.Invoke(Item7, vOther.Item7))
-                return false;
-        }
-        else if (!EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
-            return false;
-
-        if (equalsDelegates[6] is Func<T6, T6, bool> func6) {
-            if (!func6.Invoke(Item6, vOther.Item6))
-                return false;
-        }
-        else if (!EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
-            return false;
-
-        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
-            if (!func5.Invoke(Item5, vOther.Item5))
-                return false;
-        }
-        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
-            return false;
-
-        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, vOther.Item4))
-                return false;
-        }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
-            return false;
-
-        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, vOther.Item3))
-                return false;
-        }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
-            return false;
-
-        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, vOther.Item2))
-                return false;
-        }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
-            return false;
-
-        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, vOther.Item1))
-                return false;
-        }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-
-        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, vOther.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-
-        return true;
-    }
-
-    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
-    {
-        if (getHashCodeDelegates.Length < 9)
-            throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
-        unchecked {
-            int hashCode;
-            if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0.Invoke(Item0!);
-            else
-                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-
-            if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1.Invoke(Item1!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T1>.Default.GetHashCode(Item1!);
-
-            if (getHashCodeDelegates[2] is Func<T2, int> func2)
-                hashCode = (hashCode * 397) + func2.Invoke(Item2!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T2>.Default.GetHashCode(Item2!);
-
-            if (getHashCodeDelegates[3] is Func<T3, int> func3)
-                hashCode = (hashCode * 397) + func3.Invoke(Item3!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T3>.Default.GetHashCode(Item3!);
-
-            if (getHashCodeDelegates[4] is Func<T4, int> func4)
-                hashCode = (hashCode * 397) + func4.Invoke(Item4!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T4>.Default.GetHashCode(Item4!);
-
-            if (getHashCodeDelegates[5] is Func<T5, int> func5)
-                hashCode = (hashCode * 397) + func5.Invoke(Item5!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T5>.Default.GetHashCode(Item5!);
-
-            if (getHashCodeDelegates[6] is Func<T6, int> func6)
-                hashCode = (hashCode * 397) + func6.Invoke(Item6!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T6>.Default.GetHashCode(Item6!);
-
-            if (getHashCodeDelegates[7] is Func<T7, int> func7)
-                hashCode = (hashCode * 397) + func7.Invoke(Item7!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T7>.Default.GetHashCode(Item7!);
-
-            if (getHashCodeDelegates[8] is Func<T8, int> func8)
-                hashCode = (hashCode * 397) + func8.Invoke(Item8!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T8>.Default.GetHashCode(Item8!);
-
-            return hashCode;
-        }
-    }
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public override int Length => 10;
 }
 
 [DataContract]
@@ -3190,7 +3659,7 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
     T7 Item7,
     T8 Item8,
     T9 Item9
-) : ArgumentList
+) : ArgumentList10
 {
     private T0 _item0 = Item0;
     private T1 _item1 = Item1;
@@ -3214,8 +3683,11 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
     [DataMember(Order = 8)] public T8 Item8 { get => _item8; init => _item8 = value; }
     [DataMember(Order = 9)] public T9 Item9 { get => _item9; init => _item9 = value; }
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
-    public override int Length => 10;
+    // Default constructor
+
+    public ArgumentList()
+        : this(default(T0)!, default(T1)!, default(T2)!, default(T3)!, default(T4)!, default(T5)!, default(T6)!, default(T7)!, default(T8)!, default(T9)!)
+    { }
 
     // ToString & ToArray
 
@@ -3264,7 +3736,76 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
             _ => throw new ArgumentOutOfRangeException(nameof(skipIndex))
         };
 
+    // GetNonDefaultItemTypes 
+
+    public override Type?[]? GetNonDefaultItemTypes() {
+        var itemTypes = (Type?[]?)null;
+        Type? itemType;
+        itemType = _item0?.GetType();
+        if (itemType != null && itemType != typeof(T0)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[0] = itemType;
+        }
+        itemType = _item1?.GetType();
+        if (itemType != null && itemType != typeof(T1)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[1] = itemType;
+        }
+        itemType = _item2?.GetType();
+        if (itemType != null && itemType != typeof(T2)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[2] = itemType;
+        }
+        itemType = _item3?.GetType();
+        if (itemType != null && itemType != typeof(T3)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[3] = itemType;
+        }
+        itemType = _item4?.GetType();
+        if (itemType != null && itemType != typeof(T4)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[4] = itemType;
+        }
+        itemType = _item5?.GetType();
+        if (itemType != null && itemType != typeof(T5)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[5] = itemType;
+        }
+        itemType = _item6?.GetType();
+        if (itemType != null && itemType != typeof(T6)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[6] = itemType;
+        }
+        itemType = _item7?.GetType();
+        if (itemType != null && itemType != typeof(T7)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[7] = itemType;
+        }
+        itemType = _item8?.GetType();
+        if (itemType != null && itemType != typeof(T8)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[8] = itemType;
+        }
+        itemType = _item9?.GetType();
+        if (itemType != null && itemType != typeof(T9)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[9] = itemType;
+        }
+        return itemTypes;
+    }
+
     // Get
+
+    public override T Get0<T>() => Item0 is T value ? value : default!;
+    public override T Get1<T>() => Item1 is T value ? value : default!;
+    public override T Get2<T>() => Item2 is T value ? value : default!;
+    public override T Get3<T>() => Item3 is T value ? value : default!;
+    public override T Get4<T>() => Item4 is T value ? value : default!;
+    public override T Get5<T>() => Item5 is T value ? value : default!;
+    public override T Get6<T>() => Item6 is T value ? value : default!;
+    public override T Get7<T>() => Item7 is T value ? value : default!;
+    public override T Get8<T>() => Item8 is T value ? value : default!;
+    public override T Get9<T>() => Item9 is T value ? value : default!;
 
     public override T Get<T>(int index)
         => index switch {
@@ -3437,6 +3978,22 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
         }
     }
 
+    // SetFrom
+
+    public override void SetFrom(ArgumentList other)
+    {
+        _item0 = other.Get0<T0>();
+        _item1 = other.Get1<T1>();
+        _item2 = other.Get2<T2>();
+        _item3 = other.Get3<T3>();
+        _item4 = other.Get4<T4>();
+        _item5 = other.Get5<T5>();
+        _item6 = other.Get6<T6>();
+        _item7 = other.Get7<T7>();
+        _item8 = other.Get8<T8>();
+        _item9 = other.Get9<T9>();
+    }
+
     // Insert
 
     public override ArgumentList Insert<T>(int index, T item)
@@ -3461,6 +4018,85 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
             9 => New(Item0, Item1, Item2, Item3, Item4, Item5, Item6, Item7, Item8),
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
+
+    // GetInvoker
+
+    public override Func<object, ArgumentList, object?> GetInvoker(MethodInfo method)
+        => InvokerCache.GetOrAdd((GetType(), method), static key => {
+            var (listType, method1) = key;
+            var parameters = method1.GetParameters();
+            if (parameters.Length != 10)
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[0].ParameterType != typeof(T0))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[1].ParameterType != typeof(T1))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[2].ParameterType != typeof(T2))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[3].ParameterType != typeof(T3))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[4].ParameterType != typeof(T4))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[5].ParameterType != typeof(T5))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[6].ParameterType != typeof(T6))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[7].ParameterType != typeof(T7))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[8].ParameterType != typeof(T8))
+                throw new ArgumentOutOfRangeException(nameof(method));
+            if (parameters[9].ParameterType != typeof(T9))
+                throw new ArgumentOutOfRangeException(nameof(method));
+
+            var declaringType = method1.DeclaringType!;
+            var m = new DynamicMethod("_Invoke",
+                typeof(object),
+                new [] { typeof(object), typeof(ArgumentList) },
+                true);
+            var il = m.GetILGenerator();
+
+            // Cast ArgumentList to its actual type
+            il.DeclareLocal(listType);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Castclass, listType);
+            il.Emit(OpCodes.Stloc_0);
+
+            // Unbox target
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(declaringType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, declaringType);
+
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item0")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item1")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item2")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item3")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item4")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item5")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item6")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item7")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item8")!.GetGetMethod()!);
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item9")!.GetGetMethod()!);
+
+            // Call method
+            il.Emit(OpCodes.Callvirt, method1);
+
+            // Box return type
+            if (method1.ReturnType == typeof(void))
+                il.Emit(OpCodes.Ldnull);
+            else if (method1.ReturnType.IsValueType)
+                il.Emit(OpCodes.Box, method1.ReturnType);
+            il.Emit(OpCodes.Ret);
+            return (Func<object, ArgumentList, object?>)m.CreateDelegate(typeof(Func<object, ArgumentList, object?>));
+        });
 
     // Equality
 
@@ -3492,23 +4128,6 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
         return true;
     }
 
-    public override int GetHashCode()
-    {
-        unchecked {
-            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
-            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
-            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
-            hashCode = 397*hashCode + EqualityComparer<T4>.Default.GetHashCode(Item4!);
-            hashCode = 397*hashCode + EqualityComparer<T5>.Default.GetHashCode(Item5!);
-            hashCode = 397*hashCode + EqualityComparer<T6>.Default.GetHashCode(Item6!);
-            hashCode = 397*hashCode + EqualityComparer<T7>.Default.GetHashCode(Item7!);
-            hashCode = 397*hashCode + EqualityComparer<T8>.Default.GetHashCode(Item8!);
-            hashCode = 397*hashCode + EqualityComparer<T9>.Default.GetHashCode(Item9!);
-            return hashCode;
-        }
-    }
-
     public override bool Equals(ArgumentList? other, int skipIndex)
     {
         if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> vOther)
@@ -3537,6 +4156,23 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
         return true;
     }
 
+    public override int GetHashCode()
+    {
+        unchecked {
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+            hashCode = 397*hashCode + EqualityComparer<T1>.Default.GetHashCode(Item1!);
+            hashCode = 397*hashCode + EqualityComparer<T2>.Default.GetHashCode(Item2!);
+            hashCode = 397*hashCode + EqualityComparer<T3>.Default.GetHashCode(Item3!);
+            hashCode = 397*hashCode + EqualityComparer<T4>.Default.GetHashCode(Item4!);
+            hashCode = 397*hashCode + EqualityComparer<T5>.Default.GetHashCode(Item5!);
+            hashCode = 397*hashCode + EqualityComparer<T6>.Default.GetHashCode(Item6!);
+            hashCode = 397*hashCode + EqualityComparer<T7>.Default.GetHashCode(Item7!);
+            hashCode = 397*hashCode + EqualityComparer<T8>.Default.GetHashCode(Item8!);
+            hashCode = 397*hashCode + EqualityComparer<T9>.Default.GetHashCode(Item9!);
+            return hashCode;
+        }
+    }
+
     public override int GetHashCode(int skipIndex)
     {
         unchecked {
@@ -3550,146 +4186,6 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
             hashCode = 397*hashCode + (skipIndex == 7 ? 0 : EqualityComparer<T7>.Default.GetHashCode(Item7!));
             hashCode = 397*hashCode + (skipIndex == 8 ? 0 : EqualityComparer<T8>.Default.GetHashCode(Item8!));
             hashCode = 397*hashCode + (skipIndex == 9 ? 0 : EqualityComparer<T9>.Default.GetHashCode(Item9!));
-            return hashCode;
-        }
-    }
-
-    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
-    {
-        if (equalsDelegates.Length < 10)
-            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
-        if (other is not ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> vOther)
-            return false;
-
-        if (equalsDelegates[9] is Func<T9, T9, bool> func9) {
-            if (!func9.Invoke(Item9, vOther.Item9))
-                return false;
-        }
-        else if (!EqualityComparer<T9>.Default.Equals(Item9, vOther.Item9))
-            return false;
-
-        if (equalsDelegates[8] is Func<T8, T8, bool> func8) {
-            if (!func8.Invoke(Item8, vOther.Item8))
-                return false;
-        }
-        else if (!EqualityComparer<T8>.Default.Equals(Item8, vOther.Item8))
-            return false;
-
-        if (equalsDelegates[7] is Func<T7, T7, bool> func7) {
-            if (!func7.Invoke(Item7, vOther.Item7))
-                return false;
-        }
-        else if (!EqualityComparer<T7>.Default.Equals(Item7, vOther.Item7))
-            return false;
-
-        if (equalsDelegates[6] is Func<T6, T6, bool> func6) {
-            if (!func6.Invoke(Item6, vOther.Item6))
-                return false;
-        }
-        else if (!EqualityComparer<T6>.Default.Equals(Item6, vOther.Item6))
-            return false;
-
-        if (equalsDelegates[5] is Func<T5, T5, bool> func5) {
-            if (!func5.Invoke(Item5, vOther.Item5))
-                return false;
-        }
-        else if (!EqualityComparer<T5>.Default.Equals(Item5, vOther.Item5))
-            return false;
-
-        if (equalsDelegates[4] is Func<T4, T4, bool> func4) {
-            if (!func4.Invoke(Item4, vOther.Item4))
-                return false;
-        }
-        else if (!EqualityComparer<T4>.Default.Equals(Item4, vOther.Item4))
-            return false;
-
-        if (equalsDelegates[3] is Func<T3, T3, bool> func3) {
-            if (!func3.Invoke(Item3, vOther.Item3))
-                return false;
-        }
-        else if (!EqualityComparer<T3>.Default.Equals(Item3, vOther.Item3))
-            return false;
-
-        if (equalsDelegates[2] is Func<T2, T2, bool> func2) {
-            if (!func2.Invoke(Item2, vOther.Item2))
-                return false;
-        }
-        else if (!EqualityComparer<T2>.Default.Equals(Item2, vOther.Item2))
-            return false;
-
-        if (equalsDelegates[1] is Func<T1, T1, bool> func1) {
-            if (!func1.Invoke(Item1, vOther.Item1))
-                return false;
-        }
-        else if (!EqualityComparer<T1>.Default.Equals(Item1, vOther.Item1))
-            return false;
-
-        if (equalsDelegates[0] is Func<T0, T0, bool> func0) {
-            if (!func0.Invoke(Item0, vOther.Item0))
-                return false;
-        }
-        else if (!EqualityComparer<T0>.Default.Equals(Item0, vOther.Item0))
-            return false;
-
-        return true;
-    }
-
-    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
-    {
-        if (getHashCodeDelegates.Length < 10)
-            throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
-        unchecked {
-            int hashCode;
-            if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0.Invoke(Item0!);
-            else
-                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-
-            if (getHashCodeDelegates[1] is Func<T1, int> func1)
-                hashCode = (hashCode * 397) + func1.Invoke(Item1!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T1>.Default.GetHashCode(Item1!);
-
-            if (getHashCodeDelegates[2] is Func<T2, int> func2)
-                hashCode = (hashCode * 397) + func2.Invoke(Item2!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T2>.Default.GetHashCode(Item2!);
-
-            if (getHashCodeDelegates[3] is Func<T3, int> func3)
-                hashCode = (hashCode * 397) + func3.Invoke(Item3!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T3>.Default.GetHashCode(Item3!);
-
-            if (getHashCodeDelegates[4] is Func<T4, int> func4)
-                hashCode = (hashCode * 397) + func4.Invoke(Item4!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T4>.Default.GetHashCode(Item4!);
-
-            if (getHashCodeDelegates[5] is Func<T5, int> func5)
-                hashCode = (hashCode * 397) + func5.Invoke(Item5!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T5>.Default.GetHashCode(Item5!);
-
-            if (getHashCodeDelegates[6] is Func<T6, int> func6)
-                hashCode = (hashCode * 397) + func6.Invoke(Item6!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T6>.Default.GetHashCode(Item6!);
-
-            if (getHashCodeDelegates[7] is Func<T7, int> func7)
-                hashCode = (hashCode * 397) + func7.Invoke(Item7!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T7>.Default.GetHashCode(Item7!);
-
-            if (getHashCodeDelegates[8] is Func<T8, int> func8)
-                hashCode = (hashCode * 397) + func8.Invoke(Item8!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T8>.Default.GetHashCode(Item8!);
-
-            if (getHashCodeDelegates[9] is Func<T9, int> func9)
-                hashCode = (hashCode * 397) + func9.Invoke(Item9!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T9>.Default.GetHashCode(Item9!);
-
             return hashCode;
         }
     }

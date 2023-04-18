@@ -16,18 +16,38 @@ public class FuncTextSerializer<T> : ITextSerializer<T>
         Writer = writer;
     }
 
-    public T Read(ReadOnlyMemory<byte> data)
+    // Read
+
+    public T Read(string data)
+        => Reader.Invoke(data);
+
+    public T Read(ReadOnlyMemory<byte> data, out int readLength)
     {
         var decoder = Encoding.UTF8.GetDecoder();
         var buffer = ZString.CreateStringBuilder();
         try {
             decoder.Convert(data.Span, ref buffer);
+            readLength = data.Length;
             return Reader.Invoke(buffer.ToString());
         }
         finally {
             buffer.Dispose();
         }
     }
+
+    public T Read(ReadOnlyMemory<char> data)
+    {
+#if NETSTANDARD2_0
+        return Reader.Invoke(new string(data.ToArray()));
+#else
+        return Reader.Invoke(new string(data.Span));
+#endif
+    }
+
+    // Write
+
+    public string Write(T value)
+        => Writer.Invoke(value);
 
     public void Write(IBufferWriter<byte> bufferWriter, T value)
     {
@@ -36,9 +56,9 @@ public class FuncTextSerializer<T> : ITextSerializer<T>
         encoder.Convert(result.AsSpan(), bufferWriter);
     }
 
-    public T Read(string data)
-        => Reader.Invoke(data);
-
-    public string Write(T value)
-        => Writer.Invoke(value);
+    public void Write(TextWriter textWriter, T value)
+    {
+        var result = Writer.Invoke(value);
+        textWriter.Write(result);
+    }
 }

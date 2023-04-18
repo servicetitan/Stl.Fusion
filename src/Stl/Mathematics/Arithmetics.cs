@@ -7,7 +7,7 @@ public interface IArithmetics
 public abstract class Arithmetics<T> : IArithmetics
     where T : notnull
 {
-    public static Arithmetics<T> Default => ArithmeticsProvider.Default.GetArithmetics<T>();
+    public static Arithmetics<T> Default => ArithmeticsProvider.Default.Get<T>();
 
     public T One { get; protected init; } = default!; // Must be set in .ctor!
 

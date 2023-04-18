@@ -180,7 +180,7 @@ public static class AsyncChainExt
     {
         if (maxRetryCount is not { } maxCount)
             return asyncChain.RetryForever(retryDelays, log);
-        return new($"{asyncChain.Name}.Retry({retryDelays}, {maxRetryCount.ToString()})",
+        return new($"{asyncChain.Name}.Retry({retryDelays}, {maxRetryCount})",
             async cancellationToken => {
                 clock ??= MomentClockSet.Default.CpuClock;
                 for (var failedTryCount = 0; failedTryCount <= maxCount; failedTryCount++) {

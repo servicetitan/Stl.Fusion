@@ -26,7 +26,7 @@ public abstract class ComputeMethodInterceptorBase : InterceptorBase
         return invocation => {
             var input = computeMethodDef.CreateInput(function, invocation);
             var arguments = input.Arguments;
-            var ctIndex = computeMethodDef.CancellationTokenArgumentIndex;
+            var ctIndex = computeMethodDef.CancellationTokenIndex;
             var cancellationToken = ctIndex >= 0
                 ? arguments.GetCancellationToken(ctIndex)
                 : default;

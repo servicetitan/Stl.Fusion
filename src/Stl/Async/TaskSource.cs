@@ -1,6 +1,4 @@
-using System.Linq.Expressions;
 using System.Reflection.Emit;
-using Cysharp.Text;
 
 namespace Stl.Async;
 
@@ -149,65 +147,49 @@ public readonly struct TaskSource<T> : IEquatable<TaskSource<T>>
         var tTcs = typeof(TaskCompletionSource<T>);
         var tTask = typeof(Task<T>);
 #if !NETSTANDARD2_0
-        var fTask = tTcs.GetField("_task", BindingFlags.Instance | BindingFlags.NonPublic);
+        var fTask = tTcs.GetField("_task", BindingFlags.Instance | BindingFlags.NonPublic)!;
 #else
-        var fTask = tTcs.GetField("m_task", BindingFlags.Instance | BindingFlags.NonPublic);
+        var fTask = tTcs.GetField("m_task", BindingFlags.Instance | BindingFlags.NonPublic)!;
 #endif
-        var pState = Expression.Parameter(typeof(object), "state");
-        var pTco = Expression.Parameter(typeof(TaskCreationOptions), "taskCreationOptions");
-        var pTcs = Expression.Parameter(tTcs, "tcs");
-        var pTask = Expression.Parameter(tTask, "task");
-        var privateCtorBindingFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.CreateInstance;
+        var ctorBindingFlags = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.CreateInstance;
 
-        var taskCtor0 = tTask.GetConstructor(privateCtorBindingFlags, null,
-            Array.Empty<Type>(), null);
-        var taskCtor2 = tTask.GetConstructor(privateCtorBindingFlags, null,
-            new [] {typeof(object), typeof(TaskCreationOptions)}, null);
-        CreateTask0 = Expression.Lambda<Func<Task<T>>>(
-            Expression.New(taskCtor0!)).Compile();
-        CreateTask2 = Expression.Lambda<Func<object?, TaskCreationOptions, Task<T>>>(
-            Expression.New(taskCtor2!, pState, pTco), pState, pTco).Compile();
+        var taskCtor0 = tTask.GetConstructor(ctorBindingFlags, null, Type.EmptyTypes, null)!;
+        var m = new DynamicMethod("_CreateTask0", typeof(Task<T>), Type.EmptyTypes, true);
+        var il = m.GetILGenerator();
+        il.Emit(OpCodes.Newobj, taskCtor0);
+        il.Emit(OpCodes.Ret);
+        CreateTask0 = (Func<Task<T>>)m.CreateDelegate(typeof(Func<Task<T>>));
 
-#if false // Other version seem to be more efficient anyway
-        // Creating assign expression via reflection b/c otherwise
-        // it fails "lvalue must be writeable" check -- well,
-        // obviously, because we're assigning a read-only field value here.
-        var exampleAssign = Expression.Assign(pTask, pTask);
+        var taskCtor2Args = new [] { typeof(object), typeof(TaskCreationOptions) };
+        var taskCtor2 = tTask.GetConstructor(ctorBindingFlags, null, taskCtor2Args, null)!;
+        m = new DynamicMethod("_CreateTask2", typeof(Task<T>), taskCtor2Args, true);
+        il = m.GetILGenerator();
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Newobj, taskCtor2);
+        il.Emit(OpCodes.Ret);
+        CreateTask2 = (Func<object?, TaskCreationOptions, Task<T>>)m.CreateDelegate(typeof(Func<object?, TaskCreationOptions, Task<T>>));
 
-        var realAssign = (Expression) Activator.CreateInstance(
-            exampleAssign.GetType(),
-            privateCtorBindingFlags, null,
-            new object[] {Expression.Field(pTcs, fTask!), pTask}, null)!;
-        SetTask = Expression.Lambda<Action<TaskCompletionSource<T>, Task<T>>>(
-            realAssign, pTcs, pTask).Compile();
-
-        var realReset = (Expression) Activator.CreateInstance(
-            exampleAssign.GetType(),
-            privateCtorBindingFlags, null,
-            new object[] {Expression.Field(pTcs, fTask!), Expression.Constant(null)}, null)!;
-        ResetTask = Expression.Lambda<Action<TaskCompletionSource<T>>>(
-            realReset, pTcs).Compile();
-#else
         // .NET Standard version fails even on above code,
         // so IL emit is used to generate private field assignment code.
-        var setTaskMethod = new DynamicMethod(
-            ZString.Concat("_Set", fTask!.Name, "_"),
+        m = new DynamicMethod(
+            "_SetTask",
             typeof(void),
             new [] { typeof(TaskCompletionSource<T>), typeof(Task<T>) },
-            fTask.DeclaringType!,
+            fTask!.DeclaringType!,
             true);
-        var il = setTaskMethod.GetILGenerator();
+        il = m.GetILGenerator();
         il.Emit(OpCodes.Ldarg_0);
         il.Emit(OpCodes.Ldarg_1);
         if (fTask.FieldType.IsValueType)
             il.Emit(OpCodes.Unbox_Any, fTask.FieldType);
         il.Emit(OpCodes.Stfld, fTask);
         il.Emit(OpCodes.Ret);
-        SetTask = (Action<TaskCompletionSource<T>, Task<T>>) setTaskMethod.CreateDelegate(
+        SetTask = (Action<TaskCompletionSource<T>, Task<T>>)m.CreateDelegate(
             typeof(Action<TaskCompletionSource<T>, Task<T>>));
 
         var resetTaskMethod = new DynamicMethod(
-            ZString.Concat("_Reset", fTask!.Name, "_"),
+            "_ResetTask",
             typeof(void),
             new [] { typeof(TaskCompletionSource<T>) },
             fTask.DeclaringType!,
@@ -219,7 +201,6 @@ public readonly struct TaskSource<T> : IEquatable<TaskSource<T>>
         il.Emit(OpCodes.Ret);
         ResetTask = (Action<TaskCompletionSource<T>>) resetTaskMethod.CreateDelegate(
             typeof(Action<TaskCompletionSource<T>>));
-#endif
     }
 
     // Equality

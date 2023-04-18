@@ -1,4 +1,4 @@
-namespace Stl.Tests.Extensibility;
+namespace Stl.Tests.DependencyInjection;
 
 public class ServiceProviderExtTest : TestBase
 {

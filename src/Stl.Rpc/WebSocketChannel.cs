@@ -2,7 +2,7 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Runtime.ExceptionServices;
-using System.Text;                                  
+using System.Text;                                
 
 #if NETSTANDARD2_0
 using Stl.Pooling;

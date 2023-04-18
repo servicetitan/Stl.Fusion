@@ -20,14 +20,14 @@ public class MessagePackByteSerializer : IByteSerializer
     public IByteSerializer<T> ToTyped<T>(Type? serializedType = null)
         => (IByteSerializer<T>) GetTypedSerializer(serializedType ?? typeof(T));
 
-    public virtual object? Read(ReadOnlyMemory<byte> data, Type type)
+    public virtual object? Read(ReadOnlyMemory<byte> data, Type type, out int readLength)
     {
         var serializer = _typedSerializers.GetOrAdd(type,
             static (type1, self) => (MessagePackByteSerializer) typeof(MessagePackByteSerializer<>)
                 .MakeGenericType(type1)
                 .CreateInstance(self.Options),
             this);
-        return serializer.Read(data, type);
+        return serializer.Read(data, type, out readLength);
     }
 
     public virtual void Write(IBufferWriter<byte> bufferWriter, object? value, Type type)
@@ -58,12 +58,12 @@ public class MessagePackByteSerializer<T> : MessagePackByteSerializer, IByteSeri
         : base(options)
         => SerializedType = serializedType;
 
-    public override object? Read(ReadOnlyMemory<byte> data, Type type)
+    public override object? Read(ReadOnlyMemory<byte> data, Type type, out int readLength)
     {
         if (type != SerializedType)
             throw Errors.SerializedTypeMismatch(SerializedType, type);
         // ReSharper disable once HeapView.PossibleBoxingAllocation
-        return Read(data);
+        return Read(data, type, out readLength);
     }
 
     public override void Write(IBufferWriter<byte> bufferWriter, object? value, Type type)
@@ -73,8 +73,8 @@ public class MessagePackByteSerializer<T> : MessagePackByteSerializer, IByteSeri
         Write(bufferWriter, (T) value!);
     }
 
-    public T Read(ReadOnlyMemory<byte> data)
-        => MessagePackSerializer.Deserialize<T>(data, Options);
+    public T Read(ReadOnlyMemory<byte> data, out int readLength)
+        => MessagePackSerializer.Deserialize<T>(data, Options, out readLength);
 
     public void Write(IBufferWriter<byte> bufferWriter, T value)
         => MessagePackSerializer.Serialize(bufferWriter, value, Options);

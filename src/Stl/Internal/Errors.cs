@@ -65,14 +65,16 @@ public static class Errors
             ? "Already initialized."
             : $"Property {propertyName} is already initialized.");
 
+    public static Exception AlreadyReadOnly<TObject>()
+        => new InvalidOperationException($"{typeof(TObject).GetName()} is already transitioned to read-only state.");
     public static Exception AlreadyLocked()
-        => new InvalidOperationException($"The lock is already acquired by one of callers of the current method.");
+        => new InvalidOperationException("The lock is already acquired by one of callers of the current method.");
     public static Exception AlreadyUsed()
         => new InvalidOperationException("The object was already used somewhere else.");
     public static Exception AlreadyCompleted()
         => new InvalidOperationException("The event source is already completed.");
     public static Exception ThisValueCanBeSetJustOnce()
-        => new InvalidOperationException($"This value can be set just once.");
+        => new InvalidOperationException("This value can be set just once.");
     public static Exception NoDefaultConstructor(Type type)
         => new InvalidOperationException($"Type '{type}' doesn't have a default constructor.");
     public static Exception NotInitialized(string? propertyName = null)

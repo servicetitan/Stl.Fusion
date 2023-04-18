@@ -6,8 +6,22 @@ namespace Stl.Serialization;
 public static class ByteSerializerExt
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static object? Read(this IByteSerializer serializer, ReadOnlyMemory<byte> data, Type type)
+        => serializer.Read(data, type, out _);
+
+    // Read w/o Type & readLength arguments
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T Read<T>(this IByteSerializer serializer, ReadOnlyMemory<byte> data)
-        => (T) serializer.Read(data, typeof(T))!;
+        => (T)serializer.Read(data, typeof(T), out _)!;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T Read<T>(this IByteSerializer<T> serializer, ReadOnlyMemory<byte> data)
+        => serializer.Read(data, out _);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T Read<T>(this IByteSerializer serializer, ReadOnlyMemory<byte> data, out int readLength)
+        => (T)serializer.Read(data, typeof(T), out readLength)!;
 
     // Write w/o last Type argument
 

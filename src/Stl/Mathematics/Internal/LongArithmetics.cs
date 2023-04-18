@@ -1,8 +1,5 @@
-using Stl.Extensibility;
-
 namespace Stl.Mathematics.Internal;
 
-[MatchFor(typeof(long), typeof(IArithmetics))]
 public sealed class LongArithmetics : Arithmetics<long>
 {
     public LongArithmetics() => One = 1;

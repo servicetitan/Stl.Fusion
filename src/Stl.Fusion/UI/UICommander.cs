@@ -1,5 +1,3 @@
-using System.Linq.Expressions;
-
 namespace Stl.Fusion.UI;
 
 public class UICommander : IHasServices
@@ -74,23 +72,13 @@ public class UICommander : IHasServices
     // Private methods
 
     private static UIAction CreateUIAction(UICommander commander, ICommand command, CancellationToken cancellationToken)
-    {
-        var factory = CachedActionFactories.GetOrAdd(command.GetResultType(),
-            static (tCommand, commander1) => {
-                var mCreateUIAction = commander1
-                    .GetType()
-                    .GetMethod(nameof(CreateUIAction), BindingFlags.Instance | BindingFlags.NonPublic)!
-                    .MakeGenericMethod(tCommand);
-
-                var pCommander = Expression.Parameter(typeof(UICommander), "commander");
-                var pCommand = Expression.Parameter(typeof(ICommand), "command");
-                var pCancellationToken = Expression.Parameter(typeof(CancellationToken), "cancellationToken");
-                var eBody = Expression.Call(pCommander, mCreateUIAction, pCommand, pCancellationToken);
-                var func = (Func<UICommander, ICommand, CancellationToken, UIAction>) Expression
-                    .Lambda(eBody, pCommander, pCommand, pCancellationToken)
-                    .Compile();
-                return func;
-            }, commander);
-        return factory.Invoke(commander, command, cancellationToken);
-    }
+        => CachedActionFactories.GetOrAdd(
+            command.GetResultType(),
+            static (tCommand, commander1) => (Func<UICommander, ICommand, CancellationToken, UIAction>)commander1
+                .GetType()
+                .GetMethod(nameof(CreateUIAction), BindingFlags.Instance | BindingFlags.NonPublic)!
+                .MakeGenericMethod(tCommand)
+                .CreateDelegate(typeof(Func<UICommander, ICommand, CancellationToken, UIAction>)),
+            commander
+            ).Invoke(commander, command, cancellationToken);
 }

@@ -2,10 +2,10 @@ namespace Stl.CommandR.Internal;
 
 public static class Errors
 {
-    public static Exception CommandHandlerRegistryMustBeRegisteredAsInstance()
-        => new InvalidOperationException("ICommandHandlerRegistry should be registered as instance.");
-    public static Exception CommandHandlerRegistryInstanceIsNotRegistered()
-        => new InvalidOperationException("ICommandHandlerRegistry instance is not registered.");
+    public static Exception CommandHandlerSetMustBeRegisteredAsInstance()
+        => new InvalidOperationException("HashSet<CommandHandler> should be registered as instance.");
+    public static Exception CommandHandlerSetIsNotRegistered()
+        => new InvalidOperationException("HashSet<CommandHandler> instance is not registered.");
     public static Exception CommandResultTypeMismatch(Type expectedType, Type actualType)
         => new InvalidOperationException($"Command result type mismatch: expected '{expectedType}', got '{actualType}'");
 

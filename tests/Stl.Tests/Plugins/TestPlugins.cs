@@ -25,7 +25,7 @@ public abstract class TestPlugin : ITestPlugin
 [Plugin(IsEnabled = false)]
 public class DisabledTestPlugin : TestPlugin, IHasDependencies, ITestSingletonPlugin
 {
-    public IEnumerable<Type> Dependencies { get; } = Array.Empty<Type>();
+    public IEnumerable<Type> Dependencies { get; } = Type.EmptyTypes;
 
     [ServiceConstructor]
     public DisabledTestPlugin() { }

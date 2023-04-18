@@ -1,5 +1,3 @@
-using System.Linq.Expressions;
-
 namespace Stl.Async;
 
 public static partial class TaskExt
@@ -51,15 +49,12 @@ public static partial class TaskExt
                 : new Result<Unit>(default, task.GetBaseException());
         }
 
-        return ToTypedResultCache.GetOrAdd(tValue, static tValue1 => {
-            var mFromUntypedTaskInternal = FromTypedTaskInternalMethod.MakeGenericMethod(tValue1);
-            var pTask = Expression.Parameter(typeof(Task));
-            var fn = Expression.Lambda<Func<Task, IResult>>(
-                Expression.Call(mFromUntypedTaskInternal, pTask),
-                pTask
-            ).Compile();
-            return fn;
-        }).Invoke(task);
+        return ToTypedResultCache.GetOrAdd(
+            tValue,
+            static tValue1 => (Func<Task, IResult>)FromTypedTaskInternalMethod
+                .MakeGenericMethod(tValue1)
+                .CreateDelegate(typeof(Func<Task, IResult>))
+            ).Invoke(task);
     }
 
     public static Task<IResult> ToTypedResultAsync(this Task task)

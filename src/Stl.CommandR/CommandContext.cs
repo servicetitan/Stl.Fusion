@@ -142,7 +142,7 @@ public sealed class CommandContext<TResult> : CommandContext
             if (ExecutionState.IsFinal)
                 throw Errors.NoFinalHandlerFound(UntypedCommand.GetType());
             var handler = ExecutionState.NextHandler;
-            ExecutionState = ExecutionState.NextExecutionState;
+            ExecutionState = ExecutionState.NextState;
             var handlerTask = handler.Invoke(UntypedCommand, this, cancellationToken);
             if (handlerTask is Task<TResult> typedHandlerTask) {
                 Result = await typedHandlerTask.ConfigureAwait(false);

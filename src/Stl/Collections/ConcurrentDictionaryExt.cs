@@ -1,6 +1,6 @@
-using System.Linq.Expressions;
+using System.Reflection.Emit;
 
-namespace Stl.Concurrency;
+namespace Stl.Collections;
 
 public static class ConcurrentDictionaryExt
 {
@@ -11,20 +11,30 @@ public static class ConcurrentDictionaryExt
 
         static Cache()
         {
-            var eSrc = Expression.Parameter(typeof(ConcurrentDictionary<TKey, TValue>), "source");
-
 #if !NETSTANDARD2_0
-            var body = Expression.PropertyOrField(
-                Expression.Field(Expression.Field(eSrc, "_tables"), "_buckets"),
-                "Length");
+            var fTablesName = "_tables";
+            var fBucketsName = "_buckets";
 #else
-            var body = Expression.PropertyOrField(
-                Expression.Field(Expression.Field(eSrc, "m_tables"), "m_buckets"),
-                "Length");
+            var fTablesName = "m_tables";
+            var fBucketsName = "m_buckets";
 #endif
+            var fTables = typeof(ConcurrentDictionary<TKey, TValue>)
+                .GetField(fTablesName, BindingFlags.Instance | BindingFlags.NonPublic)!;
+            var fBuckets = fTables.FieldType
+                .GetField(fBucketsName, BindingFlags.Instance | BindingFlags.NonPublic)!;
+            var pLength = fBuckets.FieldType
+                .GetProperty("Length", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)!;
 
-            CapacityReader = (Func<ConcurrentDictionary<TKey, TValue>, int>)
-                Expression.Lambda(body, eSrc).Compile();
+            var m = new DynamicMethod("_CapacityReader",
+                typeof(int), new [] { typeof(ConcurrentDictionary<TKey, TValue>)},
+                true);
+            var il = m.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, fTables);
+            il.Emit(OpCodes.Ldfld, fBuckets);
+            il.Emit(OpCodes.Callvirt, pLength.GetMethod!);
+            il.Emit(OpCodes.Ret);
+            CapacityReader = (Func<ConcurrentDictionary<TKey, TValue>, int>)m.CreateDelegate(typeof(Func<ConcurrentDictionary<TKey, TValue>, int>));
         }
     }
 

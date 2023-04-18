@@ -1,8 +1,5 @@
-using Stl.Extensibility;
-
 namespace Stl.Mathematics.Internal;
 
-[MatchFor(typeof(Moment), typeof(IArithmetics))]
 public sealed class MomentArithmetics : Arithmetics<Moment>
 {
     public MomentArithmetics() => One = new(TimeSpan.FromSeconds(1));

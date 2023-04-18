@@ -1,6 +1,5 @@
 using System.Runtime.ExceptionServices;
 using Microsoft.Toolkit.HighPerformance;
-using Stl.Extensibility;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Fusion.Internal;
 

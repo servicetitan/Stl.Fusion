@@ -5,12 +5,12 @@ namespace Stl.Fusion.Operations;
 public class InvalidationInfoProvider
 {
     protected ICommander Commander { get; }
-    protected ICommandHandlerResolver CommandHandlerResolver { get; }
+    protected CommandHandlerResolver CommandHandlerResolver { get; }
     protected ConcurrentDictionary<Type, bool> IsReplicaServiceCommandCache { get; } = new();
     protected ConcurrentDictionary<Type, bool> IsComputeServiceCommandCache { get; } = new();
     protected ConcurrentDictionary<Type, Type?> FinalHandlerServiceTypeCache { get; } = new();
 
-    public InvalidationInfoProvider(ICommander commander, ICommandHandlerResolver commandHandlerResolver)
+    public InvalidationInfoProvider(ICommander commander, CommandHandlerResolver commandHandlerResolver)
     {
         Commander = commander;
         CommandHandlerResolver = commandHandlerResolver;

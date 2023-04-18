@@ -1,4 +1,4 @@
-using System.Linq.Expressions;
+using System.Reflection.Emit;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.RenderTree;
 
@@ -6,20 +6,20 @@ namespace Stl.Fusion.Blazor;
 
 public static class ComponentExt
 {
-    private static readonly Action<ComponentBase> CompiledStateHasChanged;
-    private static readonly Func<ComponentBase, bool> CompiledIsInitialized;
-    private static readonly Func<ComponentBase, RenderHandle> CompiledGetRenderHandle;
-    private static readonly Func<RenderHandle, object?> CompiledGetOptionalComponentState;
+    private static readonly Action<ComponentBase> StateHasChangedInvoker;
+    private static readonly Func<ComponentBase, bool> IsInitializedGetter;
+    private static readonly Func<ComponentBase, RenderHandle> RenderHandleGetter;
+    private static readonly Func<RenderHandle, object?> GetOptionalComponentStateGetter;
 
     public static ComponentInfo GetComponentInfo(this ComponentBase component)
         => ComponentInfo.Get(component.GetType());
     public static Dispatcher GetDispatcher(this ComponentBase component)
-        => CompiledGetRenderHandle.Invoke(component).Dispatcher;
+        => RenderHandleGetter.Invoke(component).Dispatcher;
 
     public static bool IsInitialized(this ComponentBase component)
-        => CompiledIsInitialized.Invoke(component);
+        => IsInitializedGetter.Invoke(component);
     public static bool IsDisposed(this ComponentBase component)
-        => CompiledGetRenderHandle.Invoke(component).IsDisposed();
+        => RenderHandleGetter.Invoke(component).IsDisposed();
 
     /// <summary>
     /// Calls <see cref="ComponentBase.StateHasChanged"/> in the Blazor synchronization context
@@ -37,7 +37,7 @@ public static class ComponentExt
 
         void Invoker() {
             try {
-                CompiledStateHasChanged(component);
+                StateHasChangedInvoker(component);
             }
             catch (ObjectDisposedException) {
                 // Intended
@@ -55,7 +55,7 @@ public static class ComponentExt
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static bool IsDisposed(this RenderHandle renderHandle)
-        => CompiledGetOptionalComponentState.Invoke(renderHandle) == null;
+        => GetOptionalComponentStateGetter.Invoke(renderHandle) == null;
 
     static ComponentExt()
     {
@@ -70,20 +70,18 @@ public static class ComponentExt
         var fRenderer = tRenderHandle.GetField("_renderer", bfInstanceNonPublic)!;
         var mGetOptionalComponentState = tRenderer.GetMethod("GetOptionalComponentState", bfInstanceNonPublic)!;
 
-        var pComponent = Expression.Parameter(typeof(ComponentBase), "component");
-        CompiledIsInitialized = Expression.Lambda<Func<ComponentBase, bool>>(
-            Expression.Field(pComponent, fInitialized), pComponent).Compile();
+        IsInitializedGetter = fInitialized.GetGetter<ComponentBase, bool>();
+        RenderHandleGetter = fRenderHandle.GetGetter<ComponentBase, RenderHandle>();
+        StateHasChangedInvoker = (Action<ComponentBase>)mStateHasChanged.CreateDelegate(typeof(Action<ComponentBase>));
 
-        var pRenderHandle = Expression.Parameter(typeof(RenderHandle), "renderHandle");
-        CompiledStateHasChanged = Expression.Lambda<Action<ComponentBase>>(
-            Expression.Call(pComponent, mStateHasChanged), pComponent).Compile();
-        CompiledGetRenderHandle = Expression.Lambda<Func<ComponentBase, RenderHandle>>(
-            Expression.Field(pComponent, fRenderHandle), pComponent).Compile();
-        CompiledGetOptionalComponentState = Expression.Lambda<Func<RenderHandle, object?>>(
-            Expression.Call(
-                Expression.Field(pRenderHandle, fRenderer),
-                mGetOptionalComponentState,
-                Expression.Field(pRenderHandle, fComponentId)),
-            pRenderHandle).Compile();
+        var m = new DynamicMethod("_GetOptionalComponentState", typeof(object), new [] { typeof(RenderHandle) }, true);
+        var il = m.GetILGenerator();
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldfld, fRenderer);
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldfld, fComponentId);
+        il.Emit(OpCodes.Callvirt, mGetOptionalComponentState);
+        il.Emit(OpCodes.Ret);
+        GetOptionalComponentStateGetter = (Func<RenderHandle, object?>)m.CreateDelegate(typeof(Func<RenderHandle, object?>));
     }
 }

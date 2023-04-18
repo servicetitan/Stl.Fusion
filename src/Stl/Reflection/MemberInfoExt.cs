@@ -1,5 +1,4 @@
-using System.Linq.Expressions;
-using Stl.Reflection.Internal;
+using System.Reflection.Emit;
 
 namespace Stl.Reflection;
 
@@ -9,79 +8,151 @@ public static class MemberInfoExt
     private static readonly ConcurrentDictionary<(MemberInfo, Type, bool), Delegate> SetterCache = new();
 
     public static Func<TType, TValue> GetGetter<TType, TValue>(
-        this MemberInfo propertyOrFieldInfo, bool isValueUntyped = false)
-        => (Func<TType, TValue>) GetGetter(propertyOrFieldInfo, typeof(TType), isValueUntyped);
+        this MemberInfo propertyOrField, bool isValueUntyped = false)
+        => (Func<TType, TValue>) GetGetter(propertyOrField, typeof(TType), isValueUntyped);
     public static Func<object, TValue> GetGetter<TValue>(
-        this MemberInfo propertyOrFieldInfo, bool isValueUntyped = false)
-        => (Func<object, TValue>) GetGetter(propertyOrFieldInfo, typeof(object), isValueUntyped);
-    public static Func<object, object> GetGetter(this MemberInfo propertyOrFieldInfo)
-        => (Func<object, object>) GetGetter(propertyOrFieldInfo, typeof(object), true);
+        this MemberInfo propertyOrField, bool isValueUntyped = false)
+        => (Func<object, TValue>) GetGetter(propertyOrField, typeof(object), isValueUntyped);
+    public static Func<object, object> GetGetter(this MemberInfo propertyOrField)
+        => (Func<object, object>) GetGetter(propertyOrField, typeof(object), true);
 
     public static Action<TType, TValue> GetSetter<TType, TValue>(
-        this MemberInfo propertyOrFieldInfo, bool isValueUntyped = false)
-        => (Action<TType, TValue>) GetSetter(propertyOrFieldInfo, typeof(TType), isValueUntyped);
+        this MemberInfo propertyOrField, bool isValueUntyped = false)
+        => (Action<TType, TValue>) GetSetter(propertyOrField, typeof(TType), isValueUntyped);
     public static Action<object, TValue> GetSetter<TValue>(
-        this MemberInfo propertyOrFieldInfo, bool isValueUntyped = false)
-        => (Action<object, TValue>) GetSetter(propertyOrFieldInfo, typeof(object), isValueUntyped);
-    public static Action<object, object> GetSetter(this MemberInfo propertyOrFieldInfo)
-        => (Action<object, object>) GetSetter(propertyOrFieldInfo, typeof(object), true);
+        this MemberInfo propertyOrField, bool isValueUntyped = false)
+        => (Action<object, TValue>) GetSetter(propertyOrField, typeof(object), isValueUntyped);
+    public static Action<object, object> GetSetter(this MemberInfo propertyOrField)
+        => (Action<object, object>) GetSetter(propertyOrField, typeof(object), true);
 
-    public static Delegate GetGetter(this MemberInfo propertyOrFieldInfo, Type sourceType, bool isValueUntyped = false)
+    public static Delegate GetGetter(this MemberInfo propertyOrField, Type sourceType, bool isValueUntyped = false)
     {
-        var key = (propertyOrFieldInfo, sourceType, isValueUntyped);
+        var key = (propertyOrField, sourceType, isValueUntyped);
         return GetterCache.GetOrAdd(key, static key1 => {
-            var (propertyOrFieldInfo1, sourceType1, isValueUntyped1) = key1;
-            var type = propertyOrFieldInfo1.DeclaringType!;
-            var fi = propertyOrFieldInfo1 as FieldInfo;
-            var pi = propertyOrFieldInfo1 as PropertyInfo;
-            if (fi == null && pi == null)
-                throw Errors.PropertyOrFieldInfoExpected(nameof(propertyOrFieldInfo));
-
-            var pSource = Expression.Parameter(sourceType1, "source");
-            var eSource = (Expression) (type.IsAssignableFrom(sourceType1) ? pSource : Expression.Convert(pSource, type));
-            var rValue = fi != null
-                ? (Expression) Expression.Field(eSource, fi)
-                : Expression.Property(eSource, pi!);
-
-            var body = isValueUntyped1
-                ? Expression.Convert(rValue, typeof(object))
-                : rValue;
-            return Expression.Lambda(body, pSource).Compile();
+            var (propertyOrField1, sourceType1, isValueUntyped1) = key1;
+            var valueType = isValueUntyped1 ? typeof(object) : propertyOrField1.ReturnType();
+            return CreateGetter(sourceType1, propertyOrField1, valueType);
         });
     }
 
-    public static Delegate GetSetter(this MemberInfo propertyOrFieldInfo, Type sourceType, bool isValueUntyped = false)
+    private static Delegate GetSetter(this MemberInfo propertyOrField, Type sourceType, bool isValueUntyped = false)
     {
-        var key = (propertyOrFieldInfo, sourceType, isValueUntyped);
-        // ReSharper disable once InconsistentlySynchronizedField
+        var key = (propertyOrField, sourceType, isValueUntyped);
         return SetterCache.GetOrAdd(key, static key1 => {
-            var (propertyOrFieldInfo1, sourceType1, isValueUntyped1) = key1;
-            var type = propertyOrFieldInfo1.DeclaringType!;
-            var fi = propertyOrFieldInfo1 as FieldInfo;
-            var pi = propertyOrFieldInfo1 as PropertyInfo;
-            if (fi == null && pi == null)
-                throw Errors.PropertyOrFieldInfoExpected(nameof(propertyOrFieldInfo));
-
-            var pSource = Expression.Parameter(sourceType1, "source");
-            var eSource = (Expression) (type.IsAssignableFrom(sourceType1) ? pSource : Expression.Convert(pSource, type));
-            var lValue = fi != null
-                ? (Expression) Expression.Field(eSource, fi)
-                : Expression.Property(eSource, pi!);
-
-            var pValue = Expression.Parameter(lValue.Type, "value");
-            var rValue = (Expression) pValue;
-            if (isValueUntyped1) {
-                pValue = Expression.Parameter(typeof(object), "value");
-                rValue = Expression.Convert(pValue, lValue.Type);
-            }
-
-            var eAssign = Expression.Assign(lValue, rValue);
-            var eReturnTarget = Expression.Label();
-            var eBlock = Expression.Block(
-                eAssign,
-                Expression.Return(eReturnTarget),
-                Expression.Label(eReturnTarget));
-            return Expression.Lambda(eBlock, pSource, pValue).Compile();
+            var (propertyOrField1, sourceType1, isValueUntyped1) = key1;
+            var valueType = isValueUntyped1 ? typeof(object) : propertyOrField1.ReturnType();
+            return CreateSetter(sourceType1, propertyOrField1, valueType);
         });
+    }
+
+    private static Delegate CreateGetter(
+        Type sourceType,
+        MemberInfo propertyOrField,
+        Type valueType)
+    {
+        var funcType = typeof(Func<,>).MakeGenericType(sourceType, valueType);
+        var m = new DynamicMethod("_Getter", valueType, new[] { sourceType }, true);
+        var il = m.GetILGenerator();
+        var declaringType = propertyOrField.DeclaringType!;
+        if (propertyOrField is PropertyInfo pi) {
+            var isStatic = pi.GetMethod!.IsStatic;
+            if (!isStatic && sourceType == declaringType && valueType == pi.PropertyType)
+                return pi.GetMethod!.CreateDelegate(funcType);
+
+            if (isStatic)
+                il.Emit(OpCodes.Call, pi.GetMethod!);
+            else {
+                il.Emit(OpCodes.Ldarg_0);
+                EmitCast(il, sourceType, declaringType);
+                il.Emit(OpCodes.Callvirt, pi.GetMethod!);
+            }
+        }
+        else if (propertyOrField is FieldInfo fi) {
+            if (fi.IsStatic)
+                il.Emit(OpCodes.Ldsfld, fi);
+            else {
+                il.Emit(OpCodes.Ldarg_0);
+                EmitCast(il, sourceType, declaringType);
+                il.Emit(OpCodes.Ldfld, fi);
+            }
+        }
+        else
+            throw new ArgumentOutOfRangeException(nameof(propertyOrField));
+
+        EmitCast(il, propertyOrField.ReturnType(), valueType);
+        il.Emit(OpCodes.Ret);
+        return m.CreateDelegate(funcType);
+    }
+
+    private static Delegate CreateSetter(
+        Type sourceType,
+        MemberInfo propertyOrField,
+        Type valueType)
+    {
+        var funcType = typeof(Action<,>).MakeGenericType(sourceType, valueType);
+        var m = new DynamicMethod("_Setter", null, new[] { sourceType, valueType }, true);
+        var il = m.GetILGenerator();
+        var declaringType = propertyOrField.DeclaringType!;
+        if (propertyOrField is PropertyInfo pi) {
+            var isStatic = pi.SetMethod!.IsStatic;
+            if (!isStatic && sourceType == declaringType && valueType == pi.PropertyType)
+                return pi.SetMethod!.CreateDelegate(funcType);
+
+            if (isStatic) {
+                il.Emit(OpCodes.Ldarg_1);
+                EmitCast(il, valueType, propertyOrField.ReturnType());
+                il.Emit(OpCodes.Call, pi.SetMethod!);
+            }
+            else {
+                il.Emit(OpCodes.Ldarg_0);
+                EmitCast(il, sourceType, declaringType);
+                il.Emit(OpCodes.Ldarg_1);
+                EmitCast(il, valueType, propertyOrField.ReturnType());
+                il.Emit(OpCodes.Callvirt, pi.SetMethod!);
+            }
+        }
+        else if (propertyOrField is FieldInfo fi) {
+            if (fi.IsStatic) {
+                il.Emit(OpCodes.Ldarg_1);
+                EmitCast(il, valueType, propertyOrField.ReturnType());
+                il.Emit(OpCodes.Stsfld, fi);
+            }
+            else {
+                il.Emit(OpCodes.Ldarg_0);
+                EmitCast(il, sourceType, declaringType);
+                il.Emit(OpCodes.Ldarg_1);
+                EmitCast(il, valueType, propertyOrField.ReturnType());
+                il.Emit(OpCodes.Stfld, fi);
+            }
+        }
+        else
+            throw new ArgumentOutOfRangeException(nameof(propertyOrField));
+
+        il.Emit(OpCodes.Ret);
+        return m.CreateDelegate(funcType);
+    }
+
+    private static void EmitCast(ILGenerator il, Type fromType, Type toType)
+    {
+        if (fromType == toType)
+            return;
+
+        if (toType.IsAssignableFrom(fromType)) {
+            // Upcast (... -> base)
+            if (!fromType.IsValueType)
+                return; // No cast is needed in this case
+
+            // struct -> Object
+            il.Emit(OpCodes.Box, fromType);
+            return;
+        }
+
+        if (!fromType.IsAssignableFrom(toType)) // Cast between two types which aren't related
+            throw new ArgumentOutOfRangeException();
+
+        // Downcast (base -> ...)
+        il.Emit(OpCodes.Castclass, toType);
+        if (toType.IsValueType)
+            il.Emit(OpCodes.Unbox_Any, toType);
     }
 }

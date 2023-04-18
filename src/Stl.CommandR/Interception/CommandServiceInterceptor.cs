@@ -40,7 +40,7 @@ public class CommandServiceInterceptor : InterceptorBase
     {
         try {
             var type = initialInvocation.Proxy.GetType().NonProxyType();
-            var methodDef = new CommandHandlerMethodDef(type, method, this);
+            var methodDef = new CommandHandlerMethodDef(type, method);
             return methodDef.IsValid ? methodDef : null;
         }
         catch {
@@ -62,7 +62,7 @@ public class CommandServiceInterceptor : InterceptorBase
             if (attr == null)
                 continue;
 
-            var methodDef = new CommandHandlerMethodDef(type, method, this);
+            var methodDef = new CommandHandlerMethodDef(type, method);
             var attributeName = attr.GetType().GetName()
 #if NETSTANDARD2_0
                 .Replace(nameof(Attribute), "");

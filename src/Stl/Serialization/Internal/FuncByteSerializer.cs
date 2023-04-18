@@ -4,21 +4,26 @@ namespace Stl.Serialization.Internal;
 
 public class FuncByteSerializer<T> : IByteSerializer<T>
 {
-    public Func<byte[], T> Reader { get; }
-    public Func<T, byte[]> Writer { get; }
+    public Func<ReadOnlyMemory<byte>, (T Value, int ReadLength)> Reader { get; }
+    public Action<IBufferWriter<byte>, T> Writer { get; }
 
-    public FuncByteSerializer(Func<byte[], T> reader, Func<T, byte[]> writer)
+    public FuncByteSerializer(
+        Func<ReadOnlyMemory<byte>, (T Value, int ReadLength)> reader, 
+        Action<IBufferWriter<byte>, T> writer)
     {
         Reader = reader;
         Writer = writer;
     }
 
-    public T Read(ReadOnlyMemory<byte> data) 
-        => Reader.Invoke(data.ToArray());
+    public T Read(ReadOnlyMemory<byte> data, out int readLength)
+    {
+        var result = Reader.Invoke(data);
+        readLength = result.ReadLength;
+        return result.Value;
+    }
 
     public void Write(IBufferWriter<byte> bufferWriter, T value)
     {
-        var result = Writer.Invoke(value);
-        bufferWriter.Write(result);
+        Writer.Invoke(bufferWriter, value);
     }
 }

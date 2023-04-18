@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Conversion;
-using Stl.Extensibility;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Interception;
@@ -47,7 +46,6 @@ public readonly struct FusionBuilder
 
         // Compute services & their dependencies
         Services.TryAddSingleton(_ => new ComputedOptionsProvider());
-        Services.TryAddSingleton<IMatchingTypeFinder>(_ => new MatchingTypeFinder());
         Services.TryAddSingleton(TransientErrorDetector.DefaultPreferTransient.For<IComputed>());
         Services.TryAddSingleton(_ => new ComputeMethodInterceptor.Options());
         Services.TryAddSingleton(c => new ComputeMethodInterceptor(
@@ -73,7 +71,7 @@ public readonly struct FusionBuilder
         var commander = Services.AddCommander();
         Services.TryAddSingleton(_ => new AgentInfo());
         Services.TryAddSingleton(c => new InvalidationInfoProvider(
-            c.Commander(), c.GetRequiredService<ICommandHandlerResolver>()));
+            c.Commander(), c.GetRequiredService<CommandHandlerResolver>()));
 
         // Transient operation scope & its provider
         if (!Services.HasService<TransientOperationScopeProvider>()) {

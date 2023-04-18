@@ -1,5 +1,3 @@
-using System.Linq.Expressions;
-
 namespace Stl.Reflection;
 
 public static class MemberwiseCloner
@@ -8,11 +6,9 @@ public static class MemberwiseCloner
 
     static MemberwiseCloner()
     {
-        var miMemberwiseClone = typeof(object)
-            .GetMethod(nameof(MemberwiseClone), BindingFlags.Instance | BindingFlags.NonPublic)!;
-        var eSource = Expression.Parameter(typeof(object), "source");
-        var eBody = Expression.Call(eSource, miMemberwiseClone);
-        MemberwiseCloneFunc = Expression.Lambda<Func<object, object>>(eBody, eSource).Compile();
+        MemberwiseCloneFunc = (Func<object, object>)typeof(object)
+            .GetMethod(nameof(MemberwiseClone), BindingFlags.Instance | BindingFlags.NonPublic)!
+            .CreateDelegate(typeof(Func<object, object>));
     }
 
     public static T Invoke<T>(T source)

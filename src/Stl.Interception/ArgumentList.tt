@@ -41,16 +41,26 @@
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable ArrangeConstructorOrDestructorBody
 using Cysharp.Text;
+using System.Reflection.Emit;
 
 namespace Stl.Interception;
 
 [DataContract]
-public record ArgumentList
+public abstract record ArgumentList
 {
-    public static ArgumentList Empty { get; } = new();
+    protected static readonly ConcurrentDictionary<(Type, MethodInfo), Func<object, ArgumentList, object?>> InvokerCache = new();
+
+    public static ArgumentList Empty { get; } = new ArgumentList0();
+    public static ImmutableArray<Type> Types { get; } = ImmutableArray.Create(new [] {
+        typeof(ArgumentList),
+<# for (var itemCount = 1; itemCount <= maxItemCount; itemCount++) {
+#>
+        typeof(ArgumentList<<#=ItemList("", itemCount)#>>),
+<# } #>
+    });
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
-    public virtual int Length => 0;
+    public abstract int Length { get; }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ArgumentList New()
@@ -69,6 +79,19 @@ public record ArgumentList
     public virtual object?[] ToArray() => Array.Empty<object?>();
     public virtual object?[] ToArray(int skipIndex) => Array.Empty<object?>();
 
+    public virtual Type?[]? GetNonDefaultItemTypes()
+        => null;
+
+#pragma warning disable MA0012
+<# 
+    for (var t = 0; t < maxItemCount; t++) {
+#>
+    public virtual T Get<#=t#><T>() => throw new IndexOutOfRangeException();
+<#
+    } 
+#>
+#pragma warning restore MA0012
+
     public virtual T Get<T>(int index)
         => throw new ArgumentOutOfRangeException(nameof(index));
     public virtual object? GetUntyped(int index)
@@ -85,6 +108,9 @@ public record ArgumentList
     public virtual void SetCancellationToken(int index, CancellationToken item)
          => throw new ArgumentOutOfRangeException(nameof(index));
 
+    public virtual void SetFrom(ArgumentList other)
+    { }
+
     public virtual ArgumentList Insert<T>(int index, T item)
         => index == 0
             ? New(item)
@@ -99,20 +125,76 @@ public record ArgumentList
     public virtual ArgumentList Remove(int index)
         => throw new ArgumentOutOfRangeException(nameof(index));
 
-    public virtual bool Equals(ArgumentList? other, int skipIndex)
-        => other?.GetType() == typeof(ArgumentList);
-    public virtual int GetHashCode(int skipIndex)
-        => 1;
+    public abstract Func<object, ArgumentList, object?> GetInvoker(MethodInfo method);
 
-    public virtual bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
-        => other?.GetType() == typeof(ArgumentList);
-    public virtual int GetHashCode(Delegate?[] equalsDelegates)
-        => 1;
+    // Equality
+
+    public abstract bool Equals(ArgumentList? other, int skipIndex);
+    public abstract int GetHashCode(int skipIndex);
+}
+
+[DataContract]
+public sealed record ArgumentList0 : ArgumentList
+{
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public override int Length => 0;
+
+    public override Func<object, ArgumentList, object?> GetInvoker(MethodInfo method)
+        => InvokerCache.GetOrAdd((GetType(), method), static key => {
+            var (listType, method1) = key;
+            if (method1.GetParameters().Length != 0)
+                throw new ArgumentOutOfRangeException(nameof(method));
+
+            var declaringType = method1.DeclaringType!;
+            var m = new DynamicMethod("_Invoke",
+                typeof(object),
+                new [] { typeof(object), typeof(ArgumentList) },
+                true);
+            var il = m.GetILGenerator();
+
+            // Cast ArgumentList to its actual type
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Castclass, listType);
+            il.Emit(OpCodes.Pop);
+
+            // Unbox target
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(declaringType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, declaringType);
+
+            // Call method
+            il.Emit(OpCodes.Callvirt, method1);
+
+            // Box return type
+            if (method1.ReturnType == typeof(void))
+                il.Emit(OpCodes.Ldnull);
+            else if (method1.ReturnType.IsValueType)
+                il.Emit(OpCodes.Box, method1.ReturnType);
+            il.Emit(OpCodes.Ret);
+            return (Func<object, ArgumentList, object?>)m.CreateDelegate(typeof(Func<object, ArgumentList, object?>));
+        });
+
+    public bool Equals(ArgumentList0? other)
+        => !ReferenceEquals(other, null);
+    public override bool Equals(ArgumentList? other, int skipIndex)
+        => other?.GetType() == typeof(ArgumentList0);
+
+    public override int GetHashCode() => 1;
+    public override int GetHashCode(int skipIndex) => 1;
 }
 
 <# for (var itemCount = 1; itemCount <= maxItemCount; itemCount++) {
     var argumentTypes = ItemList("T{0}", itemCount);
 #>
+[DataContract]
+public abstract record ArgumentList<#=itemCount#> : ArgumentList
+{
+    protected static Type?[] CreateNonDefaultItemTypes()
+        => new Type?[<#=itemCount#>];
+
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    public override int Length => <#=itemCount#>;
+}
+
 [DataContract]
 public sealed record ArgumentList<<#=argumentTypes#>>(
 <# 
@@ -123,7 +205,7 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
 <#
     } 
 #>
-) : ArgumentList
+) : ArgumentList<#=itemCount#>
 {
 <# for (var t = 0; t < itemCount; t++) { #>
     private T<#=t#> _item<#=t#> = Item<#=t#>;
@@ -133,8 +215,11 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
     [DataMember(Order = <#=t#>)] public T<#=t#> Item<#=t#> { get => _item<#=t#>; init => _item<#=t#> = value; }
 <# } #>
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
-    public override int Length => <#=itemCount#>;
+    // Default constructor
+
+    public ArgumentList()
+        : this(<# Write(ItemList("default(T{0})!", itemCount)); #>)
+    { }
 
     // ToString & ToArray
 
@@ -168,7 +253,34 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
         };
 <# } #>
 
+    // GetNonDefaultItemTypes 
+
+    public override Type?[]? GetNonDefaultItemTypes() {
+        var itemTypes = (Type?[]?)null;
+        Type? itemType;
+<# 
+    for (var t = 0; t < itemCount; t++) {
+#>
+        itemType = _item<#=t#>?.GetType();
+        if (itemType != null && itemType != typeof(T<#=t#>)) {
+            itemTypes ??= CreateNonDefaultItemTypes();
+            itemTypes[<#=t#>] = itemType;
+        }
+<#
+    } 
+#>
+        return itemTypes;
+    }
+
     // Get
+
+<# 
+    for (var t = 0; t < itemCount; t++) {
+#>
+    public override T Get<#=t#><T>() => Item<#=t#> is T value ? value : default!;
+<#
+    } 
+#>
 
     public override T Get<T>(int index)
         => index switch {
@@ -236,6 +348,19 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
         }
     }
 
+    // SetFrom
+
+    public override void SetFrom(ArgumentList other)
+    {
+<# 
+    for (var t = 0; t < itemCount; t++) {
+#>
+        _item<#=t#> = other.Get<#=t#><T<#=t#>>();
+<#
+    } 
+#>
+    }
+
     // Insert
 
     public override ArgumentList Insert<T>(int index, T item)
@@ -274,6 +399,53 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
             _ => throw new ArgumentOutOfRangeException(nameof(index))
         };
 
+    // GetInvoker
+
+    public override Func<object, ArgumentList, object?> GetInvoker(MethodInfo method)
+        => InvokerCache.GetOrAdd((GetType(), method), static key => {
+            var (listType, method1) = key;
+            var parameters = method1.GetParameters();
+            if (parameters.Length != <#=itemCount#>)
+                throw new ArgumentOutOfRangeException(nameof(method));
+<# for (var t = 0; t < itemCount; t++) { #>
+            if (parameters[<#=t#>].ParameterType != typeof(T<#=t#>))
+                throw new ArgumentOutOfRangeException(nameof(method));
+<# } #>
+
+            var declaringType = method1.DeclaringType!;
+            var m = new DynamicMethod("_Invoke",
+                typeof(object),
+                new [] { typeof(object), typeof(ArgumentList) },
+                true);
+            var il = m.GetILGenerator();
+
+            // Cast ArgumentList to its actual type
+            il.DeclareLocal(listType);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Castclass, listType);
+            il.Emit(OpCodes.Stloc_0);
+
+            // Unbox target
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(declaringType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, declaringType);
+
+<# for (var t = 0; t < itemCount; t++) { #>
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item<#=t#>")!.GetGetMethod()!);
+<# } #>
+
+            // Call method
+            il.Emit(OpCodes.Callvirt, method1);
+
+            // Box return type
+            if (method1.ReturnType == typeof(void))
+                il.Emit(OpCodes.Ldnull);
+            else if (method1.ReturnType.IsValueType)
+                il.Emit(OpCodes.Box, method1.ReturnType);
+            il.Emit(OpCodes.Ret);
+            return (Func<object, ArgumentList, object?>)m.CreateDelegate(typeof(Func<object, ArgumentList, object?>));
+        });
+
     // Equality
 
     public bool Equals(ArgumentList<<#=argumentTypes#>>? other)
@@ -283,6 +455,18 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
 
 <# for (var t = itemCount - 1; t >= 0; t--) { #>
         if (!EqualityComparer<T<#=t#>>.Default.Equals(Item<#=t#>, other.Item<#=t#>))
+            return false;
+<# } #>
+        return true;
+    }
+
+    public override bool Equals(ArgumentList? other, int skipIndex)
+    {
+        if (other is not ArgumentList<<#=argumentTypes#>> vOther)
+            return false;
+
+<# for (var t = itemCount - 1; t >= 0; t--) { #>
+        if (skipIndex != <#=t#> && !EqualityComparer<T<#=t#>>.Default.Equals(Item<#=t#>, vOther.Item<#=t#>))
             return false;
 <# } #>
         return true;
@@ -299,65 +483,12 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
         }
     }
 
-    public override bool Equals(ArgumentList? other, int skipIndex)
-    {
-        if (other is not ArgumentList<<#=argumentTypes#>> vOther)
-            return false;
-
-<# for (var t = itemCount - 1; t >= 0; t--) { #>
-        if (skipIndex != <#=t#> && !EqualityComparer<T<#=t#>>.Default.Equals(Item<#=t#>, vOther.Item<#=t#>))
-            return false;
-<# } #>
-        return true;
-    }
-
     public override int GetHashCode(int skipIndex)
     {
         unchecked {
             var hashCode = skipIndex == 0 ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
 <# for (var t = 1; t < itemCount; t++) { #>
             hashCode = 397*hashCode + (skipIndex == <#=t#> ? 0 : EqualityComparer<T<#=t#>>.Default.GetHashCode(Item<#=t#>!));
-<# } #>
-            return hashCode;
-        }
-    }
-
-    public override bool Equals(ArgumentList? other, Delegate?[] equalsDelegates)
-    {
-        if (equalsDelegates.Length < <#=itemCount#>)
-            throw new ArgumentOutOfRangeException(nameof(equalsDelegates));
-        if (other is not ArgumentList<<#=argumentTypes#>> vOther)
-            return false;
-
-<# for (var t = itemCount - 1; t >= 0; t--) { #>
-        if (equalsDelegates[<#=t#>] is Func<T<#=t#>, T<#=t#>, bool> func<#=t#>) {
-            if (!func<#=t#>.Invoke(Item<#=t#>, vOther.Item<#=t#>))
-                return false;
-        }
-        else if (!EqualityComparer<T<#=t#>>.Default.Equals(Item<#=t#>, vOther.Item<#=t#>))
-            return false;
-
-<# } #>
-        return true;
-    }
-
-    public override int GetHashCode(Delegate?[] getHashCodeDelegates)
-    {
-        if (getHashCodeDelegates.Length < <#=itemCount#>)
-            throw new ArgumentOutOfRangeException(nameof(getHashCodeDelegates));
-        unchecked {
-            int hashCode;
-            if (getHashCodeDelegates[0] is Func<T0, int> func0)
-                hashCode = func0.Invoke(Item0!);
-            else
-                hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
-
-<# for (var t = 1; t < itemCount; t++) { #>
-            if (getHashCodeDelegates[<#=t#>] is Func<T<#=t#>, int> func<#=t#>)
-                hashCode = (hashCode * 397) + func<#=t#>.Invoke(Item<#=t#>!);
-            else
-                hashCode = (hashCode * 397) + EqualityComparer<T<#=t#>>.Default.GetHashCode(Item<#=t#>!);
-
 <# } #>
             return hashCode;
         }

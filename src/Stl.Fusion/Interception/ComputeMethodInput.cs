@@ -19,7 +19,7 @@ public sealed class ComputeMethodInput : ComputedInput, IEquatable<ComputeMethod
         var arguments = invocation.Arguments;
         var hashCode = methodDef.GetHashCode()
             ^ invocation.Proxy.GetHashCode()
-            ^ arguments.GetHashCode(methodDef.CancellationTokenArgumentIndex);
+            ^ arguments.GetHashCode(methodDef.CancellationTokenIndex);
         Initialize(function, hashCode);
     }
 
@@ -34,7 +34,7 @@ public sealed class ComputeMethodInput : ComputedInput, IEquatable<ComputeMethod
         // This method fixes up the arguments before the invocation so that
         // CancellationToken is set to the correct one and CallOptions are reset.
         // In addition, it processes CallOptions.Capture.
-        var ctIndex = MethodDef.CancellationTokenArgumentIndex;
+        var ctIndex = MethodDef.CancellationTokenIndex;
         if (ctIndex < 0)
             return Invocation.InterceptedUntyped()!;
 
@@ -58,7 +58,7 @@ public sealed class ComputeMethodInput : ComputedInput, IEquatable<ComputeMethod
         if (!ReferenceEquals(MethodDef, other.MethodDef))
             return false;
 
-        return Arguments.Equals(other.Arguments, MethodDef.CancellationTokenArgumentIndex);
+        return Arguments.Equals(other.Arguments, MethodDef.CancellationTokenIndex);
     }
     public override bool Equals(ComputedInput? obj)
         => obj is ComputeMethodInput other && Equals(other);
