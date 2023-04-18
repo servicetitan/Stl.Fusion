@@ -22,6 +22,5 @@ public class RpcOutboundCallTracker
         var cancellationToken = cancellationTokenIndex >= 0
             ? boundRequest.Arguments.GetCancellationToken(cancellationTokenIndex)
             : default;
-        throw new NotImplementedException();
     }
 }
