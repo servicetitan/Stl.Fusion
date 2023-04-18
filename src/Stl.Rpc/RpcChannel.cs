@@ -1,4 +1,3 @@
-using Stl.Interception;
 using Stl.Internal;
 using Stl.Rpc.Infrastructure;
 
@@ -7,16 +6,26 @@ namespace Stl.Rpc;
 public class RpcChannel : Channel<RpcRequest>
 {
     public Symbol Name { get; init; }
+    public RpcGlobalOptions GlobalOptions { get; private set; } = null!;
     public RpcChannelOptions Options { get; private set; } = null!;
 
     public IServiceProvider Services { get; }
+    public RpcServiceRegistry ServiceRegistry { get; }
+    public RpcRequestBinder RequestBinder { get; }
+    public RpcOutboundCallTracker OutboundCalls { get; private set; }
     public ImmutableArray<RpcMiddleware> Middlewares { get; private set; } = ImmutableArray<RpcMiddleware>.Empty;
+
     protected ILogger Log { get; }
 
     public RpcChannel(IServiceProvider services)
     {
         Services = services;
         Log = services.LogFor(GetType());
+
+        GlobalOptions = services.GetRequiredService<RpcGlobalOptions>();
+        ServiceRegistry = services.GetRequiredService<RpcServiceRegistry>();
+        RequestBinder = services.GetRequiredService<RpcRequestBinder>();
+        OutboundCalls = services.GetRequiredService<RpcOutboundCallTracker>();
     }
 
     public RpcChannel BindTo(Channel<RpcRequest> channel)
@@ -54,13 +63,20 @@ public class RpcChannel : Channel<RpcRequest>
             await ProcessRequest(request, cancellationToken).ConfigureAwait(false);
     }
 
+    public ValueTask SendRequest(RpcBoundRequest boundRequest, CancellationToken cancellationToken)
+    {
+        var request = RequestBinder.FromBound(boundRequest, this);
+        return Writer.WriteAsync(request, cancellationToken);
+    }
+
     // Private methods
 
     private async Task ProcessRequest(
         RpcRequest request,
         CancellationToken cancellationToken)
     {
-        var context = new RpcContext(this, request);
+        var context = new RpcRequestContext(this, request);
+        using var _ = context.Activate();
         try {
             await context.InvokeNextMiddleware(cancellationToken).ConfigureAwait(false);
         }

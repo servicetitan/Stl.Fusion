@@ -4,4 +4,7 @@ public sealed record RpcRequest(
     string Service,
     string Method,
     object? Arguments,
-    RpcHeader[]? Headers = null);
+    List<RpcHeader>? Headers)
+{
+    public List<RpcHeader>? Headers { get; init; } = Headers?.Count > 0 ? Headers : null;
+}

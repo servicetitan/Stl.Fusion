@@ -34,8 +34,11 @@ public class NewtonsoftJsonSerializer : TextSerializerBase
         _jsonSerializer = JsonSerializer.Create(settings);
     }
 
+    // Read
+
     public override object? Read(string data, Type type)
         => _jsonSerializer.Deserialize(new StringReader(data), type);
+
     public override object? Read(ReadOnlyMemory<byte> data, Type type, out int readLength)
     {
         using var stream = data.AsStream();
@@ -44,6 +47,8 @@ public class NewtonsoftJsonSerializer : TextSerializerBase
         readLength = (int)stream.Position;
         return result;
     }
+
+    // Write
 
     public override string Write(object? value, Type type)
     {
@@ -54,5 +59,14 @@ public class NewtonsoftJsonSerializer : TextSerializerBase
         // ReSharper disable once HeapView.BoxingAllocation
         _jsonSerializer.Serialize(writer, value, type);
         return stringWriter.ToString();
+    }
+
+    public override void Write(TextWriter textWriter, object? value, Type type)
+    {
+        using var writer = new JsonTextWriter(textWriter) {
+            Formatting = _jsonSerializer.Formatting
+        };
+        // ReSharper disable once HeapView.BoxingAllocation
+        _jsonSerializer.Serialize(writer, value, type);
     }
 }

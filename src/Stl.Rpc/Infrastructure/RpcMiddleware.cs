@@ -11,5 +11,5 @@ public abstract class RpcMiddleware
         Log = services.LogFor(GetType());
     }
 
-    public abstract Task Invoke(RpcContext context, CancellationToken cancellationToken);
+    public abstract Task Invoke(RpcRequestContext context, CancellationToken cancellationToken);
 }

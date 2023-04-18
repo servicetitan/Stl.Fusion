@@ -6,7 +6,7 @@ public class RpcMiddlewareRegistry
 
     public RpcMiddlewareRegistry(IServiceProvider services)
     {
-        var middlewareTypes = services.GetRequiredService<RpcOptions>().MiddlewareTypes.ToArray();
+        var middlewareTypes = services.GetRequiredService<RpcGlobalOptions>().MiddlewareTypes.ToArray();
         Array.Reverse(middlewareTypes);
         MiddlewareTypes = middlewareTypes;
     }

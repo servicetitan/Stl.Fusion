@@ -5,11 +5,15 @@ namespace Stl.Rpc.Infrastructure;
 
 public sealed class RpcMethodDef : MethodDef
 {
+    public RpcServiceDef Service { get; }
+    public Symbol Name { get; }
+
     public Type ArgumentListType { get; }
     public Type[] RemoteParameterTypes { get; }
     public Type RemoteArgumentListType { get; }
 
-    public RpcMethodDef(Type type, MethodInfo method) : base(type, method)
+    public RpcMethodDef(RpcServiceDef service, MethodInfo method, Func<RpcMethodDef, Symbol> methodNameBuilder)
+        : base(service.Type, method)
     {
         ArgumentListType = ArgumentList.Types[Parameters.Length].MakeGenericType(ParameterTypes);
         if (CancellationTokenIndex >= 0) {
@@ -29,6 +33,9 @@ public sealed class RpcMethodDef : MethodDef
             RemoteParameterTypes = ParameterTypes;
             RemoteArgumentListType = ArgumentListType;
         }
+
+        Service = service;
+        Name = methodNameBuilder.Invoke(this);
 
         if (!IsAsyncMethod)
             IsValid = false;

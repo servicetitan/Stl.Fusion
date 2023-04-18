@@ -27,11 +27,15 @@ public sealed class AsymmetricTextSerializer : ITextSerializer
         => Reader.Read(data, type);
     public object? Read(ReadOnlyMemory<byte> data, Type type, out int readLength)
         => Reader.Read(data, type, out readLength);
+    public object? Read(ReadOnlyMemory<char> data, Type type)
+        => Reader.Read(data, type);
 
     public string Write(object? value, Type type)
         => Writer.Write(value, type);
     public void Write(IBufferWriter<byte> bufferWriter, object? value, Type type)
         => Writer.Write(bufferWriter, value, type);
+    public void Write(TextWriter textWriter, object? value, Type type)
+        => Writer.Write(textWriter, value, type);
 }
 
 public class AsymmetricTextSerializer<T> : ITextSerializer<T>
@@ -51,9 +55,13 @@ public class AsymmetricTextSerializer<T> : ITextSerializer<T>
         => Reader.Read(data);
     public T Read(ReadOnlyMemory<byte> data, out int readLength)
         => Reader.Read(data, out readLength);
+    public T Read(ReadOnlyMemory<char> data)
+        => Reader.Read(data);
 
     public string Write(T value)
         => Writer.Write(value);
     public void Write(IBufferWriter<byte> bufferWriter, T value)
         => Writer.Write(bufferWriter, value);
+    public void Write(TextWriter textWriter, T value)
+        => Writer.Write(textWriter, value);
 }
