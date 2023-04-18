@@ -1,5 +1,3 @@
-using System.Linq.Expressions;
-
 namespace Stl.Reflection;
 
 public static class MemberwiseCloner

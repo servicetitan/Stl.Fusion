@@ -1,5 +1,3 @@
-using System.Linq.Expressions;
-
 namespace Stl.Fusion.Bridge.Messages;
 
 [DataContract]
