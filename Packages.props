@@ -50,7 +50,7 @@
     <AspNetCoreMvcTestingVersionN4>$(AspNetCoreVersion5)</AspNetCoreMvcTestingVersionN4>
     <!-- Build & Samples -->
     <BlazoriseVersion>1.1.*</BlazoriseVersion>
-    <StlFusionVersion>5.1.*</StlFusionVersion>
+    <StlFusionVersion>5.2.*</StlFusionVersion>
   </PropertyGroup>
 
   <ItemGroup Label="Package Versions">
