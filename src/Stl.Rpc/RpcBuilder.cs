@@ -33,10 +33,13 @@ public readonly struct RpcBuilder
         Services.TryAddTransient(c => new RpcChannel(c));
 
         // Infrastructure
-        Services.TryAddSingleton(c => new RpcMiddlewareRegistry(c));
+        Services.TryAddSingleton(c => new RpcRequestBinder(c));
+        Services.TryAddSingleton(c => new RpcRequestHandler(c));
         Services.TryAddSingleton(c => new RpcServiceRegistry(c));
+        Services.TryAddSingleton(c => new RpcSystemCallService(c));
 
         GlobalOptions = GetOptions(services);
+        AddService<RpcSystemCallService>("$sys");
     }
 
     public RpcBuilder AddService<TService>(Symbol serviceName = default)
@@ -86,33 +89,6 @@ public readonly struct RpcBuilder
     public RpcBuilder ClearServices()
     {
         GlobalOptions.ServiceTypes.Clear();
-        return this;
-    }
-
-    public RpcBuilder AddMiddleware<TMiddleware>()
-        where TMiddleware : RpcMiddleware
-        => AddMiddleware(typeof(TMiddleware));
-    public RpcBuilder AddMiddleware(Type middlewareType)
-    {
-        if (!typeof(RpcMiddleware).IsAssignableFrom(middlewareType))
-            throw new ArgumentOutOfRangeException(nameof(middlewareType));
-
-        GlobalOptions.MiddlewareTypes.Add(middlewareType);
-        return this;
-    }
-
-    public RpcBuilder RemoveMiddleware<TMiddleware>()
-        where TMiddleware : RpcMiddleware
-        => RemoveMiddleware(typeof(TMiddleware));
-    public RpcBuilder RemoveMiddleware(Type middlewareType)
-    {
-        GlobalOptions.MiddlewareTypes.Remove(middlewareType);
-        return this;
-    }
-
-    public RpcBuilder ClearMiddlewares()
-    {
-        GlobalOptions.MiddlewareTypes.Clear();
         return this;
     }
 

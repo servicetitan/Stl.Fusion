@@ -7,16 +7,12 @@ using System.Globalization;
 
 namespace Stl.Rpc.Infrastructure;
 
-public class RpcRequestBinder
+public class RpcRequestBinder : RpcServiceBase
 {
-    private RpcGlobalOptions GlobalOptions { get; }
     private RpcServiceRegistry ServiceRegistry { get; }
 
-    public RpcRequestBinder(IServiceProvider services)
-    {
-        GlobalOptions = services.GetRequiredService<RpcGlobalOptions>();
-        ServiceRegistry = services.GetRequiredService<RpcServiceRegistry>();
-    }
+    public RpcRequestBinder(IServiceProvider services) : base(services)
+        => ServiceRegistry = services.GetRequiredService<RpcServiceRegistry>();
 
     public virtual RpcRequest FromBound(RpcBoundRequest boundRequest, RpcChannel channel)
     {

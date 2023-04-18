@@ -11,13 +11,13 @@ public class RpcRequestContext
     public RpcChannel Channel { get; }
     public RpcRequest Request { get; }
     public RpcBoundRequest? BoundRequest { get; set; }
-    public RpcRequestProcessingState ProcessingState { get; private set; }
+    public CancellationToken CancellationToken { get; }
 
-    public RpcRequestContext(RpcChannel channel, RpcRequest request)
+    public RpcRequestContext(RpcChannel channel, RpcRequest request, CancellationToken cancellationToken)
     {
         Channel = channel;
         Request = request;
-        ProcessingState = new RpcRequestProcessingState(channel.Middlewares);
+        CancellationToken = cancellationToken;
     }
 
     public ClosedDisposable<RpcRequestContext?> Activate()
@@ -25,15 +25,5 @@ public class RpcRequestContext
         var oldCurrent = CurrentLocal.Value;
         CurrentLocal.Value = this;
         return Disposable.NewClosed(oldCurrent, static oldCurrent1 => CurrentLocal.Value = oldCurrent1);
-    }
-
-    public Task InvokeNextMiddleware(CancellationToken cancellationToken)
-    {
-        if (ProcessingState.IsFinal)
-            throw Errors.NoMoreMiddlewares();
-
-        var middleware = ProcessingState.NextMiddleware;
-        ProcessingState = ProcessingState.NextState;
-        return middleware.Invoke(this, cancellationToken);
     }
 }
