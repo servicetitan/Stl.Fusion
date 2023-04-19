@@ -32,8 +32,10 @@ public static class AssemblyExt
                 var version = attrs.FirstOrDefault()?.InformationalVersion;
                 if (!version.IsNullOrEmpty())
                     return version;
+
                 if (OSInfo.IsWebAssembly)
                     return null;
+
                 try {
                     version = FileVersionInfo.GetVersionInfo(a.Location).ProductVersion;
                     return version.NullIfEmpty();

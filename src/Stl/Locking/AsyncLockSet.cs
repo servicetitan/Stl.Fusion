@@ -18,7 +18,7 @@ public class AsyncLockSet<TKey> : IAsyncLockSet<TKey>
     where TKey : notnull
 {
     public static int DefaultConcurrencyLevel => HardwareInfo.GetProcessorCountFactor();
-    public static int DefaultCapacity => OSInfo.IsWebAssembly ? 31 : 509;
+    public static int DefaultCapacity => 31;
 
     private readonly ConcurrentDictionary<TKey, Entry> _entries;
     private readonly ConcurrentPool<AsyncLock> _lockPool;

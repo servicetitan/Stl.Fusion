@@ -27,7 +27,7 @@ public class ChannelHub<T> : SafeAsyncDisposableBase, IChannelHub<T>
     public ChannelHub()
     {
         var concurrencyLevel = HardwareInfo.GetProcessorCountFactor(4, 4);
-        var capacity = OSInfo.IsWebAssembly ? 17 : 509;
+        var capacity = 17;
         Channels = new ConcurrentDictionary<Channel<T>, Unit>(concurrencyLevel, capacity);
     }
 
