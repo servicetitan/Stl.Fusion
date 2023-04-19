@@ -46,5 +46,5 @@
         => UIActionFailureTracker.Clear();
 
     private void OnUIActionFailureTrackerChanged()
-        => this.StateHasChangedAsync();
+        => this.NotifyStateHasChanged();
 }

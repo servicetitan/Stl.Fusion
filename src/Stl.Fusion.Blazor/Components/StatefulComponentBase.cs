@@ -33,7 +33,7 @@ public abstract class StatefulComponentBase : FusionComponentBase, IAsyncDisposa
     protected bool MustCallStateHasChangedAfterEvent { get; set; } = false;
 
     protected StatefulComponentBase()
-        => StateChanged = (_, _) => this.StateHasChangedAsync();
+        => StateChanged = (_, _) => this.NotifyStateHasChanged();
 
     public virtual ValueTask DisposeAsync()
     {

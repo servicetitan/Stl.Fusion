@@ -1,12 +1,13 @@
 using System.Reflection.Emit;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.RenderTree;
+using Stl.OS;
 
 namespace Stl.Fusion.Blazor;
 
 public static class ComponentExt
 {
-    private static readonly Action<ComponentBase> StateHasChangedInvoker;
+    internal static readonly Action<ComponentBase> StateHasChangedInvoker;
     private static readonly Func<ComponentBase, bool> IsInitializedGetter;
     private static readonly Func<ComponentBase, RenderHandle> RenderHandleGetter;
     private static readonly Func<RenderHandle, object?> GetOptionalComponentStateGetter;
@@ -26,22 +27,19 @@ public static class ComponentExt
     /// of the component, therefore it works even when called from another synchronization context
     /// (e.g. a thread-pool thread).
     /// </summary>
-    public static Task StateHasChangedAsync(this ComponentBase component)
+    public static void NotifyStateHasChanged(this ComponentBase component)
     {
         try {
-            return component.GetDispatcher().InvokeAsync(Invoker);
+            var dispatcher = component.GetDispatcher();
+            if (dispatcher.IsNullDispatcher())
+                StateHasChangedInvoker.Invoke(component);
+            else if (component is FusionComponentBase fc)
+                dispatcher.InvokeAsync(fc.StateHasChangedInvoker);
+            else
+                dispatcher.InvokeAsync(() => StateHasChangedInvoker.Invoke(component));
         }
         catch (ObjectDisposedException) {
-            return Task.CompletedTask;
-        }
-
-        void Invoker() {
-            try {
-                StateHasChangedInvoker(component);
-            }
-            catch (ObjectDisposedException) {
-                // Intended
-            }
+            // Intended
         }
     }
 
