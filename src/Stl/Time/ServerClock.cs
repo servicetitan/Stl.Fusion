@@ -11,17 +11,20 @@ public interface IServerClock : IMomentClock
 
 public class ServerClock : IServerClock
 {
-    private volatile Task<TimeSpan> _offsetTask = TaskSource.New<TimeSpan>(true).Task;
+    private volatile TaskCompletionSource<TimeSpan> _offsetSource = TaskCompletionSourceExt.New<TimeSpan>();
 
     public IMomentClock BaseClock { get; }
 
     public TimeSpan Offset {
-        get => _offsetTask.IsCompleted ? _offsetTask.Result : default;
+        get {
+            var offsetTask = _offsetSource.Task;
+            return offsetTask.IsCompleted ? offsetTask.Result : default;
+        }
         set {
-            if (_offsetTask.IsCompleted)
-                _offsetTask = Task.FromResult(value);
+            if (_offsetSource.Task.IsCompleted)
+                _offsetSource = TaskCompletionSourceExt.New<TimeSpan>().WithResult(value);
             else
-                TaskSource.For(_offsetTask).TrySetResult(value);
+                _offsetSource.TrySetResult(value);
         }
     }
 
@@ -32,7 +35,7 @@ public class ServerClock : IServerClock
 
     Moment IMomentClock.Now => Now;
     DateTimeOffset ISystemClock.UtcNow => Now;
-    public Task WhenReady => _offsetTask;
+    public Task WhenReady => _offsetSource.Task;
 
     public ServerClock(IMomentClock? baseClock = null)
         => BaseClock = baseClock ?? MomentClockSet.Default.CpuClock;

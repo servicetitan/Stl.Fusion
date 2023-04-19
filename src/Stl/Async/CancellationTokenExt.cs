@@ -12,40 +12,40 @@ public static class CancellationTokenExt
 
     // ToTask
 
-    public static Disposable<Task, CancellationTokenRegistration> ToTask(
+    public static Disposable<Task, (TaskCompletionSource<Unit>, CancellationTokenRegistration)> ToTask(
         this CancellationToken token,
         TaskCreationOptions taskCreationOptions = default)
     {
-        var ts = TaskSource.New<Unit>(taskCreationOptions);
-        var r = token.Register(() => ts.TrySetCanceled(token));
+        var tcs = TaskCompletionSourceExt.New<Unit>(taskCreationOptions);
+        var r = token.Register(() => tcs.TrySetCanceled(token));
 #if NETSTANDARD
-        return Disposable.New((Task) ts.Task, r, (t, r1) => {
-            r1.Dispose();
-            TaskSource.For((Task<Unit>) t).TrySetCanceled();
+        return Disposable.New((Task)tcs.Task, (tcs, r), (_, state) => {
+            state.r.Dispose();
+            state.tcs.TrySetCanceled();
         });
 #else
-        return Disposable.New((Task) ts.Task, r, (t, r1) => {
-            r1.Unregister();
-            TaskSource.For((Task<Unit>) t).TrySetCanceled();
+        return Disposable.New((Task)tcs.Task, (tcs, r), (_, state) => {
+            state.r.Unregister();
+            state.tcs.TrySetCanceled();
         });
 #endif
     }
 
-    public static Disposable<Task<T>, CancellationTokenRegistration> ToTask<T>(
+    public static Disposable<Task<T>, (TaskCompletionSource<T>, CancellationTokenRegistration)> ToTask<T>(
         this CancellationToken token,
         TaskCreationOptions taskCreationOptions = default)
     {
-        var ts = TaskSource.New<T>(taskCreationOptions);
-        var r = token.Register(() => ts.TrySetCanceled(token));
+        var tcs = TaskCompletionSourceExt.New<T>(taskCreationOptions);
+        var r = token.Register(() => tcs.TrySetCanceled(token));
 #if NETSTANDARD
-        return Disposable.New(ts.Task, r, (t, r1) => {
-            r1.Dispose();
-            TaskSource.For(t).TrySetCanceled();
+        return Disposable.New(tcs.Task, (tcs, r), (_, state) => {
+            state.r.Dispose();
+            state.tcs.TrySetCanceled();
         });
 #else
-        return Disposable.New(ts.Task, r, (t, r1) => {
-            r1.Unregister();
-            TaskSource.For(t).TrySetCanceled();
+        return Disposable.New(tcs.Task, (tcs, r), (_, state) => {
+            state.r.Unregister();
+            state.tcs.TrySetCanceled();
         });
 #endif
     }
@@ -53,20 +53,20 @@ public static class CancellationTokenExt
     // ToTaskUnsafe
 
     internal static Task ToTaskUnsafe(
-        this CancellationToken token, 
+        this CancellationToken token,
         TaskCreationOptions taskCreationOptions = default)
     {
-        var ts = TaskSource.New<Unit>(taskCreationOptions);
-        token.Register(() => ts.TrySetCanceled(token));
-        return ts.Task;
+        var tcs = TaskCompletionSourceExt.New<Unit>(taskCreationOptions);
+        token.Register(() => tcs.TrySetCanceled(token));
+        return tcs.Task;
     }
 
     internal static Task<T> ToTaskUnsafe<T>(
         this CancellationToken token,
         TaskCreationOptions taskCreationOptions = default)
     {
-        var ts = TaskSource.New<T>(taskCreationOptions);
-        token.Register(() => ts.TrySetCanceled(token));
-        return ts.Task;
+        var tcs = TaskCompletionSourceExt.New<T>(taskCreationOptions);
+        token.Register(() => tcs.TrySetCanceled(token));
+        return tcs.Task;
     }
 }

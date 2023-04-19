@@ -20,7 +20,7 @@ public sealed class Connector<TConnection> : WorkerBase
         Func<CancellationToken, Task<TConnection>> connectionFactory,
         IStateFactory stateFactory)
     {
-        _state = new ManualAsyncEvent<State>(new(), true);
+        _state = new ManualAsyncEvent<State>(State.New(), true);
         _connectionFactory = connectionFactory;
         IsConnected = stateFactory.NewMutable<bool>();
     }
@@ -60,7 +60,7 @@ public sealed class Connector<TConnection> : WorkerBase
                 return; // The connection is already renewed
 #pragma warning restore VSTHRD104
 
-            var nextState = prevState.Create(new() {
+            var nextState = prevState.Create(State.New() with {
                 LastError = error,
                 RetryIndex = prevState.Value.RetryIndex + 1,
             });
@@ -79,8 +79,8 @@ public sealed class Connector<TConnection> : WorkerBase
             state = _state;
         }
         while (true) {
-            var connectionTask = state.Value.ConnectionTask;
-            var connectionTaskSource = TaskSource.For(connectionTask);
+            var connectionSource = state.Value.ConnectionSource;
+            var connectionTask = connectionSource.Task;
             TConnection? connection = null;
             Exception? error = null;
             try {
@@ -89,11 +89,11 @@ public sealed class Connector<TConnection> : WorkerBase
                     connection = await _connectionFactory.Invoke(cancellationToken).ConfigureAwait(false);
                 else // Something 
                     connection = await connectionTask.ConfigureAwait(false);
-                connectionTaskSource.TrySetResult(connection);
+                connectionSource.TrySetResult(connection);
             }
             catch (Exception e) when (e is not OperationCanceledException) {
                 error = e;
-                connectionTaskSource.TrySetException(e);
+                connectionSource.TrySetException(e);
             }
 
             if (connection != null) {
@@ -111,8 +111,8 @@ public sealed class Connector<TConnection> : WorkerBase
 
             lock (Lock) {
                 if (state == _state) {
-                    var nextState = state.Create(new() {
-                        LastError = error, 
+                    var nextState = state.Create(State.New() with {
+                        LastError = error,
                         RetryIndex = state.Value.RetryIndex + 1,
                     });
                     _state = nextState;
@@ -151,12 +151,12 @@ public sealed class Connector<TConnection> : WorkerBase
         lock (Lock) {
             var prevState = _state;
             if (!prevState.Value.ConnectionTask.IsCompleted)
-                TaskSource.For(prevState.Value.ConnectionTask).TrySetCanceled();
-            var nextState = prevState.Create(new() {
-                ConnectionTask = Task.FromCanceled<TConnection>(StopToken),
-            });
+                prevState.Value.ConnectionSource.TrySetCanceled();
+
+            var nextState = prevState.Create(State.NewCancelled(StopToken));
             nextState.CancelNext(StopToken);
             _state = nextState;
+
             prevState.SetNext(nextState);
             prevState.Value.Dispose();
         }
@@ -167,16 +167,21 @@ public sealed class Connector<TConnection> : WorkerBase
     // Nested types
 
     private readonly record struct State(
-        Task<TConnection> ConnectionTask,
+        TaskCompletionSource<TConnection> ConnectionSource,
         Exception? LastError = null,
         int RetryIndex = 0) : IDisposable
     {
-        public State() : this(TaskSource.New<TConnection>(true).Task) { }
+        public Task<TConnection> ConnectionTask => ConnectionSource.Task;
+
+        public static State New()
+            => new (TaskCompletionSourceExt.New<TConnection>());
+        public static State NewCancelled(CancellationToken cancellationToken)
+            => new (TaskCompletionSourceExt.New<TConnection>().WithCancellation(cancellationToken));
 
         public void Dispose()
         {
             var connectionTask = ConnectionTask;
-            if (!connectionTask.IsCompletedSuccessfully())
+            if (!ConnectionTask.IsCompletedSuccessfully())
                 return;
 
             // Dispose the connection

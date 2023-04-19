@@ -24,7 +24,7 @@ public class MutableDictionary<TKey, TValue> : IMutableDictionary<TKey, TValue>
     where TKey : notnull
 {
     private readonly object _lock = new();
-    private volatile Task<Unit> _whenChangedTask;
+    private volatile TaskCompletionSource<Unit> _whenChangedSource;
     private volatile ImmutableDictionary<TKey, TValue> _items;
 
     public ImmutableDictionary<TKey, TValue> Items {
@@ -32,7 +32,7 @@ public class MutableDictionary<TKey, TValue> : IMutableDictionary<TKey, TValue>
         set => Update(value);
     }
 
-    public Task WhenChanged => _whenChangedTask;
+    public Task WhenChanged => _whenChangedSource.Task;
     public event Action? Changed;
 
     public int Count => _items.Count;
@@ -51,7 +51,7 @@ public class MutableDictionary<TKey, TValue> : IMutableDictionary<TKey, TValue>
     public MutableDictionary() : this(ImmutableDictionary<TKey, TValue>.Empty) { }
     public MutableDictionary(ImmutableDictionary<TKey, TValue> items)
     {
-        _whenChangedTask = TaskSource.New<Unit>(true).Task;
+        _whenChangedSource = TaskCompletionSourceExt.New<Unit>();
         _items = items;
     }
 
@@ -65,9 +65,9 @@ public class MutableDictionary<TKey, TValue> : IMutableDictionary<TKey, TValue>
                 return false;
 
             _items = items;
-            var taskSource = TaskSource.For(_whenChangedTask);
-            _whenChangedTask = TaskSource.New<Unit>(true).Task;
-            taskSource.TrySetResult(default);
+            var oldWhenChangedSource = _whenChangedSource;
+            _whenChangedSource = TaskCompletionSourceExt.New<Unit>();
+            oldWhenChangedSource.TrySetResult(default);
         }
         Changed?.Invoke();
         return true;
@@ -80,9 +80,9 @@ public class MutableDictionary<TKey, TValue> : IMutableDictionary<TKey, TValue>
                 return false;
 
             _items = items;
-            var taskSource = TaskSource.For(_whenChangedTask);
-            _whenChangedTask = TaskSource.New<Unit>(true).Task;
-            taskSource.TrySetResult(default);
+            var oldWhenChangedSource = _whenChangedSource;
+            _whenChangedSource = TaskCompletionSourceExt.New<Unit>();
+            oldWhenChangedSource.TrySetResult(default);
         }
         Changed?.Invoke();
         return true;
@@ -97,9 +97,9 @@ public class MutableDictionary<TKey, TValue> : IMutableDictionary<TKey, TValue>
                 return false;
 
             _items = newItems;
-            var taskSource = TaskSource.For(_whenChangedTask);
-            _whenChangedTask = TaskSource.New<Unit>(true).Task;
-            taskSource.TrySetResult(default);
+            var oldWhenChangedSource = _whenChangedSource;
+            _whenChangedSource = TaskCompletionSourceExt.New<Unit>();
+            oldWhenChangedSource.TrySetResult(default);
         }
         Changed?.Invoke();
         return true;
@@ -114,9 +114,9 @@ public class MutableDictionary<TKey, TValue> : IMutableDictionary<TKey, TValue>
                 return false;
 
             _items = newItems;
-            var taskSource = TaskSource.For(_whenChangedTask);
-            _whenChangedTask = TaskSource.New<Unit>(true).Task;
-            taskSource.TrySetResult(default);
+            var oldWhenChangedSource = _whenChangedSource;
+            _whenChangedSource = TaskCompletionSourceExt.New<Unit>();
+            oldWhenChangedSource.TrySetResult(default);
         }
         Changed?.Invoke();
         return true;

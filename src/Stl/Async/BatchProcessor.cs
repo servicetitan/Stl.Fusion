@@ -20,10 +20,10 @@ public abstract class BatchProcessorBase<TIn, TOut> : WorkerBase
     public async Task<TOut> Process(TIn input, CancellationToken cancellationToken = default)
     {
         this.Start();
-        var outputTask = TaskSource.New<TOut>(false).Task;
-        var batchItem = new BatchItem<TIn, TOut>(input, cancellationToken, outputTask);
+        var outputSource = TaskCompletionSourceExt.New<TOut>();
+        var batchItem = new BatchItem<TIn, TOut>(input, cancellationToken, outputSource);
         await Queue.Writer.WriteAsync(batchItem, cancellationToken).ConfigureAwait(false);
-        return await outputTask.ConfigureAwait(false);
+        return await outputSource.Task.ConfigureAwait(false);
     }
 
     protected override Task OnRun(CancellationToken cancellationToken)

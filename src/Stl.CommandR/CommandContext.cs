@@ -90,7 +90,8 @@ public sealed class CommandContext<TResult> : CommandContext
 {
     private Result<TResult> _result;
     public ICommand<TResult> Command { get; }
-    public readonly Task<TResult> ResultTask; // Set at the very end of the pipeline (via Complete)
+    public Task<TResult> ResultTask => ResultSource.Task;
+    public readonly TaskCompletionSource<TResult> ResultSource; // Set at the very end of the pipeline (via Complete)
 
     // Result may change while the pipeline runs
     public Result<TResult> Result {
@@ -116,7 +117,7 @@ public sealed class CommandContext<TResult> : CommandContext
         if (tCommandResult != tResult)
             throw Errors.CommandResultTypeMismatch(tResult, tCommandResult);
         Command = (ICommand<TResult>) command;
-        ResultTask = TaskSource.New<TResult>(true).Task;
+        ResultSource = new TaskCompletionSource<TResult>();
 
         var outerContext = isOutermost ? null : Current;
         if (outerContext != null && outerContext.Commander != commander)
@@ -172,5 +173,5 @@ public sealed class CommandContext<TResult> : CommandContext
         => Result = new Result<TResult>(result, null);
 
     public override bool TryComplete(CancellationToken candidateToken)
-        => TaskSource.For(ResultTask).TrySetFromResult(Result, candidateToken);
+        => ResultSource.TrySetFromResult(Result, candidateToken);
 }

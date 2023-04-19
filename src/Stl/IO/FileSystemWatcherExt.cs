@@ -39,13 +39,13 @@ public static class FileSystemWatcherExt
         TaskCreationOptions taskCreationOptions,
         CancellationToken cancellationToken = default)
     {
-        var ts = TaskSource.New<FileSystemEventArgs>(taskCreationOptions);
-        var handler = (FileSystemEventHandler) ((_, args) => ts.TrySetResult(args));
+        var tcs = TaskCompletionSourceExt.New<FileSystemEventArgs>(taskCreationOptions);
+        var handler = (FileSystemEventHandler) ((_, args) => tcs.TrySetResult(args));
         try {
             watcher.Changed += handler;
             watcher.Created += handler;
             watcher.Deleted += handler;
-            return await ts.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+            return await tcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
         }
         finally {
             watcher.Changed -= handler;

@@ -12,18 +12,18 @@ public class RedisStreamerTest : RedisTestBase
     public async Task BasicTest()
     {
         var db = GetRedisDb();
-        var started = TaskSource.New<Unit>(true);
+        var startedSource = TaskCompletionSourceExt.New<Unit>();
         var streamer = db.GetStreamer<int>("s");
         await streamer.Remove();
         var streamerCopy = db.GetStreamer<int>("s");
 
         var writeTask = streamer.Write(
             Delays(new[] {0.1, 0.2, 0.3, 0.1}),
-            _ => started.SetResult(default));
+            _ => startedSource.SetResult(default));
 
         var stream1 = streamer.Read();
         (await streamer.Read().FirstAsync()).Should().Be(0);
-        started.Task.IsCompleted.Should().BeTrue();
+        startedSource.Task.IsCompleted.Should().BeTrue();
         var stream2 = streamerCopy.Read();
 
         (await stream1.ToArrayAsync()).Should().Equal(0, 1, 2, 3);

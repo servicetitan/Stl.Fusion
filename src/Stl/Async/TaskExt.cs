@@ -18,11 +18,8 @@ public static partial class TaskExt
 
     static TaskExt()
     {
-        NeverEndingUnitTask = NeverEnding();
+        NeverEndingUnitTask = TaskCompletionSourceExt.New<Unit>().Task;
         NeverEndingTask = NeverEndingUnitTask;
-
-        async Task<Unit> NeverEnding()
-            => await TaskSource.New<Unit>(true).Task.ConfigureAwait(false);
     }
 
     // ToValueTask

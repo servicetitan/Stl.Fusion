@@ -37,7 +37,7 @@ public static class CommanderExt
     {
         var context = await commander.Run(command, isOutermost, cancellationToken).ConfigureAwait(false);
         var typedContext = (CommandContext<TResult>) context;
-        return await typedContext.ResultTask.ConfigureAwait(false);
+        return await typedContext.ResultSource.Task.ConfigureAwait(false);
     }
 
     public static async Task Call(this ICommander commander,

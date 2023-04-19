@@ -69,16 +69,16 @@ public class AsyncLock : IAsyncLock
     protected async ValueTask<Releaser> FastInternalLock(
         ReentryCounter? reentryCounter, CancellationToken cancellationToken = default)
     {
-        var newLockSrc = TaskSource.New<Unit>(_taskCreationOptions);
-        var dCancellationTokenTask = new Disposable<Task, CancellationTokenRegistration>();
+        var newLockSource = TaskCompletionSourceExt.New<Unit>(_taskCreationOptions);
+        var dCancellationTokenTask = new Disposable<Task, (TaskCompletionSource<Unit>, CancellationTokenRegistration)>();
         try {
             while (true) {
                 cancellationToken.ThrowIfCancellationRequested();
                 if (reentryCounter?.TryReenter(ReentryMode) == true)
                     return new Releaser(this, default, reentryCounter);
-                var oldLock = Interlocked.CompareExchange(ref _lock, newLockSrc.Task, null);
+                var oldLock = Interlocked.CompareExchange(ref _lock, newLockSource.Task, null);
                 if (oldLock == null)
-                    return new Releaser(this, newLockSrc, reentryCounter);
+                    return new Releaser(this, newLockSource, reentryCounter);
                 if (oldLock.IsCompleted)
                     continue; // Task.WhenAny will return immediately, so let's save a bit
                 if (dCancellationTokenTask.Resource == null!)
@@ -94,16 +94,16 @@ public class AsyncLock : IAsyncLock
     public readonly struct Releaser : IDisposable
     {
         private readonly AsyncLock _owner;
-        private readonly TaskSource<Unit> _taskSource;
+        private readonly TaskCompletionSource<Unit>? _taskSource;
         private readonly ReentryCounter? _reentryCounter;
 
-        public Releaser(AsyncLock owner, TaskSource<Unit> taskSource, ReentryCounter? reentryCounter)
+        public Releaser(AsyncLock owner, TaskCompletionSource<Unit>? taskSource, ReentryCounter? reentryCounter)
         {
             _owner = owner;
             _taskSource = taskSource;
             _reentryCounter = reentryCounter;
 
-            if (!taskSource.IsEmpty)
+            if (taskSource != null)
                 reentryCounter?.Enter(owner.ReentryMode);
         }
 
@@ -113,7 +113,7 @@ public class AsyncLock : IAsyncLock
             // locks from the same async flow to re-enter w/o actually acquiring
             // a lock, i.e. they'll be forced to acquire their own locks.
             _reentryCounter?.Leave();
-            if (_taskSource.IsEmpty)
+            if (_taskSource == null)
                 return;
 
             var lock1 = _taskSource.Task;

@@ -13,11 +13,13 @@ public sealed class ComputedGraphPruner : WorkerBase
         public int BatchSize { get; init; } = 1024 * HardwareInfo.GetProcessorCountPo2Factor();
     }
 
+    protected readonly TaskCompletionSource<Unit> WhenActivatedSource;
+
     public Options Settings { get; init; }
     public IMomentClock Clock { get; init; }
     public ILogger Log { get; init; }
 
-    public Task<Unit> WhenActivated { get; }
+    public Task<Unit> WhenActivated => WhenActivatedSource.Task;
 
     public ComputedGraphPruner(Options settings, ILogger<ComputedGraphPruner>? log = null)
         : this(settings, MomentClockSet.Default, log) { }
@@ -26,7 +28,7 @@ public sealed class ComputedGraphPruner : WorkerBase
         Settings = settings;
         Clock = clocks.CpuClock;
         Log = log ?? NullLogger<ComputedGraphPruner>.Instance;
-        WhenActivated = TaskSource.New<Unit>(true).Task;
+        WhenActivatedSource = TaskCompletionSourceExt.New<Unit>();
 
         if (settings.AutoActivate)
             this.Start();
@@ -37,7 +39,7 @@ public sealed class ComputedGraphPruner : WorkerBase
         Settings = settings;
         Clock = services.Clocks().CpuClock;
         Log = services.LogFor(GetType());
-        WhenActivated = TaskSource.New<Unit>(true).Task;
+        WhenActivatedSource = TaskCompletionSourceExt.New<Unit>();
 
         if (settings.AutoActivate)
             this.Start();
@@ -59,7 +61,7 @@ public sealed class ComputedGraphPruner : WorkerBase
             Log.LogWarning("Terminating: ComputedRegistry.Instance.GraphPruner != this");
             return;
         }
-        TaskSource.For(WhenActivated).TrySetResult(default);
+        WhenActivatedSource.TrySetResult(default);
 
         var activitySource = GetType().GetActivitySource();
 

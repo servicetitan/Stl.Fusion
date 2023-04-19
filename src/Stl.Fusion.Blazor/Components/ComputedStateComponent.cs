@@ -56,36 +56,36 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
         Task<TState> SynchronizedComputeState(
             IComputedState<TState> state, CancellationToken cancellationToken)
         {
-            var ts = TaskSource.New<TState>(true);
+            var tcs = TaskCompletionSourceExt.New<TState>();
             _ = InvokeAsync(() => {
                 var computeStateTask = ComputeState(cancellationToken);
-                return ts.TrySetFromTaskAsync(computeStateTask, cancellationToken);
+                return tcs.TrySetFromTaskAsync(computeStateTask, cancellationToken);
             });
-            return ts.Task;
+            return tcs.Task;
         }
 
         Task<TState> SynchronizedComputeStateWithExecutionContextFlow(
             IComputedState<TState> state, CancellationToken cancellationToken)
         {
-            var ts = TaskSource.New<TState>(true);
+            var tcs = TaskCompletionSourceExt.New<TState>();
             var executionContext = ExecutionContext.Capture();
             if (executionContext == null) {
                 // Nothing to restore
                 _ = InvokeAsync(() => {
                     var computeStateTask = ComputeState(cancellationToken);
-                    return ts.TrySetFromTaskAsync(computeStateTask, cancellationToken);
+                    return tcs.TrySetFromTaskAsync(computeStateTask, cancellationToken);
                 });
             }
             else {
                 _ = InvokeAsync(() => {
                     ExecutionContext.Run(executionContext, _ => {
                         var computeStateTask = ComputeState(cancellationToken);
-                        ts.TrySetFromTaskAsync(computeStateTask, cancellationToken);
+                        tcs.TrySetFromTaskAsync(computeStateTask, cancellationToken);
                     }, null);
-                    return ts.Task;
+                    return tcs.Task;
                 });
             }
-            return ts.Task;
+            return tcs.Task;
         }
     }
 

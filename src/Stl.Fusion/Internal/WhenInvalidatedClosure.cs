@@ -3,13 +3,13 @@ namespace Stl.Fusion.Internal;
 internal class WhenInvalidatedClosure
 {
     private readonly Action<IComputed> _onInvalidatedHandler;
-    private readonly TaskSource<Unit> _taskSource;
+    private readonly TaskCompletionSource<Unit> _taskSource;
     private readonly IComputed _computed;
     private readonly CancellationTokenRegistration _cancellationTokenRegistration;
 
     public Task Task => _taskSource.Task;
 
-    internal WhenInvalidatedClosure(TaskSource<Unit> taskSource, IComputed computed, CancellationToken cancellationToken)
+    internal WhenInvalidatedClosure(TaskCompletionSource<Unit> taskSource, IComputed computed, CancellationToken cancellationToken)
     {
         _taskSource = taskSource;
         _computed = computed;

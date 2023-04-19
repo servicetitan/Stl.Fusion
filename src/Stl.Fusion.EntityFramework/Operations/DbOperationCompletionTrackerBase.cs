@@ -39,7 +39,7 @@ public abstract class DbOperationCompletionTrackerBase : WorkerBase
 
     protected abstract class TenantWatcher : ProcessorBase
     {
-        private Task<Unit> _nextEventTask = null!;
+        private TaskCompletionSource<Unit> _nextEventSource = null!;
         protected Tenant Tenant { get; }
 
         protected TenantWatcher(Tenant tenant)
@@ -52,21 +52,21 @@ public abstract class DbOperationCompletionTrackerBase : WorkerBase
         public Task WaitForChanges(CancellationToken cancellationToken)
         {
             lock (Lock) {
-                var task = _nextEventTask;
-                if (_nextEventTask.IsCompleted)
+                var task = _nextEventSource;
+                if (_nextEventSource.Task.IsCompleted)
                     ReplaceNextEventTask();
-                return task.WaitAsync(cancellationToken);
+                return task.Task.WaitAsync(cancellationToken);
             }
         }
 
         protected void CompleteWaitForChanges()
         {
             lock (Lock)
-                TaskSource.For(_nextEventTask).TrySetResult(default);
+                _nextEventSource.TrySetResult(default);
         }
 
         private void ReplaceNextEventTask()
-            => _nextEventTask = TaskSource.New<Unit>(false).Task;
+            => _nextEventSource = TaskCompletionSourceExt.NewSynchronous<Unit>();
     }
 }
 

@@ -43,17 +43,17 @@ public abstract class Replica : IEquatable<Replica>, IDisposable
 
 public sealed class Replica<T> : Replica
 {
-    private static readonly Task<PublicationStateInfo<T>?> NullStateTask =
-        Task.FromResult<PublicationStateInfo<T>?>(null);
+    private static readonly TaskCompletionSource<PublicationStateInfo<T>?> NullStateUpdateRequestSource =
+        TaskCompletionSourceExt.New<PublicationStateInfo<T>?>().WithResult(null);
 
-    private volatile Task<PublicationStateInfo<T>?>? _updateRequestTask;
+    private volatile TaskCompletionSource<PublicationStateInfo<T>?>? _updateRequestSource;
     private readonly object _lock = new();
     private volatile PublicationStateInfo<T>? _state;
 
     public Computed<T>? Computed { get; private set; }
     public override PublicationStateInfo? UntypedState => _state;
     public PublicationStateInfo<T>? State => _state;
-    public override bool IsUpdateRequested => _updateRequestTask != null;
+    public override bool IsUpdateRequested => _updateRequestSource != null;
 
     public Replica(PublicationStateInfo<T> state, IReplicatorImpl replicatorImpl)
         : base(state.PublicationRef, replicatorImpl)
@@ -91,28 +91,28 @@ public sealed class Replica<T> : Replica
         => RequestUpdate(force);
     public Task<PublicationStateInfo<T>?> RequestUpdate(bool force = false)
     {
-        var updateRequestTask = _updateRequestTask;
-        if (updateRequestTask != null && !force)
-            return updateRequestTask;
+        var updateRequestSource = _updateRequestSource;
+        if (updateRequestSource != null && !force)
+            return updateRequestSource.Task;
 
         var mustSubscribe = force;
         // Double check locking
         lock (_lock) {
-            updateRequestTask = _updateRequestTask;
-            if (updateRequestTask == null) {
+            updateRequestSource = _updateRequestSource;
+            if (updateRequestSource == null) {
                 if (State != null) {
-                    updateRequestTask = _updateRequestTask = TaskSource.New<PublicationStateInfo<T>?>(true).Task;
+                    updateRequestSource = _updateRequestSource = TaskCompletionSourceExt.New<PublicationStateInfo<T>?>();
                     mustSubscribe = true;
                 }
                 else {
-                    updateRequestTask = _updateRequestTask = NullStateTask;
+                    updateRequestSource = _updateRequestSource = NullStateUpdateRequestSource;
                     mustSubscribe = false;
                 }
             }
         }
         if (mustSubscribe)
             _ = ReplicatorImpl.Subscribe(this);
-        return updateRequestTask;
+        return updateRequestSource.Task;
     }
 
     public override void UpdateUntyped(PublicationStateInfo? state)
@@ -120,7 +120,7 @@ public sealed class Replica<T> : Replica
     public void Update(PublicationStateInfo<T>? state)
     {
         PublicationStateInfo<T>? oldState;
-        Task<PublicationStateInfo<T>?>? oldUpdateRequestTask;
+        TaskCompletionSource<PublicationStateInfo<T>?>? oldUpdateRequestSource;
         lock (_lock) {
             oldState = _state;
             if (oldState == null) // Already disposed - we do "dispose just once" check here 
@@ -134,7 +134,7 @@ public sealed class Replica<T> : Replica
                 state.Output = oldState.Output;
             }
             _state = state;
-            (oldUpdateRequestTask, _updateRequestTask) = (_updateRequestTask, null);
+            (oldUpdateRequestSource, _updateRequestSource) = (_updateRequestSource, null);
         }
 
         var isChanged = state == null
@@ -143,8 +143,8 @@ public sealed class Replica<T> : Replica
         if (isChanged)
             Computed?.Invalidate();
 
-        if (oldUpdateRequestTask != null && oldUpdateRequestTask != NullStateTask)
-            TaskSource.For(oldUpdateRequestTask).TrySetResult(state);
+        if (oldUpdateRequestSource != null && oldUpdateRequestSource != NullStateUpdateRequestSource)
+            oldUpdateRequestSource.TrySetResult(state);
 
         // This is, in fact, Dispose logic
         if (state == null) {

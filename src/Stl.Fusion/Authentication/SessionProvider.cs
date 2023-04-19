@@ -17,17 +17,17 @@ public interface ISessionProvider : ISessionResolver
 
 public class SessionProvider : ISessionProvider
 {
-    protected TaskSource<Session> SessionTaskSource => TaskSource.For(SessionTask);
+    protected readonly TaskCompletionSource<Session> SessionSource = TaskCompletionSourceExt.New<Session>();
 
     public IServiceProvider Services { get; }
-    public Task<Session> SessionTask { get; } = TaskSource.New<Session>(true).Task;
+    public Task<Session> SessionTask => SessionSource.Task;
     public bool HasSession => SessionTask.IsCompleted;
     public Session Session {
         get => HasSession ? SessionTask.Result : throw Errors.NoSessionProvided();
         set {
             if (!Services.IsScoped())
                 throw Errors.SessionProviderSessionCannotBeSetForRootInstance();
-            SessionTaskSource.TrySetResult(value.Require());
+            SessionSource.TrySetResult(value.Require());
         }
     }
 

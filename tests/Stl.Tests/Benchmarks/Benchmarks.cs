@@ -60,7 +60,6 @@ public class BenchmarkTest : TestBase
             return sum;
         });
         RunOne("Read DateTime.Now.Ticks", baseOpCount, opCount => {
-
             var sum = 0L;
             for (; opCount > 0; opCount--) {
                 sum += DateTime.Now.Ticks;

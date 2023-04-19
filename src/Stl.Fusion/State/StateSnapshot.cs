@@ -25,8 +25,8 @@ public interface IStateSnapshot<T> : IStateSnapshot
 
 public class StateSnapshot<T> : IStateSnapshot<T>
 {
-    private TaskSource<Unit> WhenUpdatingSource { get; }
-    private TaskSource<Unit> WhenUpdatedSource { get; }
+    private TaskCompletionSource<Unit> WhenUpdatingSource { get; }
+    private TaskCompletionSource<Unit> WhenUpdatedSource { get; }
 
     public IState<T> State { get; }
     public Computed<T> Computed { get; }
@@ -44,8 +44,8 @@ public class StateSnapshot<T> : IStateSnapshot<T>
         State = state;
         Computed = computed;
         LastNonErrorComputed = computed;
-        WhenUpdatingSource = TaskSource.New<Unit>(true);
-        WhenUpdatedSource = TaskSource.New<Unit>(true);
+        WhenUpdatingSource = TaskCompletionSourceExt.New<Unit>();
+        WhenUpdatedSource = TaskCompletionSourceExt.New<Unit>();
         UpdateCount = 0;
         ErrorCount = 0;
         RetryCount = 0;
@@ -55,8 +55,8 @@ public class StateSnapshot<T> : IStateSnapshot<T>
     {
         State = prevSnapshot.State;
         Computed = computed;
-        WhenUpdatingSource = TaskSource.New<Unit>(true);
-        WhenUpdatedSource = TaskSource.New<Unit>(true);
+        WhenUpdatingSource = TaskCompletionSourceExt.New<Unit>();
+        WhenUpdatedSource = TaskCompletionSourceExt.New<Unit>();
         var error = computed.Error;
         if (error == null) {
             LastNonErrorComputed = computed;

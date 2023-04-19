@@ -4,7 +4,7 @@ namespace Stl.Redis;
 
 public sealed class RedisTaskSub : RedisSubBase
 {
-    private Task<RedisValue> _nextMessageTask = null!;
+    private TaskCompletionSource<RedisValue> _nextMessageSource = null!;
 
     public RedisTaskSub(RedisDb redisDb, RedisSubKey key,
         TimeSpan? subscribeTimeout = null)
@@ -18,7 +18,7 @@ public sealed class RedisTaskSub : RedisSubBase
     {
         await base.DisposeAsyncCore().ConfigureAwait(false);
         lock (Lock)
-            TaskSource.For(_nextMessageTask).TrySetCanceled();
+            _nextMessageSource.TrySetCanceled();
     }
 
     public Task<RedisValue> NextMessage(Task<RedisValue>? unprocessedMessageTask = null)
@@ -29,35 +29,35 @@ public sealed class RedisTaskSub : RedisSubBase
         // we were waiting for earlier is here now.
         if (unprocessedMessageTask != null)
             return unprocessedMessageTask;
-        var nextMessageTask = _nextMessageTask;
-        if (!nextMessageTask.IsCompleted)
-            return nextMessageTask;
+        var nextMessageSource = _nextMessageSource;
+        if (!nextMessageSource.Task.IsCompleted)
+            return nextMessageSource.Task;
         lock (Lock) {
-            nextMessageTask = _nextMessageTask;
-            if (!nextMessageTask.IsCompleted)
-                return nextMessageTask;
+            nextMessageSource = _nextMessageSource;
+            if (!nextMessageSource.Task.IsCompleted)
+                return nextMessageSource.Task;
             Reset();
-            return _nextMessageTask;
+            return _nextMessageSource.Task;
         }
     }
 
     protected override void OnMessage(RedisChannel redisChannel, RedisValue redisValue)
     {
         lock (Lock)
-            TaskSource.For(_nextMessageTask).TrySetResult(redisValue);
+            _nextMessageSource.TrySetResult(redisValue);
     }
 
     private void Reset()
     {
-        _nextMessageTask = TaskSource.New<RedisValue>(true).Task;
+        _nextMessageSource = TaskCompletionSourceExt.New<RedisValue>();
         if (WhenDisposed != null)
-            TaskSource.For(_nextMessageTask).TrySetCanceled();
+            _nextMessageSource.TrySetCanceled();
     }
 }
 
 public sealed class RedisTaskSub<T> : RedisSubBase
 {
-    private Task<T> _nextMessageTask = null!;
+    private TaskCompletionSource<T> _nextMessageSource = null!;
 
     public IByteSerializer<T> Serializer { get; }
 
@@ -75,7 +75,7 @@ public sealed class RedisTaskSub<T> : RedisSubBase
     {
         await base.DisposeAsyncCore().ConfigureAwait(false);
         lock (Lock)
-            TaskSource.For(_nextMessageTask).TrySetCanceled();
+            _nextMessageSource.TrySetCanceled();
     }
 
     public Task<T> NextMessage(Task<T>? unresolvedMessageTask = null)
@@ -86,15 +86,15 @@ public sealed class RedisTaskSub<T> : RedisSubBase
         // we were waiting for earlier is here now.
         if (unresolvedMessageTask != null)
             return unresolvedMessageTask;
-        var nextMessageTask = _nextMessageTask;
-        if (!nextMessageTask.IsCompleted)
-            return nextMessageTask;
+        var nextMessageSource = _nextMessageSource;
+        if (!nextMessageSource.Task.IsCompleted)
+            return nextMessageSource.Task;
         lock (Lock) {
-            nextMessageTask = _nextMessageTask;
-            if (!nextMessageTask.IsCompleted)
-                return nextMessageTask;
+            nextMessageSource = _nextMessageSource;
+            if (!nextMessageSource.Task.IsCompleted)
+                return nextMessageSource.Task;
             Reset();
-            return _nextMessageTask;
+            return _nextMessageSource.Task;
         }
     }
 
@@ -103,19 +103,18 @@ public sealed class RedisTaskSub<T> : RedisSubBase
         try {
             var value = Serializer.Read(redisValue);
             lock (Lock)
-                TaskSource.For(_nextMessageTask).TrySetResult(value);
+                _nextMessageSource.TrySetResult(value);
         }
         catch (Exception e) {
             lock (Lock)
-                TaskSource.For(_nextMessageTask).TrySetException(e);
+                _nextMessageSource.TrySetException(e);
         }
     }
 
     private void Reset()
     {
-        _nextMessageTask = TaskSource.New<T>(true).Task;
+        _nextMessageSource = TaskCompletionSourceExt.New<T>();
         if (WhenDisposed != null)
-            TaskSource.For(_nextMessageTask).TrySetCanceled();
+            _nextMessageSource.TrySetCanceled();
     }
 }
-

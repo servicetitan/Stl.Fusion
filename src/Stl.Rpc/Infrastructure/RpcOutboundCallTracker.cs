@@ -7,7 +7,7 @@ public class RpcOutboundCallTracker
     public Task<T> Create<T>(out long resultId)
     {
         resultId = Interlocked.Increment(ref _lastResultId);
-        return TaskSource.New<T>(true).Task;
+        return Task.FromResult(default(T)!);
     }
 
     public Task Complete(long resultId, object result)
