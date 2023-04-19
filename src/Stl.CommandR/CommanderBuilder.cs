@@ -121,6 +121,14 @@ public readonly struct CommanderBuilder
         foreach (var method in methods) {
             if (interfaceMethods.Contains(method))
                 continue;
+            if (!method.ReturnType.IsTaskOrValueTask())
+                continue;
+            var parameters = method.GetParameters();
+            if (parameters.Length == 0)
+                continue;
+            if (!typeof(ICommand).IsAssignableFrom(parameters[0].ParameterType))
+                continue;
+
             var handler = MethodCommandHandler.TryNew(serviceType, method, priorityOverride);
             if (handler == null)
                 continue;

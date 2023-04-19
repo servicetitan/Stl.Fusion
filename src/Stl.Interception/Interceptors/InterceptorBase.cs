@@ -71,6 +71,7 @@ public abstract class InterceptorBase : Interceptor, IHasServices
         _validateTypeCache.GetOrAdd(type, static (type1, self) => {
             self.Log.Log(self.ValidationLogLevel, "Validating: '{Type}'", type1);
             try {
+                self.ValidateTypeInternal(type1);
             }
             catch (Exception e) {
                 self.Log.LogCritical(e, "Validation of '{Type}' failed", type1);
