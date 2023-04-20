@@ -1,18 +1,24 @@
 namespace Stl.Fusion.UI;
 
-public class UIActionFailureTracker : MutableList<IUIActionResult>
+public sealed class UIActionFailureTracker : MutableList<IUIActionResult>
 {
-    protected UIActionFailureTracker() { }
-    public UIActionFailureTracker(UIActionTracker uiActionTracker)
-    {
-        // !!! This task will run till the moment UIActionTracker is disposed
-        Task.Run(async () => {
-            var failures = uiActionTracker.Results.Where(e => e.HasError);
-            await foreach (var failure in failures.ConfigureAwait(false))
-                Add(failure);
-        });
-    }
+    public Task WhenTracking { get; }
+
+    public UIActionFailureTracker(UIActionTracker actionTracker)
+        => WhenTracking = TrackFailures(actionTracker, actionTracker.StopToken);
 
     public override string ToString()
         => $"{GetType().GetName()}({Count} item(s))";
+
+    private async Task TrackFailures(UIActionTracker actionTracker, CancellationToken cancellationToken = default)
+    {
+        var lastResultEvent = actionTracker.LastResultEvent;
+        while (true) {
+            lastResultEvent = await lastResultEvent.WhenNext().WaitAsync(cancellationToken).ConfigureAwait(false);
+            var result = lastResultEvent.Value;
+            if (result is { HasError: true })
+                Add(result);
+        }
+        // ReSharper disable once FunctionNeverReturns
+    }
 }

@@ -1,12 +1,7 @@
-using Stl.Fusion.UI.Internal;
-
 namespace Stl.Fusion.UI;
 
-public class UIActionTracker : IHasServices, IDisposable
+public class UIActionTracker : ProcessorBase, IHasServices, IDisposable
 {
-    private static readonly UnboundedChannelOptions ChannelOptions =
-        new() { AllowSynchronousContinuations = false };
-
     public record Options {
         public TimeSpan MaxInvalidationDelay { get; init; } = TimeSpan.FromMilliseconds(300);
         public IMomentClock? Clock { get; init; }
@@ -16,18 +11,12 @@ public class UIActionTracker : IHasServices, IDisposable
     protected volatile ManualAsyncEvent<UIAction?> LastActionEventField;
     protected volatile ManualAsyncEvent<IUIActionResult?> LastResultEventField;
 
-    protected HashSet<Channel<UIAction>> ActionChannels { get; } = new();
-    protected HashSet<Channel<IUIActionResult>> ResultChannels { get; } = new();
-    protected bool IsDisposed { get; private set; }
-
     public Options Settings { get; }
     public IServiceProvider Services { get; }
     public IMomentClock Clock { get; }
     public ILogger Log { get; }
 
     public long RunningActionCount => Interlocked.Read(ref RunningActionCountValue);
-    public IAsyncEnumerable<UIAction> Actions => GetActions();
-    public IAsyncEnumerable<IUIActionResult> Results => GetResults();
     public AsyncEvent<UIAction?> LastActionEvent => LastActionEventField;
     public AsyncEvent<IUIActionResult?> LastResultEvent => LastResultEventField;
 
@@ -42,44 +31,24 @@ public class UIActionTracker : IHasServices, IDisposable
         LastResultEventField = new ManualAsyncEvent<IUIActionResult?>(null, true);
     }
 
-    public void Dispose()
+    protected override Task DisposeAsyncCore()
     {
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    protected virtual void Dispose(bool disposing)
-    {
-        // Intentionally ignore disposing flag here
-        lock (ActionChannels) {
-            lock (ResultChannels) {
-                if (IsDisposed)
-                    return;
-                IsDisposed = true;
-                foreach (var channel in ActionChannels)
-                    channel.Writer.Complete();
-                ActionChannels.Clear();
-                foreach (var channel in ResultChannels)
-                    channel.Writer.Complete();
-                ResultChannels.Clear();
-                Interlocked.Exchange(ref RunningActionCountValue, 0);
-            }
-        }
+        Interlocked.Exchange(ref RunningActionCountValue, 0);
+        return Task.CompletedTask;
     }
 
     public virtual void Register(UIAction action)
     {
-        lock (ActionChannels) {
-            if (IsDisposed)
+        lock (Lock) {
+            if (WhenDisposed != null)
                 return;
+
             Interlocked.Increment(ref RunningActionCountValue);
             try {
                 var prevEvent = LastActionEventField;
                 var nextEvent = prevEvent.Create(action);
                 LastActionEventField = nextEvent;
                 prevEvent.SetNext(nextEvent);
-                foreach (var channel in ActionChannels)
-                    channel.Writer.TryWrite(action);
             }
             catch (Exception e) {
                 // We need to keep this count consistent if above block somehow fails
@@ -89,6 +58,7 @@ public class UIActionTracker : IHasServices, IDisposable
                 throw;
             }
         }
+
         action.WhenCompleted().ContinueWith(_ => {
             Interlocked.Decrement(ref RunningActionCountValue);
             var result = action.UntypedResult;
@@ -96,15 +66,15 @@ public class UIActionTracker : IHasServices, IDisposable
                 Log.LogError("UI action has completed w/o a result: {Action}", action);
                 return;
             }
-            lock (ResultChannels) {
-                if (IsDisposed)
+
+            lock (Lock) {
+                if (WhenDisposed != null)
                     return;
+
                 var prevEvent = LastResultEventField;
                 var nextEvent = prevEvent.Create(result);
                 LastResultEventField = nextEvent;
                 prevEvent.SetNext(nextEvent);
-                foreach (var channel in ResultChannels)
-                    channel.Writer.TryWrite(result);
             }
         }, default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
     }
@@ -124,42 +94,4 @@ public class UIActionTracker : IHasServices, IDisposable
 
     public Task WhenInstantUpdatesEnabled()
         => AreInstantUpdatesEnabled() ? Task.CompletedTask : LastActionEvent.WhenNext();
-
-    // Protected methods
-
-    protected virtual async IAsyncEnumerable<UIAction> GetActions(
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        var channel = Channel.CreateUnbounded<UIAction>(ChannelOptions);
-        lock (ActionChannels) {
-            if (IsDisposed)
-                yield break;
-            ActionChannels.Add(channel);
-        }
-        var reader = channel.Reader;
-        while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
-        while (reader.TryRead(out var item))
-            yield return item;
-        lock (ActionChannels) {
-            ActionChannels.Remove(channel);
-        }
-    }
-
-    protected virtual async IAsyncEnumerable<IUIActionResult> GetResults(
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        var channel = Channel.CreateUnbounded<IUIActionResult>(ChannelOptions);
-        lock (ResultChannels) {
-            if (IsDisposed)
-                yield break;
-            ResultChannels.Add(channel);
-        }
-        var reader = channel.Reader;
-        while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
-        while (reader.TryRead(out var item))
-            yield return item;
-        lock (ResultChannels) {
-            ResultChannels.Remove(channel);
-        }
-    }
 }
