@@ -1,24 +1,24 @@
 namespace Stl.Fusion.UI;
 
-public class UIActionTracker : ProcessorBase, IHasServices, IDisposable
+public sealed class UIActionTracker : ProcessorBase, IHasServices
 {
-    public record Options {
-        public TimeSpan MaxInvalidationDelay { get; init; } = TimeSpan.FromMilliseconds(300);
+    public sealed record Options {
+        public TimeSpan InstantUpdatePeriod { get; init; } = TimeSpan.FromMilliseconds(300);
         public IMomentClock? Clock { get; init; }
     }
 
-    protected long RunningActionCountValue;
-    protected volatile ManualAsyncEvent<UIAction?> LastActionEventField;
-    protected volatile ManualAsyncEvent<IUIActionResult?> LastResultEventField;
+    private long _runningActionCount;
+    private volatile ManualAsyncEvent<UIAction?> _lastActionEvent;
+    private volatile ManualAsyncEvent<IUIActionResult?> _lastResultEvent;
 
     public Options Settings { get; }
     public IServiceProvider Services { get; }
     public IMomentClock Clock { get; }
     public ILogger Log { get; }
 
-    public long RunningActionCount => Interlocked.Read(ref RunningActionCountValue);
-    public AsyncEvent<UIAction?> LastActionEvent => LastActionEventField;
-    public AsyncEvent<IUIActionResult?> LastResultEvent => LastResultEventField;
+    public long RunningActionCount => Interlocked.Read(ref _runningActionCount);
+    public AsyncEvent<UIAction?> LastActionEvent => _lastActionEvent;
+    public AsyncEvent<IUIActionResult?> LastResultEvent => _lastResultEvent;
 
     public UIActionTracker(Options options, IServiceProvider services)
     {
@@ -27,32 +27,33 @@ public class UIActionTracker : ProcessorBase, IHasServices, IDisposable
         Clock = options.Clock ?? services.Clocks().CpuClock;
         Log = services.LogFor(GetType());
 
-        LastActionEventField = new ManualAsyncEvent<UIAction?>(null, true);
-        LastResultEventField = new ManualAsyncEvent<IUIActionResult?>(null, true);
+        _lastActionEvent = new ManualAsyncEvent<UIAction?>(null, true);
+        _lastResultEvent = new ManualAsyncEvent<IUIActionResult?>(null, true);
     }
 
     protected override Task DisposeAsyncCore()
     {
-        Interlocked.Exchange(ref RunningActionCountValue, 0);
+        Interlocked.Exchange(ref _runningActionCount, 0);
         return Task.CompletedTask;
     }
 
-    public virtual void Register(UIAction action)
+    public void Register(UIAction action)
     {
         lock (Lock) {
             if (WhenDisposed != null)
                 return;
 
-            Interlocked.Increment(ref RunningActionCountValue);
+            Interlocked.Increment(ref _runningActionCount);
+
             try {
-                var prevEvent = LastActionEventField;
+                var prevEvent = _lastActionEvent;
                 var nextEvent = prevEvent.Create(action);
-                LastActionEventField = nextEvent;
+                _lastActionEvent = nextEvent;
                 prevEvent.SetNext(nextEvent);
             }
             catch (Exception e) {
                 // We need to keep this count consistent if above block somehow fails
-                Interlocked.Decrement(ref RunningActionCountValue);
+                Interlocked.Decrement(ref _runningActionCount);
                 if (e is not OperationCanceledException)
                     Log.LogError("UI action registration failed: {Action}", action);
                 throw;
@@ -60,20 +61,21 @@ public class UIActionTracker : ProcessorBase, IHasServices, IDisposable
         }
 
         action.WhenCompleted().ContinueWith(_ => {
-            Interlocked.Decrement(ref RunningActionCountValue);
-            var result = action.UntypedResult;
-            if (result == null) {
-                Log.LogError("UI action has completed w/o a result: {Action}", action);
-                return;
-            }
-
             lock (Lock) {
                 if (WhenDisposed != null)
                     return;
 
-                var prevEvent = LastResultEventField;
+                Interlocked.Decrement(ref _runningActionCount);
+
+                var result = action.UntypedResult;
+                if (result == null) {
+                    Log.LogError("UI action has completed w/o a result: {Action}", action);
+                    return;
+                }
+
+                var prevEvent = _lastResultEvent;
                 var nextEvent = prevEvent.Create(result);
-                LastResultEventField = nextEvent;
+                _lastResultEvent = nextEvent;
                 prevEvent.SetNext(nextEvent);
             }
         }, default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
@@ -81,15 +83,13 @@ public class UIActionTracker : ProcessorBase, IHasServices, IDisposable
 
     public bool AreInstantUpdatesEnabled()
     {
-        // 1. When any action is running
         if (RunningActionCount > 0)
             return true;
 
-        // 2. When invalidations triggered by the most recent action are still coming
-        if (LastResultEvent.Value?.CompletedAt >= Clock.Now - Settings.MaxInvalidationDelay)
-            return true;
+        if (LastResultEvent.Value is not { } lastResult)
+            return false;
 
-        return false;
+        return lastResult.CompletedAt + Settings.InstantUpdatePeriod >= Clock.Now;
     }
 
     public Task WhenInstantUpdatesEnabled()
