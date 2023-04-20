@@ -3,7 +3,7 @@ namespace Stl.Async.Internal;
 // Based on https://github.com/dotnet/runtime/issues/22144#issuecomment-1328319861
 
 [StructLayout(LayoutKind.Auto)]
-public readonly struct VoidTaskAwaiter<TTask> : ICriticalNotifyCompletion
+public readonly struct SilentTaskAwaiter<TTask> : ICriticalNotifyCompletion
     where TTask : Task
 {
     private readonly TTask _task;
@@ -11,13 +11,13 @@ public readonly struct VoidTaskAwaiter<TTask> : ICriticalNotifyCompletion
 
     public bool IsCompleted => _task.IsCompleted;
 
-    public VoidTaskAwaiter(TTask task, bool captureContext = true)
+    public SilentTaskAwaiter(TTask task, bool captureContext = true)
     {
         _task = task;
         _captureContext = captureContext;
     }
 
-    public VoidTaskAwaiter<TTask> GetAwaiter() => this;
+    public SilentTaskAwaiter<TTask> GetAwaiter() => this;
     public void GetResult() { }
 
     public void OnCompleted(Action action)
