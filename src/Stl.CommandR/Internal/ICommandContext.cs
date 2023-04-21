@@ -23,5 +23,5 @@ internal interface ICommandContext : IHasServices, IRequirementTarget
     void SetResult(object value);
     void SetResult(Exception exception);
 
-    bool TryComplete(CancellationToken candidateToken);
+    bool TryComplete(CancellationToken cancellationToken);
 }

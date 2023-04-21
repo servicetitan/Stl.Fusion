@@ -4,7 +4,7 @@ namespace Stl.Async;
 
 public static partial class TaskExt
 {
-    // VoidAwait
+    // SilentAwait
 
     public static SilentTaskAwaiter<TTask> SilentAwait<TTask>(this TTask task, bool captureContext = true)
         where TTask : Task

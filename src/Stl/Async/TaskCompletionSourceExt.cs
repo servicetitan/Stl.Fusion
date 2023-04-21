@@ -40,33 +40,41 @@ public static class TaskCompletionSourceExt
         return value;
     }
 
-    public static TaskCompletionSource<T> WithCancellation<T>(this TaskCompletionSource<T> value)
+    public static TaskCompletionSource<T> WithCancellation<T>(this TaskCompletionSource<T> value, CancellationToken cancellationToken = default)
     {
-        value.TrySetCanceled();
-        return value;
-    }
-
-    public static TaskCompletionSource<T> WithCancellation<T>(this TaskCompletionSource<T> value, CancellationToken cancellationToken)
-    {
-        value.TrySetCanceled(cancellationToken);
+        if (cancellationToken.IsCancellationRequested)
+            value.TrySetCanceled(cancellationToken);
+        else
+            value.TrySetCanceled();
         return value;
     }
 
     // (Try)SetFromTask
 
-    public static void SetFromTask<T>(this TaskCompletionSource<T> target, Task<T> task, CancellationToken candidateToken)
+    public static void SetFromTask<T>(this TaskCompletionSource<T> target, Task<T> task, CancellationToken cancellationToken = default)
     {
-        if (task.IsCanceled)
+        if (task.IsCanceled) {
+#if NET5_0_OR_GREATER
+            if (cancellationToken.IsCancellationRequested)
+                target.SetCanceled(cancellationToken);
+            else
+                // ReSharper disable once MethodSupportsCancellation
+                target.SetCanceled();
+#else
             target.SetCanceled();
+#endif
+        }
         else if (task.Exception != null)
             target.SetException(task.Exception.GetBaseException());
         else
             target.SetResult(task.Result);
     }
 
-    public static bool TrySetFromTask<T>(this TaskCompletionSource<T> target, Task<T> task, CancellationToken candidateToken)
+    public static bool TrySetFromTask<T>(this TaskCompletionSource<T> target, Task<T> task, CancellationToken cancellationToken = default)
         => task.IsCanceled
-            ? target.TrySetCanceled(candidateToken.IsCancellationRequested ? candidateToken : default)
+            ? cancellationToken.IsCancellationRequested
+                ? target.TrySetCanceled(cancellationToken)
+                : target.TrySetCanceled()
             : task.Exception != null
                 ? target.TrySetException(task.Exception.GetBaseException())
                 : target.TrySetResult(task.Result);
@@ -74,31 +82,44 @@ public static class TaskCompletionSourceExt
     // (Try)SetFromTaskAsync
 
     public static Task SetFromTaskAsync<T>(this TaskCompletionSource<T> target, Task<T> task, CancellationToken cancellationToken = default)
-        => task.ContinueWith(
-            t => target.SetFromTask(t, cancellationToken),
-            default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+    {
+        task.GetAwaiter().OnCompleted(() => target.SetFromTask(task, cancellationToken));
+        return target.Task;
+    }
 
     public static Task TrySetFromTaskAsync<T>(this TaskCompletionSource<T> target, Task<T> task, CancellationToken cancellationToken = default)
-        => task.ContinueWith(
-            t => target.TrySetFromTask(t, cancellationToken),
-            default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+    {
+        task.GetAwaiter().OnCompleted(() => target.TrySetFromTask(task, cancellationToken));
+        return target.Task;
+    }
 
     // (Try)SetFromResult
 
-    public static void SetFromResult<T>(this TaskCompletionSource<T> target, Result<T> result, CancellationToken candidateToken)
+    public static void SetFromResult<T>(this TaskCompletionSource<T> target, Result<T> result, CancellationToken cancellationToken = default)
     {
         if (result.IsValue(out var v, out var e))
             target.SetResult(v);
-        else if (e is OperationCanceledException && candidateToken.IsCancellationRequested)
+        else if (e is OperationCanceledException) {
+#if NET5_0_OR_GREATER
+            if (cancellationToken.IsCancellationRequested)
+                target.SetCanceled(cancellationToken);
+            else
+                // ReSharper disable once MethodSupportsCancellation
+                target.SetCanceled();
+#else
             target.SetCanceled();
+#endif
+        }
         else
             target.SetException(e);
     }
 
-    public static bool TrySetFromResult<T>(this TaskCompletionSource<T> target, Result<T> result, CancellationToken candidateToken)
+    public static bool TrySetFromResult<T>(this TaskCompletionSource<T> target, Result<T> result, CancellationToken cancellationToken = default)
         => result.IsValue(out var v, out var e)
             ? target.TrySetResult(v)
-            : e is OperationCanceledException && candidateToken.IsCancellationRequested
-                ? target.TrySetCanceled(candidateToken)
+            : e is OperationCanceledException
+                ? cancellationToken.IsCancellationRequested
+                    ? target.TrySetCanceled(cancellationToken)
+                    : target.TrySetCanceled()
                 : target.TrySetException(e);
 }

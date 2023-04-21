@@ -33,12 +33,19 @@ public sealed record UpdateDelayer(
         }
 
         // Await for either delay or the beginning of a period of instant updates
-        var whenInstantUpdatesEnabledTask = UIActionTracker.WhenInstantUpdatesEnabled();
         var now = CpuTimestamp.Now;
-        if (!whenInstantUpdatesEnabledTask.IsCompleted)
-            await whenInstantUpdatesEnabledTask
-                .WaitAsync(delay, cancellationToken)
-                .SilentAwait(false);
+        var whenInstantUpdatesEnabled = UIActionTracker.WhenInstantUpdatesEnabled();
+        if (!whenInstantUpdatesEnabled.IsCompleted) {
+            var cts = cancellationToken.CreateLinkedTokenSource();
+            try {
+                await Task
+                    .WhenAny(whenInstantUpdatesEnabled, Task.Delay(delay, cts.Token))
+                    .SuppressCancellationAwait(false);
+            }
+            finally {
+                cts.CancelAndDisposeSilently();
+            }
+        }
 
         // Ensure minDelay is enforced no matter what, otherwise we might
         // end up in a situation when updates are consuming 100% CPU

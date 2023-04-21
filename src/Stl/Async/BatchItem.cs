@@ -19,6 +19,6 @@ public readonly record struct BatchItem<TIn, TOut>(
         return OutputTask.IsCanceled;
     }
 
-    public void SetResult(Result<TOut> result, CancellationToken candidateToken)
-        => OutputSource.TrySetFromResult(result, candidateToken);
+    public void SetResult(Result<TOut> result, CancellationToken cancellationToken)
+        => OutputSource.TrySetFromResult(result, cancellationToken);
 }

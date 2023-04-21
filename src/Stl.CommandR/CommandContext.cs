@@ -83,7 +83,7 @@ public abstract class CommandContext : ICommandContext, IHasServices, IAsyncDisp
     public abstract void SetResult(object value);
     public abstract void SetResult(Exception exception);
 
-    public abstract bool TryComplete(CancellationToken candidateToken);
+    public abstract bool TryComplete(CancellationToken cancellationToken);
 }
 
 public sealed class CommandContext<TResult> : CommandContext
@@ -172,6 +172,6 @@ public sealed class CommandContext<TResult> : CommandContext
     public void SetResult(TResult result)
         => Result = new Result<TResult>(result, null);
 
-    public override bool TryComplete(CancellationToken candidateToken)
-        => ResultSource.TrySetFromResult(Result, candidateToken);
+    public override bool TryComplete(CancellationToken cancellationToken)
+        => ResultSource.TrySetFromResult(Result, cancellationToken);
 }
