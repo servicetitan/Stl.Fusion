@@ -6,12 +6,12 @@ public sealed class ManualAsyncEvent<T> : AsyncEvent<T>
         : base(value, runContinuationsAsynchronously)
     { }
 
-    public ManualAsyncEvent<T> Create(T value)
+    public ManualAsyncEvent<T> CreateNext(T value)
         => new(value, RunContinuationsAsynchronously);
 
     public void SetNext(AsyncEvent<T> next)
         => WhenNextSource.TrySetResult(next);
 
-    public void CancelNext(CancellationToken cancellationToken)
+    public void CancelNext(CancellationToken cancellationToken = default)
         => WhenNextSource.TrySetCanceled(cancellationToken);
 }

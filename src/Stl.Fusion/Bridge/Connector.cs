@@ -60,7 +60,7 @@ public sealed class Connector<TConnection> : WorkerBase
                 return; // The connection is already renewed
 #pragma warning restore VSTHRD104
 
-            var nextState = prevState.Create(State.New() with {
+            var nextState = prevState.CreateNext(State.New() with {
                 LastError = error,
                 RetryIndex = prevState.Value.RetryIndex + 1,
             });
@@ -111,7 +111,7 @@ public sealed class Connector<TConnection> : WorkerBase
 
             lock (Lock) {
                 if (state == _state) {
-                    var nextState = state.Create(State.New() with {
+                    var nextState = state.CreateNext(State.New() with {
                         LastError = error,
                         RetryIndex = state.Value.RetryIndex + 1,
                     });
@@ -153,7 +153,7 @@ public sealed class Connector<TConnection> : WorkerBase
             if (!prevState.Value.ConnectionTask.IsCompleted)
                 prevState.Value.ConnectionSource.TrySetCanceled();
 
-            var nextState = prevState.Create(State.NewCancelled(StopToken));
+            var nextState = prevState.CreateNext(State.NewCancelled(StopToken));
             nextState.CancelNext(StopToken);
             _state = nextState;
 

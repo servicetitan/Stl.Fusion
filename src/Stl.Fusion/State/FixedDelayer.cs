@@ -10,8 +10,6 @@ public sealed record FixedDelayer(
     public static FixedDelayer ZeroUnsafe { get; set; } = new(TimeSpan.Zero);
     public static FixedDelayer Instant { get; set; } = Get(Defaults.MinDelay);
 
-    public IMomentClock Clock { get; init; } = Defaults.Clock;
-
     public FixedDelayer(double updateDelay)
         : this(TimeSpan.FromSeconds(updateDelay), Defaults.RetryDelays) { }
     public FixedDelayer(double updateDelay, RetryDelaySeq retryDelays)
@@ -30,7 +28,7 @@ public sealed record FixedDelayer(
         if (delay <= TimeSpan.Zero)
             return; // This may only happen if MinDelay == 0 - e.g. for UpdateDelayer.ZeroUnsafe
 
-        await Clock.Delay(delay, cancellationToken).ConfigureAwait(false);
+        await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
     }
 
     public TimeSpan GetDelay(int retryCount)

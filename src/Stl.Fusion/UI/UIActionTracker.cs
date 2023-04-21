@@ -34,20 +34,22 @@ public sealed class UIActionTracker : ProcessorBase, IHasServices
     protected override Task DisposeAsyncCore()
     {
         Interlocked.Exchange(ref _runningActionCount, 0);
+        _lastActionEvent.CancelNext(StopToken);
+        _lastResultEvent.CancelNext(StopToken);
         return Task.CompletedTask;
     }
 
     public void Register(UIAction action)
     {
         lock (Lock) {
-            if (WhenDisposed != null)
+            if (StopToken.IsCancellationRequested)
                 return;
 
             Interlocked.Increment(ref _runningActionCount);
 
             try {
                 var prevEvent = _lastActionEvent;
-                var nextEvent = prevEvent.Create(action);
+                var nextEvent = prevEvent.CreateNext(action);
                 _lastActionEvent = nextEvent;
                 prevEvent.SetNext(nextEvent);
             }
@@ -62,7 +64,7 @@ public sealed class UIActionTracker : ProcessorBase, IHasServices
 
         action.WhenCompleted().ContinueWith(_ => {
             lock (Lock) {
-                if (WhenDisposed != null)
+                if (StopToken.IsCancellationRequested)
                     return;
 
                 Interlocked.Decrement(ref _runningActionCount);
@@ -74,7 +76,7 @@ public sealed class UIActionTracker : ProcessorBase, IHasServices
                 }
 
                 var prevEvent = _lastResultEvent;
-                var nextEvent = prevEvent.Create(result);
+                var nextEvent = prevEvent.CreateNext(result);
                 _lastResultEvent = nextEvent;
                 prevEvent.SetNext(nextEvent);
             }

@@ -13,7 +13,6 @@ public sealed record UpdateDelayer(
     RetryDelaySeq RetryDelays
     ) : IUpdateDelayer
 {
-    public IMomentClock Clock { get; init; } = UIActionTracker?.Clock ?? MomentClockSet.Default.CpuClock;
     public TimeSpan MinDelay { get; init; } = Defaults.MinDelay;
 
     public UpdateDelayer(UIActionTracker uiActionTracker)
@@ -28,34 +27,27 @@ public sealed record UpdateDelayer(
         if (delay <= TimeSpan.Zero)
             return; // This may only happen if MinDelay == 0 - e.g. for UpdateDelayer.ZeroUnsafe
 
-        var clock = Clock;
-        var minDelayEndTime = clock.Now + minDelay;
+        if (UIActionTracker == null) {
+            await Task.Delay(delay, cancellationToken).SilentAwait(false);
+            return;
+        }
 
         // Await for either delay or the beginning of a period of instant updates
-        if (UIActionTracker != null) {
-            var whenInstantUpdatesEnabledTask = UIActionTracker.WhenInstantUpdatesEnabled();
-            if (!whenInstantUpdatesEnabledTask.IsCompleted) {
-                var cts = cancellationToken.CreateLinkedTokenSource();
-                try {
-                    await Task.WhenAny(
-                        whenInstantUpdatesEnabledTask,
-                        clock.Delay(delay, cts.Token)
-                        ).ConfigureAwait(false);
-                }
-                finally {
-                    cts.CancelAndDisposeSilently();
-                }
-            }
-        }
-        else {
-            await clock.Delay(delay, cancellationToken).ConfigureAwait(false);
-        }
+        var whenInstantUpdatesEnabledTask = UIActionTracker.WhenInstantUpdatesEnabled();
+        var now = CpuTimestamp.Now;
+        if (!whenInstantUpdatesEnabledTask.IsCompleted)
+            await whenInstantUpdatesEnabledTask
+                .WaitAsync(delay, cancellationToken)
+                .SilentAwait(false);
 
-        // Ensure MinDelay is enforced no matter what, otherwise we might
+        // Ensure minDelay is enforced no matter what, otherwise we might
         // end up in a situation when updates are consuming 100% CPU
-        var remainingTime = minDelayEndTime - clock.Now;
+        var elapsedDelay = CpuTimestamp.ElapsedFrom(now);
+        var remainingTime = minDelay - elapsedDelay;
         if (remainingTime > TimeSpan.Zero)
-            await clock.Delay(remainingTime, cancellationToken).ConfigureAwait(false);
+            await Task.Delay(remainingTime, cancellationToken).ConfigureAwait(false);
+        else
+            cancellationToken.ThrowIfCancellationRequested();
     }
 
     public TimeSpan GetDelay(int retryCount)
