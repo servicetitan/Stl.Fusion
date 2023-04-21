@@ -39,14 +39,12 @@ public class AnonymousComputedSource<T> : ComputedInput,
     public AnonymousComputed<T> Computed {
         get => _computed ?? throw Errors.AnonymousComputedSourceIsNotComputedYet();
         private set {
-            if (value?.Source != this)
-                throw new ArgumentOutOfRangeException(nameof(value));
-            value.AssertConsistencyStateIsNot(ConsistencyState.Computing);
             lock (Lock) {
-                if (value == _computed)
+                var computed = _computed;
+                if (computed == value)
                     return;
 
-                _computed?.Invalidate();
+                computed?.Invalidate();
                 _computed = value;
                 Updated?.Invoke(value);
             }
@@ -70,7 +68,8 @@ public class AnonymousComputedSource<T> : ComputedInput,
 
     // ComputedInput
 
-    public override IComputed? GetExistingComputed() => Computed;
+    public override IComputed? GetExistingComputed()
+        => _computed;
 
     // Update & Use
 

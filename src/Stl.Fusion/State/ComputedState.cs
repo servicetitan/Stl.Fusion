@@ -57,6 +57,7 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
     {
         if (UpdateCycleTask != null!)
             return;
+
         base.Initialize(options);
 
         // Ideally we want to suppress execution context flow here,
@@ -125,6 +126,7 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
 
     protected override void OnSetSnapshot(StateSnapshot<T> snapshot, StateSnapshot<T>? prevSnapshot)
     {
+        // This method is called inside lock (Lock)
         _computingComputed = null;
         base.OnSetSnapshot(snapshot, prevSnapshot);
     }
