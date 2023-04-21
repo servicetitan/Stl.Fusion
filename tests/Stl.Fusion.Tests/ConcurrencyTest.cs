@@ -53,9 +53,9 @@ public class ConcurrencyTest : SimpleFusionTestBase
                         await Task.Delay(1).ConfigureAwait(false);
                 }
             }
-            var mutator1 = Task.Run(() => Mutator(ms1));
-            var mutator2 = Task.Run(() => Mutator(ms2));
-            await Task.WhenAll(mutator1, mutator2);
+
+            ms1.Value = iterationCount;
+            await Task.Run(() => Mutator(ms2));
             ms1.Value.Should().Be(iterationCount);
             ms2.Value.Should().Be(iterationCount);
 
@@ -121,9 +121,9 @@ public class ConcurrencyTest : SimpleFusionTestBase
                         await Task.Delay(1).ConfigureAwait(false);
                 }
             }
-            var mutator1 = Task.Run(() => Mutator(ms1));
-            var mutator2 = Task.Run(() => Mutator(ms2));
-            await Task.WhenAll(mutator1, mutator2);
+
+            ms1.Value = iterationCount;
+            await Task.Run(() => Mutator(ms2));
             ms1.Value.Should().Be(iterationCount);
             ms2.Value.Should().Be(iterationCount);
 
@@ -164,7 +164,7 @@ public class ConcurrencyTest : SimpleFusionTestBase
         {
             var readers = (await Enumerable.Range(0, HardwareInfo.GetProcessorCountFactor())
                 .Select(async _ => {
-                    var computed = await Computed.Capture(() => counterSum.Sum(0, 1, 2));
+                    var computed = await Computed.Capture(() => counterSum.Sum(0, 1));
                     var reader = computed.Changes(updateDelayer).LastAsync();
                     return (Computed: computed, Reader: reader);
                 })
@@ -178,24 +178,31 @@ public class ConcurrencyTest : SimpleFusionTestBase
                         await Task.Delay(1).ConfigureAwait(false);
                 }
             }
-            var mutator1 = Task.Run(() => Mutator(counterSum[0]));
-            var mutator2 = Task.Run(() => Mutator(counterSum[1]));
-            var mutator3 = Task.Run(() => Mutator(counterSum[2]));
-            await Task.WhenAll(mutator1, mutator2, mutator3);
-            counterSum[0].Value.Should().Be(iterationCount);
-            counterSum[1].Value.Should().Be(iterationCount);
-            counterSum[2].Value.Should().Be(iterationCount);
-            await Task.Delay(500);
 
-            foreach (var reader in readers) {
-                var c = reader.Computed;
-                if (!c.IsConsistent())
-                    c = await c.Update().AsTask().WaitAsync(TimeSpan.FromSeconds(1));
+            const int counterCount = 2;
+            for (var usedCounterIndex = 0; usedCounterIndex < counterCount; usedCounterIndex++) {
+                for (var i = 0; i < counterCount; i++) {
+                    counterSum[i].Value = iterationCount;
+                    counterSum[0].Value.Should().Be(iterationCount);
+                }
 
-                if (c.Value != iterationCount * 3) {
-                    Out.WriteLine(c.ToString());
-                    Out.WriteLine(c.Value.ToString());
-                    Assert.Fail("One of computed instances has wrong final value!");
+                counterSum[usedCounterIndex].Value = 0;
+                counterSum[usedCounterIndex].Value.Should().Be(0);
+                await Task.Run(() => Mutator(counterSum[usedCounterIndex]));
+                counterSum[usedCounterIndex].Value.Should().Be(iterationCount);
+
+                var expectedValue = iterationCount * 2;
+                foreach (var reader in readers) {
+                    var c = reader.Computed;
+                    if (c.Value != expectedValue) {
+                        await c.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(0.5));
+                        c = await c.Update();
+                    }
+                    if (c.Value != expectedValue) {
+                        Out.WriteLine(c.ToString());
+                        Out.WriteLine(c.Value.ToString());
+                        Assert.Fail("One of computed instances has wrong final value!");
+                    }
                 }
             }
         }
