@@ -11,6 +11,7 @@ public static class ComputedExt
     {
         if (delay == TimeSpan.MaxValue) // No invalidation
             return;
+
         if (delay <= TimeSpan.Zero) { // Instant invalidation
             computed.Invalidate();
             return;
@@ -59,12 +60,6 @@ public static class ComputedExt
         // No way to cancel / unregister the handler here
         computed.Invalidated += _ => tcs.TrySetResult(default);
         return tcs.Task;
-    }
-
-    public static void SetOutput<T>(this Computed<T> computed, Result<T> output)
-    {
-        if (!computed.TrySetOutput(output))
-            throw Errors.WrongComputedState(ConsistencyState.Computing, computed.ConsistencyState);
     }
 
     // Updates N computed so that all of them are in consistent state

@@ -29,6 +29,7 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
         public bool MustFlowExecutionContext { get; init; } = IComputedState.DefaultOptions.MustFlowExecutionContext;
     }
 
+    private volatile Computed<T>? _computingComputed;
     private volatile IUpdateDelayer _updateDelayer;
     private volatile Task? _whenDisposed;
     private readonly CancellationTokenSource _disposeTokenSource;
@@ -106,5 +107,25 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
                 Log.LogError(e, "Failure inside UpdateCycle()");
             }
         }
+    }
+
+    public override IComputed? GetExistingComputed()
+    {
+        lock (Lock)
+            return _computingComputed ?? base.GetExistingComputed();
+    }
+
+    protected override StateBoundComputed<T> CreateComputed()
+    {
+        var computed = new StateBoundComputed<T>(ComputedOptions, this, VersionGenerator.NextVersion());
+        lock (Lock)
+            _computingComputed = computed;
+        return computed;
+    }
+
+    protected override void OnSetSnapshot(StateSnapshot<T> snapshot, StateSnapshot<T>? prevSnapshot)
+    {
+        _computingComputed = null;
+        base.OnSetSnapshot(snapshot, prevSnapshot);
     }
 }

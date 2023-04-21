@@ -10,45 +10,60 @@ public static class ComputedExt
     internal static bool TryUseExisting<T>(this Computed<T>? existing, ComputeContext context, IComputed? usedBy)
     {
         var callOptions = context.CallOptions;
-        var mustUseExisting = (callOptions & CallOptions.GetExisting) != 0;
+        var mustGetExisting = (callOptions & CallOptions.GetExisting) != 0;
 
         if (existing == null)
-            return mustUseExisting;
-        if (!(mustUseExisting || existing.IsConsistent()))
-            return false;
-        // We're here, if (existing != null && (mustUseExisting || existing.IsConsistent()))
+            return mustGetExisting;
 
-        context.TryCapture(existing);
-        var invalidate = (callOptions & CallOptions.Invalidate) == CallOptions.Invalidate;
-        if (invalidate) {
+        var mustInvalidate = (callOptions & CallOptions.Invalidate) == CallOptions.Invalidate;
+        if (mustInvalidate) {
+            // CallOptions.Invalidate is:
+            // - always paired with CallOptions.GetExisting 
+            // - never paired with CallOptions.Capture 
             existing.Invalidate();
             return true;
         }
-        if (!mustUseExisting)
-            ((IComputedImpl?) usedBy)?.AddUsed(existing);
-        ((IComputedImpl) existing).RenewTimeouts(false);
+
+        // CallOptions.GetExisting | CallOptions.Capture can be intact from here
+        if (mustGetExisting) {
+            context.Capture(existing);
+            ((IComputedImpl)existing).RenewTimeouts(false);
+            return true;
+        }
+
+        // Only CallOptions.Capture can be intact from here
+
+        // The remaining part of this method matches exactly to TryUseExistingFromLock 
+        if (!existing.IsConsistent())
+            return false;
+
+        existing.UseNew(context, usedBy);
         return true;
     }
 
-    internal static bool TryUseExistingFromUse<T>(this Computed<T>? existing, ComputeContext context, IComputed? usedBy)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static bool TryUseExistingFromLock<T>(this Computed<T>? existing, ComputeContext context, IComputed? usedBy)
     {
+        // We know that:
+        // - CallOptions.GetExisting is unused here - it always leads to true in TryUseExisting,
+        //   so we simply won't get to this method if it was used
+        // - Since CallOptions.Invalidate implies GetExisting, it also can't be used here
+        // So the only possible option is CallOptions.Capture 
         if (existing == null || !existing.IsConsistent())
             return false;
 
-        context.TryCapture(existing);
-        ((IComputedImpl?) usedBy)?.AddUsed(existing);
-        ((IComputedImpl?) existing)?.RenewTimeouts(false);
+        existing.UseNew(context, usedBy);
         return true;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static void UseNew<T>(this Computed<T> computed, ComputeContext context, IComputed? usedBy)
     {
-        ((IComputedImpl?) usedBy)?.AddUsed(computed);
-        ((IComputedImpl?) computed)?.RenewTimeouts(true);
+        if (usedBy != null)
+            ((IComputedImpl)usedBy).AddUsed(computed);
+        ((IComputedImpl)computed).RenewTimeouts(true);
+        context.Capture(computed);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static T Strip<T>(this Computed<T>? computed, ComputeContext context)
     {
         if (computed == null)
@@ -58,7 +73,6 @@ public static class ComputedExt
         return computed.Value;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static Task<T> StripToTask<T>(this Computed<T>? computed, ComputeContext context)
     {
         if (computed == null)

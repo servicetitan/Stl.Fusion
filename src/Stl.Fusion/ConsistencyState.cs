@@ -27,6 +27,10 @@ public static class ConsistencyStateExt
         => state == ConsistencyState.Consistent;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsComputing(this ConsistencyState state)
+        => state == ConsistencyState.Computing;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsConsistentOrComputing(this ConsistencyState state)
         => state != ConsistencyState.Invalidated;
 
@@ -37,6 +41,10 @@ public static class ConsistencyStateExt
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsConsistent(this IHasConsistencyState hasConsistencyState)
         => hasConsistencyState.ConsistencyState == ConsistencyState.Consistent;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsComputing(this IHasConsistencyState hasConsistencyState)
+        => hasConsistencyState.ConsistencyState == ConsistencyState.Computing;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsConsistentOrComputing(this IHasConsistencyState hasConsistencyState)

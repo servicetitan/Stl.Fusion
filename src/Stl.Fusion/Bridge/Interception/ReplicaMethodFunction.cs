@@ -70,8 +70,7 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>, IReplicaMethodFu
             return await Compute(typedInput, typedExisting, cancellationToken).ConfigureAwait(false);
         }
 
-        ComputeContext.Current.TryCapture(computed);
-        // We don't await the next call to speed up returning the result
+        // We don't await the Set(...) call to speed up returning the result
         _ = ReplicaCache.Set<T>(typedInput, computed.Output, CancellationToken.None);
         return computed;
     }
@@ -81,7 +80,7 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>, IReplicaMethodFu
         ReplicaMethodComputed<T>? existing,
         CancellationToken cancellationToken)
         => existing is { State.PublicationRef.IsNone: false } // State has valid PublicationRef -> it's an actual one
-            ? RemoteCompute(input, true, cancellationToken)
+            ? RemoteCompute(input, cancellationToken)
             : CachedCompute(input, cancellationToken);
 
     private async Task<Computed<T>> CachedCompute(
@@ -90,22 +89,18 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>, IReplicaMethodFu
     {
         var outputOpt = await ReplicaCache.Get<T>(input, cancellationToken).ConfigureAwait(false);
         if (outputOpt is not { } output)
-            return await RemoteCompute(input, true, cancellationToken).ConfigureAwait(false);
+            return await RemoteCompute(input, cancellationToken).ConfigureAwait(false);
 
         var publicationState = CreateFakePublicationState(output);
         var computed = new ReplicaMethodComputed<T>(input.MethodDef.ComputedOptions, input, null, publicationState);
-        ComputeContext.Current.TryCapture(computed);
 
         // Start the task to retrieve the actual value
         using var _1 = ExecutionContextExt.SuppressFlow();
-        _ = Task.Run(() => RemoteCompute(input, false, cancellationToken), CancellationToken.None);
+        _ = Task.Run(() => RemoteCompute(input, cancellationToken), CancellationToken.None);
         return computed;
     }
 
-    private async Task<Computed<T>> RemoteCompute(
-        ComputeMethodInput input,
-        bool isCurrent,
-        CancellationToken cancellationToken)
+    private async Task<Computed<T>> RemoteCompute(ComputeMethodInput input, CancellationToken cancellationToken)
     {
         while (true) {
             var publicationState = await InvokeRemoteFunction(input, cancellationToken).ConfigureAwait(false);
@@ -113,8 +108,6 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>, IReplicaMethodFu
                 ? new ReplicaMethodComputed<T>(input.MethodDef.ComputedOptions, input, null, publicationState)
                 : Replicator.AddOrUpdate(publicationState).RenewComputed(input, CreateComputed);
             if (computed != null) {
-                if (isCurrent)
-                    ComputeContext.Current.TryCapture(computed);
                 // We don't await the next call to speed up returning the result
                 _ = ReplicaCache.Set<T>(input, computed.Output, CancellationToken.None);
                 return computed;

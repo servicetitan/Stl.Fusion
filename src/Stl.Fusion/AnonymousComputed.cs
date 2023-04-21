@@ -19,8 +19,8 @@ public sealed class AnonymousComputed<T> : Computed<T>, IAnonymousComputed
 
     protected override void OnInvalidated()
     {
-        Source.OnInvalidated(this);
         ComputedRegistry.Instance.PseudoUnregister(this);
         CancelTimeouts();
+        Source.OnInvalidated(this);
     }
 }

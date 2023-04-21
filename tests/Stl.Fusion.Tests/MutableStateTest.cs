@@ -58,7 +58,7 @@ public class MutableStateTest : SimpleFusionTestBase
         var factory = CreateServiceProvider().StateFactory();
         var o1 = new object();
         var o2 = new object();
-        
+
         var s = factory.NewMutable<object?>();
         s.Value.Should().Be(null);
         var c0 = (await s.Update()).Computed;

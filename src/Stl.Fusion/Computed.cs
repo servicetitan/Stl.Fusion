@@ -124,18 +124,17 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
 
     public bool TrySetOutput(Result<T> output)
     {
-        if (ConsistencyState != ConsistencyState.Computing)
-            return false;
-
+        bool mustInvalidate;
         lock (Lock) {
             if (ConsistencyState != ConsistencyState.Computing)
                 return false;
 
             SetStateUnsafe(ConsistencyState.Consistent);
             _output = output;
+            mustInvalidate = (_flags & ComputedFlags.InvalidateOnSetOutput) != 0;
         }
 
-        if ((Flags & ComputedFlags.InvalidateOnSetOutput) != 0) {
+        if (mustInvalidate) {
             Invalidate();
             return true;
         }
@@ -156,42 +155,56 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
 
         // Debug.WriteLine($"{nameof(Invalidate)}: {this}");
         lock (Lock) {
+            var flags = _flags;
             switch (ConsistencyState) {
             case ConsistencyState.Invalidated:
                 return;
             case ConsistencyState.Computing:
-                var extraFlags = ComputedFlags.InvalidateOnSetOutput;
-                if (immediately && Options.InvalidationDelay != default)
-                    extraFlags |= ComputedFlags.InvalidationDelayStarted;
-                // ReSharper disable once NonAtomicCompoundOperator
-                _flags |= extraFlags;
+                flags |= ComputedFlags.InvalidateOnSetOutput;
+                if (immediately)
+                    flags |= ComputedFlags.InvalidationDelayStarted;
+                _flags = flags;
                 return;
             }
 
-            // Maybe start invalidation delay
-            if (Options.InvalidationDelay != default && !immediately) {
-                if ((_flags & ComputedFlags.InvalidationDelayStarted) != 0)
+            // ConsistencyState == ConsistencyState.Computing from here 
+
+            immediately |= Options.InvalidationDelay == default;
+            if (immediately)
+                SetStateUnsafe(ConsistencyState.Invalidated);
+            else {
+                if ((flags & ComputedFlags.InvalidationDelayStarted) != 0)
                     return; // Already started
 
-                // ReSharper disable once NonAtomicCompoundOperator
-                _flags |= ComputedFlags.InvalidationDelayStarted;
-                this.Invalidate(Options.InvalidationDelay);
-                return;
+                _flags = flags | ComputedFlags.InvalidationDelayStarted;
             }
-
-            SetStateUnsafe(ConsistencyState.Invalidated);
         }
+
+        if (!immediately) {
+            // Delayed invalidation
+            this.Invalidate(Options.InvalidationDelay);
+            return;
+        }
+
+        // Instant invalidation - it may happen just once,
+        // so we don't need a lock here.
         try {
-            _used.Apply(this, (self, c) => c.RemoveUsedBy(self));
-            _used.Clear();
-            _invalidated?.Invoke(this);
-            _usedBy.Apply(default(Unit), static (_, usedByEntry) => {
-                var c = usedByEntry.Input.GetExistingComputed();
-                if (c != null && c.Version == usedByEntry.Version)
-                    c.Invalidate();
-            });
-            _usedBy.Clear();
-            OnInvalidated();
+            try {
+                OnInvalidated();
+                _invalidated?.Invoke(this);
+                _invalidated = null;
+            }
+            finally {
+                // Any code called here may not throw
+                _used.Apply(this, (self, c) => c.RemoveUsedBy(self));
+                _used.Clear();
+                _usedBy.Apply(default(Unit), static (_, usedByEntry) => {
+                    var c = usedByEntry.Input.GetExistingComputed();
+                    if (c != null && c.Version == usedByEntry.Version)
+                        c.Invalidate(); // Invalidate doesn't throw - ever
+                });
+                _usedBy.Clear();
+            }
         }
         catch (Exception e) {
             // We should never throw errors during the invalidation
@@ -200,10 +213,9 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
                 log.LogError(e, "Error on invalidation");
             }
             catch {
-                // Intended
+                // Intended: Invalidate doesn't throw!
             }
         }
-        _invalidated = null;
     }
 
     protected virtual void OnInvalidated()
@@ -255,8 +267,9 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
         var context = ComputeContext.Current;
         if ((context.CallOptions & CallOptions.GetExisting) != 0) // Both GetExisting & Invalidate
             throw Errors.InvalidContextCallOptions(context.CallOptions);
-        if (IsConsistent() && this.TryUseExistingFromUse(context, usedBy))
+        if (IsConsistent() && this.TryUseExistingFromLock(context, usedBy))
             return Value;
+
         var computed = await Function
             .Invoke(Input, usedBy, context, cancellationToken)
             .ConfigureAwait(false);
@@ -353,6 +366,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
                 // moreover, only Invalidated code can modify
                 // _used/_usedBy once invalidation flag is set
                 return;
+
             _usedBy.Remove((usedBy.Input, usedBy.Version));
         }
     }
@@ -381,7 +395,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void SetStateUnsafe(ConsistencyState newState)
-        => _state = (int) newState;
+        => _state = (int)newState;
 
     bool IComputedImpl.IsTransientError(Exception error) => IsTransientError(error);
     private bool IsTransientError(Exception error)

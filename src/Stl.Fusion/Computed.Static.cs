@@ -26,7 +26,7 @@ public static class Computed
     {
         var oldCurrent = GetCurrent();
         if (newCurrent != null)
-            ComputeContext.Current.TryCapture(newCurrent);
+            ComputeContext.Current.Capture(newCurrent);
         if (oldCurrent == newCurrent)
             return default;
         CurrentLocal.Value = newCurrent;
@@ -176,7 +176,7 @@ public static class Computed
 
     public static Computed<T>? GetExisting<T>(Func<Task<T>> producer)
     {
-        using var ccs = ComputeContext.New(CallOptions.GetExisting | CallOptions.Capture).Activate();
+        using var ccs = ComputeContext.New(CallOptions.Capture | CallOptions.GetExisting).Activate();
         var task = producer();
         task.AssertCompleted(); // The must be always synchronous in this case
         return ccs.Context.TryGetCaptured<T>(out var result) ? result : default;
@@ -184,7 +184,7 @@ public static class Computed
 
     public static Computed<T>? GetExisting<T>(Func<ValueTask<T>> producer)
     {
-        using var ccs = ComputeContext.New(CallOptions.GetExisting | CallOptions.Capture).Activate();
+        using var ccs = ComputeContext.New(CallOptions.Capture | CallOptions.GetExisting).Activate();
         var task = producer();
         task.AssertCompleted(); // The must be always synchronous in this case
         return ccs.Context.TryGetCaptured<T>(out var result) ? result : default;

@@ -214,10 +214,9 @@ public abstract class State<T> : ComputedInput,
 
     protected virtual void OnSetSnapshot(StateSnapshot<T> snapshot, StateSnapshot<T>? prevSnapshot)
     {
-        if (prevSnapshot == null) {
+        if (prevSnapshot == null)
             // First assignment / initialization
             return;
-        }
 
         try {
             prevSnapshot.OnUpdated();
@@ -231,7 +230,8 @@ public abstract class State<T> : ComputedInput,
 
     // ComputedInput
 
-    public override IComputed? GetExistingComputed() => Computed;
+    public override IComputed? GetExistingComputed()
+        => _snapshot?.Computed;
 
     // IFunction<T> & IFunction
 
@@ -261,20 +261,20 @@ public abstract class State<T> : ComputedInput,
     {
         context ??= ComputeContext.Current;
 
-        var result = Computed;
-        if (result.TryUseExisting(context, usedBy))
-            return result;
+        var computed = Computed;
+        if (computed.TryUseExisting(context, usedBy))
+            return computed;
 
         using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
 
-        result = Computed;
-        if (result.TryUseExisting(context, usedBy))
-            return result;
+        computed = Computed;
+        if (computed.TryUseExistingFromLock(context, usedBy))
+            return computed;
 
-        OnUpdating(result);
-        result = await GetComputed(cancellationToken).ConfigureAwait(false);
-        result.UseNew(context, usedBy);
-        return result;
+        OnUpdating(computed);
+        computed = await GetComputed(cancellationToken).ConfigureAwait(false);
+        computed.UseNew(context, usedBy);
+        return computed;
     }
 
     async Task IFunction.InvokeAndStrip(
@@ -316,14 +316,14 @@ public abstract class State<T> : ComputedInput,
     {
         using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
 
-        var result = Computed;
-        if (result.TryUseExisting(context, usedBy))
-            return result.Strip(context);
+        var computed = Computed;
+        if (computed.TryUseExistingFromLock(context, usedBy))
+            return computed.Strip(context);
 
-        OnUpdating(result);
-        result = await GetComputed(cancellationToken).ConfigureAwait(false);
-        result.UseNew(context, usedBy);
-        return result.Value;
+        OnUpdating(computed);
+        computed = await GetComputed(cancellationToken).ConfigureAwait(false);
+        computed.UseNew(context, usedBy);
+        return computed.Value;
     }
 
     protected async ValueTask<StateBoundComputed<T>> GetComputed(CancellationToken cancellationToken)

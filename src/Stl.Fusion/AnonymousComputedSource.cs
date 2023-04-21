@@ -88,7 +88,7 @@ public class AnonymousComputedSource<T> : ComputedInput,
             throw Errors.InvalidContextCallOptions(context.CallOptions);
 
         var computed = _computed;
-        if (computed?.IsConsistent() == true && computed.TryUseExistingFromUse(context, usedBy))
+        if (computed?.IsConsistent() == true && computed.TryUseExistingFromLock(context, usedBy))
             return computed.Value;
 
         computed = (AnonymousComputed<T>) await Invoke(usedBy, context, cancellationToken).ConfigureAwait(false);
@@ -114,19 +114,19 @@ public class AnonymousComputedSource<T> : ComputedInput,
     {
         context ??= ComputeContext.Current;
 
-        var result = _computed;
-        if (result.TryUseExisting(context, usedBy))
-            return result!;
+        var computed = _computed;
+        if (computed.TryUseExisting(context, usedBy))
+            return computed!;
 
         using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
 
-        result = _computed;
-        if (result.TryUseExisting(context, usedBy))
-            return result!;
+        computed = _computed;
+        if (computed.TryUseExistingFromLock(context, usedBy))
+            return computed!;
 
-        result = await GetComputed(cancellationToken).ConfigureAwait(false);
-        result.UseNew(context, usedBy);
-        return result;
+        computed = await GetComputed(cancellationToken).ConfigureAwait(false);
+        computed.UseNew(context, usedBy);
+        return computed;
     }
 
     private Task<T> InvokeAndStrip(
@@ -147,33 +147,27 @@ public class AnonymousComputedSource<T> : ComputedInput,
     {
         using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
 
-        var result = _computed;
-        if (result.TryUseExisting(context, usedBy))
-            return result.Strip(context);
+        var computed = _computed;
+        if (computed.TryUseExistingFromLock(context, usedBy))
+            return computed.Strip(context);
 
-        result = await GetComputed(cancellationToken).ConfigureAwait(false);
-        result.UseNew(context, usedBy);
-        return result.Value;
+        computed = await GetComputed(cancellationToken).ConfigureAwait(false);
+        computed.UseNew(context, usedBy);
+        return computed.Value;
     }
 
     private async ValueTask<AnonymousComputed<T>> GetComputed(CancellationToken cancellationToken)
     {
         var computed = new AnonymousComputed<T>(ComputedOptions, this, VersionGenerator.NextVersion());
-        using (Fusion.Computed.ChangeCurrent(computed)) {
-            try {
-                var value = await Computer.Invoke(this, cancellationToken).ConfigureAwait(false);
-                computed.TrySetOutput(Result.New(value));
-            }
-            catch (Exception e) when (e is not OperationCanceledException) {
-                computed.TrySetOutput(Result.Error<T>(e));
-            }
-        }
-
-        // It's super important to make "Computed = computed" assignment after "using" block -
-        // otherwise all State events will be triggered while Computed.Current still points on
-        // computed (which is already computed), so if any compute method runs inside
-        // the event handler, it will fail on attempt to add a dependency.
         Computed = computed;
+        using var _ = Fusion.Computed.ChangeCurrent(computed);
+        try {
+            var value = await Computer.Invoke(this, cancellationToken).ConfigureAwait(false);
+            computed.TrySetOutput(Result.New(value));
+        }
+        catch (Exception e) when (e is not OperationCanceledException) {
+            computed.TrySetOutput(Result.Error<T>(e));
+        }
         return computed;
     }
 

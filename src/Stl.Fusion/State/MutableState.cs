@@ -125,21 +125,20 @@ public class MutableState<T> : State<T>, IMutableState<T>
     {
         context ??= ComputeContext.Current;
 
-        var result = Computed;
-        if (result.TryUseExisting(context, usedBy))
-            return ValueTaskExt.FromResult(result);
+        var computed = Computed;
+        if (computed.TryUseExisting(context, usedBy))
+            return ValueTaskExt.FromResult(computed);
 
         // Double-check locking
         lock (Lock) {
-            result = Computed;
-            if (result.TryUseExisting(context, usedBy))
-                return ValueTaskExt.FromResult(result);
+            computed = Computed;
+            if (computed.TryUseExistingFromLock(context, usedBy))
+                return ValueTaskExt.FromResult(computed);
 
-            OnUpdating(result);
-            result = CreateComputed();
-            result.UseNew(context, usedBy);
-            context.TryCapture(result);
-            return ValueTaskExt.FromResult(result);
+            OnUpdating(computed);
+            computed = CreateComputed();
+            computed.UseNew(context, usedBy);
+            return ValueTaskExt.FromResult(computed);
         }
     }
 
@@ -149,28 +148,27 @@ public class MutableState<T> : State<T>, IMutableState<T>
     {
         context ??= ComputeContext.Current;
 
-        var result = Computed;
-        if (result.TryUseExisting(context, usedBy))
-            return result.StripToTask(context);
+        var computed = Computed;
+        if (computed.TryUseExisting(context, usedBy))
+            return computed.StripToTask(context);
 
         // Double-check locking
         lock (Lock) {
-            result = Computed;
-            if (result.TryUseExisting(context, usedBy))
-                return result.StripToTask(context);
+            computed = Computed;
+            if (computed.TryUseExistingFromLock(context, usedBy))
+                return computed.StripToTask(context);
 
-            OnUpdating(result);
-            result = CreateComputed();
-            result.UseNew(context, usedBy);
-            context.TryCapture(result);
-            return result.StripToTask(context);
+            OnUpdating(computed);
+            computed = CreateComputed();
+            computed.UseNew(context, usedBy);
+            return computed.StripToTask(context);
         }
     }
 
     protected override StateBoundComputed<T> CreateComputed()
     {
         var computed = base.CreateComputed();
-        computed.SetOutput(_output);
+        computed.TrySetOutput(_output);
         Computed = computed;
         return computed;
     }

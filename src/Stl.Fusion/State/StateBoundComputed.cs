@@ -26,8 +26,8 @@ public class StateBoundComputed<T> : Computed<T>
 
     protected override void OnInvalidated()
     {
-        State.OnInvalidated(this);
         ComputedRegistry.Instance.PseudoUnregister(this);
         CancelTimeouts();
+        State.OnInvalidated(this);
     }
 }

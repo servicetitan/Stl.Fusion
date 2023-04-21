@@ -54,15 +54,6 @@ public class ComputeContext
     public static ComputeContextScope Suppress() => new(Default);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void TryCapture(IComputed? computed)
-    {
-        if (computed == null || (CallOptions & CallOptions.Capture) == 0)
-            return;
-        if (null == Interlocked.CompareExchange(ref _captured, computed, null))
-            CallOptions &= ~CallOptions.Capture; 
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public IComputed GetCaptured() => _captured ?? throw Errors.NoComputedCaptured();
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Computed<T> GetCaptured<T>() => (Computed<T>) GetCaptured();
@@ -79,6 +70,18 @@ public class ComputeContext
     {
         computed = _captured as Computed<T>;
         return computed != null;
+    }
+
+    // Internal methods
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void Capture(IComputed computed)
+    {
+        if ((CallOptions & CallOptions.Capture) == 0)
+            return;
+
+        if (Interlocked.CompareExchange(ref _captured, computed, null) == null)
+            CallOptions &= ~CallOptions.Capture; // Reset CallOptions.Capture on actual capture
     }
 }
 

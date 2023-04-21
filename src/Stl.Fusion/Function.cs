@@ -57,19 +57,19 @@ public abstract class FunctionBase<T> : IFunction<T>
 
         // Read-Lock-RetryRead-Compute-Store pattern
 
-        var result = GetExisting(input);
-        if (result.TryUseExisting(context, usedBy))
-            return result!;
+        var computed = GetExisting(input);
+        if (computed.TryUseExisting(context, usedBy))
+            return computed!;
 
         using var _ = await InputLocks.Lock(input, cancellationToken).ConfigureAwait(false);
 
-        result = GetExisting(input);
-        if (result.TryUseExisting(context, usedBy))
-            return result!;
+        computed = GetExisting(input);
+        if (computed.TryUseExistingFromLock(context, usedBy))
+            return computed!;
 
-        result = await Compute(input, result, cancellationToken).ConfigureAwait(false);
-        result.UseNew(context, usedBy);
-        return result;
+        computed = await Compute(input, computed, cancellationToken).ConfigureAwait(false);
+        computed.UseNew(context, usedBy);
+        return computed;
     }
 
     Task IFunction.InvokeAndStrip(ComputedInput input,
@@ -85,9 +85,9 @@ public abstract class FunctionBase<T> : IFunction<T>
     {
         context ??= ComputeContext.Current;
 
-        var result = GetExisting(input);
-        return result.TryUseExisting(context, usedBy)
-            ? result.StripToTask(context)
+        var computed = GetExisting(input);
+        return computed.TryUseExisting(context, usedBy)
+            ? computed.StripToTask(context)
             : TryRecompute(input, usedBy, context, cancellationToken);
     }
 
@@ -98,14 +98,13 @@ public abstract class FunctionBase<T> : IFunction<T>
     {
         using var _ = await InputLocks.Lock(input, cancellationToken).ConfigureAwait(false);
 
-        var result = GetExisting(input);
-        if (result.TryUseExisting(context, usedBy))
-            return result.Strip(context);
+        var computed = GetExisting(input);
+        if (computed.TryUseExistingFromLock(context, usedBy))
+            return computed.Strip(context);
 
-        result = await Compute(input, result, cancellationToken).ConfigureAwait(false);
-        var output = result.Output; // It can't be gone here b/c KeepAlive isn't called yet
-        result.UseNew(context, usedBy);
-        return output.Value;
+        computed = await Compute(input, computed, cancellationToken).ConfigureAwait(false);
+        computed.UseNew(context, usedBy);
+        return computed.Value;
     }
 
     protected Computed<T>? GetExisting(ComputedInput input)
