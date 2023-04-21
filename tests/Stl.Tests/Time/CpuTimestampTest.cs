@@ -10,9 +10,9 @@ public class CpuTimestampTest : TestBase
         CpuTimestamp.TicksPerSecond.Should().Be(10_000_000);
         var now = CpuTimestamp.Now;
         await Task.Delay(100);
-        CpuTimestamp.ElapsedFrom(now).Should().BeGreaterThan(TimeSpan.FromMilliseconds(50));
+        CpuTimestamp.Elapsed(now).Should().BeGreaterThan(TimeSpan.FromMilliseconds(50));
         await Task.Delay(100);
-        CpuTimestamp.ElapsedFrom(now).Should().BeGreaterThan(TimeSpan.FromMilliseconds(150));
-        CpuTimestamp.ElapsedFrom(now).Should().BeLessThan(TimeSpan.FromMilliseconds(2000));
+        CpuTimestamp.Elapsed(now).Should().BeGreaterThan(TimeSpan.FromMilliseconds(150));
+        CpuTimestamp.Elapsed(now).Should().BeLessThan(TimeSpan.FromMilliseconds(2000));
     }
 }

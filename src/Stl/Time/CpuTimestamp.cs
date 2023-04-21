@@ -27,8 +27,8 @@ public record struct CpuTimestamp(long Value) : IComparable<CpuTimestamp>
         => Value + " ticks";
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static TimeSpan ElapsedFrom(CpuTimestamp other)
-        => Now - other;
+    public static TimeSpan Elapsed(CpuTimestamp from)
+        => Now - from;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static TimeSpan operator -(CpuTimestamp a, CpuTimestamp b)

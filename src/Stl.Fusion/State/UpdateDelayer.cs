@@ -42,12 +42,12 @@ public sealed record UpdateDelayer(
 
         // Ensure minDelay is enforced no matter what, otherwise we might
         // end up in a situation when updates are consuming 100% CPU
-        var elapsedDelay = CpuTimestamp.ElapsedFrom(now);
-        var remainingTime = minDelay - elapsedDelay;
-        if (remainingTime > TimeSpan.Zero)
-            await Task.Delay(remainingTime, cancellationToken).ConfigureAwait(false);
+        var elapsed = CpuTimestamp.Elapsed(now);
+        var remaining = minDelay - elapsed;
+        if (remaining > TimeSpan.Zero)
+            await Task.Delay(remaining, cancellationToken).ConfigureAwait(false);
         else
-            cancellationToken.ThrowIfCancellationRequested();
+            cancellationToken.ThrowIfCancellationRequested(); // Required due to .SilentAwait above
     }
 
     public TimeSpan GetDelay(int retryCount)
