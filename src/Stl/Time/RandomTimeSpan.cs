@@ -49,6 +49,7 @@ public readonly record struct RandomTimeSpan
     {
         if (MaxDelta <= TimeSpan.Zero)
             return Origin;
+
         var deltaSeconds = MaxDelta.TotalSeconds * 2 * (ConcurrentRandomDoubleGenerator.Default.Next() - 0.5);
         return (Origin + TimeSpan.FromSeconds(deltaSeconds)).Positive();
     }
