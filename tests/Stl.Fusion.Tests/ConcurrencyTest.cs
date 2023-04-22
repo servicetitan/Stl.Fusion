@@ -63,6 +63,7 @@ public class ConcurrencyTest : SimpleFusionTestBase
                 var snapshot = computedState.Snapshot;
                 var c = snapshot.Computed;
                 if (!c.IsConsistent()) {
+                    Out.WriteLine($"Updating: {c}");
                     await snapshot.WhenUpdated().WaitAsync(TimeSpan.FromSeconds(1));
                     c = computedState.Computed;
                 }
@@ -130,8 +131,10 @@ public class ConcurrencyTest : SimpleFusionTestBase
             foreach (var reader in readers) {
                 var source = reader.Source;
                 var c = (Computed<int>)source.Computed;
-                if (!c.IsConsistent())
-                    c = await c.Update().AsTask().WaitAsync(TimeSpan.FromSeconds(1));
+                if (!c.IsConsistent()) {
+                    Out.WriteLine($"Updating: {c}");
+                    c = await c.Update();
+                }
 
                 if (c.Value != iterationCount * 2) {
                     Out.WriteLine(source.ToString());
@@ -164,12 +167,22 @@ public class ConcurrencyTest : SimpleFusionTestBase
         {
             var readers = (await Enumerable.Range(0, HardwareInfo.GetProcessorCountFactor())
                 .Select(async _ => {
+                    var source =  new AnonymousComputedSource<int>(
+                        services,
+                        async (_, ct) => await counterSum.Sum(0, 1));
                     var computed = await Computed.Capture(() => counterSum.Sum(0, 1));
-                    var reader = computed.Changes(updateDelayer).LastAsync();
-                    return (Computed: computed, Reader: reader);
+                    var reader = Task.Run(() => {
+                         var reader1 = computed.Changes(updateDelayer).LastAsync().AsTask();
+                         var reader2 = source.Changes(updateDelayer).LastAsync().AsTask();
+                         return Task.WhenAll(reader1, reader2);
+                    });
+                    return (Source: source, Computed: computed, SourceReader: reader);
                 })
                 .Collect()
                 ).ToArray();
+            readers.Zip(readers, (x, y) => (x, y))
+                .Any(p => !ReferenceEquals(p.x.Computed, p.y.Computed))
+                .Should().BeFalse();
 
             async Task Mutator(IMutableState<int> ms) {
                 for (var i = 1; i <= iterationCount; i++) {
@@ -191,12 +204,18 @@ public class ConcurrencyTest : SimpleFusionTestBase
                 await Task.Run(() => Mutator(counterSum[usedCounterIndex]));
                 counterSum[usedCounterIndex].Value.Should().Be(iterationCount);
 
+                await Task.Delay(500);
                 var expectedValue = iterationCount * 2;
+                var computed = await Computed.Capture(() => counterSum.Sum(0, 1));
+                computed.Value.Should().Be(expectedValue);
+
                 foreach (var reader in readers) {
-                    var c = reader.Computed;
-                    if (c.Value != expectedValue) {
+                    var c = await reader.Computed.Update();
+                    computed.Should().BeSameAs(c);
+                    var source = reader.Source;
+                    c = source.Computed;
+                    if (!c.IsConsistent()) {
                         Out.WriteLine($"Updating: {c}");
-                        await c.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(1));
                         c = await c.Update();
                     }
                     if (c.Value != expectedValue) {
