@@ -195,6 +195,7 @@ public class ConcurrencyTest : SimpleFusionTestBase
                 foreach (var reader in readers) {
                     var c = reader.Computed;
                     if (c.Value != expectedValue) {
+                        Out.WriteLine($"Updating: {c}");
                         await c.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(1));
                         c = await c.Update();
                     }
