@@ -9,11 +9,6 @@ public enum ConsistencyState
     Invalidated,
 }
 
-public interface IHasConsistencyState
-{
-    ConsistencyState ConsistencyState { get; }
-}
-
 public static class ConsistencyStateExt
 {
     // IsXxx
@@ -34,22 +29,6 @@ public static class ConsistencyStateExt
     public static bool IsConsistentOrComputing(this ConsistencyState state)
         => state != ConsistencyState.Invalidated;
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsInvalidated(this IHasConsistencyState hasConsistencyState)
-        => hasConsistencyState.ConsistencyState == ConsistencyState.Invalidated;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsConsistent(this IHasConsistencyState hasConsistencyState)
-        => hasConsistencyState.ConsistencyState == ConsistencyState.Consistent;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsComputing(this IHasConsistencyState hasConsistencyState)
-        => hasConsistencyState.ConsistencyState == ConsistencyState.Computing;
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsConsistentOrComputing(this IHasConsistencyState hasConsistencyState)
-        => hasConsistencyState.ConsistencyState != ConsistencyState.Invalidated;
-
     // AssertXxx
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -64,19 +43,5 @@ public static class ConsistencyStateExt
     {
         if (state == unexpectedState)
             throw Errors.WrongComputedState(state);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void AssertConsistencyStateIs(this IHasConsistencyState hasConsistencyState, ConsistencyState expectedState)
-    {
-        if (hasConsistencyState.ConsistencyState != expectedState)
-            throw Errors.WrongComputedState(expectedState, hasConsistencyState.ConsistencyState);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void AssertConsistencyStateIsNot(this IHasConsistencyState hasConsistencyState, ConsistencyState unexpectedState)
-    {
-        if (hasConsistencyState.ConsistencyState == unexpectedState)
-            throw Errors.WrongComputedState(hasConsistencyState.ConsistencyState);
     }
 }

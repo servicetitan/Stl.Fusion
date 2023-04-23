@@ -8,10 +8,11 @@ using Errors = Stl.Fusion.Internal.Errors;
 
 namespace Stl.Fusion;
 
-public interface IComputed : IHasConsistencyState, IResult, IHasVersion<LTag>
+public interface IComputed : IResult, IHasVersion<LTag>
 {
     ComputedOptions Options { get; }
     ComputedInput Input { get; }
+    ConsistencyState ConsistencyState { get; }
     Type OutputType { get; }
     IResult Output { get; }
     Task OutputAsTask { get; }
@@ -42,7 +43,6 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
     public ComputedOptions Options => _options;
     public ComputedInput Input { get; }
     public ConsistencyState ConsistencyState => (ConsistencyState) _state;
-    public bool IsConsistent() => ConsistencyState == ConsistencyState.Consistent;
     public IFunction<T> Function => (IFunction<T>) Input.Function;
     public LTag Version { get; }
     public Type OutputType => typeof(T);
@@ -248,7 +248,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
         => await Update(cancellationToken).ConfigureAwait(false);
     public async ValueTask<Computed<T>> Update(CancellationToken cancellationToken = default)
     {
-        if (IsConsistent())
+        if (this.IsConsistent())
             return this;
 
         using var scope = ComputeContext.Suppress();
@@ -267,7 +267,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
         var context = ComputeContext.Current;
         if ((context.CallOptions & CallOptions.GetExisting) != 0) // Both GetExisting & Invalidate
             throw Errors.InvalidContextCallOptions(context.CallOptions);
-        if (IsConsistent() && this.TryUseExistingFromLock(context, usedBy))
+        if (this.IsConsistent() && this.TryUseExistingFromLock(context, usedBy))
             return Value;
 
         var computed = await Function

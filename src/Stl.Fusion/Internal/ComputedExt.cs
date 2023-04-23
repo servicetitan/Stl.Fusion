@@ -10,8 +10,19 @@ public static class ComputedExt
     internal static bool TryUseExisting<T>(this Computed<T>? existing, ComputeContext context, IComputed? usedBy)
     {
         var callOptions = context.CallOptions;
-        var mustGetExisting = (callOptions & CallOptions.GetExisting) != 0;
+        if (callOptions == 0) {
+            // This is the most frequent path, so we have a dedicated branch for it
+            if (existing == null || !existing.IsConsistent())
+                return false;
 
+            // Inlined existing.UseNew(context, usedBy)
+            if (usedBy != null)
+                ((IComputedImpl)usedBy).AddUsed(existing);
+            ((IComputedImpl)existing).RenewTimeouts(true);
+            return true;
+        }
+
+        var mustGetExisting = (callOptions & CallOptions.GetExisting) != 0;
         if (existing == null)
             return mustGetExisting;
 
@@ -70,6 +81,7 @@ public static class ComputedExt
             return default!;
         if (CallOptions.GetExisting == (context.CallOptions & CallOptions.GetExisting))
             return default!;
+
         return computed.Value;
     }
 
@@ -79,6 +91,7 @@ public static class ComputedExt
             return TaskCache<T>.DefaultResultTask;
         if (CallOptions.GetExisting == (context.CallOptions & CallOptions.GetExisting))
             return TaskCache<T>.DefaultResultTask;
+
         return computed.OutputAsTask;
     }
 }

@@ -1,11 +1,10 @@
-using Stl.Caching;
 using Stl.Fusion.Internal;
 
 namespace Stl.Fusion;
 
-public static class ComputedExt
+public static partial class ComputedExt
 {
-    private static readonly RefHolder RefHolder = new();
+    // Invalidate
 
     public static void Invalidate(this IComputed computed, TimeSpan delay, bool? usePreciseTimer = null)
     {
@@ -50,6 +49,52 @@ public static class ComputedExt
         };
     }
 
+    // Perf: a copy of above method requiring no cast to interface
+    public static void Invalidate<T>(this Computed<T> computed, TimeSpan delay, bool? usePreciseTimer = null)
+    {
+        if (delay == TimeSpan.MaxValue) // No invalidation
+            return;
+
+        if (delay <= TimeSpan.Zero) { // Instant invalidation
+            computed.Invalidate();
+            return;
+        }
+
+        var bPrecise = usePreciseTimer ?? delay <= Computed.PreciseInvalidationDelayThreshold;
+        if (!bPrecise) {
+            Timeouts.Invalidate.AddOrUpdateToEarlier(computed, Timeouts.Clock.Now + delay);
+            computed.Invalidated += c => Timeouts.Invalidate.Remove(c);
+            return;
+        }
+
+        using var _ = ExecutionContextExt.SuppressFlow();
+        var cts = new CancellationTokenSource(delay);
+        var registration = cts.Token.Register(() => {
+            // No need to schedule this via Task.Run, since this code is
+            // either invoked from Invalidate method (via Invalidated handler),
+            // so Invalidate() call will do nothing & return immediately,
+            // or it's invoked via one of timer threads, i.e. where it's
+            // totally fine to invoke Invalidate directly as well.
+            computed.Invalidate(true);
+            cts.Dispose();
+        });
+        computed.Invalidated += _ => {
+            try {
+                if (!cts.IsCancellationRequested)
+                    cts.Cancel(true);
+            }
+            catch {
+                // Intended: this method should never throw any exceptions
+            }
+            finally {
+                registration.Dispose();
+                cts.Dispose();
+            }
+        };
+    }
+
+    // WhenInvalidated
+
     public static Task WhenInvalidated(this IComputed computed, CancellationToken cancellationToken = default)
     {
         if (computed.ConsistencyState == ConsistencyState.Invalidated)
@@ -57,6 +102,21 @@ public static class ComputedExt
         var tcs = TaskCompletionSourceExt.New<Unit>();
         if (cancellationToken != default)
             return new WhenInvalidatedClosure(tcs, computed, cancellationToken).Task;
+
+        // No way to cancel / unregister the handler here
+        computed.Invalidated += _ => tcs.TrySetResult(default);
+        return tcs.Task;
+    }
+
+    // Perf: a copy of above method requiring no cast to interface
+    public static Task WhenInvalidated<T>(this Computed<T> computed, CancellationToken cancellationToken = default)
+    {
+        if (computed.ConsistencyState == ConsistencyState.Invalidated)
+            return Task.CompletedTask;
+        var tcs = TaskCompletionSourceExt.New<Unit>();
+        if (cancellationToken != default)
+            return new WhenInvalidatedClosure(tcs, computed, cancellationToken).Task;
+
         // No way to cancel / unregister the handler here
         computed.Invalidated += _ => tcs.TrySetResult(default);
         return tcs.Task;
