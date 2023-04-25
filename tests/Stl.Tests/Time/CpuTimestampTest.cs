@@ -7,7 +7,9 @@ public class CpuTimestampTest : TestBase
     [Fact]
     public async Task BasicTest()
     {
-        CpuTimestamp.TicksPerSecond.Should().Be(10_000_000);
+        Out.WriteLine("Tick frequency: {0}", CpuTimestamp.TickFrequency);
+        CpuTimestamp.TickFrequency.Should().BeGreaterThan(1);
+        CpuTimestamp.TickDuration.Should().BeGreaterThan(0).And.BeLessThan(1);
         var startedAt = CpuTimestamp.Now;
 
         await Task.Delay(100);
