@@ -6,7 +6,7 @@ public static class WorkerExt
     public static TWorker Start<TWorker>(this TWorker worker)
         where TWorker : IWorker
     {
-        worker.Run();
+        _ = worker.Run();
         return worker;
     }
 }

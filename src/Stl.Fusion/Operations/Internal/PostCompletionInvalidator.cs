@@ -9,20 +9,21 @@ public class PostCompletionInvalidator : ICommandHandler<ICompletion>
         public LogLevel LogLevel { get; init; } = LogLevel.None;
     }
 
+    private ActivitySource? _activitySource;
+    private InvalidationInfoProvider? _invalidationInfoProvider;
+    private ILogger? _log;
+
+    protected IServiceProvider Services { get; }
     protected Options Settings { get; }
-    protected ActivitySource ActivitySource { get; }
-    protected InvalidationInfoProvider InvalidationInfoProvider { get; }
-    protected ILogger Log { get; }
-    protected bool IsLoggingEnabled { get; }
+    protected ActivitySource ActivitySource => _activitySource ??= GetType().GetActivitySource();
+    protected InvalidationInfoProvider InvalidationInfoProvider =>
+        _invalidationInfoProvider ??= Services.GetRequiredService<InvalidationInfoProvider>();
+    protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     public PostCompletionInvalidator(Options settings, IServiceProvider services)
     {
         Settings = settings;
-        Log = services.LogFor(GetType());
-        IsLoggingEnabled = Log.IsLogging(settings.LogLevel);
-
-        ActivitySource = GetType().GetActivitySource();
-        InvalidationInfoProvider = services.GetRequiredService<InvalidationInfoProvider>();
+        Services = services;
     }
 
     [CommandFilter(Priority = FusionOperationsCommandHandlerPriority.PostCompletionInvalidator)]
@@ -42,26 +43,27 @@ public class PostCompletionInvalidator : ICommandHandler<ICompletion>
         context.SetOperation(operation);
         var invalidateScope = Computed.Invalidate();
         try {
+            var log = Log.IfEnabled(Settings.LogLevel);
             using var activity = StartActivity(originalCommand);
             var finalHandler = context.ExecutionState.FindFinalHandler();
             var useOriginalCommandHandler = finalHandler == null
                 || finalHandler.GetHandlerService(command, context) is CompletionTerminator;
             if (useOriginalCommandHandler) {
                 if (InvalidationInfoProvider.IsReplicaServiceCommand(originalCommand)) {
-                    if (IsLoggingEnabled)
-                        Log.Log(Settings.LogLevel, "No invalidation for replica service command '{CommandType}'",
-                            originalCommand.GetType());
+                    log?.Log(Settings.LogLevel,
+                        "No invalidation for replica service command '{CommandType}'",
+                        originalCommand.GetType());
                     return;
                 }
-                if (IsLoggingEnabled)
-                    Log.Log(Settings.LogLevel, "Invalidating via original command handler for '{CommandType}'",
-                        originalCommand.GetType());
+                log?.Log(Settings.LogLevel,
+                    "Invalidating via original command handler for '{CommandType}'",
+                    originalCommand.GetType());
                 await context.Commander.Call(originalCommand, cancellationToken).ConfigureAwait(false);
             }
             else {
-                if (IsLoggingEnabled)
-                    Log.Log(Settings.LogLevel, "Invalidating via dedicated command handler for '{CommandType}'",
-                        command.GetType());
+                log?.Log(Settings.LogLevel,
+                    "Invalidating via dedicated command handler for '{CommandType}'",
+                    command.GetType());
                 await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
             }
 

@@ -34,9 +34,9 @@ public static class ComponentExt
             if (dispatcher.IsNullDispatcher())
                 StateHasChangedInvoker.Invoke(component);
             else if (component is FusionComponentBase fc)
-                dispatcher.InvokeAsync(fc.StateHasChangedInvoker);
+                _ = dispatcher.InvokeAsync(fc.StateHasChangedInvoker);
             else
-                dispatcher.InvokeAsync(() => StateHasChangedInvoker.Invoke(component));
+                _ = dispatcher.InvokeAsync(() => StateHasChangedInvoker.Invoke(component));
         }
         catch (ObjectDisposedException) {
             // Intended

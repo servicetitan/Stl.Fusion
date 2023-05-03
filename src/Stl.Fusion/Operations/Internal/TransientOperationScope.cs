@@ -6,10 +6,12 @@ namespace Stl.Fusion.Operations.Internal;
 /// </summary>
 public sealed class TransientOperationScope : AsyncDisposableBase, IOperationScope
 {
+    private ILogger? _log;
+
     private IServiceProvider Services { get; }
     private AgentInfo AgentInfo { get; }
     private MomentClockSet Clocks { get; }
-    private ILogger Log { get; }
+    private ILogger Log => _log ??= Services.LogFor(GetType());
 
     IOperation IOperationScope.Operation => Operation;
     public TransientOperation Operation { get; }
@@ -20,8 +22,6 @@ public sealed class TransientOperationScope : AsyncDisposableBase, IOperationSco
 
     public TransientOperationScope(IServiceProvider services)
     {
-        var loggerFactory = services.GetService<ILoggerFactory>();
-        Log = loggerFactory?.CreateLogger(GetType()) ?? NullLogger.Instance;
         Services = services;
         Clocks = services.Clocks();
         AgentInfo = services.GetRequiredService<AgentInfo>();

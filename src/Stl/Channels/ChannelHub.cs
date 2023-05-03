@@ -60,7 +60,7 @@ public class ChannelHub<T> : SafeAsyncDisposableBase, IChannelHub<T>
 
     protected virtual void OnAttached(Channel<T> channel)
     {
-        channel.Reader.Completion
+        _ = channel.Reader.Completion
             .ContinueWith(async _ => await Detach(channel).ConfigureAwait(false), TaskScheduler.Default);
         Attached?.Invoke(channel);
     }

@@ -27,7 +27,7 @@ public class StringKeyValueModelState : ComputedState<KeyValueModel<string>>
             services)
     {
         Locals = services.StateFactory().NewMutable("");
-        Locals.AddEventHandler(StateEventKind.Updated, (_, _) => this.Recompute());
+        Locals.AddEventHandler(StateEventKind.Updated, (_, _) => _ = this.Recompute());
     }
 
     protected override async Task<KeyValueModel<string>> Compute(CancellationToken cancellationToken)

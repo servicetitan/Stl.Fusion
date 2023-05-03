@@ -64,8 +64,8 @@ public class KeyValueService<TValue> : IKeyValueService<TValue>
     public virtual Task SetCmd(IKeyValueService<TValue>.SetCommand cmd, CancellationToken cancellationToken = default)
     {
         if (Computed.IsInvalidating()) {
-            TryGet(cmd.Key, default).AssertCompleted();
-            Get(cmd.Key, default).AssertCompleted();
+            _ = TryGet(cmd.Key, default).AssertCompleted();
+            _ = Get(cmd.Key, default).AssertCompleted();
             return Task.CompletedTask;
         }
 
@@ -76,8 +76,8 @@ public class KeyValueService<TValue> : IKeyValueService<TValue>
     public virtual Task RemoveCmd(IKeyValueService<TValue>.RemoveCommand cmd, CancellationToken cancellationToken = default)
     {
         if (Computed.IsInvalidating()) {
-            TryGet(cmd.Key, default).AssertCompleted();
-            Get(cmd.Key, default).AssertCompleted();
+            _ = TryGet(cmd.Key, default).AssertCompleted();
+            _ = Get(cmd.Key, default).AssertCompleted();
             return Task.CompletedTask;
         }
 

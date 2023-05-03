@@ -11,7 +11,7 @@ public sealed class RedisTaskSub : RedisSubBase
         : base(redisDb, key, subscribeTimeout, subscribe: false)
     {
         Reset();
-        Subscribe();
+        _ = Subscribe();
     }
 
     protected override async Task DisposeAsyncCore()
@@ -68,7 +68,7 @@ public sealed class RedisTaskSub<T> : RedisSubBase
     {
         Serializer = serializer ?? ByteSerializer<T>.Default;
         Reset();
-        Subscribe();
+        _ = Subscribe();
     }
 
     protected override async Task DisposeAsyncCore()

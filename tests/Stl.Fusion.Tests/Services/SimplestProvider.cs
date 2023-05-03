@@ -80,9 +80,9 @@ public class SimplestProvider : ISimplestProvider, IHasId<Type>, IComputeService
         if (!_isCaching)
             return;
 
-        using (Computed.Invalidate()) {
-            GetValue().AssertCompleted();
-        }
+        using (Computed.Invalidate())
+            _ = GetValue().AssertCompleted();
+
         // No need to invalidate GetCharCount,
         // since it will be invalidated automatically.
     }

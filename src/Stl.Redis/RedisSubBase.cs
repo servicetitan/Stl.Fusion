@@ -31,7 +31,7 @@ public abstract class RedisSubBase : ProcessorBase
         RedisChannel = new RedisChannel(FullKey, PatternMode);
         _onMessage = OnMessage;
         if (subscribe)
-            Subscribe();
+            _ = Subscribe();
     }
 
     protected override async Task DisposeAsyncCore()

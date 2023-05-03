@@ -185,7 +185,7 @@ public sealed class Connector<TConnection> : WorkerBase
                 return;
 
             // Dispose the connection
-            Task.Run(async () => {
+            _ = Task.Run(async () => {
                 var connection = await connectionTask.ConfigureAwait(false);
                 if (connection is IAsyncDisposable ad)
                     _ = ad.DisposeAsync();

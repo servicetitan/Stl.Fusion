@@ -8,21 +8,19 @@ public class CompletionProducer : IOperationCompletionListener
         public LogLevel LogLevel { get; init; } = LogLevel.Information;
     }
 
+    private AgentInfo? _agentInfo;
+    private ILogger? _log;
+
     protected Options Settings { get; }
     protected ICommander Commander { get; }
     protected IServiceProvider Services => Commander.Services;
-    protected AgentInfo AgentInfo { get; }
-    protected ILogger Log { get; }
-    protected bool IsLoggingEnabled { get; }
+    protected AgentInfo AgentInfo => _agentInfo ??= Services.GetRequiredService<AgentInfo>();
+    protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     public CompletionProducer(Options settings, ICommander commander, AgentInfo agentInfo)
     {
         Settings = settings;
         Commander = commander;
-        AgentInfo = agentInfo;
-
-        Log = Services.LogFor(GetType());
-        IsLoggingEnabled = Log.IsLogging(settings.LogLevel);
     }
 
     public bool IsReady()
@@ -39,8 +37,8 @@ public class CompletionProducer : IOperationCompletionListener
                 // if (command is IBackendCommand backendCommand)
                 //     backendCommand.MarkValid();
                 await Commander.Call(Completion.New(operation), true).ConfigureAwait(false);
-                if (IsLoggingEnabled && (command is not INotLogged || Settings.IgnoreNotLogged))
-                    Log.Log(Settings.LogLevel,
+                if (command is not INotLogged || Settings.IgnoreNotLogged)
+                    Log.IfEnabled(Settings.LogLevel)?.Log(Settings.LogLevel,
                         "{OperationType} operation completion succeeded. Agent: '{AgentId}', Command: {Command}",
                         operationType, operation.AgentId, command);
             }

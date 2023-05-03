@@ -70,7 +70,7 @@ public abstract class DbOperationCompletionNotifierBase<TDbContext, TOptions> : 
         var tenant = operationScope.Tenant;
         var notifyChain = new AsyncChain($"Notify({tenant.Id})", _ => Notify(tenant))
             .Retry(Options.NotifyRetryDelays, Options.NotifyRetryCount, Clocks.CpuClock, Log);
-        notifyChain.RunIsolated(default);
+        _ = notifyChain.RunIsolated(CancellationToken.None);
         return Task.CompletedTask;
     }
 

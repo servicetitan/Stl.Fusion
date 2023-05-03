@@ -30,17 +30,17 @@ public class ProxyTest : TestBase
         });
         RunOne("NoProxy.Method0", baseOpCount, opCount => {
             for (; opCount > 0; opCount--)
-                noProxy.Method0();
+                _ = noProxy.Method0();
             return 0;
         });
         RunOne("NoProxy.Method1", baseOpCount, opCount => {
             for (; opCount > 0; opCount--)
-                noProxy.Method1(default);
+                _ = noProxy.Method1(default);
             return 0;
         });
         RunOne("NoProxy.Method2", baseOpCount, opCount => {
             for (; opCount > 0; opCount--)
-                noProxy.Method2(0, default);
+                _ = noProxy.Method2(0, default);
             return 0;
         });
 
@@ -51,22 +51,22 @@ public class ProxyTest : TestBase
         });
         RunOne("ClassProxy.Method0", baseOpCount, opCount => {
             for (; opCount > 0; opCount--)
-                classProxy.Method0();
+                _ = classProxy.Method0();
             return 0;
         });
         RunOne("ClassProxy.Method1", baseOpCount, opCount => {
             for (; opCount > 0; opCount--)
-                classProxy.Method1(default);
+                _ = classProxy.Method1(default);
             return 0;
         });
         RunOne("ClassProxy.Method2", baseOpCount, opCount => {
             for (; opCount > 0; opCount--)
-                classProxy.Method2(0, default);
+                _ = classProxy.Method2(0, default);
             return 0;
         });
         RunOne("AltClassProxy.Method2", baseOpCount, opCount => {
             for (; opCount > 0; opCount--)
-                altProxy.Method2(0, default);
+                _ = altProxy.Method2(0, default);
             return 0;
         });
 
@@ -77,17 +77,17 @@ public class ProxyTest : TestBase
         });
         RunOne("InterfaceProxy.Method0", baseOpCount, opCount => {
             for (; opCount > 0; opCount--)
-                interfaceProxy.Method0();
+                _ = interfaceProxy.Method0();
             return 0;
         });
         RunOne("InterfaceProxy.Method1", baseOpCount, opCount => {
             for (; opCount > 0; opCount--)
-                interfaceProxy.Method1(default);
+                _ = interfaceProxy.Method1(default);
             return 0;
         });
         RunOne("InterfaceProxy.Method2", baseOpCount, opCount => {
             for (; opCount > 0; opCount--)
-                interfaceProxy.Method2(0, default);
+                _ = interfaceProxy.Method2(0, default);
             return 0;
         });
     }

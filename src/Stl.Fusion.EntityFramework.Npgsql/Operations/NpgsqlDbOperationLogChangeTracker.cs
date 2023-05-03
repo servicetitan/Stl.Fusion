@@ -43,7 +43,7 @@ public class NpgsqlDbOperationLogChangeTracker<TDbContext>
                     await dbConnection.WaitAsync(cancellationToken).ConfigureAwait(false);
             }).RetryForever(owner.Options.TrackerRetryDelays, owner.Log);
 
-            watchChain.RunIsolated(StopToken);
+            _ = watchChain.RunIsolated(StopToken);
         }
     }
 }

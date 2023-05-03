@@ -10,7 +10,7 @@ public class JsonifyErrorsAttributeTests
         var exceptionContext = exceptionContextFixture.Create();
         var jsonifyErrorsFixture = new JsonifyErrorsAttributeFixture();
 
-        jsonifyErrorsFixture.OnExceptionAsync(exceptionContext);
+        _ = jsonifyErrorsFixture.OnExceptionAsync(exceptionContext);
 
         exceptionContextFixture.VerifyLogError(expectedMessage);
     }
@@ -22,6 +22,6 @@ public class JsonifyErrorsAttributeTests
         var exceptionContext = exceptionContextFixture.Create();
         var jsonifyErrorsFixture = new JsonifyErrorsAttributeFixture();
 
-        jsonifyErrorsFixture.OnExceptionAsync(exceptionContext);
+        _ = jsonifyErrorsFixture.OnExceptionAsync(exceptionContext);
     }
 }

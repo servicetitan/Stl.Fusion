@@ -164,7 +164,7 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
         var channelProcessor = CreateChannelProcessor(channel);
         if (!ChannelProcessors.TryAdd(channel, channelProcessor))
             return; // Parallel attempt to add channel processor for the same channel?
-        channelProcessor.Run().ContinueWith(_ => {
+        _ = channelProcessor.Run().ContinueWith(_ => {
             // Since ChannelProcessor is WorkerBase desc.,
             // its disposal will shut down Run as well,
             // so "subscribing" to Run completion is the

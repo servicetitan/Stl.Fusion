@@ -1,4 +1,5 @@
 using Stl.DependencyInjection.Internal;
+using Stl.Internal;
 using Stl.IO;
 using Stl.Reflection;
 
@@ -146,5 +147,23 @@ public class SerializationTest : TestBase
         s = s.Set((1, "X"));
         var s1 = s.PassThroughAllSerializers(Out);
         s1.Items.Should().BeEquivalentTo(s.Items);
+    }
+
+    [Fact]
+    public void ValueOfSerialization()
+    {
+        void Test<T>(ValueOf<T>? src)
+        {
+            var dst = src.PassThroughAllSerializers(Out);
+            if (src == null)
+                dst.Should().BeNull();
+            else
+                dst!.Value.Should().Be(src.Value);
+        }
+
+        Test<int>(null);
+        Test<string>(null);
+        Test(ValueOf.New(1));
+        Test(ValueOf.New("1"));
     }
 }

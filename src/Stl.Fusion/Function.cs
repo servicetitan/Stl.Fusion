@@ -1,4 +1,5 @@
 using Stl.Fusion.Internal;
+using Stl.Internal;
 using Stl.Locking;
 
 namespace Stl.Fusion;
@@ -30,17 +31,17 @@ public interface IFunction<T> : IFunction
 public abstract class FunctionBase<T> : IFunction<T>
 {
     protected static AsyncLockSet<ComputedInput> InputLocks => ComputedRegistry.Instance.InputLocks;
-    protected readonly ILogger Log;
-    protected readonly ILogger? DebugLog;
+
+    private ILogger? _log;
+    private ValueOf<ILogger?>? _debugLog;
+
+    protected ILogger Log => _log ??= Services.LogFor(GetType());
+    protected ILogger? DebugLog => (_debugLog ??= ValueOf.New(Log.IfEnabled(LogLevel.Debug))).Value;
 
     public IServiceProvider Services { get; }
 
     protected FunctionBase(IServiceProvider services)
-    {
-        Services = services;
-        Log = Services.LogFor(GetType());
-        DebugLog = Log.IsLogging(LogLevel.Debug) ? Log : null;
-    }
+        => Services = services;
 
     async ValueTask<IComputed> IFunction.Invoke(ComputedInput input,
         IComputed? usedBy,

@@ -18,9 +18,9 @@ public class PerUserCounterService : IComputeService
     {
         _counters.AddOrUpdate((session.Id, key), _ => 1, (_, v) => v + 1);
 
-        using (Computed.Invalidate()) {
-            Get(key, session, default).AssertCompleted();
-        }
+        using (Computed.Invalidate())
+            _ = Get(key, session, default).AssertCompleted();
+
         return Task.CompletedTask;
     }
 }

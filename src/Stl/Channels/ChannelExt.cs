@@ -101,14 +101,13 @@ public static partial class ChannelExt
             Channel.CreateBounded<T>(channelOptions),
             Channel.CreateBounded<T>(channelOptions));
 
-        downstreamChannel.Connect(pair.Channel1,
+        _ = downstreamChannel.Connect(pair.Channel1,
             serializer.Read,
             serializer.Write,
             ChannelCompletionMode.Full,
             cancellationToken);
         return pair.Channel2;
     }
-
 
     public static Channel<T> WithByteSerializer<T>(
         this Channel<ReadOnlyMemory<byte>> downstreamChannel,
@@ -126,7 +125,7 @@ public static partial class ChannelExt
             Channel.CreateBounded<T>(channelOptions),
             Channel.CreateBounded<T>(channelOptions));
 
-        downstreamChannel.Connect(pair.Channel1,
+        _ = downstreamChannel.Connect(pair.Channel1,
             serializer.Read,
             Write,
             ChannelCompletionMode.Full,
@@ -168,7 +167,7 @@ public static partial class ChannelExt
             return message;
         }
 
-        channel.Connect(pair.Channel1,
+        _ = channel.Connect(pair.Channel1,
             m => LogMessage(m, true),
             m => LogMessage(m, false),
             ChannelCompletionMode.Full,

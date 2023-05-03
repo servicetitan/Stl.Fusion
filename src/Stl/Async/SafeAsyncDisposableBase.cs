@@ -18,7 +18,7 @@ public abstract class SafeAsyncDisposableBase : IAsyncDisposable, IDisposable, I
             return;
 
         var disposeTask = DisposeAsync(true);
-        Interlocked.Exchange(ref _disposeTask, disposeTask);
+        _ = Interlocked.Exchange(ref _disposeTask, disposeTask);
         GC.SuppressFinalize(this);
     }
 
@@ -36,7 +36,7 @@ public abstract class SafeAsyncDisposableBase : IAsyncDisposable, IDisposable, I
         }
 
         disposeTask = DisposeAsync(true);
-        Interlocked.Exchange(ref _disposeTask, disposeTask);
+        _ = Interlocked.Exchange(ref _disposeTask, disposeTask);
         GC.SuppressFinalize(this);
         return disposeTask.ToValueTask();
     }
@@ -48,7 +48,7 @@ public abstract class SafeAsyncDisposableBase : IAsyncDisposable, IDisposable, I
         if (Interlocked.CompareExchange(ref _isDisposing, 1, 0) != 0)
             return false;
 
-        Interlocked.Exchange(ref _disposeTask, Task.CompletedTask);
+        _ = Interlocked.Exchange(ref _disposeTask, Task.CompletedTask);
         GC.SuppressFinalize(this);
         return true;
     }

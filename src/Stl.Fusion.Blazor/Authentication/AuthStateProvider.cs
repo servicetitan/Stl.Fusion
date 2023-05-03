@@ -91,7 +91,7 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
     }
 
     protected virtual void OnStateChanged(IState<AuthState> state, StateEventKind eventKind)
-        => Task.Run(() => {
+        => _ = Task.Run(() => {
             var authenticationStateTask = Task.FromResult((AuthenticationState) state.LastNonErrorValue);
             NotifyAuthenticationStateChanged(authenticationStateTask);
 

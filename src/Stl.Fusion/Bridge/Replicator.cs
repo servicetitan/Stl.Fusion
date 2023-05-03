@@ -61,7 +61,7 @@ public class Replicator : SafeAsyncDisposableBase, IReplicatorImpl
             state.PublicationRef,
             () => new Replica<T>(state, this));
         if (isNew && state.IsConsistent)
-            replica.RequestUpdateUntyped(); // Any new inconsistent replica should subscribe for invalidations
+            _ = replica.RequestUpdateUntyped(); // Any new inconsistent replica should subscribe for invalidations
         else
             replica.UpdateUntyped(state); // Otherwise we update it
         return (Replica<T>) replica;
@@ -77,7 +77,7 @@ public class Replicator : SafeAsyncDisposableBase, IReplicatorImpl
     protected virtual ReplicatorChannelProcessor CreateChannelProcessor(Symbol publisherId)
     {
         var channelProcessor = new ReplicatorChannelProcessor(this, publisherId);
-        channelProcessor.Run().ContinueWith(_ => {
+        _ = channelProcessor.Run().ContinueWith(_ => {
             // Since ChannelProcessor is WorkerBase desc.,
             // its disposal will shut down Run as well,
             // so "subscribing" to Run completion is the

@@ -10,16 +10,16 @@ namespace Stl.Fusion.Operations.Internal;
 /// </summary>
 public class TransientOperationScopeProvider : ICommandHandler<ICommand>
 {
-    protected IOperationCompletionNotifier OperationCompletionNotifier { get; }
+    private ILogger? _log;
+    private IOperationCompletionNotifier? _operationCompletionNotifier;
+
     protected IServiceProvider Services { get; }
-    protected ILogger Log { get; }
+    protected IOperationCompletionNotifier OperationCompletionNotifier =>
+        _operationCompletionNotifier ??= Services.GetRequiredService<IOperationCompletionNotifier>();
+    protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     public TransientOperationScopeProvider(IServiceProvider services)
-    {
-        Services = services;
-        Log = Services.LogFor(GetType());
-        OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
-    }
+        => Services = services;
 
     [CommandFilter(Priority = FusionOperationsCommandHandlerPriority.TransientOperationScopeProvider)]
     public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)

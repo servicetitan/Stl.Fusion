@@ -40,7 +40,7 @@ public class CounterService : IComputeService
         _counters[key] = value;
 
         using (Computed.Invalidate())
-            Get(key, default).AssertCompleted();
+            _ = Get(key, default).AssertCompleted();
 
         return Task.CompletedTask;
     }
@@ -50,7 +50,7 @@ public class CounterService : IComputeService
         _counters.AddOrUpdate(key, k => 1, (k, v) => v + 1);
 
         using (Computed.Invalidate())
-            Get(key, default).AssertCompleted();
+            _ = Get(key, default).AssertCompleted();
 
         return Task.CompletedTask;
     }

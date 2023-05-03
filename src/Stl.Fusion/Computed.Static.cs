@@ -178,7 +178,7 @@ public static class Computed
     {
         using var ccs = ComputeContext.New(CallOptions.Capture | CallOptions.GetExisting).Activate();
         var task = producer();
-        task.AssertCompleted(); // The must be always synchronous in this case
+        _ = task.AssertCompleted(); // The must be always synchronous in this case
         return ccs.Context.TryGetCaptured<T>(out var result) ? result : default;
     }
 
@@ -186,7 +186,7 @@ public static class Computed
     {
         using var ccs = ComputeContext.New(CallOptions.Capture | CallOptions.GetExisting).Activate();
         var task = producer();
-        task.AssertCompleted(); // The must be always synchronous in this case
+        _ = task.AssertCompleted(); // The must be always synchronous in this case
         return ccs.Context.TryGetCaptured<T>(out var result) ? result : default;
     }
 }

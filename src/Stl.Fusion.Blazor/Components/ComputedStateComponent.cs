@@ -80,7 +80,7 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
                 _ = InvokeAsync(() => {
                     ExecutionContext.Run(executionContext, _ => {
                         var computeStateTask = ComputeState(cancellationToken);
-                        tcs.TrySetFromTaskAsync(computeStateTask, cancellationToken);
+                        _ = tcs.TrySetFromTaskAsync(computeStateTask, cancellationToken);
                     }, null);
                     return tcs.Task;
                 });

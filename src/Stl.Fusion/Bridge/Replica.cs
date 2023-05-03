@@ -155,6 +155,6 @@ public sealed class Replica<T> : Replica
         }
 
         if (isChanged && state.IsConsistent)
-            RequestUpdate(); // Any consistent replica should auto-subscribe for invalidation messages
+            _ = RequestUpdate(); // Any consistent replica should auto-subscribe for invalidation messages
     }
 }

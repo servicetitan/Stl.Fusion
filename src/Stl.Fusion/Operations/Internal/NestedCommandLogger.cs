@@ -7,14 +7,16 @@ namespace Stl.Fusion.Operations.Internal;
 /// </summary>
 public class NestedCommandLogger : ICommandHandler<ICommand>
 {
-    protected InvalidationInfoProvider InvalidationInfoProvider { get; }
-    protected ILogger Log { get; }
+    private InvalidationInfoProvider? _invalidationInfoProvider;
+    private ILogger? _log;
+
+    protected IServiceProvider Services { get; }
+    protected InvalidationInfoProvider InvalidationInfoProvider =>
+        _invalidationInfoProvider ??= Services.GetRequiredService<InvalidationInfoProvider>();
+    protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     public NestedCommandLogger(IServiceProvider services)
-    {
-        Log = services.LogFor(GetType());
-        InvalidationInfoProvider = services.GetRequiredService<InvalidationInfoProvider>();
-    }
+        => Services = services;
 
     [CommandFilter(Priority = FusionOperationsCommandHandlerPriority.NestedCommandLogger)]
     public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)

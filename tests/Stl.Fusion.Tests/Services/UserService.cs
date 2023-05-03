@@ -162,7 +162,8 @@ public class UserService : DbServiceBase<TestDbContext>, IUserService
             return Task.CompletedTask;
 
         using (Computed.Invalidate())
-            Everything().AssertCompleted();
+            _ = Everything().AssertCompleted();
+
         return Task.CompletedTask;
     }
 

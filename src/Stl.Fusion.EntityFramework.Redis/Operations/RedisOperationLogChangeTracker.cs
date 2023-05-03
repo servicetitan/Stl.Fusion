@@ -45,8 +45,8 @@ public class RedisOperationLogChangeTracker<TDbContext>
                         CompleteWaitForChanges();
                 }
             }).RetryForever(owner.Options.TrackerRetryDelays, owner.Log);
-            
-            watchChain.RunIsolated(StopToken);
+
+            _ = watchChain.RunIsolated(StopToken);
         }
     }
 }

@@ -33,15 +33,19 @@ public record OperationReprocessorOptions
 /// </summary>
 public class OperationReprocessor : IOperationReprocessor
 {
-    public static Generator<long> Random { get; } = new RandomInt64Generator();
+    private ITransientErrorDetector<IOperationReprocessor>? _transientErrorDetector;
+    private IMomentClock? _delayClock;
+    private ILogger? _log;
 
     protected IServiceProvider Services { get; }
-    protected ITransientErrorDetector<IOperationReprocessor> TransientErrorDetector { get; }
-    protected HashSet<Exception> KnownTransientFailures { get; }
-    protected ILogger Log { get; }
+    protected ITransientErrorDetector<IOperationReprocessor> TransientErrorDetector => 
+        _transientErrorDetector ??= Services.GetRequiredService<ITransientErrorDetector<IOperationReprocessor>>();
+    protected HashSet<Exception> KnownTransientFailures { get; } = new();
+    protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     public OperationReprocessorOptions Options { get; }
-    public IMomentClock DelayClock { get; }
+    public IMomentClock DelayClock => _delayClock ??= Options.DelayClock ?? Services.Clocks().CpuClock;
+
     public int FailedTryCount { get; protected set; }
     public Exception? LastError { get; protected set; }
     public CommandContext CommandContext { get; protected set; } = null!;
@@ -50,11 +54,6 @@ public class OperationReprocessor : IOperationReprocessor
     {
         Options = options;
         Services = services;
-        Log = Services.LogFor(GetType());
-        DelayClock = options.DelayClock ?? Services.Clocks().CpuClock;
-
-        TransientErrorDetector = Services.GetRequiredService<ITransientErrorDetector<IOperationReprocessor>>();
-        KnownTransientFailures = new();
     }
 
     public void AddTransientFailure(Exception error)

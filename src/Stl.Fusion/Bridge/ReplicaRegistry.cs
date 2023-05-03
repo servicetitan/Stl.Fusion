@@ -152,7 +152,7 @@ public sealed class ReplicaRegistry : IDisposable
             if (_opCounter.ApproximateValue <= _pruneCounterThreshold)
                 return;
             _opCounter.ApproximateValue = 0;
-            Prune();
+            _ = Prune();
         }
     }
 

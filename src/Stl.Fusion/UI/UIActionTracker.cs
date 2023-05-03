@@ -7,14 +7,16 @@ public sealed class UIActionTracker : ProcessorBase, IHasServices
         public IMomentClock? Clock { get; init; }
     }
 
+    private IMomentClock? _clock;
+    private ILogger? _log;
     private long _runningActionCount;
     private volatile ManualAsyncEvent<UIAction?> _lastActionEvent;
     private volatile ManualAsyncEvent<IUIActionResult?> _lastResultEvent;
 
     public Options Settings { get; }
     public IServiceProvider Services { get; }
-    public IMomentClock Clock { get; }
-    public ILogger Log { get; }
+    public IMomentClock Clock => _clock ??= Settings.Clock ?? Services.Clocks().CpuClock;
+    public ILogger Log => _log ??= Services.LogFor(GetType());
 
     public long RunningActionCount => Interlocked.Read(ref _runningActionCount);
     public AsyncEvent<UIAction?> LastActionEvent => _lastActionEvent;
@@ -24,8 +26,6 @@ public sealed class UIActionTracker : ProcessorBase, IHasServices
     {
         Settings = options;
         Services = services;
-        Clock = options.Clock ?? services.Clocks().CpuClock;
-        Log = services.LogFor(GetType());
 
         _lastActionEvent = new ManualAsyncEvent<UIAction?>(null, true);
         _lastResultEvent = new ManualAsyncEvent<IUIActionResult?>(null, true);
@@ -62,7 +62,7 @@ public sealed class UIActionTracker : ProcessorBase, IHasServices
             }
         }
 
-        action.WhenCompleted().ContinueWith(_ => {
+        _ = action.WhenCompleted().ContinueWith(_ => {
             lock (Lock) {
                 if (StopToken.IsCancellationRequested)
                     return;
