@@ -20,8 +20,4 @@ public class RpcBasicTest : TestBase
         rpc.AddService<ISimpleRpcService, SimpleRpcService>();
         return services.BuildServiceProvider();
     }
-
-    // Nested types
-
 }
-
