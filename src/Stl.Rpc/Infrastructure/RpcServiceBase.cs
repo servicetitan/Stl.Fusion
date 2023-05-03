@@ -4,12 +4,12 @@ public abstract class RpcServiceBase
 {
     protected IServiceProvider Services { get; }
     protected ILogger Log { get; }
-    protected RpcGlobalOptions GlobalOptions { get; }
+    protected RpcConfiguration Configuration { get; }
 
     protected RpcServiceBase(IServiceProvider services)
     {
         Services = services;
         Log = services.LogFor(GetType());
-        GlobalOptions = services.GetRequiredService<RpcGlobalOptions>();
+        Configuration = services.GetRequiredService<RpcConfiguration>();
     }
 }

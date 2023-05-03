@@ -3,7 +3,7 @@ using Stl.Interception.Interceptors;
 
 namespace Stl.Rpc.Infrastructure;
 
-public sealed class RpcMethodDef : MethodDef
+public class RpcMethodDef : MethodDef
 {
     public RpcServiceDef Service { get; }
     public Symbol Name { get; }
@@ -11,6 +11,7 @@ public sealed class RpcMethodDef : MethodDef
     public Type ArgumentListType { get; }
     public Type[] RemoteParameterTypes { get; }
     public Type RemoteArgumentListType { get; }
+    public bool MustCheckArguments { get; }
 
     public RpcMethodDef(RpcServiceDef service, MethodInfo method, Func<RpcMethodDef, Symbol> methodNameBuilder)
         : base(service.Type, method)
@@ -40,4 +41,7 @@ public sealed class RpcMethodDef : MethodDef
         if (!IsAsyncMethod)
             IsValid = false;
     }
+
+    public virtual void CheckArguments(RpcRequest request, RpcChannel channel, Type[] argumentTypes)
+    { }
 }

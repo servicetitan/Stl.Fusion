@@ -4,15 +4,15 @@ using Stl.Rpc.Infrastructure;
 
 namespace Stl.Rpc;
 
-public record RpcGlobalOptions
+public record RpcConfiguration
 {
-    public Dictionary<Type, (Symbol, Type?)> ServiceTypes { get; init; } = new();
-    public List<Type> MiddlewareTypes { get; init; } = new();
+    public Dictionary<Type, Symbol> Services { get; init; } = new();
+    public Dictionary<Type, Type> Implementations { get; init; } = new();
 
     public Func<Type, Symbol> ServiceNameBuilder { get; init; } = DefaultServiceNameBuilder;
     public Func<RpcMethodDef, Symbol> MethodNameBuilder { get; init; } = DefaultMethodNameBuilder;
-    public Func<ArgumentList, Type, object?> ArgumentListSerializer { get; init; } = DefaultArgumentListSerializer;
-    public Func<object?, Type, ArgumentList> ArgumentListDeserializer { get; init; } = DefaultArgumentListDeserializer;
+    public Func<ArgumentList, Type, object?> ArgumentSerializer { get; init; } = DefaultArgumentSerializer;
+    public Func<object?, Type, ArgumentList> ArgumentDeserializer { get; init; } = DefaultArgumentDeserializer;
 
     public static Symbol DefaultServiceNameBuilder(Type serviceType)
         => serviceType.GetName();
@@ -20,7 +20,7 @@ public record RpcGlobalOptions
     public static Symbol DefaultMethodNameBuilder(RpcMethodDef methodDef)
         => $"{methodDef.Method.Name}:{methodDef.RemoteParameterTypes.Length}";
 
-    public static object? DefaultArgumentListSerializer(ArgumentList value, Type type)
+    public static object? DefaultArgumentSerializer(ArgumentList value, Type type)
     {
         if (value.Length == 0)
             return null;
@@ -30,7 +30,7 @@ public record RpcGlobalOptions
         return bufferWriter;
     }
 
-    public static ArgumentList DefaultArgumentListDeserializer(object? data, Type type)
+    public static ArgumentList DefaultArgumentDeserializer(object? data, Type type)
     {
         if (data is null)
             return ArgumentList.Empty;

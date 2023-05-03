@@ -10,7 +10,7 @@ public readonly struct RpcBuilder
     private static readonly ServiceDescriptor AddedTagDescriptor = new(typeof(AddedTag), new AddedTag());
 
     public IServiceCollection Services { get; }
-    public RpcGlobalOptions GlobalOptions { get; }
+    public RpcConfiguration Configuration { get; }
 
     internal RpcBuilder(
         IServiceCollection services,
@@ -19,7 +19,7 @@ public readonly struct RpcBuilder
         Services = services;
         if (Services.Contains(AddedTagDescriptor)) {
             // Already configured
-            GlobalOptions = GetOptions(services);
+            Configuration = GetOptions(services);
             configure?.Invoke(this);
             return;
         }
@@ -28,9 +28,9 @@ public readonly struct RpcBuilder
         Services.Insert(0, AddedTagDescriptor);
 
         // Common services
-        Services.TryAddSingleton(new RpcGlobalOptions());
-        Services.TryAddSingleton(RpcChannelOptions.DefaultOptionsProvider);
-        Services.TryAddTransient(c => new RpcChannel(c));
+        Services.TryAddSingleton(new RpcConfiguration());
+        Services.TryAddSingleton(c => new RpcChannelHub(c));
+        Services.TryAddSingleton<Func<Symbol, RpcChannel>>(c => name => new RpcChannel(name, c));
 
         // Infrastructure
         Services.TryAddSingleton(c => new RpcRequestBinder(c));
@@ -38,22 +38,33 @@ public readonly struct RpcBuilder
         Services.TryAddSingleton(c => new RpcServiceRegistry(c));
         Services.TryAddSingleton(c => new RpcSystemCallService(c));
 
-        GlobalOptions = GetOptions(services);
+        Configuration = GetOptions(services);
         AddService<RpcSystemCallService>("$sys");
     }
 
     public RpcBuilder AddService<TService>(Symbol serviceName = default)
         => AddService(typeof(TService), serviceName);
+    public RpcBuilder AddService<TService, TImplementation>(Symbol serviceName = default)
+        where TImplementation : class, TService
+        => AddService(typeof(TService), typeof(TImplementation), serviceName);
     public RpcBuilder AddService(Type serviceType, Symbol serviceName = default)
+        => AddService(serviceType, null, serviceName);
+    public RpcBuilder AddService(Type serviceType, Type? implementationType, Symbol serviceName = default)
     {
         if (serviceType.IsValueType)
             throw new ArgumentOutOfRangeException(nameof(serviceType));
-        if (GlobalOptions.ServiceTypes.ContainsKey(serviceType))
+        if (Configuration.Services.ContainsKey(serviceType))
             throw Stl.Internal.Errors.KeyAlreadyExists();
 
         if (serviceName.IsEmpty)
-            serviceName = GlobalOptions.ServiceNameBuilder.Invoke(serviceType);
-        GlobalOptions.ServiceTypes.Add(serviceType, (serviceName, null));
+            serviceName = Configuration.ServiceNameBuilder.Invoke(serviceType);
+        if (implementationType != null) {
+            if (!serviceType.IsAssignableFrom(implementationType))
+                throw new ArgumentOutOfRangeException(nameof(implementationType));
+
+            Configuration.Implementations.Add(serviceType, implementationType);
+        }
+        Configuration.Services.Add(serviceType, serviceName);
         return this;
     }
 
@@ -61,51 +72,32 @@ public readonly struct RpcBuilder
         => RemoveService(typeof(TService));
     public RpcBuilder RemoveService(Type serviceType)
     {
-        GlobalOptions.ServiceTypes.Remove(serviceType);
-        return this;
-    }
-
-    public RpcBuilder AddServiceImplementation<TService, TImplementation>()
-        => AddServiceImplementation(typeof(TService), typeof(TImplementation));
-    public RpcBuilder AddServiceImplementation(Type serviceType, Type implementationType)
-    {
-        if (serviceType.IsValueType)
-            throw new ArgumentOutOfRangeException(nameof(serviceType));
-        if (GlobalOptions.ServiceTypes.ContainsKey(implementationType))
-            throw Stl.Internal.Errors.KeyAlreadyExists();
-
-        GlobalOptions.ServiceTypes.Add(implementationType, (Symbol.Empty, serviceType));
-        return this;
-    }
-
-    public RpcBuilder RemoveServiceImplementation<TImplementation>()
-        => RemoveService(typeof(TImplementation));
-    public RpcBuilder RemoveServiceImplementation(Type implementationType)
-    {
-        GlobalOptions.ServiceTypes.Remove(implementationType);
+        Configuration.Services.Remove(serviceType);
+        Configuration.Implementations.Remove(serviceType);
         return this;
     }
 
     public RpcBuilder ClearServices()
     {
-        GlobalOptions.ServiceTypes.Clear();
+        Configuration.Services.Clear();
+        Configuration.Implementations.Clear();
         return this;
     }
 
     // Private methods
 
-    private static RpcGlobalOptions GetOptions(IServiceCollection services)
+    private static RpcConfiguration GetOptions(IServiceCollection services)
     {
         for (var i = 0; i < services.Count; i++) {
             var descriptor = services[i];
-            if (descriptor.ServiceType == typeof(RpcGlobalOptions)) {
+            if (descriptor.ServiceType == typeof(RpcConfiguration)) {
                 if (i > 16) {
                     // Let's move it to the beginning of the list
                     // to speed up future searches
                     services.RemoveAt(i);
                     services.Insert(0, descriptor);
                 }
-                return (RpcGlobalOptions?) descriptor.ImplementationInstance
+                return (RpcConfiguration?) descriptor.ImplementationInstance
                     ?? throw Errors.RpcOptionsMustBeRegisteredAsInstance();
             }
         }

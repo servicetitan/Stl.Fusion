@@ -49,18 +49,16 @@ public class RpcRequestBinder : RpcServiceBase
             }
         }
 
-        var serializer = channel.Options.Serializer ?? GlobalOptions.ArgumentListSerializer;
-        var serializedArguments = serializer.Invoke(arguments, arguments.GetType());
+        var serializedArguments = channel.ArgumentSerializer.Invoke(arguments, arguments.GetType());
         return new RpcRequest(methodDef.Service.Name, methodDef.Name, serializedArguments, headers);
     }
 
     public virtual RpcBoundRequest ToBound(RpcRequest request, RpcChannel channel)
     {
         var headers = request.Headers;
-        var channelOptions = channel.Options;
 
         var serviceDef = ServiceRegistry[request.Service];
-        if (!serviceDef.IsSystem && !channelOptions.ServiceFilter.Invoke(serviceDef))
+        if (!serviceDef.IsSystem && !channel.LocalServiceFilter.Invoke(serviceDef))
             throw Errors.ServiceIsNotWhiteListed(serviceDef);
 
         var methodDef = serviceDef[request.Method];
@@ -68,8 +66,9 @@ public class RpcRequestBinder : RpcServiceBase
         var argumentListType = methodDef.RemoteArgumentListType;
         if (argumentListType.IsGenericType) {
             var actualArgumentListType = argumentListType;
+            Type[] argumentTypes;
             if (headers != null && headers.Any(static h => h.Name.StartsWith(RpcHeader.ArgumentTypeHeaderPrefix, StringComparison.Ordinal))) {
-                var gParameters = argumentListType.GetGenericArguments();
+                argumentTypes = argumentListType.GetGenericArguments();
                 foreach (var h in headers) {
                     if (!h.Name.StartsWith(RpcHeader.ArgumentTypeHeaderPrefix, StringComparison.Ordinal))
                         continue;
@@ -83,19 +82,22 @@ public class RpcRequestBinder : RpcServiceBase
                         continue;
 
                     var argumentType = new TypeRef(h.Value).Resolve();
-                    if (!gParameters[argumentIndex].IsAssignableFrom(argumentType))
+                    if (!argumentTypes[argumentIndex].IsAssignableFrom(argumentType))
                         throw Errors.IncompatibleArgumentType(methodDef, argumentIndex, argumentType);
 
-                    gParameters[argumentIndex] = argumentType;
+                    argumentTypes[argumentIndex] = argumentType;
                 }
 
                 actualArgumentListType = argumentListType
                     .GetGenericTypeDefinition()
-                    .MakeGenericType(gParameters);
+                    .MakeGenericType(argumentTypes);
             }
+            else
+                argumentTypes = methodDef.RemoteParameterTypes;
 
-            var deserializer = channelOptions.Deserializer ?? GlobalOptions.ArgumentListDeserializer;
-            var deserializedArguments = deserializer.Invoke(request.Arguments, actualArgumentListType) as ArgumentList;
+            if (methodDef.MustCheckArguments)
+                methodDef.CheckArguments(request, channel, argumentTypes);
+            var deserializedArguments = channel.ArgumentDeserializer.Invoke(request.Arguments, actualArgumentListType);
             if (deserializedArguments == null)
                 throw Errors.NonDeserializableArguments(methodDef);
 

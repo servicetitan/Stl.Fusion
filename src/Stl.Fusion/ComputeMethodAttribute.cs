@@ -5,8 +5,6 @@ namespace Stl.Fusion;
 [AttributeUsage(AttributeTargets.Method, Inherited = false)]
 public class ComputeMethodAttribute : Attribute
 {
-    public Type? ComputeMethodDefType { get; set; } = null;
-
     /// <summary>
     /// Minimum time (in seconds) for any produced <see cref="IComputed"/> instance to stay in RAM.
     /// <code>double.NaN</code> means "use default".

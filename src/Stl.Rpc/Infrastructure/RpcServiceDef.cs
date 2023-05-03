@@ -8,6 +8,7 @@ public class RpcServiceDef
     private readonly Dictionary<Symbol, RpcMethodDef> _methodByName;
 
     public Type Type { get; }
+    public Type? ImplementationType { get; }
     public Symbol Name { get; }
     public bool IsSystem { get; }
     public int MethodCount => _methods.Count;
@@ -16,9 +17,10 @@ public class RpcServiceDef
     public RpcMethodDef this[MethodInfo method] => Get(method) ?? throw Errors.NoMethod(Type, method);
     public RpcMethodDef this[Symbol methodName] => Get(methodName) ?? throw Errors.NoMethod(Type, methodName);
 
-    public RpcServiceDef(Type type, Symbol name, Func<RpcMethodDef, Symbol> methodNameBuilder)
+    public RpcServiceDef(Type type, Type? implementationType, Symbol name, Func<RpcMethodDef, Symbol> methodNameBuilder)
     {
         Type = type;
+        ImplementationType = implementationType;
         Name = name;
         IsSystem = typeof(IRpcSystemService).IsAssignableFrom(type);
 
@@ -28,7 +30,9 @@ public class RpcServiceDef
             if (method.IsGenericMethodDefinition)
                 continue;
 
-            var methodDef = new RpcMethodDef(this, method, methodNameBuilder);
+            var attr = IsSystem ? method.GetCustomAttribute<RpcMethodAttribute>(true) : null;
+            var methodDefType = attr?.MethodDefType ?? typeof(RpcMethodDef);
+            var methodDef = (RpcMethodDef)methodDefType.CreateInstance(this, method, methodNameBuilder);
             if (_methodByName.ContainsKey(methodDef.Name))
                 throw Errors.MethodNameConflict(methodDef);
 
@@ -38,7 +42,12 @@ public class RpcServiceDef
     }
 
     public override string ToString()
-        => $"{GetType().Name}({Type.GetName()}, Name: '{Name}', {MethodCount} method(s))";
+    {
+        var implementationInfo = ImplementationType != null
+            ? $", Implementation: {ImplementationType.GetName()}"
+            : "";
+        return $"{GetType().Name}({Type.GetName()}, Name: '{Name}', {MethodCount} method(s){implementationInfo})";
+    }
 
     public RpcMethodDef? Get(MethodInfo method) => _methods.GetValueOrDefault(method);
     public RpcMethodDef? Get(Symbol methodName) => _methodByName.GetValueOrDefault(methodName);

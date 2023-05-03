@@ -2,19 +2,19 @@ namespace Stl.Rpc.Infrastructure;
 
 public class RpcRequestHandler : RpcServiceBase
 {
-    private static readonly MethodInfo HandleBoundMethod = typeof(RpcRequestHandler)
+    private static readonly MethodInfo InvokeMethod = typeof(RpcRequestHandler)
         .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-        .Single(m => StringComparer.Ordinal.Equals(m.Name, nameof(HandleBound)));
+        .Single(m => StringComparer.Ordinal.Equals(m.Name, nameof(Invoke)));
 
-    private readonly Func<RpcMethodDef, Func<RpcRequestContext, Task>> _createHandleBoundInvoker;
-    private readonly ConcurrentDictionary<RpcMethodDef, Func<RpcRequestContext, Task>> _handleBoundInvokers = new();
+    private readonly Func<RpcMethodDef, Func<RpcRequestContext, Task>> _createInvoker;
+    private readonly ConcurrentDictionary<RpcMethodDef, Func<RpcRequestContext, Task>> _invokers = new();
 
     private RpcRequestBinder RequestBinder { get; }
 
     public RpcRequestHandler(IServiceProvider services) : base(services)
     {
         RequestBinder = services.GetRequiredService<RpcRequestBinder>();
-        _createHandleBoundInvoker = methodDef => (Func<RpcRequestContext, Task>)HandleBoundMethod
+        _createInvoker = methodDef => (Func<RpcRequestContext, Task>)InvokeMethod
             .MakeGenericMethod(methodDef.UnwrappedReturnType)
             .CreateDelegate(typeof(Func<RpcRequestContext, Task>));
     }
@@ -30,16 +30,16 @@ public class RpcRequestHandler : RpcServiceBase
             return Task.CompletedTask;
         }
 
-        var handleBoundInvoker = GetHandleBoundInvoker(context.BoundRequest.MethodDef);
-        return handleBoundInvoker.Invoke(context);
+        var invoker = GetInvoker(context.BoundRequest.MethodDef);
+        return invoker.Invoke(context);
     }
 
     // Protected methods
 
-    protected Func<RpcRequestContext, Task> GetHandleBoundInvoker(RpcMethodDef methodDef)
-        => _handleBoundInvokers.GetOrAdd(methodDef, _createHandleBoundInvoker);
+    protected Func<RpcRequestContext, Task> GetInvoker(RpcMethodDef methodDef)
+        => _invokers.GetOrAdd(methodDef, _createInvoker);
 
-    protected virtual Task HandleBound<T>(RpcRequestContext context)
+    protected virtual Task Invoke<T>(RpcRequestContext context)
     {
         var request = context.BoundRequest!;
         var methodDef = request.MethodDef;

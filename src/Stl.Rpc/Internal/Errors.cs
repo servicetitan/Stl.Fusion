@@ -26,6 +26,11 @@ public static class Errors
     public static Exception NoMethod(Type serviceType, string methodName)
         => new InvalidOperationException($"Can't resolve method '{methodName}' (by name) of '{serviceType.GetName()}'.");
 
+    public static Exception MustBeBound()
+        => new InvalidOperationException($"{nameof(RpcChannel)}.{nameof(RpcChannel.BindTo)} wasn't called yet.");
+    public static Exception AlreadyBound()
+        => new InvalidOperationException($"This {nameof(RpcChannel)} is already bound.");
+    
     public static Exception NoCurrentRpcRequestContext()
         => new InvalidOperationException($"{nameof(RpcRequestContext)}.{nameof(RpcRequestContext.Current)} is unavailable.");
 
@@ -34,7 +39,4 @@ public static class Errors
             $"Argument #{argumentIndex} for '{methodDef.FullName}' has incompatible type: '{argumentType.GetName()}.'");
     public static Exception NonDeserializableArguments(RpcMethodDef methodDef)
         => new InvalidOperationException($"Couldn't deserialize arguments for '{methodDef.FullName}'.");
-
-    public static Exception NoMoreMiddlewares()
-        => new InvalidOperationException("The very last RpcMiddleware tries to invoke the next one.");
 }
