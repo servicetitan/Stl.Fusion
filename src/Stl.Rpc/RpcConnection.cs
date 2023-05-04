@@ -22,7 +22,6 @@ public class RpcConnection : WorkerBase
     public Func<ArgumentList, Type, object?> ArgumentSerializer { get; init; }
     public Func<object?, Type, ArgumentList> ArgumentDeserializer { get; init; }
     public Func<RpcServiceDef, bool> LocalServiceFilter { get; init; }
-    // ReSharper disable once InconsistentlySynchronizedField
     public Task<Channel<RpcRequest>> WhenConnected => _connectionSource.Task;
 
     public RpcConnection(Symbol name, IServiceProvider services)
@@ -44,12 +43,8 @@ public class RpcConnection : WorkerBase
 
     public RpcConnection Connect(Channel<RpcRequest> channel)
     {
-        lock (_connectionSource) {
-            if (_connectionSource.Task.IsCompleted)
-                throw Errors.AlreadyConnected();
-
-            _connectionSource.TrySetResult(channel);
-        }
+        if (!_connectionSource.TrySetResult(channel))
+            throw Errors.AlreadyConnected();
         return this;
     }
 
@@ -84,7 +79,7 @@ public class RpcConnection : WorkerBase
             await RequestHandler.Handle(context).ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
-            Log.LogError(e, "One of RpcMiddlewares failed");
+            Log.LogError(e, "Failed to process request: {Request}", request);
         }
     }
 }
