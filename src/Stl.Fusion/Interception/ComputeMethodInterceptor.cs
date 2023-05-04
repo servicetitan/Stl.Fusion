@@ -44,7 +44,8 @@ public sealed class ComputeMethodInterceptor : ComputeMethodInterceptorBase
             if (returnType.GetTaskOrValueTaskArgument() == null)
                 throw Errors.ComputeServiceMethodAttributeOnAsyncMethodReturningNonGenericTask(method);
 
-            Log.Log(ValidationLogLevel, "+ {Method}: {Options}", method.ToString(), options);
+            Log.IfEnabled(ValidationLogLevel)?.Log(ValidationLogLevel,
+                "+ {Method}: {Options}", method.ToString(), options);
         }
     }
 }

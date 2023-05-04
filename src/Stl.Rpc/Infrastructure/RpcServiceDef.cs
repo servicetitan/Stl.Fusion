@@ -33,6 +33,9 @@ public class RpcServiceDef
             var attr = IsSystem ? method.GetCustomAttribute<RpcMethodAttribute>(true) : null;
             var methodDefType = attr?.MethodDefType ?? typeof(RpcMethodDef);
             var methodDef = (RpcMethodDef)methodDefType.CreateInstance(this, method, methodNameBuilder);
+            if (!methodDef.IsValid)
+                continue;
+
             if (_methodByName.ContainsKey(methodDef.Name))
                 throw Errors.MethodNameConflict(methodDef);
 

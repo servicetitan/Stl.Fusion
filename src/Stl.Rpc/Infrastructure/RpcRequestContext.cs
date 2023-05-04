@@ -8,14 +8,14 @@ public class RpcRequestContext
 
     public static RpcRequestContext Current => CurrentLocal.Value ?? throw Errors.NoCurrentRpcRequestContext();
 
-    public RpcChannel Channel { get; }
+    public RpcConnection Connection { get; }
     public RpcRequest Request { get; }
     public RpcBoundRequest? BoundRequest { get; set; }
     public CancellationToken CancellationToken { get; }
 
-    public RpcRequestContext(RpcChannel channel, RpcRequest request, CancellationToken cancellationToken)
+    public RpcRequestContext(RpcConnection connection, RpcRequest request, CancellationToken cancellationToken)
     {
-        Channel = channel;
+        Connection = connection;
         Request = request;
         CancellationToken = cancellationToken;
     }

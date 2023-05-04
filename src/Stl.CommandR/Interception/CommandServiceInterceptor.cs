@@ -70,10 +70,10 @@ public class CommandServiceInterceptor : InterceptorBase
                 .Replace(nameof(Attribute), "", StringComparison.Ordinal);
 #endif
             if (!methodDef.IsValid) // attr.IsEnabled == false
-                Log.Log(ValidationLogLevel,
+                Log.IfEnabled(ValidationLogLevel)?.Log(ValidationLogLevel,
                     "- {Method}: has [{Attribute}(false)]", method.ToString(), attributeName);
             else
-                Log.Log(ValidationLogLevel,
+                Log.IfEnabled(ValidationLogLevel)?.Log(ValidationLogLevel,
                     "+ {Method}: [{Attribute}(" +
                     "Priority = {Priority}" +
                     ")]", method.ToString(), attributeName, attr.Priority);

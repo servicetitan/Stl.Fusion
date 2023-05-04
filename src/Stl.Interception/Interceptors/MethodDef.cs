@@ -48,9 +48,10 @@ public abstract class MethodDef
             ReturnsTask = returnTypeGtd == typeof(Task<>);
             ReturnsValueTask = returnTypeGtd == typeof(ValueTask<>);
             IsAsyncMethod = ReturnsTask || ReturnsValueTask;
+            IsAsyncVoidMethod = false;
         }
-        UnwrappedReturnType = IsAsyncMethod && !IsAsyncVoidMethod
-            ? returnType.GetGenericArguments()[0]
+        UnwrappedReturnType = IsAsyncMethod
+            ? IsAsyncVoidMethod ? typeof(Unit) : returnType.GetGenericArguments()[0]
             : returnType;
     }
 

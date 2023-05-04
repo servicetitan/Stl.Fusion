@@ -14,11 +14,10 @@ public class RpcRequestBinder : RpcServiceBase
     public RpcRequestBinder(IServiceProvider services) : base(services)
         => ServiceRegistry = services.GetRequiredService<RpcServiceRegistry>();
 
-    public virtual RpcRequest FromBound(RpcBoundRequest boundRequest, RpcChannel channel)
+    public virtual RpcRequest FromBound(RpcConnection connection, RpcBoundRequest boundRequest)
     {
         var methodDef = boundRequest.MethodDef;
-        if (boundRequest.ResultTask != null)
-            channel.OutboundCalls.Register(boundRequest);
+        connection.OutboundCalls.Register(boundRequest);
 
         var arguments = boundRequest.Arguments;
         if (methodDef.CancellationTokenIndex >= 0)
@@ -49,16 +48,16 @@ public class RpcRequestBinder : RpcServiceBase
             }
         }
 
-        var serializedArguments = channel.ArgumentSerializer.Invoke(arguments, arguments.GetType());
+        var serializedArguments = connection.ArgumentSerializer.Invoke(arguments, arguments.GetType());
         return new RpcRequest(methodDef.Service.Name, methodDef.Name, serializedArguments, headers);
     }
 
-    public virtual RpcBoundRequest ToBound(RpcRequest request, RpcChannel channel)
+    public virtual RpcBoundRequest ToBound(RpcConnection connection, RpcRequest request)
     {
         var headers = request.Headers;
 
         var serviceDef = ServiceRegistry[request.Service];
-        if (!serviceDef.IsSystem && !channel.LocalServiceFilter.Invoke(serviceDef))
+        if (!serviceDef.IsSystem && !connection.LocalServiceFilter.Invoke(serviceDef))
             throw Errors.ServiceIsNotWhiteListed(serviceDef);
 
         var methodDef = serviceDef[request.Method];
@@ -96,8 +95,8 @@ public class RpcRequestBinder : RpcServiceBase
                 argumentTypes = methodDef.RemoteParameterTypes;
 
             if (methodDef.MustCheckArguments)
-                methodDef.CheckArguments(request, channel, argumentTypes);
-            var deserializedArguments = channel.ArgumentDeserializer.Invoke(request.Arguments, actualArgumentListType);
+                methodDef.CheckArguments(connection, request, argumentTypes);
+            var deserializedArguments = connection.ArgumentDeserializer.Invoke(request.Arguments, actualArgumentListType);
             if (deserializedArguments == null)
                 throw Errors.NonDeserializableArguments(methodDef);
 
@@ -109,7 +108,7 @@ public class RpcRequestBinder : RpcServiceBase
             }
         }
 
-        var boundRequest = new RpcBoundRequest(methodDef, arguments);
+        var boundRequest = methodDef.BoundRequestFactory.Invoke(arguments);
         if (headers != null)
             boundRequest.Headers.AddRange(headers);
         return boundRequest;

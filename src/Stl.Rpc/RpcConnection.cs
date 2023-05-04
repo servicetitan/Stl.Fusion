@@ -4,9 +4,10 @@ using Stl.Rpc.Internal;
 
 namespace Stl.Rpc;
 
-public class RpcChannel : Channel<RpcRequest>
+public class RpcConnection : WorkerBase
 {
-    private readonly TaskCompletionSource<Unit> _whenBoundSource = TaskCompletionSourceExt.New<Unit>();
+    private readonly TaskCompletionSource<Channel<RpcRequest>> _connectionSource =
+        TaskCompletionSourceExt.New<Channel<RpcRequest>>();
 
     protected ILogger Log { get; }
 
@@ -22,9 +23,9 @@ public class RpcChannel : Channel<RpcRequest>
     public Func<object?, Type, ArgumentList> ArgumentDeserializer { get; init; }
     public Func<RpcServiceDef, bool> LocalServiceFilter { get; init; }
     // ReSharper disable once InconsistentlySynchronizedField
-    public Task WhenBound => _whenBoundSource.Task;
+    public Task<Channel<RpcRequest>> WhenConnected => _connectionSource.Task;
 
-    public RpcChannel(Symbol name, IServiceProvider services)
+    public RpcConnection(Symbol name, IServiceProvider services)
     {
         Services = services;
         Log = services.LogFor(GetType());
@@ -41,36 +42,36 @@ public class RpcChannel : Channel<RpcRequest>
         LocalServiceFilter = static serviceDef => serviceDef.ImplementationType != null;
     }
 
-    public RpcChannel BindTo(Channel<RpcRequest> channel)
-        => BindTo(channel.Reader, channel.Writer);
-
-    public virtual RpcChannel BindTo(ChannelReader<RpcRequest> reader, ChannelWriter<RpcRequest> writer)
+    public RpcConnection Connect(Channel<RpcRequest> channel)
     {
-        lock (_whenBoundSource) {
-            if (_whenBoundSource.Task.IsCompleted)
-                throw Errors.AlreadyBound();
+        lock (_connectionSource) {
+            if (_connectionSource.Task.IsCompleted)
+                throw Errors.AlreadyConnected();
 
-            Reader = reader;
-            Writer = writer;
-            _whenBoundSource.TrySetResult(default);
+            _connectionSource.TrySetResult(channel);
         }
         return this;
     }
 
-    public async Task Serve(CancellationToken cancellationToken)
+    public ValueTask Send(RpcBoundRequest boundRequest, CancellationToken cancellationToken)
     {
-        await WhenBound.ConfigureAwait(false);
-        await foreach (var request in Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
-            await HandleRequest(request, cancellationToken).ConfigureAwait(false);
+        var request = RequestBinder.FromBound(this, boundRequest);
+        return Send(request, cancellationToken);
     }
 
-    public async ValueTask SendRequest(RpcBoundRequest boundRequest, CancellationToken cancellationToken)
+    public async ValueTask Send(RpcRequest request, CancellationToken cancellationToken)
     {
-        if (!WhenBound.IsCompleted)
-            await WhenBound.ConfigureAwait(false);
+        var channel = await WhenConnected.WaitAsync(cancellationToken).ConfigureAwait(false);
+        await channel.Writer.WriteAsync(request, cancellationToken).ConfigureAwait(false);
+    }
 
-        var request = RequestBinder.FromBound(boundRequest, this);
-        await Writer.WriteAsync(request, cancellationToken).ConfigureAwait(false);
+    // Protected methods
+
+    protected override async Task OnRun(CancellationToken cancellationToken)
+    {
+        var channel = await WhenConnected.WaitAsync(cancellationToken).ConfigureAwait(false);
+        await foreach (var request in channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
+            await HandleRequest(request, cancellationToken).ConfigureAwait(false);
     }
 
     // Private methods

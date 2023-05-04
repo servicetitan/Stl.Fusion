@@ -22,7 +22,7 @@ public class RpcRequestHandler : RpcServiceBase
     public virtual Task Handle(RpcRequestContext context)
     {
         try {
-            var boundRequest = RequestBinder.ToBound(context.Request, context.Channel);
+            var boundRequest = RequestBinder.ToBound(context.Connection, context.Request);
             context.BoundRequest = boundRequest;
         }
         catch (Exception e) when (e is not OperationCanceledException) {

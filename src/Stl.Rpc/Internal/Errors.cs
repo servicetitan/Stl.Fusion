@@ -26,10 +26,8 @@ public static class Errors
     public static Exception NoMethod(Type serviceType, string methodName)
         => new InvalidOperationException($"Can't resolve method '{methodName}' (by name) of '{serviceType.GetName()}'.");
 
-    public static Exception MustBeBound()
-        => new InvalidOperationException($"{nameof(RpcChannel)}.{nameof(RpcChannel.BindTo)} wasn't called yet.");
-    public static Exception AlreadyBound()
-        => new InvalidOperationException($"This {nameof(RpcChannel)} is already bound.");
+    public static Exception AlreadyConnected()
+        => new InvalidOperationException($"This {nameof(RpcConnection)} is already connected.");
     
     public static Exception NoCurrentRpcRequestContext()
         => new InvalidOperationException($"{nameof(RpcRequestContext)}.{nameof(RpcRequestContext.Current)} is unavailable.");
