@@ -1,6 +1,8 @@
+using Stl.Rpc;
+
 namespace Stl.Tests.Rpc;
 
-public interface ISimpleRpcService
+public interface ISimpleRpcService : IRpcClient
 {
     public Task<int> Sum(int a, int b);
 }

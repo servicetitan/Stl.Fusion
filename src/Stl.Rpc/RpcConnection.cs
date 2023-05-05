@@ -21,7 +21,7 @@ public class RpcConnection : WorkerBase
     public Symbol Name { get; init; }
     public Func<ArgumentList, Type, object?> ArgumentSerializer { get; init; }
     public Func<object?, Type, ArgumentList> ArgumentDeserializer { get; init; }
-    public Func<RpcServiceDef, bool> LocalServiceFilter { get; init; }
+    public Func<Infrastructure.RpcServiceDef, bool> LocalServiceFilter { get; init; }
     public Task<Channel<RpcRequest>> WhenConnected => _connectionSource.Task;
 
     public RpcConnection(Symbol name, IServiceProvider services)
@@ -38,7 +38,7 @@ public class RpcConnection : WorkerBase
         Name = name;
         ArgumentSerializer = Configuration.ArgumentSerializer;
         ArgumentDeserializer = Configuration.ArgumentDeserializer;
-        LocalServiceFilter = static serviceDef => serviceDef.ImplementationType != null;
+        LocalServiceFilter = static serviceDef => serviceDef.ServerType != null;
     }
 
     public RpcConnection Connect(Channel<RpcRequest> channel)

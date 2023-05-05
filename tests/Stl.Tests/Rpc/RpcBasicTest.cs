@@ -17,7 +17,7 @@ public class RpcBasicTest : TestBase
     {
         var services = new ServiceCollection();
         var rpc = services.AddRpc();
-        rpc.AddService<ISimpleRpcService, SimpleRpcService>();
+        rpc.HasService<ISimpleRpcService>().Serving<SimpleRpcService>();
         return services.BuildServiceProvider();
     }
 }

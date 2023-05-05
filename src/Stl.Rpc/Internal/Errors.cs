@@ -18,7 +18,7 @@ public static class Errors
         => new InvalidOperationException($"Can't resolve service by type: '{serviceType.GetName()}'.");
     public static Exception NoService(string serviceName)
         => new InvalidOperationException($"Can't resolve service by name: '{serviceName}'.");
-    public static Exception ServiceIsNotWhiteListed(RpcServiceDef serviceDef)
+    public static Exception ServiceIsNotWhiteListed(Infrastructure.RpcServiceDef serviceDef)
         => new InvalidOperationException($"Service '{serviceDef.Type.GetName()}' isn't white-listed.");
 
     public static Exception NoMethod(Type serviceType, MethodInfo method)

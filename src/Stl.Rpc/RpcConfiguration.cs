@@ -6,8 +6,7 @@ namespace Stl.Rpc;
 
 public record RpcConfiguration
 {
-    public Dictionary<Type, Symbol> Services { get; init; } = new();
-    public Dictionary<Type, Type> Implementations { get; init; } = new();
+    public Dictionary<Type, RpcServiceConfiguration> Services { get; init; } = new();
 
     public Func<Type, Symbol> ServiceNameBuilder { get; init; } = DefaultServiceNameBuilder;
     public Func<RpcMethodDef, Symbol> MethodNameBuilder { get; init; } = DefaultMethodNameBuilder;
