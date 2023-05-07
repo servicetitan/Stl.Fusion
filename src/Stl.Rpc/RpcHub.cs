@@ -45,10 +45,10 @@ public sealed class RpcHub : ProcessorBase, IHasServices
         if (WhenDisposed != null)
             throw Errors.AlreadyDisposed();
 
-        var channel = PeerFactory.Invoke(name);
-        _ = channel.Run().ContinueWith(
-            _ => Peers.TryRemove(name, channel),
+        var peer = PeerFactory.Invoke(name);
+        _ = peer.Run().ContinueWith(
+            _ => Peers.TryRemove(name, peer),
             CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
-        return channel;
+        return peer;
     }
 }
