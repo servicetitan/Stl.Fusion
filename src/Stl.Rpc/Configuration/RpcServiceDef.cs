@@ -1,6 +1,7 @@
+using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Internal;
 
-namespace Stl.Rpc.Infrastructure;
+namespace Stl.Rpc;
 
 public class RpcServiceDef
 {
@@ -12,6 +13,8 @@ public class RpcServiceDef
     public Type ClientType { get; }
     public Symbol Name { get; }
     public bool IsSystem { get; }
+    public bool HasDefaultServerType => ServerType == Type;
+    public bool HasDefaultClientType => ClientType == Type;
     public int MethodCount => _methods.Count;
     public IEnumerable<RpcMethodDef> Methods => _methods.Values;
 
@@ -48,9 +51,7 @@ public class RpcServiceDef
 
     public override string ToString()
     {
-        var serverTypeInfo = ServerType != Type
-            ? $", Serving: {ServerType.GetName()}"
-            : "";
+        var serverTypeInfo = HasDefaultServerType ? "" : $", Serving: {ServerType.GetName()}";
         return $"{GetType().Name}({Type.GetName()}, Name: '{Name}', {MethodCount} method(s){serverTypeInfo})";
     }
 

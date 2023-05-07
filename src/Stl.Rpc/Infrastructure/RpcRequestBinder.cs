@@ -14,10 +14,10 @@ public class RpcRequestBinder : RpcServiceBase
     public RpcRequestBinder(IServiceProvider services) : base(services)
         => ServiceRegistry = services.GetRequiredService<RpcServiceRegistry>();
 
-    public virtual RpcRequest FromBound(RpcConnection connection, RpcBoundRequest boundRequest)
+    public virtual RpcMessage FromBound(RpcPeer peer, RpcBoundRequest boundRequest)
     {
         var methodDef = boundRequest.MethodDef;
-        connection.OutboundCalls.Register(boundRequest);
+        peer.Hub.OutboundCalls.Register(boundRequest);
 
         var arguments = boundRequest.Arguments;
         if (methodDef.CancellationTokenIndex >= 0)
@@ -48,19 +48,19 @@ public class RpcRequestBinder : RpcServiceBase
             }
         }
 
-        var serializedArguments = connection.ArgumentSerializer.Invoke(arguments, arguments.GetType());
-        return new RpcRequest(methodDef.Service.Name, methodDef.Name, serializedArguments, headers);
+        var serializedArguments = peer.ArgumentSerializer.Invoke(arguments, arguments.GetType());
+        return new RpcMessage(methodDef.Service.Name, methodDef.Name, serializedArguments, headers);
     }
 
-    public virtual RpcBoundRequest ToBound(RpcConnection connection, RpcRequest request)
+    public virtual RpcBoundRequest ToBound(RpcPeer peer, RpcMessage message)
     {
-        var headers = request.Headers;
+        var headers = message.Headers;
 
-        var serviceDef = ServiceRegistry[request.Service];
-        if (!serviceDef.IsSystem && !connection.LocalServiceFilter.Invoke(serviceDef))
+        var serviceDef = ServiceRegistry[message.Service];
+        if (!serviceDef.IsSystem && !peer.LocalServiceFilter.Invoke(serviceDef))
             throw Errors.ServiceIsNotWhiteListed(serviceDef);
 
-        var methodDef = serviceDef[request.Method];
+        var methodDef = serviceDef[message.Method];
         var arguments = ArgumentList.Empty;
         var argumentListType = methodDef.RemoteArgumentListType;
         if (argumentListType.IsGenericType) {
@@ -95,8 +95,8 @@ public class RpcRequestBinder : RpcServiceBase
                 argumentTypes = methodDef.RemoteParameterTypes;
 
             if (methodDef.MustCheckArguments)
-                methodDef.CheckArguments(connection, request, argumentTypes);
-            var deserializedArguments = connection.ArgumentDeserializer.Invoke(request.Arguments, actualArgumentListType);
+                methodDef.CheckArguments(peer, message, argumentTypes);
+            var deserializedArguments = peer.ArgumentDeserializer.Invoke(message.Arguments, actualArgumentListType);
             if (deserializedArguments == null)
                 throw Errors.NonDeserializableArguments(methodDef);
 

@@ -1,6 +1,6 @@
 namespace Stl.Rpc.Infrastructure;
 
-public sealed record RpcRequest(
+public sealed record RpcMessage(
     string Service,
     string Method,
     object? Arguments,

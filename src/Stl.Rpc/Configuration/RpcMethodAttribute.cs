@@ -1,4 +1,4 @@
-namespace Stl.Rpc.Infrastructure;
+namespace Stl.Rpc;
 
 [AttributeUsage(AttributeTargets.Method)]
 public class RpcMethodAttribute : Attribute

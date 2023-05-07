@@ -9,6 +9,8 @@ public static class Errors
     public static Exception RpcOptionsIsNotRegistered()
         => new InvalidOperationException("RpcOptions instance is not registered.");
 
+    public static Exception ServiceTypeConflict(Type serviceType)
+        => new InvalidOperationException($"Service '{serviceType.GetName()}' is already registered.");
     public static Exception ServiceNameConflict(Type serviceType1, Type serviceType2, Symbol serviceName)
         => new InvalidOperationException($"Services '{serviceType1.GetName()}' and '{serviceType2.GetName()}' have the same name '{serviceName}'.");
     public static Exception MethodNameConflict(RpcMethodDef methodDef)
@@ -18,7 +20,7 @@ public static class Errors
         => new InvalidOperationException($"Can't resolve service by type: '{serviceType.GetName()}'.");
     public static Exception NoService(string serviceName)
         => new InvalidOperationException($"Can't resolve service by name: '{serviceName}'.");
-    public static Exception ServiceIsNotWhiteListed(Infrastructure.RpcServiceDef serviceDef)
+    public static Exception ServiceIsNotWhiteListed(RpcServiceDef serviceDef)
         => new InvalidOperationException($"Service '{serviceDef.Type.GetName()}' isn't white-listed.");
 
     public static Exception NoMethod(Type serviceType, MethodInfo method)
@@ -27,7 +29,7 @@ public static class Errors
         => new InvalidOperationException($"Can't resolve method '{methodName}' (by name) of '{serviceType.GetName()}'.");
 
     public static Exception AlreadyConnected()
-        => new InvalidOperationException($"This {nameof(RpcConnection)} is already connected.");
+        => new InvalidOperationException($"This {nameof(RpcPeer)} is already connected.");
     
     public static Exception NoCurrentRpcRequestContext()
         => new InvalidOperationException($"{nameof(RpcRequestContext)}.{nameof(RpcRequestContext.Current)} is unavailable.");

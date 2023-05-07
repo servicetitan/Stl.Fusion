@@ -1,7 +1,8 @@
 using Stl.Interception;
 using Stl.Interception.Interceptors;
+using Stl.Rpc.Infrastructure;
 
-namespace Stl.Rpc.Infrastructure;
+namespace Stl.Rpc;
 
 public class RpcMethodDef : MethodDef
 {
@@ -49,7 +50,7 @@ public class RpcMethodDef : MethodDef
             IsValid = false;
     }
 
-    public virtual void CheckArguments(RpcConnection connection, RpcRequest request, Type[] argumentTypes)
+    public virtual void CheckArguments(RpcPeer peer, RpcMessage message, Type[] argumentTypes)
     { }
 
     // Private methods

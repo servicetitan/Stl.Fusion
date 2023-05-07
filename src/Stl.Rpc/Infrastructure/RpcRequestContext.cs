@@ -8,15 +8,15 @@ public class RpcRequestContext
 
     public static RpcRequestContext Current => CurrentLocal.Value ?? throw Errors.NoCurrentRpcRequestContext();
 
-    public RpcConnection Connection { get; }
-    public RpcRequest Request { get; }
+    public RpcPeer Peer { get; }
+    public RpcMessage Message { get; }
     public RpcBoundRequest? BoundRequest { get; set; }
     public CancellationToken CancellationToken { get; }
 
-    public RpcRequestContext(RpcConnection connection, RpcRequest request, CancellationToken cancellationToken)
+    public RpcRequestContext(RpcPeer peer, RpcMessage message, CancellationToken cancellationToken)
     {
-        Connection = connection;
-        Request = request;
+        Peer = peer;
+        Message = message;
         CancellationToken = cancellationToken;
     }
 
