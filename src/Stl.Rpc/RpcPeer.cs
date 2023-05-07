@@ -7,7 +7,7 @@ public class RpcPeer : WorkerBase
 {
     private ILogger? _log;
     private IMomentClock? _clock;
-    private volatile AsyncEvent<Channel<RpcMessage>?> _whenConnected = new(null, true);
+    private volatile AsyncEvent<Result<Channel<RpcMessage>?>> _whenConnected = new(null, true);
 
     protected IServiceProvider Services => Hub.Services;
     protected ILogger Log => _log ??= Services.LogFor(GetType());
@@ -56,7 +56,7 @@ public class RpcPeer : WorkerBase
                     await HandleRequest(request, cancellationToken).ConfigureAwait(false);
             }
             catch (Exception e) when (e is not OperationCanceledException) {
-                DropConnection();
+                DropConnection(e);
                 if (tryIndex == 0)
                     Log.LogError(e, "'{Name}': Request processing failed, reconnecting...", Name);
                 else
@@ -72,10 +72,10 @@ public class RpcPeer : WorkerBase
         throw new NotSupportedException();
     }
 
-    protected void DropConnection()
+    protected void DropConnection(Exception? error = null)
     {
         lock (Lock)
-            _whenConnected = _whenConnected.SetNext(null);
+            _whenConnected = _whenConnected.CreateNext(new(null, error));
     }
 
     protected async ValueTask<Channel<RpcMessage>> GetConnection(CancellationToken cancellationToken)
@@ -84,8 +84,8 @@ public class RpcPeer : WorkerBase
         while (true) {
             // ReSharper disable once MethodSupportsCancellation
             var whenNext = whenConnected.WhenNext();
-            if (!whenNext.IsCompleted && whenConnected.Value != null)
-                return whenConnected.Value;
+            if (!whenNext.IsCompleted && whenConnected.Value.IsValue(out var channel) && channel != null)
+                return channel;
 
             whenConnected = await whenNext.WaitAsync(cancellationToken).ConfigureAwait(false);
         }

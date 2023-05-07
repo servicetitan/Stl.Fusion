@@ -22,13 +22,19 @@ public sealed class AsyncEvent<T>
     public Task<AsyncEvent<T>> WhenNext(CancellationToken cancellationToken)
         => _nextSource.Task.WaitAsync(cancellationToken);
 
-    public AsyncEvent<T> SetNext(T value)
+    public AsyncEvent<T> CreateNext(T value)
     {
         var next = new AsyncEvent<T>(value, _runContinuationsAsynchronously);
-        _nextSource.TrySetResult(next);
+        _nextSource.SetResult(next);
         return next;
     }
 
     public void CancelNext(CancellationToken cancellationToken = default)
-        => _nextSource.TrySetCanceled(cancellationToken);
+    {
+#if NET5_0_OR_GREATER
+        _nextSource.SetCanceled(cancellationToken);
+#else
+        _nextSource.SetCanceled();
+#endif
+    }
 }

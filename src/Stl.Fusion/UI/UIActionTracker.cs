@@ -45,7 +45,7 @@ public sealed class UIActionTracker : ProcessorBase, IHasServices
             Interlocked.Increment(ref _runningActionCount);
 
             try {
-                _lastActionEvent = _lastActionEvent.SetNext(action);
+                _lastActionEvent = _lastActionEvent.CreateNext(action);
             }
             catch (Exception e) {
                 // We need to keep this count consistent if above block somehow fails
@@ -68,7 +68,7 @@ public sealed class UIActionTracker : ProcessorBase, IHasServices
                     Log.LogError("UI action has completed w/o a result: {Action}", action);
                     return;
                 }
-                _lastResultEvent = _lastResultEvent.SetNext(result);
+                _lastResultEvent = _lastResultEvent.CreateNext(result);
             }
         }, default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
     }
