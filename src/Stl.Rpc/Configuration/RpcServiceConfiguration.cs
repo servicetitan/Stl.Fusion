@@ -29,8 +29,8 @@ public class RpcServiceConfiguration
         => Serving(typeof(TServer));
     public RpcServiceConfiguration Serving(Type serverType)
     {
-        if (!serverType.IsAssignableFrom(Type))
-            throw Errors.MustBeAssignableTo(serverType, Type, nameof(serverType));
+        if (!Type.IsAssignableFrom(serverType))
+            throw Errors.MustBeAssignableTo(Type, serverType, nameof(serverType));
 
         ServerType = serverType;
         return this;
@@ -40,8 +40,8 @@ public class RpcServiceConfiguration
         => ConsumedAs(typeof(TClient));
     public RpcServiceConfiguration ConsumedAs(Type clientType)
     {
-        if (!clientType.IsAssignableFrom(Type))
-            throw Errors.MustBeAssignableTo(clientType, Type, nameof(clientType));
+        if (!Type.IsAssignableFrom(clientType))
+            throw Errors.MustBeAssignableTo(Type, clientType, nameof(clientType));
 
         ClientType = clientType;
         return this;
