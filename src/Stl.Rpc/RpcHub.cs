@@ -28,7 +28,6 @@ public sealed class RpcHub : ProcessorBase, IHasServices
         RequestBinder = services.GetRequiredService<RpcRequestBinder>();
         RequestHandler = services.GetRequiredService<RpcRequestHandler>();
         OutboundCalls = services.GetRequiredService<RpcOutboundCallTracker>();
-
         PeerFactory = services.GetRequiredService<Func<Symbol, RpcPeer>>();
     }
 
