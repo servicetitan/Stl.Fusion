@@ -1,16 +1,16 @@
 namespace Stl.Async;
 
-public abstract class AsyncEvent<T>
+public sealed class AsyncEvent<T>
 {
-    protected readonly bool RunContinuationsAsynchronously;
-    protected readonly TaskCompletionSource<AsyncEvent<T>> WhenNextSource;
+    private readonly bool _runContinuationsAsynchronously;
+    private readonly TaskCompletionSource<AsyncEvent<T>> _nextSource;
 
     public T Value { get; }
 
-    protected AsyncEvent(T value, bool runContinuationsAsynchronously)
+    public AsyncEvent(T value, bool runContinuationsAsynchronously)
     {
-        RunContinuationsAsynchronously = runContinuationsAsynchronously;
-        WhenNextSource = TaskCompletionSourceExt.New<AsyncEvent<T>>(runContinuationsAsynchronously);
+        _runContinuationsAsynchronously = runContinuationsAsynchronously;
+        _nextSource = TaskCompletionSourceExt.New<AsyncEvent<T>>(runContinuationsAsynchronously);
         Value = value;
     }
 
@@ -18,5 +18,17 @@ public abstract class AsyncEvent<T>
         => $"{GetType().GetName()}({Value})";
 
     public Task<AsyncEvent<T>> WhenNext()
-        => WhenNextSource.Task;
+        => _nextSource.Task;
+    public Task<AsyncEvent<T>> WhenNext(CancellationToken cancellationToken)
+        => _nextSource.Task.WaitAsync(cancellationToken);
+
+    public AsyncEvent<T> SetNext(T value)
+    {
+        var next = new AsyncEvent<T>(value, _runContinuationsAsynchronously);
+        _nextSource.TrySetResult(next);
+        return next;
+    }
+
+    public void CancelNext(CancellationToken cancellationToken = default)
+        => _nextSource.TrySetCanceled(cancellationToken);
 }

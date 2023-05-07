@@ -14,7 +14,7 @@ public sealed class UIActionFailureTracker : MutableList<IUIActionResult>
     {
         var lastResultEvent = actionTracker.LastResultEvent;
         while (true) {
-            lastResultEvent = await lastResultEvent.WhenNext().WaitAsync(cancellationToken).ConfigureAwait(false);
+            lastResultEvent = await lastResultEvent.WhenNext(cancellationToken).ConfigureAwait(false);
             var result = lastResultEvent.Value;
             if (result is { HasError: true })
                 Add(result);

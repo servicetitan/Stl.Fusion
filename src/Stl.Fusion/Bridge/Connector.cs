@@ -4,7 +4,7 @@ public sealed class Connector<TConnection> : WorkerBase
     where TConnection : class
 {
     private readonly Func<CancellationToken, Task<TConnection>> _connectionFactory;
-    private volatile ManualAsyncEvent<State> _state;
+    private volatile AsyncEvent<State> _state = new(State.New(), true);
 
     public IMutableState<bool> IsConnected { get; }
 
@@ -20,7 +20,6 @@ public sealed class Connector<TConnection> : WorkerBase
         Func<CancellationToken, Task<TConnection>> connectionFactory,
         IStateFactory stateFactory)
     {
-        _state = new ManualAsyncEvent<State>(State.New(), true);
         _connectionFactory = connectionFactory;
         IsConnected = stateFactory.NewMutable<bool>();
     }
@@ -28,7 +27,7 @@ public sealed class Connector<TConnection> : WorkerBase
     public Task<TConnection> GetConnection(CancellationToken cancellationToken)
     {
         // ReSharper disable once InconsistentlySynchronizedField
-        var state = (AsyncEvent<State>) _state;
+        var state = _state;
         var stateValue = state.Value;
         return stateValue.ConnectionTask.IsCompletedSuccessfully()
             ? stateValue.ConnectionTask
@@ -42,7 +41,7 @@ public sealed class Connector<TConnection> : WorkerBase
                     return await state.Value.ConnectionTask.WaitAsync(cancellationToken).ConfigureAwait(false);
                 }
                 catch (Exception e) when (e is not OperationCanceledException) {
-                    state = await state.WhenNext().ConfigureAwait(false);
+                    state = await state.WhenNext(cancellationToken).ConfigureAwait(false);
                 }
             }
         }
@@ -50,7 +49,7 @@ public sealed class Connector<TConnection> : WorkerBase
 
     public void DropConnection(TConnection connection, Exception? error)
     {
-        ManualAsyncEvent<State> prevState;
+        AsyncEvent<State> prevState;
         lock (Lock) {
             prevState = _state;
             if (!prevState.Value.ConnectionTask.IsCompleted)
@@ -60,12 +59,10 @@ public sealed class Connector<TConnection> : WorkerBase
                 return; // The connection is already renewed
 #pragma warning restore VSTHRD104
 
-            var nextState = prevState.CreateNext(State.New() with {
+            _state = prevState.SetNext(State.New() with {
                 LastError = error,
                 RetryIndex = prevState.Value.RetryIndex + 1,
             });
-            _state = nextState;
-            prevState.SetNext(nextState);
         }
         prevState.Value.Dispose();
     }
@@ -74,10 +71,9 @@ public sealed class Connector<TConnection> : WorkerBase
 
     protected override async Task OnRun(CancellationToken cancellationToken)
     {
-        ManualAsyncEvent<State> state;
-        lock (Lock) {
+        AsyncEvent<State> state;
+        lock (Lock)
             state = _state;
-        }
         while (true) {
             var connectionSource = state.Value.ConnectionSource;
             var connectionTask = connectionSource.Task;
@@ -106,19 +102,16 @@ public sealed class Connector<TConnection> : WorkerBase
                 catch (Exception e) when (e is not OperationCanceledException) {
                     Log?.LogWarning(e, "{LogTag}: Connected handler failed", LogTag);
                 }
-                await state.WhenNext().WaitAsync(cancellationToken).ConfigureAwait(false);
+                await state.WhenNext(cancellationToken).ConfigureAwait(false);
             }
 
             lock (Lock) {
                 if (state == _state) {
-                    var nextState = state.CreateNext(State.New() with {
+                    _state = state.SetNext(State.New() with {
                         LastError = error,
                         RetryIndex = state.Value.RetryIndex + 1,
                     });
-                    _state = nextState;
-                    state.SetNext(nextState);
                     state.Value.Dispose();
-                    state = nextState;
                 }
                 else {
                     // It was updated by Reconnect, so we just switch to the new state
@@ -153,11 +146,8 @@ public sealed class Connector<TConnection> : WorkerBase
             if (!prevState.Value.ConnectionTask.IsCompleted)
                 prevState.Value.ConnectionSource.TrySetCanceled();
 
-            var nextState = prevState.CreateNext(State.NewCancelled(StopToken));
-            nextState.CancelNext(StopToken);
-            _state = nextState;
-
-            prevState.SetNext(nextState);
+            _state = prevState.SetNext(State.NewCancelled(StopToken));
+            _state.CancelNext(StopToken);
             prevState.Value.Dispose();
         }
         IsConnected.Value = false;

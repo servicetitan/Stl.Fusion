@@ -10,8 +10,8 @@ public sealed class UIActionTracker : ProcessorBase, IHasServices
     private IMomentClock? _clock;
     private ILogger? _log;
     private long _runningActionCount;
-    private volatile ManualAsyncEvent<UIAction?> _lastActionEvent;
-    private volatile ManualAsyncEvent<IUIActionResult?> _lastResultEvent;
+    private volatile AsyncEvent<UIAction?> _lastActionEvent = new(null, true);
+    private volatile AsyncEvent<IUIActionResult?> _lastResultEvent = new(null, true);
 
     public Options Settings { get; }
     public IServiceProvider Services { get; }
@@ -26,9 +26,6 @@ public sealed class UIActionTracker : ProcessorBase, IHasServices
     {
         Settings = options;
         Services = services;
-
-        _lastActionEvent = new ManualAsyncEvent<UIAction?>(null, true);
-        _lastResultEvent = new ManualAsyncEvent<IUIActionResult?>(null, true);
     }
 
     protected override Task DisposeAsyncCore()
@@ -48,10 +45,7 @@ public sealed class UIActionTracker : ProcessorBase, IHasServices
             Interlocked.Increment(ref _runningActionCount);
 
             try {
-                var prevEvent = _lastActionEvent;
-                var nextEvent = prevEvent.CreateNext(action);
-                _lastActionEvent = nextEvent;
-                prevEvent.SetNext(nextEvent);
+                _lastActionEvent = _lastActionEvent.SetNext(action);
             }
             catch (Exception e) {
                 // We need to keep this count consistent if above block somehow fails
@@ -74,11 +68,7 @@ public sealed class UIActionTracker : ProcessorBase, IHasServices
                     Log.LogError("UI action has completed w/o a result: {Action}", action);
                     return;
                 }
-
-                var prevEvent = _lastResultEvent;
-                var nextEvent = prevEvent.CreateNext(result);
-                _lastResultEvent = nextEvent;
-                prevEvent.SetNext(nextEvent);
+                _lastResultEvent = _lastResultEvent.SetNext(result);
             }
         }, default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
     }
