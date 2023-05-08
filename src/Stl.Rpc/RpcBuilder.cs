@@ -33,9 +33,10 @@ public readonly struct RpcBuilder
         Services.TryAddSingleton<Func<Symbol, RpcPeer>>(c => name => new RpcPeer(c.RpcHub(), name));
 
         // Infrastructure
-        Services.TryAddSingleton(c => new RpcCallConverter(c));
-        Services.TryAddSingleton(c => new RpcInboundHandler(c));
         Services.TryAddSingleton(c => new RpcServiceRegistry(c));
+        Services.TryAddSingleton(c => new RpcHandlerFactory(c));
+
+        // System services
         Services.TryAddSingleton(c => new RpcSystemCallService(c));
 
         Configuration = GetConfiguration(services);

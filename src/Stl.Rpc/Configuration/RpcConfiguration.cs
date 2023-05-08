@@ -1,6 +1,5 @@
 using Microsoft.Toolkit.HighPerformance.Buffers;
 using Stl.Interception;
-using Stl.Rpc.Infrastructure;
 
 namespace Stl.Rpc;
 

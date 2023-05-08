@@ -35,8 +35,10 @@ public static class Errors
     public static Exception ImpossibleToReconnect()
         => new ImpossibleToReconnectException();
 
-    public static Exception NoCurrentRpcRequestContext()
+    public static Exception NoCurrentRpcInboundContext()
         => new InvalidOperationException($"{nameof(RpcInboundContext)}.{nameof(RpcInboundContext.Current)} is unavailable.");
+    public static Exception NoCurrentRpcOutboundContext()
+        => new InvalidOperationException($"{nameof(RpcOutboundContext)}.{nameof(RpcOutboundContext.Current)} is unavailable.");
 
     public static Exception IncompatibleArgumentType(RpcMethodDef methodDef, int argumentIndex, Type argumentType)
         => new InvalidOperationException(

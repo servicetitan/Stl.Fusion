@@ -36,12 +36,6 @@ public class RpcPeer : WorkerBase
         Connector = Hub.Connector;
     }
 
-    public ValueTask Send(RpcCall call, CancellationToken cancellationToken)
-    {
-        var request = Hub.CallConverter.ToMessage(this, call);
-        return Send(request, cancellationToken);
-    }
-
     public async ValueTask Send(RpcMessage message, CancellationToken cancellationToken)
     {
         var channel = await GetConnection(cancellationToken).ConfigureAwait(false);
@@ -161,12 +155,11 @@ public class RpcPeer : WorkerBase
         }
     }
 
-    protected async Task ProcessMessage(RpcInboundContext context, SemaphoreSlim? semaphore = null)
+    protected virtual async Task ProcessMessage(RpcInboundContext context, SemaphoreSlim? semaphore = null)
     {
         var contextScope = context.Activate();
         try {
-            context.Call = Hub.CallConverter.ToCall(this, context.Message);
-            await Hub.InboundHandler.Handle(context).ConfigureAwait(false);
+            await context.MethodDef.Handler.HandleInbound(context).ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             Log.LogError(e, "Failed to process message: {Message}", context.Message);
