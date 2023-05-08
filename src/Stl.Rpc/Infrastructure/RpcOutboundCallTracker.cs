@@ -15,12 +15,12 @@ public class RpcOutboundCallTracker
         return Task.CompletedTask;
     }
 
-    public void Register(RpcBoundRequest boundRequest)
+    public void Register(RpcCall call)
     {
-        var methodDef = boundRequest.MethodDef;
+        var methodDef = call.MethodDef;
         var cancellationTokenIndex = methodDef.CancellationTokenIndex;
         var cancellationToken = cancellationTokenIndex >= 0
-            ? boundRequest.Arguments.GetCancellationToken(cancellationTokenIndex)
+            ? call.Arguments.GetCancellationToken(cancellationTokenIndex)
             : default;
     }
 }

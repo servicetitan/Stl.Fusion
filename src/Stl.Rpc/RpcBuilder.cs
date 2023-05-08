@@ -30,11 +30,11 @@ public readonly struct RpcBuilder
         // Common services
         Services.TryAddSingleton(new RpcConfiguration());
         Services.TryAddSingleton(c => new RpcHub(c));
-        Services.TryAddSingleton<Func<Symbol, RpcPeer>>(c => name => new RpcPeer(c.GetRequiredService<RpcHub>(), name));
+        Services.TryAddSingleton<Func<Symbol, RpcPeer>>(c => name => new RpcPeer(c.RpcHub(), name));
 
         // Infrastructure
-        Services.TryAddSingleton(c => new RpcRequestBinder(c));
-        Services.TryAddSingleton(c => new RpcRequestHandler(c));
+        Services.TryAddSingleton(c => new RpcCallConverter(c));
+        Services.TryAddSingleton(c => new RpcInboundHandler(c));
         Services.TryAddSingleton(c => new RpcServiceRegistry(c));
         Services.TryAddSingleton(c => new RpcSystemCallService(c));
 
@@ -67,6 +67,32 @@ public readonly struct RpcBuilder
         Configuration.Services.Clear();
         return this;
     }
+
+    public RpcBuilder HasConnector(Func<CancellationToken, Task<Channel<RpcMessage>>> connector)
+    {
+        Services.AddSingleton(connector);
+        return this;
+    }
+
+    public RpcBuilder HasConnector<TConnector>(TConnector connector)
+        where TConnector : RpcConnector
+    {
+        Services.AddSingleton(connector);
+        if (typeof(TConnector) != typeof(RpcConnector))
+            Services.AddSingleton<RpcConnector>(c => c.GetRequiredService<TConnector>());
+        return this;
+    }
+
+    public RpcBuilder HasConnector<TConnector>(Func<IServiceProvider, TConnector> connectorFactory)
+        where TConnector : RpcConnector
+    {
+        Services.AddSingleton(connectorFactory);
+        if (typeof(TConnector) != typeof(RpcConnector))
+            Services.AddSingleton<RpcConnector>(c => c.GetRequiredService<TConnector>());
+        return this;
+    }
+
+    // Private methods
 
     private static RpcConfiguration GetConfiguration(IServiceCollection services)
     {

@@ -6,8 +6,8 @@ namespace Stl.Rpc;
 
 public class RpcMethodDef : MethodDef
 {
-    private static readonly MethodInfo CreateBoundRequestFactoryMethod =
-        typeof(RpcMethodDef).GetMethod(nameof(CreateBoundRequestFactory), BindingFlags.Static | BindingFlags.NonPublic)!;
+    private static readonly MethodInfo CreateCallFactoryMethod =
+        typeof(RpcMethodDef).GetMethod(nameof(CreateCallFactory), BindingFlags.Static | BindingFlags.NonPublic)!;
 
     public RpcServiceDef Service { get; }
     public Symbol Name { get; }
@@ -16,7 +16,7 @@ public class RpcMethodDef : MethodDef
     public Type[] RemoteParameterTypes { get; }
     public Type RemoteArgumentListType { get; }
     public bool MustCheckArguments { get; }
-    public Func<ArgumentList, RpcBoundRequest> BoundRequestFactory { get; }
+    public Func<ArgumentList, RpcCall> CallFactory { get; }
 
     public RpcMethodDef(RpcServiceDef service, MethodInfo method, Func<RpcMethodDef, Symbol> methodNameBuilder)
         : base(service.Type, method)
@@ -39,7 +39,7 @@ public class RpcMethodDef : MethodDef
             RemoteParameterTypes = ParameterTypes;
             RemoteArgumentListType = ArgumentListType;
         }
-        BoundRequestFactory = (Func<ArgumentList, RpcBoundRequest>)CreateBoundRequestFactoryMethod
+        CallFactory = (Func<ArgumentList, RpcCall>)CreateCallFactoryMethod
             .MakeGenericMethod(UnwrappedReturnType)
             .Invoke(null, new object?[] { this })!;
 
@@ -55,6 +55,6 @@ public class RpcMethodDef : MethodDef
 
     // Private methods
 
-    private static Func<ArgumentList, RpcBoundRequest> CreateBoundRequestFactory<T>(RpcMethodDef methodDef)
-        => arguments => new RpcBoundRequest<T>(methodDef, arguments);
+    private static Func<ArgumentList, RpcCall> CreateCallFactory<T>(RpcMethodDef methodDef)
+        => arguments => new RpcCall<T>(methodDef, arguments);
 }

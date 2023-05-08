@@ -2,25 +2,25 @@ using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
 
-public class RpcRequestContext
+public class RpcInboundContext
 {
-    private static readonly AsyncLocal<RpcRequestContext?> CurrentLocal = new();
+    private static readonly AsyncLocal<RpcInboundContext?> CurrentLocal = new();
 
-    public static RpcRequestContext Current => CurrentLocal.Value ?? throw Errors.NoCurrentRpcRequestContext();
+    public static RpcInboundContext Current => CurrentLocal.Value ?? throw Errors.NoCurrentRpcRequestContext();
 
     public RpcPeer Peer { get; }
     public RpcMessage Message { get; }
-    public RpcBoundRequest? BoundRequest { get; set; }
+    public RpcCall? Call { get; set; }
     public CancellationToken CancellationToken { get; }
 
-    public RpcRequestContext(RpcPeer peer, RpcMessage message, CancellationToken cancellationToken)
+    public RpcInboundContext(RpcPeer peer, RpcMessage message, CancellationToken cancellationToken)
     {
         Peer = peer;
         Message = message;
         CancellationToken = cancellationToken;
     }
 
-    public ClosedDisposable<RpcRequestContext?> Activate()
+    public ClosedDisposable<RpcInboundContext?> Activate()
     {
         var oldCurrent = CurrentLocal.Value;
         CurrentLocal.Value = this;

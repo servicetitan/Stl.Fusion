@@ -30,9 +30,13 @@ public static class Errors
 
     public static Exception AlreadyConnected()
         => new InvalidOperationException($"This {nameof(RpcPeer)} is already connected.");
-    
+    public static Exception ConnectionIsClosed()
+        => new InvalidOperationException("Connection is gracefully closed by peer.");
+    public static Exception ImpossibleToReconnect()
+        => new ImpossibleToReconnectException();
+
     public static Exception NoCurrentRpcRequestContext()
-        => new InvalidOperationException($"{nameof(RpcRequestContext)}.{nameof(RpcRequestContext.Current)} is unavailable.");
+        => new InvalidOperationException($"{nameof(RpcInboundContext)}.{nameof(RpcInboundContext.Current)} is unavailable.");
 
     public static Exception IncompatibleArgumentType(RpcMethodDef methodDef, int argumentIndex, Type argumentType)
         => new InvalidOperationException(

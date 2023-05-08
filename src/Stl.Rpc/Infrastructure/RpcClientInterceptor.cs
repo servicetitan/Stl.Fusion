@@ -20,7 +20,7 @@ public class RpcClientInterceptor : InterceptorBase
     {
         var rpcMethodDef = (RpcMethodDef)methodDef;
         return invocation => {
-            var boundRequest = new RpcBoundRequest<T>(rpcMethodDef, invocation.Arguments);
+            var boundRequest = new RpcCall<T>(rpcMethodDef, invocation.Arguments);
             // TODO: Find RpcChannel & push request there
             return rpcMethodDef.ReturnsValueTask
                 ? rpcMethodDef.IsAsyncVoidMethod

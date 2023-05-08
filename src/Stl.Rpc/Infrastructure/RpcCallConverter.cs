@@ -7,23 +7,23 @@ using System.Globalization;
 
 namespace Stl.Rpc.Infrastructure;
 
-public class RpcRequestBinder : RpcServiceBase
+public class RpcCallConverter : RpcServiceBase
 {
     private RpcServiceRegistry ServiceRegistry { get; }
 
-    public RpcRequestBinder(IServiceProvider services) : base(services)
+    public RpcCallConverter(IServiceProvider services) : base(services)
         => ServiceRegistry = services.GetRequiredService<RpcServiceRegistry>();
 
-    public virtual RpcMessage FromBound(RpcPeer peer, RpcBoundRequest boundRequest)
+    public virtual RpcMessage ToMessage(RpcPeer peer, RpcCall call)
     {
-        var methodDef = boundRequest.MethodDef;
-        peer.Hub.OutboundCalls.Register(boundRequest);
+        var methodDef = call.MethodDef;
+        peer.Hub.OutboundCalls.Register(call);
 
-        var arguments = boundRequest.Arguments;
+        var arguments = call.Arguments;
         if (methodDef.CancellationTokenIndex >= 0)
             arguments = arguments.Remove(methodDef.CancellationTokenIndex);
 
-        var headers = boundRequest.Headers;
+        var headers = call.Headers;
         var argumentListType = arguments.GetType();
         if (argumentListType.IsGenericType) {
             var nonDefaultItemTypes = arguments.GetNonDefaultItemTypes();
@@ -52,7 +52,7 @@ public class RpcRequestBinder : RpcServiceBase
         return new RpcMessage(methodDef.Service.Name, methodDef.Name, serializedArguments, headers);
     }
 
-    public virtual RpcBoundRequest ToBound(RpcPeer peer, RpcMessage message)
+    public virtual RpcCall ToCall(RpcPeer peer, RpcMessage message)
     {
         var headers = message.Headers;
 
@@ -108,9 +108,9 @@ public class RpcRequestBinder : RpcServiceBase
             }
         }
 
-        var boundRequest = methodDef.BoundRequestFactory.Invoke(arguments);
+        var call = methodDef.CallFactory.Invoke(arguments);
         if (headers != null)
-            boundRequest.Headers.AddRange(headers);
-        return boundRequest;
+            call.Headers.AddRange(headers);
+        return call;
     }
 }

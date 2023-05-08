@@ -1,5 +1,8 @@
+using Stl.Channels;
 using Stl.Interception;
+using Stl.OS;
 using Stl.Rpc.Infrastructure;
+using Stl.Rpc.Internal;
 
 namespace Stl.Rpc;
 
@@ -18,7 +21,10 @@ public class RpcPeer : WorkerBase
     public Func<ArgumentList, Type, object?> ArgumentSerializer { get; init; }
     public Func<object?, Type, ArgumentList> ArgumentDeserializer { get; init; }
     public Func<RpcServiceDef, bool> LocalServiceFilter { get; init; }
+    public RpcConnector Connector { get; init; }
     public RetryDelaySeq ReconnectDelays { get; init; } = new();
+    public int ReconnectRetryLimit { get; init; } = int.MaxValue;
+    public int InboundConcurrencyLevel { get; init; } = 1;
 
     public RpcPeer(RpcHub hub, Symbol name)
     {
@@ -27,11 +33,12 @@ public class RpcPeer : WorkerBase
         ArgumentSerializer = Hub.Configuration.ArgumentSerializer;
         ArgumentDeserializer = Hub.Configuration.ArgumentDeserializer;
         LocalServiceFilter = static _ => true;
+        Connector = Hub.Connector;
     }
 
-    public ValueTask Send(RpcBoundRequest boundRequest, CancellationToken cancellationToken)
+    public ValueTask Send(RpcCall call, CancellationToken cancellationToken)
     {
-        var request = Hub.RequestBinder.FromBound(this, boundRequest);
+        var request = Hub.CallConverter.ToMessage(this, call);
         return Send(request, cancellationToken);
     }
 
@@ -46,62 +53,126 @@ public class RpcPeer : WorkerBase
     protected override async Task OnRun(CancellationToken cancellationToken)
     {
         var tryIndex = 0;
+        var lastError = (Exception?)null;
+        var semaphore = InboundConcurrencyLevel > 1
+            ? new SemaphoreSlim(InboundConcurrencyLevel, InboundConcurrencyLevel)
+            : null;
         while (true) {
             try {
-                if (tryIndex > 0)
-                    await Clock.Delay(ReconnectDelays[tryIndex], cancellationToken).ConfigureAwait(false);
-                var channel = await Connect(cancellationToken).ConfigureAwait(false);
+                var channel = await Reconnect(lastError, tryIndex, cancellationToken).ConfigureAwait(false);
                 tryIndex = 0;
-                await foreach (var request in channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
-                    await HandleRequest(request, cancellationToken).ConfigureAwait(false);
+                await foreach (var message in channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false)) {
+                    var context = new RpcInboundContext(this, message, cancellationToken);
+                    if (semaphore == null) {
+                        await ProcessMessage(context).ConfigureAwait(false);
+                    }
+                    else {
+                        await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+                        _ = Task.Run(() => ProcessMessage(context, semaphore), CancellationToken.None);
+                    }
+                }
+                throw Errors.ConnectionIsClosed();
             }
-            catch (Exception e) when (e is not OperationCanceledException) {
-                DropConnection(e);
-                if (tryIndex == 0)
-                    Log.LogError(e, "'{Name}': Request processing failed, reconnecting...", Name);
-                else
-                    Log.LogError(e, "'{Name}': Couldn't connect, retrying (#{TryIndex})...", Name, tryIndex);
+            catch (ImpossibleToReconnectException e) {
+                SetConnection(null, e);
+                return;
+            }
+            catch (OperationCanceledException) {
+                SetConnection(null, Errors.ImpossibleToReconnect());
+                return;
+            }
+            catch (Exception e) {
+                lastError = e;
                 tryIndex++;
             }
         }
     }
 
-    protected async Task<Channel<RpcMessage>> Connect(CancellationToken cancellationToken)
+    protected async Task<Channel<RpcMessage>> Reconnect(
+        Exception? lastError, int tryIndex, CancellationToken cancellationToken)
     {
-        await Task.Yield();
-        throw new NotSupportedException();
+        SetConnection(null, lastError);
+        if (lastError is ImpossibleToReconnectException) {
+            Log.LogWarning("'{Name}': Impossible to reconnect, shutting down", Name);
+            throw Errors.ImpossibleToReconnect();
+        }
+        if (tryIndex >= ReconnectRetryLimit) {
+            Log.LogWarning("'{Name}': Reconnect retry limit exceeded", Name);
+            throw Errors.ImpossibleToReconnect();
+        }
+
+        if (tryIndex == 0)
+            Log.LogInformation("'{Name}': Connecting...", Name);
+        else  {
+            var delay = ReconnectDelays[tryIndex];
+            Log.LogInformation("'{Name}': Reconnecting (#{TryIndex}) after {Delay}...", Name, tryIndex, delay.ToShortString());
+            await Clock.Delay(delay, cancellationToken).ConfigureAwait(false);
+        }
+
+        try {
+            var channel = await Connector.Connect(this, cancellationToken).ConfigureAwait(false);
+            // ReSharper disable once SuspiciousTypeConversion.Global
+            if (channel is null or IEmptyChannel)
+                throw Errors.ImpossibleToReconnect();
+
+            SetConnection(channel);
+            return channel;
+        }
+        catch (ImpossibleToReconnectException e) {
+            SetConnection(null, e);
+            throw;
+        }
     }
 
-    protected void DropConnection(Exception? error = null)
+    protected void SetConnection(Channel<RpcMessage>? channel, Exception? error = null)
     {
-        lock (Lock)
-            _whenConnected = _whenConnected.CreateNext(new(null, error));
+        var expectedValue = Result.New(channel, error);
+        lock (Lock) {
+            var whenConnected = _whenConnected;
+            if (whenConnected.Value == expectedValue)
+                return;
+            if (whenConnected.Value.Error is ImpossibleToReconnectException)
+                return;
+
+            _whenConnected = whenConnected.CreateNext(expectedValue);
+            if (whenConnected.Value.IsValue(out var oldChannel))
+                oldChannel?.Writer.TryComplete();
+        }
     }
 
     protected async ValueTask<Channel<RpcMessage>> GetConnection(CancellationToken cancellationToken)
     {
+        // ReSharper disable once InconsistentlySynchronizedField
         var whenConnected = _whenConnected;
         while (true) {
             // ReSharper disable once MethodSupportsCancellation
             var whenNext = whenConnected.WhenNext();
-            if (!whenNext.IsCompleted && whenConnected.Value.IsValue(out var channel) && channel != null)
-                return channel;
+            if (!whenNext.IsCompleted) {
+                var error = whenConnected.Value.Error;
+                if (error is ImpossibleToReconnectException)
+                    throw error;
+
+                var channel = error == null ? whenConnected.Value.ValueOrDefault : null;
+                if (channel != null)
+                    return channel;
+            }
 
             whenConnected = await whenNext.WaitAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
-    // Private methods
-
-    private async Task HandleRequest(RpcMessage message, CancellationToken cancellationToken)
+    protected async Task ProcessMessage(RpcInboundContext context, SemaphoreSlim? semaphore = null)
     {
-        var context = new RpcRequestContext(this, message, cancellationToken);
-        using var _ = context.Activate();
+        var contextScope = context.Activate();
         try {
-            await Hub.RequestHandler.Handle(context).ConfigureAwait(false);
+            await Hub.InboundHandler.Handle(context).ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
-            Log.LogError(e, "Failed to process request: {Request}", message);
+            Log.LogError(e, "Failed to process message: {Message}", context.Message);
+        }
+        finally {
+            contextScope.Dispose();
+            semaphore?.Release();
         }
     }
 }

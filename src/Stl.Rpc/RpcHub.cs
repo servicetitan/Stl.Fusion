@@ -13,8 +13,9 @@ public sealed class RpcHub : ProcessorBase, IHasServices
     public IServiceProvider Services { get; }
     public RpcConfiguration Configuration { get; }
     public RpcServiceRegistry ServiceRegistry { get; }
-    public RpcRequestBinder RequestBinder { get; }
-    public RpcRequestHandler RequestHandler { get; }
+    public RpcConnector Connector { get; }
+    public RpcCallConverter CallConverter { get; }
+    public RpcInboundHandler InboundHandler { get; }
     public RpcOutboundCallTracker OutboundCalls { get; private set; }
     public ConcurrentDictionary<Symbol, RpcPeer> Peers { get; } = new();
 
@@ -25,8 +26,9 @@ public sealed class RpcHub : ProcessorBase, IHasServices
         Services = services;
         Configuration = services.GetRequiredService<RpcConfiguration>();
         ServiceRegistry = services.GetRequiredService<RpcServiceRegistry>();
-        RequestBinder = services.GetRequiredService<RpcRequestBinder>();
-        RequestHandler = services.GetRequiredService<RpcRequestHandler>();
+        Connector = services.GetRequiredService<RpcConnector>();
+        CallConverter = services.GetRequiredService<RpcCallConverter>();
+        InboundHandler = services.GetRequiredService<RpcInboundHandler>();
         OutboundCalls = services.GetRequiredService<RpcOutboundCallTracker>();
         PeerFactory = services.GetRequiredService<Func<Symbol, RpcPeer>>();
     }

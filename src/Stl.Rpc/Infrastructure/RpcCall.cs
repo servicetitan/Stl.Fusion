@@ -2,7 +2,7 @@ using Stl.Interception;
 
 namespace Stl.Rpc.Infrastructure;
 
-public abstract record RpcBoundRequest(
+public abstract record RpcCall(
     RpcMethodDef MethodDef,
     ArgumentList Arguments)
 {
@@ -10,10 +10,10 @@ public abstract record RpcBoundRequest(
     public abstract Task UntypedResultTask { get; }
 }
 
-public sealed record RpcBoundRequest<T>(
+public sealed record RpcCall<T>(
     RpcMethodDef MethodDef,
     ArgumentList Arguments
-    ) : RpcBoundRequest(MethodDef, Arguments)
+    ) : RpcCall(MethodDef, Arguments)
 {
     public TaskCompletionSource<T> ResultSource { get; } = TaskCompletionSourceExt.New<T>();
     public Task<T> ResultTask => ResultSource.Task;
