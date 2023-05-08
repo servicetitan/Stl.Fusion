@@ -6,30 +6,31 @@ namespace Stl.Rpc;
 public sealed class RpcHub : ProcessorBase, IHasServices
 {
     private ILogger? _log;
+    private RpcServiceRegistry? _serviceRegistry;
+    private RpcCallConverter? _callConverter;
+    private RpcInboundHandler? _inboundHandler;
+    private RpcOutboundCallTracker? _outboundCalls;
+    private RpcConnector? _connector;
 
     private ILogger Log => _log ??= Services.LogFor(GetType());
-    private Func<Symbol, RpcPeer> PeerFactory { get; }
+
+    internal RpcCallConverter CallConverter => _callConverter ??= Services.GetRequiredService<RpcCallConverter>();
+    internal RpcInboundHandler InboundHandler => _inboundHandler ??= Services.GetRequiredService<RpcInboundHandler>();
+    internal RpcOutboundCallTracker OutboundCalls => _outboundCalls ??= Services.GetRequiredService<RpcOutboundCallTracker>();
+    internal RpcConnector Connector => _connector ??= Services.GetRequiredService<RpcConnector>();
+    internal Func<Symbol, RpcPeer> PeerFactory { get; }
 
     public IServiceProvider Services { get; }
     public RpcConfiguration Configuration { get; }
-    public RpcServiceRegistry ServiceRegistry { get; }
-    public RpcConnector Connector { get; }
-    public RpcCallConverter CallConverter { get; }
-    public RpcInboundHandler InboundHandler { get; }
-    public RpcOutboundCallTracker OutboundCalls { get; private set; }
-    public ConcurrentDictionary<Symbol, RpcPeer> Peers { get; } = new();
+    public RpcServiceRegistry ServiceRegistry => _serviceRegistry ??= Services.GetRequiredService<RpcServiceRegistry>();
 
+    public ConcurrentDictionary<Symbol, RpcPeer> Peers { get; } = new();
     public RpcPeer this[Symbol name] => Peers.GetOrAdd(name, CreatePeer);
 
     public RpcHub(IServiceProvider services)
     {
         Services = services;
         Configuration = services.GetRequiredService<RpcConfiguration>();
-        ServiceRegistry = services.GetRequiredService<RpcServiceRegistry>();
-        Connector = services.GetRequiredService<RpcConnector>();
-        CallConverter = services.GetRequiredService<RpcCallConverter>();
-        InboundHandler = services.GetRequiredService<RpcInboundHandler>();
-        OutboundCalls = services.GetRequiredService<RpcOutboundCallTracker>();
         PeerFactory = services.GetRequiredService<Func<Symbol, RpcPeer>>();
     }
 

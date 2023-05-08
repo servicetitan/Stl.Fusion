@@ -9,6 +9,7 @@ public class RpcInboundContext
     public static RpcInboundContext Current => CurrentLocal.Value ?? throw Errors.NoCurrentRpcRequestContext();
 
     public RpcPeer Peer { get; }
+    public RpcHub Hub => Peer.Hub;
     public RpcMessage Message { get; }
     public RpcCall? Call { get; set; }
     public CancellationToken CancellationToken { get; }

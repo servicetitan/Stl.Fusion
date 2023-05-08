@@ -1,22 +1,26 @@
 using Cysharp.Text;
+using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Internal;
 
 namespace Stl.Rpc;
 
-public class RpcServiceRegistry
+public class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<RpcServiceDef>
 {
     private readonly Dictionary<Type, RpcServiceDef> _services = new();
     private readonly Dictionary<Symbol, RpcServiceDef> _serviceByName = new();
 
-    public int ServiceCount => _serviceByName.Count;
-    public IEnumerable<RpcServiceDef> Services => _serviceByName.Values;
-
+    public int Count => _serviceByName.Count;
     public RpcServiceDef this[Type serviceType] => Get(serviceType) ?? throw Errors.NoService(serviceType);
     public RpcServiceDef this[Symbol serviceName] => Get(serviceName) ?? throw Errors.NoService(serviceName);
 
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    public IEnumerator<RpcServiceDef> GetEnumerator() => _serviceByName.Values.GetEnumerator();
+
     public RpcServiceRegistry(IServiceProvider services)
+        : base(services)
     {
-        var configuration = services.GetRequiredService<RpcConfiguration>();
+        var hub = Hub;
+        var configuration = hub.Configuration;
         foreach (var (_, service) in configuration.Services) {
             var name = service.Name;
             if (name.IsEmpty)
@@ -25,7 +29,7 @@ public class RpcServiceRegistry
             if (_serviceByName.TryGetValue(name, out var serviceDef))
                 throw Errors.ServiceNameConflict(service.Type, serviceDef.Type, name);
 
-            serviceDef = new RpcServiceDef(name, service, configuration.MethodNameBuilder);
+            serviceDef = new RpcServiceDef(hub, name, service, configuration.MethodNameBuilder);
             if (_services.ContainsKey(serviceDef.Type))
                 throw Errors.ServiceTypeConflict(service.Type);
             if (!serviceDef.HasDefaultServerType && _services.ContainsKey(serviceDef.ServerType))

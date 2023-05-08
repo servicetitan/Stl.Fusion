@@ -8,6 +8,7 @@ public class RpcServiceDef
     private readonly Dictionary<MethodInfo, RpcMethodDef> _methods;
     private readonly Dictionary<Symbol, RpcMethodDef> _methodByName;
 
+    public RpcHub Hub { get; }
     public Type Type { get; }
     public Type ServerType { get; }
     public Type ClientType { get; }
@@ -21,8 +22,9 @@ public class RpcServiceDef
     public RpcMethodDef this[MethodInfo method] => Get(method) ?? throw Errors.NoMethod(Type, method);
     public RpcMethodDef this[Symbol methodName] => Get(methodName) ?? throw Errors.NoMethod(Type, methodName);
 
-    public RpcServiceDef(Symbol name, RpcServiceConfiguration source, Func<RpcMethodDef, Symbol> methodNameBuilder)
+    public RpcServiceDef(RpcHub hub, Symbol name, RpcServiceConfiguration source, Func<RpcMethodDef, Symbol> methodNameBuilder)
     {
+        Hub = hub;
         Name = name;
         Type = source.Type;
         ServerType = source.ServerType;

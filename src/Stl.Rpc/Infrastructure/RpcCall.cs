@@ -8,6 +8,9 @@ public abstract record RpcCall(
 {
     public List<RpcHeader> Headers { get; init; } = new();
     public abstract Task UntypedResultTask { get; }
+
+    public Task Invoke()
+        => MethodDef.CallInvoker.Invoke(this);
 }
 
 public sealed record RpcCall<T>(
@@ -18,4 +21,7 @@ public sealed record RpcCall<T>(
     public TaskCompletionSource<T> ResultSource { get; } = TaskCompletionSourceExt.New<T>();
     public Task<T> ResultTask => ResultSource.Task;
     public override Task UntypedResultTask => ResultSource.Task;
+
+    public new Task<T> Invoke()
+        => (Task<T>)MethodDef.CallInvoker.Invoke(this);
 }

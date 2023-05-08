@@ -5,28 +5,29 @@ namespace Stl.Rpc.Infrastructure;
 
 public class RpcClientInterceptor : InterceptorBase
 {
+    private RpcServiceRegistry? _serviceRegistry;
+
     public new record Options : InterceptorBase.Options
     { }
 
-    protected RpcServiceRegistry ServiceRegistry { get; }
+    protected RpcHub Hub { get; }
+    protected RpcServiceRegistry ServiceRegistry => _serviceRegistry ??= Hub.ServiceRegistry;
 
     protected RpcClientInterceptor(Options options, IServiceProvider services)
         : base(options, services)
-    {
-        ServiceRegistry = services.GetRequiredService<RpcServiceRegistry>();
-    }
+        => Hub = services.GetRequiredService<RpcHub>();
 
     protected override Func<Invocation, object?> CreateHandler<T>(Invocation initialInvocation, MethodDef methodDef)
     {
         var rpcMethodDef = (RpcMethodDef)methodDef;
         return invocation => {
-            var boundRequest = new RpcCall<T>(rpcMethodDef, invocation.Arguments);
+            var call = new RpcCall<T>(rpcMethodDef, invocation.Arguments);
             // TODO: Find RpcChannel & push request there
             return rpcMethodDef.ReturnsValueTask
                 ? rpcMethodDef.IsAsyncVoidMethod
-                    ? boundRequest.UntypedResultTask.ToValueTask()
-                    : boundRequest.ResultTask.ToValueTask()
-                : boundRequest.ResultTask;
+                    ? call.UntypedResultTask.ToValueTask()
+                    : call.ResultTask.ToValueTask()
+                : call.ResultTask;
         };
     }
 

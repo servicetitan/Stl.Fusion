@@ -165,6 +165,7 @@ public class RpcPeer : WorkerBase
     {
         var contextScope = context.Activate();
         try {
+            context.Call = Hub.CallConverter.ToCall(this, context.Message);
             await Hub.InboundHandler.Handle(context).ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
