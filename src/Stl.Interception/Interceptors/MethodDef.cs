@@ -2,7 +2,12 @@ namespace Stl.Interception.Interceptors;
 
 public abstract class MethodDef
 {
+    private static readonly MethodInfo InvokeMethod =
+        typeof(MethodDef).GetMethod(nameof(Invoke), BindingFlags.Static | BindingFlags.NonPublic)!;
+    private static readonly ConcurrentDictionary<Type, Func<MethodDef, object, ArgumentList, Task>> InvokerCache = new();
+
     private string? _fullName;
+    private Func<object, ArgumentList, Task>? _invoker;
 
     public Type Type { get; }
     public MethodInfo Method { get; }
@@ -15,7 +20,9 @@ public abstract class MethodDef
     public bool IsAsyncVoidMethod { get; }
     public bool ReturnsTask { get; }
     public bool ReturnsValueTask { get; }
-    public Type UnwrappedReturnType { get; } = null!;
+    public Type UnwrappedReturnType { get; }
+    public Func<object, ArgumentList, Task> Invoker => _invoker ??= CreateInvoker();
+
     public bool IsValid { get; init; } = true;
 
     protected MethodDef(
@@ -57,4 +64,47 @@ public abstract class MethodDef
 
     public override string ToString()
         => $"{GetType().Name}({FullName}){(IsValid ? "" : " - invalid")}";
+
+    // Private methods
+
+    private Func<object, ArgumentList, Task> CreateInvoker()
+    {
+        var staticInvoker = InvokerCache.GetOrAdd(UnwrappedReturnType,
+            tResult => (Func<MethodDef, object, ArgumentList, Task>)InvokeMethod
+                .MakeGenericMethod(tResult)
+                .CreateDelegate(typeof(Func<MethodDef, object, ArgumentList, Task>)));
+        return (service, arguments) => staticInvoker.Invoke(this, service, arguments);
+    }
+
+    private static Task Invoke<TResult>(MethodDef methodDef, object service, ArgumentList arguments)
+    {
+        var result = arguments.GetInvoker(methodDef.Method).Invoke(service, arguments);
+        if (methodDef.ReturnsTask) {
+            var task = (Task)result!;
+            if (methodDef.IsAsyncVoidMethod)
+                task = ToUnitTask(task);
+            return task;
+        }
+
+        if (methodDef.ReturnsValueTask) {
+            if (result is ValueTask<TResult> valueTask)
+                return valueTask.AsTask();
+            if (result is ValueTask voidValueTask)
+                return ToUnitTask(voidValueTask);
+        }
+
+        return Task.FromResult((TResult)result!);
+    }
+
+    private static async Task<Unit> ToUnitTask(Task source)
+    {
+        await source.ConfigureAwait(false);
+        return default;
+    }
+
+    private static async Task<Unit> ToUnitTask(ValueTask source)
+    {
+        await source.ConfigureAwait(false);
+        return default;
+    }
 }

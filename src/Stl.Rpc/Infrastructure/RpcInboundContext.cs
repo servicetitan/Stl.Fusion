@@ -1,3 +1,4 @@
+using Stl.Interception;
 using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
@@ -13,9 +14,10 @@ public class RpcInboundContext
     public RpcPeer Peer { get; }
     public RpcMessage Message { get; }
     public List<RpcHeader> Headers => Message.Headers;
-    public RpcMethodDef MethodDef => _methodDef ??= GetMethodDef();
-    public RpcCall? Call { get; set; }
     public CancellationToken CancellationToken { get; }
+    public RpcMethodDef MethodDef => _methodDef ??= GetMethodDef();
+    public ArgumentList? Arguments { get; set; }
+    public IRpcInboundCall? Call { get; private set; }
 
     public RpcInboundContext(RpcPeer peer, RpcMessage message, CancellationToken cancellationToken)
     {
@@ -24,11 +26,16 @@ public class RpcInboundContext
         CancellationToken = cancellationToken;
     }
 
-    public ClosedDisposable<RpcInboundContext?> Activate()
+    public Scope Activate()
+        => new(this);
+
+    public Task StartCall()
     {
-        var oldCurrent = CurrentLocal.Value;
-        CurrentLocal.Value = this;
-        return Disposable.NewClosed(oldCurrent, static oldCurrent1 => CurrentLocal.Value = oldCurrent1);
+        if (Call != null)
+            throw Stl.Internal.Errors.AlreadyInvoked(nameof(StartCall));
+
+        Call = MethodDef.CallFactory.CreateInbound(this);
+        return Call.Start();
     }
 
     // Private methods
@@ -40,5 +47,37 @@ public class RpcInboundContext
             throw Errors.ServiceIsNotWhiteListed(serviceDef);
 
         return serviceDef[Message.Method];
+    }
+
+    // Nested types
+
+    public readonly struct Scope : IDisposable
+    {
+        private readonly RpcInboundContext? _oldContext;
+
+        public readonly RpcInboundContext Context;
+
+        internal Scope(RpcInboundContext context)
+        {
+            Context = context;
+            _oldContext = CurrentLocal.Value;
+            TryActivate(context);
+        }
+
+        internal Scope(RpcInboundContext context, RpcInboundContext? oldContext)
+        {
+            Context = context;
+            _oldContext = oldContext;
+            TryActivate(context);
+        }
+
+        public void Dispose()
+            => TryActivate(_oldContext);
+
+        private void TryActivate(RpcInboundContext? context)
+        {
+            if (Context != _oldContext)
+                CurrentLocal.Value = context;
+        }
     }
 }

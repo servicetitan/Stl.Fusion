@@ -157,15 +157,15 @@ public class RpcPeer : WorkerBase
 
     protected virtual async Task ProcessMessage(RpcInboundContext context, SemaphoreSlim? semaphore = null)
     {
-        var contextScope = context.Activate();
+        var scope = context.Activate();
         try {
-            await context.MethodDef.Handler.HandleInbound(context).ConfigureAwait(false);
+            await context.StartCall().ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             Log.LogError(e, "Failed to process message: {Message}", context.Message);
         }
         finally {
-            contextScope.Dispose();
+            scope.Dispose();
             semaphore?.Release();
         }
     }

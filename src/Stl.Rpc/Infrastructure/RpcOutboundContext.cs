@@ -1,3 +1,5 @@
+using Stl.Interception;
+using Stl.Interception.Interceptors;
 using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
@@ -8,22 +10,65 @@ public class RpcOutboundContext
 
     public static RpcOutboundContext Current => CurrentLocal.Value ?? throw Errors.NoCurrentRpcOutboundContext();
 
-    public RpcCall Call { get; set; }
-    public RpcPeer? Peer { get; }
-    public RpcMessage? Message { get; }
-    public List<RpcHeader> Headers { get; } = new();
-    public CancellationToken CancellationToken { get; }
-
-    public RpcOutboundContext(RpcCall call, CancellationToken cancellationToken)
+    public static Scope NewOrActive()
     {
-        Call = call;
-        CancellationToken = cancellationToken;
+        var oldContext = CurrentLocal.Value;
+        var context = oldContext ?? new RpcOutboundContext();
+        return new Scope(context, oldContext);
     }
 
-    public ClosedDisposable<RpcOutboundContext?> Activate()
+    public List<RpcHeader> Headers { get; set; } = new();
+    public RpcMethodDef? MethodDef { get; private set; }
+    public ArgumentList? Arguments { get; private set; }
+    public CancellationToken CancellationToken { get; private set; } = default;
+    public IRpcOutboundCall? Call { get; private set; }
+    public RpcPeer? Peer { get; set; }
+
+    public Scope Activate()
+        => new(this);
+
+    public Task StartCall(RpcMethodDef methodDef, ArgumentList arguments)
     {
-        var oldCurrent = CurrentLocal.Value;
-        CurrentLocal.Value = this;
-        return Disposable.NewClosed(oldCurrent, static oldCurrent1 => CurrentLocal.Value = oldCurrent1);
+        if (MethodDef != null)
+            throw Stl.Internal.Errors.AlreadyInvoked(nameof(StartCall));
+
+        MethodDef = methodDef;
+        Arguments = arguments;
+        var ctIndex = methodDef.CancellationTokenIndex;
+        CancellationToken = ctIndex >= 0 ? arguments.GetCancellationToken(ctIndex) : default;
+        Call = methodDef.CallFactory.CreateOutbound(this);
+        return Call.Start();
+    }
+
+    // Nested types
+
+    public readonly struct Scope : IDisposable
+    {
+        private readonly RpcOutboundContext? _oldContext;
+
+        public readonly RpcOutboundContext Context;
+
+        internal Scope(RpcOutboundContext context)
+        {
+            Context = context;
+            _oldContext = CurrentLocal.Value;
+            TryActivate(context);
+        }
+
+        internal Scope(RpcOutboundContext context, RpcOutboundContext? oldContext)
+        {
+            Context = context;
+            _oldContext = oldContext;
+            TryActivate(context);
+        }
+
+        public void Dispose()
+            => TryActivate(_oldContext);
+
+        private void TryActivate(RpcOutboundContext? context)
+        {
+            if (Context != _oldContext)
+                CurrentLocal.Value = context;
+        }
     }
 }

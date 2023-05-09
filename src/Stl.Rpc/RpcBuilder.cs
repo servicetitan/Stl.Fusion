@@ -34,7 +34,7 @@ public readonly struct RpcBuilder
 
         // Infrastructure
         Services.TryAddSingleton(c => new RpcServiceRegistry(c));
-        Services.TryAddSingleton(c => new RpcHandlerFactory(c));
+        Services.TryAddSingleton(c => new RpcCallFactoryProvider(c));
 
         // System services
         Services.TryAddSingleton(c => new RpcSystemCallService(c));

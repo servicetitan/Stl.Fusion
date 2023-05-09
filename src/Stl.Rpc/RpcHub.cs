@@ -7,13 +7,13 @@ public sealed class RpcHub : ProcessorBase, IHasServices
 {
     private ILogger? _log;
     private RpcServiceRegistry? _serviceRegistry;
-    private RpcHandlerFactory? _handlerFactory;
+    private RpcCallFactoryProvider? _callFactoryProvider;
     private RpcOutboundCallTracker? _outboundCalls;
     private RpcConnector? _connector;
 
     private ILogger Log => _log ??= Services.LogFor(GetType());
 
-    internal RpcHandlerFactory HandlerFactory => _handlerFactory ??= Services.GetRequiredService<RpcHandlerFactory>();
+    internal RpcCallFactoryProvider CallFactoryProvider => _callFactoryProvider ??= Services.GetRequiredService<RpcCallFactoryProvider>();
     internal RpcOutboundCallTracker OutboundCalls => _outboundCalls ??= Services.GetRequiredService<RpcOutboundCallTracker>();
     internal RpcConnector Connector => _connector ??= Services.GetRequiredService<RpcConnector>();
     internal Func<Symbol, RpcPeer> PeerFactory { get; }

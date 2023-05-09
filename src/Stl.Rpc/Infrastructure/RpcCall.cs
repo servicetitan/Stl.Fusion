@@ -1,20 +1,29 @@
 using Stl.Interception;
+using Stl.Rpc.Internal;
+
+#if NET7_0_OR_GREATER
+using System.Globalization;
+#endif
 
 namespace Stl.Rpc.Infrastructure;
 
-public abstract record RpcCall(
-    RpcMethodDef MethodDef,
-    ArgumentList Arguments)
+public interface IRpcCall
 {
-    public abstract Task UntypedResultTask { get; }
+    RpcMethodDef MethodDef { get; }
+    RpcServiceDef ServiceDef { get; }
+    RpcHub Hub { get; }
+
+    Task Start();
 }
 
-public sealed record RpcCall<T>(
-    RpcMethodDef MethodDef,
-    ArgumentList Arguments
-    ) : RpcCall(MethodDef, Arguments)
+public abstract class RpcCall<T> : IRpcCall
 {
-    public TaskCompletionSource<T> ResultSource { get; } = TaskCompletionSourceExt.New<T>();
-    public Task<T> ResultTask => ResultSource.Task;
-    public override Task UntypedResultTask => ResultSource.Task;
+    public RpcMethodDef MethodDef { get; }
+    public RpcServiceDef ServiceDef => MethodDef.Service;
+    public RpcHub Hub => MethodDef.Hub;
+
+    protected RpcCall(RpcMethodDef methodDef)
+        => MethodDef = methodDef;
+
+    public abstract Task Start();
 }

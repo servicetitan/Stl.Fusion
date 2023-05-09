@@ -6,7 +6,7 @@ namespace Stl.Rpc;
 
 public class RpcMethodDef : MethodDef
 {
-    private RpcHandler? _handler;
+    private RpcCallFactory? _callFactory;
 
     public RpcHub Hub { get; }
     public RpcServiceDef Service { get; }
@@ -15,7 +15,7 @@ public class RpcMethodDef : MethodDef
     public Type ArgumentListType { get; }
     public Type[] RemoteParameterTypes { get; }
     public Type RemoteArgumentListType { get; }
-    public RpcHandler Handler => _handler ??= Hub.HandlerFactory.Create(this);
+    public RpcCallFactory CallFactory => _callFactory ??= Hub.CallFactoryProvider.Create(this);
 
     public RpcMethodDef(RpcServiceDef service, MethodInfo method, Func<RpcMethodDef, Symbol> methodNameBuilder)
         : base(service.Type, method)

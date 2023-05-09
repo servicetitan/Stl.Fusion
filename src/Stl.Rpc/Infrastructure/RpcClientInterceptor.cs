@@ -20,14 +20,20 @@ public class RpcClientInterceptor : InterceptorBase
     protected override Func<Invocation, object?> CreateHandler<T>(Invocation initialInvocation, MethodDef methodDef)
     {
         var rpcMethodDef = (RpcMethodDef)methodDef;
+        var handler = rpcMethodDef.CallFactory;
         return invocation => {
-            var call = new RpcCall<T>(rpcMethodDef, invocation.Arguments);
-            // TODO: Find RpcChannel & push request there
-            return rpcMethodDef.ReturnsValueTask
-                ? rpcMethodDef.IsAsyncVoidMethod
-                    ? call.UntypedResultTask.ToValueTask()
-                    : call.ResultTask.ToValueTask()
-                : call.ResultTask;
+            using var scope = RpcOutboundContext.NewOrActive();
+            var context = scope.Context;
+            _ = context.StartCall(rpcMethodDef, invocation.Arguments);
+            var call = context.Call!;
+            var resultTask = call.ResultTask;
+#pragma warning disable CA2012
+            return rpcMethodDef.ReturnsTask
+                ? resultTask
+                : rpcMethodDef.IsAsyncVoidMethod
+                    ? resultTask.ToValueTask()
+                    : ((Task<T>)resultTask).ToValueTask();
+#pragma warning restore CA2012
         };
     }
 
