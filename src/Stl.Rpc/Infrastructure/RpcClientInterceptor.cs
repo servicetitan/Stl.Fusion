@@ -20,7 +20,6 @@ public class RpcClientInterceptor : InterceptorBase
     protected override Func<Invocation, object?> CreateHandler<T>(Invocation initialInvocation, MethodDef methodDef)
     {
         var rpcMethodDef = (RpcMethodDef)methodDef;
-        var handler = rpcMethodDef.CallFactory;
         return invocation => {
             using var scope = RpcOutboundContext.NewOrActive();
             var context = scope.Context;
