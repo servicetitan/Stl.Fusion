@@ -4,7 +4,8 @@ public sealed record RpcMessage(
     string Service,
     string Method,
     object? Arguments,
-    List<RpcHeader>? Headers = null)
+    List<RpcHeader>? Headers = null,
+    long CallId = 0)
 {
     public List<RpcHeader> Headers { get; init; } = Headers ?? new List<RpcHeader>();
 }

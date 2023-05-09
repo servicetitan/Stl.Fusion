@@ -1,27 +1,48 @@
 using Stl.Interception;
+using Stl.Internal;
 
 namespace Stl.Rpc.Infrastructure;
 
 public interface IRpcOutboundCall : IRpcCall
 {
     RpcOutboundContext Context { get; }
+    long Id { get; }
     Task ResultTask { get; }
 }
 
-public class RpcOutboundCall<T> : RpcCall<T>, IRpcOutboundCall
+public interface IRpcOutboundCall<TResult> : IRpcOutboundCall
 {
-    protected TaskCompletionSource<T> ResultSource { get; } = TaskCompletionSourceExt.New<T>();
+    void SetResult(Result<TResult> result, CancellationToken cancellationToken = default);
+}
+
+public class RpcOutboundCall<TResult> : RpcCall<TResult>, IRpcOutboundCall<TResult>
+{
+    private readonly TaskCompletionSource<TResult> _resultSource = TaskCompletionSourceExt.New<TResult>();
 
     public RpcOutboundContext Context { get; }
-    public Task ResultTask => ResultSource.Task;
+    public long Id { get; protected set; }
+    public Task ResultTask => _resultSource.Task;
 
     public RpcOutboundCall(RpcOutboundContext context) : base(context.MethodDef!)
         => Context = context;
 
     public override Task Start()
     {
-        return Task.CompletedTask;
+        if (Id != 0)
+            throw Errors.AlreadyInvoked(nameof(Start));
+
+        var peer = Context.Peer!;
+        Id = peer.Calls.NextId;
+        var message = CreateCallMessage();
+
+        peer.Calls.Outbound.TryAdd(Id, this);
+        var cancellationToken = Context.CancellationToken;
+        var sendTask = peer.Send(message, cancellationToken);
+        return sendTask.IsCompletedSuccessfully ? Task.CompletedTask : sendTask.AsTask();
     }
+
+    public void SetResult(Result<TResult> result, CancellationToken cancellationToken = default)
+        => _resultSource.SetFromResult(result, cancellationToken);
 
     // Protected methods
 
@@ -58,6 +79,6 @@ public class RpcOutboundCall<T> : RpcCall<T>, IRpcOutboundCall
         }
 
         var serializedArguments = peer.ArgumentSerializer.Invoke(arguments, arguments.GetType());
-        return new RpcMessage(ServiceDef.Name, MethodDef.Name, serializedArguments, headers);
+        return new RpcMessage(ServiceDef.Name, MethodDef.Name, serializedArguments, headers, Id);
     }
 }

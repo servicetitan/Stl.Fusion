@@ -16,7 +16,7 @@ public interface IRpcCall
     Task Start();
 }
 
-public abstract class RpcCall<T> : IRpcCall
+public abstract class RpcCall<TResult> : IRpcCall
 {
     public RpcMethodDef MethodDef { get; }
     public RpcServiceDef ServiceDef => MethodDef.Service;

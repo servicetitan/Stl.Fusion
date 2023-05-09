@@ -29,15 +29,23 @@ public class RpcOutboundContext
 
     public Task StartCall(RpcMethodDef methodDef, ArgumentList arguments)
     {
-        if (MethodDef != null)
+        if (Call != null)
             throw Stl.Internal.Errors.AlreadyInvoked(nameof(StartCall));
 
+        // MethodDef, Arguments, CancellationToken
         MethodDef = methodDef;
         Arguments = arguments;
         var ctIndex = methodDef.CancellationTokenIndex;
         CancellationToken = ctIndex >= 0 ? arguments.GetCancellationToken(ctIndex) : default;
-        Call = methodDef.CallFactory.CreateOutbound(this);
-        return Call.Start();
+
+        // Peer
+        var hub = MethodDef.Hub;
+        var peerName = hub.PeerResolver.Resolve(this);
+        Peer = hub.Peers[peerName];
+
+        // Call
+        var call = methodDef.CallFactory.CreateOutbound(this);
+        return call.Start();
     }
 
     // Nested types

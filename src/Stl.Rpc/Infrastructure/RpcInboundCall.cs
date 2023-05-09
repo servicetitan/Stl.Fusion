@@ -10,7 +10,7 @@ namespace Stl.Rpc.Infrastructure;
 public interface IRpcInboundCall : IRpcCall
 { }
 
-public class RpcInboundCall<T> : RpcCall<T>, IRpcInboundCall
+public class RpcInboundCall<TResult> : RpcCall<TResult>, IRpcInboundCall
 {
     public RpcInboundContext Context { get; }
 

@@ -1,6 +1,5 @@
 using Stl.Channels;
 using Stl.Interception;
-using Stl.OS;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Internal;
 
@@ -22,6 +21,7 @@ public class RpcPeer : WorkerBase
     public Func<object?, Type, ArgumentList> ArgumentDeserializer { get; init; }
     public Func<RpcServiceDef, bool> LocalServiceFilter { get; init; }
     public RpcConnector Connector { get; init; }
+    public RpcCallRegistry Calls { get; init; }
     public RetryDelaySeq ReconnectDelays { get; init; } = new();
     public int ReconnectRetryLimit { get; init; } = int.MaxValue;
     public int InboundConcurrencyLevel { get; init; } = 1;
@@ -34,6 +34,7 @@ public class RpcPeer : WorkerBase
         ArgumentDeserializer = Hub.Configuration.ArgumentDeserializer;
         LocalServiceFilter = static _ => true;
         Connector = Hub.Connector;
+        Calls = new RpcCallRegistry(this);
     }
 
     public async ValueTask Send(RpcMessage message, CancellationToken cancellationToken)

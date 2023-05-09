@@ -31,6 +31,7 @@ public readonly struct RpcBuilder
         Services.TryAddSingleton(new RpcConfiguration());
         Services.TryAddSingleton(c => new RpcHub(c));
         Services.TryAddSingleton<Func<Symbol, RpcPeer>>(c => name => new RpcPeer(c.RpcHub(), name));
+        Services.TryAddSingleton(c => new RpcPeerResolver(c));
 
         // Infrastructure
         Services.TryAddSingleton(c => new RpcServiceRegistry(c));
