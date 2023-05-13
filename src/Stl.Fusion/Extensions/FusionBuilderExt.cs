@@ -30,7 +30,7 @@ public static class FusionBuilderExt
         var services = fusion.Services;
         services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
         fusion.AddComputeService<IKeyValueStore, InMemoryKeyValueStore>();
-        services.AddHostedService(c => (InMemoryKeyValueStore) c.GetRequiredService<IKeyValueStore>());
+        services.AddHostedService(c => (InMemoryKeyValueStore)c.GetRequiredService<IKeyValueStore>());
         return fusion;
     }
 

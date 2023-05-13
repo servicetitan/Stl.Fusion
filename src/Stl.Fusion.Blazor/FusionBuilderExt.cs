@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Fusion.UI;
 
@@ -8,11 +9,13 @@ public static class FusionBuilderExt
     public static FusionBuilder AddBlazorUIServices(this FusionBuilder fusion)
     {
         var services = fusion.Services;
-        services.TryAddScoped<UICommander>();
-        // services.TryAddScoped<UIActionTracker>(); // Added in FusionBuilder.ctor
-        services.TryAddScoped<UIActionFailureTracker>();
-        services.TryAddScoped<BlazorModeHelper>();
-        services.TryAddScoped<BlazorCircuitContext>();
+        services.TryAddScoped(c => new UICommander(c));
+        services.TryAddScoped(_ => new UIActionFailureTracker.Options());
+        services.TryAddScoped(c => new UIActionFailureTracker(
+            c.GetRequiredService<UIActionFailureTracker.Options>(), c));
+        services.TryAddScoped(c => new BlazorModeHelper(
+            c.GetRequiredService<NavigationManager>()));
+        services.TryAddScoped(_ => new BlazorCircuitContext());
         return fusion;
     }
 }
