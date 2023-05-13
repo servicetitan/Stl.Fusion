@@ -18,11 +18,16 @@ public class ReplicaMethodComputed<T> : ComputeMethodComputed<T>, IReplicaMethod
     public PublicationStateInfo<T> State { get; }
     public bool HasReplica => Replica is { IsDisposed: false };
 
-    public ReplicaMethodComputed(ComputedOptions options, ComputeMethodInput input, Replica<T>? replica, PublicationStateInfo<T> state)
+    public ReplicaMethodComputed(
+        ComputedOptions options,
+        ComputeMethodInput input,
+        Replica<T>? replica,
+        PublicationStateInfo<T> state)
         : base(options, input, state.Output!.Value, state.Version, state.IsConsistent)
     {
         Replica = replica;
         State = state;
+        StartAutoInvalidation();
     }
 
     protected override void OnInvalidated()

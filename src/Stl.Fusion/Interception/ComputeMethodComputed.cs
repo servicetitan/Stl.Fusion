@@ -6,7 +6,12 @@ public class ComputeMethodComputed<T> : Computed<T>
         : base(options, input, version)
         => ComputedRegistry.Instance.Register(this);
 
-    protected ComputeMethodComputed(ComputedOptions options, ComputeMethodInput input, Result<T> output, LTag version, bool isConsistent = true)
+    protected ComputeMethodComputed(
+        ComputedOptions options,
+        ComputeMethodInput input,
+        Result<T> output,
+        LTag version,
+        bool isConsistent = true)
         : base(options, input, output, version, isConsistent)
     {
         if (isConsistent)

@@ -16,7 +16,9 @@ public class StateBoundComputed<T> : Computed<T>
     protected StateBoundComputed(
         ComputedOptions options,
         State<T> state,
-        Result<T> output, LTag version, bool isConsistent)
+        Result<T> output,
+        LTag version,
+        bool isConsistent)
         : base(options, state, output, version, isConsistent)
     {
         State = state;

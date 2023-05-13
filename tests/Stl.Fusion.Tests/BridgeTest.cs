@@ -49,7 +49,7 @@ public class BridgeTest : FusionTestBase
     }
 
     [SkipOnGitHubFact(Timeout = 120_000)]
-    public async Task DropReconnectTest()
+    public async Task DropReconnectTest1()
     {
         var serving = await WebHost.Serve(false);
         var replicator = ClientServices.GetRequiredService<IReplicator>();
@@ -117,6 +117,37 @@ public class BridgeTest : FusionTestBase
             c.Value.Should().Be("c");
         else
             c.Value.Should().BeNull();
+
+        Debug.WriteLine("Disposing");
+        await serving.DisposeAsync();
+    }
+
+    [SkipOnGitHubFact(Timeout = 120_000)]
+    public async Task DropReconnectTest2()
+    {
+        var kvsClient = ClientServices.GetRequiredService<IKeyValueServiceClient<string>>();
+        var transientErrorInvalidationDelay = ComputedOptions.ReplicaDefault.TransientErrorInvalidationDelay;
+
+        Debug.WriteLine("0");
+        var kvs = WebServices.GetRequiredService<IKeyValueService<string>>();
+        await kvs.Set("a", "b");
+        var c = (ReplicaMethodComputed<string>) await Computed.Capture(() => kvsClient.Get("a"));
+        c.Options.TransientErrorInvalidationDelay
+            .Should().Be(transientErrorInvalidationDelay);
+        c.HasError.Should().BeTrue();
+        c.State.PublicationRef.IsNone.Should().BeTrue();
+        c.IsConsistent().Should().BeTrue();
+
+        await Delay((transientErrorInvalidationDelay + TimeSpan.FromSeconds(0.5)).TotalSeconds);
+        c.IsConsistent().Should().BeFalse();
+
+        Debug.WriteLine("WebServer: starting.");
+        var serving = await WebHost.Serve();
+        Debug.WriteLine("WebServer: started.");
+
+        c = (ReplicaMethodComputed<string>)await c.Update();
+        c.IsConsistent().Should().BeTrue();
+        c.Value.Should().Be("b");
 
         Debug.WriteLine("Disposing");
         await serving.DisposeAsync();

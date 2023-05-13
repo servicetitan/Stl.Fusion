@@ -110,7 +110,12 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
         Version = version;
     }
 
-    protected Computed(ComputedOptions options, ComputedInput input, Result<T> output, LTag version, bool isConsistent)
+    protected Computed(
+        ComputedOptions options,
+        ComputedInput input,
+        Result<T> output,
+        LTag version,
+        bool isConsistent)
     {
         _options = options;
         Input = input;
@@ -139,12 +144,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
             return true;
         }
 
-        var hasTransientError = output.Error is { } error && IsTransientError(error);
-        var timeout = hasTransientError
-            ? _options.TransientErrorInvalidationDelay
-            : _options.AutoInvalidationDelay;
-        if (timeout != TimeSpan.MaxValue)
-            this.Invalidate(timeout);
+        StartAutoInvalidation();
         return true;
     }
 
@@ -220,6 +220,19 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
 
     protected virtual void OnInvalidated()
         => CancelTimeouts();
+
+    protected void StartAutoInvalidation()
+    {
+        if (!this.IsConsistent())
+            return;
+
+        var hasTransientError = _output.Error is { } error && IsTransientError(error);
+        var timeout = hasTransientError
+            ? _options.TransientErrorInvalidationDelay
+            : _options.AutoInvalidationDelay;
+        if (timeout != TimeSpan.MaxValue)
+            this.Invalidate(timeout);
+    }
 
     public void RenewTimeouts(bool isNew)
     {
