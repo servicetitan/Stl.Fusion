@@ -93,6 +93,6 @@ public abstract record TransientErrorDetector : ITransientErrorDetector
     private record FuncTransientErrorDetector(Func<Exception, bool> Detector) : TransientErrorDetector
     {
         public override bool IsTransient(Exception error)
-            => Detector(error);
+            => Detector.Invoke(error);
     }
 }

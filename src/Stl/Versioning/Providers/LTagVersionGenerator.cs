@@ -4,7 +4,7 @@ namespace Stl.Versioning.Providers;
 
 public sealed class LTagVersionGenerator : VersionGenerator<LTag>
 {
-    public static VersionGenerator<LTag> Default { get; } = new LTagVersionGenerator(ConcurrentLTagGenerator.Default);
+    public static VersionGenerator<LTag> Default { get; set; } = new LTagVersionGenerator(ConcurrentLTagGenerator.Default);
 
     private readonly ConcurrentGenerator<LTag> _generator;
 

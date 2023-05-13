@@ -39,14 +39,14 @@ public readonly struct FusionBuilder
         // Common services
         Services.AddOptions();
         Services.AddConverters();
-        Services.TryAddSingleton(MomentClockSet.Default);
+        Services.TryAddSingleton(_ => MomentClockSet.Default);
         Services.TryAddSingleton(c => c.GetRequiredService<MomentClockSet>().SystemClock);
-        Services.TryAddSingleton(LTagVersionGenerator.Default);
-        Services.TryAddSingleton(ClockBasedVersionGenerator.DefaultCoarse);
+        Services.TryAddSingleton(_ => LTagVersionGenerator.Default);
+        Services.TryAddSingleton(_ => ClockBasedVersionGenerator.DefaultCoarse);
 
         // Compute services & their dependencies
         Services.TryAddSingleton(_ => new ComputedOptionsProvider());
-        Services.TryAddSingleton(TransientErrorDetector.DefaultPreferTransient.For<IComputed>());
+        Services.TryAddSingleton(_ => TransientErrorDetector.DefaultPreferTransient.For<IComputed>());
         Services.TryAddSingleton(_ => new ComputeMethodInterceptor.Options());
         Services.TryAddSingleton(c => new ComputeMethodInterceptor(
             c.GetRequiredService<ComputeMethodInterceptor.Options>(), c));

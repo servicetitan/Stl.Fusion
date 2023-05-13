@@ -2,8 +2,8 @@ namespace Stl.Versioning.Providers;
 
 public sealed class ClockBasedVersionGenerator : VersionGenerator<long>
 {
-    public static VersionGenerator<long> DefaultPrecise { get; } = new ClockBasedVersionGenerator(MomentClockSet.Default.SystemClock);
-    public static VersionGenerator<long> DefaultCoarse { get; } = new ClockBasedVersionGenerator(MomentClockSet.Default.CoarseSystemClock);
+    public static VersionGenerator<long> DefaultPrecise { get; set; } = new ClockBasedVersionGenerator(MomentClockSet.Default.SystemClock);
+    public static VersionGenerator<long> DefaultCoarse { get; set; } = new ClockBasedVersionGenerator(MomentClockSet.Default.CoarseSystemClock);
 
     private readonly IMomentClock _clock;
 
