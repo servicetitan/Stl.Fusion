@@ -4,34 +4,32 @@ using Stl.Fusion.Authentication.Commands;
 
 namespace Stl.Fusion.Blazor;
 
-public class ClientAuthHelper
+public class ClientAuthHelper : IHasServices
 {
     public static string SchemasJavaScriptExpression { get; set; } = "window.FusionAuth.schemas";
 
+    private IAuth? _auth;
+    private ISessionResolver? _sessionResolver;
+    private ICommander? _commander;
+    private IJSRuntime? _jsRuntime;
+
     protected (string Schema, string SchemaName)[]? CachedSchemas { get; set; }
-    protected IJSRuntime JSRuntime { get; }
 
-    public IAuth Auth { get; }
-    public ISessionResolver SessionResolver { get; }
+    public IServiceProvider Services { get; }
+    public IAuth Auth => _auth ??= Services.GetRequiredService<IAuth>();
+    public ISessionResolver SessionResolver => _sessionResolver ??= Services.GetRequiredService<ISessionResolver>();
     public Session Session => SessionResolver.Session;
-    public ICommander Commander { get; }
+    public ICommander Commander => _commander ??= Services.Commander();
+    public IJSRuntime JSRuntime => _jsRuntime ??= Services.GetRequiredService<IJSRuntime>();
 
-    public ClientAuthHelper(
-        IAuth auth,
-        ISessionResolver sessionResolver,
-        ICommander commander,
-        IJSRuntime jsRuntime)
-    {
-        Auth = auth;
-        SessionResolver = sessionResolver;
-        Commander = commander;
-        JSRuntime = jsRuntime;
-    }
+    public ClientAuthHelper(IServiceProvider services)
+        => Services = services;
 
     public virtual async ValueTask<(string Name, string DisplayName)[]> GetSchemas()
     {
         if (CachedSchemas != null)
             return CachedSchemas;
+
         var sSchemas = await JSRuntime
             .InvokeAsync<string>("eval", SchemasJavaScriptExpression)
             .ConfigureAwait(false); // The rest of this method doesn't depend on Blazor

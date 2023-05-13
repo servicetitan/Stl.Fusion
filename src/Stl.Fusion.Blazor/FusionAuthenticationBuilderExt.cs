@@ -19,10 +19,11 @@ public static class FusionAuthenticationBuilderExt
         fusionAuth.Fusion.AddBlazorUIServices();
         services.AddAuthorizationCore(configure);
         services.RemoveAll(typeof(AuthenticationStateProvider));
-        services.TryAddSingleton<AuthStateProvider.Options>();
-        services.TryAddScoped<AuthenticationStateProvider, AuthStateProvider>();
-        services.TryAddScoped(c => (AuthStateProvider) c.GetRequiredService<AuthenticationStateProvider>());
-        services.TryAddScoped<ClientAuthHelper>();
+        services.TryAddSingleton(_ => new AuthStateProvider.Options());
+        services.TryAddScoped<AuthenticationStateProvider>(c => new AuthStateProvider(
+            c.GetRequiredService<AuthStateProvider.Options>(), c));
+        services.TryAddScoped(c => (AuthStateProvider)c.GetRequiredService<AuthenticationStateProvider>());
+        services.TryAddScoped(c => new ClientAuthHelper(c));
         return fusionAuth;
     }
 }
