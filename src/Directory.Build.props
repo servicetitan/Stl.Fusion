@@ -24,7 +24,8 @@
     <!-- [MA0056] Do not call overridable members in constructor -->
     <!-- [MA0064] Avoid locking on publicly accessible instance -->
     <!-- [MA0097] A class that implements IComparable<T> or IComparable should override comparison operators -->
-    <NoWarn>$(NoWarn);MA0009;MA0015;MA0016;MA0018;MA0026;MA0046;MA0048;MA0051;MA0056;MA0064;MA0097</NoWarn>
+    <!-- [MA0099] Use Explicit enum value for 'ComputedStateComponentOptions' instead of 0 -->
+    <NoWarn>$(NoWarn);MA0009;MA0015;MA0016;MA0018;MA0026;MA0046;MA0048;MA0051;MA0056;MA0064;MA0097;MA0099</NoWarn>
     <!-- [VSTHRD002] Synchronously waiting on tasks or awaiters may cause deadlocks. Use await or JoinableTaskFactory.Run instead. -->
     <!-- [VSTHRD003] Avoid awaiting or returning a Task representing work that was not started within your context as that can lead to deadlocks. -->
     <!-- [VSTHRD110] Observe the awaitable result of this method call by awaiting it, assigning to a variable, or passing it to another method. -->

@@ -1,5 +1,4 @@
 using Stl.Interception;
-using Stl.Interception.Interceptors;
 using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
@@ -39,12 +38,14 @@ public class RpcOutboundContext
         CancellationToken = ctIndex >= 0 ? arguments.GetCancellationToken(ctIndex) : default;
 
         // Peer
-        var hub = MethodDef.Hub;
-        var peerName = hub.PeerResolver.Resolve(this);
-        Peer = hub.Peers[peerName];
+        if (Peer == null) {
+            var hub = MethodDef.Hub;
+            var peerName = hub.PeerResolver.Resolve(this);
+            Peer = hub[peerName];
+        }
 
         // Call
-        var call = methodDef.CallFactory.CreateOutbound(this);
+        var call = Call = methodDef.CallFactory.CreateOutbound(this);
         return call.Start();
     }
 

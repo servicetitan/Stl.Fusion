@@ -4,7 +4,7 @@ namespace Stl.Rpc.Infrastructure;
 
 public abstract class RpcCallFactory
 {
-    private static readonly ConcurrentDictionary<Type, Func<MethodDef, Type, Type, RpcCallFactory>> FactoryCache = new();
+    private static readonly ConcurrentDictionary<Type, Func<RpcMethodDef, Type, Type, RpcCallFactory>> FactoryCache = new();
 
     public RpcMethodDef MethodDef { get; }
     public Type InboundCallType { get; }
@@ -16,9 +16,9 @@ public abstract class RpcCallFactory
     {
         var factory = FactoryCache.GetOrAdd(
             methodDef.UnwrappedReturnType,
-            tResult => (Func<MethodDef, Type, Type, RpcCallFactory>)typeof(RpcCallFactory<>)
+            tResult => (Func<RpcMethodDef, Type, Type, RpcCallFactory>)typeof(RpcCallFactory<>)
                 .MakeGenericType(tResult)
-                .GetConstructorDelegate(typeof(MethodDef), typeof(Type), typeof(Type))!);
+                .GetConstructorDelegate(typeof(RpcMethodDef), typeof(Type), typeof(Type))!);
         return factory.Invoke(methodDef, inboundCallType, outboundCallType);
     }
 

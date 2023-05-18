@@ -13,7 +13,7 @@ public class RpcClientInterceptor : InterceptorBase
     protected RpcHub Hub { get; }
     protected RpcServiceRegistry ServiceRegistry => _serviceRegistry ??= Hub.ServiceRegistry;
 
-    protected RpcClientInterceptor(Options options, IServiceProvider services)
+    public RpcClientInterceptor(Options options, IServiceProvider services)
         : base(options, services)
         => Hub = services.GetRequiredService<RpcHub>();
 

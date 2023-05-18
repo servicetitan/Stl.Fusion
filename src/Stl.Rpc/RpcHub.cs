@@ -1,3 +1,4 @@
+using Stl.Interception;
 using Stl.Internal;
 using Stl.Rpc.Infrastructure;
 
@@ -5,6 +6,7 @@ namespace Stl.Rpc;
 
 public sealed class RpcHub : ProcessorBase, IHasServices
 {
+    private readonly ConcurrentDictionary<Type, object> _clients = new();
     private ILogger? _log;
     private RpcServiceRegistry? _serviceRegistry;
     private RpcCallFactoryProvider? _callFactoryProvider;
@@ -39,6 +41,18 @@ public sealed class RpcHub : ProcessorBase, IHasServices
             disposeTasks.Add(connection.DisposeAsync().AsTask());
         return Task.WhenAll(disposeTasks);
     }
+
+    public object GetClient(Type serviceOrClientType)
+    {
+        var serviceDef = ServiceRegistry[serviceOrClientType];
+        return _clients.GetOrAdd(serviceDef.ClientType, static (type, self) => {
+            var interceptor = self.Services.GetRequiredService<RpcClientInterceptor>();
+            var proxy = Proxies.New(type, interceptor);
+            return proxy;
+        }, this);
+    }
+
+    // Private methods
 
     private RpcPeer CreatePeer(Symbol name)
     {

@@ -36,6 +36,8 @@ public readonly struct RpcBuilder
         // Infrastructure
         Services.TryAddSingleton(c => new RpcServiceRegistry(c));
         Services.TryAddSingleton(c => new RpcCallFactoryProvider(c));
+        Services.TryAddSingleton(_ => new RpcClientInterceptor.Options());
+        Services.TryAddTransient(c => new RpcClientInterceptor(c.GetRequiredService<RpcClientInterceptor.Options>(), c));
 
         // System services
         Services.TryAddSingleton(c => new RpcSystemCallService(c));
@@ -48,12 +50,12 @@ public readonly struct RpcBuilder
         => HasService(typeof(TService));
     public RpcServiceConfiguration HasService(Type serviceType)
     {
-        var serviceDef = Configuration.Services.GetValueOrDefault(serviceType);
-        if (serviceDef == null) {
-            serviceDef = new RpcServiceConfiguration(serviceType);
-            Configuration.Services.Add(serviceType, serviceDef);
+        var service = Configuration.Services.GetValueOrDefault(serviceType);
+        if (service == null) {
+            service = new RpcServiceConfiguration(serviceType);
+            Configuration.Services.Add(serviceType, service);
         }
-        return serviceDef;
+        return service;
     }
 
     public RpcBuilder RemoveService<TService>()
@@ -70,11 +72,20 @@ public readonly struct RpcBuilder
         return this;
     }
 
-    public RpcBuilder HasConnector(Func<CancellationToken, Task<Channel<RpcMessage>>> connector)
+    public RpcBuilder RegisterClients()
     {
-        Services.AddSingleton(connector);
+        foreach (var service in Configuration.Services.Values) {
+            var clientType = service.ClientType;
+            if (clientType == service.ServerType)
+                continue;
+
+            Services.AddSingleton(clientType, c => c.RpcHub().GetClient(clientType));
+        }
         return this;
     }
+
+    public RpcBuilder HasConnector(Func<RpcPeer, CancellationToken, Task<Channel<RpcMessage>>> connector)
+        => HasConnector(_ => new RpcFuncConnector(connector));
 
     public RpcBuilder HasConnector<TConnector>(TConnector connector)
         where TConnector : RpcConnector

@@ -21,7 +21,9 @@ public class RpcMethodDef : MethodDef
         : base(service.Type, method)
     {
         Hub = service.Hub;
-        ArgumentListType = ArgumentList.Types[Parameters.Length].MakeGenericType(ParameterTypes);
+        ArgumentListType = Parameters.Length == 0
+            ? ArgumentList.Types[0]
+            : ArgumentList.Types[Parameters.Length].MakeGenericType(ParameterTypes);
         if (CancellationTokenIndex >= 0) {
             var remoteParameterTypes = new Type[ParameterTypes.Length - 1];
             for (var i = 0; i < ParameterTypes.Length; i++) {

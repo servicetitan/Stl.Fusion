@@ -35,7 +35,7 @@ public class MessagePackByteSerializer : IByteSerializer
         var serializer = _typedSerializers.GetOrAdd(type,
             static (type1, self) => (MessagePackByteSerializer) typeof(MessagePackByteSerializer<>)
                 .MakeGenericType(type1)
-                .CreateInstance(self.Options),
+                .CreateInstance(self.Options, type1),
             this);
         serializer.Write(bufferWriter, value, type);
     }
