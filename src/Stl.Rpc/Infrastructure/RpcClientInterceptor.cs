@@ -24,6 +24,11 @@ public class RpcClientInterceptor : InterceptorBase
             using var scope = RpcOutboundContext.NewOrActive();
             var context = scope.Context;
             _ = context.StartCall(rpcMethodDef, invocation.Arguments);
+            if (rpcMethodDef.NoWait)
+                return rpcMethodDef.ReturnsValueTask
+                    ? RpcNoWait.ValueTasks.Completed
+                    : RpcNoWait.Tasks.Completed;
+
             var call = context.Call!;
             var resultTask = call.ResultTask;
 #pragma warning disable CA2012

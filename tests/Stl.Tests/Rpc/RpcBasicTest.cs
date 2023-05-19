@@ -14,6 +14,23 @@ public class RpcBasicTest : TestBase
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         var sum = await client.Sum(1, 2);
         sum.Should().Be(3);
+        sum = await client.Sum(1, 2);
+        sum.Should().Be(3);
+    }
+
+    [Theory]
+    [InlineData(1000)]
+    [InlineData(100_000)]
+    public async Task PerformanceTest(int iterationCount)
+    {
+        var services = CreateServerServices();
+        var client = services.GetRequiredService<ISimpleRpcServiceClient>();
+
+        var startedAt = CpuTimestamp.Now;
+        for (var i = iterationCount; i > 0; i--)
+            await client.Sum(1, 2);
+        var elapsed = startedAt.Elapsed;
+        Out.WriteLine($"{iterationCount}: {iterationCount / elapsed.TotalSeconds:F} ops/s");
     }
 
     private IServiceProvider CreateServerServices()
@@ -54,11 +71,13 @@ public class RpcBasicTest : TestBase
 
     private ChannelPair<T> CreateChannelPair<T>()
     {
-        var options = new BoundedChannelOptions(1) {
+        var options = new UnboundedChannelOptions() {
+            SingleReader = true,
+            SingleWriter = false,
             AllowSynchronousContinuations = true,
         };
         return ChannelPair.CreateTwisted(
-            Channel.CreateBounded<T>(options),
-            Channel.CreateBounded<T>(options));
+            Channel.CreateUnbounded<T>(options),
+            Channel.CreateUnbounded<T>(options));
     }
 }
