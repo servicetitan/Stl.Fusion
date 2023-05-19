@@ -11,10 +11,9 @@ public class RpcBasicTest : TestBase
     public async Task CallTest()
     {
         var services = CreateServerServices();
-        var service = services.GetRequiredService<ISimpleRpcService>();
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
-        // var sum = await client.Sum(1, 2);
-        // sum.Should().Be(3);
+        var sum = await client.Sum(1, 2);
+        sum.Should().Be(3);
     }
 
     private IServiceProvider CreateServerServices()
@@ -22,23 +21,32 @@ public class RpcBasicTest : TestBase
         var services = new ServiceCollection();
         var channelPair = CreateRpcChannelPair();
         services.AddSingleton(channelPair);
-        services.AddSingleton<ISimpleRpcService, SimpleRpcService>();
+        services.AddSingleton<SimpleRpcService>();
 
         var rpc = services.AddRpc();
-        rpc.HasConnector((peer, _) => {
-            var c = peer.Hub.Services;
-            var cp = c.GetRequiredService<ChannelPair<RpcMessage>>();
-            return peer.Name.Value switch {
-                "" => Task.FromResult(cp.Channel1),
-                "server" => Task.FromResult(cp.Channel2),
-                _ => throw new KeyNotFoundException(),
+        var serverPeerName = new Symbol("server");
+        rpc.HasPeerFactory(c => {
+            var hub = c.RpcHub();
+            return name => new RpcPeer(hub, name) {
+                LocalServiceFilter = name == serverPeerName
+                    ? _ => true
+                    : _ => false
             };
         });
+        rpc.HasPeerConnector((peer, _) => {
+            var c = peer.Hub.Services;
+            var cp = c.GetRequiredService<ChannelPair<RpcMessage>>();
+            var channel = peer.Name == serverPeerName ? cp.Channel1 : cp.Channel2;
+            return Task.FromResult(channel);
+        });
         rpc.HasService<ISimpleRpcService>()
-            .Serving<SimpleRpcService>()
-            .ConsumedAs<ISimpleRpcServiceClient>();
+            .WithServer<SimpleRpcService>()
+            .WithClient<ISimpleRpcServiceClient>();
         rpc.RegisterClients();
-        return services.BuildServiceProvider();
+
+        var c = services.BuildServiceProvider();
+        _ = c.RpcHub().GetPeer(serverPeerName);
+        return c;
     }
 
     private ChannelPair<RpcMessage> CreateRpcChannelPair()

@@ -20,11 +20,11 @@ public class RpcPeer : WorkerBase
     public Func<ArgumentList, Type, object?> ArgumentSerializer { get; init; }
     public Func<object?, Type, ArgumentList> ArgumentDeserializer { get; init; }
     public Func<RpcServiceDef, bool> LocalServiceFilter { get; init; }
-    public RpcConnector Connector { get; init; }
+    public RpcPeerConnector PeerConnector { get; init; }
     public RpcCallRegistry Calls { get; init; }
     public RetryDelaySeq ReconnectDelays { get; init; } = new();
     public int ReconnectRetryLimit { get; init; } = int.MaxValue;
-    public int InboundConcurrencyLevel { get; init; } = 1;
+    public int InboundConcurrencyLevel { get; init; } = 0;
 
     public RpcPeer(RpcHub hub, Symbol name)
     {
@@ -33,7 +33,7 @@ public class RpcPeer : WorkerBase
         ArgumentSerializer = Hub.Configuration.ArgumentSerializer;
         ArgumentDeserializer = Hub.Configuration.ArgumentDeserializer;
         LocalServiceFilter = static _ => true;
-        Connector = Hub.Connector;
+        PeerConnector = Hub.PeerConnector;
         Calls = new RpcCallRegistry(this);
     }
 
@@ -105,7 +105,7 @@ public class RpcPeer : WorkerBase
         }
 
         try {
-            var channel = await Connector.Connect(this, cancellationToken).ConfigureAwait(false);
+            var channel = await PeerConnector.Invoke(this, cancellationToken).ConfigureAwait(false);
             // ReSharper disable once SuspiciousTypeConversion.Global
             if (channel is null or IEmptyChannel)
                 throw Errors.ImpossibleToReconnect();
@@ -160,7 +160,7 @@ public class RpcPeer : WorkerBase
     {
         var scope = context.Activate();
         try {
-            await context.StartCall().ConfigureAwait(false);
+            await context.ProcessCall().ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             Log.LogError(e, "Failed to process message: {Message}", context.Message);

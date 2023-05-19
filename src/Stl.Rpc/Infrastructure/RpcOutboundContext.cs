@@ -22,6 +22,7 @@ public class RpcOutboundContext
     public CancellationToken CancellationToken { get; private set; } = default;
     public IRpcOutboundCall? Call { get; private set; }
     public RpcPeer? Peer { get; set; }
+    public long RelatedCallId { get; set; }
 
     public Scope Activate()
         => new(this);
@@ -38,15 +39,11 @@ public class RpcOutboundContext
         CancellationToken = ctIndex >= 0 ? arguments.GetCancellationToken(ctIndex) : default;
 
         // Peer
-        if (Peer == null) {
-            var hub = MethodDef.Hub;
-            var peerName = hub.PeerResolver.Resolve(this);
-            Peer = hub[peerName];
-        }
+        Peer ??= MethodDef.Hub.PeerResolver.Invoke(this);
 
         // Call
         var call = Call = methodDef.CallFactory.CreateOutbound(this);
-        return call.Start();
+        return call.Send();
     }
 
     // Nested types

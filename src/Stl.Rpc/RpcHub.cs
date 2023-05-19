@@ -10,35 +10,34 @@ public sealed class RpcHub : ProcessorBase, IHasServices
     private ILogger? _log;
     private RpcServiceRegistry? _serviceRegistry;
     private RpcCallFactoryProvider? _callFactoryProvider;
-    private RpcConnector? _connector;
+    private RpcPeerFactory? _peerFactory;
+    private RpcPeerConnector? _peerConnector;
     private RpcPeerResolver? _peerResolver;
 
     private ILogger Log => _log ??= Services.LogFor(GetType());
 
     internal RpcCallFactoryProvider CallFactoryProvider => _callFactoryProvider ??= Services.GetRequiredService<RpcCallFactoryProvider>();
-    internal RpcConnector Connector => _connector ??= Services.GetRequiredService<RpcConnector>();
+    internal RpcPeerFactory PeerFactory => _peerFactory ??= Services.GetRequiredService<RpcPeerFactory>();
+    internal RpcPeerConnector PeerConnector => _peerConnector ??= Services.GetRequiredService<RpcPeerConnector>();
     internal RpcPeerResolver PeerResolver => _peerResolver ??= Services.GetRequiredService<RpcPeerResolver>();
-    internal Func<Symbol, RpcPeer> PeerFactory { get; }
 
     public IServiceProvider Services { get; }
     public RpcConfiguration Configuration { get; }
     public RpcServiceRegistry ServiceRegistry => _serviceRegistry ??= Services.GetRequiredService<RpcServiceRegistry>();
 
     public ConcurrentDictionary<Symbol, RpcPeer> Peers { get; } = new();
-    public RpcPeer this[Symbol name] => Peers.GetOrAdd(name, CreatePeer);
 
     public RpcHub(IServiceProvider services)
     {
         Services = services;
         Configuration = services.GetRequiredService<RpcConfiguration>();
-        PeerFactory = services.GetRequiredService<Func<Symbol, RpcPeer>>();
     }
 
     protected override Task DisposeAsyncCore()
     {
         var disposeTasks = new List<Task>();
-        foreach (var (_, connection) in Peers)
-            disposeTasks.Add(connection.DisposeAsync().AsTask());
+        foreach (var (_, peer) in Peers)
+            disposeTasks.Add(peer.DisposeAsync().AsTask());
         return Task.WhenAll(disposeTasks);
     }
 
@@ -51,6 +50,9 @@ public sealed class RpcHub : ProcessorBase, IHasServices
             return proxy;
         }, this);
     }
+
+    public RpcPeer GetPeer(Symbol name)
+        => Peers.GetOrAdd(name, CreatePeer);
 
     // Private methods
 

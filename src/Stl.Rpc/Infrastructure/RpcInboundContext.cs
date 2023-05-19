@@ -29,13 +29,13 @@ public class RpcInboundContext
     public Scope Activate()
         => new(this);
 
-    public Task StartCall()
+    public Task ProcessCall()
     {
         if (Call != null)
-            throw Stl.Internal.Errors.AlreadyInvoked(nameof(StartCall));
+            throw Stl.Internal.Errors.AlreadyInvoked(nameof(ProcessCall));
 
         Call = MethodDef.CallFactory.CreateInbound(this);
-        return Call.Start();
+        return Call.Process();
     }
 
     // Private methods

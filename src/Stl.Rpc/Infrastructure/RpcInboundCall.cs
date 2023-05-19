@@ -8,7 +8,9 @@ using System.Globalization;
 namespace Stl.Rpc.Infrastructure;
 
 public interface IRpcInboundCall : IRpcCall
-{ }
+{
+    Task Process();
+}
 
 public class RpcInboundCall<TResult> : RpcCall<TResult>, IRpcInboundCall
 {
@@ -17,18 +19,49 @@ public class RpcInboundCall<TResult> : RpcCall<TResult>, IRpcInboundCall
     public RpcInboundCall(RpcInboundContext context) : base(context.MethodDef) 
         => Context = context;
 
-    public override Task Start()
+    public virtual async Task Process()
     {
         var cancellationToken = Context.CancellationToken;
-        var arguments = Context.Arguments = GetArguments();
-        var ctIndex = MethodDef.CancellationTokenIndex;
-        if (ctIndex >= 0)
-            arguments.SetCancellationToken(ctIndex, cancellationToken);
+        var result = default(Result<TResult>);
+        try {
+            var arguments = Context.Arguments = GetArguments();
+            var ctIndex = MethodDef.CancellationTokenIndex;
+            if (ctIndex >= 0)
+                arguments.SetCancellationToken(ctIndex, cancellationToken);
 
-        var service = Hub.Services.GetRequiredService(ServiceDef.ServerType);
-        var resultTask = MethodDef.Invoker.Invoke(service, arguments);
-        // TODO: Publish resultTask result
-        return Task.CompletedTask;
+            var services = Hub.Services;
+            var service = services.GetRequiredService(ServiceDef.ServerType);
+            var untypedResultTask = MethodDef.Invoker.Invoke(service, arguments);
+            await untypedResultTask.ConfigureAwait(false);
+            if (!MethodDef.IsAsyncVoidMethod) {
+                var resultTask = (Task<TResult>)untypedResultTask;
+                result = resultTask.ToResultSynchronously();
+            }
+        }
+        catch (Exception error) {
+            result = Result.Error<TResult>(error);
+        }
+        await Send(result, cancellationToken).ConfigureAwait(false);
+    }
+
+    protected Task Send(Result<TResult> result, CancellationToken cancellationToken)
+    {
+        if (Context.MethodDef.NoWait)
+            return Task.CompletedTask; // NoWait call
+
+        var callId = Context.Message.CallId;
+        if (callId == 0)
+            return Task.CompletedTask; // No result implied
+
+        var outboundContext = new RpcOutboundContext();
+        using var _ = outboundContext.Activate();
+        outboundContext.Peer = Context.Peer;
+        outboundContext.RelatedCallId = callId;
+
+        var systemCalls = Hub.Services.GetRequiredService<IRpcSystemCallsClient>();
+        return result.IsValue(out var value)
+            ? systemCalls.Result(value)
+            : systemCalls.Error(result.Error.ToExceptionInfo());
     }
 
     protected ArgumentList GetArguments()
@@ -74,8 +107,10 @@ public class RpcInboundCall<TResult> : RpcCall<TResult>, IRpcInboundCall
             else
                 argumentTypes = MethodDef.RemoteParameterTypes;
 
-            if (isSystemServiceCall)
-                ValidateArgumentTypes(argumentTypes);
+            if (MethodDef.RequiresValidation) {
+                var callValidator = (IRpcCallValidator)Hub.Services.GetRequiredService(ServiceDef.ServerType);
+                callValidator.ValidateCall(Context, argumentTypes);
+            }
             var deserializedArguments = peer.ArgumentDeserializer.Invoke(message.Arguments, actualArgumentListType);
             if (deserializedArguments == null)
                 throw Errors.NonDeserializableArguments(MethodDef);
@@ -90,7 +125,4 @@ public class RpcInboundCall<TResult> : RpcCall<TResult>, IRpcInboundCall
 
         return arguments;
     }
-
-    protected virtual void ValidateArgumentTypes(Type[] argumentTypes)
-    { }
 }

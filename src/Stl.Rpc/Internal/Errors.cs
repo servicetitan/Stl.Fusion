@@ -45,4 +45,8 @@ public static class Errors
             $"Argument #{argumentIndex} for '{methodDef.FullName}' has incompatible type: '{argumentType.GetName()}.'");
     public static Exception NonDeserializableArguments(RpcMethodDef methodDef)
         => new InvalidOperationException($"Couldn't deserialize arguments for '{methodDef.FullName}'.");
+    public static Exception IncompatibleResultType(RpcMethodDef methodDef, Type actualResultType)
+        => new InvalidOperationException($"Couldn't deserialize result for '{methodDef.FullName}' call: " +
+            $"expected '{methodDef.UnwrappedReturnType.GetName()}', " +
+            $"but got '{actualResultType.GetName()}'.");
 }

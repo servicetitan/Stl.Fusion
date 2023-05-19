@@ -63,7 +63,7 @@ public class MessagePackByteSerializer<T> : MessagePackByteSerializer, IByteSeri
         if (type != SerializedType)
             throw Errors.SerializedTypeMismatch(SerializedType, type);
         // ReSharper disable once HeapView.PossibleBoxingAllocation
-        return Read(data, type, out readLength);
+        return Read(data, out readLength);
     }
 
     public override void Write(IBufferWriter<byte> bufferWriter, object? value, Type type)

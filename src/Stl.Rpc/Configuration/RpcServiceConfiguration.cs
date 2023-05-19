@@ -9,7 +9,7 @@ public class RpcServiceConfiguration
     public Type ClientType { get; set; }
     public Symbol Name { get; set; }
 
-    public RpcServiceConfiguration(Type type)
+    public RpcServiceConfiguration(Type type, Symbol name = default)
     {
         if (type.IsValueType)
             throw new ArgumentOutOfRangeException(nameof(type));
@@ -17,17 +17,18 @@ public class RpcServiceConfiguration
         Type = type;
         ServerType = type;
         ClientType = type;
+        Name = name;
     }
 
-    public RpcServiceConfiguration Named(Symbol name)
+    public RpcServiceConfiguration WithName(Symbol name)
     {
         Name = name;
         return this;
     }
 
-    public RpcServiceConfiguration Serving<TServer>()
-        => Serving(typeof(TServer));
-    public RpcServiceConfiguration Serving(Type serverType)
+    public RpcServiceConfiguration WithServer<TServer>()
+        => WithServer(typeof(TServer));
+    public RpcServiceConfiguration WithServer(Type serverType)
     {
         if (!Type.IsAssignableFrom(serverType))
             throw Errors.MustBeAssignableTo(Type, serverType, nameof(serverType));
@@ -36,9 +37,9 @@ public class RpcServiceConfiguration
         return this;
     }
 
-    public RpcServiceConfiguration ConsumedAs<TClient>()
-        => ConsumedAs(typeof(TClient));
-    public RpcServiceConfiguration ConsumedAs(Type clientType)
+    public RpcServiceConfiguration WithClient<TClient>()
+        => WithClient(typeof(TClient));
+    public RpcServiceConfiguration WithClient(Type clientType)
     {
         if (!Type.IsAssignableFrom(clientType))
             throw Errors.MustBeAssignableTo(Type, clientType, nameof(clientType));

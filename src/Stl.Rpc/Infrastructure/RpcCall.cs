@@ -12,8 +12,6 @@ public interface IRpcCall
     RpcMethodDef MethodDef { get; }
     RpcServiceDef ServiceDef { get; }
     RpcHub Hub { get; }
-
-    Task Start();
 }
 
 public abstract class RpcCall<TResult> : IRpcCall
@@ -24,6 +22,4 @@ public abstract class RpcCall<TResult> : IRpcCall
 
     protected RpcCall(RpcMethodDef methodDef)
         => MethodDef = methodDef;
-
-    public abstract Task Start();
 }

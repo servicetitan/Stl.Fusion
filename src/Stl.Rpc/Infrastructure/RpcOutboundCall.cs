@@ -8,12 +8,14 @@ public interface IRpcOutboundCall : IRpcCall
     RpcOutboundContext Context { get; }
     long Id { get; }
     Task ResultTask { get; }
+
+    Task Send();
+    void Complete(object? result);
+    void Complete(ExceptionInfo error);
 }
 
 public interface IRpcOutboundCall<TResult> : IRpcOutboundCall
-{
-    void SetResult(Result<TResult> result, CancellationToken cancellationToken = default);
-}
+{ }
 
 public class RpcOutboundCall<TResult> : RpcCall<TResult>, IRpcOutboundCall<TResult>
 {
@@ -26,23 +28,36 @@ public class RpcOutboundCall<TResult> : RpcCall<TResult>, IRpcOutboundCall<TResu
     public RpcOutboundCall(RpcOutboundContext context) : base(context.MethodDef!)
         => Context = context;
 
-    public override Task Start()
+    public virtual Task Send()
     {
         if (Id != 0)
-            throw Errors.AlreadyInvoked(nameof(Start));
+            throw Errors.AlreadyInvoked(nameof(Send));
 
         var peer = Context.Peer!;
-        Id = peer.Calls.NextId;
+        var noWait = Context.MethodDef!.NoWait;
+        Id = noWait ? Context.RelatedCallId : peer.Calls.NextId;
         var message = CreateCallMessage();
 
-        peer.Calls.Outbound.TryAdd(Id, this);
+        if (!noWait)
+            peer.Calls.Outbound.TryAdd(Id, this);
         var cancellationToken = Context.CancellationToken;
         var sendTask = peer.Send(message, cancellationToken);
         return sendTask.IsCompletedSuccessfully ? Task.CompletedTask : sendTask.AsTask();
     }
 
-    public void SetResult(Result<TResult> result, CancellationToken cancellationToken = default)
-        => _resultSource.SetFromResult(result, cancellationToken);
+    public virtual void Complete(object? result)
+    {
+        var peer = Context.Peer!;
+        if (peer.Calls.Outbound.TryRemove(Id, this))
+            _resultSource.SetResult((TResult)result!);
+    }
+
+    public virtual void Complete(ExceptionInfo error)
+    {
+        var peer = Context.Peer!;
+        if (peer.Calls.Outbound.TryRemove(Id, this))
+            _resultSource.SetException(error.ToException()!);
+    }
 
     // Protected methods
 

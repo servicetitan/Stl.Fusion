@@ -30,8 +30,11 @@ public readonly struct RpcBuilder
         // Common services
         Services.TryAddSingleton(new RpcConfiguration());
         Services.TryAddSingleton(c => new RpcHub(c));
-        Services.TryAddSingleton<Func<Symbol, RpcPeer>>(c => name => new RpcPeer(c.RpcHub(), name));
-        Services.TryAddSingleton(c => new RpcPeerResolver(c));
+        Services.TryAddSingleton<RpcPeerFactory>(c => name => new RpcPeer(c.RpcHub(), name));
+        Services.TryAddSingleton<RpcPeerResolver>(c => {
+            var hub = c.RpcHub();
+            return _ => hub.GetPeer(Symbol.Empty);
+        });
 
         // Infrastructure
         Services.TryAddSingleton(c => new RpcServiceRegistry(c));
@@ -40,19 +43,21 @@ public readonly struct RpcBuilder
         Services.TryAddTransient(c => new RpcClientInterceptor(c.GetRequiredService<RpcClientInterceptor.Options>(), c));
 
         // System services
-        Services.TryAddSingleton(c => new RpcSystemCallService(c));
+        Services.TryAddSingleton(c => new RpcSystemCalls(c));
 
         Configuration = GetConfiguration(services);
-        HasService<RpcSystemCallService>().Named(RpcSystemCallService.Name);
+        HasService<IRpcSystemCalls>(RpcSystemCalls.Name)
+            .WithServer<RpcSystemCalls>()
+            .WithClient<IRpcSystemCallsClient>();
     }
 
-    public RpcServiceConfiguration HasService<TService>()
-        => HasService(typeof(TService));
-    public RpcServiceConfiguration HasService(Type serviceType)
+    public RpcServiceConfiguration HasService<TService>(Symbol name = default)
+        => HasService(typeof(TService), name);
+    public RpcServiceConfiguration HasService(Type serviceType, Symbol name = default)
     {
         var service = Configuration.Services.GetValueOrDefault(serviceType);
         if (service == null) {
-            service = new RpcServiceConfiguration(serviceType);
+            service = new RpcServiceConfiguration(serviceType, name);
             Configuration.Services.Add(serviceType, service);
         }
         return service;
@@ -84,24 +89,39 @@ public readonly struct RpcBuilder
         return this;
     }
 
-    public RpcBuilder HasConnector(Func<RpcPeer, CancellationToken, Task<Channel<RpcMessage>>> connector)
-        => HasConnector(_ => new RpcFuncConnector(connector));
-
-    public RpcBuilder HasConnector<TConnector>(TConnector connector)
-        where TConnector : RpcConnector
+    public RpcBuilder HasPeerFactory(RpcPeerFactory peerFactory)
     {
-        Services.AddSingleton(connector);
-        if (typeof(TConnector) != typeof(RpcConnector))
-            Services.AddSingleton<RpcConnector>(c => c.GetRequiredService<TConnector>());
+        Services.AddSingleton(peerFactory);
         return this;
     }
 
-    public RpcBuilder HasConnector<TConnector>(Func<IServiceProvider, TConnector> connectorFactory)
-        where TConnector : RpcConnector
+    public RpcBuilder HasPeerFactory(Func<IServiceProvider, RpcPeerFactory> peerFactoryFactory)
+    {
+        Services.AddSingleton(peerFactoryFactory);
+        return this;
+    }
+
+    public RpcBuilder HasPeerConnector(RpcPeerConnector peerConnector)
+    {
+        Services.AddSingleton(peerConnector);
+        return this;
+    }
+
+    public RpcBuilder HasPeerConnector(Func<IServiceProvider, RpcPeerConnector> connectorFactory)
     {
         Services.AddSingleton(connectorFactory);
-        if (typeof(TConnector) != typeof(RpcConnector))
-            Services.AddSingleton<RpcConnector>(c => c.GetRequiredService<TConnector>());
+        return this;
+    }
+
+    public RpcBuilder HasPeerResolver(RpcPeerResolver peerResolver)
+    {
+        Services.AddSingleton(peerResolver);
+        return this;
+    }
+
+    public RpcBuilder HasPeerResolver(Func<IServiceProvider, RpcPeerResolver> peerResolverFactory)
+    {
+        Services.AddSingleton(peerResolverFactory);
         return this;
     }
 
