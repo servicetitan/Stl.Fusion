@@ -46,7 +46,9 @@ public class RpcSystemCalls : RpcServiceBase, IRpcSystemCalls, IRpcArgumentListT
         var call = context.Call!;
         if (call.MethodDef.Method.Name == OkMethodName) {
             var outboundCallId = context.Message.CallId;
-            var outboundCall = context.Peer.Calls.Outbound[outboundCallId];
+            if (!context.Peer.Calls.Outbound.TryGetValue(outboundCallId, out var outboundCall))
+                return null;
+
             var resultType = outboundCall.MethodDef.UnwrappedReturnType;
             return ArgumentList.Types[1].MakeGenericType(resultType);
         }

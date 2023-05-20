@@ -5,9 +5,9 @@ using Stl.Testing.Collections;
 namespace Stl.Tests.Rpc;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class RpcBasicTest : TestBase
+public class RpcTest : TestBase
 {
-    public RpcBasicTest(ITestOutputHelper @out) : base(@out) { }
+    public RpcTest(ITestOutputHelper @out) : base(@out) { }
 
     [Fact]
     public async Task BasicTest()
@@ -17,6 +17,7 @@ public class RpcBasicTest : TestBase
         (await client.Div(6, 2)).Should().Be(3);
         (await client.Div(6, 2)).Should().Be(3);
         (await client.Div(10, 2)).Should().Be(5);
+        (await client.Div(null, 2)).Should().Be(null);
         await Assert.ThrowsAsync<DivideByZeroException>(
             () => client.Div(1, 0));
     }

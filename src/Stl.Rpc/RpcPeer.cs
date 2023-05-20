@@ -1,5 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Channels;
-using Stl.Interception;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Internal;
 
@@ -9,7 +9,7 @@ public class RpcPeer : WorkerBase
 {
     private ILogger? _log;
     private IMomentClock? _clock;
-    private volatile AsyncEvent<Result<Channel<RpcMessage>?>> _whenConnected = new(null, true);
+    private volatile AsyncEvent<ConnectionState> _connectionState = new(ConnectionState.Initial, true);
 
     protected IServiceProvider Services => Hub.Services;
     protected ILogger Log => _log ??= Services.LogFor(GetType());
@@ -37,23 +37,33 @@ public class RpcPeer : WorkerBase
 
     public async ValueTask Send(RpcMessage message, CancellationToken cancellationToken)
     {
-        var channel = await GetConnection(cancellationToken).ConfigureAwait(false);
-        await channel.Writer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
+        while (true) {
+            var channel = await GetConnection(cancellationToken).ConfigureAwait(false);
+            try {
+                await channel.Writer.WriteAsync(message, cancellationToken).ConfigureAwait(false);
+                return;
+            }
+            catch (OperationCanceledException) {
+                throw;
+            }
+            catch (Exception e) {
+                SetConnectionState(null, e);
+                if (e is ImpossibleToReconnectException)
+                    throw;
+            }
+        }
     }
 
     // Protected methods
 
     protected override async Task OnRun(CancellationToken cancellationToken)
     {
-        var tryIndex = 0;
-        var lastError = (Exception?)null;
         var semaphore = InboundConcurrencyLevel > 1
             ? new SemaphoreSlim(InboundConcurrencyLevel, InboundConcurrencyLevel)
             : null;
         while (true) {
             try {
-                var channel = await Reconnect(lastError, tryIndex, cancellationToken).ConfigureAwait(false);
-                tryIndex = 0;
+                var channel = await Reconnect(null, cancellationToken).ConfigureAwait(false);
                 if (semaphore == null)
                     await foreach (var message in channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false)) {
                         var context = new RpcInboundContext(this, message);
@@ -74,39 +84,37 @@ public class RpcPeer : WorkerBase
 
                 throw Errors.ConnectionIsClosed();
             }
-            catch (ImpossibleToReconnectException e) {
-                SetConnection(null, e);
-                return;
-            }
             catch (OperationCanceledException) {
-                SetConnection(null, Errors.ImpossibleToReconnect());
+                SetConnectionState(null, Errors.ImpossibleToReconnect());
                 return;
             }
             catch (Exception e) {
-                lastError = e;
-                tryIndex++;
+                SetConnectionState(null, e);
+                if (e is ImpossibleToReconnectException)
+                    return;
             }
         }
     }
 
-    protected async Task<Channel<RpcMessage>> Reconnect(
-        Exception? lastError, int tryIndex, CancellationToken cancellationToken)
+    protected async Task<Channel<RpcMessage>> Reconnect(Exception? error, CancellationToken cancellationToken)
     {
-        SetConnection(null, lastError);
-        if (lastError is ImpossibleToReconnectException) {
+        var connectionState = SetConnectionState(null, error);
+        if (error is ImpossibleToReconnectException) {
             Log.LogWarning("'{Name}': Impossible to reconnect, shutting down", Name);
             throw Errors.ImpossibleToReconnect();
         }
-        if (tryIndex >= ReconnectRetryLimit) {
+        if (connectionState.TryIndex >= ReconnectRetryLimit) {
             Log.LogWarning("'{Name}': Reconnect retry limit exceeded", Name);
             throw Errors.ImpossibleToReconnect();
         }
 
-        if (tryIndex == 0)
+        if (connectionState.TryIndex == 0)
             Log.LogInformation("'{Name}': Connecting...", Name);
         else  {
-            var delay = ReconnectDelays[tryIndex];
-            Log.LogInformation("'{Name}': Reconnecting (#{TryIndex}) after {Delay}...", Name, tryIndex, delay.ToShortString());
+            var delay = ReconnectDelays[connectionState.TryIndex];
+            Log.LogInformation(
+                "'{Name}': Reconnecting (#{TryIndex}) after {Delay}...", 
+                Name, connectionState.TryIndex, delay.ToShortString());
             await Clock.Delay(delay, cancellationToken).ConfigureAwait(false);
         }
 
@@ -116,49 +124,49 @@ public class RpcPeer : WorkerBase
             if (channel is null or IEmptyChannel)
                 throw Errors.ImpossibleToReconnect();
 
-            SetConnection(channel);
+            SetConnectionState(channel);
             return channel;
         }
         catch (ImpossibleToReconnectException e) {
-            SetConnection(null, e);
+            SetConnectionState(null, e);
             throw;
         }
     }
 
-    protected void SetConnection(Channel<RpcMessage>? channel, Exception? error = null)
+    protected ConnectionState SetConnectionState(Channel<RpcMessage>? channel, Exception? error = null)
     {
-        var expectedValue = Result.New(channel, error);
         lock (Lock) {
-            var whenConnected = _whenConnected;
-            if (whenConnected.Value == expectedValue)
-                return;
-            if (whenConnected.Value.Error is ImpossibleToReconnectException)
-                return;
+            var connectionState = _connectionState;
+            var state = connectionState.Value;
+            if (state.Channel == channel && state.Error == error)
+                return state;
+            if (state.Error is ImpossibleToReconnectException)
+                return state;
 
-            _whenConnected = whenConnected.CreateNext(expectedValue);
-            if (whenConnected.Value.IsValue(out var oldChannel))
-                oldChannel?.Writer.TryComplete();
+            var nextState = state.Next(channel, error);
+            _connectionState = connectionState.CreateNext(nextState);
+            state.Channel?.Writer.TryComplete();
+            return nextState;
         }
     }
 
     protected async ValueTask<Channel<RpcMessage>> GetConnection(CancellationToken cancellationToken)
     {
         // ReSharper disable once InconsistentlySynchronizedField
-        var whenConnected = _whenConnected;
+        var connectionState = _connectionState;
         while (true) {
             // ReSharper disable once MethodSupportsCancellation
-            var whenNext = whenConnected.WhenNext();
-            if (!whenNext.IsCompleted) {
-                var error = whenConnected.Value.Error;
+            var whenNextConnectionState = connectionState.WhenNext();
+            if (!whenNextConnectionState.IsCompleted) {
+                var (channel, error, _) = connectionState.Value;
                 if (error is ImpossibleToReconnectException)
                     throw error;
 
-                var channel = error == null ? whenConnected.Value.ValueOrDefault : null;
                 if (channel != null)
                     return channel;
             }
 
-            whenConnected = await whenNext.WaitAsync(cancellationToken).ConfigureAwait(false);
+            connectionState = await whenNextConnectionState.WaitAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -178,5 +186,32 @@ public class RpcPeer : WorkerBase
             scope.Dispose();
             semaphore?.Release();
         }
+    }
+
+    public sealed record ConnectionState(
+        Channel<RpcMessage>? Channel = null,
+        Exception? Error = null,
+        int TryIndex = 0)
+    {
+        public static readonly ConnectionState Initial = new();
+
+#if NETSTANDARD2_0
+        public bool IsConnected(out Channel<RpcMessage>? channel)
+#else
+        public bool IsConnected([NotNullWhen(true)] out Channel<RpcMessage>? channel)
+#endif
+        {
+            channel = Channel;
+            return channel != null;
+        }
+
+        public ConnectionState Next(Channel<RpcMessage>? channel, Exception? error)
+            => error == null ? Next(channel) : Next(error);
+
+        public ConnectionState Next(Channel<RpcMessage>? channel)
+            => new(channel);
+
+        public ConnectionState Next(Exception error)
+            => new(null, error, TryIndex + 1);
     }
 }

@@ -222,10 +222,12 @@ public sealed record ArgumentList<T0>(
     public override Type?[]? GetNonDefaultItemTypes() {
         var itemTypes = (Type?[]?)null;
         Type? itemType;
-        itemType = _item0?.GetType();
-        if (itemType != null && itemType != typeof(T0)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[0] = itemType;
+        if (!typeof(T0).IsValueType) {
+            itemType = _item0?.GetType();
+            if (itemType != null && itemType != typeof(T0)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[0] = itemType;
+            }
         }
         return itemTypes;
     }
@@ -457,15 +459,19 @@ public sealed record ArgumentList<T0, T1>(
     public override Type?[]? GetNonDefaultItemTypes() {
         var itemTypes = (Type?[]?)null;
         Type? itemType;
-        itemType = _item0?.GetType();
-        if (itemType != null && itemType != typeof(T0)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[0] = itemType;
+        if (!typeof(T0).IsValueType) {
+            itemType = _item0?.GetType();
+            if (itemType != null && itemType != typeof(T0)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[0] = itemType;
+            }
         }
-        itemType = _item1?.GetType();
-        if (itemType != null && itemType != typeof(T1)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[1] = itemType;
+        if (!typeof(T1).IsValueType) {
+            itemType = _item1?.GetType();
+            if (itemType != null && itemType != typeof(T1)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[1] = itemType;
+            }
         }
         return itemTypes;
     }
@@ -731,20 +737,26 @@ public sealed record ArgumentList<T0, T1, T2>(
     public override Type?[]? GetNonDefaultItemTypes() {
         var itemTypes = (Type?[]?)null;
         Type? itemType;
-        itemType = _item0?.GetType();
-        if (itemType != null && itemType != typeof(T0)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[0] = itemType;
+        if (!typeof(T0).IsValueType) {
+            itemType = _item0?.GetType();
+            if (itemType != null && itemType != typeof(T0)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[0] = itemType;
+            }
         }
-        itemType = _item1?.GetType();
-        if (itemType != null && itemType != typeof(T1)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[1] = itemType;
+        if (!typeof(T1).IsValueType) {
+            itemType = _item1?.GetType();
+            if (itemType != null && itemType != typeof(T1)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[1] = itemType;
+            }
         }
-        itemType = _item2?.GetType();
-        if (itemType != null && itemType != typeof(T2)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[2] = itemType;
+        if (!typeof(T2).IsValueType) {
+            itemType = _item2?.GetType();
+            if (itemType != null && itemType != typeof(T2)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[2] = itemType;
+            }
         }
         return itemTypes;
     }
@@ -1044,25 +1056,33 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
     public override Type?[]? GetNonDefaultItemTypes() {
         var itemTypes = (Type?[]?)null;
         Type? itemType;
-        itemType = _item0?.GetType();
-        if (itemType != null && itemType != typeof(T0)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[0] = itemType;
+        if (!typeof(T0).IsValueType) {
+            itemType = _item0?.GetType();
+            if (itemType != null && itemType != typeof(T0)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[0] = itemType;
+            }
         }
-        itemType = _item1?.GetType();
-        if (itemType != null && itemType != typeof(T1)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[1] = itemType;
+        if (!typeof(T1).IsValueType) {
+            itemType = _item1?.GetType();
+            if (itemType != null && itemType != typeof(T1)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[1] = itemType;
+            }
         }
-        itemType = _item2?.GetType();
-        if (itemType != null && itemType != typeof(T2)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[2] = itemType;
+        if (!typeof(T2).IsValueType) {
+            itemType = _item2?.GetType();
+            if (itemType != null && itemType != typeof(T2)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[2] = itemType;
+            }
         }
-        itemType = _item3?.GetType();
-        if (itemType != null && itemType != typeof(T3)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[3] = itemType;
+        if (!typeof(T3).IsValueType) {
+            itemType = _item3?.GetType();
+            if (itemType != null && itemType != typeof(T3)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[3] = itemType;
+            }
         }
         return itemTypes;
     }
@@ -1396,30 +1416,40 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
     public override Type?[]? GetNonDefaultItemTypes() {
         var itemTypes = (Type?[]?)null;
         Type? itemType;
-        itemType = _item0?.GetType();
-        if (itemType != null && itemType != typeof(T0)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[0] = itemType;
+        if (!typeof(T0).IsValueType) {
+            itemType = _item0?.GetType();
+            if (itemType != null && itemType != typeof(T0)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[0] = itemType;
+            }
         }
-        itemType = _item1?.GetType();
-        if (itemType != null && itemType != typeof(T1)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[1] = itemType;
+        if (!typeof(T1).IsValueType) {
+            itemType = _item1?.GetType();
+            if (itemType != null && itemType != typeof(T1)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[1] = itemType;
+            }
         }
-        itemType = _item2?.GetType();
-        if (itemType != null && itemType != typeof(T2)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[2] = itemType;
+        if (!typeof(T2).IsValueType) {
+            itemType = _item2?.GetType();
+            if (itemType != null && itemType != typeof(T2)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[2] = itemType;
+            }
         }
-        itemType = _item3?.GetType();
-        if (itemType != null && itemType != typeof(T3)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[3] = itemType;
+        if (!typeof(T3).IsValueType) {
+            itemType = _item3?.GetType();
+            if (itemType != null && itemType != typeof(T3)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[3] = itemType;
+            }
         }
-        itemType = _item4?.GetType();
-        if (itemType != null && itemType != typeof(T4)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[4] = itemType;
+        if (!typeof(T4).IsValueType) {
+            itemType = _item4?.GetType();
+            if (itemType != null && itemType != typeof(T4)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[4] = itemType;
+            }
         }
         return itemTypes;
     }
@@ -1787,35 +1817,47 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
     public override Type?[]? GetNonDefaultItemTypes() {
         var itemTypes = (Type?[]?)null;
         Type? itemType;
-        itemType = _item0?.GetType();
-        if (itemType != null && itemType != typeof(T0)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[0] = itemType;
+        if (!typeof(T0).IsValueType) {
+            itemType = _item0?.GetType();
+            if (itemType != null && itemType != typeof(T0)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[0] = itemType;
+            }
         }
-        itemType = _item1?.GetType();
-        if (itemType != null && itemType != typeof(T1)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[1] = itemType;
+        if (!typeof(T1).IsValueType) {
+            itemType = _item1?.GetType();
+            if (itemType != null && itemType != typeof(T1)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[1] = itemType;
+            }
         }
-        itemType = _item2?.GetType();
-        if (itemType != null && itemType != typeof(T2)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[2] = itemType;
+        if (!typeof(T2).IsValueType) {
+            itemType = _item2?.GetType();
+            if (itemType != null && itemType != typeof(T2)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[2] = itemType;
+            }
         }
-        itemType = _item3?.GetType();
-        if (itemType != null && itemType != typeof(T3)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[3] = itemType;
+        if (!typeof(T3).IsValueType) {
+            itemType = _item3?.GetType();
+            if (itemType != null && itemType != typeof(T3)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[3] = itemType;
+            }
         }
-        itemType = _item4?.GetType();
-        if (itemType != null && itemType != typeof(T4)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[4] = itemType;
+        if (!typeof(T4).IsValueType) {
+            itemType = _item4?.GetType();
+            if (itemType != null && itemType != typeof(T4)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[4] = itemType;
+            }
         }
-        itemType = _item5?.GetType();
-        if (itemType != null && itemType != typeof(T5)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[5] = itemType;
+        if (!typeof(T5).IsValueType) {
+            itemType = _item5?.GetType();
+            if (itemType != null && itemType != typeof(T5)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[5] = itemType;
+            }
         }
         return itemTypes;
     }
@@ -2217,40 +2259,54 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
     public override Type?[]? GetNonDefaultItemTypes() {
         var itemTypes = (Type?[]?)null;
         Type? itemType;
-        itemType = _item0?.GetType();
-        if (itemType != null && itemType != typeof(T0)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[0] = itemType;
+        if (!typeof(T0).IsValueType) {
+            itemType = _item0?.GetType();
+            if (itemType != null && itemType != typeof(T0)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[0] = itemType;
+            }
         }
-        itemType = _item1?.GetType();
-        if (itemType != null && itemType != typeof(T1)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[1] = itemType;
+        if (!typeof(T1).IsValueType) {
+            itemType = _item1?.GetType();
+            if (itemType != null && itemType != typeof(T1)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[1] = itemType;
+            }
         }
-        itemType = _item2?.GetType();
-        if (itemType != null && itemType != typeof(T2)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[2] = itemType;
+        if (!typeof(T2).IsValueType) {
+            itemType = _item2?.GetType();
+            if (itemType != null && itemType != typeof(T2)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[2] = itemType;
+            }
         }
-        itemType = _item3?.GetType();
-        if (itemType != null && itemType != typeof(T3)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[3] = itemType;
+        if (!typeof(T3).IsValueType) {
+            itemType = _item3?.GetType();
+            if (itemType != null && itemType != typeof(T3)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[3] = itemType;
+            }
         }
-        itemType = _item4?.GetType();
-        if (itemType != null && itemType != typeof(T4)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[4] = itemType;
+        if (!typeof(T4).IsValueType) {
+            itemType = _item4?.GetType();
+            if (itemType != null && itemType != typeof(T4)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[4] = itemType;
+            }
         }
-        itemType = _item5?.GetType();
-        if (itemType != null && itemType != typeof(T5)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[5] = itemType;
+        if (!typeof(T5).IsValueType) {
+            itemType = _item5?.GetType();
+            if (itemType != null && itemType != typeof(T5)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[5] = itemType;
+            }
         }
-        itemType = _item6?.GetType();
-        if (itemType != null && itemType != typeof(T6)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[6] = itemType;
+        if (!typeof(T6).IsValueType) {
+            itemType = _item6?.GetType();
+            if (itemType != null && itemType != typeof(T6)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[6] = itemType;
+            }
         }
         return itemTypes;
     }
@@ -2686,45 +2742,61 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
     public override Type?[]? GetNonDefaultItemTypes() {
         var itemTypes = (Type?[]?)null;
         Type? itemType;
-        itemType = _item0?.GetType();
-        if (itemType != null && itemType != typeof(T0)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[0] = itemType;
+        if (!typeof(T0).IsValueType) {
+            itemType = _item0?.GetType();
+            if (itemType != null && itemType != typeof(T0)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[0] = itemType;
+            }
         }
-        itemType = _item1?.GetType();
-        if (itemType != null && itemType != typeof(T1)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[1] = itemType;
+        if (!typeof(T1).IsValueType) {
+            itemType = _item1?.GetType();
+            if (itemType != null && itemType != typeof(T1)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[1] = itemType;
+            }
         }
-        itemType = _item2?.GetType();
-        if (itemType != null && itemType != typeof(T2)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[2] = itemType;
+        if (!typeof(T2).IsValueType) {
+            itemType = _item2?.GetType();
+            if (itemType != null && itemType != typeof(T2)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[2] = itemType;
+            }
         }
-        itemType = _item3?.GetType();
-        if (itemType != null && itemType != typeof(T3)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[3] = itemType;
+        if (!typeof(T3).IsValueType) {
+            itemType = _item3?.GetType();
+            if (itemType != null && itemType != typeof(T3)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[3] = itemType;
+            }
         }
-        itemType = _item4?.GetType();
-        if (itemType != null && itemType != typeof(T4)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[4] = itemType;
+        if (!typeof(T4).IsValueType) {
+            itemType = _item4?.GetType();
+            if (itemType != null && itemType != typeof(T4)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[4] = itemType;
+            }
         }
-        itemType = _item5?.GetType();
-        if (itemType != null && itemType != typeof(T5)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[5] = itemType;
+        if (!typeof(T5).IsValueType) {
+            itemType = _item5?.GetType();
+            if (itemType != null && itemType != typeof(T5)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[5] = itemType;
+            }
         }
-        itemType = _item6?.GetType();
-        if (itemType != null && itemType != typeof(T6)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[6] = itemType;
+        if (!typeof(T6).IsValueType) {
+            itemType = _item6?.GetType();
+            if (itemType != null && itemType != typeof(T6)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[6] = itemType;
+            }
         }
-        itemType = _item7?.GetType();
-        if (itemType != null && itemType != typeof(T7)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[7] = itemType;
+        if (!typeof(T7).IsValueType) {
+            itemType = _item7?.GetType();
+            if (itemType != null && itemType != typeof(T7)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[7] = itemType;
+            }
         }
         return itemTypes;
     }
@@ -3194,50 +3266,68 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
     public override Type?[]? GetNonDefaultItemTypes() {
         var itemTypes = (Type?[]?)null;
         Type? itemType;
-        itemType = _item0?.GetType();
-        if (itemType != null && itemType != typeof(T0)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[0] = itemType;
+        if (!typeof(T0).IsValueType) {
+            itemType = _item0?.GetType();
+            if (itemType != null && itemType != typeof(T0)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[0] = itemType;
+            }
         }
-        itemType = _item1?.GetType();
-        if (itemType != null && itemType != typeof(T1)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[1] = itemType;
+        if (!typeof(T1).IsValueType) {
+            itemType = _item1?.GetType();
+            if (itemType != null && itemType != typeof(T1)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[1] = itemType;
+            }
         }
-        itemType = _item2?.GetType();
-        if (itemType != null && itemType != typeof(T2)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[2] = itemType;
+        if (!typeof(T2).IsValueType) {
+            itemType = _item2?.GetType();
+            if (itemType != null && itemType != typeof(T2)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[2] = itemType;
+            }
         }
-        itemType = _item3?.GetType();
-        if (itemType != null && itemType != typeof(T3)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[3] = itemType;
+        if (!typeof(T3).IsValueType) {
+            itemType = _item3?.GetType();
+            if (itemType != null && itemType != typeof(T3)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[3] = itemType;
+            }
         }
-        itemType = _item4?.GetType();
-        if (itemType != null && itemType != typeof(T4)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[4] = itemType;
+        if (!typeof(T4).IsValueType) {
+            itemType = _item4?.GetType();
+            if (itemType != null && itemType != typeof(T4)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[4] = itemType;
+            }
         }
-        itemType = _item5?.GetType();
-        if (itemType != null && itemType != typeof(T5)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[5] = itemType;
+        if (!typeof(T5).IsValueType) {
+            itemType = _item5?.GetType();
+            if (itemType != null && itemType != typeof(T5)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[5] = itemType;
+            }
         }
-        itemType = _item6?.GetType();
-        if (itemType != null && itemType != typeof(T6)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[6] = itemType;
+        if (!typeof(T6).IsValueType) {
+            itemType = _item6?.GetType();
+            if (itemType != null && itemType != typeof(T6)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[6] = itemType;
+            }
         }
-        itemType = _item7?.GetType();
-        if (itemType != null && itemType != typeof(T7)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[7] = itemType;
+        if (!typeof(T7).IsValueType) {
+            itemType = _item7?.GetType();
+            if (itemType != null && itemType != typeof(T7)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[7] = itemType;
+            }
         }
-        itemType = _item8?.GetType();
-        if (itemType != null && itemType != typeof(T8)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[8] = itemType;
+        if (!typeof(T8).IsValueType) {
+            itemType = _item8?.GetType();
+            if (itemType != null && itemType != typeof(T8)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[8] = itemType;
+            }
         }
         return itemTypes;
     }
@@ -3741,55 +3831,75 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
     public override Type?[]? GetNonDefaultItemTypes() {
         var itemTypes = (Type?[]?)null;
         Type? itemType;
-        itemType = _item0?.GetType();
-        if (itemType != null && itemType != typeof(T0)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[0] = itemType;
+        if (!typeof(T0).IsValueType) {
+            itemType = _item0?.GetType();
+            if (itemType != null && itemType != typeof(T0)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[0] = itemType;
+            }
         }
-        itemType = _item1?.GetType();
-        if (itemType != null && itemType != typeof(T1)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[1] = itemType;
+        if (!typeof(T1).IsValueType) {
+            itemType = _item1?.GetType();
+            if (itemType != null && itemType != typeof(T1)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[1] = itemType;
+            }
         }
-        itemType = _item2?.GetType();
-        if (itemType != null && itemType != typeof(T2)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[2] = itemType;
+        if (!typeof(T2).IsValueType) {
+            itemType = _item2?.GetType();
+            if (itemType != null && itemType != typeof(T2)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[2] = itemType;
+            }
         }
-        itemType = _item3?.GetType();
-        if (itemType != null && itemType != typeof(T3)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[3] = itemType;
+        if (!typeof(T3).IsValueType) {
+            itemType = _item3?.GetType();
+            if (itemType != null && itemType != typeof(T3)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[3] = itemType;
+            }
         }
-        itemType = _item4?.GetType();
-        if (itemType != null && itemType != typeof(T4)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[4] = itemType;
+        if (!typeof(T4).IsValueType) {
+            itemType = _item4?.GetType();
+            if (itemType != null && itemType != typeof(T4)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[4] = itemType;
+            }
         }
-        itemType = _item5?.GetType();
-        if (itemType != null && itemType != typeof(T5)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[5] = itemType;
+        if (!typeof(T5).IsValueType) {
+            itemType = _item5?.GetType();
+            if (itemType != null && itemType != typeof(T5)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[5] = itemType;
+            }
         }
-        itemType = _item6?.GetType();
-        if (itemType != null && itemType != typeof(T6)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[6] = itemType;
+        if (!typeof(T6).IsValueType) {
+            itemType = _item6?.GetType();
+            if (itemType != null && itemType != typeof(T6)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[6] = itemType;
+            }
         }
-        itemType = _item7?.GetType();
-        if (itemType != null && itemType != typeof(T7)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[7] = itemType;
+        if (!typeof(T7).IsValueType) {
+            itemType = _item7?.GetType();
+            if (itemType != null && itemType != typeof(T7)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[7] = itemType;
+            }
         }
-        itemType = _item8?.GetType();
-        if (itemType != null && itemType != typeof(T8)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[8] = itemType;
+        if (!typeof(T8).IsValueType) {
+            itemType = _item8?.GetType();
+            if (itemType != null && itemType != typeof(T8)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[8] = itemType;
+            }
         }
-        itemType = _item9?.GetType();
-        if (itemType != null && itemType != typeof(T9)) {
-            itemTypes ??= CreateNonDefaultItemTypes();
-            itemTypes[9] = itemType;
+        if (!typeof(T9).IsValueType) {
+            itemType = _item9?.GetType();
+            if (itemType != null && itemType != typeof(T9)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[9] = itemType;
+            }
         }
         return itemTypes;
     }
