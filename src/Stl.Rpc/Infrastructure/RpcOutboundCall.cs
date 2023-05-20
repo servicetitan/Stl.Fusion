@@ -10,7 +10,7 @@ public interface IRpcOutboundCall : IRpcCall
     Task ResultTask { get; }
 
     RpcMessage CreateMessage(long callId);
-    ValueTask Send();
+    ValueTask Send(bool isRetry = false);
     void CompleteWithOk(object? result);
     void CompleteWithError(Exception error);
 }
@@ -34,20 +34,19 @@ public class RpcOutboundCall<TResult> : RpcCall<TResult>, IRpcOutboundCall<TResu
             : TaskCompletionSourceExt.New<TResult>();
     }
 
-    public virtual ValueTask Send()
+    public virtual ValueTask Send(bool isRetry = false)
     {
-        if (Id != 0)
-            throw Errors.AlreadyInvoked(nameof(Send));
-
         var peer = Context.Peer!;
         RpcMessage message;
         if (Context.MethodDef!.NoWait)
             message = CreateMessage(Context.RelatedCallId);
-        else {
+        else if (Id == 0) {
             Id = peer.Calls.NextId;
             message = CreateMessage(Id);
             peer.Calls.Outbound.TryAdd(Id, this);
         }
+        else
+            message = CreateMessage(Id);
         return peer.Send(message, Context.CancellationToken);
     }
 

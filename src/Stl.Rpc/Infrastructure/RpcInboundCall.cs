@@ -41,7 +41,7 @@ public class RpcInboundCall<TResult> : RpcCall<TResult>, IRpcInboundCall
             CancellationToken = CancellationTokenSource.Token;
             if (!Context.Peer.Calls.Inbound.TryAdd(Id, this)) {
                 var log = Hub.Services.LogFor(GetType());
-                log.LogError("Inbound {MethodDef} call with duplicate Id = {Id}", MethodDef, Id);
+                log.LogWarning("Inbound {MethodDef} call with duplicate Id = {Id}", MethodDef, Id);
                 CancellationTokenSource.CancelAndDisposeSilently();
                 return;
             }

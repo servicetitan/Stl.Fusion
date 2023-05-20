@@ -39,7 +39,7 @@ public static class Errors
     public static Exception ConnectionIsClosed()
         => new InvalidOperationException("Connection is gracefully closed by peer.");
     public static Exception ImpossibleToReconnect()
-        => new ImpossibleToReconnectException();
+        => new ImpossibleToConnectException();
 
     public static Exception NoCurrentRpcInboundContext()
         => new InvalidOperationException($"{nameof(RpcInboundContext)}.{nameof(RpcInboundContext.Current)} is unavailable.");
