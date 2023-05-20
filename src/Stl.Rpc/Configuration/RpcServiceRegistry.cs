@@ -57,6 +57,9 @@ public class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<RpcService
         return sb.ToString().TrimEnd();
     }
 
+    public RpcServiceDef? Get<TService>()
+        => Get(typeof(TService));
+
     public RpcServiceDef? Get(Type serviceType)
         => _services.GetValueOrDefault(serviceType);
 

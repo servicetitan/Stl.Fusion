@@ -95,12 +95,16 @@ public class RpcInboundCall<TResult> : RpcCall<TResult>, IRpcInboundCall
 
         var arguments = ArgumentList.Empty;
         var argumentListType = MethodDef.RemoteArgumentListType;
+        if (MethodDef.HasObjectTypedArguments) {
+            var argumentListTypeResolver = (IRpcArgumentListTypeResolver)Hub.Services
+                .GetRequiredService(ServiceDef.ServerType);
+            argumentListType = argumentListTypeResolver.GetArgumentListType(Context) ?? argumentListType;
+        }
+
         if (argumentListType.IsGenericType) { // == Has 1+ arguments
-            var actualArgumentListType = argumentListType;
-            Type[] argumentTypes;
             var headers = Context.Headers;
             if (headers.Any(static h => h.Name.StartsWith(RpcHeader.ArgumentTypeHeaderPrefix, StringComparison.Ordinal))) {
-                argumentTypes = argumentListType.GetGenericArguments();
+                var argumentTypes = argumentListType.GetGenericArguments();
                 foreach (var h in headers) {
                     if (!h.Name.StartsWith(RpcHeader.ArgumentTypeHeaderPrefix, StringComparison.Ordinal))
                         continue;
@@ -119,26 +123,19 @@ public class RpcInboundCall<TResult> : RpcCall<TResult>, IRpcInboundCall
 
                     argumentTypes[argumentIndex] = argumentType;
                 }
-
-                if (MethodDef.HasObjectTypedArguments) {
-                    var argumentTypeResolver = (IRpcArgumentTypeResolver)Hub.Services
-                        .GetRequiredService(ServiceDef.ServerType);
-                    argumentTypeResolver.ResolveArgumentTypes(Context, argumentTypes);
-                }
-
-                actualArgumentListType = argumentListType
+                argumentListType = argumentListType
                     .GetGenericTypeDefinition()
                     .MakeGenericType(argumentTypes);
             }
 
-            var deserializedArguments = peer.ArgumentDeserializer.Invoke(message.Arguments, actualArgumentListType);
+            var deserializedArguments = peer.ArgumentDeserializer.Invoke(message.Arguments, argumentListType);
             if (deserializedArguments == null)
                 throw Errors.NonDeserializableArguments(MethodDef);
 
-            if (argumentListType == actualArgumentListType)
+            if (argumentListType == MethodDef.ArgumentListType)
                 arguments = deserializedArguments;
             else {
-                arguments = (ArgumentList)argumentListType.CreateInstance();
+                arguments = (ArgumentList)MethodDef.ArgumentListType.CreateInstance();
                 arguments.SetFrom(deserializedArguments);
             }
         }

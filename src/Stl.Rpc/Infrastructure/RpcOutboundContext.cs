@@ -17,10 +17,10 @@ public class RpcOutboundContext
     }
 
     public List<RpcHeader> Headers { get; set; } = new();
-    public RpcMethodDef? MethodDef { get; private set; }
-    public ArgumentList? Arguments { get; private set; }
-    public CancellationToken CancellationToken { get; private set; } = default;
-    public IRpcOutboundCall? Call { get; private set; }
+    public RpcMethodDef? MethodDef { get; internal set; }
+    public ArgumentList? Arguments { get; internal set; }
+    public CancellationToken CancellationToken { get; internal set; } = default;
+    public IRpcOutboundCall? Call { get; internal set; }
     public RpcPeer? Peer { get; set; }
     public long RelatedCallId { get; set; }
 
@@ -47,11 +47,11 @@ public class RpcOutboundContext
 
         if (!MethodDef.NoWait) {
             var ctr = CancellationToken.Register(state => {
-                var context = (RpcOutboundContext)state;
+                var context = (RpcOutboundContext)state!;
                 var peer1 = context.Peer!;
                 var call1 = context.Call!;
                 var systemCallSender = peer1.Hub.SystemCallSender;
-                systemCallSender.Cancel(peer1, call1.Id);
+                _ = systemCallSender.Cancel(peer1, call1.Id);
             }, this, false);
             _ = call.ResultTask.ContinueWith(
                 _ => ctr.Dispose(),

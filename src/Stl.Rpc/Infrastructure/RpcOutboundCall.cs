@@ -9,7 +9,8 @@ public interface IRpcOutboundCall : IRpcCall
     long Id { get; }
     Task ResultTask { get; }
 
-    Task Send();
+    RpcMessage CreateMessage(long callId);
+    ValueTask Send();
     void Complete(object? result);
     void Complete(ExceptionInfo error);
 }
@@ -28,21 +29,21 @@ public class RpcOutboundCall<TResult> : RpcCall<TResult>, IRpcOutboundCall<TResu
     public RpcOutboundCall(RpcOutboundContext context) : base(context.MethodDef!)
         => Context = context;
 
-    public virtual Task Send()
+    public virtual ValueTask Send()
     {
         if (Id != 0)
             throw Errors.AlreadyInvoked(nameof(Send));
 
         var peer = Context.Peer!;
-        var noWait = Context.MethodDef!.NoWait;
-        Id = noWait ? Context.RelatedCallId : peer.Calls.NextId;
-        var message = CreateCallMessage();
-
-        if (!noWait)
+        RpcMessage message;
+        if (Context.MethodDef!.NoWait)
+            message = CreateMessage(Context.RelatedCallId);
+        else {
+            Id = peer.Calls.NextId;
+            message = CreateMessage(Id);
             peer.Calls.Outbound.TryAdd(Id, this);
-        var cancellationToken = Context.CancellationToken;
-        var sendTask = peer.Send(message, cancellationToken);
-        return sendTask.IsCompletedSuccessfully ? Task.CompletedTask : sendTask.AsTask();
+        }
+        return peer.Send(message, Context.CancellationToken);
     }
 
     public virtual void Complete(object? result)
@@ -59,9 +60,7 @@ public class RpcOutboundCall<TResult> : RpcCall<TResult>, IRpcOutboundCall<TResu
             _resultSource.SetException(error.ToException()!);
     }
 
-    // Protected methods
-
-    protected virtual RpcMessage CreateCallMessage()
+    public virtual RpcMessage CreateMessage(long callId)
     {
         var headers = Context.Headers;
         var peer = Context.Peer!;
@@ -94,6 +93,6 @@ public class RpcOutboundCall<TResult> : RpcCall<TResult>, IRpcOutboundCall<TResu
         }
 
         var serializedArguments = peer.ArgumentSerializer.Invoke(arguments, arguments.GetType());
-        return new RpcMessage(ServiceDef.Name, MethodDef.Name, serializedArguments, headers, Id);
+        return new RpcMessage(ServiceDef.Name, MethodDef.Name, serializedArguments, headers, callId);
     }
 }
