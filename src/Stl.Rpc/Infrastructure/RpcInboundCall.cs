@@ -136,6 +136,9 @@ public class RpcInboundCall<TResult> : RpcCall<TResult>, IRpcInboundCall
                 arguments = deserializedArguments;
             else {
                 arguments = (ArgumentList)MethodDef.ArgumentListType.CreateInstance();
+                var ctIndex = MethodDef.CancellationTokenIndex;
+                if (ctIndex >= 0)
+                    deserializedArguments = deserializedArguments.InsertCancellationToken(ctIndex, default);
                 arguments.SetFrom(deserializedArguments);
             }
         }

@@ -161,7 +161,7 @@ public class ServerAuthHelper : IHasServices
         Session session, SessionInfo sessionInfo,
         CancellationToken cancellationToken)
     {
-        _ = Task.Run(() => Auth.UpdatePresence(session, CancellationToken.None), CancellationToken.None);
+        _ = Auth.UpdatePresence(session, CancellationToken.None);
         return Task.CompletedTask;
     }
 

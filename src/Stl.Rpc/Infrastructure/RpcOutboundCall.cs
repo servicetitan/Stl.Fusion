@@ -11,8 +11,8 @@ public interface IRpcOutboundCall : IRpcCall
 
     RpcMessage CreateMessage(long callId);
     ValueTask Send();
-    void Complete(object? result);
-    void Complete(ExceptionInfo error);
+    void CompleteWithOk(object? result);
+    void CompleteWithError(Exception error);
 }
 
 public interface IRpcOutboundCall<TResult> : IRpcOutboundCall
@@ -20,14 +20,19 @@ public interface IRpcOutboundCall<TResult> : IRpcOutboundCall
 
 public class RpcOutboundCall<TResult> : RpcCall<TResult>, IRpcOutboundCall<TResult>
 {
-    private readonly TaskCompletionSource<TResult> _resultSource = TaskCompletionSourceExt.New<TResult>();
+    private readonly TaskCompletionSource<TResult> _resultSource;
 
     public RpcOutboundContext Context { get; }
     public long Id { get; protected set; }
     public Task ResultTask => _resultSource.Task;
 
     public RpcOutboundCall(RpcOutboundContext context) : base(context.MethodDef!)
-        => Context = context;
+    {
+        Context = context;
+        _resultSource = context.MethodDef!.NoWait
+            ? (TaskCompletionSource<TResult>)(object)RpcNoWait.TaskSources.Completed
+            : TaskCompletionSourceExt.New<TResult>();
+    }
 
     public virtual ValueTask Send()
     {
@@ -46,18 +51,21 @@ public class RpcOutboundCall<TResult> : RpcCall<TResult>, IRpcOutboundCall<TResu
         return peer.Send(message, Context.CancellationToken);
     }
 
-    public virtual void Complete(object? result)
+    public virtual void CompleteWithOk(object? result)
     {
-        var peer = Context.Peer!;
-        if (peer.Calls.Outbound.TryRemove(Id, this))
-            _resultSource.SetResult((TResult)result!);
+        try {
+            if (_resultSource.TrySetResult((TResult)result!))
+                Context.Peer!.Calls.Outbound.TryRemove(Id, this);
+        }
+        catch (Exception e) {
+            CompleteWithError(e);
+        }
     }
 
-    public virtual void Complete(ExceptionInfo error)
+    public virtual void CompleteWithError(Exception error)
     {
-        var peer = Context.Peer!;
-        if (peer.Calls.Outbound.TryRemove(Id, this))
-            _resultSource.SetException(error.ToException()!);
+        if (_resultSource.TrySetException(error))
+            Context.Peer!.Calls.Outbound.TryRemove(Id, this);
     }
 
     public virtual RpcMessage CreateMessage(long callId)

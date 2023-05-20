@@ -1,4 +1,5 @@
 using Stl.DependencyInjection.Internal;
+using Stl.Interception;
 using Stl.Internal;
 using Stl.IO;
 using Stl.Reflection;
@@ -37,6 +38,14 @@ public class SerializationTest : TestBase
 
         var deserialized = (Tuple<DateTime>) serializer.Read<object>(json);
         deserialized.Item1.Should().Be(value.Item1);
+    }
+
+    [Fact]
+    public void UnitSerialization()
+    {
+        default(Unit).AssertPassesThroughAllSerializers(Out);
+        var list = ArgumentList.New(default(Unit));
+        list.AssertPassesThroughAllSerializers(Out);
     }
 
     [Fact]

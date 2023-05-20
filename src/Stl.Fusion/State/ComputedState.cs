@@ -64,11 +64,11 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
         // because the Update is ~ a worker-style task.
         var o = (Options) options;
         if (o.MustFlowExecutionContext) {
-            UpdateCycleTask = Task.Run(UpdateCycle, default);
+            UpdateCycleTask = UpdateCycle();
         }
         else {
             using var _ = ExecutionContextExt.SuppressFlow();
-            UpdateCycleTask = Task.Run(UpdateCycle, default);
+            UpdateCycleTask = UpdateCycle();
         }
     }
 

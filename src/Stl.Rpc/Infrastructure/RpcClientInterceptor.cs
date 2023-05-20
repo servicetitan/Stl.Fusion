@@ -23,11 +23,13 @@ public class RpcClientInterceptor : InterceptorBase
         return invocation => {
             using var scope = RpcOutboundContext.NewOrActive();
             var context = scope.Context;
-            _ = context.SendCall(rpcMethodDef, invocation.Arguments);
-            if (rpcMethodDef.NoWait)
-                return rpcMethodDef.ReturnsValueTask
-                    ? RpcNoWait.ValueTasks.Completed
-                    : RpcNoWait.Tasks.Completed;
+            var sendTask = context.SendCall(rpcMethodDef, invocation.Arguments);
+            if (!rpcMethodDef.NoWait) {
+                _ = sendTask.ContinueWith(t => {
+                    if (!t.IsCompletedSuccessfully())
+                        context.Call!.CompleteWithError(t.ToResultSynchronously().Error!);
+                }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+            }
 
             var call = context.Call!;
             var resultTask = call.ResultTask;

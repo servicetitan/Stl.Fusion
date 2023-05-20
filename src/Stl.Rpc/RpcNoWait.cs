@@ -1,5 +1,6 @@
 namespace Stl.Rpc;
 
+[DataContract]
 public readonly struct RpcNoWait
 {
     public static class Tasks
@@ -10,5 +11,11 @@ public readonly struct RpcNoWait
     public static class ValueTasks
     {
         public static readonly ValueTask<RpcNoWait> Completed = ValueTaskExt.FromResult(default(RpcNoWait));
+    }
+
+    public static class TaskSources
+    {
+        public static readonly TaskCompletionSource<RpcNoWait> Completed =
+            new TaskCompletionSource<RpcNoWait>().WithResult(default);
     }
 }

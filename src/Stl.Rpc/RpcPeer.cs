@@ -56,15 +56,24 @@ public class RpcPeer : WorkerBase
             try {
                 var channel = await Reconnect(lastError, tryIndex, cancellationToken).ConfigureAwait(false);
                 tryIndex = 0;
-                await foreach (var message in channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false)) {
-                    var context = new RpcInboundContext(this, message);
-                    if (semaphore == null)
-                        await ProcessMessage(context, null, cancellationToken).ConfigureAwait(false);
-                    else {
-                        await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
-                        _ = Task.Run(() => ProcessMessage(context, semaphore, cancellationToken), CancellationToken.None);
+                if (semaphore == null)
+                    await foreach (var message in channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false)) {
+                        var context = new RpcInboundContext(this, message);
+                        _ = ProcessMessage(context, null, cancellationToken);
                     }
-                }
+                else
+                    await foreach (var message in channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false)) {
+                        var context = new RpcInboundContext(this, message);
+                        if (Equals(message.Service, RpcSystemCalls.Name.Value)) {
+                            // System calls are exempt from semaphore use
+                            _ = ProcessMessage(context, null, cancellationToken);
+                        }
+                        else {
+                            await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+                            _ = ProcessMessage(context, semaphore, cancellationToken);
+                        }
+                    }
+
                 throw Errors.ConnectionIsClosed();
             }
             catch (ImpossibleToReconnectException e) {

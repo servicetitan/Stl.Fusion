@@ -4,7 +4,8 @@ namespace Stl.Tests.Rpc;
 
 public interface ISimpleRpcService
 {
-    public Task<int> Sum(int a, int b);
+    Task<int> Div(int a, int b);
+    Task Delay(TimeSpan duration, CancellationToken cancellationToken = default);
 }
 
 public interface ISimpleRpcServiceClient : ISimpleRpcService, IRpcClient
@@ -12,6 +13,10 @@ public interface ISimpleRpcServiceClient : ISimpleRpcService, IRpcClient
 
 public class SimpleRpcService : ISimpleRpcService
 {
-    public Task<int> Sum(int a, int b)
-        => Task.FromResult(a + b);
+    public Task<int> Div(int a, int b)
+        => Task.FromResult(a / b);
+
+    public Task Delay(TimeSpan duration, CancellationToken cancellationToken = default)
+        => Task.Delay(duration, cancellationToken);
+
 }

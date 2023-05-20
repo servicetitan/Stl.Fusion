@@ -38,7 +38,7 @@ public sealed class RpcSystemCallSender : RpcServiceBase
             Arguments = ArgumentList.New(result),
         };
         // An optimized version of Client.Ok(result):
-        context.Call = OkMethodDef.CallFactory.CreateOutbound(context);
+        context.Call = context.MethodDef.CallFactory.CreateOutbound(context);
         var message = context.Call.CreateMessage(callId);
         await peer.Send(message, default).ConfigureAwait(false);
     }
@@ -48,11 +48,11 @@ public sealed class RpcSystemCallSender : RpcServiceBase
         var context = new RpcOutboundContext {
             Peer = peer,
             RelatedCallId = callId,
-            MethodDef = OkMethodDef,
+            MethodDef = ErrorMethodDef,
             Arguments = ArgumentList.New(error.ToExceptionInfo()),
         };
         // An optimized version of Client.Error(result):
-        context.Call = ErrorMethodDef.CallFactory.CreateOutbound(context);
+        context.Call = context.MethodDef.CallFactory.CreateOutbound(context);
         var message = context.Call.CreateMessage(callId);
         await peer.Send(message, default).ConfigureAwait(false);
     }
@@ -66,7 +66,7 @@ public sealed class RpcSystemCallSender : RpcServiceBase
             Arguments = ArgumentList.Empty,
         };
         // An optimized version of Client.Error(result):
-        context.Call = ErrorMethodDef.CallFactory.CreateOutbound(context);
+        context.Call = context.MethodDef.CallFactory.CreateOutbound(context);
         var message = context.Call.CreateMessage(callId);
         await peer.Send(message, default).ConfigureAwait(false);
     }

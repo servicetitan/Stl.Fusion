@@ -1,21 +1,50 @@
 using Stl.Rpc;
 using Stl.Rpc.Infrastructure;
+using Stl.Testing.Collections;
 
 namespace Stl.Tests.Rpc;
 
+[Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public class RpcBasicTest : TestBase
 {
     public RpcBasicTest(ITestOutputHelper @out) : base(@out) { }
 
     [Fact]
-    public async Task CallTest()
+    public async Task BasicTest()
     {
         var services = CreateServerServices();
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
-        var sum = await client.Sum(1, 2);
-        sum.Should().Be(3);
-        sum = await client.Sum(1, 2);
-        sum.Should().Be(3);
+        (await client.Div(6, 2)).Should().Be(3);
+        (await client.Div(6, 2)).Should().Be(3);
+        (await client.Div(10, 2)).Should().Be(5);
+        await Assert.ThrowsAsync<DivideByZeroException>(
+            () => client.Div(1, 0));
+    }
+
+    [Fact]
+    public async Task DelayTest()
+    {
+        var services = CreateServerServices();
+        var client = services.GetRequiredService<ISimpleRpcServiceClient>();
+        var startedAt = CpuTimestamp.Now;
+        await client.Delay(TimeSpan.FromMilliseconds(200));
+        startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(100, 500);
+
+        {
+            using var cts = new CancellationTokenSource(1);
+            startedAt = CpuTimestamp.Now;
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(
+                () => client.Delay(TimeSpan.FromHours(1), cts.Token));
+            startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(0, 500);
+        }
+
+        {
+            using var cts = new CancellationTokenSource(500);
+            startedAt = CpuTimestamp.Now;
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(
+                () => client.Delay(TimeSpan.FromHours(1), cts.Token));
+            startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(300, 1000);
+        }
     }
 
     [Theory]
@@ -28,7 +57,7 @@ public class RpcBasicTest : TestBase
 
         var startedAt = CpuTimestamp.Now;
         for (var i = iterationCount; i > 0; i--)
-            await client.Sum(1, 2);
+            await client.Div(1, 2);
         var elapsed = startedAt.Elapsed;
         Out.WriteLine($"{iterationCount}: {iterationCount / elapsed.TotalSeconds:F} ops/s");
     }
