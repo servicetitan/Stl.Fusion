@@ -74,7 +74,8 @@ public class RpcTest : TestBase
 
         var startedAt = CpuTimestamp.Now;
         for (var i = iterationCount; i > 0; i--)
-            await client.Div(i, 1);
+            if (i != await client.Div(i, 1).ConfigureAwait(false))
+                Assert.Fail("Wrong result.");
         var elapsed = startedAt.Elapsed;
 
         Out.WriteLine($"{iterationCount}: {iterationCount / elapsed.TotalSeconds:F} ops/s");
