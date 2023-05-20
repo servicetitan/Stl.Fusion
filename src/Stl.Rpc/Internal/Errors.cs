@@ -9,6 +9,12 @@ public static class Errors
     public static Exception RpcOptionsIsNotRegistered()
         => new InvalidOperationException("RpcOptions instance is not registered.");
 
+    public static Exception ServiceAlreadyExists(Type type)
+        => new InvalidOperationException($"Service of type '{type}' is already added.");
+    public static Exception ServiceTypeCannotBeChanged(Type originalType, Type type)
+        => new InvalidOperationException(
+            $"RpcServiceConfiguration.Type is changed from the original '{originalType}' to '{type}'.");
+
     public static Exception ServiceTypeConflict(Type serviceType)
         => new InvalidOperationException($"Service '{serviceType.GetName()}' is already registered.");
     public static Exception ServiceNameConflict(Type serviceType1, Type serviceType2, Symbol serviceName)

@@ -4,6 +4,14 @@ namespace Stl.Internal;
 
 public static class Errors
 {
+    public static Exception MustBeClass(Type type, string? argumentName = null)
+    {
+        var message = $"'{type}' must be reference type (class).";
+        return argumentName.IsNullOrEmpty()
+            ? new InvalidOperationException(message)
+            : new ArgumentOutOfRangeException(argumentName, message);
+    }
+
     public static Exception MustImplement<TExpected>(Type type, string? argumentName = null)
         => MustImplement(type, typeof(TExpected), argumentName);
     public static Exception MustImplement(Type type, Type expectedType, string? argumentName = null)

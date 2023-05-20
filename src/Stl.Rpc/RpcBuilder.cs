@@ -43,50 +43,61 @@ public readonly struct RpcBuilder
         Services.TryAddSingleton(_ => new RpcClientInterceptor.Options());
         Services.TryAddTransient(c => new RpcClientInterceptor(c.GetRequiredService<RpcClientInterceptor.Options>(), c));
 
-        // System services
-        Services.TryAddSingleton(c => new RpcSystemCalls(c));
-
         Configuration = GetConfiguration(services);
-        HasService<IRpcSystemCalls>(RpcSystemCalls.Name)
-            .WithServer<RpcSystemCalls>()
-            .WithClient<IRpcSystemCallsClient>();
+
+        // System services
+        if (!Configuration.Services.ContainsKey(typeof(IRpcSystemCalls))) {
+            Services.AddSingleton(c => new RpcSystemCalls(c));
+            AddService<IRpcSystemCalls>(cfg => cfg.With<RpcSystemCalls, IRpcSystemCalls>(RpcSystemCalls.Name));
+        }
     }
 
-    public RpcServiceConfiguration HasService<TService>(Symbol name = default)
-        => HasService(typeof(TService), name);
-    public RpcServiceConfiguration HasService(Type serviceType, Symbol name = default)
+    public RpcBuilder AddService<TService>(
+        Func<RpcServiceConfiguration<TService>, RpcServiceConfiguration<TService>>? serviceConfigurationBuilder = null)
     {
-        var service = Configuration.Services.GetValueOrDefault(serviceType);
-        if (service == null) {
-            service = new RpcServiceConfiguration(serviceType, name);
-            Configuration.Services.Add(serviceType, service);
-        }
-        return service;
+        var serviceType = typeof(TService);
+        if (Configuration.Services.ContainsKey(serviceType))
+            throw Errors.ServiceAlreadyExists(serviceType);
+
+        var cfg = new RpcServiceConfiguration<TService>();
+        if (serviceConfigurationBuilder != null)
+            cfg = serviceConfigurationBuilder.Invoke(cfg);
+        cfg.RequireValid(serviceType);
+
+        Configuration.Services[serviceType] = cfg;
+        if (cfg.ClientType != cfg.ServerType)
+            Services.AddSingleton(cfg.ClientType, c => c.RpcHub().GetClient(cfg.ClientType));
+        return this;
+    }
+
+    public RpcBuilder AddService(
+        Type serviceType,
+        Func<RpcServiceConfiguration, RpcServiceConfiguration>? serviceConfigurationBuilder = null)
+    {
+        if (Configuration.Services.ContainsKey(serviceType))
+            throw Errors.ServiceAlreadyExists(serviceType);
+
+        var cfg = new RpcServiceConfiguration(serviceType);
+        if (serviceConfigurationBuilder != null)
+            cfg = serviceConfigurationBuilder.Invoke(cfg);
+        cfg.RequireValid(serviceType);
+
+        Configuration.Services[serviceType] = cfg;
+        if (cfg.ClientType != cfg.ServerType)
+            Services.AddSingleton(cfg.ClientType, c => c.RpcHub().GetClient(cfg.ClientType));
+        return this;
     }
 
     public RpcBuilder RemoveService<TService>()
         => RemoveService(typeof(TService));
     public RpcBuilder RemoveService(Type serviceType)
     {
+        if (!Configuration.Services.TryGetValue(serviceType, out var cfg))
+            return this;
+
         Configuration.Services.Remove(serviceType);
-        return this;
-    }
-
-    public RpcBuilder ClearServices()
-    {
-        Configuration.Services.Clear();
-        return this;
-    }
-
-    public RpcBuilder RegisterClients()
-    {
-        foreach (var service in Configuration.Services.Values) {
-            var clientType = service.ClientType;
-            if (clientType == service.ServerType)
-                continue;
-
-            Services.AddSingleton(clientType, c => c.RpcHub().GetClient(clientType));
-        }
+        if (cfg.ClientType != cfg.ServerType)
+            Services.RemoveAll(cfg.ClientType);
         return this;
     }
 

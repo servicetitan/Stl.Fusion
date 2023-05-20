@@ -89,10 +89,7 @@ public class RpcTest : TestBase
             var channel = peer.Name == serverPeerName ? cp.Channel1 : cp.Channel2;
             return Task.FromResult(channel);
         });
-        rpc.HasService<ISimpleRpcService>()
-            .WithServer<SimpleRpcService>()
-            .WithClient<ISimpleRpcServiceClient>();
-        rpc.RegisterClients();
+        rpc.AddService<ISimpleRpcService>(cfg => cfg.With<SimpleRpcService, ISimpleRpcServiceClient>());
 
         var c = services.BuildServiceProvider();
         _ = c.RpcHub().GetPeer(serverPeerName);
