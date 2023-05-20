@@ -1,5 +1,4 @@
 using Stl.Interception;
-using Stl.Internal;
 
 namespace Stl.Rpc.Infrastructure;
 
@@ -11,8 +10,9 @@ public interface IRpcOutboundCall : IRpcCall
 
     RpcMessage CreateMessage(long callId);
     ValueTask Send(bool isRetry = false);
-    void CompleteWithOk(object? result);
-    void CompleteWithError(Exception error);
+    bool TryCompleteWithOk(object? result);
+    bool TryCompleteWithError(Exception error);
+    bool TryCompleteWithCancel(CancellationToken cancellationToken);
 }
 
 public interface IRpcOutboundCall<TResult> : IRpcOutboundCall
@@ -50,21 +50,36 @@ public class RpcOutboundCall<TResult> : RpcCall<TResult>, IRpcOutboundCall<TResu
         return peer.Send(message, Context.CancellationToken);
     }
 
-    public virtual void CompleteWithOk(object? result)
+    public virtual bool TryCompleteWithOk(object? result)
     {
         try {
-            if (_resultSource.TrySetResult((TResult)result!))
-                Context.Peer!.Calls.Outbound.TryRemove(Id, this);
+            if (!_resultSource.TrySetResult((TResult)result!))
+                return false;
+
+            Context.Peer!.Calls.Outbound.TryRemove(Id, this);
+            return true;
         }
         catch (Exception e) {
-            CompleteWithError(e);
+            return TryCompleteWithError(e);
         }
     }
 
-    public virtual void CompleteWithError(Exception error)
+    public virtual bool TryCompleteWithError(Exception error)
     {
-        if (_resultSource.TrySetException(error))
-            Context.Peer!.Calls.Outbound.TryRemove(Id, this);
+        if (!_resultSource.TrySetException(error))
+            return false;
+
+        Context.Peer!.Calls.Outbound.TryRemove(Id, this);
+        return true;
+    }
+
+    public virtual bool TryCompleteWithCancel(CancellationToken cancellationToken)
+    {
+        if (!_resultSource.TrySetCanceled(cancellationToken))
+            return false;
+
+        Context.Peer!.Calls.Outbound.TryRemove(Id, this);
+        return true;
     }
 
     public virtual RpcMessage CreateMessage(long callId)
