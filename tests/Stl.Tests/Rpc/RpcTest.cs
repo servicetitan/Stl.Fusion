@@ -70,10 +70,11 @@ public class RpcTest : TestBase
         var services = CreateServerServices();
         var peer = services.RpcHub().GetPeer(default);
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
+        await client.Div(1, 1);
 
         var startedAt = CpuTimestamp.Now;
         for (var i = iterationCount; i > 0; i--)
-            await client.Div(1, 2);
+            await client.Div(i, 1);
         var elapsed = startedAt.Elapsed;
 
         Out.WriteLine($"{iterationCount}: {iterationCount / elapsed.TotalSeconds:F} ops/s");
