@@ -9,7 +9,7 @@ public record RpcConfiguration
 
     public Func<Type, Symbol> ServiceNameBuilder { get; init; } = DefaultServiceNameBuilder;
     public Func<RpcMethodDef, Symbol> MethodNameBuilder { get; init; } = DefaultMethodNameBuilder;
-    public RpcArgumentSerializer ArgumentSerializer { get; init; } = RpcByteArgumentSerializer.Default;
+    public RpcArgumentSerializer ArgumentSerializer { get; init; } = RpcArgumentSerializer.Default;
 
     public static Symbol DefaultServiceNameBuilder(Type serviceType)
         => serviceType.GetName();
