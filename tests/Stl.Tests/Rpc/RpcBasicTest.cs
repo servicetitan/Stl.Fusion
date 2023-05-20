@@ -49,6 +49,9 @@ public class RpcBasicTest : TestBase
 
     [Theory]
     [InlineData(1000)]
+    [InlineData(5000)]
+    [InlineData(10_000)]
+    [InlineData(30_000)]
     [InlineData(100_000)]
     public async Task PerformanceTest(int iterationCount)
     {

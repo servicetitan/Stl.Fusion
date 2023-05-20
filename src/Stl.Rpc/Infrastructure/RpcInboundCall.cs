@@ -128,10 +128,7 @@ public class RpcInboundCall<TResult> : RpcCall<TResult>, IRpcInboundCall
                     .MakeGenericType(argumentTypes);
             }
 
-            var deserializedArguments = peer.ArgumentDeserializer.Invoke(message.Arguments, argumentListType);
-            if (deserializedArguments == null)
-                throw Errors.NonDeserializableArguments(MethodDef);
-
+            var deserializedArguments = peer.ArgumentSerializer.Deserialize(message, argumentListType);
             if (argumentListType == MethodDef.ArgumentListType)
                 arguments = deserializedArguments;
             else {

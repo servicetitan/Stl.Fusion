@@ -99,8 +99,6 @@ public class RpcOutboundCall<TResult> : RpcCall<TResult>, IRpcOutboundCall<TResu
                 arguments.SetFrom(oldArguments);
             }
         }
-
-        var serializedArguments = peer.ArgumentSerializer.Invoke(arguments, arguments.GetType());
-        return new RpcMessage(ServiceDef.Name, MethodDef.Name, serializedArguments, headers, callId);
+        return peer.ArgumentSerializer.CreateMessage(callId, MethodDef, arguments, headers);
     }
 }

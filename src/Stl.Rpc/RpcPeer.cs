@@ -17,8 +17,7 @@ public class RpcPeer : WorkerBase
 
     public RpcHub Hub { get; }
     public Symbol Name { get; init; }
-    public Func<ArgumentList, Type, object?> ArgumentSerializer { get; init; }
-    public Func<object?, Type, ArgumentList> ArgumentDeserializer { get; init; }
+    public RpcArgumentSerializer ArgumentSerializer { get; init; }
     public Func<RpcServiceDef, bool> LocalServiceFilter { get; init; }
     public RpcPeerConnector PeerConnector { get; init; }
     public RpcCallRegistry Calls { get; init; }
@@ -31,7 +30,6 @@ public class RpcPeer : WorkerBase
         Hub = hub;
         Name = name;
         ArgumentSerializer = Hub.Configuration.ArgumentSerializer;
-        ArgumentDeserializer = Hub.Configuration.ArgumentDeserializer;
         LocalServiceFilter = static _ => true;
         PeerConnector = Hub.PeerConnector;
         Calls = new RpcCallRegistry(this);
