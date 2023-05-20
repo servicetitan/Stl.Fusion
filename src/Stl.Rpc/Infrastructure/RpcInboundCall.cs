@@ -81,7 +81,11 @@ public class RpcInboundCall<TResult> : RpcCall<TResult>, IRpcInboundCall
 
         Context.Peer.Calls.Inbound.TryRemove(Id, this); // Should always succeed
         CancellationTokenSource?.Dispose();
-        await Hub.SystemCallSender.Complete(Context.Peer, Id, result).ConfigureAwait(false);
+        if (!CancellationToken.IsCancellationRequested) {
+            // If the opposite is true, the call is already cancelled @ the outbound end,
+            // so no notification is needed 
+            await Hub.SystemCallSender.Complete(Context.Peer, Id, result).ConfigureAwait(false);
+        }
     }
 
     protected ArgumentList GetArguments()

@@ -13,6 +13,7 @@ public class RpcTest : TestBase
     public async Task BasicTest()
     {
         var services = CreateServerServices();
+        var peer = services.RpcHub().GetPeer(default);
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         (await client.Div(6, 2)).Should().Be(3);
         (await client.Div(6, 2)).Should().Be(3);
@@ -20,16 +21,22 @@ public class RpcTest : TestBase
         (await client.Div(null, 2)).Should().Be(null);
         await Assert.ThrowsAsync<DivideByZeroException>(
             () => client.Div(1, 0));
+
+        peer.Calls.Outbound.Count.Should().Be(0);
+        peer.Calls.Inbound.Count.Should().Be(0);
     }
 
     [Fact]
     public async Task DelayTest()
     {
         var services = CreateServerServices();
+        var peer = services.RpcHub().GetPeer(default);
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         var startedAt = CpuTimestamp.Now;
         await client.Delay(TimeSpan.FromMilliseconds(200));
         startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(100, 500);
+        peer.Calls.Outbound.Count.Should().Be(0);
+        peer.Calls.Inbound.Count.Should().Be(0);
 
         {
             using var cts = new CancellationTokenSource(1);
@@ -37,6 +44,8 @@ public class RpcTest : TestBase
             await Assert.ThrowsAnyAsync<OperationCanceledException>(
                 () => client.Delay(TimeSpan.FromHours(1), cts.Token));
             startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(0, 500);
+            peer.Calls.Outbound.Count.Should().Be(0);
+            peer.Calls.Inbound.Count.Should().Be(0);
         }
 
         {
@@ -45,6 +54,8 @@ public class RpcTest : TestBase
             await Assert.ThrowsAnyAsync<OperationCanceledException>(
                 () => client.Delay(TimeSpan.FromHours(1), cts.Token));
             startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(300, 1000);
+            peer.Calls.Outbound.Count.Should().Be(0);
+            peer.Calls.Inbound.Count.Should().Be(0);
         }
     }
 
@@ -57,13 +68,17 @@ public class RpcTest : TestBase
     public async Task PerformanceTest(int iterationCount)
     {
         var services = CreateServerServices();
+        var peer = services.RpcHub().GetPeer(default);
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
 
         var startedAt = CpuTimestamp.Now;
         for (var i = iterationCount; i > 0; i--)
             await client.Div(1, 2);
         var elapsed = startedAt.Elapsed;
+
         Out.WriteLine($"{iterationCount}: {iterationCount / elapsed.TotalSeconds:F} ops/s");
+        peer.Calls.Outbound.Count.Should().Be(0);
+        peer.Calls.Inbound.Count.Should().Be(0);
     }
 
     private IServiceProvider CreateServerServices()
