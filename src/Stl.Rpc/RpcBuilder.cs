@@ -35,6 +35,7 @@ public readonly struct RpcBuilder
             var hub = c.RpcHub();
             return _ => hub.GetPeer(Symbol.Empty);
         });
+        Services.AddSingleton(c => new RpcSystemCallSender(c));
 
         // Infrastructure
         Services.TryAddSingleton(c => new RpcServiceRegistry(c));

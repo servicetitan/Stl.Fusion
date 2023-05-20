@@ -14,28 +14,26 @@ public class RpcInboundContext
     public RpcPeer Peer { get; }
     public RpcMessage Message { get; }
     public List<RpcHeader> Headers => Message.Headers;
-    public CancellationToken CancellationToken { get; }
     public RpcMethodDef MethodDef => _methodDef ??= GetMethodDef();
     public ArgumentList? Arguments { get; set; }
     public IRpcInboundCall? Call { get; private set; }
 
-    public RpcInboundContext(RpcPeer peer, RpcMessage message, CancellationToken cancellationToken)
+    public RpcInboundContext(RpcPeer peer, RpcMessage message)
     {
         Peer = peer;
         Message = message;
-        CancellationToken = cancellationToken;
     }
 
     public Scope Activate()
         => new(this);
 
-    public Task ProcessCall()
+    public Task ProcessCall(CancellationToken cancellationToken)
     {
         if (Call != null)
             throw Stl.Internal.Errors.AlreadyInvoked(nameof(ProcessCall));
 
         Call = MethodDef.CallFactory.CreateInbound(this);
-        return Call.Process();
+        return Call.Process(cancellationToken);
     }
 
     // Private methods

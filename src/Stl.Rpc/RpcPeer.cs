@@ -57,13 +57,12 @@ public class RpcPeer : WorkerBase
                 var channel = await Reconnect(lastError, tryIndex, cancellationToken).ConfigureAwait(false);
                 tryIndex = 0;
                 await foreach (var message in channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false)) {
-                    var context = new RpcInboundContext(this, message, cancellationToken);
-                    if (semaphore == null) {
-                        await ProcessMessage(context).ConfigureAwait(false);
-                    }
+                    var context = new RpcInboundContext(this, message);
+                    if (semaphore == null)
+                        await ProcessMessage(context, null, cancellationToken).ConfigureAwait(false);
                     else {
                         await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
-                        _ = Task.Run(() => ProcessMessage(context, semaphore), CancellationToken.None);
+                        _ = Task.Run(() => ProcessMessage(context, semaphore, cancellationToken), CancellationToken.None);
                     }
                 }
                 throw Errors.ConnectionIsClosed();
@@ -156,11 +155,14 @@ public class RpcPeer : WorkerBase
         }
     }
 
-    protected virtual async Task ProcessMessage(RpcInboundContext context, SemaphoreSlim? semaphore = null)
+    protected virtual async Task ProcessMessage(
+        RpcInboundContext context,
+        SemaphoreSlim? semaphore,
+        CancellationToken cancellationToken)
     {
         var scope = context.Activate();
         try {
-            await context.ProcessCall().ConfigureAwait(false);
+            await context.ProcessCall(cancellationToken).ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             Log.LogError(e, "Failed to process message: {Message}", context.Message);

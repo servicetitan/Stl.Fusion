@@ -16,8 +16,8 @@ public class RpcMethodDef : MethodDef
     public Type[] RemoteParameterTypes { get; }
     public Type RemoteArgumentListType { get; }
     public RpcCallFactory CallFactory => _callFactory ??= Hub.CallFactoryProvider.Create(this);
+    public bool HasObjectTypedArguments { get; }
     public bool NoWait { get; }
-    public bool RequiresValidation { get; }
 
     public RpcMethodDef(RpcServiceDef service, MethodInfo method, Func<RpcMethodDef, Symbol> methodNameBuilder)
         : base(service.Type, method)
@@ -43,7 +43,7 @@ public class RpcMethodDef : MethodDef
             RemoteParameterTypes = ParameterTypes;
             RemoteArgumentListType = ArgumentListType;
         }
-        RequiresValidation = RemoteParameterTypes.Any(type => typeof(object) == type);
+        HasObjectTypedArguments = RemoteParameterTypes.Any(type => typeof(object) == type);
         NoWait = UnwrappedReturnType == typeof(RpcNoWait);
 
         Service = service;

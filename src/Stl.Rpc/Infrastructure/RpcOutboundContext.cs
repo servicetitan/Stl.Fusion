@@ -27,10 +27,10 @@ public class RpcOutboundContext
     public Scope Activate()
         => new(this);
 
-    public Task StartCall(RpcMethodDef methodDef, ArgumentList arguments)
+    public async Task SendCall(RpcMethodDef methodDef, ArgumentList arguments)
     {
         if (Call != null)
-            throw Stl.Internal.Errors.AlreadyInvoked(nameof(StartCall));
+            throw Stl.Internal.Errors.AlreadyInvoked(nameof(SendCall));
 
         // MethodDef, Arguments, CancellationToken
         MethodDef = methodDef;
@@ -43,7 +43,20 @@ public class RpcOutboundContext
 
         // Call
         var call = Call = methodDef.CallFactory.CreateOutbound(this);
-        return call.Send();
+        await call.Send().ConfigureAwait(false);
+
+        if (!MethodDef.NoWait) {
+            var ctr = CancellationToken.Register(state => {
+                var context = (RpcOutboundContext)state;
+                var peer1 = context.Peer!;
+                var call1 = context.Call!;
+                var systemCallSender = peer1.Hub.SystemCallSender;
+                systemCallSender.Cancel(peer1, call1.Id);
+            }, this, false);
+            _ = call.ResultTask.ContinueWith(
+                _ => ctr.Dispose(),
+                CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+        }
     }
 
     // Nested types

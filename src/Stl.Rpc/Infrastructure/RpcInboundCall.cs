@@ -9,31 +9,65 @@ namespace Stl.Rpc.Infrastructure;
 
 public interface IRpcInboundCall : IRpcCall
 {
-    Task Process();
+    RpcInboundContext Context { get; }
+    long Id { get; }
+    CancellationTokenSource? CancellationTokenSource { get; }
+    CancellationToken CancellationToken { get; }
+
+    Task Process(CancellationToken cancellationToken);
 }
 
 public class RpcInboundCall<TResult> : RpcCall<TResult>, IRpcInboundCall
 {
     public RpcInboundContext Context { get; }
+    public long Id { get; }
+    public CancellationTokenSource? CancellationTokenSource { get; protected set; }
+    public CancellationToken CancellationToken { get; protected set; }
 
-    public RpcInboundCall(RpcInboundContext context) : base(context.MethodDef) 
-        => Context = context;
-
-    public virtual async Task Process()
+    public RpcInboundCall(RpcInboundContext context) : base(context.MethodDef)
     {
-        var cancellationToken = Context.CancellationToken;
-        var result = default(Result<TResult>);
+        Context = context;
+        Id =  MethodDef.NoWait ? 0 : Context.Message.CallId;
+    }
+
+    public virtual async Task Process(CancellationToken cancellationToken)
+    {
+        Result<TResult> result;
+        if (Id != 0) {
+            if (CancellationTokenSource != null)
+                throw Stl.Internal.Errors.AlreadyInvoked(nameof(Process));
+
+            CancellationTokenSource = cancellationToken.CreateLinkedTokenSource();
+            CancellationToken = CancellationTokenSource.Token;
+            if (!Context.Peer.Calls.Inbound.TryAdd(Id, this)) {
+                var log = Hub.Services.LogFor(GetType());
+                log.LogError("Inbound {MethodDef} call with duplicate Id = {Id}", MethodDef, Id);
+                CancellationTokenSource.CancelAndDisposeSilently();
+                return;
+            }
+        }
+        else
+            CancellationToken = cancellationToken;
+
+        // NOTE(AY):
+        // - CancellationToken below is a token associated with the call itself,
+        //   which can be cancelled by the remote caller
+        // - and cancellationToken is the token associated with call processing,
+        //   which can be cancelled if peer dies.
+
         try {
             var arguments = Context.Arguments = GetArguments();
             var ctIndex = MethodDef.CancellationTokenIndex;
             if (ctIndex >= 0)
-                arguments.SetCancellationToken(ctIndex, cancellationToken);
+                arguments.SetCancellationToken(ctIndex, CancellationToken);
 
             var services = Hub.Services;
             var service = services.GetRequiredService(ServiceDef.ServerType);
             var untypedResultTask = MethodDef.Invoker.Invoke(service, arguments);
             await untypedResultTask.ConfigureAwait(false);
-            if (!MethodDef.IsAsyncVoidMethod) {
+            if (MethodDef.IsAsyncVoidMethod)
+                result = default;
+            else {
                 var resultTask = (Task<TResult>)untypedResultTask;
                 result = resultTask.ToResultSynchronously();
             }
@@ -41,27 +75,13 @@ public class RpcInboundCall<TResult> : RpcCall<TResult>, IRpcInboundCall
         catch (Exception error) {
             result = Result.Error<TResult>(error);
         }
-        await Send(result, cancellationToken).ConfigureAwait(false);
-    }
 
-    protected Task Send(Result<TResult> result, CancellationToken cancellationToken)
-    {
-        if (Context.MethodDef.NoWait)
-            return Task.CompletedTask; // NoWait call
+        if (Id == 0)
+            return; // NoWait call
 
-        var callId = Context.Message.CallId;
-        if (callId == 0)
-            return Task.CompletedTask; // No result implied
-
-        var outboundContext = new RpcOutboundContext();
-        using var _ = outboundContext.Activate();
-        outboundContext.Peer = Context.Peer;
-        outboundContext.RelatedCallId = callId;
-
-        var systemCalls = Hub.Services.GetRequiredService<IRpcSystemCallsClient>();
-        return result.IsValue(out var value)
-            ? systemCalls.Result(value)
-            : systemCalls.Error(result.Error.ToExceptionInfo());
+        Context.Peer.Calls.Inbound.TryRemove(Id, this); // Should always succeed
+        CancellationTokenSource?.Dispose();
+        await Hub.SystemCallSender.Complete(Context.Peer, Id, result).ConfigureAwait(false);
     }
 
     protected ArgumentList GetArguments()
@@ -75,7 +95,7 @@ public class RpcInboundCall<TResult> : RpcCall<TResult>, IRpcInboundCall
 
         var arguments = ArgumentList.Empty;
         var argumentListType = MethodDef.RemoteArgumentListType;
-        if (argumentListType.IsGenericType) {
+        if (argumentListType.IsGenericType) { // == Has 1+ arguments
             var actualArgumentListType = argumentListType;
             Type[] argumentTypes;
             var headers = Context.Headers;
@@ -100,17 +120,17 @@ public class RpcInboundCall<TResult> : RpcCall<TResult>, IRpcInboundCall
                     argumentTypes[argumentIndex] = argumentType;
                 }
 
+                if (MethodDef.HasObjectTypedArguments) {
+                    var argumentTypeResolver = (IRpcArgumentTypeResolver)Hub.Services
+                        .GetRequiredService(ServiceDef.ServerType);
+                    argumentTypeResolver.ResolveArgumentTypes(Context, argumentTypes);
+                }
+
                 actualArgumentListType = argumentListType
                     .GetGenericTypeDefinition()
                     .MakeGenericType(argumentTypes);
             }
-            else
-                argumentTypes = MethodDef.RemoteParameterTypes;
 
-            if (MethodDef.RequiresValidation) {
-                var callValidator = (IRpcCallValidator)Hub.Services.GetRequiredService(ServiceDef.ServerType);
-                callValidator.ValidateCall(Context, argumentTypes);
-            }
             var deserializedArguments = peer.ArgumentDeserializer.Invoke(message.Arguments, actualArgumentListType);
             if (deserializedArguments == null)
                 throw Errors.NonDeserializableArguments(MethodDef);

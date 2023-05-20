@@ -23,7 +23,7 @@ public class RpcClientInterceptor : InterceptorBase
         return invocation => {
             using var scope = RpcOutboundContext.NewOrActive();
             var context = scope.Context;
-            _ = context.StartCall(rpcMethodDef, invocation.Arguments);
+            _ = context.SendCall(rpcMethodDef, invocation.Arguments);
             if (rpcMethodDef.NoWait)
                 return rpcMethodDef.ReturnsValueTask
                     ? RpcNoWait.ValueTasks.Completed
