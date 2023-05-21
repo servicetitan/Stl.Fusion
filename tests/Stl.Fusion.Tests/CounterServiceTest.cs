@@ -12,7 +12,7 @@ public class CounterServiceTest : SimpleFusionTestBase
     [Fact]
     public async Task BasicTest()
     {
-        var services = CreateServicesWithComputeService<CounterService>();
+        var services = CreateServices();
         var counters = services.GetRequiredService<CounterService>();
 
         var c = Computed.GetExisting(() => counters.Get("a"));
@@ -32,7 +32,7 @@ public class CounterServiceTest : SimpleFusionTestBase
     [Fact]
     public async Task LongWaitTest()
     {
-        var services = CreateServicesWithComputeService<CounterService>();
+        var services = CreateServices();
         var counters = services.GetRequiredService<CounterService>();
 
         var key = "a wait";
@@ -60,7 +60,7 @@ public class CounterServiceTest : SimpleFusionTestBase
     [Fact]
     public async Task ConcurrentWaitTest()
     {
-        var services = CreateServicesWithComputeService<CounterService>();
+        var services = CreateServices();
         var counters = services.GetRequiredService<CounterService>();
 
         // Case 1: Tasks for both keys are started, but just the first one is used
@@ -100,6 +100,6 @@ public class CounterServiceTest : SimpleFusionTestBase
     protected override void ConfigureServices(ServiceCollection services)
     {
         base.ConfigureServices(services);
-        services.AddFusion().AddAuthentication();
+        services.AddFusion().AddComputeService<CounterService>();
     }
 }
