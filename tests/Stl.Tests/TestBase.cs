@@ -20,5 +20,4 @@ public abstract class TestBase : IAsyncLifetime
             testOutputCapture,
             _ => Out = oldOut);
     }
-
 }

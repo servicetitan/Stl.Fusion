@@ -4,13 +4,10 @@ public class AnonymousComputedTest : SimpleFusionTestBase
 {
     public AnonymousComputedTest(ITestOutputHelper @out) : base(@out) { }
 
-    protected override void ConfigureCommonServices(ServiceCollection services)
-    { }
-
     [Fact]
     public async Task BasicTest()
     {
-        var services = CreateServiceProvider();
+        var services = CreateServices();
 
         var id = 0;
         var ci = new AnonymousComputedSource<int>(services,
@@ -40,7 +37,7 @@ public class AnonymousComputedTest : SimpleFusionTestBase
     [Fact]
     public async Task ComputedOptionsTest()
     {
-        var services = CreateServiceProvider();
+        var services = CreateServices();
 
         var id = 0;
         var ci = new AnonymousComputedSource<int>(services,

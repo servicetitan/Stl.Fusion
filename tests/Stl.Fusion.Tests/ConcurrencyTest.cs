@@ -9,17 +9,11 @@ public class ConcurrencyTest : SimpleFusionTestBase
 {
     public ConcurrencyTest(ITestOutputHelper @out) : base(@out) { }
 
-    protected override void ConfigureCommonServices(ServiceCollection services)
-    {
-        var fusion = services.AddFusion();
-        fusion.AddComputeService<CounterSumService>();
-    }
-
     [Fact]
     public async Task StateConcurrencyTest()
     {
         const int iterationCount = 10_000;
-        var services = CreateServiceProvider();
+        var services = CreateServices();
         var factory = services.StateFactory();
 
         var updateDelayer = FixedDelayer.ZeroUnsafe;
@@ -84,7 +78,7 @@ public class ConcurrencyTest : SimpleFusionTestBase
     public async Task AnonymousComputedConcurrencyTest()
     {
         const int iterationCount = 10_000;
-        var services = CreateServiceProvider();
+        var services = CreateServices();
         var factory = services.StateFactory();
 
         var updateDelayer = FixedDelayer.ZeroUnsafe;
@@ -150,7 +144,7 @@ public class ConcurrencyTest : SimpleFusionTestBase
     public async Task ComputedConcurrencyTest()
     {
         const int iterationCount = 10_000;
-        var services = CreateServiceProvider();
+        var services = CreateServices();
         var counterSum = services.GetRequiredService<CounterSumService>();
 
         var updateDelayer = FixedDelayer.ZeroUnsafe;
@@ -226,5 +220,11 @@ public class ConcurrencyTest : SimpleFusionTestBase
                 }
             }
         }
+    }
+
+    protected override void ConfigureServices(ServiceCollection services)
+    {
+        base.ConfigureServices(services);
+        services.AddFusion().AddComputeService<CounterSumService>();
     }
 }

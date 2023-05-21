@@ -6,12 +6,10 @@ public class MutableStateTest : SimpleFusionTestBase
 {
     public MutableStateTest(ITestOutputHelper @out) : base(@out) { }
 
-    protected override void ConfigureCommonServices(ServiceCollection services) { }
-
     [Fact]
     public async Task BasicTest()
     {
-        var factory = CreateServiceProvider().StateFactory();
+        var factory = CreateServices().StateFactory();
 
         var ms1 = factory.NewMutable<string>("A");
         ms1.Updated += (s, _) => Out.WriteLine($"ms1 = {s.ValueOrDefault}");
@@ -55,7 +53,7 @@ public class MutableStateTest : SimpleFusionTestBase
     [Fact]
     public async Task SkipUpdateWhenEqualTest()
     {
-        var factory = CreateServiceProvider().StateFactory();
+        var factory = CreateServices().StateFactory();
         var o1 = new object();
         var o2 = new object();
 
@@ -96,7 +94,7 @@ public class MutableStateTest : SimpleFusionTestBase
             }
         }
 
-        var services = CreateServiceProviderFor<CounterService>();
+        var services = CreateServicesWithComputeService<CounterService>();
         var counters = services.GetRequiredService<CounterService>();
         var aComputed = await Computed.Capture(() => counters.Get("a"));
         _ = Task.Run(() => Watch(nameof(aComputed), aComputed));

@@ -1,18 +1,17 @@
 using Stl.Rpc;
-using Stl.Rpc.Infrastructure;
 using Stl.Testing.Collections;
 
 namespace Stl.Tests.Rpc;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class RpcTest : TestBase
+public class RpcTest : RpcTestBase
 {
     public RpcTest(ITestOutputHelper @out) : base(@out) { }
 
     [Fact]
     public async Task BasicTest()
     {
-        var services = CreateServerServices();
+        var services = CreateServices();
         var peer = services.RpcHub().GetPeer(default);
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         (await client.Div(6, 2)).Should().Be(3);
@@ -29,7 +28,7 @@ public class RpcTest : TestBase
     [Fact]
     public async Task DelayTest()
     {
-        var services = CreateServerServices();
+        var services = CreateServices();
         var peer = services.RpcHub().GetPeer(default);
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         var startedAt = CpuTimestamp.Now;
@@ -67,7 +66,7 @@ public class RpcTest : TestBase
     [InlineData(100_000)]
     public async Task PerformanceTest(int iterationCount)
     {
-        var services = CreateServerServices();
+        var services = CreateServices();
         var peer = services.RpcHub().GetPeer(default);
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         await client.Div(1, 1);
@@ -83,48 +82,12 @@ public class RpcTest : TestBase
         peer.Calls.Inbound.Count.Should().Be(0);
     }
 
-    private IServiceProvider CreateServerServices()
+    protected override void ConfigureServices(ServiceCollection services)
     {
-        var services = new ServiceCollection();
-        var channelPair = CreateRpcChannelPair();
-        services.AddSingleton(channelPair);
+        base.ConfigureServices(services);
         services.AddSingleton<SimpleRpcService>();
 
         var rpc = services.AddRpc();
-        var serverPeerName = new Symbol("server");
-        rpc.HasPeerFactory(c => {
-            var hub = c.RpcHub();
-            return name => new RpcPeer(hub, name) {
-                LocalServiceFilter = name == serverPeerName
-                    ? _ => true
-                    : _ => false
-            };
-        });
-        rpc.HasPeerConnector((peer, _) => {
-            var c = peer.Hub.Services;
-            var cp = c.GetRequiredService<ChannelPair<RpcMessage>>();
-            var channel = peer.Name == serverPeerName ? cp.Channel1 : cp.Channel2;
-            return Task.FromResult(channel);
-        });
         rpc.AddService<ISimpleRpcService>(cfg => cfg.With<SimpleRpcService, ISimpleRpcServiceClient>());
-
-        var c = services.BuildServiceProvider();
-        _ = c.RpcHub().GetPeer(serverPeerName);
-        return c;
-    }
-
-    private ChannelPair<RpcMessage> CreateRpcChannelPair()
-        => CreateChannelPair<RpcMessage>();
-
-    private ChannelPair<T> CreateChannelPair<T>()
-    {
-        var options = new UnboundedChannelOptions() {
-            SingleReader = true,
-            SingleWriter = false,
-            AllowSynchronousContinuations = true,
-        };
-        return ChannelPair.CreateTwisted(
-            Channel.CreateUnbounded<T>(options),
-            Channel.CreateUnbounded<T>(options));
     }
 }

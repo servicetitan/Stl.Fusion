@@ -1,46 +1,19 @@
-using Stl.Testing.Output;
-using Xunit.DependencyInjection.Logging;
+using Stl.Tests.Rpc;
 
 namespace Stl.Fusion.Tests;
 
-public abstract class SimpleFusionTestBase : TestBase
+public abstract class SimpleFusionTestBase : RpcTestBase
 {
     protected SimpleFusionTestBase(ITestOutputHelper @out) : base(@out) { }
 
-    protected IServiceProvider CreateServiceProvider(
-        Action<IServiceCollection>? configureServices = null)
+    protected override void ConfigureServices(ServiceCollection services)
     {
-        var services = new ServiceCollection();
-        services.AddLogging(logging => {
-            logging.ClearProviders();
-            logging.SetMinimumLevel(LogLevel.Debug);
-            logging.AddDebug();
-            logging.AddProvider(
-                new XunitTestOutputLoggerProvider(
-                    new TestOutputHelperAccessor(Out),
-                    (_, level) => level >= LogLevel.Debug));
-        });
+        base.ConfigureServices(services);
         services.AddFusion();
-        ConfigureCommonServices(services);
-        configureServices?.Invoke(services);
-        return services.BuildServiceProvider();
     }
 
-    protected IServiceProvider CreateServiceProviderFor<TService>()
+    protected IServiceProvider CreateServicesWithComputeService<TService>()
         where TService : class, IComputeService
-        => CreateServiceProvider(
+        => CreateServices(
             services => services.AddFusion().AddComputeService<TService>());
-
-    protected abstract void ConfigureCommonServices(ServiceCollection services);
-
-    protected virtual Task Delay(double seconds)
-        => Task.Delay(TimeSpan.FromSeconds(seconds));
-
-    protected void GCCollect()
-    {
-        for (var i = 0; i < 3; i++) {
-            GC.Collect();
-            Thread.Sleep(10);
-        }
-    }
 }

@@ -9,13 +9,10 @@ public class CounterServiceTest : SimpleFusionTestBase
 {
     public CounterServiceTest(ITestOutputHelper @out) : base(@out) { }
 
-    protected override void ConfigureCommonServices(ServiceCollection services)
-        => services.AddFusion().AddAuthentication();
-
     [Fact]
     public async Task BasicTest()
     {
-        var services = CreateServiceProviderFor<CounterService>();
+        var services = CreateServicesWithComputeService<CounterService>();
         var counters = services.GetRequiredService<CounterService>();
 
         var c = Computed.GetExisting(() => counters.Get("a"));
@@ -35,7 +32,7 @@ public class CounterServiceTest : SimpleFusionTestBase
     [Fact]
     public async Task LongWaitTest()
     {
-        var services = CreateServiceProviderFor<CounterService>();
+        var services = CreateServicesWithComputeService<CounterService>();
         var counters = services.GetRequiredService<CounterService>();
 
         var key = "a wait";
@@ -63,7 +60,7 @@ public class CounterServiceTest : SimpleFusionTestBase
     [Fact]
     public async Task ConcurrentWaitTest()
     {
-        var services = CreateServiceProviderFor<CounterService>();
+        var services = CreateServicesWithComputeService<CounterService>();
         var counters = services.GetRequiredService<CounterService>();
 
         // Case 1: Tasks for both keys are started, but just the first one is used
@@ -98,5 +95,11 @@ public class CounterServiceTest : SimpleFusionTestBase
         cImpl = c;
         c.Error!.GetType().Should().Be(typeof(ArgumentOutOfRangeException));
         cImpl.Used.Length.Should().Be(1);
+    }
+
+    protected override void ConfigureServices(ServiceCollection services)
+    {
+        base.ConfigureServices(services);
+        services.AddFusion().AddAuthentication();
     }
 }

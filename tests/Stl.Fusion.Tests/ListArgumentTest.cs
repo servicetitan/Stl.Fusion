@@ -6,13 +6,10 @@ public class ListArgumentTest : SimpleFusionTestBase
 {
     public ListArgumentTest(ITestOutputHelper @out) : base(@out) { }
 
-    protected override void ConfigureCommonServices(ServiceCollection services)
-        => services.AddFusion().AddAuthentication();
-
     [Fact]
     public async Task BasicTest()
     {
-        var services = CreateServiceProviderFor<MathService>();
+        var services = CreateServicesWithComputeService<MathService>();
         var math = services.GetRequiredService<MathService>();
 
         var c1 = await Computed.Capture(() => math.Sum(null));
@@ -37,5 +34,11 @@ public class ListArgumentTest : SimpleFusionTestBase
                 c2.Should().NotBeSameAs(c1);
 #endif
         }
+    }
+
+    protected override void ConfigureServices(ServiceCollection services)
+    {
+        base.ConfigureServices(services);
+        services.AddFusion().AddAuthentication();
     }
 }

@@ -7,10 +7,7 @@ public class SessionParameterTest : SimpleFusionTestBase
 {
     public SessionParameterTest(ITestOutputHelper @out) : base(@out) { }
 
-    protected override void ConfigureCommonServices(ServiceCollection services)
-        => services.AddFusion().AddAuthentication();
-
-    private static object syncObject = new Object();
+    private static object _lock = new();
 
     [Fact]
     public async Task BasicTest()
@@ -28,7 +25,7 @@ public class SessionParameterTest : SimpleFusionTestBase
             }
         }
 
-        var services = CreateServiceProviderFor<PerUserCounterService>();
+        var services = CreateServicesWithComputeService<PerUserCounterService>();
         var counters = services.GetRequiredService<PerUserCounterService>();
         var sessionFactory = services.GetRequiredService<ISessionFactory>();
         var sessionA = sessionFactory.CreateSession();
@@ -70,5 +67,11 @@ public class SessionParameterTest : SimpleFusionTestBase
         (await baComputed.Update()).Value.Should().Be(1);
 
         stopCts.Cancel();
+    }
+
+    protected override void ConfigureServices(ServiceCollection services)
+    {
+        base.ConfigureServices(services);
+        services.AddFusion().AddAuthentication();
     }
 }

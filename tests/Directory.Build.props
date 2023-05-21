@@ -89,10 +89,12 @@
     <Using Include="Microsoft.Extensions.Logging.Abstractions" />
 
     <!-- Testing-related global usings -->
+    <Using Include="Stl.Tests.TestHelpers" Static="True" />
     <Using Include="FluentAssertions" />
     <Using Include="Stl.Testing" />
     <Using Include="Moq" />
     <Using Include="Xunit" />
+    <Using Include="Xunit.Abstractions" />
     <Using Include="Xunit.Abstractions" />
   </ItemGroup>
 
