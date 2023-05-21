@@ -30,7 +30,7 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
     }
 
     private volatile Computed<T>? _computingComputed;
-    private volatile IUpdateDelayer _updateDelayer;
+    private volatile IUpdateDelayer _updateDelayer = null!;
     private volatile Task? _whenDisposed;
     private readonly CancellationTokenSource _disposeTokenSource;
 
@@ -48,22 +48,21 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
     {
         _disposeTokenSource = new CancellationTokenSource();
         DisposeToken = _disposeTokenSource.Token;
-        _updateDelayer = options.UpdateDelayer ?? Services.GetRequiredService<IUpdateDelayer>();
+
         // ReSharper disable once VirtualMemberCallInConstructor
-        if (initialize) Initialize(options);
+        if (initialize)
+            Initialize(options);
     }
 
     protected override void Initialize(State<T>.Options options)
     {
-        if (UpdateCycleTask != null!)
-            return;
-
         base.Initialize(options);
+        var computedStateOptions = (Options)options;
+        _updateDelayer = computedStateOptions.UpdateDelayer ?? Services.GetRequiredService<IUpdateDelayer>();
 
         // Ideally we want to suppress execution context flow here,
         // because the Update is ~ a worker-style task.
-        var o = (Options) options;
-        if (o.MustFlowExecutionContext) {
+        if (computedStateOptions.MustFlowExecutionContext) {
             UpdateCycleTask = UpdateCycle();
         }
         else {

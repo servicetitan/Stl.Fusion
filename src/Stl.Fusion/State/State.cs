@@ -61,9 +61,9 @@ public abstract class State<T> : ComputedInput,
     private string? _category;
     private ILogger? _log;
 
-    protected VersionGenerator<LTag> VersionGenerator { get; set; }
-    protected ComputedOptions ComputedOptions { get; }
-    protected AsyncLock AsyncLock { get; }
+    protected VersionGenerator<LTag> VersionGenerator { get; set; } = null!;
+    protected ComputedOptions ComputedOptions { get; private set; } = null!;
+    protected AsyncLock AsyncLock { get; } = new(ReentryMode.CheckedFail);
     protected object Lock => AsyncLock;
     protected ILogger Log => _log ??= Services.LogFor(GetType());
 
@@ -132,16 +132,10 @@ public abstract class State<T> : ComputedInput,
     {
         Initialize(this, RuntimeHelpers.GetHashCode(this));
         Services = services;
-        _category = options.Category;
-        ComputedOptions = options.ComputedOptions;
-        VersionGenerator = options.VersionGenerator ?? services.VersionGenerator<LTag>();
-        options.EventConfigurator?.Invoke(this);
-        var untypedOptions = (IState.IOptions) options;
-        untypedOptions.EventConfigurator?.Invoke(this);
 
-        AsyncLock = new AsyncLock(ReentryMode.CheckedFail);
         // ReSharper disable once VirtualMemberCallInConstructor
-        if (initialize) Initialize(options);
+        if (initialize)
+            Initialize(options);
     }
 
     public void Deconstruct(out T value, out Exception? error)
@@ -174,6 +168,13 @@ public abstract class State<T> : ComputedInput,
 
     protected virtual void Initialize(Options options)
     {
+        _category = options.Category;
+        ComputedOptions = options.ComputedOptions;
+        VersionGenerator = options.VersionGenerator ?? Services.VersionGenerator<LTag>();
+        options.EventConfigurator?.Invoke(this);
+        var untypedOptions = (IState.IOptions) options;
+        untypedOptions.EventConfigurator?.Invoke(this);
+
         var computed = CreateComputed();
         computed.TrySetOutput(options.InitialOutput);
         Computed = computed;

@@ -14,20 +14,22 @@ public class KeyValueModel<TValue>
 [RegisterService(typeof(IComputedState<KeyValueModel<string>>))]
 public class StringKeyValueModelState : ComputedState<KeyValueModel<string>>
 {
-    protected IMutableState<string> Locals { get; }
+    private IMutableState<string> Locals { get; }
 
     private IKeyValueServiceClient<string> KeyValueServiceClient
         => Services.GetRequiredService<IKeyValueServiceClient<string>>();
 
     public StringKeyValueModelState(IServiceProvider services)
-        : base(
-            new Options() {
-                UpdateDelayer = new UpdateDelayer(services.UIActionTracker(), 0.5)
-            },
-            services)
+        : base(null!, services, false)
     {
         Locals = services.StateFactory().NewMutable("");
         Locals.AddEventHandler(StateEventKind.Updated, (_, _) => _ = this.Recompute());
+
+        // ReSharper disable once VirtualMemberCallInConstructor
+        Initialize(new Options() {
+            UpdateDelayer = new UpdateDelayer(services.UIActionTracker(), 0.5),
+            InitialValue = null!,
+        });
     }
 
     protected override async Task<KeyValueModel<string>> Compute(CancellationToken cancellationToken)
@@ -40,5 +42,10 @@ public class StringKeyValueModelState : ComputedState<KeyValueModel<string>>
             Value = value,
             UpdateCount = updateCount + 1,
         };
+    }
+
+    protected override Task UpdateCycle()
+    {
+        return base.UpdateCycle();
     }
 }
