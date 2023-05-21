@@ -4,14 +4,14 @@ namespace Stl.Rpc.Infrastructure;
 
 public sealed class RpcSystemCallSender : RpcServiceBase
 {
-    private IRpcSystemCallsClient? _client;
+    private IRpcSystemCalls? _client;
     private RpcServiceDef? _systemCallsServiceDef;
     private RpcMethodDef? _okMethodDef;
     private RpcMethodDef? _errorMethodDef;
     private RpcMethodDef? _cancelMethodDef;
 
-    private IRpcSystemCallsClient Client => _client
-        ??= Services.GetRequiredService<IRpcSystemCallsClient>();
+    private IRpcSystemCalls Client => _client
+        ??= Services.GetRequiredService<IRpcSystemCalls>();
     private RpcServiceDef SystemCallsServiceDef => _systemCallsServiceDef
         ??= Hub.ServiceRegistry.Get<IRpcSystemCalls>()!;
     private RpcMethodDef OkMethodDef => _okMethodDef

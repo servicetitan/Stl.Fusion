@@ -48,18 +48,47 @@ public readonly struct RpcBuilder
         // System services
         if (!Configuration.Services.ContainsKey(typeof(IRpcSystemCalls))) {
             Services.AddSingleton(c => new RpcSystemCalls(c));
-            AddService<IRpcSystemCalls>(cfg => cfg.With<RpcSystemCalls, IRpcSystemCalls>(RpcSystemCalls.Name));
+            AddService<IRpcSystemCalls, RpcSystemCalls>(RpcSystemCalls.Name);
         }
     }
 
     public RpcBuilder AddService<TService>(
         Func<RpcServiceConfiguration<TService>, RpcServiceConfiguration<TService>>? serviceConfigurationBuilder = null)
+        => AddService<TService, TService>(default, serviceConfigurationBuilder);
+
+    public RpcBuilder AddService<TService>(
+        Symbol name,
+        Func<RpcServiceConfiguration<TService>, RpcServiceConfiguration<TService>>? serviceConfigurationBuilder = null)
+        => AddService<TService, TService>(name, serviceConfigurationBuilder);
+
+    public RpcBuilder AddService<TService, TServer>(
+        Func<RpcServiceConfiguration<TService>, RpcServiceConfiguration<TService>>? serviceConfigurationBuilder = null)
+        where TServer : TService
+        => AddService<TService, TServer, TService>(default, serviceConfigurationBuilder);
+
+    public RpcBuilder AddService<TService, TServer>(
+        Symbol name,
+        Func<RpcServiceConfiguration<TService>, RpcServiceConfiguration<TService>>? serviceConfigurationBuilder = null)
+        where TServer : TService
+        => AddService<TService, TServer, TService>(name, serviceConfigurationBuilder);
+
+    public RpcBuilder AddService<TService, TServer, TClient>(
+        Func<RpcServiceConfiguration<TService>, RpcServiceConfiguration<TService>>? serviceConfigurationBuilder = null)
+        where TServer : TService
+        where TClient : TService
+        => AddService<TService, TServer, TClient>(default, serviceConfigurationBuilder);
+
+    public RpcBuilder AddService<TService, TServer, TClient>(
+        Symbol name,
+        Func<RpcServiceConfiguration<TService>, RpcServiceConfiguration<TService>>? serviceConfigurationBuilder = null)
+        where TServer : TService
+        where TClient : TService
     {
         var serviceType = typeof(TService);
         if (Configuration.Services.ContainsKey(serviceType))
             throw Errors.ServiceAlreadyExists(serviceType);
 
-        var cfg = new RpcServiceConfiguration<TService>();
+        var cfg = new RpcServiceConfiguration<TService>(typeof(TServer), typeof(TClient), name);
         if (serviceConfigurationBuilder != null)
             cfg = serviceConfigurationBuilder.Invoke(cfg);
         cfg.RequireValid(serviceType);

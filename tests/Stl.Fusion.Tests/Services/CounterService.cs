@@ -2,7 +2,19 @@ using System.Collections.Concurrent;
 
 namespace Stl.Fusion.Tests.Services;
 
-public class CounterService : IComputeService
+public interface ICounterService : IComputeService
+{
+    [ComputeMethod(MinCacheDuration = 0.3)]
+    Task<int> Get(string key, CancellationToken cancellationToken = default);
+    [ComputeMethod]
+    Task<int> GetFirstNonZero(string key1, string key2, CancellationToken cancellationToken = default);
+
+    Task Set(string key, int value, CancellationToken cancellationToken = default);
+    Task Increment(string key, CancellationToken cancellationToken = default);
+    Task SetOffset(int offset, CancellationToken cancellationToken = default);
+}
+
+public class CounterService : ICounterService
 {
     private readonly ConcurrentDictionary<string, int> _counters = new(StringComparer.Ordinal);
     private readonly IMutableState<int> _offset;
@@ -10,7 +22,6 @@ public class CounterService : IComputeService
     public CounterService(IMutableState<int> offset)
         => _offset = offset;
 
-    [ComputeMethod(MinCacheDuration = 0.3)]
     public virtual async Task<int> Get(string key, CancellationToken cancellationToken = default)
     {
         if (key.Contains("wait"))
@@ -22,7 +33,6 @@ public class CounterService : IComputeService
         return offset + (_counters.TryGetValue(key, out var value) ? value : 0);
     }
 
-    [ComputeMethod]
     public virtual async Task<int> GetFirstNonZero(string key1, string key2, CancellationToken cancellationToken = default)
     {
         var t1 = Get(key1, cancellationToken);

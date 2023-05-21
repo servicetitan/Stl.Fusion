@@ -1,7 +1,7 @@
-using Stl.Interception;
+using Stl.Rpc;
 
 namespace Stl.CommandR;
 
 // A tagging interface for proxy types
-public interface ICommandService : IRequiresAsyncProxy
+public interface ICommandService : IRpcClient
 { }

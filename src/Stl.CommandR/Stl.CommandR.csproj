@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Stl\Stl.csproj" />
     <ProjectReference Include="..\Stl.Interception\Stl.Interception.csproj" />
+    <ProjectReference Include="..\Stl.Rpc\Stl.Rpc.csproj" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Stl.Generators\Stl.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
