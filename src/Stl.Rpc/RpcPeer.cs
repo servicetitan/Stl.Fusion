@@ -189,7 +189,7 @@ public class RpcPeer : WorkerBase
         var context = InboundContextFactory.Invoke(this, message, cancellationToken);
         var scope = context.Activate();
         try {
-            await context.Call.Process(cancellationToken).ConfigureAwait(false);
+            await context.Call.Process().ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             Log.LogError(e, "Failed to process message: {Message}", context.Message);

@@ -15,7 +15,8 @@ public abstract class RpcInboundCall : RpcCall
 
     public RpcInboundContext Context { get; }
     public long Id { get; }
-    public CancellationToken CancellationToken { get; protected set; }
+    public CancellationToken CancellationToken { get; }
+    public ArgumentList? Arguments { get; protected set; } = null;
 
     public static RpcInboundCall New(RpcInboundContext context, RpcMethodDef methodDef)
         => FactoryCache.GetOrAdd((context.CallType, methodDef.UnwrappedReturnType), static key => {
@@ -35,18 +36,12 @@ public abstract class RpcInboundCall : RpcCall
         if (Id != 0) {
             CancellationTokenSource = cancellationToken.CreateLinkedTokenSource();
             CancellationToken = CancellationTokenSource.Token;
-            if (!Context.Peer.Calls.Inbound.TryAdd(Id, this)) {
-                var log = Hub.Services.LogFor(GetType());
-                log.LogWarning("Inbound {MethodDef} call with duplicate Id = {Id}", MethodDef, Id);
-                CancellationTokenSource.CancelAndDisposeSilently();
-                CancellationTokenSource = null;
-            }
         }
         else
             CancellationToken = cancellationToken;
     }
 
-    public abstract Task Process(CancellationToken cancellationToken);
+    public abstract Task Process();
 
     public virtual void Complete()
     {
@@ -69,21 +64,22 @@ public class RpcInboundCall<TResult> : RpcInboundCall
         : base(context, methodDef)
     { }
 
-    public override async Task Process(CancellationToken cancellationToken)
+    public override async Task Process()
     {
+        if (Id != 0 && !Context.Peer.Calls.Inbound.TryAdd(Id, this)) {
+            var log = Hub.Services.LogFor(GetType());
+            log.LogWarning("Inbound {MethodDef} call with duplicate Id = {Id}", MethodDef, Id);
+            Complete();
+            return;
+        }
+
+        var cancellationToken = CancellationToken;
         Result<TResult> result;
-
-        // NOTE(AY):
-        // - CancellationToken below is a token associated with the call itself,
-        //   which can be cancelled by the remote caller
-        // - and cancellationToken is the token associated with call processing,
-        //   which can be cancelled if peer dies.
-
         try {
-            var arguments = GetArguments();
+            var arguments = Arguments = GetArguments();
             var ctIndex = MethodDef.CancellationTokenIndex;
             if (ctIndex >= 0)
-                arguments.SetCancellationToken(ctIndex, CancellationToken);
+                arguments.SetCancellationToken(ctIndex, cancellationToken);
 
             var services = Hub.Services;
             var service = services.GetRequiredService(ServiceDef.ServerType);
@@ -105,7 +101,7 @@ public class RpcInboundCall<TResult> : RpcInboundCall
 
         Context.Peer.Calls.Inbound.TryRemove(Id, this); // Should always succeed
         Complete();
-        if (!CancellationToken.IsCancellationRequested) {
+        if (!cancellationToken.IsCancellationRequested) {
             // If the opposite is true, the call is already cancelled @ the outbound end,
             // so no notification is needed 
             await Hub.SystemCallSender.Complete(Context.Peer, Id, result).ConfigureAwait(false);
