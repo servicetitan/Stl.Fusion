@@ -34,7 +34,7 @@ public readonly struct RpcBuilder
         Services.TryAddSingleton(_ => RpcInboundContext.DefaultFactory);
         Services.TryAddSingleton<RpcPeerResolver>(c => {
             var hub = c.RpcHub();
-            return _ => hub.GetPeer(Symbol.Empty);
+            return (_, _) => hub.GetPeer(Symbol.Empty);
         });
         Services.AddSingleton(c => new RpcSystemCallSender(c));
 

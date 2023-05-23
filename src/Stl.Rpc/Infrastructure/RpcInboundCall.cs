@@ -9,7 +9,7 @@ namespace Stl.Rpc.Infrastructure;
 
 public abstract class RpcInboundCall : RpcCall
 {
-    private static readonly ConcurrentDictionary<(Type, Type), Func<RpcInboundContext, RpcInboundCall>> FactoryCache = new();
+    private static readonly ConcurrentDictionary<(Type, Type), Func<RpcInboundContext, RpcMethodDef, RpcInboundCall>> FactoryCache = new();
 
     protected CancellationTokenSource? CancellationTokenSource { get; set; }
 
@@ -17,51 +17,61 @@ public abstract class RpcInboundCall : RpcCall
     public long Id { get; }
     public CancellationToken CancellationToken { get; protected set; }
 
-    public static RpcInboundCall New(RpcInboundContext context)
-        => FactoryCache.GetOrAdd((context.CallType, context.MethodDef.UnwrappedReturnType), static key => {
+    public static RpcInboundCall New(RpcInboundContext context, RpcMethodDef methodDef)
+        => FactoryCache.GetOrAdd((context.CallType, methodDef.UnwrappedReturnType), static key => {
             var (tGeneric, tResult) = key;
             var tInbound = tGeneric.MakeGenericType(tResult);
-            return (Func<RpcInboundContext, RpcInboundCall>)tInbound.GetConstructorDelegate(typeof(RpcInboundContext))!;
-        }).Invoke(context);
+            return (Func<RpcInboundContext, RpcMethodDef, RpcInboundCall>)tInbound
+                .GetConstructorDelegate(typeof(RpcInboundContext), typeof(RpcMethodDef))!;
+        }).Invoke(context, methodDef);
 
-    protected RpcInboundCall(RpcInboundContext context)
-        : base(context.MethodDef)
+    protected RpcInboundCall(RpcInboundContext context, RpcMethodDef methodDef)
+        : base(methodDef)
     {
         Context = context;
-        Id =  MethodDef.NoWait ? 0 : Context.Message.CallId;
-    }
+        Id =  methodDef.NoWait ? 0 : context.Message.CallId;
+        var cancellationToken = context.CancellationToken;
 
-    public abstract Task Process(CancellationToken cancellationToken);
-
-    public virtual void Complete()
-        => CancellationTokenSource.DisposeSilently();
-
-    public virtual void Cancel()
-        => CancellationTokenSource.CancelAndDisposeSilently();
-}
-
-public class RpcInboundCall<TResult> : RpcInboundCall
-{
-    public RpcInboundCall(RpcInboundContext context) : base(context) { }
-
-    public override async Task Process(CancellationToken cancellationToken)
-    {
-        Result<TResult> result;
         if (Id != 0) {
-            if (CancellationTokenSource != null)
-                throw Stl.Internal.Errors.AlreadyInvoked(nameof(Process));
-
             CancellationTokenSource = cancellationToken.CreateLinkedTokenSource();
             CancellationToken = CancellationTokenSource.Token;
             if (!Context.Peer.Calls.Inbound.TryAdd(Id, this)) {
                 var log = Hub.Services.LogFor(GetType());
                 log.LogWarning("Inbound {MethodDef} call with duplicate Id = {Id}", MethodDef, Id);
                 CancellationTokenSource.CancelAndDisposeSilently();
-                return;
+                CancellationTokenSource = null;
             }
         }
         else
             CancellationToken = cancellationToken;
+    }
+
+    public abstract Task Process(CancellationToken cancellationToken);
+
+    public virtual void Complete()
+    {
+        var cts = CancellationTokenSource;
+        CancellationTokenSource = null;
+        cts.DisposeSilently();
+    }
+
+    public virtual void Cancel()
+    {
+        var cts = CancellationTokenSource;
+        CancellationTokenSource = null;
+        cts.CancelAndDisposeSilently();
+    }
+}
+
+public class RpcInboundCall<TResult> : RpcInboundCall
+{
+    public RpcInboundCall(RpcInboundContext context, RpcMethodDef methodDef)
+        : base(context, methodDef)
+    { }
+
+    public override async Task Process(CancellationToken cancellationToken)
+    {
+        Result<TResult> result;
 
         // NOTE(AY):
         // - CancellationToken below is a token associated with the call itself,
@@ -70,7 +80,7 @@ public class RpcInboundCall<TResult> : RpcInboundCall
         //   which can be cancelled if peer dies.
 
         try {
-            var arguments = Context.Arguments = GetArguments();
+            var arguments = GetArguments();
             var ctIndex = MethodDef.CancellationTokenIndex;
             if (ctIndex >= 0)
                 arguments.SetCancellationToken(ctIndex, CancellationToken);

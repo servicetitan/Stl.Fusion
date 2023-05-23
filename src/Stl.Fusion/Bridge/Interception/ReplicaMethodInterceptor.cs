@@ -5,8 +5,7 @@ namespace Stl.Fusion.Bridge.Interception;
 
 public class ReplicaMethodInterceptor : ComputeMethodInterceptorBase
 {
-    public new record Options : ComputeMethodInterceptorBase.Options
-    { }
+    public new record Options : ComputeMethodInterceptorBase.Options;
 
     protected readonly IReplicator Replicator;
     protected readonly VersionGenerator<LTag> VersionGenerator;

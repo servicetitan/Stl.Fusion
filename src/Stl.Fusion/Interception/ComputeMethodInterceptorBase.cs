@@ -21,7 +21,7 @@ public abstract class ComputeMethodInterceptorBase : InterceptorBase
 
     protected override Func<Invocation, object?> CreateHandler<T>(Invocation initialInvocation, MethodDef methodDef)
     {
-        var computeMethodDef = (ComputeMethodDef) methodDef;
+        var computeMethodDef = (ComputeMethodDef)methodDef;
         var function = CreateFunction<T>(computeMethodDef);
         return invocation => {
             var input = computeMethodDef.CreateInput(function, invocation);
@@ -30,8 +30,6 @@ public abstract class ComputeMethodInterceptorBase : InterceptorBase
             var cancellationToken = ctIndex >= 0
                 ? arguments.GetCancellationToken(ctIndex)
                 : default;
-
-            // Invoking the function
             var usedBy = Computed.GetCurrent();
 
             // InvokeAndStrip allows to get rid of one extra allocation

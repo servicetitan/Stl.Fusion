@@ -5,14 +5,14 @@ namespace Stl.Fusion.Rpc.Internal;
 
 public class RpcInboundComputeContext : RpcInboundContext
 {
-    public static readonly RpcInboundContextFactory DefaultFactory = NewFactory(RpcInboundContext.DefaultFactory);
+    public static new readonly RpcInboundContextFactory DefaultFactory = NewFactory(RpcInboundContext.DefaultFactory);
 
     public static RpcInboundContextFactory NewFactory(RpcInboundContextFactory nextFactory)
-        => (peer, message) => message.Headers.Contains(RpcFusionHeaders.Call)
-            ? new RpcInboundComputeContext(peer, message)
-            : nextFactory.Invoke(peer, message);
+        => (peer, message, cancellationToken) => message.Headers.Contains(RpcFusionHeaders.Call)
+            ? new RpcInboundComputeContext(peer, message, cancellationToken)
+            : nextFactory.Invoke(peer, message, cancellationToken);
 
-    public RpcInboundComputeContext(RpcPeer peer, RpcMessage message)
-        : base(peer, message)
+    public RpcInboundComputeContext(RpcPeer peer, RpcMessage message, CancellationToken cancellationToken)
+        : base(peer, message, cancellationToken)
         => CallType = typeof(RpcInboundComputeCall<>);
 }

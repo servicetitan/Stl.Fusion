@@ -6,4 +6,5 @@ namespace Stl.Fusion.Rpc.Internal;
 public static class RpcFusionHeaders
 {
     public static readonly RpcHeader Call = new("Fusion-Call");
+    public static readonly RpcHeader Version = new("Version");
 }

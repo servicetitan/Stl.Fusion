@@ -3,35 +3,32 @@ using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
 
-public class RpcOutboundContext
+public sealed class RpcOutboundContext
 {
-    private static readonly AsyncLocal<RpcOutboundContext?> CurrentLocal = new();
+    [ThreadStatic] private static RpcOutboundContext? _current;
 
-    public static RpcOutboundContext Current => CurrentLocal.Value ?? throw Errors.NoCurrentRpcOutboundContext();
-
-    public static Scope NewOrActive()
-    {
-        var oldContext = CurrentLocal.Value;
-        var context = oldContext ?? new RpcOutboundContext();
-        return new Scope(context, oldContext);
-    }
+    public static RpcOutboundContext? Current => _current;
 
     public List<RpcHeader> Headers { get; set; } = new();
-    public RpcMethodDef? MethodDef { get; internal set; }
-    public ArgumentList? Arguments { get; internal set; }
-    public CancellationToken CancellationToken { get; internal set; } = default;
+    public RpcMethodDef? MethodDef { get; private set; }
+    public ArgumentList? Arguments { get; private set; }
+    public CancellationToken CancellationToken { get; private set; } = default;
     public Type CallType { get; set; } = typeof(RpcOutboundCall<>);
     public RpcOutboundCall? Call { get; internal set; }
     public RpcPeer? Peer { get; set; }
     public long RelatedCallId { get; set; }
 
-    public Scope Activate()
-        => new(this);
-
-    public Task SendCall(RpcMethodDef methodDef, ArgumentList arguments)
+    public static Scope Use()
     {
-        if (Call != null)
-            throw Stl.Internal.Errors.AlreadyInvoked(nameof(SendCall));
+        var oldContext = _current;
+        var context = oldContext ?? new RpcOutboundContext();
+        return new Scope(context, oldContext);
+    }
+
+    public RpcOutboundCall? Bind(RpcMethodDef methodDef, ArgumentList arguments)
+    {
+        if (MethodDef != null)
+            throw Stl.Internal.Errors.AlreadyInvoked(nameof(Bind));
 
         // MethodDef, Arguments, CancellationToken
         MethodDef = methodDef;
@@ -40,13 +37,12 @@ public class RpcOutboundContext
         CancellationToken = ctIndex >= 0 ? arguments.GetCancellationToken(ctIndex) : default;
 
         // Peer
-        Peer ??= MethodDef.Hub.PeerResolver.Invoke(this);
+        Peer ??= MethodDef.Hub.PeerResolver.Invoke(methodDef, arguments);
         if (Peer == null)
-            return Task.CompletedTask;
+            return null;
 
         // Call
-        var call = Call = RpcOutboundCall.New(this);
-        return call.Send().AsTask();
+        return Call = RpcOutboundCall.New(this);
     }
 
     // Nested types
@@ -57,27 +53,19 @@ public class RpcOutboundContext
 
         public readonly RpcOutboundContext Context;
 
-        internal Scope(RpcOutboundContext context)
-        {
-            Context = context;
-            _oldContext = CurrentLocal.Value;
-            TryActivate(context);
-        }
-
         internal Scope(RpcOutboundContext context, RpcOutboundContext? oldContext)
         {
-            Context = context;
             _oldContext = oldContext;
-            TryActivate(context);
+            _current = Context = context;
         }
 
         public void Dispose()
-            => TryActivate(_oldContext);
-
-        private void TryActivate(RpcOutboundContext? context)
         {
+            if (Context != _current)
+                throw Errors.RpcOutboundContextChanged();
+
             if (Context != _oldContext)
-                CurrentLocal.Value = context;
+                _current = _oldContext;
         }
     }
 }

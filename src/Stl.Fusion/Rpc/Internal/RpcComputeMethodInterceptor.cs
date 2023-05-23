@@ -1,12 +1,15 @@
 using Stl.Fusion.Interception;
+using Stl.Interception;
+using Stl.Interception.Interceptors;
+using Stl.Rpc;
+using Stl.Rpc.Infrastructure;
 using Stl.Versioning;
 
 namespace Stl.Fusion.Rpc.Internal;
 
 public class RpcComputeMethodInterceptor : ComputeMethodInterceptorBase
 {
-    public new record Options : ComputeMethodInterceptorBase.Options
-    { }
+    public new record Options : ComputeMethodInterceptorBase.Options;
 
     protected readonly VersionGenerator<LTag> VersionGenerator;
     protected readonly RpcComputedCache Cache;

@@ -1,25 +1,31 @@
 using Stl.Fusion.Interception;
+using Stl.Rpc.Infrastructure;
 
 namespace Stl.Fusion.Rpc.Internal;
 
 public interface IRpcComputed : IComputed
 {
+    RpcOutboundCall? Call { get; }
     LTag RemoteVersion { get; }
 }
 
 public class RpcComputed<T> : ComputeMethodComputed<T>, IRpcComputed
 {
+    RpcOutboundCall? IRpcComputed.Call => Call;
+    public RpcOutboundComputeCall<T>? Call { get; }
     public LTag RemoteVersion { get; }
 
     public RpcComputed(
         ComputedOptions options,
         ComputeMethodInput input,
         Result<T> output,
-        LTag remoteVersion,
         LTag version,
-        bool isConsistent)
+        bool isConsistent,
+        RpcOutboundComputeCall<T>? call = null,
+        LTag remoteVersion = default)
         : base(options, input, output, version, isConsistent)
     {
+        Call = call;
         RemoteVersion = remoteVersion;
         StartAutoInvalidation();
     }

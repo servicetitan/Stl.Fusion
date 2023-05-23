@@ -1,5 +1,6 @@
-using Stl.Rpc.Infrastructure;
+using Stl.Interception;
+using Stl.Interception.Interceptors;
 
 namespace Stl.Rpc;
 
-public delegate RpcPeer? RpcPeerResolver(RpcOutboundContext context);
+public delegate RpcPeer? RpcPeerResolver(MethodDef methodDef, ArgumentList arguments);

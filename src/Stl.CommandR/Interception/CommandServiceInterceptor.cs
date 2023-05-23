@@ -6,8 +6,7 @@ namespace Stl.CommandR.Interception;
 
 public class CommandServiceInterceptor : InterceptorBase
 {
-    public new record Options : InterceptorBase.Options
-    { }
+    public new record Options : InterceptorBase.Options;
 
     protected ICommander Commander { get; }
 

@@ -43,8 +43,13 @@ public static class Errors
 
     public static Exception NoCurrentRpcInboundContext()
         => new InvalidOperationException($"{nameof(RpcInboundContext)}.{nameof(RpcInboundContext.Current)} is unavailable.");
-    public static Exception NoCurrentRpcOutboundContext()
-        => new InvalidOperationException($"{nameof(RpcOutboundContext)}.{nameof(RpcOutboundContext.Current)} is unavailable.");
+    public static Exception RpcOutboundContextChanged()
+        => new InvalidOperationException(
+            $"The scope returned from {nameof(RpcOutboundContext)}.{nameof(RpcOutboundContext.Use)} " +
+            $"detected context change on its disposal. " +
+            $"Most likely the scope was disposed in async continuation / another thread, which should never happen - " +
+            $"this scope should be used only in synchronous part of your code that happens " +
+            $"right before the async method triggering the outgoing RPC call is invoked.");
 
     public static Exception IncompatibleArgumentType(RpcMethodDef methodDef, int argumentIndex, Type argumentType)
         => new InvalidOperationException(
