@@ -7,6 +7,7 @@ public class RpcInboundContext
 {
     private static readonly AsyncLocal<RpcInboundContext?> CurrentLocal = new();
 
+    public static readonly RpcInboundContextFactory DefaultFactory = static (peer, message) => new RpcInboundContext(peer, message);
     public static RpcInboundContext Current => CurrentLocal.Value ?? throw Errors.NoCurrentRpcInboundContext();
 
     private RpcMethodDef? _methodDef;
@@ -16,7 +17,8 @@ public class RpcInboundContext
     public List<RpcHeader> Headers => Message.Headers;
     public RpcMethodDef MethodDef => _methodDef ??= GetMethodDef();
     public ArgumentList? Arguments { get; set; }
-    public IRpcInboundCall? Call { get; private set; }
+    public Type CallType { get; set; } = typeof(RpcInboundCall<>);
+    public RpcInboundCall? Call { get; private set; }
 
     public RpcInboundContext(RpcPeer peer, RpcMessage message)
     {
@@ -27,12 +29,12 @@ public class RpcInboundContext
     public Scope Activate()
         => new(this);
 
-    public Task ProcessCall(CancellationToken cancellationToken)
+    public virtual Task ProcessCall(CancellationToken cancellationToken)
     {
         if (Call != null)
             throw Stl.Internal.Errors.AlreadyInvoked(nameof(ProcessCall));
 
-        Call = MethodDef.CallFactory.CreateInbound(this);
+        Call = RpcInboundCall.New(this);
         return Call.Process(cancellationToken);
     }
 

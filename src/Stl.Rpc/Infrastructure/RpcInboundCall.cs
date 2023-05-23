@@ -7,30 +7,44 @@ using System.Globalization;
 
 namespace Stl.Rpc.Infrastructure;
 
-public interface IRpcInboundCall : IRpcCall
+public abstract class RpcInboundCall : RpcCall
 {
-    RpcInboundContext Context { get; }
-    long Id { get; }
-    CancellationTokenSource? CancellationTokenSource { get; }
-    CancellationToken CancellationToken { get; }
+    private static readonly ConcurrentDictionary<(Type, Type), Func<RpcInboundContext, RpcInboundCall>> FactoryCache = new();
 
-    Task Process(CancellationToken cancellationToken);
-}
+    protected CancellationTokenSource? CancellationTokenSource { get; set; }
 
-public class RpcInboundCall<TResult> : RpcCall<TResult>, IRpcInboundCall
-{
     public RpcInboundContext Context { get; }
     public long Id { get; }
-    public CancellationTokenSource? CancellationTokenSource { get; protected set; }
     public CancellationToken CancellationToken { get; protected set; }
 
-    public RpcInboundCall(RpcInboundContext context) : base(context.MethodDef)
+    public static RpcInboundCall New(RpcInboundContext context)
+        => FactoryCache.GetOrAdd((context.CallType, context.MethodDef.UnwrappedReturnType), static key => {
+            var (tGeneric, tResult) = key;
+            var tInbound = tGeneric.MakeGenericType(tResult);
+            return (Func<RpcInboundContext, RpcInboundCall>)tInbound.GetConstructorDelegate(typeof(RpcInboundContext))!;
+        }).Invoke(context);
+
+    protected RpcInboundCall(RpcInboundContext context)
+        : base(context.MethodDef)
     {
         Context = context;
         Id =  MethodDef.NoWait ? 0 : Context.Message.CallId;
     }
 
-    public virtual async Task Process(CancellationToken cancellationToken)
+    public abstract Task Process(CancellationToken cancellationToken);
+
+    public virtual void Complete()
+        => CancellationTokenSource.DisposeSilently();
+
+    public virtual void Cancel()
+        => CancellationTokenSource.CancelAndDisposeSilently();
+}
+
+public class RpcInboundCall<TResult> : RpcInboundCall
+{
+    public RpcInboundCall(RpcInboundContext context) : base(context) { }
+
+    public override async Task Process(CancellationToken cancellationToken)
     {
         Result<TResult> result;
         if (Id != 0) {
@@ -80,7 +94,7 @@ public class RpcInboundCall<TResult> : RpcCall<TResult>, IRpcInboundCall
             return; // NoWait call
 
         Context.Peer.Calls.Inbound.TryRemove(Id, this); // Should always succeed
-        CancellationTokenSource?.Dispose();
+        Complete();
         if (!CancellationToken.IsCancellationRequested) {
             // If the opposite is true, the call is already cancelled @ the outbound end,
             // so no notification is needed 

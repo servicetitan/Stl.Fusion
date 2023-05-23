@@ -2,39 +2,26 @@ using Stl.Interception;
 
 namespace Stl.Rpc.Infrastructure;
 
-public interface IRpcOutboundCall : IRpcCall
+public abstract class RpcOutboundCall : RpcCall
 {
-    RpcOutboundContext Context { get; }
-    long Id { get; }
-    Task ResultTask { get; }
-
-    RpcMessage CreateMessage(long callId);
-    ValueTask Send(bool isRetry = false);
-    bool TryCompleteWithOk(object? result);
-    bool TryCompleteWithError(Exception error);
-    bool TryCompleteWithCancel(CancellationToken cancellationToken);
-}
-
-public interface IRpcOutboundCall<TResult> : IRpcOutboundCall
-{ }
-
-public class RpcOutboundCall<TResult> : RpcCall<TResult>, IRpcOutboundCall<TResult>
-{
-    private readonly TaskCompletionSource<TResult> _resultSource;
+    private static readonly ConcurrentDictionary<(Type, Type), Func<RpcOutboundContext, RpcOutboundCall>> FactoryCache = new();
 
     public RpcOutboundContext Context { get; }
     public long Id { get; protected set; }
-    public Task ResultTask => _resultSource.Task;
+    public Task ResultTask { get; protected init; } = null!;
 
-    public RpcOutboundCall(RpcOutboundContext context) : base(context.MethodDef!)
-    {
-        Context = context;
-        _resultSource = context.MethodDef!.NoWait
-            ? (TaskCompletionSource<TResult>)(object)RpcNoWait.TaskSources.Completed
-            : TaskCompletionSourceExt.New<TResult>();
-    }
+    public static RpcOutboundCall New(RpcOutboundContext context)
+        => FactoryCache.GetOrAdd((context.CallType, context.MethodDef!.UnwrappedReturnType), static key => {
+            var (tGeneric, tResult) = key;
+            var tInbound = tGeneric.MakeGenericType(tResult);
+            return (Func<RpcOutboundContext, RpcOutboundCall>)tInbound.GetConstructorDelegate(typeof(RpcOutboundContext))!;
+        }).Invoke(context);
 
-    public virtual ValueTask Send(bool isRetry = false)
+    protected RpcOutboundCall(RpcOutboundContext context)
+        : base(context.MethodDef!)
+        => Context = context;
+
+    public ValueTask Send(bool isRetry = false)
     {
         var peer = Context.Peer!;
         RpcMessage message;
@@ -48,38 +35,6 @@ public class RpcOutboundCall<TResult> : RpcCall<TResult>, IRpcOutboundCall<TResu
         else
             message = CreateMessage(Id);
         return peer.Send(message, Context.CancellationToken);
-    }
-
-    public virtual bool TryCompleteWithOk(object? result)
-    {
-        try {
-            if (!_resultSource.TrySetResult((TResult)result!))
-                return false;
-
-            Context.Peer!.Calls.Outbound.TryRemove(Id, this);
-            return true;
-        }
-        catch (Exception e) {
-            return TryCompleteWithError(e);
-        }
-    }
-
-    public virtual bool TryCompleteWithError(Exception error)
-    {
-        if (!_resultSource.TrySetException(error))
-            return false;
-
-        Context.Peer!.Calls.Outbound.TryRemove(Id, this);
-        return true;
-    }
-
-    public virtual bool TryCompleteWithCancel(CancellationToken cancellationToken)
-    {
-        if (!_resultSource.TrySetCanceled(cancellationToken))
-            return false;
-
-        Context.Peer!.Calls.Outbound.TryRemove(Id, this);
-        return true;
     }
 
     public virtual RpcMessage CreateMessage(long callId)
@@ -114,5 +69,55 @@ public class RpcOutboundCall<TResult> : RpcCall<TResult>, IRpcOutboundCall<TResu
             }
         }
         return peer.ArgumentSerializer.CreateMessage(callId, MethodDef, arguments, headers);
+    }
+
+    public abstract bool TryCompleteWithOk(object? result, RpcInboundContext context);
+    public abstract bool TryCompleteWithError(Exception error, RpcInboundContext? context);
+    public abstract bool TryCompleteWithCancel(CancellationToken cancellationToken, RpcInboundContext? context);
+}
+
+public class RpcOutboundCall<TResult> : RpcOutboundCall
+{
+    private readonly TaskCompletionSource<TResult> _resultSource;
+
+    public RpcOutboundCall(RpcOutboundContext context)
+        : base(context)
+    {
+        _resultSource = context.MethodDef!.NoWait
+            ? (TaskCompletionSource<TResult>)(object)RpcNoWait.TaskSources.Completed
+            : TaskCompletionSourceExt.New<TResult>();
+        ResultTask = _resultSource.Task;
+    }
+
+    public override bool TryCompleteWithOk(object? result, RpcInboundContext context)
+    {
+        try {
+            if (!_resultSource.TrySetResult((TResult)result!))
+                return false;
+
+            Context.Peer!.Calls.Outbound.TryRemove(Id, this);
+            return true;
+        }
+        catch (Exception e) {
+            return TryCompleteWithError(e, context);
+        }
+    }
+
+    public override bool TryCompleteWithError(Exception error, RpcInboundContext? context)
+    {
+        if (!_resultSource.TrySetException(error))
+            return false;
+
+        Context.Peer!.Calls.Outbound.TryRemove(Id, this);
+        return true;
+    }
+
+    public override bool TryCompleteWithCancel(CancellationToken cancellationToken, RpcInboundContext? context)
+    {
+        if (!_resultSource.TrySetCanceled(cancellationToken))
+            return false;
+
+        Context.Peer!.Calls.Outbound.TryRemove(Id, this);
+        return true;
     }
 }

@@ -1,15 +1,16 @@
 using System.Buffers;
-using System.Text;
 using Stl.Serialization.Internal;
 
 namespace Stl.Serialization;
 
 public class SystemJsonSerializer : TextSerializerBase
 {
-    public static JsonSerializerOptions DefaultOptions { get; set; } = new() {
+    public static readonly JsonSerializerOptions PrettyOptions = new() { WriteIndented = true };
+    public static readonly JsonSerializerOptions DefaultOptions = new() {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
-    public static SystemJsonSerializer Default { get; } = new(DefaultOptions);
+    public static readonly SystemJsonSerializer Pretty = new(PrettyOptions);
+    public static readonly SystemJsonSerializer Default = new(DefaultOptions);
 
     public JsonSerializerOptions Options { get; }
 

@@ -8,9 +8,9 @@ public class MessagePackByteSerializer : IByteSerializer
 {
     private readonly ConcurrentDictionary<Type, MessagePackByteSerializer> _typedSerializers = new();
 
-    public static IFormatterResolver DefaultResolver { get; set; } = DefaultMessagePackResolver.Instance;
-    public static MessagePackSerializerOptions DefaultOptions { get; set; } = new(DefaultResolver);
-    public static MessagePackByteSerializer Default { get; } = new(DefaultOptions);
+    public static readonly IFormatterResolver DefaultResolver = DefaultMessagePackResolver.Instance;
+    public static readonly MessagePackSerializerOptions DefaultOptions = new(DefaultResolver);
+    public static readonly MessagePackByteSerializer Default = new(DefaultOptions);
 
     public MessagePackSerializerOptions Options { get; }
 

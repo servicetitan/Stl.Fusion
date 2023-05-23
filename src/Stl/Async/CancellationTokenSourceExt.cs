@@ -17,9 +17,11 @@ public static class CancellationTokenSourceExt
     {
         if (cancellationTokenSource == null)
             return;
+
         try {
             if (cancellationTokenSource.IsCancellationRequested || IsDisposedGetter(cancellationTokenSource))
                 return;
+
             cancellationTokenSource.Cancel();
         }
         catch {
@@ -27,6 +29,19 @@ public static class CancellationTokenSourceExt
         }
         finally {
             cancellationTokenSource.Dispose();
+        }
+    }
+
+    public static void DisposeSilently(this CancellationTokenSource? cancellationTokenSource)
+    {
+        if (cancellationTokenSource == null)
+            return;
+
+        try {
+            cancellationTokenSource.Dispose();
+        }
+        catch {
+            // Intended
         }
     }
 }

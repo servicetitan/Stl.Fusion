@@ -34,14 +34,14 @@ public class RpcClientInterceptor : InterceptorBase
                 _ = sendTask.ContinueWith(t => {
                     if (!t.IsCompletedSuccessfully()) {
                         // Send failed -> complete with an error
-                        context.Call!.TryCompleteWithError(t.ToResultSynchronously().Error!);
+                        context.Call!.TryCompleteWithError(t.ToResultSynchronously().Error!, null);
                         return;
                     }
 
                     // Send succeeded -> wire up cancellation
                     var ctr = context.CancellationToken.Register(static state => {
                         var context1 = (RpcOutboundContext)state!;
-                        if (!context1.Call!.TryCompleteWithCancel(context1.CancellationToken))
+                        if (!context1.Call!.TryCompleteWithCancel(context1.CancellationToken, null))
                             return;
 
                         var peer1 = context1.Peer!;

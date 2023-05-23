@@ -17,7 +17,7 @@ public class RpcSystemCalls : RpcServiceBase, IRpcSystemCalls, IRpcArgumentListT
         var peer = context.Peer;
         var outboundCallId = context.Message.CallId;
         if (peer.Calls.Outbound.TryGetValue(outboundCallId, out var outboundCall))
-            outboundCall.TryCompleteWithOk(result);
+            outboundCall.TryCompleteWithOk(result, context);
         return RpcNoWait.Tasks.Completed;
     }
 
@@ -27,7 +27,7 @@ public class RpcSystemCalls : RpcServiceBase, IRpcSystemCalls, IRpcArgumentListT
         var peer = context.Peer;
         var outboundCallId = context.Message.CallId;
         if (peer.Calls.Outbound.TryGetValue(outboundCallId, out var outboundCall))
-            outboundCall.TryCompleteWithError(error.ToException()!);
+            outboundCall.TryCompleteWithError(error.ToException()!, context);
         return RpcNoWait.Tasks.Completed;
     }
 
@@ -37,7 +37,7 @@ public class RpcSystemCalls : RpcServiceBase, IRpcSystemCalls, IRpcArgumentListT
         var peer = context.Peer;
         var inboundCallId = context.Message.CallId;
         if (peer.Calls.Inbound.TryGetValue(inboundCallId, out var inboundCall))
-            inboundCall.CancellationTokenSource.CancelAndDisposeSilently();
+            inboundCall.Cancel();
         return RpcNoWait.Tasks.Completed;
     }
 

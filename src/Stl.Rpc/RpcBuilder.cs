@@ -31,6 +31,7 @@ public readonly struct RpcBuilder
         Services.TryAddSingleton(new RpcConfiguration());
         Services.TryAddSingleton(c => new RpcHub(c));
         Services.TryAddSingleton<RpcPeerFactory>(c => name => new RpcPeer(c.RpcHub(), name));
+        Services.TryAddSingleton(_ => RpcInboundContext.DefaultFactory);
         Services.TryAddSingleton<RpcPeerResolver>(c => {
             var hub = c.RpcHub();
             return _ => hub.GetPeer(Symbol.Empty);
@@ -39,7 +40,6 @@ public readonly struct RpcBuilder
 
         // Infrastructure
         Services.TryAddSingleton(c => new RpcServiceRegistry(c));
-        Services.TryAddSingleton(c => new RpcCallFactoryProvider(c));
         Services.TryAddSingleton(_ => new RpcClientInterceptor.Options());
         Services.TryAddTransient(c => new RpcClientInterceptor(c.GetRequiredService<RpcClientInterceptor.Options>(), c));
 
@@ -139,6 +139,18 @@ public readonly struct RpcBuilder
     public RpcBuilder HasPeerFactory(Func<IServiceProvider, RpcPeerFactory> peerFactoryFactory)
     {
         Services.AddSingleton(peerFactoryFactory);
+        return this;
+    }
+
+    public RpcBuilder HasInboundContextFactory(RpcInboundContextFactory inboundContextFactory)
+    {
+        Services.AddSingleton(inboundContextFactory);
+        return this;
+    }
+
+    public RpcBuilder HasInboundContextFactory(Func<IServiceProvider, RpcInboundContextFactory> inboundContextFactoryFactory)
+    {
+        Services.AddSingleton(inboundContextFactoryFactory);
         return this;
     }
 

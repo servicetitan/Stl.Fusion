@@ -1,13 +1,10 @@
 using Stl.Interception;
 using Stl.Interception.Interceptors;
-using Stl.Rpc.Infrastructure;
 
 namespace Stl.Rpc;
 
-public class RpcMethodDef : MethodDef
+public sealed class RpcMethodDef : MethodDef
 {
-    private RpcCallFactory? _callFactory;
-
     public RpcHub Hub { get; }
     public RpcServiceDef Service { get; }
     public Symbol Name { get; }
@@ -15,7 +12,6 @@ public class RpcMethodDef : MethodDef
     public Type ArgumentListType { get; }
     public Type[] RemoteParameterTypes { get; }
     public Type RemoteArgumentListType { get; }
-    public RpcCallFactory CallFactory => _callFactory ??= Hub.CallFactoryProvider.Create(this);
     public bool HasObjectTypedArguments { get; }
     public bool NoWait { get; }
 

@@ -3,7 +3,7 @@ using Stl.Rpc.Internal;
 
 namespace Stl.Rpc;
 
-public class RpcServiceDef
+public sealed class RpcServiceDef
 {
     private readonly Dictionary<MethodInfo, RpcMethodDef> _methods;
     private readonly Dictionary<Symbol, RpcMethodDef> _methodByName;
@@ -37,9 +37,7 @@ public class RpcServiceDef
             if (method.IsGenericMethodDefinition)
                 continue;
 
-            var attr = IsSystem ? method.GetCustomAttribute<RpcMethodAttribute>(true) : null;
-            var methodDefType = attr?.MethodDefType ?? typeof(RpcMethodDef);
-            var methodDef = (RpcMethodDef)methodDefType.CreateInstance(this, method, methodNameBuilder);
+            var methodDef = new RpcMethodDef(this, method, methodNameBuilder);
             if (!methodDef.IsValid)
                 continue;
 

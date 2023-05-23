@@ -6,9 +6,7 @@ namespace Stl.Fusion.Bridge.Interception;
 public class ReplicaMethodInterceptor : ComputeMethodInterceptorBase
 {
     public new record Options : ComputeMethodInterceptorBase.Options
-    {
-        public VersionGenerator<LTag>? VersionGenerator { get; init; }
-    }
+    { }
 
     protected readonly IReplicator Replicator;
     protected readonly VersionGenerator<LTag> VersionGenerator;
@@ -18,7 +16,7 @@ public class ReplicaMethodInterceptor : ComputeMethodInterceptorBase
         : base(options, services)
     {
         Replicator = services.GetRequiredService<IReplicator>();
-        VersionGenerator = options.VersionGenerator ?? services.VersionGenerator<LTag>();
+        VersionGenerator = services.VersionGenerator<LTag>();
         ReplicaCache = services.GetRequiredService<ReplicaCache>();
     }
 

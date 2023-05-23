@@ -20,6 +20,7 @@ public class RpcPeer : WorkerBase
     public RpcArgumentSerializer ArgumentSerializer { get; init; }
     public Func<RpcServiceDef, bool> LocalServiceFilter { get; init; }
     public RpcPeerConnector PeerConnector { get; init; }
+    public RpcInboundContextFactory InboundContextFactory { get; init; }
     public RpcCallRegistry Calls { get; init; }
     public RetryDelaySeq ReconnectDelays { get; init; } = new();
     public int ReconnectRetryLimit { get; init; } = int.MaxValue;
@@ -32,6 +33,7 @@ public class RpcPeer : WorkerBase
         ArgumentSerializer = Hub.Configuration.ArgumentSerializer;
         LocalServiceFilter = static _ => true;
         PeerConnector = Hub.PeerConnector;
+        InboundContextFactory = Hub.InboundContextFactory;
         Calls = new RpcCallRegistry(this);
     }
 
@@ -54,6 +56,48 @@ public class RpcPeer : WorkerBase
         }
     }
 
+    public ConnectionState GetConnectionState()
+    {
+        lock (Lock)
+            return _connectionState.Value;
+    }
+
+    public void SetConnectionState(Channel<RpcMessage>? channel, Exception? error = null)
+    {
+        lock (Lock) {
+            var connectionState = _connectionState;
+            var state = connectionState.Value;
+            if (state.Channel == channel && state.Error == error)
+                return;
+            if (state.Error is ImpossibleToConnectException)
+                return;
+
+            var nextState = state.Next(channel, error);
+            _connectionState = connectionState.CreateNext(nextState);
+            state.Channel?.Writer.TryComplete();
+        }
+    }
+
+    public async ValueTask<Channel<RpcMessage>> GetConnection(CancellationToken cancellationToken)
+    {
+        // ReSharper disable once InconsistentlySynchronizedField
+        var connectionState = _connectionState;
+        while (true) {
+            // ReSharper disable once MethodSupportsCancellation
+            var whenNextConnectionState = connectionState.WhenNext();
+            if (!whenNextConnectionState.IsCompleted) {
+                var (channel, error, _) = connectionState.Value;
+                if (error is ImpossibleToConnectException)
+                    throw error;
+
+                if (channel != null)
+                    return channel;
+            }
+
+            connectionState = await whenNextConnectionState.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
+
     // Protected methods
 
     protected override async Task OnRun(CancellationToken cancellationToken)
@@ -69,19 +113,17 @@ public class RpcPeer : WorkerBase
 
                 if (semaphore == null)
                     await foreach (var message in channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false)) {
-                        var context = new RpcInboundContext(this, message);
-                        _ = ProcessMessage(context, null, cancellationToken);
+                        _ = ProcessMessage(message, null, cancellationToken);
                     }
                 else
                     await foreach (var message in channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false)) {
-                        var context = new RpcInboundContext(this, message);
                         if (Equals(message.Service, RpcSystemCalls.Name.Value)) {
                             // System calls are exempt from semaphore use
-                            _ = ProcessMessage(context, null, cancellationToken);
+                            _ = ProcessMessage(message, null, cancellationToken);
                         }
                         else {
                             await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
-                            _ = ProcessMessage(context, semaphore, cancellationToken);
+                            _ = ProcessMessage(message, semaphore, cancellationToken);
                         }
                     }
 
@@ -139,53 +181,12 @@ public class RpcPeer : WorkerBase
         }
     }
 
-    protected ConnectionState GetConnectionState()
-    {
-        lock (Lock)
-            return _connectionState.Value;
-    }
-
-    protected void SetConnectionState(Channel<RpcMessage>? channel, Exception? error = null)
-    {
-        lock (Lock) {
-            var connectionState = _connectionState;
-            var state = connectionState.Value;
-            if (state.Channel == channel && state.Error == error)
-                return;
-            if (state.Error is ImpossibleToConnectException)
-                return;
-
-            var nextState = state.Next(channel, error);
-            _connectionState = connectionState.CreateNext(nextState);
-            state.Channel?.Writer.TryComplete();
-        }
-    }
-
-    protected async ValueTask<Channel<RpcMessage>> GetConnection(CancellationToken cancellationToken)
-    {
-        // ReSharper disable once InconsistentlySynchronizedField
-        var connectionState = _connectionState;
-        while (true) {
-            // ReSharper disable once MethodSupportsCancellation
-            var whenNextConnectionState = connectionState.WhenNext();
-            if (!whenNextConnectionState.IsCompleted) {
-                var (channel, error, _) = connectionState.Value;
-                if (error is ImpossibleToConnectException)
-                    throw error;
-
-                if (channel != null)
-                    return channel;
-            }
-
-            connectionState = await whenNextConnectionState.WaitAsync(cancellationToken).ConfigureAwait(false);
-        }
-    }
-
-    protected virtual async Task ProcessMessage(
-        RpcInboundContext context,
+    protected async Task ProcessMessage(
+        RpcMessage message,
         SemaphoreSlim? semaphore,
         CancellationToken cancellationToken)
     {
+        var context = InboundContextFactory.Invoke(this, message);
         var scope = context.Activate();
         try {
             await context.ProcessCall(cancellationToken).ConfigureAwait(false);
@@ -198,6 +199,8 @@ public class RpcPeer : WorkerBase
             semaphore?.Release();
         }
     }
+
+    // Nested types
 
     public sealed record ConnectionState(
         Channel<RpcMessage>? Channel = null,

@@ -20,7 +20,8 @@ public class RpcOutboundContext
     public RpcMethodDef? MethodDef { get; internal set; }
     public ArgumentList? Arguments { get; internal set; }
     public CancellationToken CancellationToken { get; internal set; } = default;
-    public IRpcOutboundCall? Call { get; internal set; }
+    public Type CallType { get; set; } = typeof(RpcOutboundCall<>);
+    public RpcOutboundCall? Call { get; internal set; }
     public RpcPeer? Peer { get; set; }
     public long RelatedCallId { get; set; }
 
@@ -44,7 +45,7 @@ public class RpcOutboundContext
             return Task.CompletedTask;
 
         // Call
-        var call = Call = methodDef.CallFactory.CreateOutbound(this);
+        var call = Call = RpcOutboundCall.New(this);
         return call.Send().AsTask();
     }
 

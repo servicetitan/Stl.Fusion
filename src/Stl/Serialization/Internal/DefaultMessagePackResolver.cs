@@ -16,13 +16,13 @@ public class DefaultMessagePackResolver : IFormatterResolver
     private DefaultMessagePackResolver() { }
 
     public IMessagePackFormatter<T>? GetFormatter<T>()
-        => Cache<T>.Formatter;
+        => FormatterCache<T>.Formatter;
 
-    private static class Cache<T>
+    private static class FormatterCache<T>
     {
-        public static IMessagePackFormatter<T>? Formatter;
+        public static readonly IMessagePackFormatter<T>? Formatter;
 
-        static Cache()
+        static FormatterCache()
         {
             foreach (var resolver in Resolvers) {
                 var formatter = resolver.GetFormatter<T>();

@@ -9,16 +9,16 @@ public sealed class RpcHub : ProcessorBase, IHasServices
     private readonly ConcurrentDictionary<Type, object> _clients = new();
     private ILogger? _log;
     private RpcServiceRegistry? _serviceRegistry;
-    private RpcCallFactoryProvider? _callFactoryProvider;
     private RpcPeerFactory? _peerFactory;
+    private RpcInboundContextFactory? _inboundContextFactory;
     private RpcPeerConnector? _peerConnector;
     private RpcPeerResolver? _peerResolver;
     private RpcSystemCallSender? _systemCallSender;
 
     private ILogger Log => _log ??= Services.LogFor(GetType());
 
-    internal RpcCallFactoryProvider CallFactoryProvider => _callFactoryProvider ??= Services.GetRequiredService<RpcCallFactoryProvider>();
     internal RpcPeerFactory PeerFactory => _peerFactory ??= Services.GetRequiredService<RpcPeerFactory>();
+    internal RpcInboundContextFactory InboundContextFactory => _inboundContextFactory ??= Services.GetRequiredService<RpcInboundContextFactory>();
     internal RpcPeerConnector PeerConnector => _peerConnector ??= Services.GetRequiredService<RpcPeerConnector>();
     internal RpcPeerResolver PeerResolver => _peerResolver ??= Services.GetRequiredService<RpcPeerResolver>();
     internal RpcSystemCallSender SystemCallSender => _systemCallSender ??= Services.GetRequiredService<RpcSystemCallSender>();

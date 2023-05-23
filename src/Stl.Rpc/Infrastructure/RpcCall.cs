@@ -14,7 +14,7 @@ public interface IRpcCall
     RpcHub Hub { get; }
 }
 
-public abstract class RpcCall<TResult> : IRpcCall
+public abstract class RpcCall : IRpcCall
 {
     public RpcMethodDef MethodDef { get; }
     public RpcServiceDef ServiceDef => MethodDef.Service;
