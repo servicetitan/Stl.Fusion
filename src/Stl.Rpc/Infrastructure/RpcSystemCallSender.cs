@@ -24,14 +24,14 @@ public sealed class RpcSystemCallSender : RpcServiceBase
     public RpcSystemCallSender(IServiceProvider services) : base(services)
     { }
 
-    public ValueTask Complete<TResult>(RpcPeer peer, long callId, Result<TResult> result)
+    public ValueTask Complete<TResult>(RpcPeer peer, long callId, Result<TResult> result, List<RpcHeader>? headers = null)
         => result.IsValue(out var value)
-            ? Ok(peer, callId, value)
-            : Error(peer, callId, result.Error!);
+            ? Ok(peer, callId, value, headers)
+            : Error(peer, callId, result.Error!, headers);
 
-    public async ValueTask Ok<TResult>(RpcPeer peer, long callId, TResult result)
+    public async ValueTask Ok<TResult>(RpcPeer peer, long callId, TResult result, List<RpcHeader>? headers = null)
     {
-        var context = new RpcOutboundContext {
+        var context = new RpcOutboundContext(headers) {
             Peer = peer,
             RelatedCallId = callId,
         };
@@ -41,9 +41,9 @@ public sealed class RpcSystemCallSender : RpcServiceBase
         await peer.Send(message, default).ConfigureAwait(false);
     }
 
-    public async ValueTask Error(RpcPeer peer, long callId, Exception error)
+    public async ValueTask Error(RpcPeer peer, long callId, Exception error, List<RpcHeader>? headers = null)
     {
-        var context = new RpcOutboundContext {
+        var context = new RpcOutboundContext(headers) {
             Peer = peer,
             RelatedCallId = callId,
         };
@@ -53,9 +53,9 @@ public sealed class RpcSystemCallSender : RpcServiceBase
         await peer.Send(message, default).ConfigureAwait(false);
     }
 
-    public async ValueTask Cancel(RpcPeer peer, long callId)
+    public async ValueTask Cancel(RpcPeer peer, long callId, List<RpcHeader>? headers = null)
     {
-        var context = new RpcOutboundContext {
+        var context = new RpcOutboundContext(headers) {
             Peer = peer,
             RelatedCallId = callId,
         };

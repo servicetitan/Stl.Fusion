@@ -17,6 +17,8 @@ public abstract class RpcInboundCall : RpcCall
     public long Id { get; }
     public CancellationToken CancellationToken { get; }
     public ArgumentList? Arguments { get; protected set; } = null;
+    public bool NoWait => Id == 0;
+    public List<RpcHeader> ResultHeaders { get; } = new();
 
     public static RpcInboundCall New(RpcInboundContext context, RpcMethodDef methodDef)
         => FactoryCache.GetOrAdd((context.CallType, methodDef.UnwrappedReturnType), static key => {
@@ -33,82 +35,109 @@ public abstract class RpcInboundCall : RpcCall
         Id =  methodDef.NoWait ? 0 : context.Message.CallId;
         var cancellationToken = context.CancellationToken;
 
-        if (Id != 0) {
+        if (NoWait)
+            CancellationToken = cancellationToken;
+        else {
             CancellationTokenSource = cancellationToken.CreateLinkedTokenSource();
             CancellationToken = CancellationTokenSource.Token;
         }
-        else
-            CancellationToken = cancellationToken;
     }
 
     public abstract Task Process();
 
-    public virtual void Complete()
-    {
-        var cts = CancellationTokenSource;
-        CancellationTokenSource = null;
-        cts.DisposeSilently();
-    }
+    public abstract ValueTask Complete();
 
-    public virtual void Cancel()
+    public void Cancel()
     {
+        if (NoWait)
+            return;
+
         var cts = CancellationTokenSource;
         CancellationTokenSource = null;
         cts.CancelAndDisposeSilently();
+
+        // Note that we don't need to do anything special here to notify about the cancellation,
+        // since Process will take care of that by catching OperationCancelledException
+    }
+
+    // Protected methods
+
+    protected bool TryRegister()
+    {
+        if (NoWait)
+            throw Stl.Internal.Errors.InternalError("NoWait call should never be registered.");
+
+        if (Context.Peer.Calls.Inbound.TryAdd(Id, this))
+            return true;
+
+        var log = Hub.Services.LogFor(GetType());
+        log.LogWarning("Inbound {MethodDef} call with duplicate Id = {Id}", MethodDef, Id);
+        CancellationTokenSource.CancelAndDisposeSilently();
+        CancellationTokenSource = null;
+        return false;
+    }
+
+    protected bool TryUnregister()
+    {
+        if (NoWait)
+            throw Stl.Internal.Errors.InternalError("NoWait call should never be unregistered.");
+
+        return Context.Peer.Calls.Inbound.TryRemove(Id, this);
     }
 }
 
 public class RpcInboundCall<TResult> : RpcInboundCall
 {
+    public Result<TResult> Result { get; protected set; }
+
     public RpcInboundCall(RpcInboundContext context, RpcMethodDef methodDef)
         : base(context, methodDef)
     { }
 
     public override async Task Process()
     {
-        if (Id != 0 && !Context.Peer.Calls.Inbound.TryAdd(Id, this)) {
-            var log = Hub.Services.LogFor(GetType());
-            log.LogWarning("Inbound {MethodDef} call with duplicate Id = {Id}", MethodDef, Id);
-            Complete();
+        if (!NoWait && !TryRegister())
             return;
-        }
 
-        var cancellationToken = CancellationToken;
-        Result<TResult> result;
         try {
-            var arguments = Arguments = GetArguments();
-            var ctIndex = MethodDef.CancellationTokenIndex;
-            if (ctIndex >= 0)
-                arguments.SetCancellationToken(ctIndex, cancellationToken);
-
-            var services = Hub.Services;
-            var service = services.GetRequiredService(ServiceDef.ServerType);
-            var untypedResultTask = MethodDef.Invoker.Invoke(service, arguments);
-            await untypedResultTask.ConfigureAwait(false);
-            if (MethodDef.IsAsyncVoidMethod)
-                result = default;
-            else {
-                var resultTask = (Task<TResult>)untypedResultTask;
-                result = resultTask.ToResultSynchronously();
-            }
+            Arguments = DeserializeArguments();
+            Result = await InvokeService().ConfigureAwait(false);
         }
         catch (Exception error) {
-            result = Result.Error<TResult>(error);
+            Result = new Result<TResult>(default!, error);
         }
-
-        if (Id == 0)
-            return; // NoWait call
-
-        Context.Peer.Calls.Inbound.TryRemove(Id, this); // Should always succeed
-        Complete();
-        if (!cancellationToken.IsCancellationRequested) {
-            // If the opposite is true, the call is already cancelled @ the outbound end,
-            // so no notification is needed 
-            await Hub.SystemCallSender.Complete(Context.Peer, Id, result).ConfigureAwait(false);
-        }
+        await Complete().ConfigureAwait(false);
     }
 
-    protected ArgumentList GetArguments()
+    public override ValueTask Complete()
+    {
+        if (NoWait || !TryUnregister())
+            return ValueTaskExt.CompletedTask;
+
+        var cts = CancellationTokenSource;
+        CancellationTokenSource = null;
+        cts.DisposeSilently();
+
+        if (CancellationToken.IsCancellationRequested) {
+            // The call is already cancelled @ the outbound end,
+            // or Peer is being disposed, so no notification is needed
+            return ValueTaskExt.CompletedTask;
+        }
+
+        return Hub.SystemCallSender.Complete(Context.Peer, Id, Result, ResultHeaders);
+    }
+
+    // Protected methods
+
+    protected Task<TResult> InvokeService()
+    {
+        var methodDef = MethodDef;
+        var services = Hub.Services;
+        var service = services.GetRequiredService(methodDef.Service.ServerType);
+        return (Task<TResult>)methodDef.Invoker.Invoke(service, Arguments!);
+    }
+
+    protected ArgumentList DeserializeArguments()
     {
         var peer = Context.Peer;
         var message = Context.Message;
@@ -159,7 +188,7 @@ public class RpcInboundCall<TResult> : RpcInboundCall
                 arguments = (ArgumentList)MethodDef.ArgumentListType.CreateInstance();
                 var ctIndex = MethodDef.CancellationTokenIndex;
                 if (ctIndex >= 0)
-                    deserializedArguments = deserializedArguments.InsertCancellationToken(ctIndex, default);
+                    deserializedArguments = deserializedArguments.InsertCancellationToken(ctIndex, CancellationToken);
                 arguments.SetFrom(deserializedArguments);
             }
         }
