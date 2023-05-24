@@ -47,27 +47,21 @@ public abstract class RpcInboundCall : RpcCall
 
     public abstract ValueTask Complete();
 
-    public void Cancel()
+    public virtual void Cancel()
     {
-        if (NoWait)
-            return;
-
         var cts = CancellationTokenSource;
-        CancellationTokenSource = null;
-        cts.CancelAndDisposeSilently();
-
-        // Note that we don't need to do anything special here to notify about the cancellation,
-        // since Process will take care of that by catching OperationCancelledException
+        if (cts != null) {
+            CancellationTokenSource = null;
+            cts.CancelAndDisposeSilently();
+        }
     }
 
     // Protected methods
 
     protected bool TryRegister()
     {
-        if (NoWait)
-            throw Stl.Internal.Errors.InternalError("NoWait call should never be registered.");
-
-        if (Context.Peer.Calls.Inbound.TryAdd(Id, this))
+        // NoWait should always return true here!
+        if (NoWait || Context.Peer.Calls.Inbound.TryAdd(Id, this))
             return true;
 
         var log = Hub.Services.LogFor(GetType());
@@ -77,12 +71,12 @@ public abstract class RpcInboundCall : RpcCall
         return false;
     }
 
-    protected bool TryUnregister()
+    protected void Unregister()
     {
         if (NoWait)
-            throw Stl.Internal.Errors.InternalError("NoWait call should never be unregistered.");
+            return;
 
-        return Context.Peer.Calls.Inbound.TryRemove(Id, this);
+        Context.Peer.Calls.Inbound.TryRemove(Id, this);
     }
 }
 
@@ -96,7 +90,7 @@ public class RpcInboundCall<TResult> : RpcInboundCall
 
     public override async Task Process()
     {
-        if (!NoWait && !TryRegister())
+        if (!TryRegister())
             return;
 
         try {
@@ -111,20 +105,21 @@ public class RpcInboundCall<TResult> : RpcInboundCall
 
     public override ValueTask Complete()
     {
-        if (NoWait || !TryUnregister())
+        var cts = CancellationTokenSource;
+        if (cts == null) // NoWait or already completed
             return ValueTaskExt.CompletedTask;
 
-        var cts = CancellationTokenSource;
         CancellationTokenSource = null;
-        cts.DisposeSilently();
+        cts.Dispose();
+        Unregister();
 
         if (CancellationToken.IsCancellationRequested) {
-            // The call is already cancelled @ the outbound end,
-            // or Peer is being disposed, so no notification is needed
+            // Call is cancelled @ the outbound end or Peer is disposed, so there is nothing else to do
             return ValueTaskExt.CompletedTask;
         }
 
-        return Hub.SystemCallSender.Complete(Context.Peer, Id, Result, ResultHeaders);
+        var systemCallSender = Hub.SystemCallSender;
+        return systemCallSender.Complete(Context.Peer, Id, Result, ResultHeaders);
     }
 
     // Protected methods

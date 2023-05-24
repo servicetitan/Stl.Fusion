@@ -35,7 +35,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
     private RefHashSetSlim3<IComputedImpl> _used;
     private HashSetSlim3<(ComputedInput Input, LTag Version)> _usedBy;
     // ReSharper disable once InconsistentNaming
-    private event Action<IComputed>? _invalidated;
+    private InvalidatedHandlerSet _invalidated;
 
     protected ComputedFlags Flags => _flags;
     protected object Lock => this;
@@ -91,14 +91,14 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
                     value(this);
                     return;
                 }
-                _invalidated += value;
+                _invalidated.Add(value);
             }
         }
         remove {
             lock (Lock) {
                 if (ConsistencyState == ConsistencyState.Invalidated)
                     return;
-                _invalidated -= value;
+                _invalidated.Remove(value);
             }
         }
     }
@@ -191,8 +191,8 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
         try {
             try {
                 OnInvalidated();
-                _invalidated?.Invoke(this);
-                _invalidated = null;
+                _invalidated.Invoke(this);
+                _invalidated = default;
             }
             finally {
                 // Any code called here may not throw

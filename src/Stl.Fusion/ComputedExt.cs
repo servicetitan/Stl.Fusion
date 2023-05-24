@@ -113,6 +113,7 @@ public static partial class ComputedExt
     {
         if (computed.ConsistencyState == ConsistencyState.Invalidated)
             return Task.CompletedTask;
+
         var tcs = TaskCompletionSourceExt.New<Unit>();
         if (cancellationToken != default)
             return new WhenInvalidatedClosure(tcs, computed, cancellationToken).Task;

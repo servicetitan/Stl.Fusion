@@ -47,6 +47,8 @@ public class RpcClientInterceptor : InterceptorBase
                         if (!call1.TryCompleteWithCancel(context1.CancellationToken, null))
                             return;
 
+                        // If we're here, we know the outgoing call is successfully cancelled.
+                        // We notify peer about that only in this case. 
                         var peer1 = context1.Peer!;
                         var systemCallSender = peer1.Hub.SystemCallSender;
                         _ = systemCallSender.Cancel(peer1, call1.Id);
