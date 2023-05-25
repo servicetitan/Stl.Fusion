@@ -82,6 +82,9 @@ public abstract class State<T> : ComputedInput,
             lock (Lock) {
                 var prevSnapshot = _snapshot;
                 if (prevSnapshot != null) {
+                    if (prevSnapshot.Computed == value)
+                        return;
+
                     prevSnapshot.Computed.Invalidate();
                     _snapshot = new StateSnapshot<T>(prevSnapshot, value);
                 }

@@ -41,9 +41,8 @@ public class MutableState<T> : State<T>, IMutableState<T>
 
     protected override void Initialize(State<T>.Options options)
     {
-        base.Initialize(options);
         _output = options.InitialOutput;
-        CreateComputed();
+        base.Initialize(options);
     }
 
     // Set overloads
