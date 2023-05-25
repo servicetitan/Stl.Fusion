@@ -8,7 +8,6 @@ public abstract class StatefulComponentBase : FusionComponentBase, IAsyncDisposa
     private StateEventKind _stateHasChangedTriggers = StateEventKind.Updated;
 
     [Inject] protected IServiceProvider Services { get; init; } = null!;
-    [Inject] protected BlazorCircuitContext BlazorCircuitContext { get; init; } = null!;
 
     protected IStateFactory StateFactory => Services.StateFactory();
     protected abstract IState UntypedState { get; }

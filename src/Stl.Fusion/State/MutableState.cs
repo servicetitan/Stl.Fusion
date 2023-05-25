@@ -55,6 +55,7 @@ public class MutableState<T> : State<T>, IMutableState<T>
         lock (Lock) {
             if (_output == result)
                 return;
+
             var snapshot = Snapshot;
             _output = result;
             // We do this inside the lock by a few reasons:

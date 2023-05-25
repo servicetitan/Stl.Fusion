@@ -1,15 +1,21 @@
 using Stl.Fusion.Blazor.Internal;
+using Stl.OS;
 
 namespace Stl.Fusion.Blazor;
 
 public static class ComputedStateComponent
 {
     private static readonly ConcurrentDictionary<Type, string> StateCategoryCache = new();
-    private static readonly ConcurrentDictionary<Type, string> MutableStateCategoryCache = new();
 
-    public static ComputedStateComponentOptions DefaultOptions { get; set; } =
-        ComputedStateComponentOptions.SynchronizeComputeState
-        | ComputedStateComponentOptions.RecomputeOnParametersSet;
+    public static ComputedStateComponentOptions DefaultOptions { get; set; }
+
+    static ComputedStateComponent()
+    {
+        DefaultOptions = ComputedStateComponentOptions.SynchronizeComputeState
+            | ComputedStateComponentOptions.RecomputeOnParametersSet;
+        if (HardwareInfo.IsSingleThreaded)
+            DefaultOptions = ComputedStateComponentOptions.SynchronizeComputeState;
+    }
 
     public static string GetStateCategory(Type componentType)
         => StateCategoryCache.GetOrAdd(componentType, static t => $"{t.GetName()}.State");
