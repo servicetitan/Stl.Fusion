@@ -87,7 +87,7 @@ public class Publisher : SafeAsyncDisposableBase, IPublisherImpl
     public virtual IPublication Publish(IComputed computed)
     {
         this.ThrowIfDisposedOrDisposing();
-        ExecutionContextExt.SuppressFlow();
+        using var _1 = ExecutionContextExt.SuppressFlow();
         var spinWait = new SpinWait();
         while (true) {
              var p = Publications.GetOrAdd(

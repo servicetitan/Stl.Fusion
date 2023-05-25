@@ -67,7 +67,7 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
         }
         else {
             using var _ = ExecutionContextExt.SuppressFlow();
-            UpdateCycleTask = UpdateCycle();
+            UpdateCycleTask = Task.Run(UpdateCycle, DisposeToken);
         }
     }
 

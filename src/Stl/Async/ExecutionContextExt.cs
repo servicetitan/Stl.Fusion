@@ -6,6 +6,7 @@ public static class ExecutionContextExt
     {
         if (ExecutionContext.IsFlowSuppressed())
             return default;
+
         var releaser = ExecutionContext.SuppressFlow();
         return Disposable.NewClosed(releaser, r => r.Dispose());
     }
