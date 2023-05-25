@@ -14,7 +14,7 @@ public static class ComputedStateComponent
         DefaultOptions = ComputedStateComponentOptions.SynchronizeComputeState
             | ComputedStateComponentOptions.RecomputeOnParametersSet;
         if (HardwareInfo.IsSingleThreaded)
-            DefaultOptions = ComputedStateComponentOptions.SynchronizeComputeState;
+            DefaultOptions = ComputedStateComponentOptions.RecomputeOnParametersSet;
     }
 
     public static string GetStateCategory(Type componentType)

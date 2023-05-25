@@ -21,7 +21,28 @@ public static class OSInfo
 
     static OSInfo()
     {
+#if NET5_0_OR_GREATER
         // WebAssembly w/ .NET 5.0
+        if (OperatingSystem.IsBrowser()) {
+            Kind = OSKind.WebAssembly;
+            UserHomePath = "";
+            return;
+        }
+
+        // Windows
+        if (OperatingSystem.IsWindows()) {
+            Kind = OSKind.Windows;
+            UserHomePath = Environment.GetEnvironmentVariable("USERPROFILE") ?? "";
+            return;
+        }
+
+        // MacOS or Unix
+        Kind = OperatingSystem.IsMacOS()
+            ? OSKind.MacOS
+            : OSKind.OtherUnix;
+        UserHomePath = Environment.GetEnvironmentVariable("HOME") ?? "";
+#else
+        // WebAssembly w/ .NET 5.0+
         if (StringComparer.Ordinal.Equals("browser", RuntimeInformation.OSDescription.ToLowerInvariant())) {
             Kind = OSKind.WebAssembly;
             UserHomePath = "";
@@ -43,10 +64,11 @@ public static class OSInfo
             return;
         }
 
-        // Unix
+        // MacOS or Unix
         Kind = RuntimeInformation.IsOSPlatform(OSPlatform.OSX)
             ? OSKind.MacOS
             : OSKind.OtherUnix;
         UserHomePath = Environment.GetEnvironmentVariable("HOME") ?? "";
+#endif
     }
 }
