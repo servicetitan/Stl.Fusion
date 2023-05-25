@@ -3,7 +3,7 @@ using Stl.Rpc.Infrastructure;
 
 namespace Stl.Fusion.Rpc.Internal;
 
-public sealed class RpcInboundComputeCall<TResult> : RpcInboundCall<TResult>
+public class RpcInboundComputeCall<TResult> : RpcInboundCall<TResult>
 {
     public Computed<TResult>? Computed { get; protected set; }
 
