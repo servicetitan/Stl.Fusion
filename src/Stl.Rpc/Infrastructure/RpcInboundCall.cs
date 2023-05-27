@@ -43,20 +43,29 @@ public abstract class RpcInboundCall : RpcCall
         }
     }
 
-    public abstract Task Process();
+    public abstract Task Invoke();
 
     public abstract ValueTask Complete();
 
-    public virtual void Cancel()
-    {
-        var cts = CancellationTokenSource;
-        if (cts != null) {
-            CancellationTokenSource = null;
-            cts.CancelAndDisposeSilently();
-        }
-    }
+    public void Cancel()
+        => TryComplete(true);
 
     // Protected methods
+
+    protected bool TryComplete(bool mustCancel)
+    {
+        var cts = CancellationTokenSource;
+        if (cts == null) // NoWait, already completed, or cancelled
+            return false;
+
+        CancellationTokenSource = null;
+        if (mustCancel)
+            cts.CancelAndDisposeSilently();
+        else
+            cts.Dispose();
+        Unregister();
+        return true;
+    }
 
     protected bool TryRegister()
     {
@@ -73,10 +82,8 @@ public abstract class RpcInboundCall : RpcCall
 
     protected void Unregister()
     {
-        if (NoWait)
-            return;
-
-        Context.Peer.Calls.Inbound.TryRemove(Id, this);
+        if (!NoWait)
+            Context.Peer.Calls.Inbound.TryRemove(Id, this);
     }
 }
 
@@ -88,7 +95,7 @@ public class RpcInboundCall<TResult> : RpcInboundCall
         : base(context, methodDef)
     { }
 
-    public override async Task Process()
+    public override async Task Invoke()
     {
         if (!TryRegister())
             return;
@@ -105,16 +112,11 @@ public class RpcInboundCall<TResult> : RpcInboundCall
 
     public override ValueTask Complete()
     {
-        var cts = CancellationTokenSource;
-        if (cts == null) // NoWait or already completed
+        if (!TryComplete(false))
             return ValueTaskExt.CompletedTask;
 
-        CancellationTokenSource = null;
-        cts.Dispose();
-        Unregister();
-
         if (CancellationToken.IsCancellationRequested) {
-            // Call is cancelled @ the outbound end or Peer is disposed, so there is nothing else to do
+            // Call is cancelled @ the outbound end or Peer is disposed
             return ValueTaskExt.CompletedTask;
         }
 

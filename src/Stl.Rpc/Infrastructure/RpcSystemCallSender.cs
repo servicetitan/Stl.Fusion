@@ -29,7 +29,7 @@ public sealed class RpcSystemCallSender : RpcServiceBase
             ? Ok(peer, callId, value, headers)
             : Error(peer, callId, result.Error!, headers);
 
-    public async ValueTask Ok<TResult>(RpcPeer peer, long callId, TResult result, List<RpcHeader>? headers = null)
+    public ValueTask Ok<TResult>(RpcPeer peer, long callId, TResult result, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
@@ -38,10 +38,10 @@ public sealed class RpcSystemCallSender : RpcServiceBase
         // An optimized version of Client.Ok(result):
         var call = context.Bind(OkMethodDef, ArgumentList.New(result))!;
         var message = call.CreateMessage(callId);
-        await peer.Send(message, default).ConfigureAwait(false);
+        return peer.Send(message, default);
     }
 
-    public async ValueTask Error(RpcPeer peer, long callId, Exception error, List<RpcHeader>? headers = null)
+    public ValueTask Error(RpcPeer peer, long callId, Exception error, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
@@ -50,10 +50,10 @@ public sealed class RpcSystemCallSender : RpcServiceBase
         // An optimized version of Client.Error(result):
         var call = context.Bind(ErrorMethodDef, ArgumentList.New(error.ToExceptionInfo()))!;
         var message = call.CreateMessage(callId);
-        await peer.Send(message, default).ConfigureAwait(false);
+        return peer.Send(message, default);
     }
 
-    public async ValueTask Cancel(RpcPeer peer, long callId, List<RpcHeader>? headers = null)
+    public ValueTask Cancel(RpcPeer peer, long callId, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
@@ -62,6 +62,6 @@ public sealed class RpcSystemCallSender : RpcServiceBase
         // An optimized version of Client.Error(result):
         var call = context.Bind(CancelMethodDef, ArgumentList.Empty)!;
         var message = call.CreateMessage(callId);
-        await peer.Send(message, default).ConfigureAwait(false);
+        return peer.Send(message, default);
     }
 }

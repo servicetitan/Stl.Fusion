@@ -27,6 +27,7 @@ public class RpcComputed<T> : ComputeMethodComputed<T>, IRpcComputed
     {
         Call = call;
         RemoteVersion = remoteVersion;
+        call?.WhenInvalidated.GetAwaiter().OnCompleted(() => Invalidate());
         StartAutoInvalidation();
     }
 
