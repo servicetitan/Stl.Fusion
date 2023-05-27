@@ -27,8 +27,18 @@ public class RpcComputed<T> : ComputeMethodComputed<T>, IRpcComputed
     {
         Call = call;
         RemoteVersion = remoteVersion;
-        call?.WhenInvalidated.GetAwaiter().OnCompleted(() => Invalidate());
-        StartAutoInvalidation();
+        if (call == null) {
+            StartAutoInvalidation();
+            return;
+        }
+
+        var whenInvalidatedAwaiter = call.WhenInvalidated.GetAwaiter();
+        if (whenInvalidatedAwaiter.IsCompleted)
+            Invalidate(true);
+        else {
+            whenInvalidatedAwaiter.OnCompleted(() => Invalidate(true));
+            StartAutoInvalidation();
+        }
     }
 
     protected override void OnInvalidated()
