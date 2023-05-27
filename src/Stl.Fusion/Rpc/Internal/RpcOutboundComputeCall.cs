@@ -15,7 +15,7 @@ public class RpcOutboundComputeCall<T> : RpcOutboundCall<T>, IRpcOutboundCompute
 
     public RpcOutboundComputeCall(RpcOutboundContext context)
         : base(context)
-        => context.Headers.Add(RpcFusionHeaders.Call);
+        => context.Headers.Add(FusionRpcHeaders.ComputeMethod);
 
     public void TryInvalidate(RpcInboundContext context)
         => WhenInvalidatedSource.TrySetResult(default);

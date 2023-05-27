@@ -52,82 +52,72 @@ public readonly struct RpcBuilder
         }
     }
 
-    public RpcBuilder AddService<TService>(
-        Func<RpcServiceConfiguration<TService>, RpcServiceConfiguration<TService>>? serviceConfigurationBuilder = null)
-        => AddService<TService, TService>(default, serviceConfigurationBuilder);
+    public RpcServiceBuilder AddService<TService>(Symbol name = default)
+        => AddService<TService, TService>(name);
 
-    public RpcBuilder AddService<TService>(
-        Symbol name,
-        Func<RpcServiceConfiguration<TService>, RpcServiceConfiguration<TService>>? serviceConfigurationBuilder = null)
-        => AddService<TService, TService>(name, serviceConfigurationBuilder);
-
-    public RpcBuilder AddService<TService, TServer>(
-        Func<RpcServiceConfiguration<TService>, RpcServiceConfiguration<TService>>? serviceConfigurationBuilder = null)
+    public RpcServiceBuilder AddService<TService, TServer>(Symbol name = default)
         where TServer : TService
-        => AddService<TService, TServer, TService>(default, serviceConfigurationBuilder);
-
-    public RpcBuilder AddService<TService, TServer>(
-        Symbol name,
-        Func<RpcServiceConfiguration<TService>, RpcServiceConfiguration<TService>>? serviceConfigurationBuilder = null)
-        where TServer : TService
-        => AddService<TService, TServer, TService>(name, serviceConfigurationBuilder);
-
-    public RpcBuilder AddService<TService, TServer, TClient>(
-        Func<RpcServiceConfiguration<TService>, RpcServiceConfiguration<TService>>? serviceConfigurationBuilder = null)
-        where TServer : TService
-        where TClient : TService
-        => AddService<TService, TServer, TClient>(default, serviceConfigurationBuilder);
-
-    public RpcBuilder AddService<TService, TServer, TClient>(
-        Symbol name,
-        Func<RpcServiceConfiguration<TService>, RpcServiceConfiguration<TService>>? serviceConfigurationBuilder = null)
-        where TServer : TService
-        where TClient : TService
     {
         var serviceType = typeof(TService);
         if (Configuration.Services.ContainsKey(serviceType))
             throw Errors.ServiceAlreadyExists(serviceType);
 
-        var cfg = new RpcServiceConfiguration<TService>(typeof(TServer), typeof(TClient), name);
-        if (serviceConfigurationBuilder != null)
-            cfg = serviceConfigurationBuilder.Invoke(cfg);
-        cfg.RequireValid(serviceType);
-
-        Configuration.Services[serviceType] = cfg;
-        if (cfg.ClientType != cfg.ServerType)
-            Services.AddSingleton(cfg.ClientType, c => c.RpcHub().GetClient(cfg.ClientType));
-        return this;
+        var service = new RpcServiceBuilder<TService>(this, typeof(TServer), name).RequireValid();
+        Configuration.Services[serviceType] = service;
+        return service;
     }
 
-    public RpcBuilder AddService(
-        Type serviceType,
-        Func<RpcServiceConfiguration, RpcServiceConfiguration>? serviceConfigurationBuilder = null)
+    public RpcServiceBuilder<TService> AddService<TService>(RpcServiceBuilder<TService> service)
+    {
+        if (service.Rpc.Services != Services)
+            throw new ArgumentOutOfRangeException(nameof(service));
+        if (Configuration.Services.ContainsKey(service.Type))
+            throw Errors.ServiceAlreadyExists(service.Type);
+
+        service.RequireValid();
+        Configuration.Services[service.Type] = service;
+        return service;
+    }
+
+    public RpcServiceBuilder AddService(Type serviceType, Type clientType, Symbol name = default)
     {
         if (Configuration.Services.ContainsKey(serviceType))
             throw Errors.ServiceAlreadyExists(serviceType);
 
-        var cfg = new RpcServiceConfiguration(serviceType);
-        if (serviceConfigurationBuilder != null)
-            cfg = serviceConfigurationBuilder.Invoke(cfg);
-        cfg.RequireValid(serviceType);
-
-        Configuration.Services[serviceType] = cfg;
-        if (cfg.ClientType != cfg.ServerType)
-            Services.AddSingleton(cfg.ClientType, c => c.RpcHub().GetClient(cfg.ClientType));
-        return this;
+        var service = new RpcServiceBuilder(this, serviceType, clientType, name).RequireValid();
+        Configuration.Services[serviceType] = service;
+        return service;
     }
 
-    public RpcBuilder RemoveService<TService>()
-        => RemoveService(typeof(TService));
-    public RpcBuilder RemoveService(Type serviceType)
+    public RpcServiceBuilder AddService(RpcServiceBuilder service)
     {
-        if (!Configuration.Services.TryGetValue(serviceType, out var cfg))
-            return this;
+        if (service.Rpc.Services != Services)
+            throw new ArgumentOutOfRangeException(nameof(service));
+        if (Configuration.Services.ContainsKey(service.Type))
+            throw Errors.ServiceAlreadyExists(service.Type);
+
+        service.RequireValid();
+        Configuration.Services[service.Type] = service;
+        return service;
+    }
+
+    public RpcServiceBuilder<TService>? RemoveService<TService>()
+    {
+        var service = RemoveService(typeof(TService));
+        if (service is RpcServiceBuilder<TService> typedService)
+            return typedService;
+        if (service != null)
+            return new RpcServiceBuilder<TService>(this, service.ServerType, service.Name);
+        return null;
+    }
+
+    public RpcServiceBuilder? RemoveService(Type serviceType)
+    {
+        if (!Configuration.Services.TryGetValue(serviceType, out var service))
+            return null;
 
         Configuration.Services.Remove(serviceType);
-        if (cfg.ClientType != cfg.ServerType)
-            Services.RemoveAll(cfg.ClientType);
-        return this;
+        return service;
     }
 
     public RpcBuilder HasPeerFactory(RpcPeerFactory peerFactory)

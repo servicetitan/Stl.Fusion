@@ -6,7 +6,6 @@ namespace Stl.Rpc;
 
 public sealed class RpcHub : ProcessorBase, IHasServices
 {
-    private readonly ConcurrentDictionary<Type, object> _clients = new();
     private ILogger? _log;
     private RpcServiceRegistry? _serviceRegistry;
     private RpcPeerFactory? _peerFactory;
@@ -43,14 +42,24 @@ public sealed class RpcHub : ProcessorBase, IHasServices
         return Task.WhenAll(disposeTasks);
     }
 
-    public object GetClient(Type serviceOrClientType)
+    public TClient CreateClient<TService, TClient>()
+        where TClient : TService
+        => (TClient)CreateClient(typeof(TService), typeof(TClient));
+
+    public TService CreateClient<TService>(Type? clientType = null)
+        => (TService)CreateClient(typeof(TService), clientType);
+
+    public object CreateClient(Type serviceType, Type? clientType = null)
     {
-        var serviceDef = ServiceRegistry[serviceOrClientType];
-        return _clients.GetOrAdd(serviceDef.ClientType, static (type, self) => {
-            var interceptor = self.Services.GetRequiredService<RpcClientInterceptor>();
-            var proxy = Proxies.New(type, interceptor);
-            return proxy;
-        }, this);
+        if (clientType == null)
+            clientType = serviceType;
+        else if (!serviceType.IsAssignableFrom(clientType))
+            throw Errors.MustBeAssignableTo(clientType, serviceType, nameof(clientType));
+
+        var interceptor = Services.GetRequiredService<RpcClientInterceptor>();
+        interceptor.ServiceDef = ServiceRegistry[serviceType];
+        var proxy = Proxies.New(clientType, interceptor);
+        return proxy;
     }
 
     public RpcPeer GetPeer(Symbol name)

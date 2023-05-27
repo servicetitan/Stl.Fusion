@@ -8,7 +8,7 @@ public class RpcInboundComputeContext : RpcInboundContext
     public static new readonly RpcInboundContextFactory DefaultFactory = NewFactory(RpcInboundContext.DefaultFactory);
 
     public static RpcInboundContextFactory NewFactory(RpcInboundContextFactory nextFactory)
-        => (peer, message, cancellationToken) => message.Headers.Contains(RpcFusionHeaders.Call)
+        => (peer, message, cancellationToken) => message.Headers.Contains(FusionRpcHeaders.ComputeMethod)
             ? new RpcInboundComputeContext(peer, message, cancellationToken)
             : nextFactory.Invoke(peer, message, cancellationToken);
 

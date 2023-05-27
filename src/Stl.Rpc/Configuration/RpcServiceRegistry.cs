@@ -34,14 +34,10 @@ public class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<RpcService
                 throw Errors.ServiceTypeConflict(service.Type);
             if (!serviceDef.HasDefaultServerType && _services.ContainsKey(serviceDef.ServerType))
                 throw Errors.ServiceTypeConflict(service.ServerType);
-            if (!serviceDef.HasDefaultClientType && _services.ContainsKey(serviceDef.ClientType))
-                throw Errors.ServiceTypeConflict(service.ClientType);
 
             _services.Add(serviceDef.Type, serviceDef);
             if (!serviceDef.HasDefaultServerType)
                 _services.Add(serviceDef.ServerType, serviceDef);
-            if (!serviceDef.HasDefaultClientType)
-                _services.Add(serviceDef.ClientType, serviceDef);
             _serviceByName.Add(serviceDef.Name, serviceDef);
         }
     }

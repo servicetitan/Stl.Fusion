@@ -11,24 +11,21 @@ public sealed class RpcServiceDef
     public RpcHub Hub { get; }
     public Type Type { get; }
     public Type ServerType { get; }
-    public Type ClientType { get; }
     public Symbol Name { get; }
     public bool IsSystem { get; }
     public bool HasDefaultServerType => ServerType == Type;
-    public bool HasDefaultClientType => ClientType == Type;
     public int MethodCount => _methods.Count;
     public IEnumerable<RpcMethodDef> Methods => _methods.Values;
 
     public RpcMethodDef this[MethodInfo method] => Get(method) ?? throw Errors.NoMethod(Type, method);
     public RpcMethodDef this[Symbol methodName] => Get(methodName) ?? throw Errors.NoMethod(Type, methodName);
 
-    public RpcServiceDef(RpcHub hub, Symbol name, RpcServiceConfiguration source, Func<RpcMethodDef, Symbol> methodNameBuilder)
+    public RpcServiceDef(RpcHub hub, Symbol name, RpcServiceBuilder source, Func<RpcMethodDef, Symbol> methodNameBuilder)
     {
         Hub = hub;
         Name = name;
         Type = source.Type;
         ServerType = source.ServerType;
-        ClientType = source.ClientType;
         IsSystem = typeof(IRpcSystemService).IsAssignableFrom(Type);
 
         _methods = new Dictionary<MethodInfo, RpcMethodDef>();

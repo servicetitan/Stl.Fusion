@@ -1,16 +1,25 @@
 using Stl.Interception;
 using Stl.Interception.Interceptors;
+using Stl.Internal;
 
 namespace Stl.Rpc.Infrastructure;
 
 public class RpcClientInterceptor : InterceptorBase
 {
-    private RpcServiceRegistry? _serviceRegistry;
+    private RpcServiceDef? _serviceDef;
 
     public new record Options : InterceptorBase.Options;
 
-    protected RpcHub Hub { get; }
-    protected RpcServiceRegistry ServiceRegistry => _serviceRegistry ??= Hub.ServiceRegistry;
+    public RpcHub Hub { get; }
+    public RpcServiceDef ServiceDef {
+        get => _serviceDef ?? throw Errors.NotInitialized(nameof(ServiceDef));
+        set {
+            if (_serviceDef != null)
+                throw Errors.AlreadyInitialized(nameof(ServiceDef));
+
+            _serviceDef = value;
+        }
+    }
 
     public RpcClientInterceptor(Options options, IServiceProvider services)
         : base(options, services)
@@ -71,12 +80,7 @@ public class RpcClientInterceptor : InterceptorBase
     }
 
     protected override MethodDef? CreateMethodDef(MethodInfo method, Invocation initialInvocation)
-    {
-        var type = initialInvocation.Proxy.GetType().NonProxyType();
-        var serviceDef = ServiceRegistry[type];
-        var methodDef = serviceDef.Methods.FirstOrDefault(m => m.Method == method);
-        return methodDef;
-    }
+        => ServiceDef.Methods.FirstOrDefault(m => m.Method == method);
 
     protected override void ValidateTypeInternal(Type type)
     { }

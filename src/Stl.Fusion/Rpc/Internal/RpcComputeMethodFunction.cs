@@ -1,7 +1,5 @@
 using Cysharp.Text;
-using Stl.Fusion.Bridge.Internal;
 using Stl.Fusion.Interception;
-using Stl.Fusion.Internal;
 using Stl.Rpc.Infrastructure;
 using Stl.Versioning;
 using Errors = Stl.Internal.Errors;
@@ -82,7 +80,7 @@ public class RpcComputeMethodFunction<T> : ComputeFunctionBase<T>, IRpcComputeMe
         catch (Exception error) {
             result = new Result<T>(default!, error);
         }
-        var versionHeader = call?.Context.Headers.GetOrDefault(RpcFusionHeaders.Version.Name);
+        var versionHeader = call?.Context.Headers.GetOrDefault(FusionRpcHeaders.Version.Name);
         var remoteVersion = versionHeader is { } vVersionHeader
             ? LTag.Parse(vVersionHeader.Value)
             : default;
@@ -100,7 +98,7 @@ public class RpcComputeMethodFunction<T> : ComputeFunctionBase<T>, IRpcComputeMe
         var context = scope.Context;
         if (context.CallType != typeof(RpcOutboundComputeCall<>)) {
             context.CallType = typeof(RpcOutboundComputeCall<>);
-            context.Headers.Add(RpcFusionHeaders.Call);
+            context.Headers.Add(FusionRpcHeaders.ComputeMethod);
         }
 
         input.InvokeOriginalFunction(cancellationToken);
