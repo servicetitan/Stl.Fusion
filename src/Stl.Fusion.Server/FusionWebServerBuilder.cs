@@ -17,18 +17,19 @@ public readonly struct FusionWebServerBuilder
         Action<FusionWebServerBuilder>? configure)
     {
         Fusion = fusion;
-        if (Services.HasService<WebSocketServer>()) {
+        var services = Services;
+        if (services.HasService<WebSocketServer>()) {
             configure?.Invoke(this);
             return;
         }
 
         Fusion.AddPublisher();
-        Services.TryAddSingleton<WebSocketServer.Options>();
-        Services.TryAddSingleton<WebSocketServer>();
-        Services.TryAddSingleton<SessionMiddleware.Options>();
-        Services.TryAddScoped<SessionMiddleware>();
+        services.TryAddSingleton<WebSocketServer.Options>();
+        services.TryAddSingleton<WebSocketServer>();
+        services.TryAddSingleton<SessionMiddleware.Options>();
+        services.TryAddScoped<SessionMiddleware>();
 
-        var mvcBuilder = Services.AddMvcCore(options => {
+        var mvcBuilder = services.AddMvcCore(options => {
             var oldModelBinderProviders = options.ModelBinderProviders.ToList();
             var newModelBinderProviders = new IModelBinderProvider[] {
                 new SimpleModelBinderProvider<Moment, MomentModelBinder>(),

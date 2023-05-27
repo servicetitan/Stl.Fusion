@@ -17,7 +17,7 @@ public readonly struct RpcBuilder
         Action<RpcBuilder>? configure)
     {
         Services = services;
-        if (Services.Contains(AddedTagDescriptor)) {
+        if (services.Contains(AddedTagDescriptor)) {
             // Already configured
             Configuration = GetConfiguration(services);
             configure?.Invoke(this);
@@ -25,23 +25,27 @@ public readonly struct RpcBuilder
         }
 
         // We want above Contains call to run in O(1), so...
-        Services.Insert(0, AddedTagDescriptor);
+        services.Insert(0, AddedTagDescriptor);
 
         // Common services
-        Services.TryAddSingleton(new RpcConfiguration());
-        Services.TryAddSingleton(c => new RpcHub(c));
-        Services.TryAddSingleton<RpcPeerFactory>(c => name => new RpcPeer(c.RpcHub(), name));
-        Services.TryAddSingleton(_ => RpcInboundContext.DefaultFactory);
-        Services.TryAddSingleton<RpcPeerResolver>(c => {
+        services.TryAddSingleton(new RpcConfiguration());
+        services.TryAddSingleton(c => new RpcHub(c));
+        services.TryAddSingleton<RpcPeerFactory>(c => name => new RpcPeer(c.RpcHub(), name));
+        services.TryAddSingleton(_ => RpcInboundContext.DefaultFactory);
+        services.TryAddSingleton<RpcPeerResolver>(c => {
             var hub = c.RpcHub();
             return (_, _) => hub.GetPeer(Symbol.Empty);
         });
-        Services.AddSingleton(c => new RpcSystemCallSender(c));
+        services.AddSingleton(c => new RpcSystemCallSender(c));
 
         // Infrastructure
-        Services.TryAddSingleton(c => new RpcServiceRegistry(c));
-        Services.TryAddSingleton(_ => new RpcClientInterceptor.Options());
-        Services.TryAddTransient(c => new RpcClientInterceptor(c.GetRequiredService<RpcClientInterceptor.Options>(), c));
+        services.TryAddSingleton(c => new RpcServiceRegistry(c));
+
+        // Interceptors
+        services.TryAddSingleton(_ => new RpcClientInterceptor.Options());
+        services.TryAddTransient(c => new RpcClientInterceptor(c.GetRequiredService<RpcClientInterceptor.Options>(), c));
+        services.TryAddSingleton(_ => new RpcRoutingInterceptor.Options());
+        services.TryAddTransient(c => new RpcRoutingInterceptor(c.GetRequiredService<RpcRoutingInterceptor.Options>(), c));
 
         Configuration = GetConfiguration(services);
 

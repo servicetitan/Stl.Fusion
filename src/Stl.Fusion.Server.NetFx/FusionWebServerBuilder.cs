@@ -8,18 +8,19 @@ public readonly struct FusionWebServerBuilder
     public IServiceCollection Services => Fusion.Services;
 
     internal FusionWebServerBuilder(
-        FusionBuilder fusion, 
+        FusionBuilder fusion,
         Action<FusionWebServerBuilder>? configure)
     {
         Fusion = fusion;
-        if (Services.HasService<WebSocketServer>()) {
+        var services = Services;
+        if (services.HasService<WebSocketServer>()) {
             configure?.Invoke(this);
             return;
         }
 
         Fusion.AddPublisher();
-        Services.TryAddSingleton<WebSocketServer.Options>();
-        Services.TryAddSingleton<WebSocketServer>();
+        services.TryAddSingleton<WebSocketServer.Options>();
+        services.TryAddSingleton<WebSocketServer>();
 
         // TODO: configure model binder providers
 

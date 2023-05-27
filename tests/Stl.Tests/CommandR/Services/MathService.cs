@@ -5,9 +5,13 @@ public class MathService : ServiceBase, ICommandService
 {
     private readonly object _lock = new();
 
+    private ICommander Commander { get; } 
+
     public long Value { get; set; }
 
-    public MathService(IServiceProvider services) : base(services) { }
+    public MathService(IServiceProvider services)
+        : base(services)
+        => Commander = services.Commander();
 
     [CommandHandler(Priority = 2)]
     protected virtual Task<double> Divide(DivCommand command, CancellationToken cancellationToken = default)
@@ -48,8 +52,9 @@ public class MathService : ServiceBase, ICommandService
         var tailCommand = new RecSumCommand() {
             Arguments = command.Arguments[1..],
         };
-        var tailSumTask = RecSum(tailCommand, cancellationToken);
-        var tailSum = await tailSumTask.ConfigureAwait(false);
+
+
+        var tailSum = await Commander.Call(tailCommand, cancellationToken).ConfigureAwait(false);
         return command.Arguments[0] + tailSum;
     }
 

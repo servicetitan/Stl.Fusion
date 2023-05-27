@@ -5,19 +5,13 @@ namespace Stl.Fusion.Interception;
 
 public abstract class ComputeMethodInterceptorBase : InterceptorBase
 {
-    public new record Options : InterceptorBase.Options
-    {
-        public ComputedOptionsProvider? ComputedOptionsProvider { get; init; }
-    }
+    public new record Options : InterceptorBase.Options;
 
     public ComputedOptionsProvider ComputedOptionsProvider { get; }
 
     protected ComputeMethodInterceptorBase(Options options, IServiceProvider services)
         : base(options, services)
-    {
-        ComputedOptionsProvider = options.ComputedOptionsProvider
-            ?? services.GetRequiredService<ComputedOptionsProvider>();
-    }
+        => ComputedOptionsProvider = services.GetRequiredService<ComputedOptionsProvider>();
 
     protected override Func<Invocation, object?> CreateHandler<T>(Invocation initialInvocation, MethodDef methodDef)
     {

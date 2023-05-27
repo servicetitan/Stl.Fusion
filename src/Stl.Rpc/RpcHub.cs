@@ -57,7 +57,7 @@ public sealed class RpcHub : ProcessorBase, IHasServices
             throw Errors.MustBeAssignableTo(clientType, serviceType, nameof(clientType));
 
         var interceptor = Services.GetRequiredService<RpcClientInterceptor>();
-        interceptor.ServiceDef = ServiceRegistry[serviceType];
+        interceptor.Configure(ServiceRegistry[serviceType]);
         var proxy = Proxies.New(clientType, interceptor);
         return proxy;
     }

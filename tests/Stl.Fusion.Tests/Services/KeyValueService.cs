@@ -38,8 +38,11 @@ public class KeyValueService<TValue> : IKeyValueService<TValue>
 {
     private readonly ConcurrentDictionary<string, TValue> _values = new(StringComparer.Ordinal);
 
+    private ICommander Commander { get; }
+
     public KeyValueService(IServiceProvider services)
     {
+        Commander = services.Commander();
         Debug.WriteLine($"{GetType().GetName()} created @ {services.GetHashCode()}.");
     }
 
@@ -55,33 +58,31 @@ public class KeyValueService<TValue> : IKeyValueService<TValue>
         return _values.GetValueOrDefault(key)!;
     }
 
-    public virtual Task Set(string key, TValue value, CancellationToken cancellationToken = default)
-        => SetCmd(new IKeyValueService<TValue>.SetCommand(key, value), cancellationToken);
+    public Task Set(string key, TValue value, CancellationToken cancellationToken = default)
+        => Commander.Call(new IKeyValueService<TValue>.SetCommand(key, value), cancellationToken);
 
-    public virtual Task Remove(string key, CancellationToken cancellationToken = default)
-        => RemoveCmd(new IKeyValueService<TValue>.RemoveCommand(key), cancellationToken);
+    public Task Remove(string key, CancellationToken cancellationToken = default)
+        => Commander.Call(new IKeyValueService<TValue>.RemoveCommand(key), cancellationToken);
 
-    public virtual Task SetCmd(IKeyValueService<TValue>.SetCommand cmd, CancellationToken cancellationToken = default)
+    public Task SetCmd(IKeyValueService<TValue>.SetCommand cmd, CancellationToken cancellationToken = default)
     {
+        _values[cmd.Key] = cmd.Value;
+
         if (Computed.IsInvalidating()) {
             _ = TryGet(cmd.Key, default).AssertCompleted();
             _ = Get(cmd.Key, default).AssertCompleted();
-            return Task.CompletedTask;
         }
-
-        _values[cmd.Key] = cmd.Value;
         return Task.CompletedTask;
     }
 
-    public virtual Task RemoveCmd(IKeyValueService<TValue>.RemoveCommand cmd, CancellationToken cancellationToken = default)
+    public Task RemoveCmd(IKeyValueService<TValue>.RemoveCommand cmd, CancellationToken cancellationToken = default)
     {
+        _values.TryRemove(cmd.Key, out _);
+
         if (Computed.IsInvalidating()) {
             _ = TryGet(cmd.Key, default).AssertCompleted();
             _ = Get(cmd.Key, default).AssertCompleted();
-            return Task.CompletedTask;
         }
-
-        _values.TryRemove(cmd.Key, out _);
         return Task.CompletedTask;
     }
 }

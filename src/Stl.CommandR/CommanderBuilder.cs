@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.CommandR.Diagnostics;
-using Stl.CommandR.Interception;
 using Stl.CommandR.Internal;
 using Stl.Interception;
 
@@ -19,7 +18,7 @@ public readonly struct CommanderBuilder
         Action<CommanderBuilder>? configure)
     {
         Services = services;
-        if (Services.Contains(AddedTagDescriptor)) {
+        if (services.Contains(AddedTagDescriptor)) {
             // Already configured
             Handlers = GetCommandHandlers(services);
             configure?.Invoke(this);
@@ -27,46 +26,26 @@ public readonly struct CommanderBuilder
         }
 
         // We want above Contains call to run in O(1), so...
-        Services.Insert(0, AddedTagDescriptor);
+        services.Insert(0, AddedTagDescriptor);
 
         // Common services
-        Services.TryAddSingleton(_ => new CommanderOptions());
-        Services.TryAddSingleton<ICommander>(c => new Commander(c));
-        Services.TryAddSingleton(new HashSet<CommandHandler>());
-        Services.TryAddSingleton(c => new CommandHandlerRegistry(c));
-        Services.TryAddSingleton(c => new CommandHandlerResolver(c));
+        services.TryAddSingleton<ICommander>(c => new Commander(c));
+        services.TryAddSingleton(new HashSet<CommandHandler>());
+        services.TryAddSingleton(c => new CommandHandlerRegistry(c));
+        services.TryAddSingleton(c => new CommandHandlerResolver(c));
 
         // Command services & their dependencies
-        Services.TryAddSingleton(_ => new CommandServiceInterceptor.Options());
-        Services.TryAddSingleton(c => new CommandServiceInterceptor(
-            c.GetRequiredService<CommandServiceInterceptor.Options>(), c));
         Handlers = GetCommandHandlers(services);
 
         // Default handlers
-        Services.AddSingleton(_ => new PreparedCommandHandler());
+        services.AddSingleton(_ => new PreparedCommandHandler());
         AddHandlers<PreparedCommandHandler>();
-        Services.AddSingleton(c => new CommandTracer(c));
+        services.AddSingleton(c => new CommandTracer(c));
         AddHandlers<CommandTracer>();
-        Services.AddSingleton(_ => new LocalCommandRunner());
+        services.AddSingleton(_ => new LocalCommandRunner());
         AddHandlers<LocalCommandRunner>();
 
         configure?.Invoke(this);
-    }
-
-    // Options
-
-    public CommanderBuilder Configure(CommanderOptions options)
-    {
-        Services.RemoveAll<CommanderOptions>();
-        Services.AddSingleton(options);
-        return this;
-    }
-
-    public CommanderBuilder Configure(Func<IServiceProvider, CommanderOptions> optionsFactory)
-    {
-        Services.RemoveAll<CommanderOptions>();
-        Services.AddSingleton(optionsFactory);
-        return this;
     }
 
     // Handler discovery
@@ -168,17 +147,7 @@ public readonly struct CommanderBuilder
         if (!typeof(ICommandService).IsAssignableFrom(implementationType))
             throw Stl.Internal.Errors.MustImplement<ICommandService>(implementationType, nameof(implementationType));
 
-        object Factory(IServiceProvider c)
-        {
-            // We should try to validate it here because if the type doesn't
-            // have any virtual methods (which might be a mistake), no calls
-            // will be intercepted, so no error will be thrown later.
-            var interceptor = c.GetRequiredService<CommandServiceInterceptor>();
-            interceptor.ValidateType(implementationType);
-            return c.ActivateProxy(implementationType, interceptor);
-        }
-
-        var descriptor = new ServiceDescriptor(serviceType, Factory, lifetime);
+        var descriptor = new ServiceDescriptor(serviceType, implementationType, lifetime);
         Services.TryAdd(descriptor);
         AddHandlers(serviceType, implementationType, priorityOverride);
         return this;

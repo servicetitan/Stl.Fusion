@@ -1,11 +1,13 @@
-using Microsoft.Toolkit.HighPerformance.Buffers;
-using Stl.Interception;
+using Stl.Rpc.Infrastructure;
 
 namespace Stl.Rpc;
 
 public record RpcConfiguration
 {
     public Dictionary<Type, RpcServiceBuilder> Services { get; init; } = new();
+    public Dictionary<Symbol, Type> InboundCallTypes { get; init; } = new() {
+        { Symbol.Empty, typeof(RpcInboundCall<>) },
+    };
 
     public Func<Type, Symbol> ServiceNameBuilder { get; init; } = DefaultServiceNameBuilder;
     public Func<RpcMethodDef, Symbol> MethodNameBuilder { get; init; } = DefaultMethodNameBuilder;

@@ -17,31 +17,32 @@ public readonly struct DbOperationsBuilder<TDbContext>
         Action<DbOperationsBuilder<TDbContext>>? configure)
     {
         DbContext = dbContext;
-        if (Services.HasService<IDbOperationLog<TDbContext>>()) {
+        var services = Services;
+        if (services.HasService<IDbOperationLog<TDbContext>>()) {
             configure?.Invoke(this);
             return;
         }
 
         // Common services
-        Services.TryAddSingleton<IDbOperationLog<TDbContext>, DbOperationLog<TDbContext, DbOperation>>();
+        services.TryAddSingleton<IDbOperationLog<TDbContext>, DbOperationLog<TDbContext, DbOperation>>();
 
         // DbOperationScope & its CommandR handler
-        Services.TryAddSingleton<TransactionIdGenerator<TDbContext>>();
-        Services.TryAddSingleton<DbOperationScope<TDbContext>.Options>();
-        if (!Services.HasService<DbOperationScopeProvider<TDbContext>>()) {
-            Services.AddSingleton<DbOperationScopeProvider<TDbContext>>();
-            Services.AddCommander().AddHandlers<DbOperationScopeProvider<TDbContext>>();
+        services.TryAddSingleton<TransactionIdGenerator<TDbContext>>();
+        services.TryAddSingleton<DbOperationScope<TDbContext>.Options>();
+        if (!services.HasService<DbOperationScopeProvider<TDbContext>>()) {
+            services.AddSingleton<DbOperationScopeProvider<TDbContext>>();
+            services.AddCommander().AddHandlers<DbOperationScopeProvider<TDbContext>>();
         }
 
         // DbOperationLogReader - hosted service!
-        Services.TryAddSingleton<DbOperationLogReader<TDbContext>.Options>();
-        Services.TryAddSingleton<DbOperationLogReader<TDbContext>>();
-        Services.AddHostedService(c => c.GetRequiredService<DbOperationLogReader<TDbContext>>());
+        services.TryAddSingleton<DbOperationLogReader<TDbContext>.Options>();
+        services.TryAddSingleton<DbOperationLogReader<TDbContext>>();
+        services.AddHostedService(c => c.GetRequiredService<DbOperationLogReader<TDbContext>>());
 
         // DbOperationLogTrimmer - hosted service!
-        Services.TryAddSingleton<DbOperationLogTrimmer<TDbContext>.Options>();
-        Services.TryAddSingleton<DbOperationLogTrimmer<TDbContext>>();
-        Services.AddHostedService(c => c.GetRequiredService<DbOperationLogTrimmer<TDbContext>>());
+        services.TryAddSingleton<DbOperationLogTrimmer<TDbContext>.Options>();
+        services.TryAddSingleton<DbOperationLogTrimmer<TDbContext>>();
+        services.AddHostedService(c => c.GetRequiredService<DbOperationLogTrimmer<TDbContext>>());
 
         configure?.Invoke(this);
     }
@@ -114,18 +115,19 @@ public readonly struct DbOperationsBuilder<TDbContext>
     public DbOperationsBuilder<TDbContext> AddFileBasedOperationLogChangeTracking(
         Func<IServiceProvider, FileBasedDbOperationLogChangeTrackingOptions<TDbContext>>? optionsFactory = null)
     {
-        var isConfigured = Services.HasService<FileBasedDbOperationLogChangeTracker<TDbContext>>();
+        var services = Services;
+        var isConfigured = services.HasService<FileBasedDbOperationLogChangeTracker<TDbContext>>();
 
         if (optionsFactory != null)
-            Services.AddSingleton(optionsFactory);
+            services.AddSingleton(optionsFactory);
         if (isConfigured)
             return this;
 
-        Services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
-        Services.TryAddSingleton<FileBasedDbOperationLogChangeTracker<TDbContext>>();
-        Services.TryAddSingleton<IDbOperationLogChangeTracker<TDbContext>>(c =>
+        services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
+        services.TryAddSingleton<FileBasedDbOperationLogChangeTracker<TDbContext>>();
+        services.TryAddSingleton<IDbOperationLogChangeTracker<TDbContext>>(c =>
             c.GetRequiredService<FileBasedDbOperationLogChangeTracker<TDbContext>>());
-        Services.TryAddEnumerable(
+        services.TryAddEnumerable(
             ServiceDescriptor.Singleton<
                 IOperationCompletionListener,
                 FileBasedDbOperationLogChangeNotifier<TDbContext>>());

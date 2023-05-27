@@ -5,16 +5,13 @@ namespace Stl.Fusion.Interception;
 
 public sealed class ComputeMethodInterceptor : ComputeMethodInterceptorBase
 {
-    public new record Options : ComputeMethodInterceptorBase.Options
-    {
-        public VersionGenerator<LTag>? VersionGenerator { get; init; }
-    }
+    public new record Options : ComputeMethodInterceptorBase.Options;
 
     private VersionGenerator<LTag> VersionGenerator { get; }
 
     public ComputeMethodInterceptor(Options options, IServiceProvider services)
         : base(options, services)
-        => VersionGenerator = options.VersionGenerator ?? services.VersionGenerator<LTag>();
+        => VersionGenerator = services.VersionGenerator<LTag>();
 
     protected override ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method)
         => new ComputeMethodFunction<T>(method, Services, VersionGenerator);

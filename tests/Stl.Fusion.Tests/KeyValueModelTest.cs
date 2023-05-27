@@ -59,12 +59,13 @@ public class KeyValueModelTest : FusionTestBase
 
         // Server commands
         var kv = WebServices.GetRequiredService<IKeyValueService<string>>();
+        var commander = WebServices.Commander();
         (await kv.Get("")).Should().BeNull();
 
-        await kv.SetCmd(new IKeyValueService<string>.SetCommand("", "1"));
+        await commander.Call(new IKeyValueService<string>.SetCommand("", "1"));
         (await kv.Get("")).Should().Be("1");
 
-        await WebServices.Commander().Call(new IKeyValueService<string>.SetCommand("", "2"));
+        await commander.Call(new IKeyValueService<string>.SetCommand("", "2"));
         (await kv.Get("")).Should().Be("2");
 
         // Client commands

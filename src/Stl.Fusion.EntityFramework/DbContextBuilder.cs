@@ -16,12 +16,12 @@ public readonly struct DbContextBuilder<TDbContext>
         Action<DbContextBuilder<TDbContext>>? configure)
     {
         Services = services;
-        if (Services.HasService<DbHub<TDbContext>>()) {
+        if (services.HasService<DbHub<TDbContext>>()) {
             configure?.Invoke(this);
             return;
         }
 
-        Services.TryAddSingleton<DbHub<TDbContext>>();
+        services.TryAddSingleton<DbHub<TDbContext>>();
         AddMultitenancy(); // Core multitenancy services
 
         configure?.Invoke(this);
@@ -151,22 +151,23 @@ public readonly struct DbContextBuilder<TDbContext>
         Func<IServiceProvider, DbKeyValueTrimmer<TDbContext, TDbKeyValue>.Options>? keyValueTrimmerOptionsFactory = null)
         where TDbKeyValue : DbKeyValue, new()
     {
-        var isConfigured = Services.HasService<DbKeyValueTrimmer<TDbContext, TDbKeyValue>>();
+        var services = Services;
+        var isConfigured = services.HasService<DbKeyValueTrimmer<TDbContext, TDbKeyValue>>();
 
         if (keyValueTrimmerOptionsFactory != null)
-            Services.AddSingleton(keyValueTrimmerOptionsFactory);
+            services.AddSingleton(keyValueTrimmerOptionsFactory);
         if (isConfigured)
             return this;
 
         TryAddEntityResolver<string, TDbKeyValue>();
-        var fusion = Services.AddFusion();
+        var fusion = services.AddFusion();
         fusion.AddComputeService<DbKeyValueStore<TDbContext, TDbKeyValue>>();
-        Services.TryAddSingleton<IKeyValueStore>(c => c.GetRequiredService<DbKeyValueStore<TDbContext, TDbKeyValue>>());
+        services.TryAddSingleton<IKeyValueStore>(c => c.GetRequiredService<DbKeyValueStore<TDbContext, TDbKeyValue>>());
 
         // DbKeyValueTrimmer - hosted service!
-        Services.TryAddSingleton<DbKeyValueTrimmer<TDbContext, TDbKeyValue>.Options>();
-        Services.TryAddSingleton<DbKeyValueTrimmer<TDbContext, TDbKeyValue>>();
-        Services.AddHostedService(c => c.GetRequiredService<DbKeyValueTrimmer<TDbContext, TDbKeyValue>>());
+        services.TryAddSingleton<DbKeyValueTrimmer<TDbContext, TDbKeyValue>.Options>();
+        services.TryAddSingleton<DbKeyValueTrimmer<TDbContext, TDbKeyValue>>();
+        services.AddHostedService(c => c.GetRequiredService<DbKeyValueTrimmer<TDbContext, TDbKeyValue>>());
         return this;
     }
 }

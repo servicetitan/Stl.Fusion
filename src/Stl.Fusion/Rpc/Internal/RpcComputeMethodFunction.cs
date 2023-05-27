@@ -96,10 +96,8 @@ public class RpcComputeMethodFunction<T> : ComputeFunctionBase<T>, IRpcComputeMe
     {
         using var scope = RpcOutboundContext.Use();
         var context = scope.Context;
-        if (context.CallType != typeof(RpcOutboundComputeCall<>)) {
+        if (context.CallType != typeof(RpcOutboundComputeCall<>))
             context.CallType = typeof(RpcOutboundComputeCall<>);
-            context.Headers.Add(FusionRpcHeaders.ComputeMethod);
-        }
 
         input.InvokeOriginalFunction(cancellationToken);
         var call = (RpcOutboundComputeCall<T>?)context.Call;
