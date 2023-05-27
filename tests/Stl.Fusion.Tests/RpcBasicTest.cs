@@ -1,4 +1,5 @@
 using StackExchange.Redis;
+using Stl.Fusion.Rpc.Interception;
 using Stl.Fusion.Rpc.Internal;
 using Stl.Fusion.Tests.Services;
 using Stl.Interception;
@@ -41,9 +42,9 @@ public class RpcBasicTest : SimpleFusionTestBase
 
         var rpc = services.AddRpc();
         rpc.Configuration.InboundCallTypes.Add(RpcComputeCall.CallTypeId, typeof(RpcInboundComputeCall<>));
-        services.AddSingleton(_ => new RpcComputeMethodInterceptor.Options());
-        services.AddSingleton(c => new RpcComputeMethodInterceptor(
-            c.GetRequiredService<RpcComputeMethodInterceptor.Options>(), c));
+        services.AddSingleton(_ => new RpcComputeServiceInterceptor.Options());
+        services.AddSingleton(c => new RpcComputeServiceInterceptor(
+            c.GetRequiredService<RpcComputeServiceInterceptor.Options>(), c));
 
         rpc.AddService<ICounterService, CounterService>();
         var clientType = typeof(ICounterServiceClient);
@@ -54,7 +55,7 @@ public class RpcBasicTest : SimpleFusionTestBase
             var server = c.GetRequiredService(serviceType);
             var client = c.GetRequiredService(clientType); // Replace it with actual client
             var interceptor = c.GetRequiredService<RpcRoutingInterceptor>();
-            interceptor.Configure(serviceRegistry[serviceType], server, client); 
+            interceptor.Setup(serviceRegistry[serviceType], server, client); 
             var computeServiceProxy = Proxies.New(clientType, interceptor);
             return computeServiceProxy;
         });

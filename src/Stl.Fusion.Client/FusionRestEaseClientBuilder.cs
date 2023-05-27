@@ -137,9 +137,9 @@ public readonly struct FusionRestEaseClientBuilder
         object ClientAccessorFactory(IServiceProvider c)
         {
             // 1. Validate types
-            var replicaMethodInterceptor = c.GetRequiredService<ReplicaMethodInterceptor>();
+            var replicaMethodInterceptor = c.GetRequiredService<ReplicaServiceInterceptor>();
             replicaMethodInterceptor.ValidateType(clientDefType);
-            var computeMethodInterceptor = c.GetRequiredService<ComputeMethodInterceptor>();
+            var computeMethodInterceptor = c.GetRequiredService<ComputeServiceInterceptor>();
             computeMethodInterceptor.ValidateType(serviceType);
 
             // 2. Create REST client (of clientType)
@@ -160,7 +160,7 @@ public readonly struct FusionRestEaseClientBuilder
             var client = clientAccessor.Client;
 
             // 4. Create Replica Client
-            var interceptor = c.GetRequiredService<ReplicaMethodInterceptor>();
+            var interceptor = c.GetRequiredService<ReplicaServiceInterceptor>();
             return c.ActivateProxy(serviceType, interceptor, client);
         }
 

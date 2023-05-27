@@ -3,15 +3,15 @@ using Stl.Versioning;
 
 namespace Stl.Fusion.Bridge.Interception;
 
-public class ReplicaMethodInterceptor : ComputeMethodInterceptorBase
+public class ReplicaServiceInterceptor : ComputeServiceInterceptorBase
 {
-    public new record Options : ComputeMethodInterceptorBase.Options;
+    public new record Options : ComputeServiceInterceptorBase.Options;
 
     protected readonly IReplicator Replicator;
     protected readonly VersionGenerator<LTag> VersionGenerator;
     protected readonly ReplicaCache ReplicaCache;
 
-    public ReplicaMethodInterceptor(Options options, IServiceProvider services)
+    public ReplicaServiceInterceptor(Options options, IServiceProvider services)
         : base(options, services)
     {
         Replicator = services.GetRequiredService<IReplicator>();

@@ -17,7 +17,7 @@ public abstract class RpcInterceptorBase : InterceptorBase
         : base(options, services)
     { }
 
-    public void Configure(RpcServiceDef serviceDef)
+    public void Setup(RpcServiceDef serviceDef)
     {
         if (ServiceDef != null)
             throw Errors.AlreadyInitialized(nameof(ServiceDef));

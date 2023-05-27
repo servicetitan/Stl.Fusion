@@ -3,13 +3,13 @@ using Stl.Versioning;
 
 namespace Stl.Fusion.Interception;
 
-public sealed class ComputeMethodInterceptor : ComputeMethodInterceptorBase
+public sealed class ComputeServiceInterceptor : ComputeServiceInterceptorBase
 {
-    public new record Options : ComputeMethodInterceptorBase.Options;
+    public new record Options : ComputeServiceInterceptorBase.Options;
 
     private VersionGenerator<LTag> VersionGenerator { get; }
 
-    public ComputeMethodInterceptor(Options options, IServiceProvider services)
+    public ComputeServiceInterceptor(Options options, IServiceProvider services)
         : base(options, services)
         => VersionGenerator = services.VersionGenerator<LTag>();
 

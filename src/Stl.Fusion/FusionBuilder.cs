@@ -47,9 +47,9 @@ public readonly struct FusionBuilder
         // Compute services & their dependencies
         services.TryAddSingleton(_ => new ComputedOptionsProvider());
         services.TryAddSingleton(_ => TransientErrorDetector.DefaultPreferTransient.For<IComputed>());
-        services.TryAddSingleton(_ => new ComputeMethodInterceptor.Options());
-        services.TryAddSingleton(c => new ComputeMethodInterceptor(
-            c.GetRequiredService<ComputeMethodInterceptor.Options>(), c));
+        services.TryAddSingleton(_ => new ComputeServiceInterceptor.Options());
+        services.TryAddSingleton(c => new ComputeServiceInterceptor(
+            c.GetRequiredService<ComputeServiceInterceptor.Options>(), c));
 
         // States
         services.TryAddSingleton(c => new MixedModeService<IStateFactory>.Singleton(new StateFactory(c), c));
@@ -145,9 +145,9 @@ public readonly struct FusionBuilder
         services.TryAddSingleton<ReplicaCache>(c => new NoReplicaCache(c));
 
         // Interceptors
-        services.TryAddSingleton(_ => new ReplicaMethodInterceptor.Options());
-        services.TryAddSingleton(c => new ReplicaMethodInterceptor(
-            c.GetRequiredService<ReplicaMethodInterceptor.Options>(), c));
+        services.TryAddSingleton(_ => new ReplicaServiceInterceptor.Options());
+        services.TryAddSingleton(c => new ReplicaServiceInterceptor(
+            c.GetRequiredService<ReplicaServiceInterceptor.Options>(), c));
 
         // Replicator
         services.TryAddSingleton<IReplicator>(c => new Replicator(
@@ -187,7 +187,7 @@ public readonly struct FusionBuilder
             // We should try to validate it here because if the type doesn't
             // have any virtual methods (which might be a mistake), no calls
             // will be intercepted, so no error will be thrown later.
-            var interceptor = c.GetRequiredService<ComputeMethodInterceptor>();
+            var interceptor = c.GetRequiredService<ComputeServiceInterceptor>();
             interceptor.ValidateType(implementationType);
             return c.ActivateProxy(implementationType, interceptor);
         }

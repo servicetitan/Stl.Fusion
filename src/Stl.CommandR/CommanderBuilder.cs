@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.CommandR.Diagnostics;
+using Stl.CommandR.Interception;
 using Stl.CommandR.Internal;
 using Stl.Interception;
 
@@ -35,6 +36,9 @@ public readonly struct CommanderBuilder
         services.TryAddSingleton(c => new CommandHandlerResolver(c));
 
         // Command services & their dependencies
+        Services.TryAddSingleton(_ => new CommandServiceInterceptor.Options());
+        Services.TryAddSingleton(c => new CommandServiceInterceptor(
+            c.GetRequiredService<CommandServiceInterceptor.Options>(), c));
         Handlers = GetCommandHandlers(services);
 
         // Default handlers
@@ -147,7 +151,17 @@ public readonly struct CommanderBuilder
         if (!typeof(ICommandService).IsAssignableFrom(implementationType))
             throw Stl.Internal.Errors.MustImplement<ICommandService>(implementationType, nameof(implementationType));
 
-        var descriptor = new ServiceDescriptor(serviceType, implementationType, lifetime);
+        object Factory(IServiceProvider c)
+        {
+            // We should try to validate it here because if the type doesn't
+            // have any virtual methods (which might be a mistake), no calls
+            // will be intercepted, so no error will be thrown later.
+            var interceptor = c.GetRequiredService<CommandServiceInterceptor>();
+            interceptor.ValidateType(implementationType);
+            return c.ActivateProxy(implementationType, interceptor);
+        }
+
+        var descriptor = new ServiceDescriptor(serviceType, Factory, lifetime);
         Services.TryAdd(descriptor);
         AddHandlers(serviceType, implementationType, priorityOverride);
         return this;

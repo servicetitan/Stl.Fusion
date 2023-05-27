@@ -7,18 +7,18 @@ public class RpcRoutingInterceptor : RpcInterceptorBase
 {
     public new record Options : RpcInterceptorBase.Options;
 
-    public object LocalService { get; private set; }
-    public object RemoteService { get; private set; }
-
     protected readonly RpcPeerResolver RpcPeerResolver;
+
+    public object LocalService { get; private set; } = null!;
+    public object RemoteService { get; private set; } = null!;
 
     public RpcRoutingInterceptor(Options options, IServiceProvider services)
         : base(options, services)
         => RpcPeerResolver = services.GetRequiredService<RpcPeerResolver>();
 
-    public void Configure(RpcServiceDef serviceDef, object localService, object remoteService)
+    public void Setup(RpcServiceDef serviceDef, object localService, object remoteService)
     {
-        base.Configure(serviceDef);
+        base.Setup(serviceDef);
         LocalService = localService;
         RemoteService = remoteService;
     }

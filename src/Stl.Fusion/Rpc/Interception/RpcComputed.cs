@@ -1,7 +1,8 @@
 using Stl.Fusion.Interception;
+using Stl.Fusion.Rpc.Internal;
 using Stl.Rpc.Infrastructure;
 
-namespace Stl.Fusion.Rpc.Internal;
+namespace Stl.Fusion.Rpc.Interception;
 
 public interface IRpcComputed : IComputed
 {

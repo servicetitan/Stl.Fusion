@@ -1,10 +1,11 @@
 using Cysharp.Text;
 using Stl.Fusion.Interception;
+using Stl.Fusion.Rpc.Internal;
 using Stl.Rpc.Infrastructure;
 using Stl.Versioning;
 using Errors = Stl.Internal.Errors;
 
-namespace Stl.Fusion.Rpc.Internal;
+namespace Stl.Fusion.Rpc.Interception;
 
 public interface IRpcComputeMethodFunction : IComputeMethodFunction
 {
