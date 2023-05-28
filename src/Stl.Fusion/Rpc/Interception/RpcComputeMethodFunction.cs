@@ -81,14 +81,10 @@ public class RpcComputeMethodFunction<T> : ComputeFunctionBase<T>, IRpcComputeMe
         catch (Exception error) {
             result = new Result<T>(default!, error);
         }
-        var versionHeader = call?.Context.Headers.GetOrDefault(FusionRpcHeaders.Version.Name);
-        var remoteVersion = versionHeader is { } vVersionHeader
-            ? LTag.Parse(vVersionHeader.Value)
-            : default;
-        var computed = new RpcComputed<T>(
-            input.MethodDef.ComputedOptions, input, result, VersionGenerator.NextVersion(), true,
-            call, remoteVersion);
-        return computed;
+        return new RpcComputed<T>(
+            input.MethodDef.ComputedOptions,
+            input, result, VersionGenerator.NextVersion(), true,
+            call);
     }
 
     private RpcOutboundComputeCall<T> SendRpcCall(

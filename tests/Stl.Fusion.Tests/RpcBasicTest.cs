@@ -1,4 +1,5 @@
 using StackExchange.Redis;
+using Stl.Fusion.Rpc;
 using Stl.Fusion.Rpc.Interception;
 using Stl.Fusion.Rpc.Internal;
 using Stl.Fusion.Tests.Services;
@@ -17,7 +18,6 @@ public class RpcBasicTest : SimpleFusionTestBase
     [Fact]
     public async Task BasicTest()
     {
-        return;
         var services = CreateServices();
         var counters = services.GetRequiredService<ICounterService>();
 
@@ -30,9 +30,11 @@ public class RpcBasicTest : SimpleFusionTestBase
         c1.Should().BeSameAs(c);
 
         await counters.Increment("a");
-        c.IsConsistent().Should().BeFalse();
+        await TestExt.WhenMet(
+            () => c.IsConsistent().Should().BeFalse(),
+            TimeSpan.FromSeconds(1));
         c1 = Computed.GetExisting(() => counters.Get("a"));
-        c1.Should().BeNull();
+        c1.Should().NotBeNull();
     }
 
     protected override void ConfigureServices(ServiceCollection services)
@@ -45,19 +47,29 @@ public class RpcBasicTest : SimpleFusionTestBase
         services.AddSingleton(_ => new RpcComputeServiceInterceptor.Options());
         services.AddSingleton(c => new RpcComputeServiceInterceptor(
             c.GetRequiredService<RpcComputeServiceInterceptor.Options>(), c));
+        services.AddSingleton(c => (RpcComputedCache)new RpcNoComputedCache(c));
+        if (!rpc.Configuration.Services.ContainsKey(typeof(IRpcComputeSystemCalls))) {
+            rpc.AddService<IRpcComputeSystemCalls, RpcComputeSystemCalls>(RpcComputeSystemCalls.Name);
+            services.AddSingleton(c => new RpcComputeSystemCalls(c));
+            services.AddSingleton(c => new RpcComputeSystemCallSender(c));
+        }
 
         rpc.AddService<ICounterService, CounterService>();
-        var clientType = typeof(ICounterServiceClient);
+        var serviceType = typeof(ICounterService);
+        var clientType = typeof(ICounterService);
+        var serverType = typeof(CounterService);
         services.AddSingleton(clientType, c => {
-            var serviceType = typeof(ICounterService);
-            var serviceRegistry = c.RpcHub().ServiceRegistry;
+            var rpcHub = c.RpcHub();
+            var server = c.GetRequiredService(serverType);
+            var rpcClient = rpcHub.CreateClient(clientType);
+            var computeServiceInterceptor = c.GetRequiredService<RpcComputeServiceInterceptor>();
+            var client = Proxies.New(clientType, computeServiceInterceptor, rpcClient);
 
-            var server = c.GetRequiredService(serviceType);
-            var client = c.GetRequiredService(clientType); // Replace it with actual client
-            var interceptor = c.GetRequiredService<RpcRoutingInterceptor>();
-            interceptor.Setup(serviceRegistry[serviceType], server, client); 
-            var computeServiceProxy = Proxies.New(clientType, interceptor);
-            return computeServiceProxy;
+            var routingInterceptor = c.GetRequiredService<RpcRoutingInterceptor>();
+            var serviceDef = rpcHub.ServiceRegistry[serviceType];
+            routingInterceptor.Setup(serviceDef, server, client);
+            var proxy = Proxies.New(clientType, routingInterceptor);
+            return proxy;
         });
     }
 }

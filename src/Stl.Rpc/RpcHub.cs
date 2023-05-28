@@ -32,6 +32,7 @@ public sealed class RpcHub : ProcessorBase, IHasServices
     {
         Services = services;
         Configuration = services.GetRequiredService<RpcConfiguration>();
+        Configuration.Freeze();
     }
 
     protected override Task DisposeAsyncCore()

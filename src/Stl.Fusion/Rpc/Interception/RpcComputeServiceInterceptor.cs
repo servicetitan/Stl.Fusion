@@ -7,15 +7,15 @@ public class RpcComputeServiceInterceptor : ComputeServiceInterceptorBase
 {
     public new record Options : ComputeServiceInterceptorBase.Options;
 
-    private VersionGenerator<LTag>? _versionGenerator;
-    private RpcComputedCache? _cache;
-
-    protected VersionGenerator<LTag> VersionGenerator => _versionGenerator ??= Services.VersionGenerator<LTag>();
-    protected RpcComputedCache Cache => _cache ??= Services.GetRequiredService<RpcComputedCache>();
+    protected VersionGenerator<LTag> VersionGenerator;
+    protected RpcComputedCache Cache;
 
     public RpcComputeServiceInterceptor(Options options, IServiceProvider services)
         : base(options, services)
-    { }
+    {
+        VersionGenerator = services.VersionGenerator<LTag>();
+        Cache = services.GetRequiredService<RpcComputedCache>();
+    }
 
     protected override ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method)
         => new RpcComputeMethodFunction<T>(method, VersionGenerator, Cache, Services);

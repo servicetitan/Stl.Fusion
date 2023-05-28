@@ -4,17 +4,15 @@ using Stl.Rpc.Infrastructure;
 
 namespace Stl.Fusion.Rpc.Interception;
 
-public interface IRpcComputed : IComputed
+public interface IRpcComputed : IComputed, IDisposable
 {
     RpcOutboundCall? Call { get; }
-    LTag RemoteVersion { get; }
 }
 
 public class RpcComputed<T> : ComputeMethodComputed<T>, IRpcComputed
 {
     RpcOutboundCall? IRpcComputed.Call => Call;
     public RpcOutboundComputeCall<T>? Call { get; }
-    public LTag RemoteVersion { get; }
 
     public RpcComputed(
         ComputedOptions options,
@@ -22,12 +20,10 @@ public class RpcComputed<T> : ComputeMethodComputed<T>, IRpcComputed
         Result<T> output,
         LTag version,
         bool isConsistent,
-        RpcOutboundComputeCall<T>? call = null,
-        LTag remoteVersion = default)
+        RpcOutboundComputeCall<T>? call = null)
         : base(options, input, output, version, isConsistent)
     {
         Call = call;
-        RemoteVersion = remoteVersion;
         if (call == null) {
             StartAutoInvalidation();
             return;
@@ -41,6 +37,13 @@ public class RpcComputed<T> : ComputeMethodComputed<T>, IRpcComputed
             StartAutoInvalidation();
         }
     }
+
+#pragma warning disable MA0055
+    ~RpcComputed() => Dispose();
+#pragma warning restore MA0055
+
+    public void Dispose()
+        => Call?.Context.Peer?.Calls.Outbound.TryRemove(Call.Id, Call);
 
     protected override void OnInvalidated()
     {

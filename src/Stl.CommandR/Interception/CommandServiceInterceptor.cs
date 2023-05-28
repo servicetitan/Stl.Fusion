@@ -8,7 +8,7 @@ public class CommandServiceInterceptor : InterceptorBase
 {
     public new record Options : InterceptorBase.Options;
 
-    protected ICommander Commander { get; }
+    protected readonly ICommander Commander;
 
     public CommandServiceInterceptor(Options options, IServiceProvider services)
         : base(options, services)
@@ -62,10 +62,10 @@ public class CommandServiceInterceptor : InterceptorBase
                 .Replace(nameof(Attribute), "", StringComparison.Ordinal);
 #endif
             if (!methodDef.IsValid) // attr.IsEnabled == false
-                Log.IfEnabled(ValidationLogLevel)?.Log(ValidationLogLevel,
+                ValidationLog?.Log(ValidationLogLevel,
                     "- {Method}: has [{Attribute}(false)]", method.ToString(), attributeName);
             else
-                Log.IfEnabled(ValidationLogLevel)?.Log(ValidationLogLevel,
+                ValidationLog?.Log(ValidationLogLevel,
                     "+ {Method}: [{Attribute}(" +
                     "Priority = {Priority}" +
                     ")]", method.ToString(), attributeName, attr.Priority);

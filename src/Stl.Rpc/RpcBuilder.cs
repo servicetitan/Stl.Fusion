@@ -26,20 +26,17 @@ public readonly struct RpcBuilder
 
         // We want above Contains call to run in O(1), so...
         services.Insert(0, AddedTagDescriptor);
+        services.AddSingleton(c => new RpcHub(c));
 
         // Common services
         services.TryAddSingleton(new RpcConfiguration());
-        services.TryAddSingleton(c => new RpcHub(c));
+        services.TryAddSingleton(c => new RpcServiceRegistry(c));
         services.TryAddSingleton<RpcPeerFactory>(c => name => new RpcPeer(c.RpcHub(), name));
         services.TryAddSingleton(_ => RpcInboundContext.DefaultFactory);
         services.TryAddSingleton<RpcPeerResolver>(c => {
             var hub = c.RpcHub();
             return (_, _) => hub.GetPeer(Symbol.Empty);
         });
-        services.AddSingleton(c => new RpcSystemCallSender(c));
-
-        // Infrastructure
-        services.TryAddSingleton(c => new RpcServiceRegistry(c));
 
         // Interceptors
         services.TryAddSingleton(_ => new RpcClientInterceptor.Options());
@@ -51,8 +48,9 @@ public readonly struct RpcBuilder
 
         // System services
         if (!Configuration.Services.ContainsKey(typeof(IRpcSystemCalls))) {
-            Services.AddSingleton(c => new RpcSystemCalls(c));
             AddService<IRpcSystemCalls, RpcSystemCalls>(RpcSystemCalls.Name);
+            services.TryAddSingleton(c => new RpcSystemCalls(c));
+            services.TryAddSingleton(c => new RpcSystemCallSender(c));
         }
     }
 
