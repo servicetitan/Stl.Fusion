@@ -62,14 +62,15 @@ public class RpcBasicTest : SimpleFusionTestBase
             var rpcHub = c.RpcHub();
             var server = c.GetRequiredService(serverType);
             var rpcClient = rpcHub.CreateClient(clientType);
+
             var computeServiceInterceptor = c.GetRequiredService<RpcComputeServiceInterceptor>();
-            var client = Proxies.New(clientType, computeServiceInterceptor, rpcClient);
+            var clientProxy = Proxies.New(clientType, computeServiceInterceptor, rpcClient);
 
             var routingInterceptor = c.GetRequiredService<RpcRoutingInterceptor>();
             var serviceDef = rpcHub.ServiceRegistry[serviceType];
-            routingInterceptor.Setup(serviceDef, server, client);
-            var proxy = Proxies.New(clientType, routingInterceptor);
-            return proxy;
+            routingInterceptor.Setup(serviceDef, server, clientProxy);
+            var routingProxy = Proxies.New(clientType, routingInterceptor);
+            return routingProxy;
         });
     }
 }
