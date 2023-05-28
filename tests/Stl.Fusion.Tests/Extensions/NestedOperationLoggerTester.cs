@@ -28,6 +28,7 @@ public class NestedOperationLoggerTester : IComputeService
             return;
         await KeyValueStore.Set(default, first, valuePrefix + keys.Length, cancellationToken);
         var nextCommand = new SetManyCommand(keys[1..], valuePrefix);
-        await SetMany(nextCommand, cancellationToken).ConfigureAwait(false);
+        var commander = this.GetCommander();
+        await commander.Call(nextCommand, cancellationToken).ConfigureAwait(false);
     }
 }

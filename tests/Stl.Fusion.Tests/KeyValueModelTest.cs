@@ -69,14 +69,15 @@ public class KeyValueModelTest : FusionTestBase
         (await kv.Get("")).Should().Be("2");
 
         // Client commands
+        var clientCommander = ClientServices.Commander();
         var kvc = ClientServices.GetRequiredService<IKeyValueServiceClient<string>>();
         (await kv.Get("")).Should().Be("2");
 
-        await kvc.SetCmd(new IKeyValueService<string>.SetCommand("", "1"));
+        await clientCommander.Call(new IKeyValueService<string>.SetCommand("", "1"));
         await Task.Delay(100); // Remote invalidation takes some time
         (await kvc.Get("")).Should().Be("1");
 
-        await ClientServices.Commander().Call(new IKeyValueService<string>.SetCommand("", "2"));
+        await clientCommander.Call(new IKeyValueService<string>.SetCommand("", "2"));
 #if NETCOREAPP
         await Task.Delay(100); // Remote invalidation takes some time
 #else
