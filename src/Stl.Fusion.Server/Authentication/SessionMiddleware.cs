@@ -15,6 +15,7 @@ public class SessionMiddleware : IMiddleware, IHasServices
             SameSite = SameSiteMode.Lax,
             Expiration = TimeSpan.FromDays(28),
         };
+        public Func<HttpContext, bool> RequestFilter = _ => true;
         public Func<SessionMiddleware, HttpContext, Task<bool>> ForcedSignOutHandler { get; init; } =
             DefaultForcedSignOutHandler;
         public Func<HttpContext, Symbol> TenantIdExtractor { get; init; } = TenantIdExtractors.None;
@@ -51,7 +52,8 @@ public class SessionMiddleware : IMiddleware, IHasServices
 
     public async Task InvokeAsync(HttpContext httpContext, RequestDelegate next)
     {
-        SessionProvider.Session = await GetOrCreateSession(httpContext).ConfigureAwait(false);
+        if (Settings.RequestFilter.Invoke(httpContext))
+            SessionProvider.Session = await GetOrCreateSession(httpContext).ConfigureAwait(false);
         await next(httpContext).ConfigureAwait(false);
     }
 
