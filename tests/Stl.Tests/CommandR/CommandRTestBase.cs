@@ -38,17 +38,22 @@ public class CommandRTestBase : TestBase
                 "Stl.Tests.CommandR",
             };
 
-            bool LogFilter(string category, LogLevel level)
-                => debugCategories.Any(category.StartsWith) && level >= LogLevel.Debug;
+            bool LogFilter(string? category, LogLevel level)
+            {
+                category ??= "";
+                return debugCategories.Any(category.StartsWith) && level >= LogLevel.Debug;
+            }
 
             logging.ClearProviders();
             logging.SetMinimumLevel(LogLevel.Debug);
             logging.AddDebug();
             // XUnit logging requires weird setup b/c otherwise it filters out
             // everything below LogLevel.Information
+#pragma warning disable CS0618
             logging.AddProvider(new XunitTestOutputLoggerProvider(
                 new TestOutputHelperAccessor(Out),
                 LogFilter));
+#pragma warning restore CS0618
         });
 
         var commander = services.AddCommander();

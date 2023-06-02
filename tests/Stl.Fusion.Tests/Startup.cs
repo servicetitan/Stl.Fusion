@@ -13,9 +13,11 @@ public class Startup
             logging.AddDebug();
             logging.Services.AddSingleton<ILoggerProvider>(c => {
                 var outputAccessor = c.GetRequiredService<ITestOutputHelperAccessor>();
+#pragma warning disable CS0618
                 return new XunitTestOutputLoggerProvider(
                     outputAccessor,
-                    (category, level) => level >= LogLevel.Debug);
+                    (_, level) => level >= LogLevel.Debug);
+#pragma warning restore CS0618
             });
         });
     }
