@@ -13,7 +13,7 @@ public class MeterTest : TestBase
         Out.WriteLine(a.Name);
         Out.WriteLine(a.Version);
         a.Name.Should().Be("Stl");
-        a.Version.Should().StartWith("5.");
+        a.Version.Should().StartWith("6.");
         a.Version.Should().Contain("+");
 
         var b = typeof(Result).GetMeter();

@@ -79,9 +79,12 @@ public class PluginTest : TestBase
                     logging.ClearProviders();
                     logging.SetMinimumLevel(LogLevel.Debug);
                     logging.AddDebug();
-                    logging.AddProvider(new XunitTestOutputLoggerProvider(
-                        new TestOutputHelperAccessor(Out),
-                        (category, level) => level >= LogLevel.Debug));
+                    logging.AddProvider(
+#pragma warning disable CS0618
+                        new XunitTestOutputLoggerProvider(
+                            new TestOutputHelperAccessor(Out),
+                            (_, level) => level >= LogLevel.Debug));
+#pragma warning restore CS0618
                 });
             });
         if (mustClearCache) {

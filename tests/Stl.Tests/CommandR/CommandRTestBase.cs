@@ -49,10 +49,11 @@ public class CommandRTestBase : TestBase
             logging.AddDebug();
             // XUnit logging requires weird setup b/c otherwise it filters out
             // everything below LogLevel.Information
+            logging.AddProvider(
 #pragma warning disable CS0618
-            logging.AddProvider(new XunitTestOutputLoggerProvider(
-                new TestOutputHelperAccessor(Out),
-                LogFilter));
+                new XunitTestOutputLoggerProvider(
+                    new TestOutputHelperAccessor(Out),
+                    LogFilter));
 #pragma warning restore CS0618
         });
 

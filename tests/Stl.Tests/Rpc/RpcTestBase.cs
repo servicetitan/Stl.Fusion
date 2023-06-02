@@ -35,9 +35,11 @@ public abstract class RpcTestBase : TestBase
             logging.SetMinimumLevel(LogLevel.Debug);
             logging.AddDebug();
             logging.AddProvider(
+#pragma warning disable CS0618
                 new XunitTestOutputLoggerProvider(
                     new TestOutputHelperAccessor(Out),
                     (_, level) => level >= LogLevel.Debug));
+#pragma warning restore CS0618
         });
 
         var channelPair = CreateRpcChannelPair();
