@@ -15,7 +15,7 @@ public class SessionMiddleware : IMiddleware, IHasServices
             SameSite = SameSiteMode.Lax,
             Expiration = TimeSpan.FromDays(28),
         };
-        public Func<HttpContext, bool> RequestFilter = _ => true;
+        public Func<HttpContext, bool> RequestFilter { get; init; } = _ => true;
         public Func<SessionMiddleware, HttpContext, Task<bool>> ForcedSignOutHandler { get; init; } =
             DefaultForcedSignOutHandler;
         public Func<HttpContext, Symbol> TenantIdExtractor { get; init; } = TenantIdExtractors.None;
