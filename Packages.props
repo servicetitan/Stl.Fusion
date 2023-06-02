@@ -123,7 +123,7 @@
     <PackageReference Update="System.Net.Http.Json" Version="$(SystemXxxVersion)" />
     <PackageReference Update="System.Net.WebSockets" Version="4.3.*" />
     <PackageReference Update="System.Net.WebSockets.Client" Version="4.3.*" />
-    <PackageReference Update="System.Reactive" Version="5.0.*" />
+    <PackageReference Update="System.Reactive" Version="6.0.*" />
     <PackageReference Update="System.Runtime.Loader" Version="4.3.*" />
     <PackageReference Update="System.Text.Json" Version="$(SystemXxxVersion)" />
     <PackageReference Update="System.Threading.Channels" Version="$(SystemXxxVersion)" />
