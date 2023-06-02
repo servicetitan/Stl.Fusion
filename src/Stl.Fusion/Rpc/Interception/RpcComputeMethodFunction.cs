@@ -1,10 +1,11 @@
 using Cysharp.Text;
 using Stl.Fusion.Interception;
+using Stl.Fusion.Rpc.Internal;
 using Stl.Rpc.Infrastructure;
 using Stl.Versioning;
 using Errors = Stl.Internal.Errors;
 
-namespace Stl.Fusion.Rpc.Internal;
+namespace Stl.Fusion.Rpc.Interception;
 
 public interface IRpcComputeMethodFunction : IComputeMethodFunction
 {
@@ -80,14 +81,10 @@ public class RpcComputeMethodFunction<T> : ComputeFunctionBase<T>, IRpcComputeMe
         catch (Exception error) {
             result = new Result<T>(default!, error);
         }
-        var versionHeader = call?.Context.Headers.GetOrDefault(FusionRpcHeaders.Version.Name);
-        var remoteVersion = versionHeader is { } vVersionHeader
-            ? LTag.Parse(vVersionHeader.Value)
-            : default;
-        var computed = new RpcComputed<T>(
-            input.MethodDef.ComputedOptions, input, result, VersionGenerator.NextVersion(), true,
-            call, remoteVersion);
-        return computed;
+        return new RpcComputed<T>(
+            input.MethodDef.ComputedOptions,
+            input, result, VersionGenerator.NextVersion(), true,
+            call);
     }
 
     private RpcOutboundComputeCall<T> SendRpcCall(
@@ -96,10 +93,8 @@ public class RpcComputeMethodFunction<T> : ComputeFunctionBase<T>, IRpcComputeMe
     {
         using var scope = RpcOutboundContext.Use();
         var context = scope.Context;
-        if (context.CallType != typeof(RpcOutboundComputeCall<>)) {
+        if (context.CallType != typeof(RpcOutboundComputeCall<>))
             context.CallType = typeof(RpcOutboundComputeCall<>);
-            context.Headers.Add(FusionRpcHeaders.ComputeMethod);
-        }
 
         input.InvokeOriginalFunction(cancellationToken);
         var call = (RpcOutboundComputeCall<T>?)context.Call;

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.Tests.Model;
+using Stl.Reflection;
 using Stl.RegisterAttributes;
 
 namespace Stl.Fusion.Tests.Services;
@@ -43,6 +44,8 @@ public interface IUserService : IComputeService
     Task<User?> Get(long userId, CancellationToken cancellationToken = default);
     [ComputeMethod(MinCacheDuration = 60)]
     Task<long> Count(CancellationToken cancellationToken = default);
+
+    Task UpdateDirectly(UpdateCommand command, CancellationToken cancellationToken = default);
     Task Invalidate();
 }
 
@@ -50,11 +53,12 @@ public interface IUserService : IComputeService
 [RegisterService] // "No Fusion" version
 public class UserService : DbServiceBase<TestDbContext>, IUserService
 {
-    protected bool IsProxy { get; }
+    public bool IsProxy { get; }
 
     public UserService(IServiceProvider services) : base(services)
     {
-        IsProxy = GetType().Name.EndsWith("Proxy");
+        var type = GetType();
+        IsProxy = type != type.NonProxyType();
     }
 
     public virtual async Task Create(IUserService.AddCommand command, CancellationToken cancellationToken = default)
@@ -99,6 +103,17 @@ public class UserService : DbServiceBase<TestDbContext>, IUserService
 
         dbContext.Users.Update(user);
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task UpdateDirectly(IUserService.UpdateCommand command, CancellationToken cancellationToken = default)
+    {
+        var user = command.User;
+        await using (var dbContext = CreateDbContext(true)) {
+            dbContext.Users.Update(user);
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+        if (Computed.IsInvalidating())
+            _ = Get(user.Id, default).AssertCompleted();
     }
 
     public virtual async Task<bool> Delete(IUserService.DeleteCommand command, CancellationToken cancellationToken = default)

@@ -7,15 +7,17 @@ public sealed class RpcServiceDef
 {
     private readonly Dictionary<MethodInfo, RpcMethodDef> _methods;
     private readonly Dictionary<Symbol, RpcMethodDef> _methodByName;
+    private object? _server;
 
     public RpcHub Hub { get; }
     public Type Type { get; }
-    public Type ServerType { get; }
+    public CustomResolver? ServerResolver { get; }
     public Symbol Name { get; }
     public bool IsSystem { get; }
-    public bool HasDefaultServerType => ServerType == Type;
     public int MethodCount => _methods.Count;
     public IEnumerable<RpcMethodDef> Methods => _methods.Values;
+    public bool HasServer => ServerResolver != null;
+    public object Server => _server ??= ServerResolver.Resolve(Hub.Services);
 
     public RpcMethodDef this[MethodInfo method] => Get(method) ?? throw Errors.NoMethod(Type, method);
     public RpcMethodDef this[Symbol methodName] => Get(methodName) ?? throw Errors.NoMethod(Type, methodName);
@@ -25,7 +27,7 @@ public sealed class RpcServiceDef
         Hub = hub;
         Name = name;
         Type = source.Type;
-        ServerType = source.ServerType;
+        ServerResolver = source.ServerResolver;
         IsSystem = typeof(IRpcSystemService).IsAssignableFrom(Type);
 
         _methods = new Dictionary<MethodInfo, RpcMethodDef>();
@@ -48,8 +50,8 @@ public sealed class RpcServiceDef
 
     public override string ToString()
     {
-        var serverTypeInfo = HasDefaultServerType ? "" : $", Serving: {ServerType.GetName()}";
-        return $"{GetType().Name}({Type.GetName()}, Name: '{Name}', {MethodCount} method(s){serverTypeInfo})";
+        var serverInfo = HasServer  ? "" : $", Serving: {ServerResolver}";
+        return $"{GetType().Name}({Type.GetName()}, Name: '{Name}', {MethodCount} method(s){serverInfo})";
     }
 
     public RpcMethodDef? Get(MethodInfo method) => _methods.GetValueOrDefault(method);

@@ -10,7 +10,7 @@ public sealed class ComputeMethodDef : MethodDef
     public ComputeMethodDef(
         Type type,
         MethodInfo method,
-        ComputeMethodInterceptorBase interceptor)
+        ComputeServiceInterceptorBase interceptor)
         : base(type, method)
     {
         if (!IsAsyncMethod) {

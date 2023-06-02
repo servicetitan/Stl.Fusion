@@ -57,7 +57,7 @@ public abstract class RpcOutboundCall : RpcCall
 
                     gParameters[i] = itemType;
                     var typeRef = new TypeRef(itemType);
-                    var h = new RpcHeader(RpcHeader.ArgumentTypeHeaders[i], typeRef.AssemblyQualifiedName);
+                    var h = RpcSystemHeaders.ArgumentTypes[i].With(typeRef.AssemblyQualifiedName);
                     headers.Add(h);
                 }
                 argumentListType = argumentListType
@@ -78,21 +78,21 @@ public abstract class RpcOutboundCall : RpcCall
 
 public class RpcOutboundCall<TResult> : RpcOutboundCall
 {
-    private readonly TaskCompletionSource<TResult> _resultSource;
+    protected readonly TaskCompletionSource<TResult> ResultSource;
 
     public RpcOutboundCall(RpcOutboundContext context)
         : base(context)
     {
-        _resultSource = context.MethodDef!.NoWait
+        ResultSource = context.MethodDef!.NoWait
             ? (TaskCompletionSource<TResult>)(object)RpcNoWait.TaskSources.Completed
             : TaskCompletionSourceExt.New<TResult>();
-        ResultTask = _resultSource.Task;
+        ResultTask = ResultSource.Task;
     }
 
     public override bool TryCompleteWithOk(object? result, RpcInboundContext context)
     {
         try {
-            if (!_resultSource.TrySetResult((TResult)result!))
+            if (!ResultSource.TrySetResult((TResult)result!))
                 return false;
 
             Context.Peer!.Calls.Outbound.TryRemove(Id, this);
@@ -105,7 +105,7 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
 
     public override bool TryCompleteWithError(Exception error, RpcInboundContext? context)
     {
-        if (!_resultSource.TrySetException(error))
+        if (!ResultSource.TrySetException(error))
             return false;
 
         Context.Peer!.Calls.Outbound.TryRemove(Id, this);
@@ -114,7 +114,7 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
 
     public override bool TryCompleteWithCancel(CancellationToken cancellationToken, RpcInboundContext? context)
     {
-        if (!_resultSource.TrySetCanceled(cancellationToken))
+        if (!ResultSource.TrySetCanceled(cancellationToken))
             return false;
 
         Context.Peer!.Calls.Outbound.TryRemove(Id, this);

@@ -8,7 +8,7 @@ public class CommandServiceInterceptor : InterceptorBase
 {
     public new record Options : InterceptorBase.Options;
 
-    protected ICommander Commander { get; }
+    protected readonly ICommander Commander;
 
     public CommandServiceInterceptor(Options options, IServiceProvider services)
         : base(options, services)
@@ -18,21 +18,14 @@ public class CommandServiceInterceptor : InterceptorBase
         => invocation => {
             var arguments = invocation.Arguments;
             var command = arguments.Get<ICommand>(0);
-            var cancellationToken = arguments.GetCancellationToken(arguments.Length - 1);
             var context = CommandContext.Current;
-            if (ReferenceEquals(command, context?.UntypedCommand)) {
-                // We're already inside the ICommander pipeline created for exactly this command
-                return invocation.InterceptedUntyped();
+            if (!ReferenceEquals(command, context?.UntypedCommand)) {
+                // We're outside the ICommander pipeline, so we either have to block this call...
+                throw Errors.DirectCommandHandlerCallsAreNotAllowed();
             }
 
-            // We're outside the ICommander pipeline, so we either have to block this call...
-            if (!Commander.Options.AllowDirectCommandHandlerCalls)
-                throw Errors.DirectCommandHandlerCallsAreNotAllowed();
-
-            // Or route it via ICommander
-            return methodDef.IsAsyncVoidMethod
-                ? Commander.Call(command, cancellationToken)
-                : Commander.Call((ICommand<T>)command, cancellationToken);
+            // We're already inside the ICommander pipeline created for exactly this command
+            return invocation.InterceptedUntyped();
         };
 
     protected override MethodDef? CreateMethodDef(MethodInfo method, Invocation initialInvocation)
@@ -69,10 +62,10 @@ public class CommandServiceInterceptor : InterceptorBase
                 .Replace(nameof(Attribute), "", StringComparison.Ordinal);
 #endif
             if (!methodDef.IsValid) // attr.IsEnabled == false
-                Log.IfEnabled(ValidationLogLevel)?.Log(ValidationLogLevel,
+                ValidationLog?.Log(ValidationLogLevel,
                     "- {Method}: has [{Attribute}(false)]", method.ToString(), attributeName);
             else
-                Log.IfEnabled(ValidationLogLevel)?.Log(ValidationLogLevel,
+                ValidationLog?.Log(ValidationLogLevel,
                     "+ {Method}: [{Attribute}(" +
                     "Priority = {Priority}" +
                     ")]", method.ToString(), attributeName, attr.Priority);

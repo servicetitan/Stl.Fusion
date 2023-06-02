@@ -32,6 +32,9 @@ public static class Errors
             : new ArgumentOutOfRangeException(argumentName, message);
     }
 
+    public static Exception ImplementationNotFound(Type type)
+        => new InvalidOperationException($"No implementation is found for type '{type}'.");
+
     public static Exception ExpressionDoesNotSpecifyAMember(string expression)
         => new ArgumentException($"Expression '{expression}' does not specify a member.");
     public static Exception UnexpectedMemberType(string memberType)
@@ -53,9 +56,6 @@ public static class Errors
 
     public static Exception PathIsRelative(string? paramName)
         => new ArgumentException("Path is relative.", paramName);
-
-    public static Exception WrongExceptionType(Type type)
-        => new SecurityException($"Wrong exception type: '{type}'.");
 
     public static Exception AlreadyDisposed()
         => new ObjectDisposedException("unknown", "The object is already disposed.");

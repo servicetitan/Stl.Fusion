@@ -10,9 +10,10 @@ public class UserProviderTest : FusionTestBase
     [Fact]
     public async Task InvalidateEverythingTest()
     {
+        var commander = Services.Commander();
         var users = Services.GetRequiredService<IUserService>();
         // We need at least 1 user to see count invalidation messages
-        await users.Create(new(new User() {
+        await commander.Call(new IUserService.AddCommand(new User() {
             Id = int.MaxValue,
             Name = "Chuck Norris",
         }));
@@ -36,9 +37,10 @@ public class UserProviderTest : FusionTestBase
     [Fact]
     public async Task InvalidationTest()
     {
+        var commander = Services.Commander();
         var users = Services.GetRequiredService<IUserService>();
         // We need at least 1 user to see count invalidation messages
-        await users.Create(new(new User() {
+        await commander.Call(new IUserService.AddCommand(new User() {
             Id = int.MaxValue,
             Name = "Chuck Norris",
         }));
@@ -49,11 +51,11 @@ public class UserProviderTest : FusionTestBase
             Name = "Bruce Lee"
         };
         // This delete won't do anything, since the user doesn't exist
-        (await users.Delete(new(u))).Should().BeFalse();
+        (await commander.Call(new IUserService.DeleteCommand(u))).Should().BeFalse();
         // Thus count shouldn't change
         (await users.Count()).Should().Be(userCount);
         // But after this line the could should change
-        await users.Create(new(u));
+        await commander.Call(new IUserService.AddCommand(u));
 
         var u1 = await users.Get(u.Id);
         u1.Should().NotBeNull();
@@ -66,7 +68,7 @@ public class UserProviderTest : FusionTestBase
         u2.Should().BeSameAs(u1);
 
         u = u with { Name = "Jackie Chan" };
-        await users.Update(new(u)); // u.Name change
+        await commander.Call(new IUserService.UpdateCommand(u)); // u.Name change
 
         var u3 = await users.Get(u.Id);
         u3.Should().NotBeNull();
@@ -79,6 +81,7 @@ public class UserProviderTest : FusionTestBase
     [Fact]
     public async Task StandaloneComputedTest()
     {
+        var commander = Services.Commander();
         var stateFactory = Services.StateFactory();
         var users = Services.GetRequiredService<IUserService>();
         var time = Services.GetRequiredService<ITimeService>();
@@ -87,7 +90,7 @@ public class UserProviderTest : FusionTestBase
             Id = int.MaxValue,
             Name = "Chuck Norris",
         };
-        await users.Create(new(u));
+        await commander.Call(new IUserService.AddCommand(u));
 
         using var sText = await stateFactory.NewComputed<string>(
             FixedDelayer.Instant,
@@ -100,7 +103,7 @@ public class UserProviderTest : FusionTestBase
 
         for (var i = 1; i <= 10; i += 1) {
             u = u with { Name = $"Chuck Norris Lvl{i}" };
-            await users.Create(new(u, true));
+            await commander.Call(new IUserService.AddCommand(u, true));
             await Task.Delay(100);
         }
 
@@ -163,10 +166,11 @@ public class UserProviderTest : FusionTestBase
 
         async Task PingPong(IUserService users1, IUserService users2, User user)
         {
+            var commander = users1.GetCommander();
             var count0 = await users1.Count();
             (await users2.Count()).Should().Be(count0);
 
-            await users1.Create(new(user));
+            await commander.Call(new IUserService.AddCommand(user));
             (await users1.Count()).Should().Be(++count0);
 
             await Delay(0.5);

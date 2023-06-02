@@ -17,7 +17,7 @@ public readonly struct RpcBuilder
         Action<RpcBuilder>? configure)
     {
         Services = services;
-        if (Services.Contains(AddedTagDescriptor)) {
+        if (services.Contains(AddedTagDescriptor)) {
             // Already configured
             Configuration = GetConfiguration(services);
             configure?.Invoke(this);
@@ -25,98 +25,45 @@ public readonly struct RpcBuilder
         }
 
         // We want above Contains call to run in O(1), so...
-        Services.Insert(0, AddedTagDescriptor);
+        services.Insert(0, AddedTagDescriptor);
+        services.AddSingleton(c => new RpcHub(c));
 
         // Common services
-        Services.TryAddSingleton(new RpcConfiguration());
-        Services.TryAddSingleton(c => new RpcHub(c));
-        Services.TryAddSingleton<RpcPeerFactory>(c => name => new RpcPeer(c.RpcHub(), name));
-        Services.TryAddSingleton(_ => RpcInboundContext.DefaultFactory);
-        Services.TryAddSingleton<RpcPeerResolver>(c => {
+        services.TryAddSingleton(new RpcConfiguration());
+        services.TryAddSingleton(c => new RpcServiceRegistry(c));
+        services.TryAddSingleton<RpcPeerFactory>(c => name => new RpcPeer(c.RpcHub(), name));
+        services.TryAddSingleton(_ => RpcInboundContext.DefaultFactory);
+        services.TryAddSingleton<RpcPeerResolver>(c => {
             var hub = c.RpcHub();
             return (_, _) => hub.GetPeer(Symbol.Empty);
         });
-        Services.AddSingleton(c => new RpcSystemCallSender(c));
 
-        // Infrastructure
-        Services.TryAddSingleton(c => new RpcServiceRegistry(c));
-        Services.TryAddSingleton(_ => new RpcClientInterceptor.Options());
-        Services.TryAddTransient(c => new RpcClientInterceptor(c.GetRequiredService<RpcClientInterceptor.Options>(), c));
+        // Interceptors
+        services.TryAddSingleton(_ => new RpcClientInterceptor.Options());
+        services.TryAddTransient(c => new RpcClientInterceptor(c.GetRequiredService<RpcClientInterceptor.Options>(), c));
+        services.TryAddSingleton(_ => new RpcRoutingInterceptor.Options());
+        services.TryAddTransient(c => new RpcRoutingInterceptor(c.GetRequiredService<RpcRoutingInterceptor.Options>(), c));
 
         Configuration = GetConfiguration(services);
 
         // System services
         if (!Configuration.Services.ContainsKey(typeof(IRpcSystemCalls))) {
-            Services.AddSingleton(c => new RpcSystemCalls(c));
-            AddService<IRpcSystemCalls, RpcSystemCalls>(RpcSystemCalls.Name);
+            Service<IRpcSystemCalls>().HasServer<RpcSystemCalls>().HasName(RpcSystemCalls.Name);
+            services.TryAddSingleton(c => new RpcSystemCalls(c));
+            services.TryAddSingleton(c => new RpcSystemCallSender(c));
         }
     }
 
-    public RpcServiceBuilder AddService<TService>(Symbol name = default)
-        => AddService<TService, TService>(name);
+    public RpcServiceBuilder Service<TService>()
+        => Service(typeof(TService));
 
-    public RpcServiceBuilder AddService<TService, TServer>(Symbol name = default)
-        where TServer : TService
+    public RpcServiceBuilder Service(Type serviceType)
     {
-        var serviceType = typeof(TService);
-        if (Configuration.Services.ContainsKey(serviceType))
-            throw Errors.ServiceAlreadyExists(serviceType);
+        if (Configuration.Services.TryGetValue(serviceType, out var service))
+            return service;
 
-        var service = new RpcServiceBuilder<TService>(this, typeof(TServer), name).RequireValid();
-        Configuration.Services[serviceType] = service;
-        return service;
-    }
-
-    public RpcServiceBuilder<TService> AddService<TService>(RpcServiceBuilder<TService> service)
-    {
-        if (service.Rpc.Services != Services)
-            throw new ArgumentOutOfRangeException(nameof(service));
-        if (Configuration.Services.ContainsKey(service.Type))
-            throw Errors.ServiceAlreadyExists(service.Type);
-
-        service.RequireValid();
-        Configuration.Services[service.Type] = service;
-        return service;
-    }
-
-    public RpcServiceBuilder AddService(Type serviceType, Type clientType, Symbol name = default)
-    {
-        if (Configuration.Services.ContainsKey(serviceType))
-            throw Errors.ServiceAlreadyExists(serviceType);
-
-        var service = new RpcServiceBuilder(this, serviceType, clientType, name).RequireValid();
-        Configuration.Services[serviceType] = service;
-        return service;
-    }
-
-    public RpcServiceBuilder AddService(RpcServiceBuilder service)
-    {
-        if (service.Rpc.Services != Services)
-            throw new ArgumentOutOfRangeException(nameof(service));
-        if (Configuration.Services.ContainsKey(service.Type))
-            throw Errors.ServiceAlreadyExists(service.Type);
-
-        service.RequireValid();
-        Configuration.Services[service.Type] = service;
-        return service;
-    }
-
-    public RpcServiceBuilder<TService>? RemoveService<TService>()
-    {
-        var service = RemoveService(typeof(TService));
-        if (service is RpcServiceBuilder<TService> typedService)
-            return typedService;
-        if (service != null)
-            return new RpcServiceBuilder<TService>(this, service.ServerType, service.Name);
-        return null;
-    }
-
-    public RpcServiceBuilder? RemoveService(Type serviceType)
-    {
-        if (!Configuration.Services.TryGetValue(serviceType, out var service))
-            return null;
-
-        Configuration.Services.Remove(serviceType);
+        service = new RpcServiceBuilder(this, serviceType);
+        Configuration.Services.Add(serviceType, service);
         return service;
     }
 

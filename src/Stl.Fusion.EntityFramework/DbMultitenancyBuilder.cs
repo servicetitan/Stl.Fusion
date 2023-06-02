@@ -16,16 +16,17 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
         Action<DbMultitenancyBuilder<TDbContext>>? configure)
     {
         DbContext = dbContext;
-        if (Services.HasService<IMultitenantDbContextFactory<TDbContext>>()) {
+        var services = Services;
+        if (services.HasService<IMultitenantDbContextFactory<TDbContext>>()) {
             configure?.Invoke(this);
             return;
         }
 
         // Core multitenancy services
-        Services.TryAddSingleton<DefaultTenantResolver<TDbContext>.Options>();
-        Services.TryAddSingleton<ITenantResolver<TDbContext>, DefaultTenantResolver<TDbContext>>();
-        Services.TryAddSingleton<ITenantRegistry<TDbContext>, SingleTenantRegistry<TDbContext>>();
-        Services.TryAddSingleton<IMultitenantDbContextFactory<TDbContext>, SingleTenantDbContextFactory<TDbContext>>();
+        services.TryAddSingleton<DefaultTenantResolver<TDbContext>.Options>();
+        services.TryAddSingleton<ITenantResolver<TDbContext>, DefaultTenantResolver<TDbContext>>();
+        services.TryAddSingleton<ITenantRegistry<TDbContext>, SingleTenantRegistry<TDbContext>>();
+        services.TryAddSingleton<IMultitenantDbContextFactory<TDbContext>, SingleTenantDbContextFactory<TDbContext>>();
 
         configure?.Invoke(this);
     }

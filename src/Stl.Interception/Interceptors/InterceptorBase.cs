@@ -6,11 +6,13 @@ public abstract class InterceptorBase : Interceptor, IHasServices
     {
         public static class Defaults
         {
-            public static bool IsLoggingEnabled { get; set; } = true;
+            public static LogLevel LogLevel { get; set; } = LogLevel.Debug;
+            public static LogLevel ValidationLogLevel { get; set; } = LogLevel.Debug;
             public static bool IsValidationEnabled { get; set; } = true;
         }
 
-        public bool IsLoggingEnabled { get; init; } = Defaults.IsLoggingEnabled;
+        public LogLevel LogLevel { get; set; } = Defaults.LogLevel;
+        public LogLevel ValidationLogLevel { get; set; } = Defaults.ValidationLogLevel;
         public bool IsValidationEnabled { get; init; } = Defaults.IsValidationEnabled;
     }
 
@@ -24,10 +26,11 @@ public abstract class InterceptorBase : Interceptor, IHasServices
     private readonly ConcurrentDictionary<MethodInfo, Func<Invocation, object?>?> _handlerCache = new();
     private readonly ConcurrentDictionary<Type, Unit> _validateTypeCache = new();
 
-    protected ILogger Log { get; }
-    protected bool IsLoggingEnabled { get; set; }
-    protected LogLevel LogLevel { get; set; } = LogLevel.Debug;
-    protected LogLevel ValidationLogLevel { get; set; } = LogLevel.Debug;
+    protected readonly ILogger Log;
+    protected readonly ILogger? DefaultLog;
+    protected readonly ILogger? ValidationLog;
+    protected readonly LogLevel LogLevel;
+    protected readonly LogLevel ValidationLogLevel;
 
     public bool IsValidationEnabled { get; }
     public IServiceProvider Services { get; }
@@ -35,9 +38,13 @@ public abstract class InterceptorBase : Interceptor, IHasServices
     protected InterceptorBase(Options options, IServiceProvider services)
     {
         Services = services;
-        Log = Services.LogFor(GetType());
-        IsLoggingEnabled = options.IsLoggingEnabled && Log.IsLogging(LogLevel);
+        LogLevel = options.LogLevel;
+        ValidationLogLevel = options.ValidationLogLevel;
         IsValidationEnabled = options.IsValidationEnabled;
+
+        Log = Services.LogFor(GetType());
+        DefaultLog = Log.IfEnabled(options.LogLevel);
+        ValidationLog = Log.IfEnabled(options.ValidationLogLevel);
 
         _createHandlerUntyped = CreateHandlerUntyped;
         _createMethodDef = CreateMethodDef;
@@ -69,7 +76,7 @@ public abstract class InterceptorBase : Interceptor, IHasServices
             return;
 
         _validateTypeCache.GetOrAdd(type, static (type1, self) => {
-            self.Log.Log(self.ValidationLogLevel, "Validating: '{Type}'", type1);
+            self.ValidationLog?.Log(self.ValidationLogLevel, "Validating: '{Type}'", type1);
             try {
                 self.ValidateTypeInternal(type1);
             }

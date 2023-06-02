@@ -50,6 +50,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         if (Computed.IsInvalidating()) {
             if (isKickCommand)
                 return;
+
             _ = GetSessionInfo(session, default); // Must go first!
             _ = GetAuthInfo(session, default);
             if (force) {
@@ -86,7 +87,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
 
         var dbSessionInfo = await Sessions.GetOrCreate(dbContext, session.Id, cancellationToken).ConfigureAwait(false);
         var sessionInfo = SessionConverter.ToModel(dbSessionInfo);
-        if (sessionInfo == null || sessionInfo.IsSignOutForced)
+        if (sessionInfo == null! || sessionInfo.IsSignOutForced)
             return;
 
         context.Operation().Items.Set(sessionInfo);
@@ -124,6 +125,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         var dbUser = await Users.Get(dbContext, dbUserId, true, cancellationToken).ConfigureAwait(false);
         if (dbUser == null)
             throw Internal.Errors.EntityNotFound(Users.UserEntityType);
+
         await Users.Edit(dbContext, dbUser, command, cancellationToken).ConfigureAwait(false);
         context.Operation().Items.Set(sessionInfo);
     }
@@ -134,9 +136,11 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
         if (sessionInfo == null)
             return;
+
         var delta = Clocks.SystemClock.Now - sessionInfo.LastSeenAt;
         if (delta < Settings.MinUpdatePresencePeriod)
             return; // We don't want to update this too frequently
+
         var command = new SetupSessionCommand(session);
         await Commander.Call(command, cancellationToken).ConfigureAwait(false);
     }
@@ -196,6 +200,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         var user = await GetUser(session, cancellationToken).ConfigureAwait(false);
         if (user == null)
             return ImmutableArray<SessionInfo>.Empty;
+
         var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);
         var sessions = await GetUserSessions(tenant.Id, user.Id, cancellationToken).ConfigureAwait(false);
         return sessions.Select(p => p.SessionInfo).ToImmutableArray();

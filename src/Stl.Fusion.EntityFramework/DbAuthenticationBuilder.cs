@@ -21,24 +21,25 @@ public readonly struct DbAuthenticationBuilder<TDbContext, TDbSessionInfo, TDbUs
         Action<DbAuthenticationBuilder<TDbContext, TDbSessionInfo, TDbUser, TDbUserId>>? configure)
     {
         DbContext = dbContext;
-        if (!Services.HasService<DbOperationScopeProvider<TDbContext>>())
+        var services = Services;
+        if (!services.HasService<DbOperationScopeProvider<TDbContext>>())
             throw Errors.NoOperationsFrameworkServices();
-        if (Services.HasService<DbSessionInfoTrimmer<TDbContext>>()) {
+        if (services.HasService<DbSessionInfoTrimmer<TDbContext>>()) {
             configure?.Invoke(this);
             return;
         }
 
         // DbAuthService
-        var fusion = Services.AddFusion();
+        var fusion = services.AddFusion();
         var fusionAuth = fusion.AddAuthentication();
-        Services.TryAddSingleton<DbAuthService<TDbContext>.Options>();
+        services.TryAddSingleton<DbAuthService<TDbContext>.Options>();
         fusionAuth.AddBackend<DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId>>();
 
         // Repositories, entity resolvers & converters, isolation level selectors
-        Services.TryAddSingleton<
+        services.TryAddSingleton<
             IDbUserRepo<TDbContext, TDbUser, TDbUserId>,
             DbUserRepo<TDbContext, TDbUser, TDbUserId>>();
-        Services.TryAddSingleton<
+        services.TryAddSingleton<
             IDbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>,
             DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>>();
 
@@ -54,17 +55,17 @@ public readonly struct DbAuthenticationBuilder<TDbContext, TDbSessionInfo, TDbUs
             });
 
         // DbUserIdHandler
-        Services.TryAddSingleton<IDbUserIdHandler<TDbUserId>, DbUserIdHandler<TDbUserId>>();
+        services.TryAddSingleton<IDbUserIdHandler<TDbUserId>, DbUserIdHandler<TDbUserId>>();
 
         // Default isolation level selector
         DbContext.AddOperations().TryAddIsolationLevelSelector(_ => new DbAuthIsolationLevelSelector<TDbContext>());
 
         // DbSessionInfoTrimmer - hosted service!
-        Services.TryAddSingleton<DbSessionInfoTrimmer<TDbContext>.Options>();
-        Services.TryAddSingleton<
+        services.TryAddSingleton<DbSessionInfoTrimmer<TDbContext>.Options>();
+        services.TryAddSingleton<
             DbSessionInfoTrimmer<TDbContext>,
             DbSessionInfoTrimmer<TDbContext, TDbSessionInfo, TDbUserId>>();
-        Services.AddHostedService(c => c.GetRequiredService<DbSessionInfoTrimmer<TDbContext>>());
+        services.AddHostedService(c => c.GetRequiredService<DbSessionInfoTrimmer<TDbContext>>());
 
         configure?.Invoke(this);
     }

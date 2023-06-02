@@ -1,52 +1,73 @@
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Internal;
 
 namespace Stl.Rpc;
 
-public record RpcServiceBuilder(
-    RpcBuilder Rpc,
-    Type Type,
-    Type ServerType,
-    Symbol Name = default)
+public sealed class RpcServiceBuilder
 {
+    public RpcBuilder Rpc { get; }
+    public Type Type { get; }
+    public Symbol Name { get; set; }
+    public Type? ClientType { get; private set; }
+    public CustomResolver? ServerResolver { get; private set; }
+
     public RpcServiceBuilder(RpcBuilder rpc, Type type, Symbol name = default)
-        : this(rpc, type, type, name)
-    { }
-
-    public RpcServiceBuilder RequireValid()
     {
-        if (Type.IsValueType)
-            throw Errors.MustBeClass(Type);
-        if (!Type.IsAssignableFrom(ServerType))
-            throw Errors.MustBeAssignableTo(ServerType, Type, nameof(ServerType));
+        if (type.IsValueType)
+            throw Errors.MustBeClass(type, nameof(type));
 
+        Rpc = rpc;
+        Type = type;
+        Name = name;
+    }
+
+    public RpcServiceBuilder HasName(Symbol name)
+    {
+        Name = name;
+        return  this;
+    }
+
+    public RpcServiceBuilder HasServer<TServer>()
+        => HasServer(typeof(TServer));
+    public RpcServiceBuilder HasServer(CustomResolver? serverResolver = null)
+    {
+        serverResolver ??= CustomResolver.New(Type);
+        if (!Type.IsAssignableFrom(serverResolver.Type))
+            throw Errors.MustBeAssignableTo(serverResolver.Type, Type, nameof(serverResolver));
+
+        ServerResolver = serverResolver;
         return this;
     }
 
-    public RpcServiceBuilder AddClient<TClient>()
-        => AddClient(typeof(TClient));
-    public RpcServiceBuilder AddClient(Type? clientType = null)
+    public RpcServiceBuilder HasNoServer()
     {
-        if (clientType == null)
-            clientType = Type;
-        else if (!Type.IsAssignableFrom(clientType))
+        ServerResolver = null;
+        return this;
+    }
+
+    public RpcServiceBuilder HasClient<TClient>()
+        => HasClient(typeof(TClient));
+    public RpcServiceBuilder HasClient(Type? clientType = null)
+    {
+        clientType ??= Type;
+        if (!Type.IsAssignableFrom(clientType))
             throw Errors.MustBeAssignableTo(clientType, Type, nameof(clientType));
 
         Rpc.Services.AddSingleton(clientType, c => c.RpcHub().CreateClient(Type, clientType));
         return this;
     }
-}
 
-public record RpcServiceBuilder<TService>(
-    RpcBuilder Rpc,
-    Type ServerType,
-    Symbol Name = default
-    ) : RpcServiceBuilder(Rpc, typeof(TService), ServerType, Name)
-{
-    public RpcServiceBuilder(RpcBuilder rpc, Symbol name = default)
-        : this(rpc, typeof(TService), name)
-    { }
+    public RpcServiceBuilder HasNoClient()
+    {
+        if (ClientType != null)
+            Rpc.Services.RemoveAll(ClientType);
+        ClientType = null;
+        return this;
+    }
 
-    public new RpcServiceBuilder<TService> AddClient<TClient>()
-        where TClient : TService
-        => (RpcServiceBuilder<TService>)base.AddClient(typeof(TClient));
+    public RpcBuilder Remove()
+    {
+        Rpc.Configuration.Services.Remove(Type);
+        return Rpc;
+    }
 }

@@ -14,18 +14,19 @@ public readonly struct FusionAuthenticationBuilder
         Action<FusionAuthenticationBuilder>? configure)
     {
         Fusion = fusion;
-        if (Services.HasService<ISessionFactory>()) {
+        var services = Services;
+        if (services.HasService<ISessionFactory>()) {
             configure?.Invoke(this);
             return;
         }
 
-        Services.TryAddScoped<ISessionProvider>(c => new SessionProvider(c));
-        Services.TryAddScoped(c => (ISessionResolver) c.GetRequiredService<ISessionProvider>());
-        Services.TryAddScoped(c => c.GetRequiredService<ISessionProvider>().Session);
-        Services.TryAddSingleton<ISessionFactory>(_ => new SessionFactory());
+        services.TryAddScoped<ISessionProvider>(c => new SessionProvider(c));
+        services.TryAddScoped(c => (ISessionResolver) c.GetRequiredService<ISessionProvider>());
+        services.TryAddScoped(c => c.GetRequiredService<ISessionProvider>().Session);
+        services.TryAddSingleton<ISessionFactory>(_ => new SessionFactory());
 
-        Services.TryAddSingleton(_ => new PresenceReporter.Options());
-        Services.TryAddScoped(c => new PresenceReporter(
+        services.TryAddSingleton(_ => new PresenceReporter.Options());
+        services.TryAddScoped(c => new PresenceReporter(
             c.GetRequiredService<PresenceReporter.Options>(), c));
 
         configure?.Invoke(this);

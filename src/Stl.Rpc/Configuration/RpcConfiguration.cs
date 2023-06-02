@@ -1,19 +1,91 @@
-using Microsoft.Toolkit.HighPerformance.Buffers;
-using Stl.Interception;
+using System.Collections.ObjectModel;
+using Stl.Internal;
+using Stl.Rpc.Infrastructure;
 
 namespace Stl.Rpc;
 
-public record RpcConfiguration
+public class RpcConfiguration
 {
-    public Dictionary<Type, RpcServiceBuilder> Services { get; init; } = new();
+    private readonly object _lock = new();
+    private IDictionary<Type, RpcServiceBuilder> _services;
+    private IDictionary<Symbol, Type> _inboundCallTypes;
+    private Func<Type, Symbol> _serviceNameBuilder = DefaultServiceNameBuilder;
+    private Func<RpcMethodDef, Symbol> _methodNameBuilder = DefaultMethodNameBuilder;
+    private RpcArgumentSerializer _argumentSerializer = RpcArgumentSerializer.Default;
 
-    public Func<Type, Symbol> ServiceNameBuilder { get; init; } = DefaultServiceNameBuilder;
-    public Func<RpcMethodDef, Symbol> MethodNameBuilder { get; init; } = DefaultMethodNameBuilder;
-    public RpcArgumentSerializer ArgumentSerializer { get; init; } = RpcArgumentSerializer.Default;
+    public bool IsFrozen { get; private set; }
+
+    public IDictionary<Type, RpcServiceBuilder> Services {
+        get => _services;
+        set {
+            if (IsFrozen)
+                throw Errors.AlreadyReadOnly<RpcConfiguration>();
+            _services = value;
+        }
+    }
+
+    public IDictionary<Symbol, Type> InboundCallTypes {
+        get => _inboundCallTypes;
+        set {
+            if (IsFrozen)
+                throw Errors.AlreadyReadOnly<RpcConfiguration>();
+            _inboundCallTypes = value;
+        }
+    }
+
+    public Func<Type, Symbol> ServiceNameBuilder {
+        get => _serviceNameBuilder;
+        set {
+            if (IsFrozen)
+                throw Errors.AlreadyReadOnly<RpcConfiguration>();
+            _serviceNameBuilder = value;
+        }
+    }
+
+    public Func<RpcMethodDef, Symbol> MethodNameBuilder {
+        get => _methodNameBuilder;
+        set {
+            if (IsFrozen)
+                throw Errors.AlreadyReadOnly<RpcConfiguration>();
+            _methodNameBuilder = value;
+        }
+    }
+
+    public RpcArgumentSerializer ArgumentSerializer {
+        get => _argumentSerializer;
+        set {
+            if (IsFrozen)
+                throw Errors.AlreadyReadOnly<RpcConfiguration>();
+            _argumentSerializer = value;
+        }
+    }
 
     public static Symbol DefaultServiceNameBuilder(Type serviceType)
         => serviceType.GetName();
 
     public static Symbol DefaultMethodNameBuilder(RpcMethodDef methodDef)
         => $"{methodDef.Method.Name}:{methodDef.RemoteParameterTypes.Length}";
+
+    public RpcConfiguration()
+    {
+        _services = new Dictionary<Type, RpcServiceBuilder>();
+        _inboundCallTypes = new Dictionary<Symbol, Type>() {
+            { Symbol.Empty, typeof(RpcInboundCall<>) },
+        };
+    }
+
+    public void Freeze()
+    {
+        if (IsFrozen)
+            return;
+
+        lock (_lock) {
+            if (IsFrozen) // Double-check locking
+                return;
+
+            IsFrozen = true;
+            _services = new ReadOnlyDictionary<Type, RpcServiceBuilder>(Services);
+            _inboundCallTypes = new ReadOnlyDictionary<Symbol, Type>(InboundCallTypes);
+        }
+    }
 }

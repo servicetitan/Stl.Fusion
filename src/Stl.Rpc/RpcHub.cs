@@ -32,6 +32,7 @@ public sealed class RpcHub : ProcessorBase, IHasServices
     {
         Services = services;
         Configuration = services.GetRequiredService<RpcConfiguration>();
+        Configuration.Freeze();
     }
 
     protected override Task DisposeAsyncCore()
@@ -57,7 +58,7 @@ public sealed class RpcHub : ProcessorBase, IHasServices
             throw Errors.MustBeAssignableTo(clientType, serviceType, nameof(clientType));
 
         var interceptor = Services.GetRequiredService<RpcClientInterceptor>();
-        interceptor.ServiceDef = ServiceRegistry[serviceType];
+        interceptor.Setup(ServiceRegistry[serviceType]);
         var proxy = Proxies.New(clientType, interceptor);
         return proxy;
     }

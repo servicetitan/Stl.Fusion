@@ -1,22 +1,39 @@
+using Stl.CommandR.Interception;
 using Stl.Interception;
 using Stl.Interception.Interceptors;
 
 namespace Stl.Fusion.Interception;
 
-public abstract class ComputeMethodInterceptorBase : InterceptorBase
+public abstract class ComputeServiceInterceptorBase : InterceptorBase
 {
-    public new record Options : InterceptorBase.Options
-    {
-        public ComputedOptionsProvider? ComputedOptionsProvider { get; init; }
-    }
+    public new record Options : InterceptorBase.Options;
+
+    protected CommandServiceInterceptor CommandServiceInterceptor;
 
     public ComputedOptionsProvider ComputedOptionsProvider { get; }
 
-    protected ComputeMethodInterceptorBase(Options options, IServiceProvider services)
+    protected ComputeServiceInterceptorBase(Options options, IServiceProvider services)
         : base(options, services)
     {
-        ComputedOptionsProvider = options.ComputedOptionsProvider
-            ?? services.GetRequiredService<ComputedOptionsProvider>();
+        ComputedOptionsProvider = services.GetRequiredService<ComputedOptionsProvider>();
+        CommandServiceInterceptor = services.GetRequiredService<CommandServiceInterceptor>();
+    }
+
+    public override void Intercept(Invocation invocation)
+    {
+        var handler = GetHandler(invocation) ?? CommandServiceInterceptor.GetHandler(invocation);
+        if (handler == null)
+            invocation.Intercepted();
+        else
+            handler(invocation);
+    }
+
+    public override TResult Intercept<TResult>(Invocation invocation)
+    {
+        var handler = GetHandler(invocation) ?? CommandServiceInterceptor.GetHandler(invocation);
+        return handler == null
+            ? invocation.Intercepted<TResult>()
+            : (TResult)handler.Invoke(invocation)!;
     }
 
     protected override Func<Invocation, object?> CreateHandler<T>(Invocation initialInvocation, MethodDef methodDef)

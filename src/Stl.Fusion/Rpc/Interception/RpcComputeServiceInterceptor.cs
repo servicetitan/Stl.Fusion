@@ -1,16 +1,16 @@
 using Stl.Fusion.Interception;
 using Stl.Versioning;
 
-namespace Stl.Fusion.Rpc.Internal;
+namespace Stl.Fusion.Rpc.Interception;
 
-public class RpcComputeMethodInterceptor : ComputeMethodInterceptorBase
+public class RpcComputeServiceInterceptor : ComputeServiceInterceptorBase
 {
-    public new record Options : ComputeMethodInterceptorBase.Options;
+    public new record Options : ComputeServiceInterceptorBase.Options;
 
-    protected readonly VersionGenerator<LTag> VersionGenerator;
-    protected readonly RpcComputedCache Cache;
+    protected VersionGenerator<LTag> VersionGenerator;
+    protected RpcComputedCache Cache;
 
-    public RpcComputeMethodInterceptor(Options options, IServiceProvider services)
+    public RpcComputeServiceInterceptor(Options options, IServiceProvider services)
         : base(options, services)
     {
         VersionGenerator = services.VersionGenerator<LTag>();

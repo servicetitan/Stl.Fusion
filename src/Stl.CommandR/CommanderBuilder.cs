@@ -19,7 +19,7 @@ public readonly struct CommanderBuilder
         Action<CommanderBuilder>? configure)
     {
         Services = services;
-        if (Services.Contains(AddedTagDescriptor)) {
+        if (services.Contains(AddedTagDescriptor)) {
             // Already configured
             Handlers = GetCommandHandlers(services);
             configure?.Invoke(this);
@@ -27,14 +27,13 @@ public readonly struct CommanderBuilder
         }
 
         // We want above Contains call to run in O(1), so...
-        Services.Insert(0, AddedTagDescriptor);
+        services.Insert(0, AddedTagDescriptor);
 
         // Common services
-        Services.TryAddSingleton(_ => new CommanderOptions());
-        Services.TryAddSingleton<ICommander>(c => new Commander(c));
-        Services.TryAddSingleton(new HashSet<CommandHandler>());
-        Services.TryAddSingleton(c => new CommandHandlerRegistry(c));
-        Services.TryAddSingleton(c => new CommandHandlerResolver(c));
+        services.TryAddSingleton<ICommander>(c => new Commander(c));
+        services.TryAddSingleton(new HashSet<CommandHandler>());
+        services.TryAddSingleton(c => new CommandHandlerRegistry(c));
+        services.TryAddSingleton(c => new CommandHandlerResolver(c));
 
         // Command services & their dependencies
         Services.TryAddSingleton(_ => new CommandServiceInterceptor.Options());
@@ -43,30 +42,14 @@ public readonly struct CommanderBuilder
         Handlers = GetCommandHandlers(services);
 
         // Default handlers
-        Services.AddSingleton(_ => new PreparedCommandHandler());
+        services.AddSingleton(_ => new PreparedCommandHandler());
         AddHandlers<PreparedCommandHandler>();
-        Services.AddSingleton(c => new CommandTracer(c));
+        services.AddSingleton(c => new CommandTracer(c));
         AddHandlers<CommandTracer>();
-        Services.AddSingleton(_ => new LocalCommandRunner());
+        services.AddSingleton(_ => new LocalCommandRunner());
         AddHandlers<LocalCommandRunner>();
 
         configure?.Invoke(this);
-    }
-
-    // Options
-
-    public CommanderBuilder Configure(CommanderOptions options)
-    {
-        Services.RemoveAll<CommanderOptions>();
-        Services.AddSingleton(options);
-        return this;
-    }
-
-    public CommanderBuilder Configure(Func<IServiceProvider, CommanderOptions> optionsFactory)
-    {
-        Services.RemoveAll<CommanderOptions>();
-        Services.AddSingleton(optionsFactory);
-        return this;
     }
 
     // Handler discovery

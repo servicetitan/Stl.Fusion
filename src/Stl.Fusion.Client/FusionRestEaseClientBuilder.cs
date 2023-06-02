@@ -25,36 +25,37 @@ public readonly struct FusionRestEaseClientBuilder
         Action<FusionRestEaseClientBuilder>? configure)
     {
         Fusion = fusion;
-        if (Services.Contains(AddedTagDescriptor)) {
+        var services = Services;
+        if (services.Contains(AddedTagDescriptor)) {
             configure?.Invoke(this);
             return;
         }
 
         // We want above Contains call to run in O(1), so...
-        Services.Insert(0, AddedTagDescriptor);
+        services.Insert(0, AddedTagDescriptor);
 
         Fusion.AddReplicator();
-        Services.TryAddSingleton(_ => new WebSocketChannelProvider.Options());
-        Services.TryAddSingleton<IChannelProvider>(c => new WebSocketChannelProvider(
+        services.TryAddSingleton(_ => new WebSocketChannelProvider.Options());
+        services.TryAddSingleton<IChannelProvider>(c => new WebSocketChannelProvider(
             c.GetRequiredService<WebSocketChannelProvider.Options>(), c));
 
         // FusionHttpMessageHandler (handles Fusion headers)
-        Services.AddHttpClient();
-        Services.TryAddEnumerable(ServiceDescriptor.Singleton<
+        services.AddHttpClient();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<
             IHttpMessageHandlerBuilderFilter,
             FusionHttpMessageHandlerBuilderFilter>());
 
         // ResponseDeserializer & RequestBodySerializer
-        Services.TryAddTransient<RequestQueryParamSerializer>(
+        services.TryAddTransient<RequestQueryParamSerializer>(
             _ => new FusionRequestQueryParamSerializer());
-        Services.TryAddTransient<RequestBodySerializer>(
+        services.TryAddTransient<RequestBodySerializer>(
             _ => new FusionRequestBodySerializer());
-        Services.TryAddTransient<ResponseDeserializer>(
+        services.TryAddTransient<ResponseDeserializer>(
             _ => new FusionResponseDeserializer());
 
         // BackendUnreachableDetector - makes "TypeError: Failed to fetch" errors more descriptive
-        var commander = Services.AddCommander();
-        Services.TryAddSingleton(_ => new BackendUnreachableDetector());
+        var commander = services.AddCommander();
+        services.TryAddSingleton(_ => new BackendUnreachableDetector());
         commander.AddHandlers<BackendUnreachableDetector>();
 
         configure?.Invoke(this);
@@ -136,9 +137,9 @@ public readonly struct FusionRestEaseClientBuilder
         object ClientAccessorFactory(IServiceProvider c)
         {
             // 1. Validate types
-            var replicaMethodInterceptor = c.GetRequiredService<ReplicaMethodInterceptor>();
+            var replicaMethodInterceptor = c.GetRequiredService<ReplicaServiceInterceptor>();
             replicaMethodInterceptor.ValidateType(clientDefType);
-            var computeMethodInterceptor = c.GetRequiredService<ComputeMethodInterceptor>();
+            var computeMethodInterceptor = c.GetRequiredService<ComputeServiceInterceptor>();
             computeMethodInterceptor.ValidateType(serviceType);
 
             // 2. Create REST client (of clientType)

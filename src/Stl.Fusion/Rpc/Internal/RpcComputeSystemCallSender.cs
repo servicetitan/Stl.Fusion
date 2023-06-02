@@ -15,7 +15,7 @@ public sealed class RpcComputeSystemCallSender : RpcServiceBase
     private RpcServiceDef ComputeSystemCallsServiceDef => _computeSystemCallsServiceDef
         ??= Hub.ServiceRegistry.Get<IRpcComputeSystemCalls>()!;
     private RpcMethodDef InvalidateMethodDef => _invalidateMethodDef
-        ??= ComputeSystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.Error)));
+        ??= ComputeSystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcComputeSystemCalls.Invalidate)));
 
     public RpcComputeSystemCallSender(IServiceProvider services) : base(services)
     { }

@@ -20,8 +20,8 @@ public abstract class RpcInboundCall : RpcCall
     public bool NoWait => Id == 0;
     public List<RpcHeader> ResultHeaders { get; } = new();
 
-    public static RpcInboundCall New(RpcInboundContext context, RpcMethodDef methodDef)
-        => FactoryCache.GetOrAdd((context.CallType, methodDef.UnwrappedReturnType), static key => {
+    public static RpcInboundCall New(Type type, RpcInboundContext context, RpcMethodDef methodDef)
+        => FactoryCache.GetOrAdd((type, methodDef.UnwrappedReturnType), static key => {
             var (tGeneric, tResult) = key;
             var tInbound = tGeneric.MakeGenericType(tResult);
             return (Func<RpcInboundContext, RpcMethodDef, RpcInboundCall>)tInbound
@@ -129,9 +129,8 @@ public class RpcInboundCall<TResult> : RpcInboundCall
     protected Task<TResult> InvokeService()
     {
         var methodDef = MethodDef;
-        var services = Hub.Services;
-        var service = services.GetRequiredService(methodDef.Service.ServerType);
-        return (Task<TResult>)methodDef.Invoker.Invoke(service, Arguments!);
+        var server = methodDef.Service.Server;
+        return (Task<TResult>)methodDef.Invoker.Invoke(server, Arguments!);
     }
 
     protected ArgumentList DeserializeArguments()
@@ -146,23 +145,27 @@ public class RpcInboundCall<TResult> : RpcInboundCall
         var arguments = ArgumentList.Empty;
         var argumentListType = MethodDef.RemoteArgumentListType;
         if (MethodDef.HasObjectTypedArguments) {
-            var argumentListTypeResolver = (IRpcArgumentListTypeResolver)Hub.Services
-                .GetRequiredService(ServiceDef.ServerType);
+            var argumentListTypeResolver = (IRpcArgumentListTypeResolver)ServiceDef.Server;
             argumentListType = argumentListTypeResolver.GetArgumentListType(Context) ?? argumentListType;
         }
 
         if (argumentListType.IsGenericType) { // == Has 1+ arguments
             var headers = Context.Headers;
-            if (headers.Any(static h => h.Name.StartsWith(RpcHeader.ArgumentTypeHeaderPrefix, StringComparison.Ordinal))) {
+            if (headers.Any(static h => h.Name.StartsWith(RpcSystemHeaders.ArgumentTypeHeaderPrefix, StringComparison.Ordinal))) {
                 var argumentTypes = argumentListType.GetGenericArguments();
                 foreach (var h in headers) {
-                    if (!h.Name.StartsWith(RpcHeader.ArgumentTypeHeaderPrefix, StringComparison.Ordinal))
+                    if (!h.Name.StartsWith(RpcSystemHeaders.ArgumentTypeHeaderPrefix, StringComparison.Ordinal))
                         continue;
 #if NET7_0_OR_GREATER
-                    if (!int.TryParse(h.Name.AsSpan(RpcHeader.ArgumentTypeHeaderPrefix.Length), CultureInfo.InvariantCulture, out var argumentIndex))
+                    if (!int.TryParse(
+                        h.Name.AsSpan(RpcSystemHeaders.ArgumentTypeHeaderPrefix.Length),
+                        CultureInfo.InvariantCulture,
+                        out var argumentIndex))
 #else
 #pragma warning disable MA0011
-                    if (!int.TryParse(h.Name.Substring(RpcHeader.ArgumentTypeHeaderPrefix.Length), out var argumentIndex))
+                    if (!int.TryParse(
+                        h.Name.Substring(RpcSystemHeaders.ArgumentTypeHeaderPrefix.Length), 
+                        out var argumentIndex))
 #pragma warning restore MA0011
 #endif
                         continue;

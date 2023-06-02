@@ -32,12 +32,8 @@ public class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<RpcService
             serviceDef = new RpcServiceDef(hub, name, service, configuration.MethodNameBuilder);
             if (_services.ContainsKey(serviceDef.Type))
                 throw Errors.ServiceTypeConflict(service.Type);
-            if (!serviceDef.HasDefaultServerType && _services.ContainsKey(serviceDef.ServerType))
-                throw Errors.ServiceTypeConflict(service.ServerType);
 
             _services.Add(serviceDef.Type, serviceDef);
-            if (!serviceDef.HasDefaultServerType)
-                _services.Add(serviceDef.ServerType, serviceDef);
             _serviceByName.Add(serviceDef.Name, serviceDef);
         }
     }
@@ -47,8 +43,8 @@ public class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<RpcService
         using var sb = ZString.CreateStringBuilder();
         sb.AppendLine($"{GetType().GetName()}({_services.Count} service(s)):");
         foreach (var serviceDef in _serviceByName.Values.OrderBy(s => s.Name)) {
-            var serverTypeInfo = serviceDef.HasDefaultServerType ? "" : $", Serving: {serviceDef.ServerType.GetName()}";
-            sb.AppendLine($"- '{serviceDef.Name}' -> {serviceDef.Type.GetName()}, {serviceDef.MethodCount} method(s){serverTypeInfo}");
+            var serverInfo = serviceDef.HasServer  ? "" : $", Serving: {serviceDef.ServerResolver}";
+            sb.AppendLine($"- '{serviceDef.Name}' -> {serviceDef.Type.GetName()}, {serviceDef.MethodCount} method(s){serverInfo}");
         }
         return sb.ToString().TrimEnd();
     }

@@ -15,15 +15,24 @@ public class RpcInboundContext
     public RpcMessage Message { get; }
     public CancellationToken CancellationToken { get; }
     public List<RpcHeader> Headers => Message.Headers;
-    public Type CallType { get; set; } = typeof(RpcInboundCall<>);
-    public RpcInboundCall Call { get; private set; }
+    public RpcInboundCall Call { get; protected init; }
 
     public RpcInboundContext(RpcPeer peer, RpcMessage message, CancellationToken cancellationToken)
+        : this(peer, message, cancellationToken, true)
+    { }
+
+    protected RpcInboundContext(RpcPeer peer, RpcMessage message, CancellationToken cancellationToken, bool initializeCall)
     {
         Peer = peer;
         Message = message;
         CancellationToken = cancellationToken;
-        Call = RpcInboundCall.New(this, GetMethodDef());
+        if (initializeCall) {
+            var callTypeHeader = message.Headers.GetOrDefault(RpcSystemHeaders.CallType.Name);
+            var callType = Peer.Hub.Configuration.InboundCallTypes[callTypeHeader?.Value ?? ""];
+            Call = RpcInboundCall.New(callType, this, GetMethodDef());
+        }
+        else
+            Call = null!;
     }
 
     public Scope Activate()

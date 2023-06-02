@@ -12,7 +12,6 @@ public class CommandRTestBase : TestBase
 {
     protected bool UseDbContext { get; set; }
     protected Func<CommandHandler, Type, bool>? CommandHandlerFilter { get; set; }
-    protected bool AllowDirectCommandHandlerCalls { get; set; } = true;
 
     public CommandRTestBase(ITestOutputHelper @out) : base(@out) { }
 
@@ -52,9 +51,7 @@ public class CommandRTestBase : TestBase
                 LogFilter));
         });
 
-        var commander = services.AddCommander().Configure(new CommanderOptions() {
-            AllowDirectCommandHandlerCalls = AllowDirectCommandHandlerCalls,
-        });
+        var commander = services.AddCommander();
         if (CommandHandlerFilter != null)
             commander.AddHandlerFilter(CommandHandlerFilter);
 

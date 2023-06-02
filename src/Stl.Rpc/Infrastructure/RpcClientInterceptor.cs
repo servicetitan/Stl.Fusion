@@ -1,29 +1,15 @@
 using Stl.Interception;
 using Stl.Interception.Interceptors;
-using Stl.Internal;
 
 namespace Stl.Rpc.Infrastructure;
 
-public class RpcClientInterceptor : InterceptorBase
+public class RpcClientInterceptor : RpcInterceptorBase
 {
-    private RpcServiceDef? _serviceDef;
-
-    public new record Options : InterceptorBase.Options;
-
-    public RpcHub Hub { get; }
-    public RpcServiceDef ServiceDef {
-        get => _serviceDef ?? throw Errors.NotInitialized(nameof(ServiceDef));
-        set {
-            if (_serviceDef != null)
-                throw Errors.AlreadyInitialized(nameof(ServiceDef));
-
-            _serviceDef = value;
-        }
-    }
+    public new record Options : RpcInterceptorBase.Options;
 
     public RpcClientInterceptor(Options options, IServiceProvider services)
         : base(options, services)
-        => Hub = services.GetRequiredService<RpcHub>();
+    { }
 
     protected override Func<Invocation, object?> CreateHandler<T>(Invocation initialInvocation, MethodDef methodDef)
     {
@@ -37,7 +23,7 @@ public class RpcClientInterceptor : InterceptorBase
             }
             if (call == null) {
                 // No call == no peer -> we invoke it locally
-                var server = rpcMethodDef.Hub.Services.GetRequiredService(rpcMethodDef.Service.ServerType);
+                var server = rpcMethodDef.Service.Server;
                 return rpcMethodDef.Invoker.Invoke(server, invocation.Arguments);
             }
 
@@ -78,10 +64,4 @@ public class RpcClientInterceptor : InterceptorBase
 #pragma warning restore CA2012
         };
     }
-
-    protected override MethodDef? CreateMethodDef(MethodInfo method, Invocation initialInvocation)
-        => ServiceDef.Methods.FirstOrDefault(m => m.Method == method);
-
-    protected override void ValidateTypeInternal(Type type)
-    { }
 }

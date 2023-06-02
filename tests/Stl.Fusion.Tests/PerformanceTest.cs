@@ -16,10 +16,10 @@ public abstract class PerformanceTestBase : FusionTestBase
     public override async Task InitializeAsync()
     {
         await base.InitializeAsync().ConfigureAwait(false);
-        var users = Services.GetRequiredService<IUserService>();
+        var commander = Services.Commander();
         var tasks = new List<Task>();
         for (var i = 0; i < UserCount; i++)
-            tasks.Add(users.Create(new IUserService.AddCommand(new User() {
+            tasks.Add(commander.Call(new IUserService.AddCommand(new User() {
                 Id = i,
                 Name = $"User_{i}",
             }, true)));
@@ -77,15 +77,17 @@ public abstract class PerformanceTestBase : FusionTestBase
         {
             var rnd = new Random();
             var count = 0L;
+
             while (true) {
                 cancellationToken.ThrowIfCancellationRequested();
                 var userId = (long) rnd.Next(UserCount);
                 // Log.LogDebug($"{name}: R {userId}");
-                var user = await users.Get(userId, cancellationToken)
-                    .ConfigureAwait(false);
+                var user = await users.Get(userId, cancellationToken).ConfigureAwait(false);
                 user = user! with { Email = $"{++count}@counter.org" };
                 // Log.LogDebug($"{name}: R done, U {user}");
-                await users.Update(new(user), cancellationToken).ConfigureAwait(false);
+                var updateCommand = new IUserService.UpdateCommand(user);
+                await users.UpdateDirectly(updateCommand, cancellationToken).ConfigureAwait(false);
+
                 // Log.LogDebug($"{name}: U {user} done");
                 await Task.Delay(10, cancellationToken).ConfigureAwait(false);
             }
@@ -95,6 +97,7 @@ public abstract class PerformanceTestBase : FusionTestBase
         {
             var rnd = new Random();
             var count = 0L;
+
             for (; iterationCount > 0; iterationCount--) {
                 var userId = (long) rnd.Next(UserCount);
                 // Log.LogDebug($"{name}: R {userId}");
