@@ -129,9 +129,8 @@ public class RpcInboundCall<TResult> : RpcInboundCall
     protected Task<TResult> InvokeService()
     {
         var methodDef = MethodDef;
-        var services = Hub.Services;
-        var service = services.GetRequiredService(methodDef.Service.ServerType);
-        return (Task<TResult>)methodDef.Invoker.Invoke(service, Arguments!);
+        var server = methodDef.Service.Server;
+        return (Task<TResult>)methodDef.Invoker.Invoke(server, Arguments!);
     }
 
     protected ArgumentList DeserializeArguments()
@@ -146,8 +145,7 @@ public class RpcInboundCall<TResult> : RpcInboundCall
         var arguments = ArgumentList.Empty;
         var argumentListType = MethodDef.RemoteArgumentListType;
         if (MethodDef.HasObjectTypedArguments) {
-            var argumentListTypeResolver = (IRpcArgumentListTypeResolver)Hub.Services
-                .GetRequiredService(ServiceDef.ServerType);
+            var argumentListTypeResolver = (IRpcArgumentListTypeResolver)ServiceDef.Server;
             argumentListType = argumentListTypeResolver.GetArgumentListType(Context) ?? argumentListType;
         }
 

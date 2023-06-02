@@ -23,7 +23,7 @@ public class RpcClientInterceptor : RpcInterceptorBase
             }
             if (call == null) {
                 // No call == no peer -> we invoke it locally
-                var server = rpcMethodDef.Hub.Services.GetRequiredService(rpcMethodDef.Service.ServerType);
+                var server = rpcMethodDef.Service.Server;
                 return rpcMethodDef.Invoker.Invoke(server, invocation.Arguments);
             }
 

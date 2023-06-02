@@ -8,6 +8,7 @@ using Stl.Fusion.Internal;
 using Stl.Fusion.Multitenancy;
 using Stl.Fusion.Operations.Internal;
 using Stl.Fusion.Operations.Reprocessing;
+using Stl.Fusion.Rpc;
 using Stl.Fusion.UI;
 using Stl.Interception;
 using Stl.Multitenancy;
@@ -117,6 +118,14 @@ public readonly struct FusionBuilder
         configure?.Invoke(this);
     }
 
+    // AddRpc
+
+    public FusionRpcBuilder AddRpc()
+        => new(this, null);
+
+    public FusionBuilder AddRpc(Action<FusionRpcBuilder> configure)
+        => new FusionRpcBuilder(this, configure).Fusion;
+
     // AddPublisher, AddReplicator
 
     public FusionBuilder AddPublisher(
@@ -203,7 +212,7 @@ public readonly struct FusionBuilder
     public FusionAuthenticationBuilder AddAuthentication()
         => new(this, null);
 
-    public FusionBuilder AddAuthentication(Action<FusionAuthenticationBuilder> configure) 
+    public FusionBuilder AddAuthentication(Action<FusionAuthenticationBuilder> configure)
         => new FusionAuthenticationBuilder(this, configure).Fusion;
 
     // AddOperationReprocessor

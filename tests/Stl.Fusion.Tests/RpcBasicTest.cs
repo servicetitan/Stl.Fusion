@@ -40,37 +40,10 @@ public class RpcBasicTest : SimpleFusionTestBase
     protected override void ConfigureServices(ServiceCollection services)
     {
         base.ConfigureServices(services);
-        services.AddFusion().AddComputeService<CounterService>();
+        var fusion = services.AddFusion();
+        fusion.AddComputeService<CounterService>();
 
-        var rpc = services.AddRpc();
-        rpc.Configuration.InboundCallTypes.Add(RpcComputeCall.CallTypeId, typeof(RpcInboundComputeCall<>));
-        services.AddSingleton(_ => new RpcComputeServiceInterceptor.Options());
-        services.AddSingleton(c => new RpcComputeServiceInterceptor(
-            c.GetRequiredService<RpcComputeServiceInterceptor.Options>(), c));
-        services.AddSingleton(c => (RpcComputedCache)new RpcNoComputedCache(c));
-        if (!rpc.Configuration.Services.ContainsKey(typeof(IRpcComputeSystemCalls))) {
-            rpc.AddService<IRpcComputeSystemCalls, RpcComputeSystemCalls>(RpcComputeSystemCalls.Name);
-            services.AddSingleton(c => new RpcComputeSystemCalls(c));
-            services.AddSingleton(c => new RpcComputeSystemCallSender(c));
-        }
-
-        rpc.AddService<ICounterService, CounterService>();
-        var serviceType = typeof(ICounterService);
-        var clientType = typeof(ICounterService);
-        var serverType = typeof(CounterService);
-        services.AddSingleton(clientType, c => {
-            var rpcHub = c.RpcHub();
-            var server = c.GetRequiredService(serverType);
-            var rpcClient = rpcHub.CreateClient(clientType);
-
-            var computeServiceInterceptor = c.GetRequiredService<RpcComputeServiceInterceptor>();
-            var clientProxy = Proxies.New(clientType, computeServiceInterceptor, rpcClient);
-
-            var routingInterceptor = c.GetRequiredService<RpcRoutingInterceptor>();
-            var serviceDef = rpcHub.ServiceRegistry[serviceType];
-            routingInterceptor.Setup(serviceDef, server, clientProxy);
-            var routingProxy = Proxies.New(clientType, routingInterceptor);
-            return routingProxy;
-        });
+        var fusionRpc = fusion.AddRpc();
+        fusionRpc.AddRouter<ICounterService, CounterService>();
     }
 }

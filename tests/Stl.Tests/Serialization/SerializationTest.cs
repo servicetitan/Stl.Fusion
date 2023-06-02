@@ -93,13 +93,6 @@ public class SerializationTest : TestBase
     }
 
     [Fact]
-    public void ServiceTypeRefSerialization()
-    {
-        var s1 = new ServiceTypeRef(typeof(bool)).PassThroughAllSerializers(Out);
-        s1.TypeRef.Resolve().Should().Be(typeof(bool));
-    }
-
-    [Fact]
     public void JsonStringSerialization()
     {
         default(JsonString).AssertPassesThroughAllSerializers(Out);

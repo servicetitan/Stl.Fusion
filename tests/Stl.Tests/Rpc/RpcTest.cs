@@ -88,7 +88,8 @@ public class RpcTest : RpcTestBase
         services.AddSingleton<SimpleRpcService>();
 
         var rpc = services.AddRpc();
-        rpc.AddService<ISimpleRpcService, SimpleRpcService>()
-            .AddClient<ISimpleRpcServiceClient>();
+        rpc.Service<ISimpleRpcService>()
+            .HasServer<SimpleRpcService>()
+            .HasClient<ISimpleRpcServiceClient>();
     }
 }
