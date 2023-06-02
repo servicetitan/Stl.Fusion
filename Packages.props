@@ -103,7 +103,7 @@
     <PackageReference Update="MySqlConnector" Version="$(MySqlConnectorVersion)" />
     <PackageReference Update="Npgsql" Version="$(EntityFrameworkCoreVersion)" />
     <PackageReference Update="Npgsql.EntityFrameworkCore.PostgreSQL" Version="$(EntityFrameworkCoreNpgsqlVersion)" />
-    <PackageReference Update="Microsoft.Identity.Web" Version="2.9.*" />
+    <PackageReference Update="Microsoft.Identity.Web" Version="2.11.*" />
     <PackageReference Update="MsgPack.Cli" Version="1.0.*" />
     <PackageReference Update="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
     <PackageReference Update="Pluralize.NET" Version="1.0.*" />
