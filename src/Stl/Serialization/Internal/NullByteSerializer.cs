@@ -15,6 +15,12 @@ public sealed class NullByteSerializer : IByteSerializer
         return null;
     }
 
+    public object? Read(ReadOnlySequence<byte> data, Type type, out long readLength)
+    {
+        readLength = 0;
+        return null;
+    }
+
     public void Write(IBufferWriter<byte> bufferWriter, object? value, Type type)
     { }
 
@@ -30,6 +36,12 @@ public sealed class NullByteSerializer<T> : IByteSerializer<T>
     public static NullByteSerializer<T> Instance { get; } = new();
 
     public T Read(ReadOnlyMemory<byte> data, out int readLength)
+    {
+        readLength = 0;
+        return default!;
+    }
+
+    public T Read(ReadOnlySequence<byte> data, out long readLength)
     {
         readLength = 0;
         return default!;

@@ -24,7 +24,17 @@ public class MessagePackByteSerializer : IByteSerializer
     public virtual object? Read(ReadOnlyMemory<byte> data, Type type, out int readLength)
     {
         var serializer = _typedSerializers.GetOrAdd(type,
-            static (type1, self) => (MessagePackByteSerializer) typeof(MessagePackByteSerializer<>)
+            static (type1, self) => (MessagePackByteSerializer)typeof(MessagePackByteSerializer<>)
+                .MakeGenericType(type1)
+                .CreateInstance(self.Options),
+            this);
+        return serializer.Read(data, type, out readLength);
+    }
+
+    public virtual object? Read(ReadOnlySequence<byte> data, Type type, out long readLength)
+    {
+        var serializer = _typedSerializers.GetOrAdd(type,
+            static (type1, self) => (MessagePackByteSerializer)typeof(MessagePackByteSerializer<>)
                 .MakeGenericType(type1)
                 .CreateInstance(self.Options),
             this);
@@ -34,7 +44,7 @@ public class MessagePackByteSerializer : IByteSerializer
     public virtual void Write(IBufferWriter<byte> bufferWriter, object? value, Type type)
     {
         var serializer = _typedSerializers.GetOrAdd(type,
-            static (type1, self) => (MessagePackByteSerializer) typeof(MessagePackByteSerializer<>)
+            static (type1, self) => (MessagePackByteSerializer)typeof(MessagePackByteSerializer<>)
                 .MakeGenericType(type1)
                 .CreateInstance(self.Options, type1),
             this);
@@ -45,7 +55,7 @@ public class MessagePackByteSerializer : IByteSerializer
 
     private MessagePackByteSerializer GetTypedSerializer(Type serializedType)
         => _typedSerializers.GetOrAdd(serializedType,
-            static (type1, self) => (MessagePackByteSerializer) typeof(MessagePackByteSerializer<>)
+            static (type1, self) => (MessagePackByteSerializer)typeof(MessagePackByteSerializer<>)
                 .MakeGenericType(type1)
                 .CreateInstance(self.Options, type1),
             this);
@@ -63,6 +73,16 @@ public class MessagePackByteSerializer<T> : MessagePackByteSerializer, IByteSeri
     {
         if (type != SerializedType)
             throw Errors.SerializedTypeMismatch(SerializedType, type);
+
+        // ReSharper disable once HeapView.PossibleBoxingAllocation
+        return Read(data, out readLength);
+    }
+
+    public override object? Read(ReadOnlySequence<byte> data, Type type, out long readLength)
+    {
+        if (type != SerializedType)
+            throw Errors.SerializedTypeMismatch(SerializedType, type);
+
         // ReSharper disable once HeapView.PossibleBoxingAllocation
         return Read(data, out readLength);
     }
@@ -71,11 +91,20 @@ public class MessagePackByteSerializer<T> : MessagePackByteSerializer, IByteSeri
     {
         if (type != SerializedType)
             throw Errors.SerializedTypeMismatch(SerializedType, type);
+
         Write(bufferWriter, (T) value!);
     }
 
     public T Read(ReadOnlyMemory<byte> data, out int readLength)
         => MessagePackSerializer.Deserialize<T>(data, Options, out readLength);
+
+    public T Read(ReadOnlySequence<byte> data, out long readLength)
+    {
+        var reader = new MessagePackReader(data);
+        var result = MessagePackSerializer.Deserialize<T>(ref reader, Options);
+        readLength = reader.Consumed;
+        return result;
+    }
 
     public void Write(IBufferWriter<byte> bufferWriter, T value)
         => MessagePackSerializer.Serialize(bufferWriter, value, Options);

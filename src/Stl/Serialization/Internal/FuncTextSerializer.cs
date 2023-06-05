@@ -35,6 +35,20 @@ public class FuncTextSerializer<T> : ITextSerializer<T>
         }
     }
 
+    public T Read(ReadOnlySequence<byte> data, out long readLength)
+    {
+        var decoder = Encoding.UTF8.GetDecoder();
+        var buffer = ZString.CreateStringBuilder();
+        try {
+            decoder.Convert(data, ref buffer);
+            readLength = (int)data.Length;
+            return Reader.Invoke(buffer.ToString());
+        }
+        finally {
+            buffer.Dispose();
+        }
+    }
+
     public T Read(ReadOnlyMemory<char> data)
     {
 #if NETSTANDARD2_0

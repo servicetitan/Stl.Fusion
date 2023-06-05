@@ -1,3 +1,5 @@
+using System.Buffers;
+
 namespace Stl.Serialization;
 
 public interface ITextSerializer : IByteSerializer

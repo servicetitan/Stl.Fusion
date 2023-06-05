@@ -4,6 +4,7 @@ using Stl.Channels;
 using Stl.Fusion.Bridge;
 using Stl.Fusion.Bridge.Messages;
 using Stl.Rpc;
+using Stl.Rpc.WebSockets;
 
 namespace Stl.Fusion.Server;
 

@@ -47,6 +47,7 @@ public class ByteSerialized<T> : IEquatable<ByteSerialized<T>>
     {
         if (!_valueOption.IsSome(out var value))
             throw new InvalidOperationException($"{nameof(Value)} isn't set.");
+
         byte[] serializedValue;
         if (!typeof(T).IsValueType && ReferenceEquals(value, null)) {
             serializedValue = Array.Empty<byte>();
@@ -62,6 +63,7 @@ public class ByteSerialized<T> : IEquatable<ByteSerialized<T>>
     {
         if (!_dataOption.IsSome(out var serializedValue))
             throw new InvalidOperationException($"{nameof(Data)} isn't set.");
+
         var value = serializedValue.Length == 0
             ? default!
             : GetSerializer().Read(serializedValue, out _);

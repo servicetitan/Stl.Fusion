@@ -16,6 +16,9 @@ public class CastingByteSerializer<T> : IByteSerializer<T>
     public T Read(ReadOnlyMemory<byte> data, out int readLength)
         => (T) UntypedSerializer.Read(data, SerializedType, out readLength)!;
 
+    public T Read(ReadOnlySequence<byte> data, out long readLength)
+        => (T) UntypedSerializer.Read(data, SerializedType, out readLength)!;
+
     public void Write(IBufferWriter<byte> bufferWriter, T value)
         // ReSharper disable once HeapView.PossibleBoxingAllocation
         => UntypedSerializer.Write(bufferWriter, value, SerializedType);

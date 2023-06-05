@@ -23,6 +23,12 @@ public static class ByteSerializer<T>
         Func<ReadOnlyMemory<byte>, (T Value, int ReadLength)> reader,
         Action<IBufferWriter<byte>, T> writer)
         => new FuncByteSerializer<T>(reader, writer);
+
+    public static IByteSerializer<T> New(
+        Func<ReadOnlySequence<byte>, (T Value, long ReadLength)> reader,
+        Action<IBufferWriter<byte>, T> writer)
+        => new FuncByteSequenceSerializer<T>(reader, writer);
+
     public static IByteSerializer<T> NewAsymmetric(IByteSerializer<T> reader, IByteSerializer<T> writer)
         => new AsymmetricByteSerializer<T>(reader, writer);
 }

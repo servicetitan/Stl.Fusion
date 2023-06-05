@@ -2,13 +2,13 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Runtime.ExceptionServices;
-using System.Text;                                
+using System.Text;
 
 #if NETSTANDARD2_0
 using Stl.Pooling;
 #endif
 
-namespace Stl.Rpc;
+namespace Stl.Rpc.WebSockets;
 
 public class WebSocketChannel : Channel<string>, IAsyncDisposable
 {
@@ -39,9 +39,9 @@ public class WebSocketChannel : Channel<string>, IAsyncDisposable
             => Channel.CreateBounded<string>(ChannelOptions);
     }
 
-    private Task _whenReadCompletedTask;
-    private Task _whenWriteCompletedTask;
-    private Task _whenClosedTask;
+    private readonly Task _whenReadCompletedTask;
+    private readonly Task _whenWriteCompletedTask;
+    private readonly Task _whenClosedTask;
 
     protected volatile CancellationTokenSource? StopCts;
 

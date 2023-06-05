@@ -27,6 +27,20 @@ public abstract class TextSerializerBase : ITextSerializer
         }
     }
 
+    public object? Read(ReadOnlySequence<byte> data, Type type, out long readLength)
+    {
+        var decoder = Encoding.UTF8.GetDecoder();
+        var buffer = ZString.CreateStringBuilder();
+        try {
+            decoder.Convert(data, ref buffer);
+            readLength = (int)data.Length;
+            return Read(buffer.ToString(), type);
+        }
+        finally {
+            buffer.Dispose();
+        }
+    }
+
     public virtual object? Read(ReadOnlyMemory<char> data, Type type)
     {
 #if NETSTANDARD2_0
