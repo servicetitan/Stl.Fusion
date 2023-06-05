@@ -16,10 +16,10 @@ public class ChannelPair<T>
 public static class ChannelPair
 {
     public static ChannelPair<T> Create<T>(Channel<T> channel1, Channel<T> channel2)
-        => new ChannelPair<T>(channel1, channel2);
+        => new(channel1, channel2);
 
     public static ChannelPair<T> CreateTwisted<T>(Channel<T> channel1, Channel<T> channel2)
-        => new ChannelPair<T>(
+        => new(
             new CustomChannel<T>(channel1.Reader, channel2.Writer),
             new CustomChannel<T>(channel2.Reader, channel1.Writer));
 }

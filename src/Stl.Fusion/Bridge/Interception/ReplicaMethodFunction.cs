@@ -95,7 +95,7 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>, IReplicaMethodFu
         var computed = new ReplicaMethodComputed<T>(input.MethodDef.ComputedOptions, input, null, publicationState);
 
         // Start the task to retrieve the actual value
-        using var _1 = ExecutionContextExt.SuppressFlow();
+        using var suppressFlow = ExecutionContextExt.SuppressFlow();
         _ = Task.Run(() => RemoteCompute(input, cancellationToken), CancellationToken.None);
         return computed;
     }
@@ -144,7 +144,7 @@ public class ReplicaMethodFunction<T> : ComputeFunctionBase<T>, IReplicaMethodFu
         if (publicationState != null)
             return new PublicationStateInfo<T>(publicationState, output);
 
-        // No PublicationStateInfo is captured, so... 
+        // No PublicationStateInfo is captured, so...
         output = Result.Error<T>(Errors.NoPublicationStateInfo());
         return CreateFakePublicationState(output);
     }

@@ -4,7 +4,7 @@ using Microsoft.Toolkit.HighPerformance.Buffers;
 
 namespace Stl.Rpc.WebSockets;
 
-public sealed class WebSocketHandler<T>
+public sealed class WebSocketAdapter<T>
 {
     public record Options
     {
@@ -23,8 +23,8 @@ public sealed class WebSocketHandler<T>
     public DualSerializer<T> Serializer { get; }
     public ILogger? Log { get; }
 
-    public WebSocketHandler(WebSocket webSocket) : this(Options.Default, webSocket) { }
-    public WebSocketHandler(Options settings, WebSocket webSocket)
+    public WebSocketAdapter(WebSocket webSocket) : this(Options.Default, webSocket) { }
+    public WebSocketAdapter(Options settings, WebSocket webSocket)
     {
         Settings = settings;
         WebSocket = webSocket;
@@ -109,6 +109,31 @@ public sealed class WebSocketHandler<T>
         }
     }
 
+    public async Task Close(Exception? error = null)
+    {
+        if (error is OperationCanceledException)
+            error = null;
+
+        var status = WebSocketCloseStatus.NormalClosure;
+        var message = "Ok.";
+        if (error != null) {
+            status = WebSocketCloseStatus.InternalServerError;
+            message = "Internal Server Error.";
+        }
+
+        using var cts = new CancellationTokenSource(Settings.CloseTimeout);
+        try {
+            await WebSocket.CloseAsync(status, message, cts.Token).ConfigureAwait(false);
+        }
+        catch {
+            // Intended
+        }
+        finally {
+            if (Settings.OwnsWebSocket)
+                WebSocket.Dispose();
+        }
+    }
+
     // Private methods
 
     private bool TrySerialize(T value, IBufferWriter<byte> bufferWriter)
@@ -133,31 +158,6 @@ public sealed class WebSocketHandler<T>
             Log?.LogError(e, "Couldn't deserialize: {Data}", new Serialized(bytes, format));
             value = default!;
             return false;
-        }
-    }
-
-    private async Task Close(Exception? error = null)
-    {
-        if (error is OperationCanceledException)
-            error = null;
-
-        var status = WebSocketCloseStatus.NormalClosure;
-        var message = "Ok.";
-        if (error != null) {
-            status = WebSocketCloseStatus.InternalServerError;
-            message = "Internal Server Error.";
-        }
-
-        using var cts = new CancellationTokenSource(Settings.CloseTimeout);
-        try {
-            await WebSocket.CloseAsync(status, message, cts.Token).ConfigureAwait(false);
-        }
-        catch {
-            // Intended
-        }
-        finally {
-            if (Settings.OwnsWebSocket)
-                WebSocket.Dispose();
         }
     }
 }

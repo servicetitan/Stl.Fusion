@@ -60,7 +60,7 @@ public class RpcComputeMethodFunction<T> : ComputeFunctionBase<T>, IRpcComputeMe
         var computed = new ReplicaMethodComputed<T>(input.MethodDef.ComputedOptions, input, null, publicationState);
 
         // Start the task to retrieve the actual value
-        using var _1 = ExecutionContextExt.SuppressFlow();
+        using var suppressFlow = ExecutionContextExt.SuppressFlow();
         _ = Task.Run(() => RpcCompute(input, cancellationToken), CancellationToken.None);
         return computed;
     }
