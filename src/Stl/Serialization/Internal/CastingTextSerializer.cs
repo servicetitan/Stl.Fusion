@@ -18,8 +18,6 @@ public class CastingTextSerializer<T> : ITextSerializer<T>
         => (T) UntypedSerializer.Read(data, SerializedType)!;
     public T Read(ReadOnlyMemory<byte> data, out int readLength)
         => (T) UntypedSerializer.Read(data, SerializedType, out readLength)!;
-    public T Read(ReadOnlySequence<byte> data, out long readLength)
-        => (T) UntypedSerializer.Read(data, SerializedType, out readLength)!;
     public T Read(ReadOnlyMemory<char> data)
         => (T) UntypedSerializer.Read(data, SerializedType)!;
 

@@ -42,13 +42,6 @@ public sealed record DualSerializer<T>(
             ? TextSerializer.Read(data, out _)
             : ByteSerializer.Read(data, out _);
 
-    public T Read(ReadOnlySequence<byte> data)
-        => Read(data, DefaultFormat);
-    public T Read(ReadOnlySequence<byte> data, SerializedFormat format)
-        => format == SerializedFormat.Text
-            ? TextSerializer.Read(data, out _)
-            : ByteSerializer.Read(data, out _);
-
     // Write
 
     public Serialized Write(T value)

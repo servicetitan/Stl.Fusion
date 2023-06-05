@@ -10,6 +10,7 @@ public static unsafe class EncoderExt
 public static class EncoderExt
 #endif
 {
+#if false
     public static void Convert(this Encoder encoder, ReadOnlySequence<char> source, IBufferWriter<byte> target)
     {
         var position = source.Start;
@@ -33,6 +34,7 @@ public static class EncoderExt
         }
         encoder.Convert(lastBuffer.Span, target);
     }
+#endif
 
     public static void Convert(this Encoder encoder, ReadOnlySpan<char> source, IBufferWriter<byte> target, bool flush = true)
     {

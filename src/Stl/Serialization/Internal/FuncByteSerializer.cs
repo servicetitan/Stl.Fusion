@@ -17,15 +17,6 @@ public class FuncByteSerializer<T> : IByteSerializer<T>
         Writer = writer;
     }
 
-    public T Read(ReadOnlySequence<byte> data, out long readLength)
-    {
-        using var writer = new ArrayPoolBufferWriter<byte>();
-        writer.Write(data);
-        var result = Read(writer.WrittenMemory, out var intReadLength);
-        readLength = intReadLength;
-        return result;
-    }
-
     public T Read(ReadOnlyMemory<byte> data, out int readLength)
     {
         var result = Reader.Invoke(data);
