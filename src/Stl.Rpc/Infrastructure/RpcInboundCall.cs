@@ -164,7 +164,7 @@ public class RpcInboundCall<TResult> : RpcInboundCall
 #else
 #pragma warning disable MA0011
                     if (!int.TryParse(
-                        h.Name.Substring(RpcSystemHeaders.ArgumentTypeHeaderPrefix.Length), 
+                        h.Name.Substring(RpcSystemHeaders.ArgumentTypeHeaderPrefix.Length),
                         out var argumentIndex))
 #pragma warning restore MA0011
 #endif
@@ -181,7 +181,7 @@ public class RpcInboundCall<TResult> : RpcInboundCall
                     .MakeGenericType(argumentTypes);
             }
 
-            var deserializedArguments = peer.ArgumentSerializer.Deserialize(message, argumentListType);
+            var deserializedArguments = peer.ArgumentSerializer.Deserialize(message.ArgumentData, argumentListType);
             if (argumentListType == MethodDef.ArgumentListType)
                 arguments = deserializedArguments;
             else {

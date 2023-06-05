@@ -38,7 +38,7 @@ public sealed class WebSocketAdapter<T>
         var bufferWriter = new ArrayPoolBufferWriter<byte>(Settings.WriteBufferSize);
         try {
             if (TrySerialize(value, bufferWriter)) {
-                var messageType = Serializer.DefaultFormat == SerializedFormat.Text
+                var messageType = Serializer.DefaultFormat == DataFormat.Text
                     ? WebSocketMessageType.Text
                     : WebSocketMessageType.Binary;
                 sendTask = WebSocket.SendAsync(bufferWriter, messageType, true, cancellationToken);
@@ -69,13 +69,13 @@ public sealed class WebSocketAdapter<T>
                 case WebSocketMessageType.Binary:
                     if (r.EndOfMessage && byteBufferWriter.WrittenCount == 0) {
                         // No-copy deserialization
-                        if (TryDeserialize(buffer, SerializedFormat.Bytes, out value))
+                        if (TryDeserialize(buffer, DataFormat.Bytes, out value))
                             yield return value;
                     }
                     else {
                         byteBufferWriter.Write(buffer.AsSpan(0, r.Count));
                         if (r.EndOfMessage) {
-                            if (TryDeserialize(byteBufferWriter.WrittenMemory, SerializedFormat.Bytes, out value))
+                            if (TryDeserialize(byteBufferWriter.WrittenMemory, DataFormat.Bytes, out value))
                                 yield return value;
                             byteBufferWriter.Clear();
                         }
@@ -84,13 +84,13 @@ public sealed class WebSocketAdapter<T>
                 case WebSocketMessageType.Text:
                     if (r.EndOfMessage && textBufferWriter.WrittenCount == 0) {
                         // No-copy deserialization
-                        if (TryDeserialize(buffer, SerializedFormat.Text, out value))
+                        if (TryDeserialize(buffer, DataFormat.Text, out value))
                             yield return value;
                     }
                     else {
                         textBufferWriter.Write(buffer.AsSpan(0, r.Count));
                         if (r.EndOfMessage) {
-                            if (TryDeserialize(textBufferWriter.WrittenMemory, SerializedFormat.Text, out value))
+                            if (TryDeserialize(textBufferWriter.WrittenMemory, DataFormat.Text, out value))
                                 yield return value;
                             textBufferWriter.Clear();
                         }
@@ -148,14 +148,14 @@ public sealed class WebSocketAdapter<T>
         }
     }
 
-    private bool TryDeserialize(ReadOnlyMemory<byte> bytes, SerializedFormat format, out T value)
+    private bool TryDeserialize(ReadOnlyMemory<byte> bytes, DataFormat format, out T value)
     {
         try {
             value = Serializer.Read(bytes, format);
             return true;
         }
         catch (Exception e) {
-            Log?.LogError(e, "Couldn't deserialize: {Data}", new Serialized(bytes, format));
+            Log?.LogError(e, "Couldn't deserialize: {Data}", new TextOrBytes(format, bytes));
             value = default!;
             return false;
         }

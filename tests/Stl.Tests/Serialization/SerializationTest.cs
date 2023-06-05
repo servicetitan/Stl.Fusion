@@ -3,6 +3,7 @@ using Stl.Interception;
 using Stl.Internal;
 using Stl.IO;
 using Stl.Reflection;
+using TextOrBytes = Stl.Serialization.TextOrBytes;
 
 namespace Stl.Tests.Serialization;
 
@@ -116,6 +117,29 @@ public class SerializationTest : TestBase
         Test(new Base64Encoded(Array.Empty<byte>()));
         Test(new Base64Encoded(new byte[] {1}));
         Test(new Base64Encoded(new byte[] {1, 2}));
+    }
+
+    [Fact]
+    public void TextOrBytesSerialization()
+    {
+        void Test(TextOrBytes src)
+        {
+            var dst = src.PassThroughAllSerializers(Out);
+            dst.Format.Should().Be(src.Format);
+            dst.Bytes.SequenceEqual(src.Bytes).Should().BeTrue();
+        }
+
+        Test(default);
+
+        Test(TextOrBytes.EmptyText);
+        Test(new TextOrBytes(""));
+        Test(new TextOrBytes("1"));
+        Test(new TextOrBytes("2"));
+
+        Test(TextOrBytes.EmptyBytes);
+        Test(new TextOrBytes(Array.Empty<byte>()));
+        Test(new TextOrBytes(new byte[] {1}));
+        Test(new TextOrBytes(new byte[] {1, 2}));
     }
 
     [Fact]

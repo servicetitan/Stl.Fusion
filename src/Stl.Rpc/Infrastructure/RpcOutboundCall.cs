@@ -42,8 +42,9 @@ public abstract class RpcOutboundCall : RpcCall
         var headers = Context.Headers;
         var peer = Context.Peer!;
         var arguments = Context.Arguments!;
-        if (MethodDef.CancellationTokenIndex >= 0)
-            arguments = arguments.Remove(MethodDef.CancellationTokenIndex);
+        var methodDef = MethodDef;
+        if (methodDef.CancellationTokenIndex >= 0)
+            arguments = arguments.Remove(methodDef.CancellationTokenIndex);
 
         var argumentListType = arguments.GetType();
         if (argumentListType.IsGenericType) {
@@ -68,7 +69,9 @@ public abstract class RpcOutboundCall : RpcCall
                 arguments.SetFrom(oldArguments);
             }
         }
-        return peer.ArgumentSerializer.CreateMessage(callId, MethodDef, arguments, headers);
+        var argumentData = peer.ArgumentSerializer.Serialize(arguments);
+        var message = new RpcMessage(callId, methodDef.Service.Name, methodDef.Name, argumentData, headers);
+        return message;
     }
 
     public abstract bool TryCompleteWithOk(object? result, RpcInboundContext context);

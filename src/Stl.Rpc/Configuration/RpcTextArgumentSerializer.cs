@@ -2,20 +2,29 @@ using Stl.Interception;
 
 namespace Stl.Rpc;
 
-public sealed class RpcTextArgumentSerializer : RpcArgumentSerializer<string?>
+public sealed class RpcTextArgumentSerializer : RpcArgumentSerializer
 {
     private readonly ITextSerializer _serializer;
 
     public RpcTextArgumentSerializer(ITextSerializer serializer)
         => _serializer = serializer;
 
-    protected override string? Serialize(ArgumentList arguments, Type argumentListType)
-        => arguments.Length == 0
-            ? null
-            : _serializer.Write(arguments, argumentListType);
+    public override TextOrBytes Serialize(ArgumentList arguments)
+    {
+        if (arguments.Length == 0)
+            return TextOrBytes.EmptyBytes;
 
-    protected override ArgumentList Deserialize(string? data, Type argumentListType)
-        => data is null
+        var text = _serializer.Write(arguments, arguments.GetType());
+        return new TextOrBytes(text);
+    }
+
+    public override ArgumentList Deserialize(TextOrBytes argumentData, Type argumentListType)
+    {
+        if (!argumentData.IsText(out var text))
+            throw new ArgumentOutOfRangeException(nameof(argumentData));
+
+        return text.IsEmpty
             ? ArgumentList.Empty
-            : (ArgumentList)_serializer.Read(data, argumentListType)!;
+            : (ArgumentList)_serializer.Read(text, argumentListType)!;
+    }
 }

@@ -5,15 +5,15 @@ using Stl.Serialization.Internal;
 namespace Stl.Serialization;
 
 public sealed record DualSerializer<T>(
-    SerializedFormat DefaultFormat,
+    DataFormat DefaultFormat,
     IByteSerializer<T> ByteSerializer,
     ITextSerializer<T> TextSerializer)
 {
     public DualSerializer()
-        : this(SerializedFormat.Bytes)
+        : this(DataFormat.Bytes)
     { }
 
-    public DualSerializer(SerializedFormat DefaultFormat)
+    public DualSerializer(DataFormat DefaultFormat)
         : this(
             DefaultFormat,
             Serialization.ByteSerializer.Default.ToTyped<T>(),
@@ -21,46 +21,46 @@ public sealed record DualSerializer<T>(
     { }
 
     public DualSerializer(IByteSerializer<T> byteSerializer)
-        : this(SerializedFormat.Bytes, byteSerializer, NoneTextSerializer<T>.Instance)
+        : this(DataFormat.Bytes, byteSerializer, NoneTextSerializer<T>.Instance)
     { }
 
     public DualSerializer(ITextSerializer<T> textSerializer)
-        : this(SerializedFormat.Text, NoneByteSerializer<T>.Instance, textSerializer)
+        : this(DataFormat.Text, NoneByteSerializer<T>.Instance, textSerializer)
     { }
 
     // Read
 
-    public T Read(Serialized data)
-        => data.Format == SerializedFormat.Text
+    public T Read(TextOrBytes data)
+        => data.Format == DataFormat.Text
             ? TextSerializer.Read(data.Data)
             : ByteSerializer.Read(data.Data, out _);
 
     public T Read(ReadOnlyMemory<byte> data)
         => Read(data, DefaultFormat);
-    public T Read(ReadOnlyMemory<byte> data, SerializedFormat format)
-        => format == SerializedFormat.Text
+    public T Read(ReadOnlyMemory<byte> data, DataFormat format)
+        => format == DataFormat.Text
             ? TextSerializer.Read(data, out _)
             : ByteSerializer.Read(data, out _);
 
     // Write
 
-    public Serialized Write(T value)
+    public TextOrBytes Write(T value)
         => Write(value, DefaultFormat);
-    public Serialized Write(T value, SerializedFormat format)
+    public TextOrBytes Write(T value, DataFormat format)
     {
         using var bufferWriter = new ArrayPoolBufferWriter<byte>();
-        if (format == SerializedFormat.Text)
+        if (format == DataFormat.Text)
             TextSerializer.Write(bufferWriter, value);
         else
             ByteSerializer.Write(bufferWriter, value);
-        return new Serialized(bufferWriter.WrittenMemory.ToArray(), format);
+        return new TextOrBytes(format, bufferWriter.WrittenMemory.ToArray());
     }
 
     public void Write(T value, IBufferWriter<byte> bufferWriter)
         => Write(value, DefaultFormat, bufferWriter);
-    public void Write(T value, SerializedFormat format, IBufferWriter<byte> bufferWriter)
+    public void Write(T value, DataFormat format, IBufferWriter<byte> bufferWriter)
     {
-        if (format == SerializedFormat.Text)
+        if (format == DataFormat.Text)
             TextSerializer.Write(bufferWriter, value);
         else
             ByteSerializer.Write(bufferWriter, value);
