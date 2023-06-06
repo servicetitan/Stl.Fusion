@@ -7,7 +7,7 @@ namespace Stl.Tests.Rpc;
 
 public abstract class RpcTestBase : TestBase
 {
-    protected Symbol ServerPeerName { get; init; } = "server";
+    protected Symbol ServerPeerName { get; init; } = RpcServerPeer.FormatName("client");
 
     protected RpcTestBase(ITestOutputHelper @out) : base(@out) { }
 
@@ -25,7 +25,9 @@ public abstract class RpcTestBase : TestBase
 
     protected virtual void StartServices(IServiceProvider services)
     {
-        services.RpcHub().GetPeer("server");
+        var channels = services.GetRequiredService<ChannelPair<RpcMessage>>();
+        var serverPeer = (RpcServerPeer)services.RpcHub().GetPeer(ServerPeerName);
+        serverPeer.SetChannel(channels.Channel1);
     }
 
     protected virtual void ConfigureServices(ServiceCollection services)
@@ -46,19 +48,10 @@ public abstract class RpcTestBase : TestBase
         services.AddSingleton(channelPair);
 
         var rpc = services.AddRpc();
-        rpc.HasPeerFactory(c => {
-            var hub = c.RpcHub();
-            return name => new RpcPeer(hub, name) {
-                LocalServiceFilter = name == ServerPeerName
-                    ? _ => true
-                    : _ => false
-            };
-        });
-        rpc.HasPeerConnector((peer, _) => {
+        rpc.HasClientChannelProvider((peer, _) => {
             var c = peer.Hub.Services;
-            var cp = c.GetRequiredService<ChannelPair<RpcMessage>>();
-            var channel = peer.Name == ServerPeerName ? cp.Channel1 : cp.Channel2;
-            return Task.FromResult(channel);
+            var channels = c.GetRequiredService<ChannelPair<RpcMessage>>();
+            return Task.FromResult(channels.Channel2);
         });
     }
 

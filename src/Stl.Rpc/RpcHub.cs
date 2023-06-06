@@ -10,16 +10,16 @@ public sealed class RpcHub : ProcessorBase, IHasServices
     private RpcServiceRegistry? _serviceRegistry;
     private RpcPeerFactory? _peerFactory;
     private RpcInboundContextFactory? _inboundContextFactory;
-    private RpcPeerConnector? _peerConnector;
+    private RpcClientChannelProvider? _clientChannelProvider;
     private RpcPeerResolver? _peerResolver;
     private RpcSystemCallSender? _systemCallSender;
 
     private ILogger Log => _log ??= Services.LogFor(GetType());
 
     internal RpcPeerFactory PeerFactory => _peerFactory ??= Services.GetRequiredService<RpcPeerFactory>();
-    internal RpcInboundContextFactory InboundContextFactory => _inboundContextFactory ??= Services.GetRequiredService<RpcInboundContextFactory>();
-    internal RpcPeerConnector PeerConnector => _peerConnector ??= Services.GetRequiredService<RpcPeerConnector>();
     internal RpcPeerResolver PeerResolver => _peerResolver ??= Services.GetRequiredService<RpcPeerResolver>();
+    internal RpcInboundContextFactory InboundContextFactory => _inboundContextFactory ??= Services.GetRequiredService<RpcInboundContextFactory>();
+    internal RpcClientChannelProvider ClientChannelProvider => _clientChannelProvider ??= Services.GetRequiredService<RpcClientChannelProvider>();
     internal RpcSystemCallSender SystemCallSender => _systemCallSender ??= Services.GetRequiredService<RpcSystemCallSender>();
 
     public IServiceProvider Services { get; }

@@ -31,7 +31,7 @@ public readonly struct RpcBuilder
         // Common services
         services.TryAddSingleton(new RpcConfiguration());
         services.TryAddSingleton(c => new RpcServiceRegistry(c));
-        services.TryAddSingleton<RpcPeerFactory>(c => name => new RpcPeer(c.RpcHub(), name));
+        services.TryAddSingleton<RpcPeerFactory>(c => RpcPeerFactoryExt.Default(c.RpcHub()));
         services.TryAddSingleton(_ => RpcInboundContext.DefaultFactory);
         services.TryAddSingleton<RpcPeerResolver>(c => {
             var hub = c.RpcHub();
@@ -91,13 +91,13 @@ public readonly struct RpcBuilder
         return this;
     }
 
-    public RpcBuilder HasPeerConnector(RpcPeerConnector peerConnector)
+    public RpcBuilder HasClientChannelProvider(RpcClientChannelProvider clientChannelProvider)
     {
-        Services.AddSingleton(peerConnector);
+        Services.AddSingleton(clientChannelProvider);
         return this;
     }
 
-    public RpcBuilder HasPeerConnector(Func<IServiceProvider, RpcPeerConnector> connectorFactory)
+    public RpcBuilder HasClientChannelProvider(Func<IServiceProvider, RpcClientChannelProvider> connectorFactory)
     {
         Services.AddSingleton(connectorFactory);
         return this;
