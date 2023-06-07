@@ -26,7 +26,7 @@ public class MessagePackByteSerializer : IByteSerializer
         var serializer = _typedSerializers.GetOrAdd(type,
             static (type1, self) => (MessagePackByteSerializer)typeof(MessagePackByteSerializer<>)
                 .MakeGenericType(type1)
-                .CreateInstance(self.Options),
+                .CreateInstance(self.Options, type1),
             this);
         return serializer.Read(data, type, out readLength);
     }
@@ -73,7 +73,7 @@ public class MessagePackByteSerializer<T> : MessagePackByteSerializer, IByteSeri
         if (type != SerializedType)
             throw Errors.SerializedTypeMismatch(SerializedType, type);
 
-        Write(bufferWriter, (T) value!);
+        Write(bufferWriter, (T)value!);
     }
 
     public T Read(ReadOnlyMemory<byte> data, out int readLength)
