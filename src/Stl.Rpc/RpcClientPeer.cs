@@ -20,7 +20,7 @@ public class RpcClientPeer : RpcPeer
 
     protected override async Task<Channel<RpcMessage>> GetChannelOrReconnect(CancellationToken cancellationToken)
     {
-        var (channel, error, tryIndex) = GetConnectionState();
+        var (channel, error, tryIndex) = GetConnectionState().Value;
         if (channel != null)
             return channel;
 
@@ -47,18 +47,6 @@ public class RpcClientPeer : RpcPeer
             await Clock.Delay(delay, cancellationToken).ConfigureAwait(false);
         }
 
-        try {
-            channel = await ChannelProvider.Invoke(this, cancellationToken).ConfigureAwait(false);
-            // ReSharper disable once SuspiciousTypeConversion.Global
-            if (channel is null or IEmptyChannel)
-                throw Errors.ImpossibleToReconnect();
-
-            SetConnectionState(channel);
-            return channel;
-        }
-        catch (Exception e) {
-            SetConnectionState(null, e);
-            throw;
-        }
+        return await ChannelProvider.Invoke(this, cancellationToken).ConfigureAwait(false);
     }
 }

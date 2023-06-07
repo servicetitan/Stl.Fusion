@@ -1,15 +1,6 @@
 using System.Collections.Concurrent;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-using Stl.Fusion.Bridge;
-using Stl.Fusion.Bridge.Messages;
-using Stl.Fusion.EntityFramework;
-using Stl.Fusion.Extensions;
-using Stl.IO;
 using Stl.Locking;
-using Stl.RegisterAttributes;
 using Stl.Rpc;
-using Stl.Rpc.Server;
 using Stl.Testing.Collections;
 using Stl.Testing.Output;
 using Xunit.DependencyInjection.Logging;
@@ -128,7 +119,7 @@ public class RpbWebTestBase : TestBase, IAsyncLifetime
         else {
             var rpcClient = rpc.AddClient();
             rpcClient.Configure(_ => RpcClient.Options.Default with {
-                AddressResolver = _ => WebHost.ServerUri.ToString(),
+                HostUrlResolver = _ => WebHost.ServerUri.ToString(),
             });
         }
     }

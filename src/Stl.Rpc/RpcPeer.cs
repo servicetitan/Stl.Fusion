@@ -46,7 +46,7 @@ public abstract class RpcPeer : WorkerBase
             }
             catch (Exception e) {
                 SetConnectionState(null, e);
-                if (e is ImpossibleToConnectException)
+                if (e is ImpossibleToConnectException or TimeoutException)
                     throw;
             }
         }
@@ -55,7 +55,7 @@ public abstract class RpcPeer : WorkerBase
     public void SetChannel(Channel<RpcMessage> channel)
     {
         lock (Lock) {
-            var connectionState = GetConnectionState();
+            var connectionState = GetConnectionState().Value;
             if (connectionState.IsConnected(out var existingChannel))
                 existingChannel!.Writer.TryComplete(new OperationCanceledException());
 
@@ -68,7 +68,7 @@ public abstract class RpcPeer : WorkerBase
     public async ValueTask<Channel<RpcMessage>> GetChannel(TimeSpan timeout, CancellationToken cancellationToken)
     {
         // ReSharper disable once InconsistentlySynchronizedField
-        var connectionState = _connectionState;
+        var connectionState = GetConnectionState();
         while (true) {
             // ReSharper disable once MethodSupportsCancellation
             var whenNextConnectionState = connectionState.WhenNext();
@@ -97,6 +97,11 @@ public abstract class RpcPeer : WorkerBase
         while (true) {
             try {
                 var channel = await GetChannelOrReconnect(cancellationToken).ConfigureAwait(false);
+                // ReSharper disable once SuspiciousTypeConversion.Global
+                if (channel is null or IEmptyChannel)
+                    throw Errors.ImpossibleToReconnect();
+
+                SetConnectionState(channel);
                 foreach (var call in Calls.Outbound.Values)
                     await call.Send(true).ConfigureAwait(false);
 
@@ -120,7 +125,7 @@ public abstract class RpcPeer : WorkerBase
             }
             catch (Exception e) {
                 SetConnectionState(null, e);
-                if (e is OperationCanceledException or ImpossibleToConnectException)
+                if (e is OperationCanceledException or ImpossibleToConnectException or TimeoutException)
                     throw;
             }
         }
@@ -145,11 +150,8 @@ public abstract class RpcPeer : WorkerBase
         }
     }
 
-    protected ConnectionState GetConnectionState()
-    {
-        lock (Lock)
-            return _connectionState.Value;
-    }
+    protected AsyncEvent<ConnectionState> GetConnectionState()
+        => _connectionState;
 
     protected void SetConnectionState(Channel<RpcMessage>? channel, Exception? error = null)
     {
@@ -158,7 +160,7 @@ public abstract class RpcPeer : WorkerBase
             var state = connectionState.Value;
             if (state.Channel == channel && state.Error == error)
                 return;
-            if (state.Error is ImpossibleToConnectException)
+            if (state.Error is ImpossibleToConnectException or TimeoutException)
                 return;
 
             var nextState = state.Next(channel, error);

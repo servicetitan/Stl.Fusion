@@ -31,22 +31,27 @@ public class RpcServerPeer : RpcPeer
 
     protected override async Task<Channel<RpcMessage>> GetChannelOrReconnect(CancellationToken cancellationToken)
     {
+        // ReSharper disable once InconsistentlySynchronizedField
+        var connectionState = GetConnectionState();
         while (true) {
-            Exception error;
-            try {
-                return await GetChannel(CloseTimeout, cancellationToken).ConfigureAwait(false);
+            // ReSharper disable once MethodSupportsCancellation
+            var whenNextConnectionState = connectionState.WhenNext();
+            if (!whenNextConnectionState.IsCompleted) {
+                var (channel, error, _) = connectionState.Value;
+                if (error is OperationCanceledException) {
+                    Log.LogInformation("'{Name}': Connection cancelled, shutting down", Name);
+                    throw error;
+                }
+                if (error is ImpossibleToConnectException or TimeoutException) {
+                    Log.LogWarning(error, "'{Name}': Can't (re)connect, shutting down", Name);
+                    throw error;
+                }
+
+                if (channel != null)
+                    return channel;
             }
-            catch (Exception e) {
-                error = e;
-            }
-            if (error is OperationCanceledException) {
-                Log.LogInformation("'{Name}': Connection cancelled, shutting down", Name);
-                throw error;
-            }
-            if (error is ImpossibleToConnectException or TimeoutException) {
-                Log.LogWarning(error, "'{Name}': Can't (re)connect, shutting down", Name);
-                throw error;
-            }
+
+            connectionState = await whenNextConnectionState.WaitAsync(CloseTimeout, cancellationToken).ConfigureAwait(false);
         }
     }
 }

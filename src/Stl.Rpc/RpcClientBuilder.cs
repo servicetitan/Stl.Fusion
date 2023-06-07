@@ -18,13 +18,12 @@ public readonly struct RpcClientBuilder
             return;
         }
 
+        services.TryAddSingleton(_ => RpcClient.Options.Default);
+        services.TryAddSingleton(c => new RpcClient(c.GetRequiredService<RpcClient.Options>(), c));
         rpc.HasClientChannelProvider(c => {
             var client = c.GetRequiredService<RpcClient>();
             return client.GetChannel;
         });
-        services.TryAddSingleton(_ => RpcClient.Options.Default);
-        services.TryAddSingleton(c => new RpcClient(c.GetRequiredService<RpcClient.Options>(), c));
-        services.AddHttpClient();
         configure?.Invoke(this);
     }
 
