@@ -1,6 +1,6 @@
 using System.Web.Http.Dependencies;
 
-namespace Stl.Rpc.Server;
+namespace Stl.Rpc.Server.Internal;
 
 public class DefaultDependencyResolver : IDependencyResolver
 {

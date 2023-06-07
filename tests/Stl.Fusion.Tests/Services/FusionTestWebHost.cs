@@ -75,18 +75,18 @@ public class FusionTestWebHost : TestWebHostBase
         });
     }
 #else
-    protected override void ConfigureHttp(IServiceProvider svp, HttpConfiguration config)
+    protected override void ConfigureHttp(IServiceProvider services, HttpConfiguration config)
     {
-        base.ConfigureHttp(svp, config);
+        base.ConfigureHttp(services, config);
 
         config.Formatters.Insert(0, new TextMediaTypeFormatter());
     }
 
-    protected override void ConfigureAppBuilder(IServiceProvider svp, IAppBuilder builder)
+    protected override void ConfigureAppBuilder(IServiceProvider services, IAppBuilder builder)
     {
-        base.ConfigureAppBuilder(svp, builder);
+        base.ConfigureAppBuilder(services, builder);
 
-        builder.MapFusionWebSocketServer(svp);
+        builder.MapFusionWebSocketServer(services);
     }
 #endif
 }

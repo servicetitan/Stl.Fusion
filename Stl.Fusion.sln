@@ -103,6 +103,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Rpc", "src\Stl.Rpc\Stl.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Rpc.Server", "src\Stl.Rpc.Server\Stl.Rpc.Server.csproj", "{5BBF576B-FE92-4821-9617-79003001A9E1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Rpc.Server.NetFx", "src\Stl.Rpc.Server.NetFx\Stl.Rpc.Server.NetFx.csproj", "{5EA29C97-FB87-4001-BD8E-D12917D3C21A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -235,6 +237,10 @@ Global
 		{5BBF576B-FE92-4821-9617-79003001A9E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5BBF576B-FE92-4821-9617-79003001A9E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5BBF576B-FE92-4821-9617-79003001A9E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5EA29C97-FB87-4001-BD8E-D12917D3C21A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5EA29C97-FB87-4001-BD8E-D12917D3C21A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5EA29C97-FB87-4001-BD8E-D12917D3C21A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5EA29C97-FB87-4001-BD8E-D12917D3C21A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -273,6 +279,7 @@ Global
 		{7E1E6947-4ED3-4CDB-A7C6-C640123ECF2A} = {A50B98CF-9AA1-4622-B2AD-5E17610115A7}
 		{68AEF45C-5DE6-41F0-8D97-1DF5FC27F1D3} = {A50B98CF-9AA1-4622-B2AD-5E17610115A7}
 		{5BBF576B-FE92-4821-9617-79003001A9E1} = {A50B98CF-9AA1-4622-B2AD-5E17610115A7}
+		{5EA29C97-FB87-4001-BD8E-D12917D3C21A} = {A50B98CF-9AA1-4622-B2AD-5E17610115A7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B50610D6-2B28-4258-98A2-A0B486FD5907}

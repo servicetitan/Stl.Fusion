@@ -78,4 +78,8 @@ public class PublisherTest : FusionTestBase
         Debug.WriteLine("f2");
         await cReader.AssertCannotRead();
     }
+
+    private TestChannelPair<BridgeMessage> CreateChannelPair(
+        string name, bool dump = true)
+        => new(name, dump ? Out : null);
 }

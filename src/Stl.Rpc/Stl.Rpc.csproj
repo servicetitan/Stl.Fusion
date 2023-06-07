@@ -8,8 +8,11 @@
 
   <ItemGroup>
     <PackageReference Include="System.Net.WebSockets" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
   </ItemGroup>
-
+  <ItemGroup Condition="!$(TargetFramework.StartsWith('net7'))">
+    <PackageReference Include="Microsoft.Extensions.Http" VersionOverride="$(MicrosoftExtensionsVersion6)" />
+  </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('netstandard'))">
     <PackageReference Include="IndexRange" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />

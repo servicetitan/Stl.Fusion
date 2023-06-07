@@ -4,23 +4,13 @@ namespace Stl.Rpc.WebSockets;
 
 public static class WebSocketAdapterExt
 {
-    public static BoundedChannelOptions DefaultReadChannelOptions { get; set; } = new(16) {
-        FullMode = BoundedChannelFullMode.Wait,
-        SingleReader = true,
-        SingleWriter = true,
-        AllowSynchronousContinuations = true,
-    };
-    public static BoundedChannelOptions DefaultWriteChannelOptions { get; set; } = new(16) {
-        FullMode = BoundedChannelFullMode.Wait,
-        SingleReader = true,
-        SingleWriter = false,
-        AllowSynchronousContinuations = true,
-    };
-
-    public static Channel<T> ToChannel<T>(this WebSocketAdapter<T> webSocket, CancellationToken cancellationToken = default)
+    public static Channel<T> ToChannel<T>(
+        this WebSocketAdapter<T> webSocket,
+        WebSocketChannelOptions options,
+        CancellationToken cancellationToken = default)
     {
-        var readChannel = Channel.CreateBounded<T>(DefaultReadChannelOptions);
-        var writeChannel = Channel.CreateBounded<T>(DefaultWriteChannelOptions);
+        var readChannel = Channel.CreateBounded<T>(options.ReadChannelOptions);
+        var writeChannel = Channel.CreateBounded<T>(options.WriteChannelOptions);
         return webSocket.ToChannel(readChannel, writeChannel, cancellationToken);
     }
 
@@ -32,6 +22,7 @@ public static class WebSocketAdapterExt
     {
         var stopTokenSource = cancellationToken.CreateLinkedTokenSource();
         var stopToken = stopTokenSource.Token;
+        var isClosedGracefully = false;
 
         using var suppressFlow = ExecutionContextExt.SuppressFlow();
 
@@ -48,6 +39,8 @@ public static class WebSocketAdapterExt
             }
             finally {
                 stopTokenSource.CancelAndDisposeSilently();
+                if (isClosedGracefully)
+                    error = null;
                 readChannelWriter.TryComplete(error);
                 await webSocket.Close(error).ConfigureAwait(false);
             }
@@ -58,6 +51,7 @@ public static class WebSocketAdapterExt
             try {
                 await foreach (var item in writeChannel.Reader.ReadAllAsync(stopToken).ConfigureAwait(false))
                     await webSocket.Write(item, stopToken).ConfigureAwait(false);
+                isClosedGracefully = true;
             }
             finally {
                 stopTokenSource.CancelAndDisposeSilently();

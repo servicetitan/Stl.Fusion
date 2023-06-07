@@ -43,6 +43,12 @@
     <ProjectReference Include="..\..\src\Stl.RegisterAttributes\Stl.RegisterAttributes.csproj" />
     <ProjectReference Include="..\..\src\Stl.Testing\Stl.Testing.csproj" />
   </ItemGroup>
+  <ItemGroup Condition="!$(TargetFramework.StartsWith('net4'))">
+    <ProjectReference Include="..\..\src\Stl.Rpc.Server\Stl.Rpc.Server.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+    <ProjectReference Include="..\..\src\Stl.Rpc.Server.NetFx\Stl.Rpc.Server.NetFx.csproj" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Stl.Generators\Stl.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>

@@ -1,5 +1,6 @@
 using System.Web.Http;
 using System.Web.Http.Dependencies;
+using Stl.Rpc.Server.Internal;
 
 namespace Stl.Rpc.Server;
 

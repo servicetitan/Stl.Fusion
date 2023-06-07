@@ -5,11 +5,11 @@ using Xunit.DependencyInjection.Logging;
 
 namespace Stl.Tests.Rpc;
 
-public abstract class RpcTestBase : TestBase
+public abstract class RpcLocalTestBase : TestBase
 {
     protected Symbol ServerPeerName { get; init; } = RpcServerPeer.FormatName("client");
 
-    protected RpcTestBase(ITestOutputHelper @out) : base(@out) { }
+    protected RpcLocalTestBase(ITestOutputHelper @out) : base(@out) { }
 
     protected virtual IServiceProvider CreateServices(
         Action<IServiceCollection>? configureServices = null)
@@ -44,10 +44,9 @@ public abstract class RpcTestBase : TestBase
 #pragma warning restore CS0618
         });
 
+        var rpc = services.AddRpc();
         var channelPair = CreateRpcChannelPair();
         services.AddSingleton(channelPair);
-
-        var rpc = services.AddRpc();
         rpc.HasClientChannelProvider((peer, _) => {
             var c = peer.Hub.Services;
             var channels = c.GetRequiredService<ChannelPair<RpcMessage>>();

@@ -1,7 +1,7 @@
 using System.Web.Http.Controllers;
 using Stl.Internal;
 
-namespace Stl.Rpc.Server;
+namespace Stl.Rpc.Server.Internal;
 
 public static class HttpActionContextExt
 {

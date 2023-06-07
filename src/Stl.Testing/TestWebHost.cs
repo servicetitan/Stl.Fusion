@@ -66,7 +66,7 @@ public abstract class TestWebHostBase : ITestWebHost
         // ReSharper disable once HeapView.BoxingAllocation
         return AsyncDisposable.New(async self => {
             var host1 = self.Host;
-            // 100ms for graceful shutdown 
+            // 100ms for graceful shutdown
             using var cts = new CancellationTokenSource(100);
             await host1.StopAsync(cts.Token).SilentAwait(false);
             if (disposeOnStop)
@@ -93,17 +93,17 @@ public abstract class TestWebHostBase : ITestWebHost
         });
 
 #if NETCOREAPP
-        builder.ConfigureWebHost(b => {
-            b.UseKestrel();
-            b.UseUrls(ServerUri.ToString());
-            b.UseContentRoot(wwwRootDir);
-            ConfigureWebHost(b);
+        builder.ConfigureWebHost(webHost => {
+            webHost.UseKestrel();
+            webHost.UseUrls(ServerUri.ToString());
+            webHost.UseContentRoot(wwwRootDir);
+            ConfigureWebHost(webHost);
         });
 #endif
 
 #if NETFRAMEWORK
         builder.ConfigureServices(
-            (ctx, services) => {
+            (_, services) => {
                 services.Configure<OwinWebApiServerOptions>(c => {
                     c.Urls = ServerUri.ToString();
                     c.ConfigureBuilder = ConfigureAppBuilder;
@@ -126,8 +126,8 @@ public abstract class TestWebHostBase : ITestWebHost
 #endif
 
 #if NETFRAMEWORK
-    protected virtual void ConfigureHttp(IServiceProvider svp, HttpConfiguration config) { }
+    protected virtual void ConfigureHttp(IServiceProvider services, HttpConfiguration config) { }
 
-    protected virtual void ConfigureAppBuilder(IServiceProvider svp, IAppBuilder builder) { }
+    protected virtual void ConfigureAppBuilder(IServiceProvider services, IAppBuilder builder) { }
 #endif
 }

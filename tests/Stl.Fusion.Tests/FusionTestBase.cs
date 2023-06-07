@@ -12,14 +12,16 @@ using Stl.Fusion.Extensions;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;
-using Stl.Fusion.Internal;
-using Stl.Fusion.Server;
 using Stl.Locking;
 using Stl.RegisterAttributes;
 using Stl.Testing.Collections;
 using Stl.Testing.Output;
 using Stl.Time.Testing;
 using Xunit.DependencyInjection.Logging;
+
+#if !NETCOREAPP
+using Stl.Fusion.Server;
+#endif
 
 namespace Stl.Fusion.Tests;
 
@@ -247,7 +249,7 @@ public class FusionTestBase : TestBase, IAsyncLifetime
                     operations.ConfigureOperationLogReader(_ => new() {
                         UnconditionalCheckPeriod = TimeSpan.FromSeconds(5),
                         // Enable this if you debug multi-host invalidation
-                        // MaxCommitDuration = TimeSpan.FromMinutes(5), 
+                        // MaxCommitDuration = TimeSpan.FromMinutes(5),
                     });
                     if (Options.UseRedisOperationLogChangeTracking)
                         operations.AddRedisOperationLogChangeTracking();
@@ -327,20 +329,5 @@ public class FusionTestBase : TestBase, IAsyncLifetime
         var publisher = WebServices.GetRequiredService<IPublisher>();
         var channelProvider = ClientServices.GetRequiredService<IChannelProvider>();
         return channelProvider.CreateChannel(publisher.Id, cancellationToken);
-    }
-
-    protected TestChannelPair<BridgeMessage> CreateChannelPair(
-        string name, bool dump = true)
-        => new(name, dump ? Out : null);
-
-    protected Task Delay(double seconds)
-        => Timeouts.Clock.Delay(TimeSpan.FromSeconds(seconds));
-
-    protected void GCCollect()
-    {
-        for (var i = 0; i < 3; i++) {
-            GC.Collect();
-            Thread.Sleep(10);
-        }
     }
 }

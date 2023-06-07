@@ -28,6 +28,7 @@ public abstract class RpcPeer : WorkerBase
         Hub = hub;
         Name = name;
         ArgumentSerializer = Hub.Configuration.ArgumentSerializer;
+        LocalServiceFilter = null!; // To make sure any descendant has to set it
         InboundContextFactory = Hub.InboundContextFactory;
         Calls = new RpcCallRegistry(this);
     }
@@ -56,7 +57,7 @@ public abstract class RpcPeer : WorkerBase
         lock (Lock) {
             var connectionState = GetConnectionState();
             if (connectionState.IsConnected(out var existingChannel))
-                existingChannel.Writer.TryComplete(new OperationCanceledException());
+                existingChannel!.Writer.TryComplete(new OperationCanceledException());
 
             SetConnectionState(channel);
         }

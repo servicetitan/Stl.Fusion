@@ -2,7 +2,7 @@ using Stl.Tests.Rpc;
 
 namespace Stl.Fusion.Tests;
 
-public abstract class SimpleFusionTestBase : RpcTestBase
+public abstract class SimpleFusionTestBase : RpcLocalTestBase
 {
     protected SimpleFusionTestBase(ITestOutputHelper @out) : base(@out) { }
 

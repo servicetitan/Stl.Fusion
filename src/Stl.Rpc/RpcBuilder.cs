@@ -67,6 +67,12 @@ public readonly struct RpcBuilder
         return service;
     }
 
+    public RpcClientBuilder AddClient()
+        => new(this, null);
+
+    public RpcBuilder AddClient(Action<RpcClientBuilder> configure)
+        => new RpcClientBuilder(this, configure).Rpc;
+
     public RpcBuilder HasPeerFactory(RpcPeerFactory peerFactory)
     {
         Services.AddSingleton(peerFactory);
@@ -76,6 +82,18 @@ public readonly struct RpcBuilder
     public RpcBuilder HasPeerFactory(Func<IServiceProvider, RpcPeerFactory> peerFactoryFactory)
     {
         Services.AddSingleton(peerFactoryFactory);
+        return this;
+    }
+
+    public RpcBuilder HasPeerResolver(RpcPeerResolver peerResolver)
+    {
+        Services.AddSingleton(peerResolver);
+        return this;
+    }
+
+    public RpcBuilder HasPeerResolver(Func<IServiceProvider, RpcPeerResolver> peerResolverFactory)
+    {
+        Services.AddSingleton(peerResolverFactory);
         return this;
     }
 
@@ -100,18 +118,6 @@ public readonly struct RpcBuilder
     public RpcBuilder HasClientChannelProvider(Func<IServiceProvider, RpcClientChannelProvider> connectorFactory)
     {
         Services.AddSingleton(connectorFactory);
-        return this;
-    }
-
-    public RpcBuilder HasPeerResolver(RpcPeerResolver peerResolver)
-    {
-        Services.AddSingleton(peerResolver);
-        return this;
-    }
-
-    public RpcBuilder HasPeerResolver(Func<IServiceProvider, RpcPeerResolver> peerResolverFactory)
-    {
-        Services.AddSingleton(peerResolverFactory);
         return this;
     }
 

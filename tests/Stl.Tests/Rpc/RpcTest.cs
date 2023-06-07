@@ -4,7 +4,7 @@ using Stl.Testing.Collections;
 namespace Stl.Tests.Rpc;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class RpcTest : RpcTestBase
+public class RpcTest : RpcLocalTestBase
 {
     public RpcTest(ITestOutputHelper @out) : base(@out) { }
 

@@ -22,7 +22,6 @@ public readonly struct RpcServerBuilder
 
         services.TryAddSingleton(_ => RpcServer.Options.Default);
         services.TryAddSingleton(c => new RpcServer(c.GetRequiredService<RpcServer.Options>(), c));
-        services.AddRouting();
         configure?.Invoke(this);
     }
 
