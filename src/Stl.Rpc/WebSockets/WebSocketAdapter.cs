@@ -21,6 +21,7 @@ public sealed class WebSocketAdapter<T>
     }
 
     private ArrayPoolBufferWriter<byte> _writeBufferWriter;
+    private readonly int _releaseBufferSize;
 
     public Options Settings { get; }
     public WebSocket WebSocket { get; }
@@ -35,6 +36,7 @@ public sealed class WebSocketAdapter<T>
         Serializer = settings.Serializer;
         Log = settings.Log;
         _writeBufferWriter = new ArrayPoolBufferWriter<byte>(settings.WriteBufferSize);
+        _releaseBufferSize = Settings.ReleaseBufferSize;
     }
 
     public async ValueTask Write(T value, CancellationToken cancellationToken = default)
@@ -168,8 +170,7 @@ public sealed class WebSocketAdapter<T>
 
     private void RenewBuffer(ref ArrayPoolBufferWriter<byte> bufferWriter, int capacity)
     {
-        var maxCapacity = capacity << 1;
-        if (bufferWriter.Capacity <= maxCapacity)
+        if (bufferWriter.Capacity <= _releaseBufferSize)
             bufferWriter.Reset();
         else {
             bufferWriter.Dispose();
