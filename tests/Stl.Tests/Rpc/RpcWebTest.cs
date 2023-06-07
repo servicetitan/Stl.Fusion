@@ -71,25 +71,31 @@ public class RpcWebTest : RpbWebTestBase
         var services = ClientServices;
         var peer = services.RpcHub().GetPeer(default);
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
-        await client.Div(1, 1);
 
         var threadCount = Math.Max(1, HardwareInfo.ProcessorCount - 2);
         var tasks = new Task[threadCount];
-        var startedAt = CpuTimestamp.Now;
-        for (var threadIndex = 0; threadIndex < threadCount; threadIndex++) {
-            tasks[threadIndex] = Task.Run(async () => {
-                for (var i = iterationCount; i > 0; i--)
-                    if (i != await client.Div(i, 1).ConfigureAwait(false))
-                        Assert.Fail("Wrong result.");
-            }, CancellationToken.None);
-        }
-        await Task.WhenAll(tasks);
-        var elapsed = startedAt.Elapsed;
+        await Run(10); // Warmup
+        var elapsed = await Run(iterationCount);
 
         var totalIterationCount = threadCount * iterationCount;
         Out.WriteLine($"{iterationCount}: {totalIterationCount / elapsed.TotalSeconds:F} ops/s using {threadCount} threads");
         peer.Calls.Outbound.Count.Should().Be(0);
         peer.Calls.Inbound.Count.Should().Be(0);
+
+        async Task<TimeSpan> Run(int count)
+        {
+            var startedAt = CpuTimestamp.Now;
+            for (var threadIndex = 0; threadIndex < threadCount; threadIndex++) {
+                tasks[threadIndex] = Task.Run(async () => {
+                    for (var i = count; i > 0; i--)
+                        if (i != await client.Div(i, 1).ConfigureAwait(false))
+                            Assert.Fail("Wrong result.");
+                }, CancellationToken.None);
+            }
+
+            await Task.WhenAll(tasks);
+            return elapsed = startedAt.Elapsed;
+        }
     }
 
     protected override void ConfigureServices(IServiceCollection services, bool isClient = false)
