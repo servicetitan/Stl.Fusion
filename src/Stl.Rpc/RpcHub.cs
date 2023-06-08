@@ -1,6 +1,7 @@
 using Stl.Interception;
-using Stl.Internal;
 using Stl.Rpc.Infrastructure;
+using Stl.Rpc.Internal;
+using Errors = Stl.Internal.Errors;
 
 namespace Stl.Rpc;
 
@@ -25,6 +26,7 @@ public sealed class RpcHub : ProcessorBase, IHasServices
     public IServiceProvider Services { get; }
     public RpcConfiguration Configuration { get; }
     public RpcServiceRegistry ServiceRegistry => _serviceRegistry ??= Services.GetRequiredService<RpcServiceRegistry>();
+    public RpcHubInternals Internals => new(this);
 
     public ConcurrentDictionary<Symbol, RpcPeer> Peers { get; } = new();
 

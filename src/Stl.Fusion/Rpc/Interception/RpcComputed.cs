@@ -43,7 +43,21 @@ public class RpcComputed<T> : ComputeMethodComputed<T>, IRpcComputed
 #pragma warning restore MA0055
 
     public void Dispose()
-        => Call?.Context.Peer?.Calls.Outbound.TryRemove(Call.Id, Call);
+    {
+        var call = Call;
+        if (call == null)
+            return;
+
+        var peer = call.Context.Peer;
+        if (peer == null)
+            return;
+
+        peer.Calls.Outbound.TryRemove(call.Id, call);
+        if (!this.IsInvalidated()) {
+            var systemCallSender = peer.Hub.Internals.SystemCallSender;
+            _ = systemCallSender.Cancel(peer, call.Id);
+        }
+    }
 
     protected override void OnInvalidated()
     {
@@ -52,12 +66,12 @@ public class RpcComputed<T> : ComputeMethodComputed<T>, IRpcComputed
         // We want to keep this computed while it's possible:
         // ReplicaMethodFunction.Compute tries to use it
         // to find a Replica to update through.
-        // If this computed instance is gone from registry,  
+        // If this computed instance is gone from registry,
         // a new Replica is going to be created for each call
         // to replica method.
         ComputedRegistry.Instance.PseudoUnregister(this);
         CancelTimeouts();
-        if (Function is IRpcComputeMethodFunction fn)
+        if (Function is IRpcReplicaMethodFunction fn)
             fn.OnInvalidated(this);
     }
 }

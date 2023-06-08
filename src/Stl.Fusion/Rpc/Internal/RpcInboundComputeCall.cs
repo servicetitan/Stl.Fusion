@@ -73,7 +73,7 @@ public class RpcInboundComputeCall<TResult> : RpcInboundCall<TResult>
         if (computed != null)
             ResultHeaders.Add(FusionRpcHeaders.Version with { Value = computed.Version.ToString() });
 
-        var systemCallSender = Hub.Services.GetRequiredService<RpcSystemCallSender>();
+        var systemCallSender = Hub.Internals.SystemCallSender;
         return systemCallSender.Complete(Context.Peer, Id, Result, ResultHeaders);
     }
 

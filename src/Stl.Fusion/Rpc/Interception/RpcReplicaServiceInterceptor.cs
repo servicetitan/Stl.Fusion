@@ -3,14 +3,14 @@ using Stl.Versioning;
 
 namespace Stl.Fusion.Rpc.Interception;
 
-public class RpcComputeServiceInterceptor : ComputeServiceInterceptorBase
+public class RpcReplicaServiceInterceptor : ComputeServiceInterceptorBase
 {
     public new record Options : ComputeServiceInterceptorBase.Options;
 
     protected VersionGenerator<LTag> VersionGenerator;
     protected RpcComputedCache Cache;
 
-    public RpcComputeServiceInterceptor(Options options, IServiceProvider services)
+    public RpcReplicaServiceInterceptor(Options options, IServiceProvider services)
         : base(options, services)
     {
         VersionGenerator = services.VersionGenerator<LTag>();
@@ -18,7 +18,7 @@ public class RpcComputeServiceInterceptor : ComputeServiceInterceptorBase
     }
 
     protected override ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method)
-        => new RpcComputeMethodFunction<T>(method, VersionGenerator, Cache, Services);
+        => new RpcReplicaMethodFunction<T>(method, VersionGenerator, Cache, Services);
 
     protected override void ValidateTypeInternal(Type type) { }
 }

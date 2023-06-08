@@ -44,9 +44,9 @@ public readonly struct FusionRpcBuilder
         }
 
         // Compute call interceptor
-        services.TryAddSingleton(_ => new RpcComputeServiceInterceptor.Options());
-        services.TryAddSingleton(c => new RpcComputeServiceInterceptor(
-            c.GetRequiredService<RpcComputeServiceInterceptor.Options>(), c));
+        services.TryAddSingleton(_ => new RpcReplicaServiceInterceptor.Options());
+        services.TryAddSingleton(c => new RpcReplicaServiceInterceptor(
+            c.GetRequiredService<RpcReplicaServiceInterceptor.Options>(), c));
 
         // Compute call cache
         services.AddSingleton(c => (RpcComputedCache)new RpcNoComputedCache(c));
@@ -69,8 +69,8 @@ public readonly struct FusionRpcBuilder
             var rpcHub = c.RpcHub();
             var rpcClient = rpcHub.CreateClient(serviceType);
 
-            var computeServiceInterceptor = c.GetRequiredService<RpcComputeServiceInterceptor>();
-            var clientProxy = Proxies.New(serviceType, computeServiceInterceptor, rpcClient);
+            var replicaServiceInterceptor = c.GetRequiredService<RpcReplicaServiceInterceptor>();
+            var clientProxy = Proxies.New(serviceType, replicaServiceInterceptor, rpcClient);
             return clientProxy;
         });
         return this;
@@ -86,8 +86,8 @@ public readonly struct FusionRpcBuilder
             var server = rpcHub.ServiceRegistry[serviceType].Server;
             var rpcClient = rpcHub.CreateClient(serviceType);
 
-            var computeServiceInterceptor = c.GetRequiredService<RpcComputeServiceInterceptor>();
-            var clientProxy = Proxies.New(serviceType, computeServiceInterceptor, rpcClient);
+            var replicaServiceInterceptor = c.GetRequiredService<RpcReplicaServiceInterceptor>();
+            var clientProxy = Proxies.New(serviceType, replicaServiceInterceptor, rpcClient);
 
             var routingInterceptor = c.GetRequiredService<RpcRoutingInterceptor>();
             var serviceDef = rpcHub.ServiceRegistry[serviceType];

@@ -7,19 +7,19 @@ using Errors = Stl.Internal.Errors;
 
 namespace Stl.Fusion.Rpc.Interception;
 
-public interface IRpcComputeMethodFunction : IComputeMethodFunction
+public interface IRpcReplicaMethodFunction : IComputeMethodFunction
 {
     void OnInvalidated(IRpcComputed computed);
 }
 
-public class RpcComputeMethodFunction<T> : ComputeFunctionBase<T>, IRpcComputeMethodFunction
+public class RpcReplicaMethodFunction<T> : ComputeFunctionBase<T>, IRpcReplicaMethodFunction
 {
     private string? _toString;
 
     public VersionGenerator<LTag> VersionGenerator { get; }
     public RpcComputedCache RpcComputedCache { get; }
 
-    public RpcComputeMethodFunction(
+    public RpcReplicaMethodFunction(
         ComputeMethodDef methodDef,
         VersionGenerator<LTag> versionGenerator,
         RpcComputedCache cache,
