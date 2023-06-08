@@ -63,8 +63,8 @@ public class RpcWebTest : RpbWebTestBase
 
     [Theory]
     [InlineData(100)]
-    [InlineData(500)]
     [InlineData(1000)]
+    [InlineData(2000)]
     public async Task PerformanceTest(int iterationCount)
     {
         await using var _ = await WebHost.Serve();
@@ -72,7 +72,7 @@ public class RpcWebTest : RpbWebTestBase
         var peer = services.RpcHub().GetPeer(default);
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
 
-        var threadCount = Math.Max(1, HardwareInfo.ProcessorCount * 16);
+        var threadCount = Math.Max(1, HardwareInfo.ProcessorCount);
         var tasks = new Task[threadCount];
         await Run(10); // Warmup
         var elapsed = await Run(iterationCount);

@@ -141,13 +141,25 @@ public sealed class WebSocketChannel2<T> : Channel<T>
     {
         try {
             var writeChannelReader = _writeChannel.Reader;
-            while (await writeChannelReader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)) {
-                while (writeChannelReader.TryRead(out var item)) {
-                    if (TrySerialize(item, _writeBuffer) && _writeBuffer.WrittenCount >= _writePacketSize)
-                        await FlushWriteBuffer(false, cancellationToken).ConfigureAwait(false);
+            if (_defaultMessageType == WebSocketMessageType.Binary) {
+                // Binary -> we build frames
+                while (await writeChannelReader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)) {
+                    while (writeChannelReader.TryRead(out var item)) {
+                        if (TrySerialize(item, _writeBuffer) && _writeBuffer.WrittenCount >= _writePacketSize)
+                            await FlushWriteBuffer(false, cancellationToken).ConfigureAwait(false);
+                    }
+                    if (_writeBuffer.WrittenCount > 0)
+                        await FlushWriteBuffer(true, cancellationToken).ConfigureAwait(false);
                 }
-                if (_writeBuffer.WrittenCount > 0)
-                    await FlushWriteBuffer(true, cancellationToken).ConfigureAwait(false);
+            }
+            else {
+                // Text -> no frames
+                while (await writeChannelReader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)) {
+                    while (writeChannelReader.TryRead(out var item)) {
+                        if (TrySerialize(item, _writeBuffer))
+                            await FlushWriteBuffer(true, cancellationToken).ConfigureAwait(false);
+                    }
+                }
             }
         }
         finally {
