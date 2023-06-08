@@ -48,7 +48,7 @@ public class FusionTestOptions
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public class FusionTestBase : TestBase, IAsyncLifetime
 {
-    private static readonly AsyncLock InitializeLock = new(ReentryMode.CheckedFail);
+    private static readonly ReentrantAsyncLock InitializeLock = new(LockReentryMode.CheckedFail);
     protected static readonly ConcurrentDictionary<Symbol, string> ReplicaCache = new();
 
     public FusionTestOptions Options { get; }

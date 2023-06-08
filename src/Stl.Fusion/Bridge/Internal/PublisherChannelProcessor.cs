@@ -11,7 +11,7 @@ public class PublisherChannelProcessor : WorkerBase
     protected readonly IServiceProvider Services;
     protected IPublisherImpl PublisherImpl => (IPublisherImpl) Publisher;
     protected readonly Dictionary<Symbol, SubscriptionProcessor> Subscriptions = new();
-    protected readonly AsyncLock ReplyLock = new(ReentryMode.UncheckedDeadlock);
+    protected readonly SemaphoreSlim ReplyLock = new SemaphoreSlim(1, 1);
     protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     public readonly IPublisher Publisher;

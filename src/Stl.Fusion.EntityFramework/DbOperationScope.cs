@@ -66,7 +66,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
     protected IDbOperationLog<TDbContext> DbOperationLog { get; }
     protected TransactionIdGenerator<TDbContext> TransactionIdGenerator { get; }
     protected MomentClockSet Clocks { get; }
-    protected AsyncLock AsyncLock { get; }
+    protected ReentrantAsyncLock AsyncLock { get; }
     protected ILogger Log { get; }
 
     public DbOperationScope(Options settings, IServiceProvider services)
@@ -79,7 +79,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
         DbContextFactory = Services.GetRequiredService<IMultitenantDbContextFactory<TDbContext>>();
         DbOperationLog = Services.GetRequiredService<IDbOperationLog<TDbContext>>();
         TransactionIdGenerator = Services.GetRequiredService<TransactionIdGenerator<TDbContext>>();
-        AsyncLock = new AsyncLock(ReentryMode.CheckedPass);
+        AsyncLock = new ReentrantAsyncLock(LockReentryMode.CheckedPass);
         Operation = DbOperationLog.New();
         CommandContext = CommandContext.GetCurrent();
     }
@@ -279,7 +279,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
     protected virtual async Task BeginTransaction(TDbContext dbContext, CancellationToken cancellationToken)
     {
         var commandContext = CommandContext;
-        // 1. If IsolationLevel is set explicitly, we honor it 
+        // 1. If IsolationLevel is set explicitly, we honor it
         var isolationLevel = IsolationLevel;
         if (isolationLevel != IsolationLevel.Unspecified)
             goto ready;
@@ -292,7 +292,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
         if (isolationLevel != IsolationLevel.Unspecified)
             goto ready;
 
-        // 3. Try to query GlobalIsolationLevelSelectors  
+        // 3. Try to query GlobalIsolationLevelSelectors
         var globalSelectors = Services.GetRequiredService<IEnumerable<GlobalIsolationLevelSelector>>();
         isolationLevel = globalSelectors
             .Select(s => s.GetCommandIsolationLevel(commandContext))
@@ -300,7 +300,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
         if (isolationLevel != IsolationLevel.Unspecified)
             goto ready;
 
-        // 4. Use Settings.DefaultIsolationLevel  
+        // 4. Use Settings.DefaultIsolationLevel
         isolationLevel = Settings.DefaultIsolationLevel;
 
         ready:

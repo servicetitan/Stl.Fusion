@@ -6,12 +6,12 @@ public abstract class ComputingCacheBase<TKey, TValue> : AsyncKeyResolverBase<TK
     where TKey : notnull
 {
     public IAsyncCache<TKey, TValue> Cache { get; }
-    public IAsyncLockSet<TKey> Locks { get; }
+    public AsyncLockSet<TKey> Locks { get; }
 
-    protected ComputingCacheBase(IAsyncCache<TKey, TValue> cache, IAsyncLockSet<TKey>? lockSet = null)
+    protected ComputingCacheBase(IAsyncCache<TKey, TValue> cache, AsyncLockSet<TKey>? lockSet = null)
     {
         Cache = cache;
-        Locks = lockSet ?? new AsyncLockSet<TKey>(ReentryMode.CheckedFail);
+        Locks = lockSet ?? new AsyncLockSet<TKey>(LockReentryMode.CheckedFail);
     }
 
     // Note that Get is the primary method here, not TryGet -
@@ -54,7 +54,7 @@ public class ComputingCache<TKey, TValue> : ComputingCacheBase<TKey, TValue>
         : base(cache)
         => Computer = computer;
 
-    public ComputingCache(IAsyncCache<TKey, TValue> cache, IAsyncLockSet<TKey> lockSet, Func<TKey, CancellationToken, ValueTask<TValue>> computer)
+    public ComputingCache(IAsyncCache<TKey, TValue> cache, AsyncLockSet<TKey> lockSet, Func<TKey, CancellationToken, ValueTask<TValue>> computer)
         : base(cache, lockSet)
         => Computer = computer;
 

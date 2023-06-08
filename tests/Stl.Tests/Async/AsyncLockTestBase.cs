@@ -72,14 +72,14 @@ public abstract class AsyncLockTestBase : TestBase
 
     protected AsyncLockTestBase(ITestOutputHelper @out) : base(@out) { }
 
-    protected abstract IAsyncLock CreateAsyncLock(ReentryMode reentryMode);
+    protected abstract IAsyncLock CreateAsyncLock(LockReentryMode reentryMode);
     protected abstract void AssertResourcesReleased();
 
     [Fact]
     public async Task BasicTest()
     {
         const int NoCancel = 1_000;
-        var r = new Resource(CreateAsyncLock(ReentryMode.CheckedFail));
+        var r = new Resource(CreateAsyncLock(LockReentryMode.CheckedFail));
         var tasks = new List<Task> {
             Task.Run(() => r.Access(0, 3, NoCancel)),
             Task.Run(() => r.Access(0, 3, NoCancel)),
@@ -98,11 +98,11 @@ public abstract class AsyncLockTestBase : TestBase
     public async Task ReentryTest()
     {
         const int NoCancel = 1_000;
-        var r = new Resource(CreateAsyncLock(ReentryMode.CheckedFail));
+        var r = new Resource(CreateAsyncLock(LockReentryMode.CheckedFail));
         await Task.Run(() => r.Access(0, 3, NoCancel, 1))
             .AsAsyncFunc().Should().ThrowAsync<InvalidOperationException>();
 
-        r = new Resource(CreateAsyncLock(ReentryMode.CheckedPass));
+        r = new Resource(CreateAsyncLock(LockReentryMode.CheckedPass));
         await Task.Run(() => r.Access(0, 3, NoCancel, 1))
             .AsAsyncFunc().Should().CompleteWithinAsync(TimeSpan.FromSeconds(1));
 
@@ -112,11 +112,11 @@ public abstract class AsyncLockTestBase : TestBase
     [Fact]
     public async Task ConcurrentTest()
     {
-        var r = new Resource(CreateAsyncLock(ReentryMode.CheckedPass));
+        var r = new Resource(CreateAsyncLock(LockReentryMode.CheckedPass));
         var rnd = new Random();
         var tasks = new List<Task>();
 
-        var taskCount = TestRunnerInfo.IsBuildAgent() ? 2 : HardwareInfo.GetProcessorCountFactor(4);
+        var taskCount = TestRunnerInfo.IsBuildAgent() ? 2 : HardwareInfo.GetProcessorCountFactor(10);
         var maxDelayMs = 100;
         var maxDurationMs = 3;
         var maxReentryCount = 5;

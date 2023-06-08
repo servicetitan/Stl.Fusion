@@ -1,74 +1,43 @@
 using Stl.Concurrency;
+using Stl.Locking.Internal;
 using Stl.OS;
 using Stl.Pooling;
 
 namespace Stl.Locking;
 
-public interface IAsyncLockSet<in TKey>
-    where TKey : notnull
-{
-    ReentryMode ReentryMode { get; }
-    int AcquiredLockCount { get; }
-    bool IsLocked(TKey key);
-    bool? IsLockedLocally(TKey key);
-    ValueTask<IDisposable> Lock(TKey key, CancellationToken cancellationToken = default);
-}
-
-public class AsyncLockSet<TKey> : IAsyncLockSet<TKey>
+public class AsyncLockSet<TKey>
     where TKey : notnull
 {
     public static int DefaultConcurrencyLevel => HardwareInfo.GetProcessorCountFactor();
     public static int DefaultCapacity => 31;
 
     private readonly ConcurrentDictionary<TKey, Entry> _entries;
-    private readonly ConcurrentPool<AsyncLock> _lockPool;
+    private readonly ConcurrentPool<IAsyncLock> _lockPool;
 
-    public ReentryMode ReentryMode { get; }
     public int AcquiredLockCount => _entries.Count;
+    public Func<IAsyncLock> LockFactory { get; }
 
-    public AsyncLockSet(
-        TaskCreationOptions taskCreationOptions = TaskCreationOptions.RunContinuationsAsynchronously)
-        : this(ReentryMode.CheckedFail, taskCreationOptions) { }
-    public AsyncLockSet(
-        ReentryMode reentryMode,
-        TaskCreationOptions taskCreationOptions = TaskCreationOptions.RunContinuationsAsynchronously)
-        : this(reentryMode, taskCreationOptions, DefaultConcurrencyLevel, DefaultCapacity) { }
-    public AsyncLockSet(
-        ReentryMode reentryMode,
-        TaskCreationOptions taskCreationOptions,
-        int concurrencyLevel, int capacity)
+    public AsyncLockSet(LockReentryMode reentryMode)
+        : this(() => AsyncLock.New(reentryMode)) { }
+    public AsyncLockSet(Func<IAsyncLock> lockFactory)
+        : this(lockFactory, DefaultConcurrencyLevel, DefaultCapacity) { }
+    public AsyncLockSet(LockReentryMode reentryMode, int concurrencyLevel, int capacity)
+        : this(() => AsyncLock.New(reentryMode), DefaultConcurrencyLevel, DefaultCapacity) { }
+    public AsyncLockSet(Func<IAsyncLock> lockFactory, int concurrencyLevel, int capacity)
     {
-        ReentryMode = reentryMode;
+        LockFactory = lockFactory;
         _entries = new ConcurrentDictionary<TKey, Entry>(concurrencyLevel, capacity);
-        _lockPool = new ConcurrentPool<AsyncLock>(
-            () => new AsyncLock(ReentryMode, taskCreationOptions));
+        _lockPool = new ConcurrentPool<IAsyncLock>(LockFactory);
     }
 
-    public bool IsLocked(TKey key)
-    {
-        if (_entries.TryGetValue(key, out var entry))
-            return false;
-        return entry?.AsyncLock?.IsLocked ?? false;
-    }
-
-    public bool? IsLockedLocally(TKey key)
-    {
-        if (ReentryMode == ReentryMode.UncheckedDeadlock)
-            return null;
-        if (_entries.TryGetValue(key, out var entry))
-            return false;
-        return entry!.AsyncLock?.IsLockedLocally;
-    }
-
-    ValueTask<IDisposable> IAsyncLockSet<TKey>.Lock(
-        TKey key, CancellationToken cancellationToken)
+    public ValueTask<Releaser> Lock(TKey key, CancellationToken cancellationToken = default)
     {
         // This has to be non-async method, otherwise AsyncLocals
         // created inside it won't be available in caller's ExecutionContext.
         var (asyncLock, entry) = PrepareLock(key);
         try {
             var task = asyncLock.Lock(cancellationToken);
-            return ToReleaserTaskSlow(entry, task);
+            return ToReleaserTask(entry, task);
         }
         catch {
             entry.EndUse();
@@ -76,23 +45,17 @@ public class AsyncLockSet<TKey> : IAsyncLockSet<TKey>
         }
     }
 
-    public ValueTask<Releaser> Lock(
-        TKey key, CancellationToken cancellationToken = default)
+    public void Release(TKey key)
     {
-        // This has to be non-async method, otherwise AsyncLocals
-        // created inside it won't be available in caller's ExecutionContext.
-        var (asyncLock, entry) = PrepareLock(key);
-        try {
-            var task = asyncLock.Lock(cancellationToken);
-            return ToReleaserTaskFast(entry, task);
-        }
-        catch {
-            entry.EndUse();
-            throw;
-        }
+        if (!_entries.TryGetValue(key, out var entry) || entry.AsyncLock is not { } asyncLock)
+            return;
+
+        entry.EndUseWithLockRelease();
     }
 
-    private (AsyncLock, Entry) PrepareLock(TKey key)
+    // Private methods
+
+    private (IAsyncLock, Entry) PrepareLock(TKey key)
     {
         var spinWait = new SpinWait();
         while (true) {
@@ -104,23 +67,10 @@ public class AsyncLockSet<TKey> : IAsyncLockSet<TKey>
         }
     }
 
-    private async ValueTask<Releaser> ToReleaserTaskFast(Entry entry, ValueTask<AsyncLock.Releaser> task)
+    private static async ValueTask<Releaser> ToReleaserTask(Entry entry, ValueTask<AsyncLockReleaser> task)
     {
         try {
             var releaser = await task.ConfigureAwait(false);
-            return new Releaser(entry, releaser);
-        }
-        catch {
-            entry.EndUse();
-            throw;
-        }
-    }
-
-    private async ValueTask<IDisposable> ToReleaserTaskSlow(Entry entry, ValueTask<AsyncLock.Releaser> task)
-    {
-        try {
-            var releaser = await task.ConfigureAwait(false);
-            // ReSharper disable once HeapView.BoxingAllocation
             return new Releaser(entry, releaser);
         }
         catch {
@@ -135,11 +85,11 @@ public class AsyncLockSet<TKey> : IAsyncLockSet<TKey>
     {
         private readonly AsyncLockSet<TKey> _owner;
         private readonly TKey _key;
-        private readonly ResourceLease<AsyncLock> _lease;
-        private volatile AsyncLock? _asyncLock;
+        private readonly ResourceLease<IAsyncLock> _lease;
+        private volatile IAsyncLock? _asyncLock;
         private int _useCount;
 
-        public AsyncLock? AsyncLock => _asyncLock;
+        public IAsyncLock? AsyncLock => _asyncLock;
 
         public Entry(AsyncLockSet<TKey> owner, TKey key)
         {
@@ -149,7 +99,7 @@ public class AsyncLockSet<TKey> : IAsyncLockSet<TKey>
             _asyncLock = _lease.Resource;
         }
 
-        public AsyncLock? TryBeginUse()
+        public IAsyncLock? TryBeginUse()
         {
             lock (this) {
                 var asyncLock = _asyncLock;
@@ -173,27 +123,41 @@ public class AsyncLockSet<TKey> : IAsyncLockSet<TKey>
                 _lease.Dispose();
             }
         }
+
+        public void EndUseWithLockRelease()
+        {
+            var mustRelease = false;
+            lock (this) {
+                if (_asyncLock != null) {
+                    _asyncLock.Release();
+                    if (--_useCount == 0) {
+                        _asyncLock = null;
+                        mustRelease = true;
+                    }
+                }
+            }
+            if (mustRelease) {
+                _owner._entries.TryRemove(_key, this);
+                _lease.Dispose();
+            }
+        }
     }
 
     public readonly struct Releaser : IDisposable
     {
         private readonly Entry _entry;
-        private readonly AsyncLock.Releaser _asyncLockReleaser;
+        private readonly AsyncLockReleaser _releaser;
 
-        public Releaser(object entry, AsyncLock.Releaser asyncLockReleaser)
+        public Releaser(object entry, AsyncLockReleaser releaser)
         {
             _entry = (Entry) entry;
-            _asyncLockReleaser = asyncLockReleaser;
+            _releaser = releaser;
         }
 
         public void Dispose()
         {
-            try {
-                _asyncLockReleaser.Dispose();
-            }
-            finally {
-                _entry.EndUse();
-            }
+            _releaser.Dispose();
+            _entry.EndUse();
         }
     }
 }

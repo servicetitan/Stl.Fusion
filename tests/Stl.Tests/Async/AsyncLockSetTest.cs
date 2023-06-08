@@ -1,6 +1,7 @@
 using System.Reflection;
 using Stl.Locking;
 using Stl.Generators;
+using Stl.Locking.Internal;
 using Stl.Testing.Collections;
 
 namespace Stl.Tests.Async;
@@ -8,44 +9,44 @@ namespace Stl.Tests.Async;
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public class AsyncLockSetTest : AsyncLockTestBase
 {
-    protected AsyncLockSet<string> CheckedFailSet { get; } =
-        new AsyncLockSet<string>(ReentryMode.CheckedFail);
-    protected AsyncLockSet<string> CheckedPassSet { get; } =
-        new AsyncLockSet<string>(ReentryMode.CheckedPass);
-    protected AsyncLockSet<string> UncheckedDeadlockSet { get; } =
-        new AsyncLockSet<string>(ReentryMode.UncheckedDeadlock);
+    protected AsyncLockSet<string> CheckedFailSet { get; } = new(LockReentryMode.CheckedFail);
+    protected AsyncLockSet<string> CheckedPassSet { get; } = new(LockReentryMode.CheckedPass);
+    protected AsyncLockSet<string> UncheckedSet { get; } = new(LockReentryMode.Unchecked);
 
     protected class AsyncSetLock<TKey> : IAsyncLock
         where TKey : notnull
     {
-        public IAsyncLockSet<TKey> LockSet { get; }
+        public AsyncLockSet<TKey> LockSet { get; }
         public TKey Key { get; }
 
-        public ReentryMode ReentryMode => LockSet.ReentryMode;
-        public bool IsLocked => LockSet.IsLocked(Key);
-        public bool? IsLockedLocally => LockSet.IsLockedLocally(Key);
-        public ValueTask<IDisposable> Lock(CancellationToken cancellationToken = default)
-            => LockSet.Lock(Key, cancellationToken);
-
-        public AsyncSetLock(IAsyncLockSet<TKey> lockSet, TKey key)
+        public AsyncSetLock(AsyncLockSet<TKey> lockSet, TKey key)
         {
             LockSet = lockSet;
             Key = key;
         }
+
+        public ValueTask<AsyncLockReleaser> Lock(CancellationToken cancellationToken = default)
+        {
+            var task = LockSet.Lock(Key, cancellationToken);
+            return AsyncLockReleaser.NewWhenCompleted(task, this);
+        }
+
+        public void Release()
+            => LockSet.Release(Key);
     }
 
     public AsyncLockSetTest(ITestOutputHelper @out) : base(@out) { }
 
-    protected override IAsyncLock CreateAsyncLock(ReentryMode reentryMode)
+    protected override IAsyncLock CreateAsyncLock(LockReentryMode reentryMode)
     {
         var key = RandomStringGenerator.Default.Next();
         switch (reentryMode) {
-        case ReentryMode.CheckedFail:
+        case LockReentryMode.CheckedFail:
             return new AsyncSetLock<string>(CheckedFailSet, key);
-        case ReentryMode.CheckedPass:
+        case LockReentryMode.CheckedPass:
             return new AsyncSetLock<string>(CheckedPassSet, key);
-        case ReentryMode.UncheckedDeadlock:
-            return new AsyncSetLock<string>(UncheckedDeadlockSet, key);
+        case LockReentryMode.Unchecked:
+            return new AsyncSetLock<string>(UncheckedSet, key);
         default:
             throw new ArgumentOutOfRangeException(nameof(reentryMode), reentryMode, null);
         }
@@ -53,7 +54,7 @@ public class AsyncLockSetTest : AsyncLockTestBase
 
     protected override void AssertResourcesReleased()
     {
-        void AssertIsEmpty(IAsyncLockSet<string> asyncLockSet)
+        void AssertIsEmpty(AsyncLockSet<string> asyncLockSet)
         {
             var fEntries = asyncLockSet.GetType().GetField("_entries",
                 BindingFlags.Instance | BindingFlags.NonPublic);
@@ -67,6 +68,6 @@ public class AsyncLockSetTest : AsyncLockTestBase
 
         AssertIsEmpty(CheckedFailSet);
         AssertIsEmpty(CheckedPassSet);
-        AssertIsEmpty(UncheckedDeadlockSet);
+        AssertIsEmpty(UncheckedSet);
     }
 }

@@ -63,8 +63,7 @@ public sealed class ComputedRegistry : IDisposable
                 $"{nameof(options)}.{nameof(options.GCHandlePool)}.{nameof(_gcHandlePool.HandleType)}");
         _opCounter = new StochasticCounter();
         InputLocks = options.LocksFactory?.Invoke() ?? new AsyncLockSet<ComputedInput>(
-            ReentryMode.CheckedFail,
-            TaskCreationOptions.RunContinuationsAsynchronously,
+            LockReentryMode.CheckedFail,
             options.ConcurrencyLevel, options.InitialCapacity);
         ChangeGraphPruner(new ComputedGraphPruner(new()), null!);
         UpdatePruneCounterThreshold();

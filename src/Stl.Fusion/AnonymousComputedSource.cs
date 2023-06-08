@@ -18,7 +18,7 @@ public class AnonymousComputedSource<T> : ComputedInput,
     private string? _category;
     private ILogger? _log;
 
-    protected AsyncLock AsyncLock { get; }
+    protected ReentrantAsyncLock AsyncLock { get; }
     protected object Lock => AsyncLock;
     protected ILogger Log => _log ??= Services.LogFor(GetType());
 
@@ -62,7 +62,7 @@ public class AnonymousComputedSource<T> : ComputedInput,
 
         ComputedOptions = ComputedOptions.Default;
         VersionGenerator = services.VersionGenerator<LTag>();
-        AsyncLock = new AsyncLock(ReentryMode.CheckedFail);
+        AsyncLock = new ReentrantAsyncLock(LockReentryMode.CheckedFail);
         Initialize(this, RuntimeHelpers.GetHashCode(this));
     }
 

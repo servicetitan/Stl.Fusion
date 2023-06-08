@@ -63,7 +63,7 @@ public abstract class State<T> : ComputedInput,
 
     protected VersionGenerator<LTag> VersionGenerator { get; set; } = null!;
     protected ComputedOptions ComputedOptions { get; private set; } = null!;
-    protected AsyncLock AsyncLock { get; } = new(ReentryMode.CheckedFail);
+    protected ReentrantAsyncLock AsyncLock { get; } = new(LockReentryMode.CheckedFail);
     protected object Lock => AsyncLock;
     protected ILogger Log => _log ??= Services.LogFor(GetType());
 
