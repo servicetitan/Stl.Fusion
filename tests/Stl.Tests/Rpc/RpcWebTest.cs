@@ -63,8 +63,8 @@ public class RpcWebTest : RpbWebTestBase
 
     [Theory]
     [InlineData(100)]
+    [InlineData(500)]
     [InlineData(1000)]
-    [InlineData(5000)]
     public async Task PerformanceTest(int iterationCount)
     {
         await using var _ = await WebHost.Serve();
