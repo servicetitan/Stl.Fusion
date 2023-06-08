@@ -83,7 +83,7 @@ public class Replicator : SafeAsyncDisposableBase, IReplicatorImpl
             // so "subscribing" to Run completion is the
             // same as subscribing to its disposal.
             ChannelProcessors.TryRemove(publisherId, channelProcessor);
-        }, default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+        }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
         return channelProcessor;
     }
 

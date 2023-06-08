@@ -9,13 +9,16 @@ public sealed record DualSerializer<T>(
     IByteSerializer<T> ByteSerializer,
     ITextSerializer<T> TextSerializer)
 {
+    public IByteSerializer<T> DefaultSerializer { get; } =
+        DefaultFormat == DataFormat.Text ? TextSerializer : ByteSerializer;
+
     public DualSerializer()
         : this(DataFormat.Bytes)
     { }
 
-    public DualSerializer(DataFormat DefaultFormat)
+    public DualSerializer(DataFormat defaultFormat)
         : this(
-            DefaultFormat,
+            defaultFormat,
             Serialization.ByteSerializer.Default.ToTyped<T>(),
             Serialization.TextSerializer.Default.ToTyped<T>())
     { }
@@ -46,6 +49,7 @@ public sealed record DualSerializer<T>(
 
     public TextOrBytes Write(T value)
         => Write(value, DefaultFormat);
+
     public TextOrBytes Write(T value, DataFormat format)
     {
         using var bufferWriter = new ArrayPoolBufferWriter<byte>();
@@ -56,9 +60,10 @@ public sealed record DualSerializer<T>(
         return new TextOrBytes(format, bufferWriter.WrittenMemory.ToArray());
     }
 
-    public void Write(T value, IBufferWriter<byte> bufferWriter)
-        => Write(value, DefaultFormat, bufferWriter);
-    public void Write(T value, DataFormat format, IBufferWriter<byte> bufferWriter)
+    public void Write(IBufferWriter<byte> bufferWriter, T value)
+        => DefaultSerializer.Write(bufferWriter, value);
+
+    public void Write(IBufferWriter<byte> bufferWriter, T value, DataFormat format)
     {
         if (format == DataFormat.Text)
             TextSerializer.Write(bufferWriter, value);

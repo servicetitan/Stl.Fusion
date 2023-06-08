@@ -65,7 +65,7 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
             var snapshot = t.Result.Snapshot;
             _cachedStateSnapshot = snapshot;
             return (AuthenticationState) snapshot.LastNonErrorComputed.Value;
-        }, default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
+        }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
         return _cachedStateValueTask;
     }
 
@@ -80,7 +80,7 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
     protected virtual async Task<AuthState> ComputeState(IComputedState<AuthState> state, CancellationToken cancellationToken)
     {
         // We have to use SessionResolver here, since this service is requested
-        // before ISessionProvider.Session gets set. 
+        // before ISessionProvider.Session gets set.
         var session = await SessionResolver.GetSession(cancellationToken).ConfigureAwait(false);
         var user = await Auth.GetUser(session, cancellationToken).ConfigureAwait(false);
         // AuthService.GetUser checks for forced sign-out as well, so

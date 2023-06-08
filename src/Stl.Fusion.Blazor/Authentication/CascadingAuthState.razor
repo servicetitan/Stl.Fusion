@@ -17,9 +17,9 @@
 </CascadingAuthenticationState>
 
 @code {
-    [Parameter] 
+    [Parameter]
     public RenderFragment ChildContent { get; set; } = _ => { };
-    [Parameter] 
+    [Parameter]
     public bool StartPresenceService { get; set; } = true;
 
     protected override void OnInitialized()
@@ -42,18 +42,20 @@
         _ = newAuthStateTask.ContinueWith(t => {
             if (!t.IsCompletedSuccessfully)
                 return; // Will react to the next change
-            var authState = (AuthState) t.Result;
+
+            var authState = (AuthState)t.Result;
             if (!authState.IsSignOutForced)
                 return;
+
             // Current Session is unusable due to forced sign-out.
             // The only way to get an usable one is to reload the page.
             _ = InvokeAsync(() => Nav.NavigateTo(Nav.Uri, true));
-        }, default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
+        }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
     }
 
     private Task<AuthState> GetAuthState()
         => AuthStateProvider.GetAuthenticationStateAsync()
             .ContinueWith(
-                t => (AuthState) t.Result, 
-                default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
+                t => (AuthState)t.Result,
+                CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
 }

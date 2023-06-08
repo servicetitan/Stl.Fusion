@@ -4,6 +4,7 @@ using Stl.IO;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 #else
 using Owin;
 using System.Web.Http;
@@ -33,10 +34,10 @@ public abstract class TestWebHostBase : ITestWebHost
     public ILoggerFactory LoggerFactory => Services.GetRequiredService<ILoggerFactory>();
     public Uri ServerUri { get; }
 
-    protected TestWebHostBase()
+    protected TestWebHostBase(bool useHttps = false)
     {
         var localPort = WebTestExt.GetUnusedTcpPort();
-        ServerUri = WebTestExt.GetLocalUri(localPort);
+        ServerUri = WebTestExt.GetLocalUri(localPort, useHttps ? "https" : "http");
         HostLazy = new Lazy<IHost>(CreateHost);
     }
 
@@ -94,6 +95,14 @@ public abstract class TestWebHostBase : ITestWebHost
 
 #if NETCOREAPP
         builder.ConfigureWebHost(webHost => {
+            webHost.UseKestrel(kestrel => {
+                kestrel.ConfigureEndpointDefaults(listen => {
+                    listen.Protocols = HttpProtocols.Http1AndHttp2;
+                    if (Equals(ServerUri.Scheme, "https"))
+                        listen.UseHttps();
+                });
+            });
+        webHost.UseSockets(socket => socket.NoDelay = true);
             webHost.UseKestrel();
             webHost.UseUrls(ServerUri.ToString());
             webHost.UseContentRoot(wwwRootDir);
@@ -122,7 +131,7 @@ public abstract class TestWebHostBase : ITestWebHost
     protected virtual void ConfigureHost(IHostBuilder builder) { }
 
 #if NETCOREAPP
-    protected virtual void ConfigureWebHost(IWebHostBuilder builder) { }
+    protected virtual void ConfigureWebHost(IWebHostBuilder webHost) { }
 #endif
 
 #if NETFRAMEWORK

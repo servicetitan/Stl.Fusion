@@ -1,23 +1,20 @@
 using System.Net.WebSockets;
-using Microsoft.Toolkit.HighPerformance.Buffers;
 
 namespace Stl.Rpc.WebSockets;
 
 public static class WebSocketExt
 {
+#if NETSTANDARD2_0
     public static ValueTask SendAsync(this WebSocket webSocket,
-        IBuffer<byte> bufferWriter,
+        ReadOnlyMemory<byte> buffer,
         WebSocketMessageType messageType,
         bool endOfMessage,
         CancellationToken cancellationToken)
     {
-#if NETSTANDARD2_0
-        var segment = new ArraySegment<byte>(bufferWriter.WrittenMemory.ToArray());
+        var segment = new ArraySegment<byte>(buffer.ToArray());
         return webSocket.SendAsync(segment, messageType, endOfMessage, cancellationToken).ToValueTask();
-#else
-        return webSocket.SendAsync(bufferWriter.WrittenMemory, messageType, endOfMessage, cancellationToken);
-#endif
     }
+#endif
 
 #if NETSTANDARD2_0
     public static Task<WebSocketReceiveResult> ReceiveAsync(this WebSocket webSocket,

@@ -12,6 +12,6 @@ public static class BufferWriterExt
             writer.Write(segment.Span);
     }
 
-    public static void Reset<T>(this ArrayPoolBufferWriter<T> writer)
-        => ArrayPoolBufferWriterHelper<T>.IndexSetter.Invoke(writer, 0);
+    public static void Reset<T>(this ArrayPoolBufferWriter<T> writer, int writtenCount = 0)
+        => ArrayPoolBufferWriterHelper<T>.IndexSetter.Invoke(writer, writtenCount);
 }

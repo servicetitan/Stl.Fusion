@@ -19,8 +19,7 @@ public class RpcServer : IHasServices
 
         public string RequestPath { get; init; } = RpcClient.Options.Default.RequestPath;
         public string ClientIdParameterName { get; init; } = RpcClient.Options.Default.ClientIdParameterName;
-        public WebSocketChannelOptions WebSocketChannelOptions { get; init; } = WebSocketChannelOptions.Default;
-        public WebSocketAdapter<RpcMessage>.Options WebSocketAdapterOptions { get; init; } = WebSocketAdapter<RpcMessage>.Options.Default;
+        public WebSocketChannel2<RpcMessage>.Options WebSocketChannelOptions { get; init; } = WebSocketChannel2<RpcMessage>.Options.Default;
     }
 
     private ILogger? _log;
@@ -74,20 +73,17 @@ public class RpcServer : IHasServices
     {
         var cancellationToken = context.Request.CallCancelled;
         var webSocket = wsContext.WebSocket;
-        var webSocketAdapter = new WebSocketAdapter<RpcMessage>(Settings.WebSocketAdapterOptions, webSocket);
+        var channel = new WebSocketChannel2<RpcMessage>(Settings.WebSocketChannelOptions, webSocket, cancellationToken);
 
         var query = context.Request.Query;
         var clientId = query[Settings.ClientIdParameterName];
         var peerName = RpcServerPeer.FormatName(clientId);
-        if (RpcHub.GetPeer(peerName) is not RpcServerPeer peer) {
-            await webSocketAdapter.Close().ConfigureAwait(false);
+        if (RpcHub.GetPeer(peerName) is not RpcServerPeer peer)
             return;
-        }
 
-        var channel = webSocketAdapter.ToChannel(Settings.WebSocketChannelOptions, cancellationToken);
         peer.SetChannel(channel);
         try {
-            await channel.Reader.Completion.ConfigureAwait(false);
+            await channel.WhenClosed.ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             Log.LogWarning(e, "WebSocket connection was closed with an error");

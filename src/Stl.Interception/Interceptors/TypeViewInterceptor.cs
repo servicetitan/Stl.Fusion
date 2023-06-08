@@ -144,7 +144,7 @@ public class TypeViewInterceptor : Interceptor
             var result = (Task<TTarget>) untypedResult!;
             return result.ContinueWith(
                 t => converter.Convert(t.Result),
-                default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+                CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
         };
     }
 
@@ -165,7 +165,7 @@ public class TypeViewInterceptor : Interceptor
                 .AsTask()
                 .ContinueWith(
                     t => converter.Convert(t.Result),
-                    default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default)
+                    CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default)
                 .ToValueTask();
         };
     }

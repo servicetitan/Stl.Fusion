@@ -6,8 +6,8 @@ public abstract class TenantWorkerBase<TContext> : WorkerBase
     protected abstract IReadOnlyMutableDictionary<Symbol, Tenant> TenantSet { get; }
 
     protected TenantWorkerBase(
-        ITenantRegistry<TContext> tenantRegistry, 
-        CancellationTokenSource? stopTokenSource = null) 
+        ITenantRegistry<TContext> tenantRegistry,
+        CancellationTokenSource? stopTokenSource = null)
         : base(stopTokenSource)
         => TenantRegistry = tenantRegistry;
 
@@ -18,7 +18,7 @@ public abstract class TenantWorkerBase<TContext> : WorkerBase
         var tasksToStop = new ConcurrentDictionary<Task, Unit>();
         try {
             while (!cancellationToken.IsCancellationRequested) {
-                var whenChanged = tenantSet.WhenChanged; // We should read this property first 
+                var whenChanged = tenantSet.WhenChanged; // We should read this property first
                 var tenants = tenantSet.Items;
 
                 // Starting tasks for new tenants
@@ -32,7 +32,7 @@ public abstract class TenantWorkerBase<TContext> : WorkerBase
                     tasksToStop.TryAdd(task, default);
                     _ = task.ContinueWith(
                         t => tasksToStop.TryRemove(t, out _),
-                        default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+                        CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
                 }
 
                 // Stopping old tasks

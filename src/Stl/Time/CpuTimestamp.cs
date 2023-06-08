@@ -9,6 +9,8 @@ public readonly record struct CpuTimestamp(long Value) : IComparable<CpuTimestam
 
     public static readonly long TickFrequency;
     public static readonly double TickDuration;
+    public static readonly CpuTimestamp PositiveInfinity;
+    public static readonly CpuTimestamp NegativeInfinity;
 
     static CpuTimestamp()
     {
@@ -23,11 +25,13 @@ public readonly record struct CpuTimestamp(long Value) : IComparable<CpuTimestam
                 .CreateDelegate(typeof(Func<long>));
         }
         else {
-            // .NET Framework 
+            // .NET Framework
             TickFrequency = 10_000_000;
             QueryPerformanceCounter = Stopwatch.GetTimestamp;
         }
         TickDuration = 1d / TickFrequency;
+        PositiveInfinity = new CpuTimestamp(long.MaxValue);
+        NegativeInfinity = new CpuTimestamp(long.MinValue);
     }
 
     public TimeSpan Elapsed {
@@ -46,6 +50,14 @@ public readonly record struct CpuTimestamp(long Value) : IComparable<CpuTimestam
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static TimeSpan operator -(CpuTimestamp a, CpuTimestamp b)
         => TimeSpan.FromSeconds(TickDuration * (a.Value - b.Value));
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static CpuTimestamp operator +(CpuTimestamp a, TimeSpan b)
+        => new(a.Value + (long)(b.TotalSeconds * TickFrequency));
+
+    public static bool operator >(CpuTimestamp a, CpuTimestamp b) => a.Value > b.Value;
+    public static bool operator >=(CpuTimestamp a, CpuTimestamp b) => a.Value >= b.Value;
+    public static bool operator <(CpuTimestamp a, CpuTimestamp b) => a.Value < b.Value;
+    public static bool operator <=(CpuTimestamp a, CpuTimestamp b) => a.Value <= b.Value;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int CompareTo(CpuTimestamp other)

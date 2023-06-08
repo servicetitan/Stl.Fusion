@@ -3,6 +3,7 @@ using Stl.Rpc;
 using Stl.Rpc.Server;
 
 #if NETCOREAPP
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 #else
@@ -31,9 +32,9 @@ public class RpcTestWebHost : TestWebHostBase
     }
 
 #if NETCOREAPP
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    protected override void ConfigureWebHost(IWebHostBuilder webHost)
     {
-        builder.Configure((_, app) => {
+        webHost.Configure((_, app) => {
             app.UseWebSockets();
             app.UseRouting();
             app.UseEndpoints(endpoints => endpoints.MapRpcServer());

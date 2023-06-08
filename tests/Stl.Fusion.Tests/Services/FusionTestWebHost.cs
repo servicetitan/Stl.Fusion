@@ -59,9 +59,9 @@ public class FusionTestWebHost : TestWebHostBase
     }
 
 #if NETCOREAPP
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    protected override void ConfigureWebHost(IWebHostBuilder webHost)
     {
-        builder.Configure((ctx, app) => {
+        webHost.Configure((ctx, app) => {
             app.UseWebSockets();
             app.UseFusionSession();
 

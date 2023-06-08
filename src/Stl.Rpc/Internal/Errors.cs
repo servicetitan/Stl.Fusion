@@ -66,4 +66,7 @@ public static class Errors
         => new InvalidOperationException($"Couldn't deserialize result for '{methodDef.FullName}' call: " +
             $"expected '{methodDef.UnwrappedReturnType.GetName()}', " +
             $"but got '{actualResultType.GetName()}'.");
+
+    public static Exception InvalidMessageSize()
+        => new SerializationException("Invalid item size. The remainder of the message will be dropped.");
 }

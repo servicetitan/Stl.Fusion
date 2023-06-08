@@ -17,8 +17,7 @@ public class RpcClient : IHasServices
         public string ClientIdParameterName { get; init; } = "clientId";
         public Func<IServiceProvider, string> ClientIdProvider { get; init; } = DefaultClientIdProvider;
         public Func<IServiceProvider, ClientWebSocket> WebSocketFactory { get; init; } = DefaultClientWebSocketFactory;
-        public WebSocketAdapter<RpcMessage>.Options WebSocketAdapterOptions { get; init; } = WebSocketAdapter<RpcMessage>.Options.Default;
-        public WebSocketChannelOptions WebSocketChannelOptions { get; init; } = WebSocketChannelOptions.Default;
+        public WebSocketChannel2<RpcMessage>.Options WebSocketChannelOptions { get; init; } = WebSocketChannel2<RpcMessage>.Options.Default;
         public TimeSpan ConnectTimeout { get; init; } = TimeSpan.FromSeconds(10);
 
         public static string DefaultClientIdProvider(IServiceProvider services)
@@ -52,8 +51,7 @@ public class RpcClient : IHasServices
         await webSocket.ConnectAsync(uri, cancellationToken)
             .WaitAsync(Settings.ConnectTimeout, cancellationToken)
             .ConfigureAwait(false);
-        var webSocketAdapter = new WebSocketAdapter<RpcMessage>(Settings.WebSocketAdapterOptions, webSocket);
-        var channel = webSocketAdapter.ToChannel(Settings.WebSocketChannelOptions, cancellationToken);
+        var channel = new WebSocketChannel2<RpcMessage>(Settings.WebSocketChannelOptions, webSocket);
         return channel;
     }
 

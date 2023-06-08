@@ -60,5 +60,5 @@ public static partial class TaskExt
     public static Task<IResult> ToTypedResultAsync(this Task task)
         => task.ContinueWith(
             t => t.ToTypedResultSynchronously(),
-            default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
 }
