@@ -99,7 +99,7 @@ public class EdgeCaseServiceTest : FusionTestBase
         if (computed is IReplicaMethodComputed rc)
             await rc.Replica!
                 .RequestUpdateUntyped(true)
-                .WaitAsync(TimeSpan.FromSeconds(0.2), cancellationToken)
+                .WaitAsync(TimeSpan.FromSeconds(0.5), cancellationToken)
                 .SilentAwait();
         // Why WaitAsync? If it is consistent, the update comes only once it gets invalidated,
         // so if there is no timeout, it might wait for it indefinitely long.
