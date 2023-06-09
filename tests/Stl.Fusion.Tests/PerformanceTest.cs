@@ -49,9 +49,9 @@ public abstract class PerformanceTestBase : FusionTestBase
         Out.WriteLine($"Database: {Options.DbType}");
         Out.WriteLine("With Stl.Fusion:");
         if (enableSerialization)
-            await Test("Multiple readers + serialization, 1 mutator", users, withSerialization, true, 
+            await Test("Multiple readers + serialization, 1 mutator", users, withSerialization, true,
                 readerCount, fusionIterationCount / 2);
-        await Test("Multiple readers, 1 mutator", users, withoutSerialization, true, 
+        await Test("Multiple readers, 1 mutator", users, withoutSerialization, true,
             readerCount, fusionIterationCount);
         await Test("Single reader, no mutators", users, withoutSerialization, false,
             1, fusionIterationCount * 20);
@@ -123,7 +123,7 @@ public abstract class PerformanceTestBase : FusionTestBase
         WriteLine($"    Operations: {operationCount} ({threadCount} readers x {iterationCount})");
 
         var startTime = CpuClock.Now;
-        var mutatorTask = enableMutations 
+        var mutatorTask = enableMutations
             ? Task.Run(() => Mutator("W", stopCts.Token))
             : Task.CompletedTask;
         var tasks = Enumerable
