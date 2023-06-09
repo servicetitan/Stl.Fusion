@@ -52,9 +52,7 @@ public sealed class ConcurrentTimerSet<TTimer> : SafeAsyncDisposableBase
     public bool Remove(TTimer timer)
         => GetTimerSet(timer).Remove(timer);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private TimerSet<TTimer> GetTimerSet(TTimer timer)
-    {
-        var hashCode = timer.GetHashCode();
-        return _timerSets[hashCode & _concurrencyLevelMask];
-    }
+        => _timerSets[timer.GetHashCode() & _concurrencyLevelMask];
 }

@@ -47,19 +47,12 @@ public sealed class ComputeMethodInput : ComputedInput, IEquatable<ComputeMethod
     // Equality
 
     public bool Equals(ComputeMethodInput? other)
-    {
-        if (other == null)
-            return false;
-        if (HashCode != other.HashCode)
-            return false;
+        => other != null
+        && HashCode == other.HashCode
+        && ReferenceEquals(MethodDef, other.MethodDef)
+        && ReferenceEquals(Service, other.Service)
+        && Arguments.Equals(other.Arguments, MethodDef.CancellationTokenIndex);
 
-        if (!ReferenceEquals(Service, other.Service))
-            return false;
-        if (!ReferenceEquals(MethodDef, other.MethodDef))
-            return false;
-
-        return Arguments.Equals(other.Arguments, MethodDef.CancellationTokenIndex);
-    }
     public override bool Equals(ComputedInput? obj)
         => obj is ComputeMethodInput other && Equals(other);
     public override bool Equals(object? obj)

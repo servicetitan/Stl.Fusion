@@ -14,7 +14,7 @@ public static class Timeouts
         KeepAlive = new ConcurrentTimerSet<object>(
             new() {
                 Quanta = TimeSpan.FromMilliseconds(250),
-                ConcurrencyLevel = HardwareInfo.GetProcessorCountPo2Factor(2),
+                ConcurrencyLevel = HardwareInfo.GetProcessorCountPo2Factor(),
                 Clock = Clock,
             });
         Invalidate = new ConcurrentTimerSet<IComputed>(

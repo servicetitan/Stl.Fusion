@@ -30,6 +30,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
     private readonly ComputedOptions _options;
     private volatile int _state;
     private volatile ComputedFlags _flags;
+    private long _lastKeepAliveUntil;
     private Result<T> _output;
     private Task<T>? _outputAsTask;
     private RefHashSetSlim3<IComputedImpl> _used;
@@ -167,7 +168,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
                 return;
             }
 
-            // ConsistencyState == ConsistencyState.Computing from here 
+            // ConsistencyState == ConsistencyState.Computing from here
 
             immediately |= Options.InvalidationDelay == default;
             if (immediately)
@@ -239,10 +240,13 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
         if (ConsistencyState == ConsistencyState.Invalidated)
             return; // We shouldn't register miss here, since it's going to be counted as hit anyway
 
-        var options = Options;
-        if (options.MinCacheDuration != default) {
-            var keepAliveUntil = Timeouts.Clock.Now + options.MinCacheDuration;
-            Timeouts.KeepAlive.AddOrUpdateToLater(this, keepAliveUntil);
+        var minCacheDuration = Options.MinCacheDuration;
+        if (minCacheDuration != default) {
+            // We quantize keepAliveUntil here to prevent too frequent AddOrUpdateToLater calls
+            var keepAliveUntil = (Timeouts.Clock.Now + minCacheDuration).EpochOffsetTicks & Computed.KeepAliveTicksMask;
+            var lastKeepAliveUntil = Interlocked.Exchange(ref _lastKeepAliveUntil, keepAliveUntil);
+            if (lastKeepAliveUntil != keepAliveUntil)
+                Timeouts.KeepAlive.AddOrUpdateToLater(this, new Moment(keepAliveUntil));
         }
 
         ComputedRegistry.Instance.ReportAccess(this, isNew);
@@ -251,8 +255,10 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
     public void CancelTimeouts()
     {
         var options = Options;
-        if (options.MinCacheDuration != default)
+        if (options.MinCacheDuration != default) {
+            Interlocked.Exchange(ref _lastKeepAliveUntil, 0);
             Timeouts.KeepAlive.Remove(this);
+        }
     }
 
     // Update
@@ -338,7 +344,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
             if (ConsistencyState != ConsistencyState.Computing) {
                 // The current computed is either:
                 // - Invalidated: nothing to do in this case.
-                //   Deps are meaningless for whatever is already invalidated.   
+                //   Deps are meaningless for whatever is already invalidated.
                 // - Consistent: this means the dependency computation hasn't been completed
                 //   while the dependant was computing, which literally means it is actually unused.
                 //   This happens e.g. when N tasks to compute dependencies start during the computation,

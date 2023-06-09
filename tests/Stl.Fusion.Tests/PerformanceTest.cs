@@ -35,11 +35,11 @@ public abstract class PerformanceTestBase : FusionTestBase
 
         var users = Services.GetRequiredService<IUserService>();
         var plainUsers = Services.GetRequiredService<UserService>();
-        var opCountPerCore = 4_000_000;
-        var readersPerCore = 8;
+        var opCountPerCore = 8_000_000;
+        var readersPerCore = 16;
         var readerCount = HardwareInfo.GetProcessorCountFactor(readersPerCore);
         var fusionIterationCount = opCountPerCore / readersPerCore;
-        var nonFusionIterationCount = fusionIterationCount / 4000;
+        var nonFusionIterationCount = fusionIterationCount / 6000;
 
         var withoutSerialization = (Action<User>) (_ => { });
         var withSerialization = (Action<User>) (u => JsonSerializer.Serialize(u)); // STJ serializer
