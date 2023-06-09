@@ -4,19 +4,24 @@ namespace Stl.Locking.Internal;
 
 public sealed class AsyncLockReentryCounter
 {
-    private int _value;
+    public int Value;
 
     public AsyncLockReentryCounter(int value)
-        => _value = value;
+        => Value = value;
 
-    public bool Enter()
+    public bool Enter(LockReentryMode reentryMode)
     {
-        return Interlocked.Increment(ref _value) == 1;
+        var value = ++Value;
+        if (reentryMode == LockReentryMode.CheckedFail && value > 1) {
+            Value--;
+            throw Errors.AlreadyLocked();
+        }
+        return value == 1;
     }
 
     public bool Leave()
     {
-        var value = Interlocked.Decrement(ref _value);
+        var value = --Value;
         if (value < 0)
             throw Errors.InternalError($"{nameof(AsyncLockReentryCounter)}'s value is < 0.");
         return value == 0;

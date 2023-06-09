@@ -1,4 +1,3 @@
-using Stl.Internal;
 using Stl.Locking.Internal;
 
 namespace Stl.Locking;
@@ -27,15 +26,11 @@ public sealed class ReentrantAsyncLock : IAsyncLock
     public ValueTask<AsyncLockReleaser> Lock(CancellationToken cancellationToken = default)
     {
         var reentryCounter = ReentryCounter;
-        if (reentryCounter != null) {
-            if (ReentryMode == LockReentryMode.CheckedFail)
-                throw Errors.AlreadyLocked();
-
-            reentryCounter.Enter();
+        if (reentryCounter == null)
+            ReentryCounter = new(1);
+        else if (!reentryCounter.Enter(ReentryMode))
             return ValueTaskExt.FromResult(new AsyncLockReleaser(this));
-        }
 
-        ReentryCounter = new(1);
         var task = _semaphore.WaitAsync(cancellationToken);
         return AsyncLockReleaser.NewWhenCompleted(task, this);
     }
