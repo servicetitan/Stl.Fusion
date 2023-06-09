@@ -5,7 +5,7 @@ namespace Stl.Fusion;
 public static class Computed
 {
     private static readonly AsyncLocal<IComputed?> CurrentLocal = new();
-    internal const long KeepAliveTicksMask = long.MaxValue << 19; // ~ 0.5M ticks or 0.05 sec.
+    internal const long KeepAliveTicksMask = long.MaxValue << 20; // ~ 1M ticks or 0.1 sec.
 
     public static TimeSpan PreciseInvalidationDelayThreshold { get; set; } = TimeSpan.FromSeconds(1);
 
