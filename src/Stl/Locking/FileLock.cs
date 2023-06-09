@@ -4,7 +4,7 @@ using Stl.Locking.Internal;
 
 namespace Stl.Locking;
 
-public class FileLock : IAsyncLock
+public class FileLock : AsyncLock
 {
     public static readonly IEnumerable<TimeSpan> DefaultRetryIntervals =
         Intervals.Exponential(TimeSpan.FromMilliseconds(50), 1.25, TimeSpan.FromSeconds(1));
@@ -28,7 +28,7 @@ public class FileLock : IAsyncLock
         RetryIntervals = retryIntervals ?? DefaultRetryIntervals;
     }
 
-    public async ValueTask<AsyncLockReleaser> Lock(CancellationToken cancellationToken = default)
+    public override async ValueTask<AsyncLockReleaser> Lock(CancellationToken cancellationToken = default)
     {
         try {
             if (!File.Exists(Path))
@@ -67,7 +67,7 @@ public class FileLock : IAsyncLock
         return new AsyncLockReleaser(this);
     }
 
-    public void Release()
+    public override void Release()
     {
         var fs = _fileStream;
         _fileStream = null;

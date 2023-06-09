@@ -1,8 +1,9 @@
+using Stl.Internal;
 using Stl.Locking.Internal;
 
 namespace Stl.Locking;
 
-public sealed class ReentrantAsyncLock : IAsyncLock
+public sealed class ReentrantAsyncLock : AsyncLock
 {
     private readonly SemaphoreSlim _semaphore = new(1, 1);
     private readonly AsyncLocal<AsyncLockReentryCounter?> _reentryCounter = new();
@@ -23,25 +24,36 @@ public sealed class ReentrantAsyncLock : IAsyncLock
         ReentryMode = reentryMode;
     }
 
-    public ValueTask<AsyncLockReleaser> Lock(CancellationToken cancellationToken = default)
+    public override ValueTask<AsyncLockReleaser> Lock(CancellationToken cancellationToken = default)
     {
         var reentryCounter = ReentryCounter;
         if (reentryCounter == null)
             ReentryCounter = new(1);
-        else if (!reentryCounter.Enter(ReentryMode))
-            return ValueTaskExt.FromResult(new AsyncLockReleaser(this));
+        else {
+            var oldReentryCount = reentryCounter.Value++;
+            if (oldReentryCount > 0) {
+                if (ReentryMode == LockReentryMode.CheckedFail) {
+                    reentryCounter.Value = oldReentryCount;
+                    throw Errors.AlreadyLocked();
+                }
+                return ValueTaskExt.FromResult(new AsyncLockReleaser(this));
+            }
+        }
 
         var task = _semaphore.WaitAsync(cancellationToken);
         return AsyncLockReleaser.NewWhenCompleted(task, this);
     }
 
-    public void Release()
+    public override void Release()
     {
         var reentryCounter = ReentryCounter;
         if (reentryCounter == null)
             return;
 
-        if (reentryCounter.Leave()) {
+        var newReentryCount = --reentryCounter.Value;
+        if (newReentryCount <= 0) {
+            // < 0 is something that should never happen,
+            // but throwing an error here is probably worse, so...
             ReentryCounter = null;
             _semaphore.Release();
         }

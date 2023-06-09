@@ -12,22 +12,22 @@ public class AsyncLockSet<TKey>
     public static int DefaultCapacity => 31;
 
     private readonly ConcurrentDictionary<TKey, Entry> _entries;
-    private readonly ConcurrentPool<IAsyncLock> _lockPool;
+    private readonly ConcurrentPool<AsyncLock> _lockPool;
 
     public int AcquiredLockCount => _entries.Count;
-    public Func<IAsyncLock> LockFactory { get; }
+    public Func<AsyncLock> LockFactory { get; }
 
     public AsyncLockSet(LockReentryMode reentryMode)
         : this(() => AsyncLock.New(reentryMode)) { }
-    public AsyncLockSet(Func<IAsyncLock> lockFactory)
+    public AsyncLockSet(Func<AsyncLock> lockFactory)
         : this(lockFactory, DefaultConcurrencyLevel, DefaultCapacity) { }
     public AsyncLockSet(LockReentryMode reentryMode, int concurrencyLevel, int capacity)
         : this(() => AsyncLock.New(reentryMode), DefaultConcurrencyLevel, DefaultCapacity) { }
-    public AsyncLockSet(Func<IAsyncLock> lockFactory, int concurrencyLevel, int capacity)
+    public AsyncLockSet(Func<AsyncLock> lockFactory, int concurrencyLevel, int capacity)
     {
         LockFactory = lockFactory;
         _entries = new ConcurrentDictionary<TKey, Entry>(concurrencyLevel, capacity);
-        _lockPool = new ConcurrentPool<IAsyncLock>(LockFactory);
+        _lockPool = new ConcurrentPool<AsyncLock>(LockFactory);
     }
 
     public ValueTask<Releaser> Lock(TKey key, CancellationToken cancellationToken = default)
@@ -55,7 +55,7 @@ public class AsyncLockSet<TKey>
 
     // Private methods
 
-    private (IAsyncLock, Entry) PrepareLock(TKey key)
+    private (AsyncLock, Entry) PrepareLock(TKey key)
     {
         var spinWait = new SpinWait();
         while (true) {
@@ -85,11 +85,11 @@ public class AsyncLockSet<TKey>
     {
         private readonly AsyncLockSet<TKey> _owner;
         private readonly TKey _key;
-        private readonly ResourceLease<IAsyncLock> _lease;
-        private volatile IAsyncLock? _asyncLock;
+        private readonly ResourceLease<AsyncLock> _lease;
+        private volatile AsyncLock? _asyncLock;
         private int _useCount;
 
-        public IAsyncLock? AsyncLock => _asyncLock;
+        public AsyncLock? AsyncLock => _asyncLock;
 
         public Entry(AsyncLockSet<TKey> owner, TKey key)
         {
@@ -99,7 +99,7 @@ public class AsyncLockSet<TKey>
             _asyncLock = _lease.Resource;
         }
 
-        public IAsyncLock? TryBeginUse()
+        public AsyncLock? TryBeginUse()
         {
             lock (this) {
                 var asyncLock = _asyncLock;

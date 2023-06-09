@@ -13,7 +13,7 @@ public class AsyncLockSetTest : AsyncLockTestBase
     protected AsyncLockSet<string> CheckedPassSet { get; } = new(LockReentryMode.CheckedPass);
     protected AsyncLockSet<string> UncheckedSet { get; } = new(LockReentryMode.Unchecked);
 
-    protected class AsyncSetLock<TKey> : IAsyncLock
+    protected sealed class AsyncSetLock<TKey> : AsyncLock
         where TKey : notnull
     {
         public AsyncLockSet<TKey> LockSet { get; }
@@ -25,19 +25,19 @@ public class AsyncLockSetTest : AsyncLockTestBase
             Key = key;
         }
 
-        public ValueTask<AsyncLockReleaser> Lock(CancellationToken cancellationToken = default)
+        public override ValueTask<AsyncLockReleaser> Lock(CancellationToken cancellationToken = default)
         {
             var task = LockSet.Lock(Key, cancellationToken);
             return AsyncLockReleaser.NewWhenCompleted(task, this);
         }
 
-        public void Release()
+        public override void Release()
             => LockSet.Release(Key);
     }
 
     public AsyncLockSetTest(ITestOutputHelper @out) : base(@out) { }
 
-    protected override IAsyncLock CreateAsyncLock(LockReentryMode reentryMode)
+    protected override AsyncLock CreateAsyncLock(LockReentryMode reentryMode)
     {
         var key = RandomStringGenerator.Default.Next();
         switch (reentryMode) {

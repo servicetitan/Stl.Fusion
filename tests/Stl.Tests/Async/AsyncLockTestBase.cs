@@ -11,9 +11,9 @@ public abstract class AsyncLockTestBase : TestBase
     {
         private volatile int _lockCount = 0;
 
-        public readonly IAsyncLock Lock;
+        public readonly AsyncLock Lock;
 
-        public Resource(IAsyncLock @lock) => Lock = @lock;
+        public Resource(AsyncLock @lock) => Lock = @lock;
 
         public async Task Access(int delayMs, int durationMs, int cancelMs, int reentryCount = 0, int expectedLockCount = 0)
         {
@@ -72,7 +72,7 @@ public abstract class AsyncLockTestBase : TestBase
 
     protected AsyncLockTestBase(ITestOutputHelper @out) : base(@out) { }
 
-    protected abstract IAsyncLock CreateAsyncLock(LockReentryMode reentryMode);
+    protected abstract AsyncLock CreateAsyncLock(LockReentryMode reentryMode);
     protected abstract void AssertResourcesReleased();
 
     [Fact]

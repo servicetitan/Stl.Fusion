@@ -7,7 +7,6 @@ using Stl.Fusion.EntityFramework.Operations;
 using Stl.Multitenancy;
 using Stl.Locking;
 using Stl.Versioning;
-using AsyncLock = Stl.Locking.AsyncLock;
 
 namespace Stl.Fusion.EntityFramework;
 
