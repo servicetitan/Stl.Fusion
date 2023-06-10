@@ -24,7 +24,7 @@ public class RpcServerPeer : RpcPeer
             throw new ArgumentOutOfRangeException(nameof(name));
 
         ClientId = name.Value[NamePrefix.Length..];
-        LocalServiceFilter = static serviceDef => true;
+        LocalServiceFilter = static serviceDef => !serviceDef.IsBackend;
     }
 
     // Protected methods
