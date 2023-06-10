@@ -9,7 +9,7 @@ public static class EndpointRouteBuilderExt
         this IEndpointRouteBuilder endpoints, string? pattern = null)
     {
         var services = endpoints.ServiceProvider;
-        var server = services.GetRequiredService<RpcServer>();
+        var server = services.GetRequiredService<RpcWebSocketServer>();
         return endpoints
             .MapGet(pattern ?? server.Settings.RequestPath, ctx => server.HandleRequest(ctx))
             .WithDisplayName(server.GetType().FullName!);

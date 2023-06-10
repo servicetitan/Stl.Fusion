@@ -1,4 +1,7 @@
+using System.Net.WebSockets;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Stl.Interception;
+using Stl.Rpc.Clients;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Internal;
 
@@ -6,9 +9,6 @@ namespace Stl.Rpc;
 
 public readonly struct RpcBuilder
 {
-    private class AddedTag { }
-    private static readonly ServiceDescriptor AddedTagDescriptor = new(typeof(AddedTag), new AddedTag());
-
     public IServiceCollection Services { get; }
     public RpcConfiguration Configuration { get; }
 
@@ -17,19 +17,19 @@ public readonly struct RpcBuilder
         Action<RpcBuilder>? configure)
     {
         Services = services;
-        if (services.Contains(AddedTagDescriptor)) {
+        if (GetConfiguration(services) is { } configuration) {
             // Already configured
-            Configuration = GetConfiguration(services);
+            Configuration = configuration;
             configure?.Invoke(this);
             return;
         }
 
-        // We want above Contains call to run in O(1), so...
-        services.Insert(0, AddedTagDescriptor);
+        // We want above GetConfiguration call to run in O(1), so...
+        Configuration = new RpcConfiguration();
+        services.Insert(0, new ServiceDescriptor(typeof(RpcConfiguration), Configuration));
         services.AddSingleton(c => new RpcHub(c));
 
         // Common services
-        services.TryAddSingleton(new RpcConfiguration());
         services.TryAddSingleton(c => new RpcServiceRegistry(c));
         services.TryAddSingleton<RpcPeerFactory>(c => RpcPeerFactoryExt.Default(c.RpcHub()));
         services.TryAddSingleton(_ => RpcInboundContext.DefaultFactory);
@@ -44,15 +44,67 @@ public readonly struct RpcBuilder
         services.TryAddSingleton(_ => new RpcRoutingInterceptor.Options());
         services.TryAddTransient(c => new RpcRoutingInterceptor(c.GetRequiredService<RpcRoutingInterceptor.Options>(), c));
 
-        Configuration = GetConfiguration(services);
-
         // System services
         if (!Configuration.Services.ContainsKey(typeof(IRpcSystemCalls))) {
             Service<IRpcSystemCalls>().HasServer<RpcSystemCalls>().HasName(RpcSystemCalls.Name);
             services.TryAddSingleton(c => new RpcSystemCalls(c));
             services.TryAddSingleton(c => new RpcSystemCallSender(c));
         }
+
+        // WebSocket client
+        UseClientChannelProvider(c => {
+            var client = c.GetRequiredService<RpcClient>();
+            return client.GetChannel;
+        });
+        services.TryAddTransient(_ => new ClientWebSocket());
+        services.TryAddSingleton(_ => RpcWebSocketClient.Options.Default);
+        services.TryAddSingleton(c => (RpcClient)new RpcWebSocketClient(c.GetRequiredService<RpcWebSocketClient.Options>(), c));
     }
+
+    public RpcBuilder ConfigureWebSocketClient(Func<IServiceProvider, RpcWebSocketClient.Options> clientOptionsFactory)
+    {
+        Services.AddSingleton(clientOptionsFactory);
+        return this;
+    }
+
+    public RpcBuilder AddServer<TService>(Symbol name = default)
+        => AddServer(typeof(TService), typeof(TService), name);
+    public RpcBuilder AddServer<TService, TServer>(Symbol name = default)
+        => AddServer(typeof(TService), typeof(TServer), name);
+    public RpcBuilder AddServer(Type serviceType, Type serverType, Symbol name = default)
+    {
+        Service(serviceType).HasServer(serverType).HasName(name);
+        return this;
+    }
+
+    public RpcBuilder AddClient<TService>(Symbol name = default)
+        => AddClient(typeof(TService), name);
+    public RpcBuilder AddClient(Type serviceType, Symbol name = default)
+    {
+        Service(serviceType).HasClient().HasName(name);
+        return this;
+    }
+
+    public RpcBuilder AddRouter<TService, TServer>(Symbol name = default)
+        => AddRouter(typeof(TService), typeof(TServer), name);
+    public RpcBuilder AddRouter(Type serviceType, Type serverType, Symbol name = default)
+    {
+        AddServer(serviceType, serverType, name);
+        Services.AddSingleton(serviceType, c => {
+            var rpcHub = c.RpcHub();
+            var server = rpcHub.ServiceRegistry[serviceType].Server;
+            var client = rpcHub.CreateClient(serviceType);
+
+            var routingInterceptor = c.GetRequiredService<RpcRoutingInterceptor>();
+            var serviceDef = rpcHub.ServiceRegistry[serviceType];
+            routingInterceptor.Setup(serviceDef, server, client);
+            var routingProxy = Proxies.New(serviceType, routingInterceptor);
+            return routingProxy;
+        });
+        return this;
+    }
+
+    // More low-level configuration options stuff
 
     public RpcServiceBuilder Service<TService>()
         => Service(typeof(TService));
@@ -67,12 +119,20 @@ public readonly struct RpcBuilder
         return service;
     }
 
-    public RpcClientBuilder AddClient()
-        => new(this, null);
+    public RpcBuilder UseClientChannelProvider(RpcClientChannelProvider clientChannelProvider)
+    {
+        Services.AddSingleton(clientChannelProvider);
+        return this;
+    }
 
-    public RpcBuilder AddClient(Action<RpcClientBuilder> configure)
-        => new RpcClientBuilder(this, configure).Rpc;
+    public RpcBuilder UseClientChannelProvider(Func<IServiceProvider, RpcClientChannelProvider> connectorFactory)
+    {
+        Services.AddSingleton(connectorFactory);
+        return this;
+    }
 
+    // The methods below seem kinda excessive
+    /*
     public RpcBuilder HasPeerFactory(RpcPeerFactory peerFactory)
     {
         Services.AddSingleton(peerFactory);
@@ -108,36 +168,24 @@ public readonly struct RpcBuilder
         Services.AddSingleton(inboundContextFactoryFactory);
         return this;
     }
-
-    public RpcBuilder HasClientChannelProvider(RpcClientChannelProvider clientChannelProvider)
-    {
-        Services.AddSingleton(clientChannelProvider);
-        return this;
-    }
-
-    public RpcBuilder HasClientChannelProvider(Func<IServiceProvider, RpcClientChannelProvider> connectorFactory)
-    {
-        Services.AddSingleton(connectorFactory);
-        return this;
-    }
+    */
 
     // Private methods
 
-    private static RpcConfiguration GetConfiguration(IServiceCollection services)
+    private static RpcConfiguration? GetConfiguration(IServiceCollection services)
     {
         for (var i = 0; i < services.Count; i++) {
             var descriptor = services[i];
             if (descriptor.ServiceType == typeof(RpcConfiguration)) {
                 if (i > 16) {
-                    // Let's move it to the beginning of the list
-                    // to speed up future searches
+                    // Let's move it to the beginning of the list to speed up future lookups
                     services.RemoveAt(i);
                     services.Insert(0, descriptor);
                 }
-                return (RpcConfiguration?) descriptor.ImplementationInstance
+                return (RpcConfiguration?)descriptor.ImplementationInstance
                     ?? throw Errors.RpcOptionsMustBeRegisteredAsInstance();
             }
         }
-        throw Errors.RpcOptionsIsNotRegistered();
+        return null;
     }
 }

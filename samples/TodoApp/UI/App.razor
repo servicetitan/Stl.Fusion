@@ -1,7 +1,7 @@
 @using Stl.OS
 @implements IDisposable
 @inject BlazorCircuitContext BlazorCircuitContext
-@inject ISessionProvider SessionProvider
+@inject ISessionResolver SessionResolver
 
 <CascadingAuthState>
     <ThemeProvider Theme="@Theme">
@@ -26,7 +26,7 @@
 
     protected override void OnInitialized()
     {
-        SessionProvider.Session = OSInfo.IsWebAssembly 
+        SessionResolver.Session = OSInfo.IsWebAssembly 
             ? Session.Default 
             : new Session(SessionId);
         if (!BlazorCircuitContext.IsPrerendering)

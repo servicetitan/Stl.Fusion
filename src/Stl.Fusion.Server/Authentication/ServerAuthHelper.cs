@@ -11,6 +11,8 @@ public class ServerAuthHelper : IHasServices
 {
     public record Options
     {
+        public static Options Default { get; set; } = new();
+
         public string[] IdClaimKeys { get; init; } = { ClaimTypes.NameIdentifier };
         public string[] NameClaimKeys { get; init; } = { ClaimTypes.Name };
         public string CloseWindowRequestPath { get; init; } = "/fusion/close";

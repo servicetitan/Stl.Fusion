@@ -1,4 +1,3 @@
-using Stl.Fusion.Authentication;
 using Stl.Multitenancy;
 
 namespace Stl.Fusion.Multitenancy;

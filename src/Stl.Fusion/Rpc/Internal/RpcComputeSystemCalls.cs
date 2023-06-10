@@ -3,7 +3,7 @@ using Stl.Rpc.Infrastructure;
 
 namespace Stl.Fusion.Rpc.Internal;
 
-public interface IRpcComputeSystemCalls : IRpcSystemService, IRpcClient
+public interface IRpcComputeSystemCalls : IRpcSystemService
 {
     Task<RpcNoWait> Invalidate();
 }

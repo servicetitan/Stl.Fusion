@@ -24,10 +24,6 @@ public class JsonifyErrorsAttribute : ExceptionFilterAttribute
             Content = new StringContent(content, null, "application/json"),
             StatusCode = HttpStatusCode.InternalServerError
         };
-        var psi = actionContext.GetPublicationStateInfo();
-        if (psi != null)
-            response.Headers.AddPublicationStateInfoHeader(psi);
-
         actionExecutedContext.Response = response;
     }
 }

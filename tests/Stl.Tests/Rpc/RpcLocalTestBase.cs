@@ -47,7 +47,7 @@ public abstract class RpcLocalTestBase : TestBase
         var rpc = services.AddRpc();
         var channelPair = CreateRpcChannelPair();
         services.AddSingleton(channelPair);
-        rpc.HasClientChannelProvider((peer, _) => {
+        rpc.UseClientChannelProvider((peer, _) => {
             var c = peer.Hub.Services;
             var channels = c.GetRequiredService<ChannelPair<RpcMessage>>();
             return Task.FromResult(channels.Channel2);

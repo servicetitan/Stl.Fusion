@@ -137,7 +137,7 @@ public class Startup
         });
 
         if (HostSettings.UseMultitenancy)
-            fusionServer.ConfigureSessionMiddleware(_ => new() {
+            fusionServer.AddSessionMiddleware(_ => new() {
                 TenantIdExtractor = TenantIdExtractors.FromSubdomain(".localhost")
                     .Or(TenantIdExtractors.FromPort((5005, 5010)))
                     .WithValidator(tenantId => tenantId.Value.StartsWith("tenant")),

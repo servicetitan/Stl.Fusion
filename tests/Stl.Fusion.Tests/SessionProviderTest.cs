@@ -19,7 +19,7 @@ public class SessionProviderTest
         var c = (IServiceProvider) services;
         c.IsScoped().Should().BeFalse();
 
-        var sp = c.GetRequiredService<ISessionProvider>();
+        var sp = c.GetRequiredService<ISessionResolver>();
         c.GetRequiredService<ISessionResolver>().Should().Be(sp);
         sp.HasSession.Should().BeFalse();
         sp.SessionTask.IsCompleted.Should().BeFalse();
@@ -33,7 +33,7 @@ public class SessionProviderTest
         c = scope.ServiceProvider;
         c.IsScoped().Should().BeTrue();
 
-        sp = c.GetRequiredService<ISessionProvider>();
+        sp = c.GetRequiredService<ISessionResolver>();
         c.GetRequiredService<ISessionResolver>().Should().Be(sp);
         sp.HasSession.Should().BeFalse();
         sp.SessionTask.IsCompleted.Should().BeFalse();

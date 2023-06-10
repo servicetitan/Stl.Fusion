@@ -11,9 +11,10 @@ public sealed class RpcServiceDef
 
     public RpcHub Hub { get; }
     public Type Type { get; }
-    public CustomResolver? ServerResolver { get; }
+    public ServiceResolver? ServerResolver { get; }
     public Symbol Name { get; }
     public bool IsSystem { get; }
+    public bool IsBackend { get; }
     public int MethodCount => _methods.Count;
     public IEnumerable<RpcMethodDef> Methods => _methods.Values;
     public bool HasServer => ServerResolver != null;
@@ -22,13 +23,14 @@ public sealed class RpcServiceDef
     public RpcMethodDef this[MethodInfo method] => Get(method) ?? throw Errors.NoMethod(Type, method);
     public RpcMethodDef this[Symbol methodName] => Get(methodName) ?? throw Errors.NoMethod(Type, methodName);
 
-    public RpcServiceDef(RpcHub hub, Symbol name, RpcServiceBuilder source, Func<RpcMethodDef, Symbol> methodNameBuilder)
+    public RpcServiceDef(RpcHub hub, Symbol name, RpcServiceBuilder source)
     {
         Hub = hub;
         Name = name;
         Type = source.Type;
         ServerResolver = source.ServerResolver;
         IsSystem = typeof(IRpcSystemService).IsAssignableFrom(Type);
+        IsBackend = hub.Configuration.BackendServiceDetector.Invoke(Type, name);
 
         _methods = new Dictionary<MethodInfo, RpcMethodDef>();
         _methodByName = new Dictionary<Symbol, RpcMethodDef>();
@@ -36,7 +38,7 @@ public sealed class RpcServiceDef
             if (method.IsGenericMethodDefinition)
                 continue;
 
-            var methodDef = new RpcMethodDef(this, method, methodNameBuilder);
+            var methodDef = new RpcMethodDef(this, method);
             if (!methodDef.IsValid)
                 continue;
 

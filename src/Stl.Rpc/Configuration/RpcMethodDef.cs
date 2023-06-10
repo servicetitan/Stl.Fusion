@@ -15,7 +15,7 @@ public sealed class RpcMethodDef : MethodDef
     public bool HasObjectTypedArguments { get; }
     public bool NoWait { get; }
 
-    public RpcMethodDef(RpcServiceDef service, MethodInfo method, Func<RpcMethodDef, Symbol> methodNameBuilder)
+    public RpcMethodDef(RpcServiceDef service, MethodInfo method)
         : base(service.Type, method)
     {
         Hub = service.Hub;
@@ -43,7 +43,7 @@ public sealed class RpcMethodDef : MethodDef
         NoWait = UnwrappedReturnType == typeof(RpcNoWait);
 
         Service = service;
-        Name = methodNameBuilder.Invoke(this);
+        Name = Hub.Configuration.MethodNameBuilder.Invoke(this);
 
         if (!IsAsyncMethod)
             IsValid = false;

@@ -34,7 +34,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Stl\Stl.csproj" />
     <ProjectReference Include="..\..\src\Stl.CommandR\Stl.CommandR.csproj" />
-    <ProjectReference Include="..\..\src\Stl.CommandR.RegisterAttributes\Stl.CommandR.RegisterAttributes.csproj" />
     <ProjectReference Include="..\..\src\Stl.Interception\Stl.Interception.csproj" />
     <ProjectReference Include="..\..\src\Stl.Rpc\Stl.Rpc.csproj" />
     <ProjectReference Include="..\..\src\Stl.Redis\Stl.Redis.csproj" />

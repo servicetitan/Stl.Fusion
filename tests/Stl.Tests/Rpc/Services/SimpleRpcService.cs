@@ -8,7 +8,7 @@ public interface ISimpleRpcService
     Task Delay(TimeSpan duration, CancellationToken cancellationToken = default);
 }
 
-public interface ISimpleRpcServiceClient : ISimpleRpcService, IRpcClient
+public interface ISimpleRpcServiceClient : ISimpleRpcService, IRpcService
 { }
 
 public class SimpleRpcService : ISimpleRpcService

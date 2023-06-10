@@ -24,8 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Stl.Fusion\Stl.Fusion.csproj" />
-    <ProjectReference Include="..\Stl.Rpc\Stl.Rpc.csproj" />
+    <ProjectReference Include="..\Stl.Fusion.Ext.Services\Stl.Fusion.Ext.Services.csproj" />
+    <ProjectReference Include="..\Stl.Rpc.Server\Stl.Rpc.Server.csproj" />
   </ItemGroup>
 
 </Project>

@@ -71,7 +71,7 @@ public class RpcComputed<T> : ComputeMethodComputed<T>, IRpcComputed
         // to replica method.
         ComputedRegistry.Instance.PseudoUnregister(this);
         CancelTimeouts();
-        if (Function is IRpcReplicaMethodFunction fn)
+        if (Function is IRpcComputeMethodFunction fn)
             fn.OnInvalidated(this);
     }
 }

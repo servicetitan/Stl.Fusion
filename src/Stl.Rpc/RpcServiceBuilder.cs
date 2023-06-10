@@ -9,7 +9,7 @@ public sealed class RpcServiceBuilder
     public Type Type { get; }
     public Symbol Name { get; set; }
     public Type? ClientType { get; private set; }
-    public CustomResolver? ServerResolver { get; private set; }
+    public ServiceResolver? ServerResolver { get; private set; }
 
     public RpcServiceBuilder(RpcBuilder rpc, Type type, Symbol name = default)
     {
@@ -29,9 +29,9 @@ public sealed class RpcServiceBuilder
 
     public RpcServiceBuilder HasServer<TServer>()
         => HasServer(typeof(TServer));
-    public RpcServiceBuilder HasServer(CustomResolver? serverResolver = null)
+    public RpcServiceBuilder HasServer(ServiceResolver? serverResolver = null)
     {
-        serverResolver ??= CustomResolver.New(Type);
+        serverResolver ??= ServiceResolver.New(Type);
         if (!Type.IsAssignableFrom(serverResolver.Type))
             throw Errors.MustBeAssignableTo(serverResolver.Type, Type, nameof(serverResolver));
 

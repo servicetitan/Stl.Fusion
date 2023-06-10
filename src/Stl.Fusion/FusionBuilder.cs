@@ -1,17 +1,18 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Conversion;
-using Stl.Fusion.Authentication;
-using Stl.Fusion.Bridge;
-using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
 using Stl.Fusion.Multitenancy;
 using Stl.Fusion.Operations.Internal;
 using Stl.Fusion.Operations.Reprocessing;
-using Stl.Fusion.Rpc;
+using Stl.Fusion.Rpc.Cache;
+using Stl.Fusion.Rpc.Interception;
+using Stl.Fusion.Rpc.Internal;
 using Stl.Fusion.UI;
 using Stl.Interception;
 using Stl.Multitenancy;
+using Stl.Rpc;
+using Stl.Rpc.Infrastructure;
 using Stl.Versioning.Providers;
 
 namespace Stl.Fusion;
@@ -22,12 +23,14 @@ public readonly struct FusionBuilder
     private static readonly ServiceDescriptor AddedTagDescriptor = new(typeof(AddedTag), new AddedTag());
 
     public IServiceCollection Services { get; }
+    public RpcBuilder Rpc { get;}
 
     internal FusionBuilder(
         IServiceCollection services,
         Action<FusionBuilder>? configure)
     {
         Services = services;
+        Rpc = services.AddRpc();
         if (services.Contains(AddedTagDescriptor)) {
             configure?.Invoke(this);
             return;
@@ -106,6 +109,11 @@ public readonly struct FusionBuilder
             commander.AddHandlers<CompletionTerminator>();
         }
 
+        // Core authentication services
+        services.TryAddScoped<ISessionResolver>(c => new SessionResolver(c));
+        services.TryAddScoped(c => c.GetRequiredService<ISessionResolver>().Session);
+        services.TryAddSingleton<ISessionFactory>(_ => new SessionFactory());
+
         // Core multitenancy services
         services.TryAddSingleton<ITenantRegistry<Unit>>(_ => new SingleTenantRegistry<Unit>());
         services.TryAddSingleton<DefaultTenantResolver<Unit>.Options>();
@@ -115,56 +123,30 @@ public readonly struct FusionBuilder
         services.TryAddSingleton<ITenantRegistry>(c => c.GetRequiredService<ITenantRegistry<Unit>>());
         services.TryAddSingleton<ITenantResolver>(c => c.GetRequiredService<ITenantResolver<Unit>>());
 
+        // RPC
+
+        // Compute system calls service + call type
+        if (!Rpc.Configuration.Services.ContainsKey(typeof(IRpcComputeSystemCalls))) {
+            Rpc.Service<IRpcComputeSystemCalls>().HasServer<RpcComputeSystemCalls>().HasName(RpcComputeSystemCalls.Name);
+            services.AddSingleton(c => new RpcComputeSystemCalls(c));
+            services.AddSingleton(c => new RpcComputeSystemCallSender(c));
+            Rpc.Configuration.InboundCallTypes.Add(
+                RpcComputeCall.CallTypeId,
+                typeof(RpcInboundComputeCall<>));
+        }
+
+        // Compute call interceptor
+        services.TryAddSingleton(_ => new RpcComputeServiceInterceptor.Options());
+        services.TryAddSingleton(c => new RpcComputeServiceInterceptor(
+            c.GetRequiredService<RpcComputeServiceInterceptor.Options>(), c));
+
+        // Compute call cache
+        services.AddSingleton(c => (RpcComputedCache)new RpcNoComputedCache(c));
+
         configure?.Invoke(this);
     }
 
-    // AddRpc
-
-    public FusionRpcBuilder AddRpc()
-        => new(this, null);
-
-    public FusionBuilder AddRpc(Action<FusionRpcBuilder> configure)
-        => new FusionRpcBuilder(this, configure).Fusion;
-
-    // AddPublisher, AddReplicator
-
-    public FusionBuilder AddPublisher(
-        Func<IServiceProvider, PublisherOptions>? optionsFactory = null)
-    {
-        if (optionsFactory != null)
-            Services.AddSingleton(optionsFactory);
-        else
-            Services.TryAddSingleton(_ => new PublisherOptions());
-        Services.TryAddSingleton<IPublisher>(c => new Publisher(c.GetRequiredService<PublisherOptions>(), c));
-        return this;
-    }
-
-    public FusionBuilder AddReplicator(
-        Func<IServiceProvider, ReplicatorOptions>? optionsFactory = null)
-    {
-        var services = Services;
-        if (optionsFactory != null)
-            services.AddSingleton(optionsFactory);
-        else
-            services.TryAddSingleton(_ => new ReplicatorOptions());
-        if (services.HasService<IReplicator>())
-            return this;
-
-        // ReplicaCache
-        services.TryAddSingleton<ReplicaCache>(c => new NoReplicaCache(c));
-
-        // Interceptors
-        services.TryAddSingleton(_ => new ReplicaServiceInterceptor.Options());
-        services.TryAddSingleton(c => new ReplicaServiceInterceptor(
-            c.GetRequiredService<ReplicaServiceInterceptor.Options>(), c));
-
-        // Replicator
-        services.TryAddSingleton<IReplicator>(c => new Replicator(
-            c.GetRequiredService<ReplicatorOptions>(), c));
-        return this;
-    }
-
-    // AddComputeService
+    // ComputeService
 
     public FusionBuilder AddComputeService<TService>(
         ServiceLifetime lifetime = ServiceLifetime.Singleton)
@@ -207,13 +189,52 @@ public readonly struct FusionBuilder
         return this;
     }
 
-    // AddAuthentication
+    public FusionBuilder AddComputeServer<TService, TImplementation>(Symbol name = default)
+        => AddComputeServer(typeof(TService), typeof(TImplementation), name);
+    public FusionBuilder AddComputeServer(Type serviceType, Type implementationType, Symbol name = default)
+    {
+        AddComputeService(serviceType, implementationType);
+        Rpc.Service(serviceType).HasServer(implementationType).HasName(name);
+        return this;
+    }
 
-    public FusionAuthenticationBuilder AddAuthentication()
-        => new(this, null);
+    public FusionBuilder AddComputeClient<TService>(Symbol name = default)
+        => AddComputeClient(typeof(TService), name);
+    public FusionBuilder AddComputeClient(Type serviceType, Symbol name = default)
+    {
+        Rpc.Service(serviceType).HasName(name);
+        Services.AddSingleton(serviceType, c => {
+            var rpcHub = c.RpcHub();
+            var client = rpcHub.CreateClient(serviceType);
 
-    public FusionBuilder AddAuthentication(Action<FusionAuthenticationBuilder> configure)
-        => new FusionAuthenticationBuilder(this, configure).Fusion;
+            var replicaServiceInterceptor = c.GetRequiredService<RpcComputeServiceInterceptor>();
+            var clientProxy = Proxies.New(serviceType, replicaServiceInterceptor, client);
+            return clientProxy;
+        });
+        return this;
+    }
+
+    public FusionBuilder AddComputeRouter<TService, TServer>(Symbol name = default)
+        => AddComputeRouter(typeof(TService), typeof(TServer), name);
+    public FusionBuilder AddComputeRouter(Type serviceType, Type serverType, Symbol name = default)
+    {
+        AddComputeService(serviceType, serverType);
+        Services.AddSingleton(serviceType, c => {
+            var rpcHub = c.RpcHub();
+            var server = rpcHub.ServiceRegistry[serviceType].Server;
+            var client = rpcHub.CreateClient(serviceType);
+
+            var replicaServiceInterceptor = c.GetRequiredService<RpcComputeServiceInterceptor>();
+            var clientProxy = Proxies.New(serviceType, replicaServiceInterceptor, client);
+
+            var routingInterceptor = c.GetRequiredService<RpcRoutingInterceptor>();
+            var serviceDef = rpcHub.ServiceRegistry[serviceType];
+            routingInterceptor.Setup(serviceDef, server, clientProxy);
+            var routingProxy = Proxies.New(serviceType, routingInterceptor);
+            return routingProxy;
+        });
+        return this;
+    }
 
     // AddOperationReprocessor
 
