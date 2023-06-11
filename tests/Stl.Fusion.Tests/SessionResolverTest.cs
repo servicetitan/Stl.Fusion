@@ -3,7 +3,7 @@ using Stl.Generators;
 
 namespace Stl.Fusion.Tests;
 
-public class SessionProviderTest
+public class SessionResolverTest
 {
     [Fact]
     public void BasicTest()

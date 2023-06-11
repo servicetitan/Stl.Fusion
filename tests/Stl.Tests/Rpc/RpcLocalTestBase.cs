@@ -7,7 +7,7 @@ namespace Stl.Tests.Rpc;
 
 public abstract class RpcLocalTestBase : TestBase
 {
-    protected Symbol ServerPeerName { get; init; } = RpcServerPeer.FormatName("client");
+    protected Symbol ServerPeerId { get; init; } = RpcServerPeer.FormatId("client");
 
     protected RpcLocalTestBase(ITestOutputHelper @out) : base(@out) { }
 
@@ -26,8 +26,8 @@ public abstract class RpcLocalTestBase : TestBase
     protected virtual void StartServices(IServiceProvider services)
     {
         var channels = services.GetRequiredService<ChannelPair<RpcMessage>>();
-        var serverPeer = (RpcServerPeer)services.RpcHub().GetPeer(ServerPeerName);
-        serverPeer.SetChannel(channels.Channel1);
+        var serverPeer = (RpcServerPeer)services.RpcHub().GetPeer(ServerPeerId);
+        serverPeer.SetConnectionState(channels.Channel1);
     }
 
     protected virtual void ConfigureServices(ServiceCollection services)

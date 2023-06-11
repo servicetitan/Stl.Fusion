@@ -48,8 +48,8 @@ public class RpcWebSocketServer : IHasServices
 
         var query = context.Request.Query;
         var clientId = query[Settings.ClientIdParameterName];
-        var peerName = RpcServerPeer.FormatName(clientId);
-        if (RpcHub.GetPeer(peerName) is not RpcServerPeer peer)
+        var peerId = RpcServerPeer.FormatId(clientId);
+        if (RpcHub.GetPeer(peerId) is not RpcServerPeer peer)
             return HttpStatusCode.Unauthorized;
 
         var requestHeaders =
@@ -78,11 +78,11 @@ public class RpcWebSocketServer : IHasServices
 
         var query = context.Request.Query;
         var clientId = query[Settings.ClientIdParameterName];
-        var peerName = RpcServerPeer.FormatName(clientId);
-        if (RpcHub.GetPeer(peerName) is not RpcServerPeer peer)
+        var peerId = RpcServerPeer.FormatId(clientId);
+        if (RpcHub.GetPeer(peerId) is not RpcServerPeer peer)
             return;
 
-        peer.SetChannel(channel);
+        peer.SetConnectionState(channel);
         try {
             await channel.WhenClosed.ConfigureAwait(false);
         }

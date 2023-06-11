@@ -9,7 +9,7 @@ public class ClientAuthHelper : IHasServices
     public static string SchemasJavaScriptExpression { get; set; } = "window.FusionAuth.schemas";
 
     private IAuth? _auth;
-    private ISessionResolver? _sessionProvider;
+    private ISessionResolver? _sessionResolver;
     private ICommander? _commander;
     private IJSRuntime? _jsRuntime;
 
@@ -17,7 +17,7 @@ public class ClientAuthHelper : IHasServices
 
     public IServiceProvider Services { get; }
     public IAuth Auth => _auth ??= Services.GetRequiredService<IAuth>();
-    public ISessionResolver SessionResolver => _sessionProvider ??= Services.GetRequiredService<ISessionResolver>();
+    public ISessionResolver SessionResolver => _sessionResolver ??= Services.GetRequiredService<ISessionResolver>();
     public Session Session => SessionResolver.Session;
     public ICommander Commander => _commander ??= Services.Commander();
     public IJSRuntime JSRuntime => _jsRuntime ??= Services.GetRequiredService<IJSRuntime>();

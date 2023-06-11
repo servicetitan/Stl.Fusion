@@ -12,7 +12,6 @@ public class RpcWebSocketClient : RpcClient
     {
         public static Options Default { get; set; } = new();
 
-        public Func<IServiceProvider, string> ClientIdProvider { get; init; } = DefaultClientIdProvider;
         public Func<RpcWebSocketClient, RpcClientPeer, string> HostUrlResolver { get; init; } = DefaultHostUrlResolver;
         public Func<RpcWebSocketClient, RpcClientPeer, Uri> ConnectionUriResolver { get; init; } = DefaultConnectionUriResolver;
         public WebSocketChannel2<RpcMessage>.Options WebSocketChannelOptions { get; init; } = WebSocketChannel2<RpcMessage>.Options.Default;
@@ -20,23 +19,24 @@ public class RpcWebSocketClient : RpcClient
         public string RequestPath { get; init; } = "/rpc/ws";
         public string ClientIdParameterName { get; init; } = "clientId";
 
-        public static string DefaultClientIdProvider(IServiceProvider services)
-            => "c-" + RandomStringGenerator.Default.Next(32);
-
         public static string DefaultHostUrlResolver(RpcWebSocketClient client, RpcClientPeer peer)
-            => peer.Name.Value;
+            => peer.Id.Value;
 
         public static Uri DefaultConnectionUriResolver(RpcWebSocketClient client, RpcClientPeer peer)
         {
             var settings = client.Settings;
             var url = settings.HostUrlResolver.Invoke(client, peer).TrimSuffix("/");
-            if (url.StartsWith("http://", StringComparison.Ordinal))
-                url = "ws://" + url.Substring(7);
-            else if (url.StartsWith("https://", StringComparison.Ordinal))
-                url = "wss://" + url.Substring(8);
-            else
-                url = "wss://" + url;
-            url += settings.RequestPath;
+            var isWebSocketUrl = url.StartsWith("ws://", StringComparison.Ordinal)
+                || url.StartsWith("wss://", StringComparison.Ordinal);
+            if (!isWebSocketUrl) {
+                if (url.StartsWith("http://", StringComparison.Ordinal))
+                    url = "ws://" + url.Substring(7);
+                else if (url.StartsWith("https://", StringComparison.Ordinal))
+                    url = "wss://" + url.Substring(8);
+                else
+                    url = "wss://" + url;
+                url += settings.RequestPath;
+            }
 
             var uriBuilder = new UriBuilder(url);
             var queryTail = $"{settings.ClientIdParameterName}={UrlEncoder.Default.Encode(client.ClientId)}";
@@ -52,10 +52,7 @@ public class RpcWebSocketClient : RpcClient
 
     public RpcWebSocketClient(Options settings, IServiceProvider services)
         : base(services)
-    {
-        Settings = settings;
-        ClientId = settings.ClientIdProvider.Invoke(services);
-    }
+        => Settings = settings;
 
     public override async Task<Channel<RpcMessage>> GetChannel(RpcClientPeer peer, CancellationToken cancellationToken)
     {

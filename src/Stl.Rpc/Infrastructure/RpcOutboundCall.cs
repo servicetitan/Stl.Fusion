@@ -21,20 +21,24 @@ public abstract class RpcOutboundCall : RpcCall
         : base(context.MethodDef!)
         => Context = context;
 
-    public ValueTask Send(bool isRetry = false)
+    public async ValueTask Send()
     {
-        var peer = Context.Peer!;
         RpcMessage message;
-        if (Context.MethodDef!.NoWait)
+        var peer = Context.Peer!;
+        if (Context.MethodDef!.NoWait) {
             message = CreateMessage(Context.RelatedCallId);
-        else if (Id == 0) {
+            await peer.Send(message).ConfigureAwait(false);
+            return;
+        }
+
+        if (Id == 0) {
             Id = peer.Calls.NextId;
             message = CreateMessage(Id);
             peer.Calls.Outbound.TryAdd(Id, this);
         }
         else
             message = CreateMessage(Id);
-        return peer.Send(message, Context.CancellationToken);
+        await peer.TrySend(message).ConfigureAwait(false);
     }
 
     public virtual RpcMessage CreateMessage(long callId)

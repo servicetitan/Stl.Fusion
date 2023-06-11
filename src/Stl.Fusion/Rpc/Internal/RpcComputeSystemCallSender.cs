@@ -20,15 +20,14 @@ public sealed class RpcComputeSystemCallSender : RpcServiceBase
     public RpcComputeSystemCallSender(IServiceProvider services) : base(services)
     { }
 
-    public ValueTask Invalidate(RpcPeer peer, long callId, List<RpcHeader>? headers = null)
+    public async ValueTask Invalidate(RpcPeer peer, long callId, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
             RelatedCallId = callId,
         };
         // An optimized version of Client.Error(result):
-        var call = context.Bind(InvalidateMethodDef, ArgumentList.Empty)!;
-        var message = call.CreateMessage(callId);
-        return peer.Send(message, default);
+        var call = context.SetCall(InvalidateMethodDef, ArgumentList.Empty)!;
+        await call.Send().ConfigureAwait(false);
     }
 }

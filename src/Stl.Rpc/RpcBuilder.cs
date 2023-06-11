@@ -33,10 +33,12 @@ public readonly struct RpcBuilder
         services.TryAddSingleton(c => new RpcServiceRegistry(c));
         services.TryAddSingleton<RpcPeerFactory>(c => RpcPeerFactoryExt.Default(c.RpcHub()));
         services.TryAddSingleton(_ => RpcInboundContext.DefaultFactory);
-        services.TryAddSingleton<RpcPeerResolver>(c => {
+        services.TryAddSingleton<RpcCallRouter>(c => {
             var hub = c.RpcHub();
             return (_, _) => hub.GetPeer(Symbol.Empty);
         });
+        services.TryAddSingleton<RpcClientIdGenerator>();
+        services.TryAddSingleton<RpcErrorClassifier>();
 
         // Interceptors
         services.TryAddSingleton(_ => new RpcClientInterceptor.Options());

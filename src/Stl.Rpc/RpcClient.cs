@@ -10,11 +10,15 @@ public abstract class RpcClient : IHasServices
     protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     public IServiceProvider Services { get; }
-    public RpcHub RpcHub => _rpcHub ??= Services.GetRequiredService<RpcHub>();
-    public Symbol ClientId { get; init; } = default;
+    public RpcHub RpcHub { get; }
+    public string ClientId { get; init; }
 
     protected RpcClient(IServiceProvider services)
-        => Services = services;
+    {
+        Services = services;
+        RpcHub = services.RpcHub();
+        ClientId = RpcHub.ClientIdGenerator.Invoke();
+    }
 
     public abstract Task<Channel<RpcMessage>> GetChannel(RpcClientPeer peer, CancellationToken cancellationToken);
 }

@@ -5,25 +5,25 @@ namespace Stl.Rpc;
 
 public class RpcServerPeer : RpcPeer
 {
-    public static string NamePrefix { get; set; } = "@inbound-";
+    public static string IdPrefix { get; set; } = "@inbound-";
 
-    public static Symbol FormatName(string clientId)
+    public static Symbol FormatId(string clientId)
     {
         if (clientId.IsNullOrEmpty())
             throw new ArgumentOutOfRangeException(nameof(clientId));
 
-        return NamePrefix + clientId;
+        return IdPrefix + clientId;
     }
 
     public Symbol ClientId { get; init; }
     public TimeSpan CloseTimeout { get; init; } = TimeSpan.FromMinutes(1);
 
-    public RpcServerPeer(RpcHub hub, Symbol name) : base(hub, name)
+    public RpcServerPeer(RpcHub hub, Symbol id) : base(hub, id)
     {
-        if (!name.Value.StartsWith(NamePrefix, StringComparison.Ordinal))
-            throw new ArgumentOutOfRangeException(nameof(name));
+        if (!id.Value.StartsWith(IdPrefix, StringComparison.Ordinal))
+            throw new ArgumentOutOfRangeException(nameof(id));
 
-        ClientId = name.Value[NamePrefix.Length..];
+        ClientId = id.Value[IdPrefix.Length..];
         LocalServiceFilter = static serviceDef => !serviceDef.IsBackend;
     }
 
@@ -32,18 +32,18 @@ public class RpcServerPeer : RpcPeer
     protected override async Task<Channel<RpcMessage>> GetChannelOrReconnect(CancellationToken cancellationToken)
     {
         // ReSharper disable once InconsistentlySynchronizedField
-        var connectionState = GetConnectionState();
+        var connectionState = ConnectionState;
         while (true) {
             // ReSharper disable once MethodSupportsCancellation
             var whenNextConnectionState = connectionState.WhenNext();
             if (!whenNextConnectionState.IsCompleted) {
                 var (channel, error, _) = connectionState.Value;
                 if (error is OperationCanceledException) {
-                    Log.LogInformation("'{Name}': Connection cancelled, shutting down", Name);
+                    Log.LogInformation("'{Name}': Connection cancelled, shutting down", Id);
                     throw error;
                 }
-                if (error is ImpossibleToConnectException or TimeoutException) {
-                    Log.LogWarning(error, "'{Name}': Can't (re)connect, shutting down", Name);
+                if (error is ConnectionUnrecoverableException or TimeoutException) {
+                    Log.LogWarning(error, "'{Name}': Can't (re)connect, shutting down", Id);
                     throw error;
                 }
 

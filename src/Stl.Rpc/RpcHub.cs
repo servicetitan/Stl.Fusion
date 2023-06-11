@@ -10,18 +10,24 @@ public sealed class RpcHub : ProcessorBase, IHasServices
     private ILogger? _log;
     private RpcServiceRegistry? _serviceRegistry;
     private RpcPeerFactory? _peerFactory;
+    private IEnumerable<RpcPeerTracker>? _peerTrackers;
+    private RpcCallRouter? _peerResolver;
     private RpcInboundContextFactory? _inboundContextFactory;
     private RpcClientChannelProvider? _clientChannelProvider;
-    private RpcPeerResolver? _peerResolver;
+    private RpcClientIdGenerator? _clientIdGenerator;
     private RpcSystemCallSender? _systemCallSender;
+    private RpcErrorClassifier? _errorClassifier;
 
     private ILogger Log => _log ??= Services.LogFor(GetType());
 
     internal RpcPeerFactory PeerFactory => _peerFactory ??= Services.GetRequiredService<RpcPeerFactory>();
-    internal RpcPeerResolver PeerResolver => _peerResolver ??= Services.GetRequiredService<RpcPeerResolver>();
+    internal IEnumerable<RpcPeerTracker> PeerTrackers => _peerTrackers ??= Services.GetRequiredService<IEnumerable<RpcPeerTracker>>();
+    internal RpcCallRouter CallRouter => _peerResolver ??= Services.GetRequiredService<RpcCallRouter>();
     internal RpcInboundContextFactory InboundContextFactory => _inboundContextFactory ??= Services.GetRequiredService<RpcInboundContextFactory>();
     internal RpcClientChannelProvider ClientChannelProvider => _clientChannelProvider ??= Services.GetRequiredService<RpcClientChannelProvider>();
+    internal RpcClientIdGenerator ClientIdGenerator => _clientIdGenerator ??= Services.GetRequiredService<RpcClientIdGenerator>();
     internal RpcSystemCallSender SystemCallSender => _systemCallSender ??= Services.GetRequiredService<RpcSystemCallSender>();
+    internal RpcErrorClassifier ErrorClassifier => _errorClassifier ??= Services.GetRequiredService<RpcErrorClassifier>();
 
     public IServiceProvider Services { get; }
     public RpcConfiguration Configuration { get; }
@@ -65,20 +71,24 @@ public sealed class RpcHub : ProcessorBase, IHasServices
         return proxy;
     }
 
-    public RpcPeer GetPeer(Symbol name)
-        => Peers.GetOrAdd(name, CreatePeer);
+    public RpcPeer GetPeer(Symbol id)
+    {
+        while (true) {
+            var peer = Peers.GetOrAdd(id, CreatePeer);
+            if (peer.WhenRunning?.IsCompleted == false)
+                return peer;
+        }
+    }
 
     // Private methods
 
-    private RpcPeer CreatePeer(Symbol name)
+    private RpcPeer CreatePeer(Symbol id)
     {
         if (WhenDisposed != null)
             throw Errors.AlreadyDisposed();
 
-        var peer = PeerFactory.Invoke(name);
-        _ = peer.Run().ContinueWith(
-            _ => Peers.TryRemove(name, peer),
-            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+        var peer = PeerFactory.Invoke(id);
+        _ = peer.Run();
         return peer;
     }
 }

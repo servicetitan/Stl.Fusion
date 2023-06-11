@@ -13,8 +13,8 @@ public class UseDefaultSessionAttribute : ActionFilterAttribute
         foreach (var (_, argument) in actionContext.ActionArguments) {
             if (argument is ISessionCommand command && command.Session.IsDefault()) {
                 var services = actionContext.GetAppServices();
-                var sessionProvider = services.GetRequiredService<ISessionResolver>();
-                command.UseDefaultSession(sessionProvider);
+                var sessionResolver = services.GetRequiredService<ISessionResolver>();
+                command.UseDefaultSession(sessionResolver);
             }
         }
     }

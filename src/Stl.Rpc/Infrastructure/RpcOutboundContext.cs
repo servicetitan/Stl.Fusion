@@ -28,10 +28,10 @@ public sealed class RpcOutboundContext
     public RpcOutboundContext(List<RpcHeader>? headers = null)
         => Headers = headers ?? new();
 
-    public RpcOutboundCall? Bind(RpcMethodDef methodDef, ArgumentList arguments)
+    public RpcOutboundCall? SetCall(RpcMethodDef methodDef, ArgumentList arguments)
     {
         if (MethodDef != null)
-            throw Stl.Internal.Errors.AlreadyInvoked(nameof(Bind));
+            throw Stl.Internal.Errors.AlreadyInvoked(nameof(SetCall));
 
         // MethodDef, Arguments, CancellationToken
         MethodDef = methodDef;
@@ -40,7 +40,7 @@ public sealed class RpcOutboundContext
         CancellationToken = ctIndex >= 0 ? arguments.GetCancellationToken(ctIndex) : default;
 
         // Peer
-        Peer ??= MethodDef.Hub.PeerResolver.Invoke(methodDef, arguments);
+        Peer ??= MethodDef.Hub.CallRouter.Invoke(methodDef, arguments);
         if (Peer == null)
             return null;
 

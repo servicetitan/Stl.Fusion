@@ -36,16 +36,14 @@ public static class Errors
 
     public static Exception AlreadyConnected()
         => new InvalidOperationException($"This {nameof(RpcPeer)} is already connected.");
-    public static Exception ConnectionIsClosed()
-        => new InvalidOperationException("Connection is gracefully closed by peer.");
     public static Exception ConnectionTimeout()
         => new TimeoutException($"Connection time-out.");
     public static Exception ConnectionTimeout(TimeSpan timeout)
         => new TimeoutException($"Connection time-out ({timeout.ToShortString()}).");
     public static Exception ConnectionRetryLimitExceeded()
-        => new ImpossibleToConnectException("Can't reconnect: retry limit exceeded.");
-    public static Exception ImpossibleToReconnect()
-        => new ImpossibleToConnectException();
+        => new ConnectionUnrecoverableException("Can't reconnect: retry limit exceeded.");
+    public static Exception ConnectionUnrecoverable()
+        => new ConnectionUnrecoverableException();
 
     public static Exception NoCurrentRpcInboundContext()
         => new InvalidOperationException($"{nameof(RpcInboundContext)}.{nameof(RpcInboundContext.Current)} is unavailable.");

@@ -18,7 +18,7 @@ public class RpcClientInterceptor : RpcInterceptorBase
             RpcOutboundCall? call;
             Task sendTask;
             using (var scope = RpcOutboundContext.Use()) {
-                call = scope.Context.Bind(rpcMethodDef, invocation.Arguments);
+                call = scope.Context.SetCall(rpcMethodDef, invocation.Arguments);
                 sendTask = call?.Send().AsTask() ?? Task.CompletedTask;
             }
             if (call == null) {
