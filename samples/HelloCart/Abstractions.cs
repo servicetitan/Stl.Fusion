@@ -1,18 +1,26 @@
+using System.Runtime.Serialization;
+
 namespace Samples.HelloCart;
 
+[DataContract]
 public record Product : IHasId<string>
 {
-    public string Id { get; init; } = "";
-    public decimal Price { get; init; } = 0;
+    [DataMember] public string Id { get; init; } = "";
+    [DataMember] public decimal Price { get; init; } = 0;
 }
 
+[DataContract]
 public record Cart : IHasId<string>
 {
-    public string Id { get; init; } = "";
-    public ImmutableDictionary<string, decimal> Items { get; init; } = ImmutableDictionary<string, decimal>.Empty;
+    [DataMember] public string Id { get; init; } = "";
+    [DataMember] public ImmutableDictionary<string, decimal> Items { get; init; } = ImmutableDictionary<string, decimal>.Empty;
 }
 
-public record EditCommand<TValue>(string Id, TValue? Value = null) : ICommand<Unit>
+[DataContract]
+public record EditCommand<TValue>(
+    [property: DataMember] string Id,
+    [property: DataMember] TValue? Value = null
+    ) : ICommand<Unit>
     where TValue : class, IHasId<string>
 {
     public EditCommand(TValue value) : this(value.Id, value) { }

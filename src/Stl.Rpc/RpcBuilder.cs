@@ -56,6 +56,14 @@ public readonly struct RpcBuilder
         }
     }
 
+    public RpcBuilder UseWebSocketClient(string hostUrl)
+        => UseWebSocketClient(_ => hostUrl);
+
+    public RpcBuilder UseWebSocketClient(Func<IServiceProvider, string> hostUrlFactory)
+        => UseWebSocketClient(c => RpcWebSocketClient.Options.Default with {
+            HostUrlResolver = (_, _) => hostUrlFactory.Invoke(c),
+        });
+
     public RpcBuilder UseWebSocketClient(Func<IServiceProvider, RpcWebSocketClient.Options>? optionsFactory = null)
     {
         var services = Services;

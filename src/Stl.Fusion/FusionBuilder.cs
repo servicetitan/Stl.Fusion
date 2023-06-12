@@ -194,7 +194,7 @@ public readonly struct FusionBuilder
     public FusionBuilder AddComputeServer(Type serviceType, Type implementationType, Symbol name = default)
     {
         AddComputeService(serviceType, implementationType);
-        Rpc.Service(serviceType).HasServer(implementationType).HasName(name);
+        Rpc.Service(serviceType).HasServer(serviceType).HasName(name);
         return this;
     }
 
