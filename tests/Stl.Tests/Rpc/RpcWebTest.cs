@@ -28,6 +28,21 @@ public class RpcWebTest : RpbWebTestBase
     }
 
     [Fact]
+    public async Task CommandTest()
+    {
+        await using var _ = await WebHost.Serve();
+        var services = ClientServices;
+        var commander = services.Commander();
+        await commander.Call(new ISimpleRpcService.DummyCommand("ok"));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
+            () => commander.Call(new ISimpleRpcService.DummyCommand("error")));
+
+        var peer = services.RpcHub().GetPeer(ClientPeerId);
+        peer.Calls.Outbound.Count.Should().Be(0);
+        peer.Calls.Inbound.Count.Should().Be(0);
+    }
+
+    [Fact]
     public async Task DelayTest()
     {
         await using var _ = await WebHost.Serve();
@@ -102,11 +117,13 @@ public class RpcWebTest : RpbWebTestBase
     {
         base.ConfigureServices(services, isClient);
         var rpc = services.AddRpc();
+        var commander = services.AddCommander();
         if (isClient) {
+            commander.AddCommandService<ISimpleRpcServiceClient>();
             rpc.Service<ISimpleRpcService>().HasClient<ISimpleRpcServiceClient>();
         }
         else {
-            services.AddSingleton<SimpleRpcService>();
+            commander.AddCommandService<SimpleRpcService>();
             rpc.Service<ISimpleRpcService>().HasServer<SimpleRpcService>();
         }
     }

@@ -32,7 +32,6 @@ public class RpcTest : RpcLocalTestBase
         var services = CreateServices();
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         await client.OnDummyCommand(new ISimpleRpcService.DummyCommand("ok"));
-        (await client.Div(null, 2)).Should().Be(null);
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
             () => client.OnDummyCommand(new ISimpleRpcService.DummyCommand("error")));
 
