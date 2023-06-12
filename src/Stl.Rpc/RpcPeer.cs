@@ -217,6 +217,8 @@ public abstract class RpcPeer : WorkerBase
     private async ValueTask CompleteTrySend(Channel<RpcMessage> channel, RpcMessage message)
     {
         try {
+            // If we're here, WaitToWriteAsync call is required to continue
+            await channel.Writer.WaitToWriteAsync(StopToken).ConfigureAwait(false);
             while (!channel.Writer.TryWrite(message))
                 await channel.Writer.WaitToWriteAsync(StopToken).ConfigureAwait(false);
         }
