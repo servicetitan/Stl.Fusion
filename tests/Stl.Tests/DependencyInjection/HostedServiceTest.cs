@@ -1,15 +1,11 @@
-using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Memory;
 using Microsoft.Extensions.Hosting;
-using Stl.RegisterAttributes;
 
 namespace Stl.Tests.DependencyInjection;
 
 public class HostedServiceTest
 {
-    [RegisterService(Scope = nameof(HostedServiceTest))]
-    [RegisterHostedService(Scope = nameof(HostedServiceTest))]
     public class TestHostedService : IHostedService
     {
         public bool IsStarted { get; set; }
@@ -30,6 +26,14 @@ public class HostedServiceTest
     [Fact]
     public void BasicTest()
     {
+        var services = CreateServices();
+        var hostedServices = services.GetServices<IHostedService>().ToArray();
+        hostedServices.Length.Should().Be(1);
+        hostedServices[0].GetType().Should().Be(typeof(TestHostedService));
+    }
+
+    private static ServiceProvider CreateServices()
+    {
         var cfg = new ConfigurationBuilder()
             .Add(new MemoryConfigurationSource {
                 InitialData = new[] {
@@ -42,13 +46,11 @@ public class HostedServiceTest
 
         var services = new ServiceCollection()
             .AddSingleton(cfg)
-            .AddSingleton<IConfiguration>(cfg)
-            .UseRegisterAttributeScanner(nameof(HostedServiceTest))
-                .RegisterFrom(Assembly.GetExecutingAssembly())
-                .Services
-            .BuildServiceProvider();
-        var hostedServices = services.GetServices<IHostedService>().ToArray();
-        hostedServices.Length.Should().Be(1);
-        hostedServices[0].GetType().Should().Be(typeof(TestHostedService));
+            .AddSingleton<IConfiguration>(cfg);
+
+        services.AddSingleton<TestHostedService>();
+        services.AddHostedService<TestHostedService>();
+
+        return services.BuildServiceProvider();
     }
 }

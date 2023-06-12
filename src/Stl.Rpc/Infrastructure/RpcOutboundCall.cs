@@ -25,20 +25,16 @@ public abstract class RpcOutboundCall : RpcCall
     {
         RpcMessage message;
         var peer = Context.Peer!;
-        if (Context.MethodDef!.NoWait) {
+        if (Context.MethodDef!.NoWait)
             message = CreateMessage(Context.RelatedCallId);
-            await peer.Send(message).ConfigureAwait(false);
-            return;
-        }
-
-        if (Id == 0) {
+        else if (Id == 0) {
             Id = peer.Calls.NextId;
             message = CreateMessage(Id);
             peer.Calls.Outbound.TryAdd(Id, this);
         }
         else
             message = CreateMessage(Id);
-        await peer.TrySend(message).ConfigureAwait(false);
+        await peer.Send(message).ConfigureAwait(false);
     }
 
     public virtual RpcMessage CreateMessage(long callId)

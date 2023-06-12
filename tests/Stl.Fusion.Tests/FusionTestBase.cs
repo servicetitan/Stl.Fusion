@@ -76,10 +76,9 @@ public class FusionTestBase : TestBase, IAsyncLifetime
         Services = CreateServices();
         WebHost = Services.GetRequiredService<FusionTestWebHost>();
         ClientServices = CreateServices(true);
-        if (Options.UseLogging)
-            Log = (ILogger) Services.GetRequiredService(typeof(ILogger<>).MakeGenericType(GetType()));
-        else
-            Log = NullLogger.Instance;
+        Log = Options.UseLogging
+            ? Services.LogFor(GetType())
+            : NullLogger.Instance;
     }
 
     public override async Task InitializeAsync()

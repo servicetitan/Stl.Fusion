@@ -47,7 +47,7 @@ public class InMemoryReplicaCache : ReplicaCache
     protected override ValueTask SetInternal<T>(ComputeMethodInput input, Result<T>? output, CancellationToken cancellationToken)
     {
         if (!IsEnabled )
-            return ValueTaskExt.CompletedTask;
+            return default;
 
         var key = GetKey(input);
         if (output is { } vOutput) {
@@ -56,7 +56,7 @@ public class InMemoryReplicaCache : ReplicaCache
         }
         else
             Cache.Remove(key, out _);
-        return ValueTaskExt.CompletedTask;
+        return default;
     }
 
     // Private methods

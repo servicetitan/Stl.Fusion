@@ -30,7 +30,7 @@ public sealed class RpcServiceDef
         Type = source.Type;
         ServerResolver = source.ServerResolver;
         IsSystem = typeof(IRpcSystemService).IsAssignableFrom(Type);
-        IsBackend = hub.Configuration.BackendServiceDetector.Invoke(Type, name);
+        IsBackend = hub.BackendServiceDetector.Invoke(Type, name);
 
         _methods = new Dictionary<MethodInfo, RpcMethodDef>();
         _methodByName = new Dictionary<Symbol, RpcMethodDef>();

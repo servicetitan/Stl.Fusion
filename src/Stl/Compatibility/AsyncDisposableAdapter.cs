@@ -21,7 +21,7 @@ public readonly struct AsyncDisposableAdapter<T> : IAsyncDisposable
         if (Target is IAsyncDisposable ad)
             return ad.DisposeAsync();
         Target?.Dispose();
-        return ValueTaskExt.CompletedTask;
+        return default;
 #endif
     }
 

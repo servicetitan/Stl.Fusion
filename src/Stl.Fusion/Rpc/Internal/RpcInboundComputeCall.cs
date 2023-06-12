@@ -62,29 +62,29 @@ public class RpcInboundComputeCall<TResult> : RpcInboundCall<TResult>
     {
         var cts = CancellationTokenSource;
         if (cts == null) // Already completed or cancelled
-            return ValueTaskExt.CompletedTask;
+            return default;
 
         if (CancellationToken.IsCancellationRequested) {
             // Call is cancelled @ the outbound end or Peer is disposed
-            return ValueTaskExt.CompletedTask;
+            return default;
         }
 
         var computed = Computed;
         if (computed != null)
             ResultHeaders.Add(FusionRpcHeaders.Version with { Value = computed.Version.ToString() });
 
-        var systemCallSender = Hub.Internals.SystemCallSender;
+        var systemCallSender = Hub.InternalServices.SystemCallSender;
         return systemCallSender.Complete(Context.Peer, Id, Result, ResultHeaders);
     }
 
     public virtual ValueTask Invalidate()
     {
         if (!TryComplete(false))
-            return ValueTaskExt.CompletedTask;
+            return default;
 
         if (CancellationToken.IsCancellationRequested) {
             // Call is cancelled @ the outbound end or Peer is disposed, so there is nothing else to do
-            return ValueTaskExt.CompletedTask;
+            return default;
         }
 
         ResultHeaders.Clear();

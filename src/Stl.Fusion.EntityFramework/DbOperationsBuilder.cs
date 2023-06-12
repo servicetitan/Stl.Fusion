@@ -116,17 +116,15 @@ public readonly struct DbOperationsBuilder<TDbContext>
         Func<IServiceProvider, FileBasedDbOperationLogChangeTrackingOptions<TDbContext>>? optionsFactory = null)
     {
         var services = Services;
-        var isConfigured = services.HasService<FileBasedDbOperationLogChangeTracker<TDbContext>>();
-
-        if (optionsFactory != null)
-            services.AddSingleton(optionsFactory);
-        if (isConfigured)
+        services.AddSingleton(optionsFactory, _ => FileBasedDbOperationLogChangeTrackingOptions<TDbContext>.Default);
+        if (services.HasService<FileBasedDbOperationLogChangeTracker<TDbContext>>())
             return this;
 
-        services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
-        services.TryAddSingleton<FileBasedDbOperationLogChangeTracker<TDbContext>>();
-        services.TryAddSingleton<IDbOperationLogChangeTracker<TDbContext>>(c =>
-            c.GetRequiredService<FileBasedDbOperationLogChangeTracker<TDbContext>>());
+        services.AddSingleton(c => new FileBasedDbOperationLogChangeTracker<TDbContext>(
+            c.GetRequiredService<FileBasedDbOperationLogChangeTrackingOptions<TDbContext>>(), c));
+        services.AddAlias<
+            IDbOperationLogChangeTracker<TDbContext>,
+            FileBasedDbOperationLogChangeTracker<TDbContext>>();
         services.TryAddEnumerable(
             ServiceDescriptor.Singleton<
                 IOperationCompletionListener,

@@ -31,19 +31,21 @@ public readonly struct RpcBuilder
 
         // Common services
         services.TryAddSingleton(c => new RpcServiceRegistry(c));
-        services.TryAddSingleton<RpcPeerFactory>(c => RpcPeerFactoryExt.Default(c.RpcHub()));
-        services.TryAddSingleton(_ => RpcInboundContext.DefaultFactory);
-        services.TryAddSingleton<RpcCallRouter>(c => {
-            var hub = c.RpcHub();
-            return (_, _) => hub.GetPeer(Symbol.Empty);
-        });
-        services.TryAddSingleton<RpcClientIdGenerator>();
-        services.TryAddSingleton<RpcErrorClassifier>();
+        services.TryAddSingleton(_ => RpcDefaults.ServiceNameBuilder);
+        services.TryAddSingleton(_ => RpcDefaults.MethodNameBuilder);
+        services.TryAddSingleton(_ => RpcDefaults.PeerFactory);
+        services.TryAddSingleton(_ => RpcDefaults.CallRouter);
+        services.TryAddSingleton(_ => RpcDefaults.InboundContextFactory);
+        services.TryAddSingleton(_ => RpcDefaults.ArgumentSerializer);
+        services.TryAddSingleton(_ => RpcDefaults.ClientIdGenerator);
+        services.TryAddSingleton(_ => RpcDefaults.BackendServiceDetector);
+        services.TryAddSingleton(_ => RpcDefaults.UnrecoverableErrorDetector);
+        services.TryAddSingleton(_ => RpcDefaults.ClientChannelFactory);
 
         // Interceptors
-        services.TryAddSingleton(_ => new RpcClientInterceptor.Options());
+        services.TryAddSingleton(_ => RpcClientInterceptor.Options.Default);
         services.TryAddTransient(c => new RpcClientInterceptor(c.GetRequiredService<RpcClientInterceptor.Options>(), c));
-        services.TryAddSingleton(_ => new RpcRoutingInterceptor.Options());
+        services.TryAddSingleton(_ => RpcRoutingInterceptor.Options.Default);
         services.TryAddTransient(c => new RpcRoutingInterceptor(c.GetRequiredService<RpcRoutingInterceptor.Options>(), c));
 
         // System services
@@ -52,20 +54,19 @@ public readonly struct RpcBuilder
             services.TryAddSingleton(c => new RpcSystemCalls(c));
             services.TryAddSingleton(c => new RpcSystemCallSender(c));
         }
-
-        // WebSocket client
-        UseClientChannelProvider(c => {
-            var client = c.GetRequiredService<RpcClient>();
-            return client.GetChannel;
-        });
-        services.TryAddTransient(_ => new ClientWebSocket());
-        services.TryAddSingleton(_ => RpcWebSocketClient.Options.Default);
-        services.TryAddSingleton(c => (RpcClient)new RpcWebSocketClient(c.GetRequiredService<RpcWebSocketClient.Options>(), c));
     }
 
-    public RpcBuilder ConfigureWebSocketClient(Func<IServiceProvider, RpcWebSocketClient.Options> clientOptionsFactory)
+    public RpcBuilder UseWebSocketClient(Func<IServiceProvider, RpcWebSocketClient.Options>? optionsFactory = null)
     {
-        Services.AddSingleton(clientOptionsFactory);
+        var services = Services;
+        services.AddSingleton(optionsFactory, _ => RpcWebSocketClient.Options.Default);
+        if (services.HasService<RpcWebSocketClient>())
+            return this;
+
+        services.AddSingleton(c => new RpcWebSocketClient(
+            c.GetRequiredService<RpcWebSocketClient.Options>(), c));
+        services.AddAlias<RpcClient, RpcWebSocketClient>();
+        services.AddTransient(_ => new ClientWebSocket());
         return this;
     }
 
@@ -120,57 +121,6 @@ public readonly struct RpcBuilder
         Configuration.Services.Add(serviceType, service);
         return service;
     }
-
-    public RpcBuilder UseClientChannelProvider(RpcClientChannelProvider clientChannelProvider)
-    {
-        Services.AddSingleton(clientChannelProvider);
-        return this;
-    }
-
-    public RpcBuilder UseClientChannelProvider(Func<IServiceProvider, RpcClientChannelProvider> connectorFactory)
-    {
-        Services.AddSingleton(connectorFactory);
-        return this;
-    }
-
-    // The methods below seem kinda excessive
-    /*
-    public RpcBuilder HasPeerFactory(RpcPeerFactory peerFactory)
-    {
-        Services.AddSingleton(peerFactory);
-        return this;
-    }
-
-    public RpcBuilder HasPeerFactory(Func<IServiceProvider, RpcPeerFactory> peerFactoryFactory)
-    {
-        Services.AddSingleton(peerFactoryFactory);
-        return this;
-    }
-
-    public RpcBuilder HasPeerResolver(RpcPeerResolver peerResolver)
-    {
-        Services.AddSingleton(peerResolver);
-        return this;
-    }
-
-    public RpcBuilder HasPeerResolver(Func<IServiceProvider, RpcPeerResolver> peerResolverFactory)
-    {
-        Services.AddSingleton(peerResolverFactory);
-        return this;
-    }
-
-    public RpcBuilder HasInboundContextFactory(RpcInboundContextFactory inboundContextFactory)
-    {
-        Services.AddSingleton(inboundContextFactory);
-        return this;
-    }
-
-    public RpcBuilder HasInboundContextFactory(Func<IServiceProvider, RpcInboundContextFactory> inboundContextFactoryFactory)
-    {
-        Services.AddSingleton(inboundContextFactoryFactory);
-        return this;
-    }
-    */
 
     // Private methods
 

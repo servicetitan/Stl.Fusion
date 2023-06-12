@@ -9,30 +9,30 @@ public sealed class RpcHub : ProcessorBase, IHasServices
 {
     private ILogger? _log;
     private RpcServiceRegistry? _serviceRegistry;
-    private RpcPeerFactory? _peerFactory;
     private IEnumerable<RpcPeerTracker>? _peerTrackers;
-    private RpcCallRouter? _peerResolver;
-    private RpcInboundContextFactory? _inboundContextFactory;
-    private RpcClientChannelProvider? _clientChannelProvider;
-    private RpcClientIdGenerator? _clientIdGenerator;
+    private RpcClient? _client;
     private RpcSystemCallSender? _systemCallSender;
-    private RpcErrorClassifier? _errorClassifier;
 
     private ILogger Log => _log ??= Services.LogFor(GetType());
 
-    internal RpcPeerFactory PeerFactory => _peerFactory ??= Services.GetRequiredService<RpcPeerFactory>();
+    internal RpcServiceNameBuilder ServiceNameBuilder { get; }
+    internal RpcMethodNameBuilder MethodNameBuilder { get; }
+    internal RpcPeerFactory PeerFactory { get; }
+    internal RpcCallRouter CallRouter { get; }
+    internal RpcArgumentSerializer ArgumentSerializer { get; }
+    internal RpcInboundContextFactory InboundContextFactory { get; }
+    internal RpcClientChannelFactory ClientChannelFactory { get; }
+    internal RpcClientIdGenerator ClientIdGenerator { get; }
+    internal RpcBackendServiceDetector BackendServiceDetector { get; }
+    internal RpcUnrecoverableErrorDetector UnrecoverableErrorDetector { get; }
     internal IEnumerable<RpcPeerTracker> PeerTrackers => _peerTrackers ??= Services.GetRequiredService<IEnumerable<RpcPeerTracker>>();
-    internal RpcCallRouter CallRouter => _peerResolver ??= Services.GetRequiredService<RpcCallRouter>();
-    internal RpcInboundContextFactory InboundContextFactory => _inboundContextFactory ??= Services.GetRequiredService<RpcInboundContextFactory>();
-    internal RpcClientChannelProvider ClientChannelProvider => _clientChannelProvider ??= Services.GetRequiredService<RpcClientChannelProvider>();
-    internal RpcClientIdGenerator ClientIdGenerator => _clientIdGenerator ??= Services.GetRequiredService<RpcClientIdGenerator>();
     internal RpcSystemCallSender SystemCallSender => _systemCallSender ??= Services.GetRequiredService<RpcSystemCallSender>();
-    internal RpcErrorClassifier ErrorClassifier => _errorClassifier ??= Services.GetRequiredService<RpcErrorClassifier>();
+    internal RpcClient Client => _client ??= Services.GetRequiredService<RpcClient>();
 
     public IServiceProvider Services { get; }
     public RpcConfiguration Configuration { get; }
     public RpcServiceRegistry ServiceRegistry => _serviceRegistry ??= Services.GetRequiredService<RpcServiceRegistry>();
-    public RpcHubInternals Internals => new(this);
+    public RpcInternalServices InternalServices => new(this);
 
     public ConcurrentDictionary<Symbol, RpcPeer> Peers { get; } = new();
 
@@ -41,6 +41,18 @@ public sealed class RpcHub : ProcessorBase, IHasServices
         Services = services;
         Configuration = services.GetRequiredService<RpcConfiguration>();
         Configuration.Freeze();
+
+        // Delegates
+        ServiceNameBuilder = services.GetRequiredService<RpcServiceNameBuilder>();
+        MethodNameBuilder = services.GetRequiredService<RpcMethodNameBuilder>();
+        PeerFactory = services.GetRequiredService<RpcPeerFactory>();
+        CallRouter = services.GetRequiredService<RpcCallRouter>();
+        ArgumentSerializer = services.GetRequiredService<RpcArgumentSerializer>();
+        InboundContextFactory = services.GetRequiredService<RpcInboundContextFactory>();
+        ClientChannelFactory = services.GetRequiredService<RpcClientChannelFactory>();
+        ClientIdGenerator = services.GetRequiredService<RpcClientIdGenerator>();
+        BackendServiceDetector = services.GetRequiredService<RpcBackendServiceDetector>();
+        UnrecoverableErrorDetector = services.GetRequiredService<RpcUnrecoverableErrorDetector>();
     }
 
     protected override Task DisposeAsyncCore()
@@ -87,7 +99,7 @@ public sealed class RpcHub : ProcessorBase, IHasServices
         if (WhenDisposed != null)
             throw Errors.AlreadyDisposed();
 
-        var peer = PeerFactory.Invoke(id);
+        var peer = PeerFactory.Invoke(this, id);
         _ = peer.Run();
         return peer;
     }

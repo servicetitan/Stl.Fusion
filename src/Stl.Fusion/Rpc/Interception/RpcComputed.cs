@@ -54,7 +54,7 @@ public class RpcComputed<T> : ComputeMethodComputed<T>, IRpcComputed
 
         peer.Calls.Outbound.TryRemove(call.Id, call);
         if (!this.IsInvalidated()) {
-            var systemCallSender = peer.Hub.Internals.SystemCallSender;
+            var systemCallSender = peer.Hub.InternalServices.SystemCallSender;
             _ = systemCallSender.Cancel(peer, call.Id);
         }
     }

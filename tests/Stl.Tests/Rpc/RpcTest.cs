@@ -12,7 +12,6 @@ public class RpcTest : RpcLocalTestBase
     public async Task BasicTest()
     {
         var services = CreateServices();
-        var peer = services.RpcHub().GetPeer(default);
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         (await client.Div(6, 2)).Should().Be(3);
         (await client.Div(6, 2)).Should().Be(3);
@@ -21,6 +20,7 @@ public class RpcTest : RpcLocalTestBase
         await Assert.ThrowsAsync<DivideByZeroException>(
             () => client.Div(1, 0));
 
+        var peer = services.RpcHub().GetPeer(ClientPeerId);
         peer.Calls.Outbound.Count.Should().Be(0);
         peer.Calls.Inbound.Count.Should().Be(0);
     }
@@ -29,14 +29,14 @@ public class RpcTest : RpcLocalTestBase
     public async Task DelayTest()
     {
         var services = CreateServices();
-        var peer = services.RpcHub().GetPeer(default);
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         var startedAt = CpuTimestamp.Now;
         await client.Delay(TimeSpan.FromMilliseconds(200));
         startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(100, 500);
+
+        var peer = services.RpcHub().GetPeer(ClientPeerId);
         peer.Calls.Outbound.Count.Should().Be(0);
         peer.Calls.Inbound.Count.Should().Be(0);
-
         {
             using var cts = new CancellationTokenSource(1);
             startedAt = CpuTimestamp.Now;
@@ -67,7 +67,6 @@ public class RpcTest : RpcLocalTestBase
     public async Task PerformanceTest(int iterationCount)
     {
         var services = CreateServices();
-        var peer = services.RpcHub().GetPeer(default);
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         await client.Div(1, 1);
 
@@ -76,8 +75,9 @@ public class RpcTest : RpcLocalTestBase
             if (i != await client.Div(i, 1).ConfigureAwait(false))
                 Assert.Fail("Wrong result.");
         var elapsed = startedAt.Elapsed;
-
         Out.WriteLine($"{iterationCount}: {iterationCount / elapsed.TotalSeconds:F} ops/s");
+
+        var peer = services.RpcHub().GetPeer(ClientPeerId);
         peer.Calls.Outbound.Count.Should().Be(0);
         peer.Calls.Inbound.Count.Should().Be(0);
     }

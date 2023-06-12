@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
 using Stl.Locking;
 using Stl.Rpc;
+using Stl.Rpc.Clients;
+using Stl.Rpc.Server;
 using Stl.Testing.Collections;
 using Stl.Testing.Output;
 using Xunit.DependencyInjection.Logging;
@@ -16,7 +18,7 @@ public class RpcWebTestOptions
 public class RpbWebTestBase : TestBase, IAsyncLifetime
 {
     private static readonly ReentrantAsyncLock InitializeLock = new(LockReentryMode.CheckedFail);
-    protected static readonly ConcurrentDictionary<Symbol, string> ReplicaCache = new();
+    protected static readonly Symbol ClientPeerId = RpcDefaults.DefaultPeerId;
 
     public RpcWebTestOptions Options { get; }
     public bool IsLoggingEnabled { get; set; } = true;
@@ -33,10 +35,9 @@ public class RpbWebTestBase : TestBase, IAsyncLifetime
         Services = CreateServices();
         WebHost = Services.GetRequiredService<RpcTestWebHost>();
         ClientServices = CreateServices(true);
-        if (Options.UseLogging)
-            Log = Services.LogFor(GetType());
-        else
-            Log = NullLogger.Instance;
+        Log = Options.UseLogging
+            ? Services.LogFor(GetType())
+            : NullLogger.Instance;
     }
 
     public override async Task InitializeAsync()
@@ -67,7 +68,7 @@ public class RpbWebTestBase : TestBase, IAsyncLifetime
 
     protected IServiceProvider CreateServices(bool isClient = false)
     {
-        var services = (IServiceCollection) new ServiceCollection();
+        var services = (IServiceCollection)new ServiceCollection();
         ConfigureServices(services, isClient);
         return services.BuildServiceProvider();
     }
@@ -115,12 +116,11 @@ public class RpbWebTestBase : TestBase, IAsyncLifetime
             if (webHost == null)
                 webHost = new RpcTestWebHost(services);
             services.AddSingleton(_ => webHost);
+            // rpc.UseWebSocketServer(); // Not necessary - RpcTestWebHost already does this
         }
-        else {
-            var rpcClient = rpc.AddClient();
-            rpcClient.Configure(_ => RpcClient.Options.Default with {
-                HostUrlResolver = _ => WebHost.ServerUri.ToString(),
+        else
+            rpc.UseWebSocketClient(_ => RpcWebSocketClient.Options.Default with {
+                HostUrlResolver = (_, _) => WebHost.ServerUri.ToString(),
             });
-        }
     }
 }

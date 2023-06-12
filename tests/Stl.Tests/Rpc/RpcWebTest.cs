@@ -14,7 +14,7 @@ public class RpcWebTest : RpbWebTestBase
     {
         await using var _ = await WebHost.Serve();
         var services = ClientServices;
-        var peer = services.RpcHub().GetPeer(default);
+        var peer = services.RpcHub().GetPeer(ClientPeerId);
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         (await client.Div(6, 2)).Should().Be(3);
         (await client.Div(6, 2)).Should().Be(3);
@@ -32,7 +32,7 @@ public class RpcWebTest : RpbWebTestBase
     {
         await using var _ = await WebHost.Serve();
         var services = ClientServices;
-        var peer = services.RpcHub().GetPeer(default);
+        var peer = services.RpcHub().GetPeer(ClientPeerId);
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         var startedAt = CpuTimestamp.Now;
         await client.Delay(TimeSpan.FromMilliseconds(200));
@@ -64,12 +64,12 @@ public class RpcWebTest : RpbWebTestBase
     [Theory]
     [InlineData(100)]
     [InlineData(1000)]
-    [InlineData(2000)]
+    [InlineData(50_000)]
     public async Task PerformanceTest(int iterationCount)
     {
         await using var _ = await WebHost.Serve();
         var services = ClientServices;
-        var peer = services.RpcHub().GetPeer(default);
+        var peer = services.RpcHub().GetPeer(ClientPeerId);
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
 
         var threadCount = Math.Max(1, HardwareInfo.ProcessorCount);

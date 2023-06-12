@@ -1,9 +1,7 @@
 using Stl.Fusion.EntityFramework;
-using Stl.RegisterAttributes;
 
 namespace Stl.Tests.CommandR.Services;
 
-[RegisterService, RegisterCommandHandlers]
 public class UserService : DbServiceBase<TestDbContext>, ICommandService
 {
     public UserService(IServiceProvider services) : base(services) { }

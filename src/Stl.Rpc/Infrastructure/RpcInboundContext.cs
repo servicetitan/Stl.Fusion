@@ -6,8 +6,6 @@ public class RpcInboundContext
 {
     private static readonly AsyncLocal<RpcInboundContext?> CurrentLocal = new();
 
-    public static readonly RpcInboundContextFactory DefaultFactory =
-        static (peer, message, cancellationToken) => new RpcInboundContext(peer, message, cancellationToken);
     public static RpcInboundContext Current => CurrentLocal.Value
         ?? throw Errors.NoCurrentRpcInboundContext();
 

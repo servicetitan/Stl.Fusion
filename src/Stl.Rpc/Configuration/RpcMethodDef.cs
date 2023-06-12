@@ -43,7 +43,7 @@ public sealed class RpcMethodDef : MethodDef
         NoWait = UnwrappedReturnType == typeof(RpcNoWait);
 
         Service = service;
-        Name = Hub.Configuration.MethodNameBuilder.Invoke(this);
+        Name = Hub.MethodNameBuilder.Invoke(this);
 
         if (!IsAsyncMethod)
             IsValid = false;

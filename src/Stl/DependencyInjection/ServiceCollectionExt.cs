@@ -32,12 +32,52 @@ public static class ServiceCollectionExt
         return services;
     }
 
-    // Settings
+    // AddSingleton
+
+    public static IServiceCollection AddSingleton<TService>(
+        this IServiceCollection services,
+        Func<IServiceProvider, TService>? factory,
+        Func<IServiceProvider, TService> defaultFactory)
+        where TService : class
+    {
+        if (factory != null)
+            services.AddSingleton(factory);
+        else
+            services.TryAddSingleton(defaultFactory);
+        return services;
+    }
+
+    // AddAlias
+
+    public static IServiceCollection AddAlias<TAlias, TService>(
+        this IServiceCollection services,
+        ServiceLifetime lifetime = ServiceLifetime.Singleton)
+        where TAlias : class
+        where TService : class, TAlias
+    {
+        var descriptor = new ServiceDescriptor(typeof(TAlias), c => c.GetRequiredService<TService>(), lifetime);
+        services.Add(descriptor);
+        return services;
+    }
+
+    public static IServiceCollection TryAddAlias<TAlias, TService>(
+        this IServiceCollection services,
+        ServiceLifetime lifetime = ServiceLifetime.Singleton)
+        where TAlias : class
+        where TService : class, TAlias
+    {
+        var descriptor = new ServiceDescriptor(typeof(TAlias), c => c.GetRequiredService<TService>(), lifetime);
+        services.TryAdd(descriptor);
+        return services;
+    }
+
+    // AddSettings
 
     public static IServiceCollection AddSettings<TSettings>(
         this IServiceCollection services,
         string? sectionName = null)
         => services.AddSettings(typeof(TSettings), sectionName);
+
     public static IServiceCollection AddSettings(
         this IServiceCollection services,
         Type settingsType,

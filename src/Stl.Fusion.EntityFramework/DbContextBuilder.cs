@@ -59,10 +59,8 @@ public readonly struct DbContextBuilder<TDbContext>
         where TKey : notnull
         where TDbEntity : class
     {
-        if (optionsFactory != null)
-            Services.AddSingleton(optionsFactory);
-        else
-            Services.TryAddSingleton(_ => DbEntityResolver<TDbContext, TKey, TDbEntity>.Options.Default);
+        var services = Services;
+        services.AddSingleton(optionsFactory, _ => DbEntityResolver<TDbContext, TKey, TDbEntity>.Options.Default);
         Services.AddSingleton<IDbEntityResolver<TKey, TDbEntity>>(c => new DbEntityResolver<TDbContext, TKey, TDbEntity>(
             c.GetRequiredService<DbEntityResolver<TDbContext, TKey, TDbEntity>.Options>(), c));
         return this;
@@ -83,10 +81,8 @@ public readonly struct DbContextBuilder<TDbContext>
         where TKey : notnull
         where TDbEntity : class
     {
-        if (optionsFactory != null)
-            Services.AddSingleton(optionsFactory);
-        else
-            Services.TryAddSingleton(_ => DbEntityResolver<TDbContext, TKey, TDbEntity>.Options.Default);
+        var services = Services;
+        services.AddSingleton(optionsFactory, _ => DbEntityResolver<TDbContext, TKey, TDbEntity>.Options.Default);
         Services.TryAddSingleton<IDbEntityResolver<TKey, TDbEntity>>(c => new DbEntityResolver<TDbContext, TKey, TDbEntity>(
             c.GetRequiredService<DbEntityResolver<TDbContext, TKey, TDbEntity>.Options>(), c));
         return this;

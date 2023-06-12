@@ -27,7 +27,7 @@ public class RpcTestWebHost : TestWebHostBase
 
             // Since we copy all services here,
             // only web-related ones must be added to services
-            services.AddRpc().AddWebSocketServer();
+            services.AddRpc().UseWebSocketServer();
         });
     }
 

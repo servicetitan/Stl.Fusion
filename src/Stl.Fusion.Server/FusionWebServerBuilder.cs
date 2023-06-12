@@ -10,7 +10,9 @@ namespace Stl.Fusion.Server;
 public readonly struct FusionWebServerBuilder
 {
     private class AddedTag { }
+    private class ControllersAddedTag { }
     private static readonly ServiceDescriptor AddedTagDescriptor = new(typeof(AddedTag), new AddedTag());
+    private static readonly ServiceDescriptor ControllersAddedTagDescriptor = new(typeof(ControllersAddedTag), new ControllersAddedTag());
 
     public FusionBuilder Fusion { get; }
     public IServiceCollection Services => Fusion.Services;
@@ -28,7 +30,7 @@ public readonly struct FusionWebServerBuilder
 
         // We want above Contains call to run in O(1), so...
         services.Insert(0, AddedTagDescriptor);
-        fusion.Rpc.AddWebSocketServer();
+        fusion.Rpc.UseWebSocketServer();
 
         services.AddMvcCore(options => {
             var oldModelBinderProviders = options.ModelBinderProviders.ToList();
@@ -60,29 +62,27 @@ public readonly struct FusionWebServerBuilder
         configure?.Invoke(this);
     }
 
-    public FusionWebServerBuilder AddSessionMiddleware(
-        Func<IServiceProvider, SessionMiddleware.Options>? optionsFactory = null)
+    public FusionWebServerBuilder AddAuthentication(
+        Func<IServiceProvider, ServerAuthHelper.Options>? optionsFactory = null)
     {
-        if (optionsFactory != null)
-            Services.AddSingleton(optionsFactory);
-        else
-            Services.TryAddSingleton(_ => new SessionMiddleware.Options());
-        Services.TryAddScoped<SessionMiddleware>();
+        var services = Services;
+        services.AddSingleton(optionsFactory, _ => ServerAuthHelper.Options.Default);
+        if (services.HasService<ServerAuthHelper>())
+            return this;
+
+        services.AddScoped<ServerAuthHelper>();
+        services.AddSingleton<AuthSchemasCache>();
+        AddSessionMiddleware();
+        AddControllers();
         return this;
     }
 
-    public FusionWebServerBuilder AddAuthentication(
-        Func<IServiceProvider, ServerAuthHelper.Options>? serverAuthHelperOptionsFactory = null,
-        Func<IServiceProvider, SignInController.Options>? signInControllerOptionsFactory = null)
+    public FusionWebServerBuilder AddSessionMiddleware(
+        Func<IServiceProvider, SessionMiddleware.Options>? optionsFactory = null)
     {
         var services = Services;
-        AddControllers(signInControllerOptionsFactory);
-        if (serverAuthHelperOptionsFactory != null)
-            services.AddSingleton(serverAuthHelperOptionsFactory);
-        else
-            services.TryAddSingleton(_ => ServerAuthHelper.Options.Default);
-        services.TryAddScoped<ServerAuthHelper>();
-        services.TryAddSingleton<AuthSchemasCache>();
+        services.AddSingleton(optionsFactory, _ => SessionMiddleware.Options.Default);
+        Services.TryAddScoped<SessionMiddleware>();
         return this;
     }
 
@@ -90,15 +90,12 @@ public readonly struct FusionWebServerBuilder
         Func<IServiceProvider, SignInController.Options>? signInControllerOptionsFactory = null)
     {
         var services = Services;
-        var isAlreadyAdded = services.HasService<SignInController.Options>();
-        if (signInControllerOptionsFactory != null)
-            services.AddSingleton(signInControllerOptionsFactory);
-        if (isAlreadyAdded)
+        services.AddSingleton(signInControllerOptionsFactory, _ => SignInController.Options.Default);
+        if (services.Contains(ControllersAddedTagDescriptor))
             return this;
 
-        services.AddSingleton(_ => SignInController.Options.Default);
+        services.Add(ControllersAddedTagDescriptor);
         services.AddControllers().AddApplicationPart(typeof(SignInController).Assembly);
-
         return this;
     }
 

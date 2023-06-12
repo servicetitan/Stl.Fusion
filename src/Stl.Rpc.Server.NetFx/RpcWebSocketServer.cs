@@ -12,7 +12,7 @@ using WebSocketAccept = System.Action<
 
 namespace Stl.Rpc.Server;
 
-public class RpcWebSocketServer : IHasServices
+public class RpcWebSocketServer : RpcServiceBase
 {
     public record Options
     {
@@ -20,23 +20,14 @@ public class RpcWebSocketServer : IHasServices
 
         public string RequestPath { get; init; } = RpcWebSocketClient.Options.Default.RequestPath;
         public string ClientIdParameterName { get; init; } = RpcWebSocketClient.Options.Default.ClientIdParameterName;
-        public WebSocketChannel2<RpcMessage>.Options WebSocketChannelOptions { get; init; } = WebSocketChannel2<RpcMessage>.Options.Default;
+        public WebSocketChannel<RpcMessage>.Options WebSocketChannelOptions { get; init; } = WebSocketChannel<RpcMessage>.Options.Default;
     }
-
-    private ILogger? _log;
-    private RpcHub? _rpcHub;
-
-    protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     public Options Settings { get; }
-    public IServiceProvider Services { get; }
-    public RpcHub RpcHub => _rpcHub ??= Services.GetRequiredService<RpcHub>();
 
     public RpcWebSocketServer(Options settings, IServiceProvider services)
-    {
-        Settings = settings;
-        Services = services;
-    }
+        : base(services)
+        => Settings = settings;
 
     public HttpStatusCode HandleRequest(IOwinContext context)
     {
@@ -49,7 +40,7 @@ public class RpcWebSocketServer : IHasServices
         var query = context.Request.Query;
         var clientId = query[Settings.ClientIdParameterName];
         var peerId = RpcServerPeer.FormatId(clientId);
-        if (RpcHub.GetPeer(peerId) is not RpcServerPeer peer)
+        if (Hub.GetPeer(peerId) is not RpcServerPeer)
             return HttpStatusCode.Unauthorized;
 
         var requestHeaders =
@@ -74,12 +65,12 @@ public class RpcWebSocketServer : IHasServices
     {
         var cancellationToken = context.Request.CallCancelled;
         var webSocket = wsContext.WebSocket;
-        var channel = new WebSocketChannel2<RpcMessage>(Settings.WebSocketChannelOptions, webSocket, cancellationToken);
+        var channel = new WebSocketChannel<RpcMessage>(Settings.WebSocketChannelOptions, webSocket, cancellationToken);
 
         var query = context.Request.Query;
         var clientId = query[Settings.ClientIdParameterName];
         var peerId = RpcServerPeer.FormatId(clientId);
-        if (RpcHub.GetPeer(peerId) is not RpcServerPeer peer)
+        if (Hub.GetPeer(peerId) is not RpcServerPeer peer)
             return;
 
         peer.SetConnectionState(channel);

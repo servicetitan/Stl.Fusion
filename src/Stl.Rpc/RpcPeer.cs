@@ -27,7 +27,7 @@ public abstract class RpcPeer : WorkerBase
     {
         Hub = hub;
         Id = id;
-        ArgumentSerializer = Hub.Configuration.ArgumentSerializer;
+        ArgumentSerializer = Hub.ArgumentSerializer;
         LocalServiceFilter = null!; // To make sure any descendant has to set it
         InboundContextFactory = Hub.InboundContextFactory;
         Calls = new RpcCallRegistry(this);
@@ -41,26 +41,31 @@ public abstract class RpcPeer : WorkerBase
             var (oldChannel, oldError, _) = state;
             if (oldChannel == channel && oldError == error)
                 return;
-            if (oldError != null && Hub.ErrorClassifier.IsUnrecoverableError(oldError))
+            if (oldError != null && Hub.UnrecoverableErrorDetector.Invoke(oldError, StopToken))
                 return;
 
             var nextState = state.Next(channel, error);
             _connectionState = connectionState.CreateNext(nextState);
-            state.Channel?.Writer.TryComplete(error);
+            if (oldChannel != null)
+                oldChannel.Writer.TryComplete(error);
         }
 
         if (channel != null)
-            Log.LogInformation("'{Id}': Connected", Id);
+            Log.LogInformation("'{PeerId}': Connected", Id);
         else {
             if (error != null) {
-                var isTerminalError = Hub.ErrorClassifier.IsUnrecoverableError(error);
-                Log.LogWarning(error, isTerminalError
-                        ? "'{Id}': Can't (re)connect, will shut down"
-                        : "'{Id}': Disconnected",
-                    Id);
+                if (Hub.UnrecoverableErrorDetector.Invoke(error, StopToken)) {
+                    if (StopToken.IsCancellationRequested && error is OperationCanceledException) {
+                        Log.LogInformation("'{PeerId}': Can't (re)connect, will shut down: stopped", Id);
+                        return;
+                    }
+                }
+                Log.LogInformation(
+                    "'{PeerId}': Disconnected: {ErrorType}: {ErrorMessage}",
+                    Id, error.GetType().GetName(), error.Message);
             }
             else
-                Log.LogInformation("'{Id}': Disconnected", Id);
+                Log.LogInformation("'{PeerId}': Disconnected", Id);
         }
     }
 
@@ -75,7 +80,7 @@ public abstract class RpcPeer : WorkerBase
             var whenNextConnectionState = connectionState.WhenNext();
             if (!whenNextConnectionState.IsCompleted) {
                 var (channel, error, _) = connectionState.Value;
-                if (error != null && Hub.ErrorClassifier.IsUnrecoverableError(error))
+                if (error != null && Hub.UnrecoverableErrorDetector.Invoke(error, StopToken))
                     throw error;
 
                 if (channel != null)
@@ -86,21 +91,27 @@ public abstract class RpcPeer : WorkerBase
         }
     }
 
-    public async ValueTask<bool> TrySend(RpcMessage message)
+    public ValueTask Send(RpcMessage message)
     {
-        var channel = await GetChannel(default).ConfigureAwait(false);
+        // This method is optimized to run as quickly as possible,
+        // that's why it is a bit complicated.
+
+        var channelTask = GetChannel(default);
+        if (!channelTask.IsCompletedSuccessfully)
+            return CompleteTrySend(channelTask, message);
+
+#pragma warning disable VSTHRD103
+        var channel = channelTask.Result;
+#pragma warning restore VSTHRD103
         try {
-            await channel.Writer.WriteAsync(message).ConfigureAwait(false);
-            return ConnectionState.Value.Channel == channel;
+            if (channel.Writer.TryWrite(message))
+                return default;
+
+            return CompleteTrySend(channel, message);
         }
         catch (Exception) {
-            return false;
+            return default;
         }
-    }
-
-    public async ValueTask Send(RpcMessage message)
-    {
-        while (!await TrySend(message).ConfigureAwait(false)) { }
     }
 
     // Protected methods
@@ -124,13 +135,15 @@ public abstract class RpcPeer : WorkerBase
                     cancellationToken.ThrowIfCancellationRequested();
                     await call.Send().ConfigureAwait(false);
                 }
-
+                var channelReader = channel.Reader;
                 if (semaphore == null)
-                    await foreach (var message in channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false)) {
+                    while (await channelReader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
+                    while (channelReader.TryRead(out var message)) {
                         _ = ProcessMessage(message, null, cancellationToken);
                     }
                 else
-                    await foreach (var message in channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false)) {
+                    while (await channelReader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
+                    while (channelReader.TryRead(out var message)) {
                         if (Equals(message.Service, RpcSystemCalls.Name.Value)) {
                             // System calls are exempt from semaphore use
                             _ = ProcessMessage(message, null, cancellationToken);
@@ -144,7 +157,7 @@ public abstract class RpcPeer : WorkerBase
             }
             catch (Exception e) {
                 SetConnectionState(null, e);
-                if (Hub.ErrorClassifier.IsUnrecoverableError(e))
+                if (Hub.UnrecoverableErrorDetector.Invoke(e, StopToken))
                     throw;
             }
         }
@@ -152,7 +165,7 @@ public abstract class RpcPeer : WorkerBase
 
     protected override Task OnStart(CancellationToken cancellationToken)
     {
-        Log.LogInformation("'{Id}': Started", Id);
+        Log.LogInformation("'{PeerId}': Started", Id);
         foreach (var peerTracker in Hub.PeerTrackers)
             peerTracker.Invoke(this);
         return Task.CompletedTask;
@@ -162,7 +175,7 @@ public abstract class RpcPeer : WorkerBase
     {
         Hub.Peers.TryRemove(Id, this);
         _ = DisposeAsync();
-        Log.LogInformation("'{Id}': Stopped", Id);
+        Log.LogInformation("'{PeerId}': Stopped", Id);
         return Task.CompletedTask;
     }
 
@@ -183,5 +196,34 @@ public abstract class RpcPeer : WorkerBase
             scope.Dispose();
             semaphore?.Release();
         }
+    }
+
+    // Private methods
+
+    private async ValueTask CompleteTrySend(ValueTask<Channel<RpcMessage>> channelTask, RpcMessage message)
+    {
+        var channel = await channelTask.ConfigureAwait(false);
+        try {
+            while (!channel.Writer.TryWrite(message))
+                await channel.Writer.WaitToWriteAsync(StopToken).ConfigureAwait(false);
+        }
+#pragma warning disable RCS1075
+        catch (Exception) {
+            // Intended
+        }
+#pragma warning restore RCS1075
+    }
+
+    private async ValueTask CompleteTrySend(Channel<RpcMessage> channel, RpcMessage message)
+    {
+        try {
+            while (!channel.Writer.TryWrite(message))
+                await channel.Writer.WaitToWriteAsync(StopToken).ConfigureAwait(false);
+        }
+#pragma warning disable RCS1075
+        catch (Exception) {
+            // Intended
+        }
+#pragma warning restore RCS1075
     }
 }

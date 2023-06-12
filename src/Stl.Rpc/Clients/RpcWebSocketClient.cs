@@ -1,6 +1,5 @@
 using System.Net.WebSockets;
 using System.Text.Encodings.Web;
-using Stl.Generators;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.WebSockets;
 
@@ -14,7 +13,7 @@ public class RpcWebSocketClient : RpcClient
 
         public Func<RpcWebSocketClient, RpcClientPeer, string> HostUrlResolver { get; init; } = DefaultHostUrlResolver;
         public Func<RpcWebSocketClient, RpcClientPeer, Uri> ConnectionUriResolver { get; init; } = DefaultConnectionUriResolver;
-        public WebSocketChannel2<RpcMessage>.Options WebSocketChannelOptions { get; init; } = WebSocketChannel2<RpcMessage>.Options.Default;
+        public WebSocketChannel<RpcMessage>.Options WebSocketChannelOptions { get; init; } = WebSocketChannel<RpcMessage>.Options.Default;
         public TimeSpan ConnectTimeout { get; init; } = TimeSpan.FromSeconds(10);
         public string RequestPath { get; init; } = "/rpc/ws";
         public string ClientIdParameterName { get; init; } = "clientId";
@@ -61,7 +60,7 @@ public class RpcWebSocketClient : RpcClient
         await webSocket.ConnectAsync(uri, cancellationToken)
             .WaitAsync(Settings.ConnectTimeout, cancellationToken)
             .ConfigureAwait(false);
-        var channel = new WebSocketChannel2<RpcMessage>(Settings.WebSocketChannelOptions, webSocket);
+        var channel = new WebSocketChannel<RpcMessage>(Settings.WebSocketChannelOptions, webSocket);
         return channel;
     }
 }

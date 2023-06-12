@@ -61,7 +61,7 @@ public static class FusionBuilderExt
         var dbContext = services.AddDbContextServices<TDbContext>();
         dbContext.TryAddEntityResolver<string, TDbKeyValue>();
         fusion.AddComputeService<DbKeyValueStore<TDbContext, TDbKeyValue>>();
-        services.TryAddSingleton<IKeyValueStore>(c => c.GetRequiredService<DbKeyValueStore<TDbContext, TDbKeyValue>>());
+        services.TryAddAlias<IKeyValueStore, DbKeyValueStore<TDbContext, TDbKeyValue>>();
 
         // DbKeyValueTrimmer - hosted service!
         services.TryAddSingleton<DbKeyValueTrimmer<TDbContext, TDbKeyValue>.Options>();

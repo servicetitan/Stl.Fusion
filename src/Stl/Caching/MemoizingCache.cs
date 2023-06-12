@@ -20,6 +20,6 @@ public class MemoizingCache<TKey, TValue> : AsyncCacheBase<TKey, TValue>
             _dictionary[key] = v;
         else
             _dictionary.TryRemove(key, out _);
-        return ValueTaskExt.CompletedTask;
+        return default;
     }
 }

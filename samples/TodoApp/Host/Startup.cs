@@ -71,7 +71,7 @@ public class Startup
             }
         });
 
-        // ComputedService/ReplicaService/etc. type validation should be off in release 
+        // ComputedService/ReplicaService/etc. type validation should be off in release
 #if !DEBUG
         InterceptorBase.Options.Defaults.IsValidationEnabled = true;
 #endif
@@ -86,7 +86,7 @@ public class Startup
             DefaultIsolationLevel = IsolationLevel.RepeatableRead,
         });
         services.AddDbContextServices<AppDbContext>(db => {
-            // Uncomment if you'll be using AddRedisOperationLogChangeTracking 
+            // Uncomment if you'll be using AddRedisOperationLogChangeTracking
             // db.AddRedisDb("localhost", "Fusion.Samples.TodoApp");
             db.AddOperations(operations => {
                 operations.ConfigureOperationLogReader(_ => new() {
@@ -125,16 +125,7 @@ public class Startup
 
         // Fusion services
         var fusion = services.AddFusion();
-        var fusionServer = fusion.AddWebServer();
-        services.AddSingleton(new PublisherOptions() {
-            // Id = "p",
-            Id = $"p-{RandomStringGenerator.Default.Next(8)}",
-        });
-        services.AddSingleton(new WebSocketServer.Options() {
-            ConfigureWebSocket = () => new WebSocketAcceptContext() {
-                DangerousEnableCompression = true,
-            }
-        });
+        var fusionServer = fusion.AddWebServer().AddAuthentication();
 
         if (HostSettings.UseMultitenancy)
             fusionServer.AddSessionMiddleware(_ => new() {
@@ -267,7 +258,7 @@ public class Startup
             CultureInfo.CurrentUICulture = culture;
             await next().ConfigureAwait(false);
         });
-        
+
         // Static + Swagger
         app.UseBlazorFrameworkFiles();
         app.UseStaticFiles();

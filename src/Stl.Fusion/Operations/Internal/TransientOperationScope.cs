@@ -36,7 +36,7 @@ public sealed class TransientOperationScope : AsyncDisposableBase, IOperationSco
     {
         IsConfirmed ??= true;
         IsClosed = true;
-        return ValueTaskExt.CompletedTask;
+        return default;
     }
 
     protected override void Dispose(bool disposing)

@@ -20,11 +20,10 @@ public class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<RpcService
         : base(services)
     {
         var hub = Hub; // The implicit RpcHub resolution here freezes RpcConfiguration
-        var configuration = hub.Configuration;
-        foreach (var (_, service) in configuration.Services) {
+        foreach (var (_, service) in hub.Configuration.Services) {
             var name = service.Name;
             if (name.IsEmpty)
-                name = configuration.ServiceNameBuilder.Invoke(service.Type);
+                name = hub.ServiceNameBuilder.Invoke(service.Type);
 
             if (_serviceByName.TryGetValue(name, out var serviceDef))
                 throw Errors.ServiceNameConflict(service.Type, serviceDef.Type, name);

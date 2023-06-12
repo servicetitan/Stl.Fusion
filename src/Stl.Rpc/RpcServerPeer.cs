@@ -38,14 +38,8 @@ public class RpcServerPeer : RpcPeer
             var whenNextConnectionState = connectionState.WhenNext();
             if (!whenNextConnectionState.IsCompleted) {
                 var (channel, error, _) = connectionState.Value;
-                if (error is OperationCanceledException) {
-                    Log.LogInformation("'{Name}': Connection cancelled, shutting down", Id);
+                if (error != null && Hub.UnrecoverableErrorDetector.Invoke(error, StopToken))
                     throw error;
-                }
-                if (error is ConnectionUnrecoverableException or TimeoutException) {
-                    Log.LogWarning(error, "'{Name}': Can't (re)connect, shutting down", Id);
-                    throw error;
-                }
 
                 if (channel != null)
                     return channel;

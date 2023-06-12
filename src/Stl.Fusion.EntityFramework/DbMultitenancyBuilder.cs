@@ -81,7 +81,7 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
             services.AddPooledDbContextFactory<TDbContext>(
                 db => {
                     // This ensures logging settings from the main container
-                    // are applied to tenant DbContexts 
+                    // are applied to tenant DbContexts
                     var loggerFactory = c.GetService<ILoggerFactory>();
                     if (loggerFactory != null)
                         db.UseLoggerFactory(loggerFactory);
@@ -113,8 +113,8 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
 
     public DbMultitenancyBuilder<TDbContext> MakeDefault()
     {
-        Services.AddSingleton<ITenantRegistry>(c => c.GetRequiredService<ITenantRegistry<TDbContext>>());
-        Services.AddSingleton<ITenantResolver>(c => c.GetRequiredService<ITenantResolver<TDbContext>>());
+        Services.AddAlias<ITenantRegistry, ITenantRegistry<TDbContext>>();
+        Services.AddAlias<ITenantResolver, ITenantResolver<TDbContext>>();
         return this;
     }
 

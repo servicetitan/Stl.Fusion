@@ -113,11 +113,11 @@ public class RpcInboundCall<TResult> : RpcInboundCall
     public override ValueTask Complete()
     {
         if (!TryComplete(false))
-            return ValueTaskExt.CompletedTask;
+            return default;
 
         if (CancellationToken.IsCancellationRequested) {
             // Call is cancelled @ the outbound end or Peer is disposed
-            return ValueTaskExt.CompletedTask;
+            return default;
         }
 
         var systemCallSender = Hub.SystemCallSender;

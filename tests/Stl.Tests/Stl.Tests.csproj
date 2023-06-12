@@ -30,6 +30,11 @@
     <PackageReference Include="System.Drawing.Common" VersionOverride="$(SystemXxxVersion5)" />
     <PackageReference Include="Microsoft.CSharp" />
   </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+    <PackageReference Include="IndexRange" />
+    <PackageReference Include="System.Memory" />
+    <PackageReference Include="Microsoft.AspNet.WebApi.OwinSelfHost" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Stl\Stl.csproj" />
@@ -39,7 +44,6 @@
     <ProjectReference Include="..\..\src\Stl.Redis\Stl.Redis.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework\Stl.Fusion.EntityFramework.csproj" />
     <ProjectReference Include="..\..\src\Stl.Plugins\Stl.Plugins.csproj" />
-    <ProjectReference Include="..\..\src\Stl.RegisterAttributes\Stl.RegisterAttributes.csproj" />
     <ProjectReference Include="..\..\src\Stl.Testing\Stl.Testing.csproj" />
   </ItemGroup>
   <ItemGroup Condition="!$(TargetFramework.StartsWith('net4'))">

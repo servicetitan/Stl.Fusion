@@ -6,7 +6,7 @@ using Stl.Rpc.WebSockets;
 
 namespace Stl.Rpc.Server;
 
-public class RpcWebSocketServer : IHasServices
+public class RpcWebSocketServer : RpcServiceBase
 {
     public record Options
     {
@@ -14,26 +14,16 @@ public class RpcWebSocketServer : IHasServices
 
         public string RequestPath { get; init; } = RpcWebSocketClient.Options.Default.RequestPath;
         public string ClientIdParameterName { get; init; } = RpcWebSocketClient.Options.Default.ClientIdParameterName;
-        public WebSocketChannel2<RpcMessage>.Options WebSocketChannelOptions { get; init; } = WebSocketChannel2<RpcMessage>.Options.Default;
+        public WebSocketChannel<RpcMessage>.Options WebSocketChannelOptions { get; init; } = WebSocketChannel<RpcMessage>.Options.Default;
 #if NET6_0_OR_GREATER
         public Func<WebSocketAcceptContext> ConfigureWebSocket { get; init; } = () => new();
 #endif
     }
 
-    private ILogger? _log;
-    private RpcHub? _rpcHub;
-
-    protected ILogger Log => _log ??= Services.LogFor(GetType());
-
     public Options Settings { get; }
-    public IServiceProvider Services { get; }
-    public RpcHub RpcHub => _rpcHub ??= Services.GetRequiredService<RpcHub>();
-
     public RpcWebSocketServer(Options settings, IServiceProvider services)
-    {
-        Settings = settings;
-        Services = services;
-    }
+        : base(services)
+        => Settings = settings;
 
     public async Task HandleRequest(HttpContext context)
     {
@@ -46,7 +36,7 @@ public class RpcWebSocketServer : IHasServices
         var query = context.Request.Query;
         var clientId = query[Settings.ClientIdParameterName].SingleOrDefault() ?? "";
         var peerId = RpcServerPeer.FormatId(clientId);
-        if (RpcHub.GetPeer(peerId) is not RpcServerPeer peer) {
+        if (Hub.GetPeer(peerId) is not RpcServerPeer peer) {
             context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
             return;
         }
@@ -58,7 +48,7 @@ public class RpcWebSocketServer : IHasServices
         var acceptWebSocketTask = context.WebSockets.AcceptWebSocketAsync();
 #endif
         var webSocket = await acceptWebSocketTask.ConfigureAwait(false);
-        var channel = new WebSocketChannel2<RpcMessage>(Settings.WebSocketChannelOptions, webSocket, cancellationToken);
+        var channel = new WebSocketChannel<RpcMessage>(Settings.WebSocketChannelOptions, webSocket, cancellationToken);
 
         peer.SetConnectionState(channel);
         try {

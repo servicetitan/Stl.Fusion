@@ -5,6 +5,8 @@ namespace Stl.Fusion.EntityFramework.Operations;
 
 public record FileBasedDbOperationLogChangeTrackingOptions<TDbContext> : DbOperationCompletionTrackingOptions
 {
+    public static FileBasedDbOperationLogChangeTrackingOptions<TDbContext> Default { get; set; } = new();
+
     public Func<Tenant, FilePath> FilePathFactory { get; init; } = DefaultFilePathFactory;
 
     public static FilePath DefaultFilePathFactory(Tenant tenant)

@@ -38,7 +38,7 @@ public abstract class StatefulComponentBase : FusionComponentBase, IAsyncDisposa
     {
         if (UntypedState is IDisposable d)
             d.Dispose();
-        return ValueTaskExt.CompletedTask;
+        return default;
     }
 
     Task IHandleEvent.HandleEventAsync(EventCallbackWorkItem callback, object? arg)

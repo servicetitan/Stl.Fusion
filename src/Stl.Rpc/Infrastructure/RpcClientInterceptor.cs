@@ -5,7 +5,10 @@ namespace Stl.Rpc.Infrastructure;
 
 public class RpcClientInterceptor : RpcInterceptorBase
 {
-    public new record Options : RpcInterceptorBase.Options;
+    public new record Options : RpcInterceptorBase.Options
+    {
+        public static Options Default { get; set; } = new();
+    }
 
     public RpcClientInterceptor(Options options, IServiceProvider services)
         : base(options, services)
@@ -43,7 +46,7 @@ public class RpcClientInterceptor : RpcInterceptorBase
                             return;
 
                         // If we're here, we know the outgoing call is successfully cancelled.
-                        // We notify peer about that only in this case. 
+                        // We notify peer about that only in this case.
                         var peer1 = context1.Peer!;
                         var systemCallSender = peer1.Hub.SystemCallSender;
                         _ = systemCallSender.Cancel(peer1, call1.Id);

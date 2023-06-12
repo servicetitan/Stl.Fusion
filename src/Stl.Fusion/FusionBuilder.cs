@@ -120,8 +120,8 @@ public readonly struct FusionBuilder
         services.TryAddSingleton<ITenantResolver<Unit>>(c => new DefaultTenantResolver<Unit>(
             c.GetRequiredService<DefaultTenantResolver<Unit>.Options>(), c));
         // And make it default
-        services.TryAddSingleton<ITenantRegistry>(c => c.GetRequiredService<ITenantRegistry<Unit>>());
-        services.TryAddSingleton<ITenantResolver>(c => c.GetRequiredService<ITenantResolver<Unit>>());
+        services.TryAddAlias<ITenantRegistry, ITenantRegistry<Unit>>();
+        services.TryAddAlias<ITenantResolver, ITenantResolver<Unit>>();
 
         // RPC
 
@@ -247,17 +247,14 @@ public readonly struct FusionBuilder
         where TOperationReprocessor : class, IOperationReprocessor
     {
         var services = Services;
-        if (optionsFactory != null)
-            services.AddSingleton(optionsFactory);
-        else
-            services.TryAddSingleton<OperationReprocessorOptions>();
+        services.AddSingleton(optionsFactory, _ => OperationReprocessorOptions.Default);
+        if (services.HasService<TOperationReprocessor>())
+            return this;
 
-        if (!services.HasService<IOperationReprocessor>()) {
-            services.AddSingleton(TransientErrorDetector.DefaultPreferNonTransient.For<IOperationReprocessor>());
-            services.AddTransient<TOperationReprocessor>();
-            services.AddTransient<IOperationReprocessor>(c => c.GetRequiredService<TOperationReprocessor>());
-            services.AddCommander().AddHandlers<TOperationReprocessor>();
-        }
+        services.AddTransient<TOperationReprocessor>();
+        services.AddAlias<IOperationReprocessor, TOperationReprocessor>(ServiceLifetime.Transient);
+        services.AddCommander().AddHandlers<TOperationReprocessor>();
+        services.AddSingleton(TransientErrorDetector.DefaultPreferNonTransient.For<IOperationReprocessor>());
         return this;
     }
 
@@ -267,12 +264,11 @@ public readonly struct FusionBuilder
         Func<IServiceProvider, ComputedGraphPruner.Options>? optionsFactory = null)
     {
         var services = Services;
-        if (optionsFactory != null)
-            services.AddSingleton(optionsFactory);
-        else
-            services.TryAddSingleton(_ => new ComputedGraphPruner.Options());
+        services.AddSingleton(optionsFactory, _ => ComputedGraphPruner.Options.Default);
+        if (services.HasService<ComputedGraphPruner>())
+            return this;
 
-        services.TryAddSingleton(c => new ComputedGraphPruner(
+        services.AddSingleton(c => new ComputedGraphPruner(
             c.GetRequiredService<ComputedGraphPruner.Options>(), c));
         services.AddHostedService(c => c.GetRequiredService<ComputedGraphPruner>());
         return this;

@@ -10,7 +10,7 @@ public abstract class RpcInterceptorBase : InterceptorBase
 
     private RpcHub? _rpcHub;
 
-    public RpcHub RpcHub => _rpcHub ??= Services.RpcHub();
+    public RpcHub Hub => _rpcHub ??= Services.RpcHub();
     public RpcServiceDef ServiceDef { get; private set; } = null!;
 
     protected RpcInterceptorBase(Options options, IServiceProvider services)

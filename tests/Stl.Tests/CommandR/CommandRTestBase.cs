@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework;
 using Stl.IO;
-using Stl.RegisterAttributes;
 using Stl.Testing.Output;
 using Stl.Tests.CommandR.Services;
 using Xunit.DependencyInjection.Logging;
@@ -76,8 +75,15 @@ public class CommandRTestBase : TestBase
             });
         }
 
-        services.UseRegisterAttributeScanner()
-            .WithTypeFilter(GetType().Namespace!)
-            .RegisterFrom(GetType().Assembly);
+        services.AddSingleton<LogCommandHandler>();
+        commander.AddHandlers<LogCommandHandler>();
+
+        services.AddSingleton<LogEnterExitService>();
+        commander.AddHandlers<LogEnterExitService>();
+
+        services.AddSingleton<UserService>();
+        commander.AddHandlers<UserService>();
+
+        commander.AddCommandService<MathService>();
     }
 }

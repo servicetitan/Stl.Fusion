@@ -9,11 +9,6 @@ public class RpcConfiguration
     private readonly object _lock = new();
     private IDictionary<Type, RpcServiceBuilder> _services;
     private IDictionary<Symbol, Type> _inboundCallTypes;
-    private Func<Type, Symbol> _serviceNameBuilder = DefaultServiceNameBuilder;
-    private Func<RpcMethodDef, Symbol> _methodNameBuilder = DefaultMethodNameBuilder;
-    private Func<Type, Symbol, bool> _backendServiceDetector = DefaultBackendServiceDetector;
-
-    private RpcArgumentSerializer _argumentSerializer = RpcArgumentSerializer.Default;
 
     public bool IsFrozen { get; private set; }
 
@@ -35,48 +30,6 @@ public class RpcConfiguration
         }
     }
 
-    public Func<Type, Symbol> ServiceNameBuilder {
-        get => _serviceNameBuilder;
-        set {
-            if (IsFrozen)
-                throw Errors.AlreadyReadOnly<RpcConfiguration>();
-            _serviceNameBuilder = value;
-        }
-    }
-
-    public Func<RpcMethodDef, Symbol> MethodNameBuilder {
-        get => _methodNameBuilder;
-        set {
-            if (IsFrozen)
-                throw Errors.AlreadyReadOnly<RpcConfiguration>();
-            _methodNameBuilder = value;
-        }
-    }
-
-    public Func<Type, Symbol, bool> BackendServiceDetector {
-        get => _backendServiceDetector;
-        set {
-            if (IsFrozen)
-                throw Errors.AlreadyReadOnly<RpcConfiguration>();
-            _backendServiceDetector = value;
-        }
-    }
-
-    public RpcArgumentSerializer ArgumentSerializer {
-        get => _argumentSerializer;
-        set {
-            if (IsFrozen)
-                throw Errors.AlreadyReadOnly<RpcConfiguration>();
-            _argumentSerializer = value;
-        }
-    }
-
-    public static Symbol DefaultServiceNameBuilder(Type serviceType)
-        => serviceType.GetName();
-
-    public static Symbol DefaultMethodNameBuilder(RpcMethodDef methodDef)
-        => $"{methodDef.Method.Name}:{methodDef.RemoteParameterTypes.Length}";
-
     public RpcConfiguration()
     {
         _services = new Dictionary<Type, RpcServiceBuilder>();
@@ -84,10 +37,6 @@ public class RpcConfiguration
             { Symbol.Empty, typeof(RpcInboundCall<>) },
         };
     }
-
-    private static bool DefaultBackendServiceDetector(Type serviceType, Symbol serviceName)
-        => serviceType.Name.EndsWith("Backend", StringComparison.Ordinal)
-        || serviceName.Value.StartsWith("backend.", StringComparison.Ordinal);
 
     public void Freeze()
     {

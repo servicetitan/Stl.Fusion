@@ -5,14 +5,14 @@ namespace Stl.Rpc;
 
 public class RpcClientPeer : RpcPeer
 {
-    public RpcClientChannelProvider ChannelProvider { get; init; }
+    public RpcClientChannelFactory ChannelFactory { get; init; }
     public RetryDelaySeq ReconnectDelays { get; init; } = new();
     public int ReconnectRetryLimit { get; init; } = int.MaxValue;
 
     public RpcClientPeer(RpcHub hub, Symbol id) : base(hub, id)
     {
         LocalServiceFilter = static _ => false;
-        ChannelProvider = Hub.ClientChannelProvider;
+        ChannelFactory = Hub.ClientChannelFactory;
     }
 
     // Protected methods
@@ -23,29 +23,23 @@ public class RpcClientPeer : RpcPeer
         if (channel != null)
             return channel;
 
-        if (error != null && Hub.ErrorClassifier.IsUnrecoverableError(error))
+        if (error != null && Hub.UnrecoverableErrorDetector.Invoke(error, StopToken))
             throw error;
         if (tryIndex >= ReconnectRetryLimit) {
-            Log.LogWarning(error, "'{Name}': Reconnect retry limit exceeded", Id);
+            Log.LogWarning(error, "'{PeerId}': Reconnect retry limit exceeded", Id);
             throw Errors.ConnectionUnrecoverable();
         }
 
         if (tryIndex == 0)
-            Log.LogInformation("'{Name}': Connecting...", Id);
+            Log.LogInformation("'{PeerId}': Connecting...", Id);
         else  {
             var delay = ReconnectDelays[tryIndex];
             Log.LogInformation(
-                "'{Name}': Reconnecting (#{TryIndex}) after {Delay}...",
+                "'{PeerId}': Reconnecting (#{TryIndex}) after {Delay}...",
                 Id, tryIndex, delay.ToShortString());
             await Clock.Delay(delay, cancellationToken).ConfigureAwait(false);
         }
 
-        try {
-            return await ChannelProvider.Invoke(this, cancellationToken).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) {
-            Log.LogInformation("'{Name}': Connection cancelled", Id);
-            throw;
-        }
+        return await ChannelFactory.Invoke(this, cancellationToken).ConfigureAwait(false);
     }
 }
