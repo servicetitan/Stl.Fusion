@@ -29,11 +29,13 @@ public class RpcComputed<T> : ComputeMethodComputed<T>, IRpcComputed
             return;
         }
 
-        var whenInvalidatedAwaiter = call.WhenInvalidated.GetAwaiter();
-        if (whenInvalidatedAwaiter.IsCompleted)
+        var whenInvalidated = call.WhenInvalidated;
+        if (whenInvalidated.IsCompleted)
             Invalidate(true);
         else {
-            whenInvalidatedAwaiter.OnCompleted(() => Invalidate(true));
+            _ = whenInvalidated.ContinueWith(
+                _ => Invalidate(true),
+                CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
             StartAutoInvalidation();
         }
     }

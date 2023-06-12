@@ -136,9 +136,9 @@ public readonly struct FusionBuilder
         }
 
         // Compute call interceptor
-        services.TryAddSingleton(_ => new RpcComputeServiceInterceptor.Options());
-        services.TryAddSingleton(c => new RpcComputeServiceInterceptor(
-            c.GetRequiredService<RpcComputeServiceInterceptor.Options>(), c));
+        services.TryAddSingleton(_ => new RpcComputeClientInterceptor.Options());
+        services.TryAddSingleton(c => new RpcComputeClientInterceptor(
+            c.GetRequiredService<RpcComputeClientInterceptor.Options>(), c));
 
         // Compute call cache
         services.AddSingleton(c => (RpcComputedCache)new RpcNoComputedCache(c));
@@ -207,7 +207,7 @@ public readonly struct FusionBuilder
             var rpcHub = c.RpcHub();
             var client = rpcHub.CreateClient(serviceType);
 
-            var replicaServiceInterceptor = c.GetRequiredService<RpcComputeServiceInterceptor>();
+            var replicaServiceInterceptor = c.GetRequiredService<RpcComputeClientInterceptor>();
             var clientProxy = Proxies.New(serviceType, replicaServiceInterceptor, client);
             return clientProxy;
         });
@@ -224,7 +224,7 @@ public readonly struct FusionBuilder
             var server = rpcHub.ServiceRegistry[serviceType].Server;
             var client = rpcHub.CreateClient(serviceType);
 
-            var replicaServiceInterceptor = c.GetRequiredService<RpcComputeServiceInterceptor>();
+            var replicaServiceInterceptor = c.GetRequiredService<RpcComputeClientInterceptor>();
             var clientProxy = Proxies.New(serviceType, replicaServiceInterceptor, client);
 
             var routingInterceptor = c.GetRequiredService<RpcRoutingInterceptor>();

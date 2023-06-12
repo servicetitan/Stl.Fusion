@@ -19,10 +19,10 @@ public class RpcClientInterceptor : RpcInterceptorBase
         var rpcMethodDef = (RpcMethodDef)methodDef;
         return invocation => {
             RpcOutboundCall? call;
-            Task sendTask;
+            ValueTask sendTask;
             using (var scope = RpcOutboundContext.Use()) {
                 call = scope.Context.SetCall(rpcMethodDef, invocation.Arguments);
-                sendTask = call?.Send().AsTask() ?? Task.CompletedTask;
+                sendTask = call?.Send() ?? default(ValueTask);
             }
             if (call == null) {
                 // No call == no peer -> we invoke it locally
@@ -31,30 +31,10 @@ public class RpcClientInterceptor : RpcInterceptorBase
             }
 
             if (!rpcMethodDef.NoWait) {
-                _ = sendTask.ContinueWith(t => {
-                    if (!t.IsCompletedSuccessfully()) {
-                        // Send failed -> complete with an error
-                        call.TryCompleteWithError(t.ToResultSynchronously().Error!, null);
-                        return;
-                    }
-
-                    // Send succeeded -> wire up cancellation
-                    var ctr = call.Context.CancellationToken.Register(static state => {
-                        var call1 = (RpcOutboundCall)state!;
-                        var context1 = call1.Context;
-                        if (!call1.TryCompleteWithCancel(context1.CancellationToken, null))
-                            return;
-
-                        // If we're here, we know the outgoing call is successfully cancelled.
-                        // We notify peer about that only in this case.
-                        var peer1 = context1.Peer!;
-                        var systemCallSender = peer1.Hub.SystemCallSender;
-                        _ = systemCallSender.Cancel(peer1, call1.Id);
-                    }, call, false);
-                    _ = call.ResultTask.ContinueWith(
-                        _ => ctr.Dispose(),
-                        CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
-                }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+                if (sendTask.IsCompletedSuccessfully)
+                    CompleteSend(call);
+                else
+                    _ = CompleteSend(sendTask, call);
             }
 
             var resultTask = call.ResultTask;
@@ -66,5 +46,38 @@ public class RpcClientInterceptor : RpcInterceptorBase
                     : ((Task<T>)resultTask).ToValueTask();
 #pragma warning restore CA2012
         };
+    }
+
+    private static async Task CompleteSend(ValueTask sendTask, RpcOutboundCall call)
+    {
+        try {
+            await sendTask.ConfigureAwait(false);
+        }
+        catch (Exception error) {
+            // Should never happen, but
+            call.TryCompleteWithError(error, null);
+            return;
+        }
+        CompleteSend(call);
+    }
+
+    private static void CompleteSend(RpcOutboundCall call)
+    {
+        // Send succeeded -> wire up cancellation
+        var ctr = call.Context.CancellationToken.Register(static state => {
+            var call1 = (RpcOutboundCall)state!;
+            var context1 = call1.Context;
+            if (!call1.TryCompleteWithCancel(context1.CancellationToken, null))
+                return;
+
+            // If we're here, we know the outgoing call is successfully cancelled.
+            // We notify peer about that only in this case.
+            var peer1 = context1.Peer!;
+            var systemCallSender = peer1.Hub.SystemCallSender;
+            _ = systemCallSender.Cancel(peer1, call1.Id);
+        }, call, false);
+        _ = call.ResultTask.ContinueWith(
+            _ => ctr.Dispose(),
+            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
     }
 }

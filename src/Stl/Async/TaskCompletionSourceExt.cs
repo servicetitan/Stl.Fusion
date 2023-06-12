@@ -83,13 +83,17 @@ public static class TaskCompletionSourceExt
 
     public static Task SetFromTaskAsync<T>(this TaskCompletionSource<T> target, Task<T> task, CancellationToken cancellationToken = default)
     {
-        task.GetAwaiter().OnCompleted(() => target.SetFromTask(task, cancellationToken));
+        _ = task.ContinueWith(
+            t => target.SetFromTask(t, cancellationToken),
+            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
         return target.Task;
     }
 
     public static Task TrySetFromTaskAsync<T>(this TaskCompletionSource<T> target, Task<T> task, CancellationToken cancellationToken = default)
     {
-        task.GetAwaiter().OnCompleted(() => target.TrySetFromTask(task, cancellationToken));
+        _ = task.ContinueWith(
+            t => target.TrySetFromTask(t, cancellationToken),
+            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
         return target.Task;
     }
 

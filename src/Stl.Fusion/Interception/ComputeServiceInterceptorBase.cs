@@ -8,7 +8,7 @@ public abstract class ComputeServiceInterceptorBase : InterceptorBase
 {
     public new record Options : InterceptorBase.Options;
 
-    protected CommandServiceInterceptor CommandServiceInterceptor;
+    protected readonly CommandServiceInterceptor CommandServiceInterceptor;
 
     public ComputedOptionsProvider ComputedOptionsProvider { get; }
 
