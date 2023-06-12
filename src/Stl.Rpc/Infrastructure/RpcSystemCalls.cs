@@ -21,7 +21,7 @@ public class RpcSystemCalls : RpcServiceBase, IRpcSystemCalls, IRpcArgumentListT
 
     public Task<RpcNoWait> Ok(object? result)
     {
-        var context = RpcInboundContext.Current;
+        var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
         var outboundCallId = context.Message.CallId;
         if (peer.Calls.Outbound.TryGetValue(outboundCallId, out var outboundCall))
@@ -31,7 +31,7 @@ public class RpcSystemCalls : RpcServiceBase, IRpcSystemCalls, IRpcArgumentListT
 
     public Task<RpcNoWait> Error(ExceptionInfo error)
     {
-        var context = RpcInboundContext.Current;
+        var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
         var outboundCallId = context.Message.CallId;
         if (peer.Calls.Outbound.TryGetValue(outboundCallId, out var outboundCall))
@@ -41,7 +41,7 @@ public class RpcSystemCalls : RpcServiceBase, IRpcSystemCalls, IRpcArgumentListT
 
     public Task<RpcNoWait> Cancel()
     {
-        var context = RpcInboundContext.Current;
+        var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
         var inboundCallId = context.Message.CallId;
         if (peer.Calls.Inbound.TryGetValue(inboundCallId, out var inboundCall))

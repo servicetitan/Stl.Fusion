@@ -1,5 +1,6 @@
 using Stl.Rpc;
 using Stl.Testing.Collections;
+using Stl.Tests.Rpc.StlInterceptionProxies;
 
 namespace Stl.Tests.Rpc;
 
@@ -19,6 +20,21 @@ public class RpcTest : RpcLocalTestBase
         (await client.Div(null, 2)).Should().Be(null);
         await Assert.ThrowsAsync<DivideByZeroException>(
             () => client.Div(1, 0));
+
+        var peer = services.RpcHub().GetPeer(ClientPeerId);
+        peer.Calls.Outbound.Count.Should().Be(0);
+        peer.Calls.Inbound.Count.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task CommandTest()
+    {
+        var services = CreateServices();
+        var client = services.GetRequiredService<ISimpleRpcServiceClient>();
+        await client.OnDummyCommand(new ISimpleRpcService.DummyCommand("ok"));
+        (await client.Div(null, 2)).Should().Be(null);
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
+            () => client.OnDummyCommand(new ISimpleRpcService.DummyCommand("error")));
 
         var peer = services.RpcHub().GetPeer(ClientPeerId);
         peer.Calls.Outbound.Count.Should().Be(0);
@@ -85,7 +101,8 @@ public class RpcTest : RpcLocalTestBase
     protected override void ConfigureServices(ServiceCollection services)
     {
         base.ConfigureServices(services);
-        services.AddSingleton<SimpleRpcService>();
+        var commander = services.AddCommander();
+        commander.AddCommandService<SimpleRpcService>();
 
         var rpc = services.AddRpc();
         rpc.Service<ISimpleRpcService>()

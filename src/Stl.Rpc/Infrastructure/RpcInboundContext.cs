@@ -6,14 +6,16 @@ public class RpcInboundContext
 {
     private static readonly AsyncLocal<RpcInboundContext?> CurrentLocal = new();
 
-    public static RpcInboundContext Current => CurrentLocal.Value
-        ?? throw Errors.NoCurrentRpcInboundContext();
+    public static RpcInboundContext? Current => CurrentLocal.Value;
 
     public RpcPeer Peer { get; }
     public RpcMessage Message { get; }
     public CancellationToken CancellationToken { get; }
     public List<RpcHeader> Headers => Message.Headers;
     public RpcInboundCall Call { get; protected init; }
+
+    public static RpcInboundContext GetCurrent()
+        => CurrentLocal.Value ?? throw Errors.NoCurrentRpcInboundContext();
 
     public RpcInboundContext(RpcPeer peer, RpcMessage message, CancellationToken cancellationToken)
         : this(peer, message, cancellationToken, true)

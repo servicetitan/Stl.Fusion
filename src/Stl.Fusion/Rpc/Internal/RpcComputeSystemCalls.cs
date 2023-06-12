@@ -17,7 +17,7 @@ public class RpcComputeSystemCalls : RpcServiceBase, IRpcComputeSystemCalls
 
     public Task<RpcNoWait> Invalidate()
     {
-        var context = RpcInboundContext.Current;
+        var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
         var outboundCallId = context.Message.CallId;
         if (peer.Calls.Outbound.TryGetValue(outboundCallId, out var c) && c is IRpcOutboundComputeCall outboundCall)
