@@ -137,7 +137,7 @@ public readonly struct FusionBuilder
 
         // Compute call interceptor
         services.TryAddSingleton(_ => new RpcComputeClientInterceptor.Options());
-        services.TryAddSingleton(c => new RpcComputeClientInterceptor(
+        services.TryAddTransient(c => new RpcComputeClientInterceptor(
             c.GetRequiredService<RpcComputeClientInterceptor.Options>(), c));
 
         // Compute call cache
@@ -149,22 +149,26 @@ public readonly struct FusionBuilder
     // ComputeService
 
     public FusionBuilder AddComputeService<TService>(
-        ServiceLifetime lifetime = ServiceLifetime.Singleton)
+        ServiceLifetime lifetime = ServiceLifetime.Singleton,
+        bool addCommandHandlers = true)
         where TService : class, IComputeService
-        => AddComputeService(typeof(TService), typeof(TService), lifetime);
+        => AddComputeService(typeof(TService), typeof(TService), lifetime, addCommandHandlers);
     public FusionBuilder AddComputeService<TService, TImplementation>(
-        ServiceLifetime lifetime = ServiceLifetime.Singleton)
+        ServiceLifetime lifetime = ServiceLifetime.Singleton,
+        bool addCommandHandlers = true)
         where TService : class
         where TImplementation : class, TService, IComputeService
-        => AddComputeService(typeof(TService), typeof(TImplementation), lifetime);
+        => AddComputeService(typeof(TService), typeof(TImplementation), lifetime, addCommandHandlers);
 
     public FusionBuilder AddComputeService(
         Type serviceType,
-        ServiceLifetime lifetime = ServiceLifetime.Singleton)
-        => AddComputeService(serviceType, serviceType, lifetime);
+        ServiceLifetime lifetime = ServiceLifetime.Singleton,
+        bool addCommandHandlers = true)
+        => AddComputeService(serviceType, serviceType, lifetime, addCommandHandlers);
     public FusionBuilder AddComputeService(
         Type serviceType, Type implementationType,
-        ServiceLifetime lifetime = ServiceLifetime.Singleton)
+        ServiceLifetime lifetime = ServiceLifetime.Singleton,
+        bool addCommandHandlers = true)
     {
         if (!serviceType.IsAssignableFrom(implementationType))
             throw new ArgumentOutOfRangeException(nameof(implementationType));
@@ -185,7 +189,8 @@ public readonly struct FusionBuilder
 
         var descriptor = new ServiceDescriptor(serviceType, Factory, lifetime);
         Services.Add(descriptor);
-        Services.AddCommander().AddHandlers(serviceType, implementationType);
+        if (addCommandHandlers)
+            Services.AddCommander().AddHandlers(serviceType, implementationType);
         return this;
     }
 
@@ -202,15 +207,17 @@ public readonly struct FusionBuilder
         => AddComputeClient(typeof(TService), name);
     public FusionBuilder AddComputeClient(Type serviceType, Symbol name = default)
     {
-        Rpc.Service(serviceType).HasName(name);
+        Rpc.AddClient(serviceType);
         Services.AddSingleton(serviceType, c => {
             var rpcHub = c.RpcHub();
             var client = rpcHub.CreateClient(serviceType);
 
-            var replicaServiceInterceptor = c.GetRequiredService<RpcComputeClientInterceptor>();
-            var clientProxy = Proxies.New(serviceType, replicaServiceInterceptor, client);
+            var clientInterceptor = c.GetRequiredService<RpcComputeClientInterceptor>();
+            clientInterceptor.Setup(rpcHub.ServiceRegistry[serviceType]);
+            var clientProxy = Proxies.New(serviceType, clientInterceptor, client);
             return clientProxy;
         });
+        Services.AddCommander().AddHandlers(serviceType);
         return this;
     }
 
@@ -218,14 +225,16 @@ public readonly struct FusionBuilder
         => AddComputeRouter(typeof(TService), typeof(TServer), name);
     public FusionBuilder AddComputeRouter(Type serviceType, Type serverType, Symbol name = default)
     {
-        AddComputeService(serviceType, serverType);
+        Rpc.AddClient(serviceType);
+        AddComputeService(serverType, ServiceLifetime.Singleton, false);
         Services.AddSingleton(serviceType, c => {
             var rpcHub = c.RpcHub();
             var server = rpcHub.ServiceRegistry[serviceType].Server;
             var client = rpcHub.CreateClient(serviceType);
 
-            var replicaServiceInterceptor = c.GetRequiredService<RpcComputeClientInterceptor>();
-            var clientProxy = Proxies.New(serviceType, replicaServiceInterceptor, client);
+            var clientInterceptor = c.GetRequiredService<RpcComputeClientInterceptor>();
+            clientInterceptor.Setup(rpcHub.ServiceRegistry[serviceType]);
+            var clientProxy = Proxies.New(serviceType, clientInterceptor, client);
 
             var routingInterceptor = c.GetRequiredService<RpcRoutingInterceptor>();
             var serviceDef = rpcHub.ServiceRegistry[serviceType];
@@ -233,6 +242,7 @@ public readonly struct FusionBuilder
             var routingProxy = Proxies.New(serviceType, routingInterceptor);
             return routingProxy;
         });
+        Services.AddCommander().AddHandlers(serviceType);
         return this;
     }
 
