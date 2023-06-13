@@ -1,7 +1,5 @@
-using Stl.Fusion.Client;
 using Stl.Fusion.UI;
 using Templates.TodoApp.Abstractions;
-using Templates.TodoApp.Abstractions.Clients;
 using static System.Console;
 
 Write("Enter SessionId to use: ");

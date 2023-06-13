@@ -80,22 +80,22 @@ public readonly struct RpcBuilder
 
     // Share, Connect, Route
 
-    public RpcBuilder AddServer<TService>(RpcServiceMode mode, Symbol name = default)
+    public RpcBuilder AddService<TService>(RpcServiceMode mode, Symbol name = default)
         where TService : class
-        => AddServer(typeof(TService), mode, name);
-    public RpcBuilder AddServer<TService, TServer>(RpcServiceMode mode, Symbol name = default)
+        => AddService(typeof(TService), mode, name);
+    public RpcBuilder AddService<TService, TServer>(RpcServiceMode mode, Symbol name = default)
         where TService : class
         where TServer : class, TService
-        => AddServer(typeof(TService), typeof(TServer), mode, name);
-    public RpcBuilder AddServer(Type serviceType, RpcServiceMode mode, Symbol name = default)
-        => AddServer(serviceType, serviceType, mode, name);
-    public RpcBuilder AddServer(Type serviceType, Type serverType, RpcServiceMode mode, Symbol name = default)
+        => AddService(typeof(TService), typeof(TServer), mode, name);
+    public RpcBuilder AddService(Type serviceType, RpcServiceMode mode, Symbol name = default)
+        => AddService(serviceType, serviceType, mode, name);
+    public RpcBuilder AddService(Type serviceType, Type serverType, RpcServiceMode mode, Symbol name = default)
         => mode switch {
             RpcServiceMode.Server => AddServer(serviceType, serverType, name),
             RpcServiceMode.Router => AddRouter(serviceType, serverType, name),
             RpcServiceMode.ServingRouter => AddRouter(serviceType, serverType).AddServer(serviceType, name),
             RpcServiceMode.RoutingServer => AddRouter(serviceType, serverType).AddServer(serviceType, serverType, name),
-            _ => this,
+            _ => Service(serverType).HasName(name).Rpc,
         };
 
     public RpcBuilder AddServer<TService>(Symbol name = default)
@@ -153,7 +153,6 @@ public readonly struct RpcBuilder
         => serviceType == serverType
             ? throw new ArgumentOutOfRangeException(nameof(serverType))
             : AddRouter(serviceType, ServiceResolver.New(serverType), name);
-
     public RpcBuilder AddRouter(Type serviceType, ServiceResolver serverResolver, Symbol name = default)
     {
         if (!serviceType.IsInterface)
