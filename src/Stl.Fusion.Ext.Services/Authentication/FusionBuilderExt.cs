@@ -63,9 +63,9 @@ public static class FusionBuilderExt
             throw Errors.MustImplement(implementationType, serverSideServiceType, nameof(implementationType));
 
         if (expose)
-            fusion.AddComputeServer(typeof(IAuth), implementationType);
+            fusion.AddServer(typeof(IAuth), implementationType);
         else
-            fusion.AddComputeService(typeof(IAuth), implementationType);
+            fusion.AddService(typeof(IAuth), implementationType);
         services.AddSingleton(c => (IAuthBackend)c.GetRequiredService(implementationType));
         return fusion;
     }

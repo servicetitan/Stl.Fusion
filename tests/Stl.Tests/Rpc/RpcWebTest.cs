@@ -119,12 +119,12 @@ public class RpcWebTest : RpbWebTestBase
         var rpc = services.AddRpc();
         var commander = services.AddCommander();
         if (isClient) {
+            rpc.AddClient<ISimpleRpcService, ISimpleRpcServiceClient>();
             commander.AddCommandService<ISimpleRpcServiceClient>();
-            rpc.Service<ISimpleRpcService>().HasClient<ISimpleRpcServiceClient>();
         }
         else {
+            rpc.AddServer<ISimpleRpcService, SimpleRpcService>();
             commander.AddCommandService<SimpleRpcService>();
-            rpc.Service<ISimpleRpcService>().HasServer<SimpleRpcService>();
         }
     }
 }

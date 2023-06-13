@@ -19,9 +19,9 @@ public static class FusionBuilderExt
         var services = fusion.Services;
         services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
         if (expose)
-            fusion.AddComputeServer<ISandboxedKeyValueStore, SandboxedKeyValueStore>();
+            fusion.AddServer<ISandboxedKeyValueStore, SandboxedKeyValueStore>();
         else
-            fusion.AddComputeService<ISandboxedKeyValueStore, SandboxedKeyValueStore>();
+            fusion.AddService<ISandboxedKeyValueStore, SandboxedKeyValueStore>();
         return fusion;
     }
 
@@ -32,7 +32,7 @@ public static class FusionBuilderExt
     {
         var services = fusion.Services;
         services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
-        fusion.AddComputeService<IKeyValueStore, InMemoryKeyValueStore>();
+        fusion.AddService<IKeyValueStore, InMemoryKeyValueStore>();
         services.AddHostedService(c => (InMemoryKeyValueStore)c.GetRequiredService<IKeyValueStore>());
         return fusion;
     }
@@ -60,7 +60,7 @@ public static class FusionBuilderExt
 
         var dbContext = services.AddDbContextServices<TDbContext>();
         dbContext.TryAddEntityResolver<string, TDbKeyValue>();
-        fusion.AddComputeService<DbKeyValueStore<TDbContext, TDbKeyValue>>();
+        fusion.AddService<DbKeyValueStore<TDbContext, TDbKeyValue>>();
         services.TryAddAlias<IKeyValueStore, DbKeyValueStore<TDbContext, TDbKeyValue>>();
 
         // DbKeyValueTrimmer - hosted service!

@@ -104,8 +104,7 @@ public class RpcTest : RpcLocalTestBase
         commander.AddCommandService<SimpleRpcService>();
 
         var rpc = services.AddRpc();
-        rpc.Service<ISimpleRpcService>()
-            .HasServer<SimpleRpcService>()
-            .HasClient<ISimpleRpcServiceClient>();
+        rpc.AddServer<ISimpleRpcService, SimpleRpcService>();
+        rpc.AddClient<ISimpleRpcService, ISimpleRpcServiceClient>();
     }
 }

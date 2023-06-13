@@ -78,40 +78,91 @@ public readonly struct RpcBuilder
         return this;
     }
 
+    // Share, Connect, Route
+
+    public RpcBuilder AddServer<TService>(RpcServiceMode mode, Symbol name = default)
+        where TService : class
+        => AddServer(typeof(TService), mode, name);
+    public RpcBuilder AddServer<TService, TServer>(RpcServiceMode mode, Symbol name = default)
+        where TService : class
+        where TServer : class, TService
+        => AddServer(typeof(TService), typeof(TServer), mode, name);
+    public RpcBuilder AddServer(Type serviceType, RpcServiceMode mode, Symbol name = default)
+        => AddServer(serviceType, serviceType, mode, name);
+    public RpcBuilder AddServer(Type serviceType, Type serverType, RpcServiceMode mode, Symbol name = default)
+        => mode switch {
+            RpcServiceMode.Server => AddServer(serviceType, serverType, name),
+            RpcServiceMode.Router => AddRouter(serviceType, serverType, name),
+            RpcServiceMode.ServingRouter => AddRouter(serviceType, serverType).AddServer(serviceType, name),
+            RpcServiceMode.RoutingServer => AddRouter(serviceType, serverType).AddServer(serviceType, serverType, name),
+            _ => this,
+        };
+
     public RpcBuilder AddServer<TService>(Symbol name = default)
-        => AddServer(typeof(TService), typeof(TService), name);
+        where TService : class
+        => AddServer(typeof(TService), name);
     public RpcBuilder AddServer<TService, TServer>(Symbol name = default)
+        where TService : class
+        where TServer : class, TService
         => AddServer(typeof(TService), typeof(TServer), name);
+    public RpcBuilder AddServer(Type serviceType, Symbol name = default)
+        => AddServer(serviceType, serviceType, name);
     public RpcBuilder AddServer(Type serviceType, Type serverType, Symbol name = default)
     {
+        if (!serviceType.IsInterface)
+            throw Stl.Internal.Errors.MustBeInterface(serviceType, nameof(serviceType));
+        if (!typeof(IRpcService).IsAssignableFrom(serviceType))
+            throw Stl.Internal.Errors.MustImplement<IRpcService>(serviceType, nameof(serviceType));
+        if (!serviceType.IsAssignableFrom(serverType))
+            throw Stl.Internal.Errors.MustBeAssignableTo(serverType, serviceType, nameof(serverType));
+
         Service(serviceType).HasServer(serverType).HasName(name);
+        if (!serverType.IsInterface)
+            Services.AddSingleton(serverType);
         return this;
     }
 
     public RpcBuilder AddClient<TService>(Symbol name = default)
+        where TService : class
         => AddClient(typeof(TService), name);
+    public RpcBuilder AddClient<TService, TClient>(Symbol name = default)
+        where TService : class
+        where TClient : class, TService
+        => AddClient(typeof(TService), typeof(TClient), name);
     public RpcBuilder AddClient(Type serviceType, Symbol name = default)
+        => AddClient(serviceType, serviceType, name);
+    public RpcBuilder AddClient(Type serviceType, Type clientType, Symbol name = default)
     {
-        Service(serviceType).HasClient().HasName(name);
+        if (!serviceType.IsInterface)
+            throw Stl.Internal.Errors.MustBeInterface(serviceType, nameof(serviceType));
+        if (!typeof(IRpcService).IsAssignableFrom(serviceType))
+            throw Stl.Internal.Errors.MustImplement<IRpcService>(serviceType, nameof(serviceType));
+        if (!serviceType.IsAssignableFrom(clientType))
+            throw Stl.Internal.Errors.MustBeAssignableTo(clientType, serviceType, nameof(clientType));
+
+        Service(serviceType).HasName(name);
+        Services.AddSingleton(clientType, c => RpcProxies.NewClientProxy(c, serviceType, clientType));
         return this;
     }
 
     public RpcBuilder AddRouter<TService, TServer>(Symbol name = default)
+        where TService : class
+        where TServer : class, TService
         => AddRouter(typeof(TService), typeof(TServer), name);
     public RpcBuilder AddRouter(Type serviceType, Type serverType, Symbol name = default)
-    {
-        AddServer(serviceType, serverType, name);
-        Services.AddSingleton(serviceType, c => {
-            var rpcHub = c.RpcHub();
-            var server = rpcHub.ServiceRegistry[serviceType].Server;
-            var client = rpcHub.CreateClient(serviceType);
+        => serviceType == serverType
+            ? throw new ArgumentOutOfRangeException(nameof(serverType))
+            : AddRouter(serviceType, ServiceResolver.New(serverType), name);
 
-            var routingInterceptor = c.GetRequiredService<RpcRoutingInterceptor>();
-            var serviceDef = rpcHub.ServiceRegistry[serviceType];
-            routingInterceptor.Setup(serviceDef, server, client);
-            var routingProxy = Proxies.New(serviceType, routingInterceptor);
-            return routingProxy;
-        });
+    public RpcBuilder AddRouter(Type serviceType, ServiceResolver serverResolver, Symbol name = default)
+    {
+        if (!serviceType.IsInterface)
+            throw Stl.Internal.Errors.MustBeInterface(serviceType, nameof(serviceType));
+        if (!typeof(IRpcService).IsAssignableFrom(serviceType))
+            throw Stl.Internal.Errors.MustImplement<IRpcService>(serviceType, nameof(serviceType));
+
+        Service(serviceType).HasName(name);
+        Services.AddSingleton(serviceType, c => RpcProxies.NewRoutingProxy(c, serviceType, serverResolver));
         return this;
     }
 

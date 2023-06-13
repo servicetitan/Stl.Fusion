@@ -148,7 +148,7 @@ public class Startup
         fusion.AddOperationReprocessor();
 
         // Compute service(s)
-        fusion.AddComputeService<ITodoService, TodoService>();
+        fusion.AddService<ITodoService, TodoService>();
 
         // Shared services
         StartupHelper.ConfigureSharedServices(services);

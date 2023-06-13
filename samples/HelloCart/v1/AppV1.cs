@@ -6,8 +6,8 @@ public class AppV1 : AppBase
     {
         var services = new ServiceCollection();
         services.AddFusion(fusion => {
-            fusion.AddComputeService<IProductService, InMemoryProductService>();
-            fusion.AddComputeService<ICartService, InMemoryCartService>();
+            fusion.AddService<IProductService, InMemoryProductService>();
+            fusion.AddService<ICartService, InMemoryCartService>();
         });
         ClientServices = HostServices = services.BuildServiceProvider();
     }

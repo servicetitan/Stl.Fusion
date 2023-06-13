@@ -5,6 +5,7 @@ using Stl.Fusion.EntityFramework;
 using Stl.Fusion.EntityFramework.Redis;
 using Stl.Fusion.Server;
 using Stl.IO;
+using Stl.Rpc;
 using Stl.Rpc.Server;
 
 namespace Samples.HelloCart.V4;
@@ -34,9 +35,9 @@ public class AppV4 : AppBase
             .ConfigureWebHostDefaults(webHost => webHost
                 .ConfigureServices(services => {
                     ConfigureLogging(services);
-                    services.AddFusion(fusion => {
-                        fusion.AddComputeServer<IProductService, DbProductService>();
-                        fusion.AddComputeServer<ICartService, DbCartService>();
+                    services.AddFusion(RpcServiceMode.Server, fusion => {
+                        fusion.AddService<IProductService, DbProductService>();
+                        fusion.AddService<ICartService, DbCartService>();
                         fusion.AddWebServer();
                     });
 
@@ -81,8 +82,8 @@ public class AppV4 : AppBase
         ConfigureLogging(services);
         services.AddFusion(fusion => {
             fusion.Rpc.UseWebSocketClient(baseUri.ToString());
-            fusion.AddComputeClient<IProductService>();
-            fusion.AddComputeClient<ICartService>();
+            fusion.AddClient<IProductService>();
+            fusion.AddClient<ICartService>();
         });
         return services.BuildServiceProvider();
     }

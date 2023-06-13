@@ -63,7 +63,7 @@ public readonly struct CommanderBuilder
     public CommanderBuilder AddHandlers(Type serviceType, Type implementationType, double? priorityOverride = null)
     {
         if (!serviceType.IsAssignableFrom(implementationType))
-            throw new ArgumentOutOfRangeException(nameof(implementationType));
+            throw Stl.Internal.Errors.MustBeAssignableTo(implementationType, serviceType, nameof(implementationType));
 
         var interfaceMethods = new HashSet<MethodInfo>();
 
@@ -147,21 +147,11 @@ public readonly struct CommanderBuilder
         double? priorityOverride = null)
     {
         if (!serviceType.IsAssignableFrom(implementationType))
-            throw new ArgumentOutOfRangeException(nameof(implementationType));
+            throw Stl.Internal.Errors.MustBeAssignableTo(implementationType, serviceType, nameof(implementationType));
         if (!typeof(ICommandService).IsAssignableFrom(implementationType))
             throw Stl.Internal.Errors.MustImplement<ICommandService>(implementationType, nameof(implementationType));
 
-        object Factory(IServiceProvider c)
-        {
-            // We should try to validate it here because if the type doesn't
-            // have any virtual methods (which might be a mistake), no calls
-            // will be intercepted, so no error will be thrown later.
-            var interceptor = c.GetRequiredService<CommandServiceInterceptor>();
-            interceptor.ValidateType(implementationType);
-            return c.ActivateProxy(implementationType, interceptor);
-        }
-
-        var descriptor = new ServiceDescriptor(serviceType, Factory, lifetime);
+        var descriptor = new ServiceDescriptor(serviceType, c => CommanderProxies.NewServiceProxy(c, implementationType), lifetime);
         Services.TryAdd(descriptor);
         AddHandlers(serviceType, implementationType, priorityOverride);
         return this;

@@ -10,7 +10,7 @@ public static class FusionBuilderExt
     {
         var services = fusion.Services;
         services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
-        fusion.AddComputeService<IFusionTime, FusionTime>();
+        fusion.AddService<IFusionTime, FusionTime>();
         return fusion;
     }
 }

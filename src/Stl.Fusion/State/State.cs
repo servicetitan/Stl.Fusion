@@ -11,7 +11,6 @@ public interface IState : IResult, IHasServices
     public interface IOptions
     {
         ComputedOptions ComputedOptions { get; init; }
-        VersionGenerator<LTag>? VersionGenerator { get; init; }
         Action<IState>? EventConfigurator { get; init; }
         string? Category { get; init; }
     }
@@ -44,7 +43,6 @@ public abstract class State<T> : ComputedInput,
     public record Options : IState.IOptions
     {
         public ComputedOptions ComputedOptions { get; init; } = ComputedOptions.Default;
-        public VersionGenerator<LTag>? VersionGenerator { get; init; }
         public Result<T> InitialOutput { get; init; } = default;
         public string? Category { get; init; }
 
@@ -173,7 +171,7 @@ public abstract class State<T> : ComputedInput,
     {
         _category = options.Category;
         ComputedOptions = options.ComputedOptions;
-        VersionGenerator = options.VersionGenerator ?? Services.VersionGenerator<LTag>();
+        VersionGenerator = Services.VersionGenerator<LTag>();
         options.EventConfigurator?.Invoke(this);
         var untypedOptions = (IState.IOptions) options;
         untypedOptions.EventConfigurator?.Invoke(this);

@@ -1,4 +1,4 @@
-using Stl.CommandR.Interception;
+using Stl.Fusion.Internal;
 using Stl.Interception;
 using Stl.Interception.Interceptors;
 
@@ -8,20 +8,15 @@ public abstract class ComputeServiceInterceptorBase : InterceptorBase
 {
     public new record Options : InterceptorBase.Options;
 
-    protected readonly CommandServiceInterceptor CommandServiceInterceptor;
-
-    public ComputedOptionsProvider ComputedOptionsProvider { get; }
+    public readonly FusionInternalHub Hub;
 
     protected ComputeServiceInterceptorBase(Options options, IServiceProvider services)
         : base(options, services)
-    {
-        ComputedOptionsProvider = services.GetRequiredService<ComputedOptionsProvider>();
-        CommandServiceInterceptor = services.GetRequiredService<CommandServiceInterceptor>();
-    }
+        => Hub = services.GetRequiredService<FusionInternalHub>();
 
     public override void Intercept(Invocation invocation)
     {
-        var handler = GetHandler(invocation) ?? CommandServiceInterceptor.GetHandler(invocation);
+        var handler = GetHandler(invocation) ?? Hub.CommandServiceInterceptor.GetHandler(invocation);
         if (handler == null)
             invocation.Intercepted();
         else
@@ -30,7 +25,7 @@ public abstract class ComputeServiceInterceptorBase : InterceptorBase
 
     public override TResult Intercept<TResult>(Invocation invocation)
     {
-        var handler = GetHandler(invocation) ?? CommandServiceInterceptor.GetHandler(invocation);
+        var handler = GetHandler(invocation) ?? Hub.CommandServiceInterceptor.GetHandler(invocation);
         return handler == null
             ? invocation.Intercepted<TResult>()
             : (TResult)handler.Invoke(invocation)!;
@@ -66,7 +61,7 @@ public abstract class ComputeServiceInterceptorBase : InterceptorBase
     protected override MethodDef? CreateMethodDef(MethodInfo method, Invocation initialInvocation)
     {
         var type = initialInvocation.Proxy.GetType().NonProxyType();
-        var options = ComputedOptionsProvider.GetComputedOptions(type, method);
+        var options = Hub.ComputedOptionsProvider.GetComputedOptions(type, method);
         if (options == null)
             return null;
 

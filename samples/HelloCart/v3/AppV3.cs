@@ -19,8 +19,8 @@ public class AppV3 : AppBase
         });
 
         services.AddFusion(fusion => {
-            fusion.AddComputeService<IProductService, DbProductService2>();
-            fusion.AddComputeService<ICartService, DbCartService2>();
+            fusion.AddService<IProductService, DbProductService2>();
+            fusion.AddService<ICartService, DbCartService2>();
         });
 
         // Add AppDbContext & related services

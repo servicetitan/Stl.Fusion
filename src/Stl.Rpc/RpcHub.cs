@@ -7,13 +7,10 @@ namespace Stl.Rpc;
 
 public sealed class RpcHub : ProcessorBase, IHasServices
 {
-    private ILogger? _log;
     private RpcServiceRegistry? _serviceRegistry;
     private IEnumerable<RpcPeerTracker>? _peerTrackers;
     private RpcClient? _client;
     private RpcSystemCallSender? _systemCallSender;
-
-    private ILogger Log => _log ??= Services.LogFor(GetType());
 
     internal RpcServiceNameBuilder ServiceNameBuilder { get; }
     internal RpcMethodNameBuilder MethodNameBuilder { get; }
@@ -61,26 +58,6 @@ public sealed class RpcHub : ProcessorBase, IHasServices
         foreach (var (_, peer) in Peers)
             disposeTasks.Add(peer.DisposeAsync().AsTask());
         return Task.WhenAll(disposeTasks);
-    }
-
-    public TClient CreateClient<TService, TClient>()
-        where TClient : TService
-        => (TClient)CreateClient(typeof(TService), typeof(TClient));
-
-    public TService CreateClient<TService>(Type? clientType = null)
-        => (TService)CreateClient(typeof(TService), clientType);
-
-    public object CreateClient(Type serviceType, Type? clientType = null)
-    {
-        if (clientType == null)
-            clientType = serviceType;
-        else if (!serviceType.IsAssignableFrom(clientType))
-            throw Errors.MustBeAssignableTo(clientType, serviceType, nameof(clientType));
-
-        var interceptor = Services.GetRequiredService<RpcClientInterceptor>();
-        interceptor.Setup(ServiceRegistry[serviceType]);
-        var proxy = Proxies.New(clientType, interceptor);
-        return proxy;
     }
 
     public RpcPeer GetPeer(Symbol id)

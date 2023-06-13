@@ -15,5 +15,5 @@ public abstract class SimpleFusionTestBase : RpcLocalTestBase
     protected IServiceProvider CreateServicesWithComputeService<TService>()
         where TService : class, IComputeService
         => CreateServices(
-            services => services.AddFusion().AddComputeService<TService>());
+            services => services.AddFusion().AddService<TService>());
 }
