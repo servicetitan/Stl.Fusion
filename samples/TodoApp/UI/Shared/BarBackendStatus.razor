@@ -1,7 +1,7 @@
 @using Stl
 @inherits ComputedStateComponent<ImmutableList<(string Backend, Exception Error)>>
 @inject Session Session
-@inject BackendStatus BackendStatus
+@* @inject BackendStatus BackendStatus *@
 
 @{
     var errors = State.ValueOrDefault ?? ImmutableList<(string Backend, Exception Error)>.Empty;
@@ -29,5 +29,6 @@
     public string CssClass { get; set; } = "";
 
     protected override Task<ImmutableList<(string Backend, Exception Error)>> ComputeState(CancellationToken cancellationToken)
-        => BackendStatus.GetAllErrors(Session, cancellationToken);
+        => Task.FromResult(ImmutableList<(string Backend, Exception Error)>.Empty);
+        // => BackendStatus.GetAllErrors(Session, cancellationToken);
 }

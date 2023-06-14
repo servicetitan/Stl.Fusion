@@ -3,7 +3,7 @@
 @inject BlazorCircuitContext BlazorCircuitContext
 @inject ISessionResolver SessionResolver
 
-<CascadingAuthState>
+<CascadingAuthState UsePresenceReporter="true">
     <ThemeProvider Theme="@Theme">
         <Router AppAssembly="@typeof(Program).Assembly">
             <Found Context="routeData">
@@ -22,13 +22,11 @@
     private Theme Theme { get; } = new() { IsGradient = true, IsRounded = false };
 
     [Parameter]
-    public string SessionId { get; set; } = Session.Default.Id;
+    public string SessionId { get; set; } = "";
 
     protected override void OnInitialized()
     {
-        SessionResolver.Session = OSInfo.IsWebAssembly 
-            ? Session.Default 
-            : new Session(SessionId);
+        SessionResolver.Session = new Session(SessionId);
         if (!BlazorCircuitContext.IsPrerendering)
             BlazorCircuitContext.RootComponent = this;
     }

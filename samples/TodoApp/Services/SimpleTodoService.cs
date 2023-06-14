@@ -1,12 +1,9 @@
-﻿using System.Collections.Immutable;
-using System.Reactive;
-using Stl.Async;
-using Stl.Fusion;
-using Stl.Fusion.Authentication;
-using Stl.Fusion.Extensions;
+﻿using Stl.Fusion.Extensions;
 using Templates.TodoApp.Abstractions;
 
 namespace Templates.TodoApp.Services;
+
+#pragma warning disable 1998
 
 public class SimpleTodoService : ITodoService
 {
@@ -14,10 +11,10 @@ public class SimpleTodoService : ITodoService
 
     // Commands
 
-#pragma warning disable 1998
     public virtual async Task<Todo> AddOrUpdate(AddOrUpdateTodoCommand command, CancellationToken cancellationToken = default)
     {
-        if (Computed.IsInvalidating()) return null!;
+        if (Computed.IsInvalidating())
+            return null!;
 
         var (session, todo) = command;
         if (string.IsNullOrEmpty(todo.Id))
@@ -32,7 +29,8 @@ public class SimpleTodoService : ITodoService
 
     public virtual async Task Remove(RemoveTodoCommand command, CancellationToken cancellationToken = default)
     {
-        if (Computed.IsInvalidating()) return;
+        if (Computed.IsInvalidating())
+            return;
 
         var (session, todoId) = command;
         _store = _store.RemoveAll(i => i.Id == todoId);
@@ -41,7 +39,6 @@ public class SimpleTodoService : ITodoService
         _ = Get(session, todoId, default);
         _ = PseudoGetAllItems(session);
     }
-#pragma warning restore 1998
 
     // Queries
 

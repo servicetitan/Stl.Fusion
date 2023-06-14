@@ -1,30 +1,38 @@
+using System.Runtime.Serialization;
 using Stl.Fusion.Blazor;
 using Stl.Fusion.Extensions;
 
 namespace Templates.TodoApp.Abstractions;
 
+[DataContract]
 [ParameterComparer(typeof(ByValueParameterComparer))]
-public sealed record Todo(string Id, string Title, bool IsDone = false)
+public sealed record Todo(
+    [property: DataMember] string Id,
+    [property: DataMember] string Title,
+    [property: DataMember] bool IsDone = false)
 {
     public Todo() : this("", "") { }
 }
 
-public sealed record TodoSummary(int Count, int DoneCount)
+[DataContract]
+public sealed record TodoSummary(
+    [property: DataMember] int Count,
+    [property: DataMember] int DoneCount)
 {
     public TodoSummary() : this(0, 0) { }
 }
 
-public sealed record AddOrUpdateTodoCommand(Session Session, Todo Item) : ISessionCommand<Todo>
-{
-    // Newtonsoft.Json needs this constructor to deserialize this record
-    public AddOrUpdateTodoCommand() : this(Session.Null, default!) { }
-}
+[DataContract]
+public sealed record AddOrUpdateTodoCommand(
+    [property: DataMember] Session Session,
+    [property: DataMember] Todo Item
+    ) : ISessionCommand<Todo>;
 
-public sealed record RemoveTodoCommand(Session Session, string Id) : ISessionCommand<Unit>
-{
-    // Newtonsoft.Json needs this constructor to deserialize this record
-    public RemoveTodoCommand() : this(Session.Null, "") { }
-}
+[DataContract]
+public sealed record RemoveTodoCommand(
+    [property: DataMember] Session Session,
+    [property: DataMember] string Id
+    ) : ISessionCommand<Unit>;
 
 public interface ITodoService : IComputeService
 {
