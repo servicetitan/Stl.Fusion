@@ -10,6 +10,8 @@ public class DbKeyValueTrimmer<TDbContext, TDbKeyValue> : DbTenantWorkerBase<TDb
 {
     public record Options
     {
+        public static Options Default { get; set; } = new();
+
         public RandomTimeSpan CheckPeriod { get; init; } = TimeSpan.FromMinutes(5).ToRandom(0.1);
         public RandomTimeSpan NextBatchDelay { get; init; } = TimeSpan.FromSeconds(1).ToRandom(0.25);
         public RetryDelaySeq RetryDelays { get; init; } = (TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(10));

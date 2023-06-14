@@ -23,7 +23,7 @@ public readonly struct FusionWebServerBuilder
 
         // We want above Contains call to run in O(1), so...
         services.Insert(0, AddedTagDescriptor);
-        fusion.Rpc.UseWebSocketServer();
+        fusion.Rpc.AddWebSocketServer();
 
         configure?.Invoke(this);
     }

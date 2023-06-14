@@ -30,7 +30,7 @@ public readonly struct FusionWebServerBuilder
 
         // We want above Contains call to run in O(1), so...
         services.Insert(0, AddedTagDescriptor);
-        fusion.Rpc.UseWebSocketServer();
+        fusion.Rpc.AddWebSocketServer();
 
         services.AddMvcCore(options => {
             var oldModelBinderProviders = options.ModelBinderProviders.ToList();
@@ -62,14 +62,34 @@ public readonly struct FusionWebServerBuilder
         configure?.Invoke(this);
     }
 
-    public FusionWebServerBuilder AddAuthentication(
-        Func<IServiceProvider, ServerAuthHelper.Options>? optionsFactory = null)
+    public FusionWebServerBuilder ConfigureSessionMiddleware(
+        Func<IServiceProvider, SessionMiddleware.Options> optionsFactory)
+    {
+        Services.AddSingleton(optionsFactory);
+        return this;
+    }
+
+    public FusionWebServerBuilder ConfigureSignInController(
+        Func<IServiceProvider, SignInController.Options> optionsFactory)
+    {
+        Services.AddSingleton(optionsFactory);
+        return this;
+    }
+
+    public FusionWebServerBuilder ConfigureServerAuthHelper(
+        Func<IServiceProvider, ServerAuthHelper.Options> optionsFactory)
+    {
+        Services.AddSingleton(optionsFactory);
+        return this;
+    }
+
+    public FusionWebServerBuilder AddAuthentication()
     {
         var services = Services;
-        services.AddSingleton(optionsFactory, _ => ServerAuthHelper.Options.Default);
         if (services.HasService<ServerAuthHelper>())
             return this;
 
+        services.AddSingleton(_ => ServerAuthHelper.Options.Default);
         services.AddScoped<ServerAuthHelper>();
         services.AddSingleton<AuthSchemasCache>();
         AddSessionMiddleware();
@@ -77,24 +97,25 @@ public readonly struct FusionWebServerBuilder
         return this;
     }
 
-    public FusionWebServerBuilder AddSessionMiddleware(
-        Func<IServiceProvider, SessionMiddleware.Options>? optionsFactory = null)
+    public FusionWebServerBuilder AddSessionMiddleware()
     {
         var services = Services;
-        services.AddSingleton(optionsFactory, _ => SessionMiddleware.Options.Default);
+        if (services.HasService<SessionMiddleware>())
+            return this;
+
+        services.AddSingleton(_ => SessionMiddleware.Options.Default);
         Services.TryAddScoped<SessionMiddleware>();
         return this;
     }
 
-    public FusionWebServerBuilder AddControllers(
-        Func<IServiceProvider, SignInController.Options>? signInControllerOptionsFactory = null)
+    public FusionWebServerBuilder AddControllers()
     {
         var services = Services;
-        services.AddSingleton(signInControllerOptionsFactory, _ => SignInController.Options.Default);
         if (services.Contains(ControllersAddedTagDescriptor))
             return this;
 
         services.Add(ControllersAddedTagDescriptor);
+        services.AddSingleton(_ => SignInController.Options.Default);
         services.AddControllers().AddApplicationPart(typeof(SignInController).Assembly);
         return this;
     }

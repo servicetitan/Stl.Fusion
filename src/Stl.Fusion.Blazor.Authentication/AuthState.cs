@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components.Authorization;
 using Stl.Fusion.Authentication;
 
-namespace Stl.Fusion.Blazor;
+namespace Stl.Fusion.Blazor.Authentication;
 
 public class AuthState : AuthenticationState
 {

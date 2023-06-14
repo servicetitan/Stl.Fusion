@@ -38,13 +38,11 @@ public class RpcClientInterceptor : RpcInterceptorBase
             }
 
             var resultTask = call.ResultTask;
-#pragma warning disable CA2012
             return rpcMethodDef.ReturnsTask
                 ? resultTask
                 : rpcMethodDef.IsAsyncVoidMethod
                     ? resultTask.ToValueTask()
                     : ((Task<T>)resultTask).ToValueTask();
-#pragma warning restore CA2012
         };
     }
 

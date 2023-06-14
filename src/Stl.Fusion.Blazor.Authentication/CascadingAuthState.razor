@@ -1,21 +1,21 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.JSInterop
 @using Stl.Fusion.Authentication
+@using Stl.Fusion.Blazor.Authentication.Internal
 @using Stl.Fusion.Blazor.Internal
 @implements IDisposable
-@inject Session Session
-@inject AuthStateProvider AuthStateProvider
-@inject PresenceReporter PresenceReporter
-@inject NavigationManager Nav
-@inject IJSRuntime JS
 
 <CascadingAuthenticationState>
     <CascadingValue TValue="Task<AuthState>" Value="@GetAuthState()" ChildContent="@ChildContent"/>
 </CascadingAuthenticationState>
 
 @code {
+    [Inject] protected IServiceProvider Services { get; init; } = null!;
+    [Inject] protected Session Session { get; init; } = null!;
+    [Inject] protected AuthStateProvider AuthStateProvider  { get; init; } = null!;
+
     [Parameter] public RenderFragment ChildContent { get; set; } = _ => { };
-    [Parameter] public bool StartPresenceService { get; set; } = true;
+    [Parameter] public bool UsePresenceReporter { get; set; }
 
     protected override void OnInitialized()
     {
@@ -24,8 +24,10 @@
 
         AuthStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
         OnAuthenticationStateChanged(AuthStateProvider.GetAuthenticationStateAsync());
-        if (StartPresenceService)
-            PresenceReporter.Start();
+        if (UsePresenceReporter) {
+            var presenceReporter = Services.GetRequiredService<PresenceReporter>();
+            presenceReporter.Start();
+        }
     }
 
     void IDisposable.Dispose()
@@ -44,7 +46,10 @@
 
             // Current Session is unusable due to forced sign-out.
             // The only way to get an usable one is to reload the page.
-            _ = InvokeAsync(() => Nav.NavigateTo(Nav.Uri, true));
+            _ = InvokeAsync(() => {
+                var nav = Services.GetRequiredService<NavigationManager>();
+                nav.NavigateTo(nav.Uri, true);
+            });
         }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
     }
 

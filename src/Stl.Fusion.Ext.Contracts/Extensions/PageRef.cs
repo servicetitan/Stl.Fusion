@@ -17,7 +17,10 @@ public abstract record PageRef : IHasJsonCompatibleToString
             : SystemJsonSerializer.Default.Read<PageRef<TKey>>(value);
 }
 
-public record PageRef<TKey>(int Count, Option<TKey> After = default) : PageRef
+[DataContract]
+public record PageRef<TKey>(
+    [property: DataMember(Order = 0)] int Count,
+    [property: DataMember(Order = 1)] Option<TKey> After = default) : PageRef
 {
     public PageRef() : this(0) { }
 

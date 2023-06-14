@@ -1,5 +1,3 @@
-using Stl.Fusion.Bridge;
-using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Tests.Services;
 
 namespace Stl.Fusion.Tests;
@@ -8,13 +6,6 @@ public class BridgeTest : FusionTestBase
 {
     public BridgeTest(ITestOutputHelper @out, FusionTestOptions? options = null)
         : base(@out, options) { }
-
-    protected override void ConfigureServices(IServiceCollection services, bool isClient = false)
-    {
-        // We need the same publisher Id here for DropReconnectTest
-        services.AddSingleton(new PublisherOptions() { Id = "p" });
-        base.ConfigureServices(services, isClient);
-    }
 
     [Fact]
     public async Task ConnectToPublisherTest()

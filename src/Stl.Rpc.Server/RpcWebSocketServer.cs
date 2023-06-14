@@ -48,7 +48,8 @@ public class RpcWebSocketServer : RpcServiceBase
         var acceptWebSocketTask = context.WebSockets.AcceptWebSocketAsync();
 #endif
         var webSocket = await acceptWebSocketTask.ConfigureAwait(false);
-        var channel = new WebSocketChannel<RpcMessage>(Settings.WebSocketChannelOptions, webSocket, cancellationToken);
+        var channel = new WebSocketChannel<RpcMessage>(
+            Settings.WebSocketChannelOptions, webSocket, Services, cancellationToken);
 
         peer.SetConnectionState(channel);
         try {

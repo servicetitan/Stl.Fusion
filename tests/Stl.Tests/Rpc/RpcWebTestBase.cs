@@ -119,7 +119,7 @@ public class RpbWebTestBase : TestBase, IAsyncLifetime
             // rpc.UseWebSocketServer(); // Not necessary - RpcTestWebHost already does this
         }
         else
-            rpc.UseWebSocketClient(_ => RpcWebSocketClient.Options.Default with {
+            rpc.AddWebSocketClient(_ => RpcWebSocketClient.Options.Default with {
                 HostUrlResolver = (_, _) => WebHost.ServerUri.ToString(),
             });
     }

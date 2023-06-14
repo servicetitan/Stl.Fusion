@@ -33,7 +33,6 @@ public sealed class WebSocketChannel<T> : Channel<T>
             SingleWriter = false,
             AllowSynchronousContinuations = true,
         };
-        public ILogger? Log { get; init; }
     }
 
     private volatile CancellationTokenSource? _stopCts;
@@ -53,19 +52,31 @@ public sealed class WebSocketChannel<T> : Channel<T>
     public DualSerializer<T> Serializer { get; }
     public CancellationToken StopToken { get; }
     public ILogger? Log { get; }
+    public ILogger? ErrorLog { get; }
 
     public Task WhenReadCompleted { get; }
     public Task WhenWriteCompleted { get; }
     public Task WhenClosed { get; }
 
-    public WebSocketChannel(WebSocket webSocket, CancellationToken cancellationToken = default)
-        : this(Options.Default, webSocket, cancellationToken) { }
-    public WebSocketChannel(Options settings, WebSocket webSocket, CancellationToken cancellationToken = default)
+    public WebSocketChannel(
+        WebSocket webSocket,
+        IServiceProvider services,
+        CancellationToken cancellationToken = default)
+        : this(Options.Default, webSocket, services, cancellationToken)
+    { }
+
+    public WebSocketChannel(
+        Options settings,
+        WebSocket webSocket,
+        IServiceProvider services,
+        CancellationToken cancellationToken = default)
     {
         Settings = settings;
         WebSocket = webSocket;
         Serializer = settings.Serializer;
-        Log = settings.Log;
+        Log = services.LogFor(GetType());
+        ErrorLog = Log.IfEnabled(LogLevel.Error);
+
         _stopCts = cancellationToken.CreateLinkedTokenSource();
         StopToken = _stopCts.Token;
 
@@ -280,7 +291,10 @@ public sealed class WebSocketChannel<T> : Channel<T>
         if (error != null) {
             status = WebSocketCloseStatus.InternalServerError;
             message = "Internal Server Error.";
+            ErrorLog?.LogError(error, "WebSocket is closing after an error");
         }
+        else
+            Log?.LogInformation("WebSocket is closing");
 
         try {
             await WebSocket.CloseAsync(status, message, default)
@@ -308,7 +322,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
         }
         catch (Exception e) {
             buffer.Reset(startOffset);
-            Log?.LogError(e, "Couldn't serialize value of type '{Type}'", value?.GetType());
+            ErrorLog?.LogError(e, "Couldn't serialize the value of type '{Type}'", value?.GetType().FullName ?? "null");
             return false;
         }
     }
@@ -328,7 +342,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
             return true;
         }
         catch (Exception e) {
-            Log?.LogError(e, "Couldn't deserialize: {Data}", new TextOrBytes(DataFormat.Bytes, bytes));
+            ErrorLog?.LogError(e, "Couldn't deserialize: {Data}", new TextOrBytes(DataFormat.Bytes, bytes));
             value = default!;
             bytes = isSizeValid ? bytes[size..] : default;
             return false;
@@ -342,7 +356,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
             return true;
         }
         catch (Exception e) {
-            Log?.LogError(e, "Couldn't deserialize: {Data}", new TextOrBytes(DataFormat.Text, bytes));
+            ErrorLog?.LogError(e, "Couldn't deserialize: {Data}", new TextOrBytes(DataFormat.Text, bytes));
             value = default!;
             return false;
         }

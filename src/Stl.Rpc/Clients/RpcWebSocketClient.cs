@@ -60,7 +60,7 @@ public class RpcWebSocketClient : RpcClient
         await webSocket.ConnectAsync(uri, cancellationToken)
             .WaitAsync(Settings.ConnectTimeout, cancellationToken)
             .ConfigureAwait(false);
-        var channel = new WebSocketChannel<RpcMessage>(Settings.WebSocketChannelOptions, webSocket);
+        var channel = new WebSocketChannel<RpcMessage>(Settings.WebSocketChannelOptions, webSocket, Services);
         return channel;
     }
 }

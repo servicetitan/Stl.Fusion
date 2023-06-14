@@ -2,9 +2,9 @@ namespace Stl.Rpc.Server;
 
 public static class RpcBuilderExt
 {
-    public static RpcWebSocketServerBuilder UseWebSocketServer(this RpcBuilder rpc)
+    public static RpcWebSocketServerBuilder AddWebSocketServer(this RpcBuilder rpc)
         => new(rpc, null);
 
-    public static RpcBuilder UseWebSocketServer(this RpcBuilder rpc, Action<RpcWebSocketServerBuilder> configure)
+    public static RpcBuilder AddWebSocketServer(this RpcBuilder rpc, Action<RpcWebSocketServerBuilder> configure)
         => new RpcWebSocketServerBuilder(rpc, configure).Rpc;
 }

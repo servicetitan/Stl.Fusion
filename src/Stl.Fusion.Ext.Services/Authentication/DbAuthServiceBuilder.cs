@@ -7,6 +7,7 @@ using Stl.Fusion.EntityFramework.Operations;
 
 namespace Stl.Fusion.Authentication;
 
+[StructLayout(LayoutKind.Auto)]
 public readonly struct DbAuthServiceBuilder<TDbContext, TDbSessionInfo, TDbUser, TDbUserId>
     where TDbContext : DbContext
     where TDbSessionInfo : DbSessionInfo<TDbUserId>, new()
@@ -19,8 +20,7 @@ public readonly struct DbAuthServiceBuilder<TDbContext, TDbSessionInfo, TDbUser,
 
     internal DbAuthServiceBuilder(
         FusionBuilder fusion,
-        Action<DbAuthServiceBuilder<TDbContext, TDbSessionInfo, TDbUser, TDbUserId>>? configure,
-        bool expose)
+        Action<DbAuthServiceBuilder<TDbContext, TDbSessionInfo, TDbUser, TDbUserId>>? configure)
     {
         Fusion = fusion;
         DbContext = fusion.Services.AddDbContextServices<TDbContext>();
@@ -34,7 +34,7 @@ public readonly struct DbAuthServiceBuilder<TDbContext, TDbSessionInfo, TDbUser,
         }
 
         // DbAuthService
-        fusion.AddAuthService<DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId>>(expose);
+        fusion.AddAuthService<DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId>>();
         services.TryAddSingleton<DbAuthService<TDbContext>.Options>();
 
         // Repositories, entity resolvers & converters, isolation level selectors

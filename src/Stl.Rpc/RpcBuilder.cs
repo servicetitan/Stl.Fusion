@@ -56,15 +56,18 @@ public readonly struct RpcBuilder
         }
     }
 
-    public RpcBuilder UseWebSocketClient(string hostUrl)
-        => UseWebSocketClient(_ => hostUrl);
+    public RpcBuilder AddWebSocketClient(Uri hostUri)
+        => AddWebSocketClient(_ => hostUri.ToString());
 
-    public RpcBuilder UseWebSocketClient(Func<IServiceProvider, string> hostUrlFactory)
-        => UseWebSocketClient(c => RpcWebSocketClient.Options.Default with {
+    public RpcBuilder AddWebSocketClient(string hostUrl)
+        => AddWebSocketClient(_ => hostUrl);
+
+    public RpcBuilder AddWebSocketClient(Func<IServiceProvider, string> hostUrlFactory)
+        => AddWebSocketClient(c => RpcWebSocketClient.Options.Default with {
             HostUrlResolver = (_, _) => hostUrlFactory.Invoke(c),
         });
 
-    public RpcBuilder UseWebSocketClient(Func<IServiceProvider, RpcWebSocketClient.Options>? optionsFactory = null)
+    public RpcBuilder AddWebSocketClient(Func<IServiceProvider, RpcWebSocketClient.Options>? optionsFactory = null)
     {
         var services = Services;
         services.AddSingleton(optionsFactory, _ => RpcWebSocketClient.Options.Default);

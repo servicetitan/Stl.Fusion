@@ -4,6 +4,8 @@ public class PresenceReporter : WorkerBase
 {
     public record Options
     {
+        public static Options Default { get; set; } = new();
+
         public RandomTimeSpan UpdatePeriod { get; init; } = TimeSpan.FromMinutes(3).ToRandom(0.05);
         public RetryDelaySeq RetryDelays { get; init; } = new(TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(30));
         public MomentClockSet? Clocks { get; init; }

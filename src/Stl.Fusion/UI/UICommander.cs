@@ -3,7 +3,10 @@ namespace Stl.Fusion.UI;
 public class UICommander : IHasServices
 {
     private static readonly ConcurrentDictionary<Type, Func<UICommander, ICommand, CancellationToken, UIAction>>
-        CachedActionFactories = new();
+        CreateUIActionInvokers = new();
+    private static readonly MethodInfo CreateUIActionMethod = typeof(UICommander)
+        .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
+        .Single(m => Equals(m.Name, nameof(CreateUIAction)) && m.IsGenericMethod);
 
     public IServiceProvider Services { get; }
     public ICommander Commander { get; }
@@ -63,7 +66,7 @@ public class UICommander : IHasServices
         ICommand command,
         CancellationToken cancellationToken)
     {
-        var typedCommand = (ICommand<TResult>) command;
+        var typedCommand = (ICommand<TResult>)command;
         var resultTask = Commander.Call(typedCommand, isOutermost: true, cancellationToken);
         var action = new UIAction<TResult>(typedCommand, Clock, resultTask, cancellationToken);
         return action;
@@ -72,13 +75,10 @@ public class UICommander : IHasServices
     // Private methods
 
     private static UIAction CreateUIAction(UICommander commander, ICommand command, CancellationToken cancellationToken)
-        => CachedActionFactories.GetOrAdd(
+        => CreateUIActionInvokers.GetOrAdd(
             command.GetResultType(),
-            static (tCommand, commander1) => (Func<UICommander, ICommand, CancellationToken, UIAction>)commander1
-                .GetType()
-                .GetMethod(nameof(CreateUIAction), BindingFlags.Instance | BindingFlags.NonPublic)!
+            static tCommand => (Func<UICommander, ICommand, CancellationToken, UIAction>)CreateUIActionMethod
                 .MakeGenericMethod(tCommand)
-                .CreateDelegate(typeof(Func<UICommander, ICommand, CancellationToken, UIAction>)),
-            commander
+                .CreateDelegate(typeof(Func<UICommander, ICommand, CancellationToken, UIAction>))
             ).Invoke(commander, command, cancellationToken);
 }

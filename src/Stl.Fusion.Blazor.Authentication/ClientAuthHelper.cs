@@ -2,7 +2,7 @@ using Microsoft.JSInterop;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Authentication.Commands;
 
-namespace Stl.Fusion.Blazor;
+namespace Stl.Fusion.Blazor.Authentication;
 
 public class ClientAuthHelper : IHasServices
 {

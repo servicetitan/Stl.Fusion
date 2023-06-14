@@ -65,7 +65,8 @@ public class RpcWebSocketServer : RpcServiceBase
     {
         var cancellationToken = context.Request.CallCancelled;
         var webSocket = wsContext.WebSocket;
-        var channel = new WebSocketChannel<RpcMessage>(Settings.WebSocketChannelOptions, webSocket, cancellationToken);
+        var channel = new WebSocketChannel<RpcMessage>(
+            Settings.WebSocketChannelOptions, webSocket, Services, cancellationToken);
 
         var query = context.Request.Query;
         var clientId = query[Settings.ClientIdParameterName];

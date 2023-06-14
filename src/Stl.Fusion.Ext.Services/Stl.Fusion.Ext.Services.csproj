@@ -16,5 +16,8 @@
     <ProjectReference Include="..\Stl.Fusion.EntityFramework\Stl.Fusion.EntityFramework.csproj" />
     <ProjectReference Include="..\Stl.Fusion.Ext.Contracts\Stl.Fusion.Ext.Contracts.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Stl.Generators\Stl.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
 
 </Project>

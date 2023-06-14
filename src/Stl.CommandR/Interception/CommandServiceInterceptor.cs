@@ -35,7 +35,14 @@ public class CommandServiceInterceptor : InterceptorBase
                         var cancellationToken = callArguments.Length == 2
                             ? arguments.GetCancellationToken(1)
                             : default;
-                        return Commander.Call(command, cancellationToken);
+
+
+                        var resultTask = Commander.Call(command, isOutermost: true, cancellationToken);
+                        return methodDef.ReturnsTask
+                            ? resultTask
+                            : methodDef.IsAsyncVoidMethod
+                                ? resultTask.ToValueTask()
+                                : ((Task<T>)resultTask).ToValueTask();
                     }
                 }
                 // We're outside the ICommander pipeline

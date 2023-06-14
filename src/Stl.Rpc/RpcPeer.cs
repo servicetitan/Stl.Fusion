@@ -109,7 +109,8 @@ public abstract class RpcPeer : WorkerBase
 
             return CompleteTrySend(channel, message);
         }
-        catch (Exception) {
+        catch (Exception e) {
+            Log.LogError(e, "Send failed");
             return default;
         }
     }
@@ -208,8 +209,8 @@ public abstract class RpcPeer : WorkerBase
                 await channel.Writer.WaitToWriteAsync(StopToken).ConfigureAwait(false);
         }
 #pragma warning disable RCS1075
-        catch (Exception) {
-            // Intended
+        catch (Exception e) {
+            Log.LogError(e, "Send failed");
         }
 #pragma warning restore RCS1075
     }
@@ -223,8 +224,8 @@ public abstract class RpcPeer : WorkerBase
                 await channel.Writer.WaitToWriteAsync(StopToken).ConfigureAwait(false);
         }
 #pragma warning disable RCS1075
-        catch (Exception) {
-            // Intended
+        catch (Exception e) {
+            Log.LogError(e, "Send failed");
         }
 #pragma warning restore RCS1075
     }

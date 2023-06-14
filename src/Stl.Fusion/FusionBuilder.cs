@@ -24,9 +24,9 @@ public readonly struct FusionBuilder
 
     internal FusionBuilder(
         IServiceCollection services,
-        Action<FusionBuilder>? configure = null,
-        RpcServiceMode serviceMode = default,
-        bool setDefaultServiceShareMode = false)
+        Action<FusionBuilder>? configure,
+        RpcServiceMode serviceMode,
+        bool setDefaultServiceMode)
     {
         Services = services;
         Commander = services.AddCommander();
@@ -34,7 +34,7 @@ public readonly struct FusionBuilder
         var dFusionTag = services.FirstOrDefault(d => d.ServiceType == typeof(FusionTag));
         if (dFusionTag is { ImplementationInstance: FusionTag fusionTag }) {
             ServiceMode = serviceMode.Or(fusionTag.ServiceMode);
-            if (setDefaultServiceShareMode)
+            if (setDefaultServiceMode)
                 fusionTag.ServiceMode = ServiceMode;
 
             configure?.Invoke(this);
@@ -46,7 +46,7 @@ public readonly struct FusionBuilder
         services.RemoveAll<FusionTag>();
         services.Insert(0, new ServiceDescriptor(
             typeof(FusionTag),
-            new FusionTag(setDefaultServiceShareMode ? ServiceMode : RpcServiceMode.None)));
+            new FusionTag(setDefaultServiceMode ? ServiceMode : RpcServiceMode.None)));
 
         // Common services
         services.AddOptions();
@@ -155,10 +155,26 @@ public readonly struct FusionBuilder
         configure?.Invoke(this);
     }
 
+    internal FusionBuilder(FusionBuilder fusion, RpcServiceMode serviceMode, bool setDefaultServiceMode)
+    {
+        Services = fusion.Services;
+        Commander = fusion.Commander;
+        Rpc = fusion.Rpc;
+        ServiceMode = serviceMode;
+        if (!setDefaultServiceMode)
+            return;
+
+        var dFusionTag = Services.FirstOrDefault(d => d.ServiceType == typeof(FusionTag));
+        if (dFusionTag is { ImplementationInstance: FusionTag fusionTag }) {
+            ServiceMode = serviceMode.Or(fusionTag.ServiceMode);
+            fusionTag.ServiceMode = ServiceMode;
+        }
+    }
+
     public FusionBuilder WithServiceMode(
         RpcServiceMode serviceMode,
         bool makeDefault = false)
-        => new(Services, null, serviceMode, makeDefault);
+        => new(this, serviceMode, makeDefault);
 
     // ComputeService
 

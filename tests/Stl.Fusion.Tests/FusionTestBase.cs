@@ -187,18 +187,7 @@ public class FusionTestBase : TestBase, IAsyncLifetime
         fusion.AddOperationReprocessor();
         fusion.AddFusionTime();
 
-        // Auto-discovered services
-        var testType = GetType();
-        services.UseRegisterAttributeScanner()
-            .WithTypeFilter(testType.Namespace!)
-            .RegisterFrom(testType.Assembly);
-
         if (!isClient) {
-            // Configuring Services and ServerServices
-            services.UseRegisterAttributeScanner(ServiceScope.Services)
-                .WithTypeFilter(testType.Namespace!)
-                .RegisterFrom(testType.Assembly);
-
             // DbContext & related services
             services.AddPooledDbContextFactory<TestDbContext>(builder => {
                 switch (Options.DbType) {
@@ -322,11 +311,4 @@ public class FusionTestBase : TestBase, IAsyncLifetime
 
     protected TestDbContext CreateDbContext()
         => Services.GetRequiredService<DbHub<TestDbContext>>().CreateDbContext(readWrite: true);
-
-    protected Task<Channel<BridgeMessage>> ConnectToPublisher(CancellationToken cancellationToken = default)
-    {
-        var publisher = WebServices.GetRequiredService<IPublisher>();
-        var channelProvider = ClientServices.GetRequiredService<IChannelProvider>();
-        return channelProvider.CreateChannel(publisher.Id, cancellationToken);
-    }
 }

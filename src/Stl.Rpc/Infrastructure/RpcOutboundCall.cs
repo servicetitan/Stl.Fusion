@@ -88,7 +88,7 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
     {
         ResultSource = context.MethodDef!.NoWait
             ? (TaskCompletionSource<TResult>)(object)RpcNoWait.TaskSources.Completed
-            : TaskCompletionSourceExt.New<TResult>();
+            : new TaskCompletionSource<TResult>();
         ResultTask = ResultSource.Task;
     }
 

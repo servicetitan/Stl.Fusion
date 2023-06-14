@@ -10,6 +10,8 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
 {
     public record Options
     {
+        public static Options Default { get; set; } = new();
+
         public string SessionKeyPrefixFormat { get; set; } = "@session/{0}";
         public TimeSpan? SessionKeyExpirationTime { get; set; } = TimeSpan.FromDays(30);
         public string UserKeyPrefixFormat { get; set; } = "@user/{0}";

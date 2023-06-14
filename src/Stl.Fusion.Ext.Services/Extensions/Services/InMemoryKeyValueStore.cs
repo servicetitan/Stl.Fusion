@@ -6,6 +6,8 @@ public class InMemoryKeyValueStore : WorkerBase, IKeyValueStore
 {
     public record Options
     {
+        public static Options Default { get; set; } = new();
+
         public RandomTimeSpan CleanupPeriod { get; init; } = TimeSpan.FromMinutes(1).ToRandom(0.05);
         public IMomentClock? Clock { get; init; } = null;
     }

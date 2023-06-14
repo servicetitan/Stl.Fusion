@@ -81,7 +81,7 @@ public class AppV4 : AppBase
         var services = new ServiceCollection();
         ConfigureLogging(services);
         services.AddFusion(fusion => {
-            fusion.Rpc.UseWebSocketClient(baseUri.ToString());
+            fusion.Rpc.AddWebSocketClient(baseUri);
             fusion.AddClient<IProductService>();
             fusion.AddClient<ICartService>();
         });

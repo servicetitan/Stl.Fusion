@@ -9,19 +9,12 @@ public static class FusionBuilderExt
 {
     // SandboxedKeyValueStore
 
-    public static FusionBuilder AddSandboxedKeyValueStore(this FusionBuilder fusion, bool expose = true)
-        => fusion.AddSandboxedKeyValueStore(null, expose);
-
     public static FusionBuilder AddSandboxedKeyValueStore(this FusionBuilder fusion,
-        Func<IServiceProvider, SandboxedKeyValueStore.Options>? optionsFactory = null,
-        bool expose = true)
+        Func<IServiceProvider, SandboxedKeyValueStore.Options>? optionsFactory = null)
     {
         var services = fusion.Services;
-        services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
-        if (expose)
-            fusion.AddServer<ISandboxedKeyValueStore, SandboxedKeyValueStore>();
-        else
-            fusion.AddService<ISandboxedKeyValueStore, SandboxedKeyValueStore>();
+        services.AddSingleton(optionsFactory, _ => SandboxedKeyValueStore.Options.Default);
+        fusion.AddService<ISandboxedKeyValueStore, SandboxedKeyValueStore>();
         return fusion;
     }
 
@@ -31,7 +24,7 @@ public static class FusionBuilderExt
         Func<IServiceProvider, InMemoryKeyValueStore.Options>? optionsFactory = null)
     {
         var services = fusion.Services;
-        services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
+        services.AddSingleton(optionsFactory, _ => InMemoryKeyValueStore.Options.Default);
         fusion.AddService<IKeyValueStore, InMemoryKeyValueStore>();
         services.AddHostedService(c => (InMemoryKeyValueStore)c.GetRequiredService<IKeyValueStore>());
         return fusion;
@@ -39,32 +32,28 @@ public static class FusionBuilderExt
 
     // DbKeyValueStore
 
-    public static FusionBuilder AddKeyValueStore<TDbContext>(
+    public static FusionBuilder AddDbKeyValueStore<TDbContext>(
         this FusionBuilder fusion,
         Func<IServiceProvider, DbKeyValueTrimmer<TDbContext, DbKeyValue>.Options>? keyValueTrimmerOptionsFactory = null)
         where TDbContext : DbContext
-        => fusion.AddKeyValueStore<TDbContext, DbKeyValue>(keyValueTrimmerOptionsFactory);
+        => fusion.AddDbKeyValueStore<TDbContext, DbKeyValue>(keyValueTrimmerOptionsFactory);
 
-    public static FusionBuilder AddKeyValueStore<TDbContext, TDbKeyValue>(
+    public static FusionBuilder AddDbKeyValueStore<TDbContext, TDbKeyValue>(
         this FusionBuilder fusion,
         Func<IServiceProvider, DbKeyValueTrimmer<TDbContext, TDbKeyValue>.Options>? keyValueTrimmerOptionsFactory = null)
         where TDbContext : DbContext
         where TDbKeyValue : DbKeyValue, new()
     {
         var services = fusion.Services;
-        var isAlreadyAdded = services.HasService<DbKeyValueTrimmer<TDbContext, TDbKeyValue>.Options>();
-        if (keyValueTrimmerOptionsFactory != null)
-            services.AddSingleton(keyValueTrimmerOptionsFactory);
-        if (isAlreadyAdded)
+        services.AddSingleton(keyValueTrimmerOptionsFactory, _ => DbKeyValueTrimmer<TDbContext, TDbKeyValue>.Options.Default);
+        if (services.HasService<DbKeyValueTrimmer<TDbContext, TDbKeyValue>>())
             return fusion;
 
         var dbContext = services.AddDbContextServices<TDbContext>();
         dbContext.TryAddEntityResolver<string, TDbKeyValue>();
-        fusion.AddService<DbKeyValueStore<TDbContext, TDbKeyValue>>();
-        services.TryAddAlias<IKeyValueStore, DbKeyValueStore<TDbContext, TDbKeyValue>>();
+        fusion.AddService<IKeyValueStore, DbKeyValueStore<TDbContext, TDbKeyValue>>();
 
         // DbKeyValueTrimmer - hosted service!
-        services.TryAddSingleton<DbKeyValueTrimmer<TDbContext, TDbKeyValue>.Options>();
         services.TryAddSingleton<DbKeyValueTrimmer<TDbContext, TDbKeyValue>>();
         services.AddHostedService(c => c.GetRequiredService<DbKeyValueTrimmer<TDbContext, TDbKeyValue>>());
         return fusion;

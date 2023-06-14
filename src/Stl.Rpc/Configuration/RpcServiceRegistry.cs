@@ -4,10 +4,12 @@ using Stl.Rpc.Internal;
 
 namespace Stl.Rpc;
 
-public class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<RpcServiceDef>
+public sealed class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<RpcServiceDef>
 {
     private readonly Dictionary<Type, RpcServiceDef> _services = new();
     private readonly Dictionary<Symbol, RpcServiceDef> _serviceByName = new();
+
+    private ILogger Log { get; }
 
     public int Count => _serviceByName.Count;
     public RpcServiceDef this[Type serviceType] => Get(serviceType) ?? throw Errors.NoService(serviceType);
@@ -20,6 +22,7 @@ public class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<RpcService
         : base(services)
     {
         var hub = Hub; // The implicit RpcHub resolution here freezes RpcConfiguration
+        Log = hub.Services.LogFor(GetType());
         foreach (var (_, service) in hub.Configuration.Services) {
             var name = service.Name;
             if (name.IsEmpty)
@@ -35,6 +38,7 @@ public class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<RpcService
             _services.Add(serviceDef.Type, serviceDef);
             _serviceByName.Add(serviceDef.Name, serviceDef);
         }
+        Log.LogInformation("{RpcServiceRegistry}", ToString());
     }
 
     public override string ToString()

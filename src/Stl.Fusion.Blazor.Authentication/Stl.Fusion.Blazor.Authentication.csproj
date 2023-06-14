@@ -10,7 +10,6 @@
     -->and ready to serve replicas of computed instances to remote clients.<!--
     --></Description>
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
-    <RootNamespace>Stl.Fusion.Blazor</RootNamespace>
   </PropertyGroup>
   <!-- <workaround for https://github.com/dotnet/aspnetcore/issues/30427 > -->
   <PropertyGroup>
