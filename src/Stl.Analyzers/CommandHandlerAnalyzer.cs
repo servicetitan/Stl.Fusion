@@ -15,7 +15,7 @@ public class CommandHandlerAnalyzer : DiagnosticAnalyzer
             "Invalid command handler call",
             "Direct command handler calls on command service proxies are not allowed",
             "Test",
-            DiagnosticSeverity.Error,
+            DiagnosticSeverity.Warning,
             isEnabledByDefault: true
         );
 
@@ -32,34 +32,24 @@ public class CommandHandlerAnalyzer : DiagnosticAnalyzer
 
     private void CheckCommandHandler(SyntaxNodeAnalysisContext context)
     {
-        // check if the called method has the CommandHandler attribute
-
         if (context.Node is not InvocationExpressionSyntax invocation)
-        {
             return;
-        }
 
-        var methodSymbol = context.SemanticModel.GetSymbolInfo(invocation).Symbol as IMethodSymbol;
-
-        if (methodSymbol == null)
-        {
+        if (context.SemanticModel.GetSymbolInfo(invocation, cancellationToken: context.CancellationToken).Symbol is not IMethodSymbol methodSymbol)
             return;
-        }
 
         var syntaxReference = methodSymbol.DeclaringSyntaxReferences.FirstOrDefault();
 
-        if (syntaxReference == null)
-        {
+        if (syntaxReference is null)
             return;
-        }
 
         SyntaxNode declaration = syntaxReference.GetSyntax(context.CancellationToken);
 
         if (declaration is not MethodDeclarationSyntax method)
-        {
             return;
-        }
 
+        // check if the called method has the CommandHandler attribute
+        // this is a very naive implementation, the namespace should be checked as well
         bool isCommandHandler = method.AttributeLists
             .SelectMany(x => x.Attributes)
             .Any(
