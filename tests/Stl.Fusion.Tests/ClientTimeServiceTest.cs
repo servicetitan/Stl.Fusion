@@ -66,7 +66,7 @@ public class ClientTimeServiceTest : FusionTestBase
         (await service.GetFormattedTime("")).Should().Be("");
         (await service.GetFormattedTime("null")).Should().Be(null);
 
-        var format = "{0}";
+        var format = "{0:s}";
         var matchCount = 0;
         for (int i = 0; i < 20; i++) {
             var time = await service.GetTime();
