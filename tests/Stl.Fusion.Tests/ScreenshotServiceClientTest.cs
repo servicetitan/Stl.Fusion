@@ -20,7 +20,6 @@ public class ScreenshotServiceClientTest : FusionTestBase
         await Delay(0.25);
         var service = (ScreenshotService)Services.GetRequiredService<IScreenshotService>();
         var clientService = ClientServices.GetRequiredService<IScreenshotService>();
-        await clientService.GetScreenshot(100);
 
         var initialScreenshotCount = service.ScreenshotCount;
         for (var i = 0; i < 50; i++) {

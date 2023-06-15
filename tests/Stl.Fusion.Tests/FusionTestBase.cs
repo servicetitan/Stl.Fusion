@@ -96,7 +96,6 @@ public abstract class FusionTestBase : RpcTestBase
         var fusion = services.AddFusion();
         var rpc = fusion.Rpc;
         if (!isClient) {
-            fusion = fusion.WithServiceMode(RpcServiceMode.Server, true);
             fusion.AddService<ITimeService, TimeService>();
             rpc.Service<ITimeService>().Remove();
             rpc.Service<ITimeServer>().HasServer<ITimeService>().HasName(nameof(ITimeService));
@@ -128,6 +127,7 @@ public abstract class FusionTestBase : RpcTestBase
         fusion.AddFusionTime();
 
         if (!isClient) {
+            fusion = fusion.WithServiceMode(RpcServiceMode.Server, true);
             var fusionServer = fusion.AddWebServer();
 #if !NETFRAMEWORK
             fusionServer.AddAuthentication();
@@ -204,6 +204,7 @@ public abstract class FusionTestBase : RpcTestBase
             });
         }
         else {
+            fusion.AddAuthClient();
             services.AddSingleton(_ => new InMemoryComputedCache.Options() {
                 IsEnabled = UseClientComputedCache,
                 Cache = ClientComputedCacheStore,

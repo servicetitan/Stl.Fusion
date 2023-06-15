@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Internal;
@@ -8,8 +9,6 @@ public sealed class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<Rpc
 {
     private readonly Dictionary<Type, RpcServiceDef> _services = new();
     private readonly Dictionary<Symbol, RpcServiceDef> _serviceByName = new();
-
-    private ILogger Log { get; }
 
     public int Count => _serviceByName.Count;
     public RpcServiceDef this[Type serviceType] => Get(serviceType) ?? throw Errors.NoService(serviceType);
@@ -22,7 +21,6 @@ public sealed class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<Rpc
         : base(services)
     {
         var hub = Hub; // The implicit RpcHub resolution here freezes RpcConfiguration
-        Log = hub.Services.LogFor(GetType());
         foreach (var (_, service) in hub.Configuration.Services) {
             var name = service.Name;
             if (name.IsEmpty)
@@ -65,6 +63,7 @@ public sealed class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<Rpc
 
     public void DumpTo(StringBuilder sb, bool dumpMethods = true, string indent = "")
     {
+#pragma warning disable MA0011
         foreach (var serviceDef in _serviceByName.Values.OrderBy(s => s.Name)) {
             var serverInfo = serviceDef.HasServer  ? $" -> {serviceDef.ServerResolver}" : "";
             sb.AppendLine($"{indent}'{serviceDef.Name}': {serviceDef.Type.GetName()}{serverInfo}, {serviceDef.MethodCount} method(s)");
@@ -76,6 +75,7 @@ public sealed class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<Rpc
                 sb.AppendLine($"{indent}- '{methodDef.Name}': ({arguments}) -> {methodDef.UnwrappedReturnType.GetName()}");
             }
         }
+#pragma warning restore MA0011
     }
 
     public RpcServiceDef? Get<TService>()
