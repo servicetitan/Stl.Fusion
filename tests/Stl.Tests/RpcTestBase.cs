@@ -21,7 +21,7 @@ public abstract class RpcTestBase : TestBase, IAsyncLifetime
     private RpcWebHost? _webHost;
     private ILogger? _log;
 
-    public bool UseLogging { get; init; }
+    public bool UseLogging { get; init; } = true;
     public bool UseTestClock { get; init; }
     public bool IsLogEnabled { get; init; } = true;
 
@@ -94,8 +94,7 @@ public abstract class RpcTestBase : TestBase, IAsyncLifetime
                 };
 
                 bool LogFilter(string? category, LogLevel level)
-                    => IsLogEnabled &&
-                        debugCategories.Any(x => category?.StartsWith(x) ?? false)
+                    => debugCategories.Any(x => category?.StartsWith(x) ?? false)
                         && level >= LogLevel.Debug;
 
                 logging.ClearProviders();

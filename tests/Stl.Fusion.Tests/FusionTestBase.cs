@@ -94,10 +94,12 @@ public abstract class FusionTestBase : RpcTestBase
     protected override void ConfigureTestServices(IServiceCollection services, bool isClient)
     {
         var fusion = services.AddFusion();
+        var rpc = fusion.Rpc;
         if (!isClient) {
             fusion = fusion.WithServiceMode(RpcServiceMode.Server, true);
             fusion.AddService<ITimeService, TimeService>();
-            fusion.Rpc.Service<ITimeServer>().HasServer<ITimeService>().HasName(nameof(ITimeService));
+            rpc.Service<ITimeService>().Remove();
+            rpc.Service<ITimeServer>().HasServer<ITimeService>().HasName(nameof(ITimeService));
             fusion.AddService<IUserService, UserService>();
             fusion.AddService<IScreenshotService, ScreenshotService>();
             fusion.AddService<IEdgeCaseService, EdgeCaseService>();

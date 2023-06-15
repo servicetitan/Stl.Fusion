@@ -200,6 +200,11 @@ public class RpcInboundCall<TResult> : RpcInboundCall
                 arguments.SetFrom(deserializedArguments);
             }
         }
+        else if (argumentListType != MethodDef.ArgumentListType) {
+            var ctIndex = MethodDef.CancellationTokenIndex;
+            if (ctIndex >= 0)
+                arguments = arguments.InsertCancellationToken(ctIndex, CancellationToken);
+        }
 
         return arguments;
     }

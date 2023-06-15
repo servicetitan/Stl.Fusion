@@ -34,19 +34,22 @@ public sealed class RpcServiceDef
 
         _methods = new Dictionary<MethodInfo, RpcMethodDef>();
         _methodByName = new Dictionary<Symbol, RpcMethodDef>();
-        foreach (var method in Type.GetMethods(BindingFlags.Instance | BindingFlags.Public)) {
-            if (method.IsGenericMethodDefinition)
-                continue;
+        var baseTypes = Type.GetAllBaseTypes(true, true);
+        foreach (var type in baseTypes) {
+            foreach (var method in type.GetMethods(BindingFlags.Instance | BindingFlags.Public)) {
+                if (method.IsGenericMethodDefinition)
+                    continue;
 
-            var methodDef = new RpcMethodDef(this, method);
-            if (!methodDef.IsValid)
-                continue;
+                var methodDef = new RpcMethodDef(this, method);
+                if (!methodDef.IsValid)
+                    continue;
 
-            if (_methodByName.ContainsKey(methodDef.Name))
-                throw Errors.MethodNameConflict(methodDef);
+                if (_methodByName.ContainsKey(methodDef.Name))
+                    throw Errors.MethodNameConflict(methodDef);
 
-            _methods.Add(method, methodDef);
-            _methodByName.Add(methodDef.Name, methodDef);
+                _methods.Add(method, methodDef);
+                _methodByName.Add(methodDef.Name, methodDef);
+            }
         }
     }
 

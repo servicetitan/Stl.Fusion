@@ -31,9 +31,9 @@ public sealed class RpcMethodDef : MethodDef
                     remoteParameterTypes[i - 1] = ParameterTypes[i];
             }
             RemoteParameterTypes = remoteParameterTypes;
-            RemoteArgumentListType = ArgumentList
-                .Types[remoteParameterTypes.Length]
-                .MakeGenericType(remoteParameterTypes);
+            RemoteArgumentListType = remoteParameterTypes.Length == 0
+                ? typeof(ArgumentList0)
+                : ArgumentList.Types[remoteParameterTypes.Length].MakeGenericType(remoteParameterTypes);
         }
         else {
             RemoteParameterTypes = ParameterTypes;

@@ -41,16 +41,16 @@ public readonly record struct TextOrBytes(
         var isText = IsText(out var text);
 #if NET5_0_OR_GREATER
         var sData = isText
-            ? new string(text.Span[..maxLength])
-            : Convert.ToHexString(Data.Span[..maxLength]);
+            ? new string(text.Span[..Math.Min(text.Length, maxLength)])
+            : Convert.ToHexString(Data.Span[..Math.Min(Data.Length, maxLength)]);
 #else
         var sData = isText
-            ? new string(text.Span[..maxLength].ToArray())
-            : BitConverter.ToString(Data.Span[..maxLength].ToArray());
+            ? new string(text.Span[..Math.Min(text.Length, maxLength)].ToArray())
+            : BitConverter.ToString(Data.Span[..Math.Min(Data.Length, maxLength)].ToArray());
 #endif
         return isText
-            ? ZString.Concat("[ ", text.Length, "char(s): `", sData, maxLength <= text.Length ? "` ]" : "`... ]")
-            : ZString.Concat("[ ", Data.Length, "byte(s): ", sData, maxLength <= Data.Length ? " ]" : "... ]");
+            ? ZString.Concat("[ ", text.Length, " char(s): `", sData, maxLength < text.Length ? "` ]" : "`... ]")
+            : ZString.Concat("[ ", Data.Length, " byte(s): ", sData, maxLength < Data.Length ? " ]" : "... ]");
     }
 
     public static implicit operator TextOrBytes(ReadOnlyMemory<byte> bytes) => new(bytes);

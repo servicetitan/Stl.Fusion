@@ -184,16 +184,13 @@ public abstract class RpcPeer : WorkerBase
         RpcMessage message,
         CancellationToken cancellationToken)
     {
-        var context = InboundContextFactory.Invoke(this, message, cancellationToken);
-        var scope = context.Activate();
         try {
+            var context = InboundContextFactory.Invoke(this, message, cancellationToken);
+            using var scope = context.Activate();
             await context.Call.Invoke().ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
-            Log.LogError(e, "Failed to process message: {Message}", context.Message);
-        }
-        finally {
-            scope.Dispose();
+            Log.LogError(e, "Failed to process message: {Message}", message);
         }
     }
 
@@ -202,16 +199,15 @@ public abstract class RpcPeer : WorkerBase
         SemaphoreSlim semaphore,
         CancellationToken cancellationToken)
     {
-        var context = InboundContextFactory.Invoke(this, message, cancellationToken);
-        var scope = context.Activate();
         try {
+            var context = InboundContextFactory.Invoke(this, message, cancellationToken);
+            using var scope = context.Activate();
             await context.Call.Invoke().ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
-            Log.LogError(e, "Failed to process message: {Message}", context.Message);
+            Log.LogError(e, "Failed to process message: {Message}", message);
         }
         finally {
-            scope.Dispose();
             semaphore.Release();
         }
     }
