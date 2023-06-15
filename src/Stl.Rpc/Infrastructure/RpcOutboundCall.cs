@@ -95,11 +95,8 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
     public override bool TryCompleteWithOk(object? result, RpcInboundContext context)
     {
         try {
-            if (!ResultSource.TrySetResult((TResult)result!))
-                return false;
-
-            Context.Peer!.Calls.Outbound.TryRemove(Id, this);
-            return true;
+            Context.Peer!.Calls.Outbound.Remove(Id, out _);
+            return ResultSource.TrySetResult((TResult)result!);
         }
         catch (Exception e) {
             return TryCompleteWithError(e, context);
@@ -108,19 +105,13 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
 
     public override bool TryCompleteWithError(Exception error, RpcInboundContext? context)
     {
-        if (!ResultSource.TrySetException(error))
-            return false;
-
-        Context.Peer!.Calls.Outbound.TryRemove(Id, this);
-        return true;
+        Context.Peer!.Calls.Outbound.Remove(Id, out _);
+        return ResultSource.TrySetException(error);
     }
 
     public override bool TryCompleteWithCancel(CancellationToken cancellationToken, RpcInboundContext? context)
     {
-        if (!ResultSource.TrySetCanceled(cancellationToken))
-            return false;
-
-        Context.Peer!.Calls.Outbound.TryRemove(Id, this);
-        return true;
+        Context.Peer!.Calls.Outbound.Remove(Id, out _);
+        return ResultSource.TrySetCanceled(cancellationToken);
     }
 }

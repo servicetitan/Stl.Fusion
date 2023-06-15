@@ -1,4 +1,3 @@
-using Stl.Interception;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Internal;
 using Errors = Stl.Internal.Errors;

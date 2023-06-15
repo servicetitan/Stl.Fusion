@@ -11,15 +11,17 @@ public static class Timeouts
     static Timeouts()
     {
         Clock = MomentClockSet.Default.CpuClock;
+        var keepAliveQuanta = TimeSpan.FromMilliseconds(250);
+        var invalidateQuanta = TimeSpan.FromMilliseconds(250);
         KeepAlive = new ConcurrentTimerSet<object>(
             new() {
-                Quanta = TimeSpan.FromMilliseconds(250),
+                Quanta = keepAliveQuanta,
                 ConcurrencyLevel = HardwareInfo.GetProcessorCountPo2Factor(),
                 Clock = Clock,
-            });
+            }, null, Clock.Now - keepAliveQuanta.Multiply(2)); // Start in past makes timer priorities strictly positive
         Invalidate = new ConcurrentTimerSet<IComputed>(
             new() {
-                Quanta = TimeSpan.FromMilliseconds(250),
+                Quanta = invalidateQuanta,
                 ConcurrencyLevel = HardwareInfo.GetProcessorCountPo2Factor(),
                 Clock = Clock,
             },

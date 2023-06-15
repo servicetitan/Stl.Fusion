@@ -30,7 +30,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
     private readonly ComputedOptions _options;
     private volatile int _state;
     private volatile ComputedFlags _flags;
-    private long _lastKeepAliveUntil;
+    private long _lastKeepAliveSlot;
     private Result<T> _output;
     private Task<T>? _outputAsTask;
     private RefHashSetSlim3<IComputedImpl> _used;
@@ -243,10 +243,10 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
         var minCacheDuration = Options.MinCacheDuration;
         if (minCacheDuration != default) {
             // We quantize keepAliveUntil here to prevent too frequent AddOrUpdateToLater calls
-            var keepAliveUntil = (Timeouts.Clock.Now + minCacheDuration).EpochOffsetTicks & Computed.KeepAliveTicksMask;
-            var lastKeepAliveUntil = Interlocked.Exchange(ref _lastKeepAliveUntil, keepAliveUntil);
-            if (lastKeepAliveUntil != keepAliveUntil)
-                Timeouts.KeepAlive.AddOrUpdateToLater(this, new Moment(keepAliveUntil));
+            var keepAliveSlot = Timeouts.KeepAlive.GetPriority(Timeouts.Clock.Now + minCacheDuration);
+            var lastKeepAliveSlot = Interlocked.Exchange(ref _lastKeepAliveSlot, keepAliveSlot);
+            if (lastKeepAliveSlot != keepAliveSlot)
+                Timeouts.KeepAlive.AddOrUpdateToLater(this, new Moment(keepAliveSlot));
         }
 
         ComputedRegistry.Instance.ReportAccess(this, isNew);
@@ -256,7 +256,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
     {
         var options = Options;
         if (options.MinCacheDuration != default) {
-            Interlocked.Exchange(ref _lastKeepAliveUntil, 0);
+            Interlocked.Exchange(ref _lastKeepAliveSlot, 0);
             Timeouts.KeepAlive.Remove(this);
         }
     }

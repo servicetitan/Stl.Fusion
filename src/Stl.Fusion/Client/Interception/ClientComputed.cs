@@ -54,10 +54,20 @@ public class ClientComputed<T> : ComputeMethodComputed<T>, IClientComputed
         if (peer == null)
             return;
 
-        peer.Calls.Outbound.TryRemove(call.Id, call);
+        peer.Calls.Outbound.Remove(call.Id, out _);
         if (!this.IsInvalidated()) {
-            var systemCallSender = peer.Hub.InternalServices.SystemCallSender;
-            _ = systemCallSender.Cancel(peer, call.Id);
+            try {
+                var systemCallSender = peer.Hub.InternalServices.SystemCallSender;
+                _ = systemCallSender.Cancel(peer, call.Id);
+            }
+            catch {
+                // It's totally fine to ignore any error here:
+                // peer.Hub might be already disposed at this point,
+                // so SystemCallSender might not be available.
+                // In any case, peer on the other side is going to
+                // be gone as well after that, so every call there
+                // will be cancelled anyway.
+            }
         }
     }
 
