@@ -10,62 +10,46 @@ namespace Stl.Fusion.Tests.Authentication;
 
 public class SqliteAuthServiceTest : AuthServiceTestBase
 {
-    public SqliteAuthServiceTest(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() {
-            DbType = FusionTestDbType.Sqlite
-        })
-    { }
+    public SqliteAuthServiceTest(ITestOutputHelper @out) : base(@out)
+        => DbType = FusionTestDbType.Sqlite;
 }
 
 public class PostgreSqlAuthServiceTest : AuthServiceTestBase
 {
-    public PostgreSqlAuthServiceTest(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() {
-            DbType = FusionTestDbType.PostgreSql
-        })
-    { }
+    public PostgreSqlAuthServiceTest(ITestOutputHelper @out) : base(@out)
+        => DbType = FusionTestDbType.PostgreSql;
 }
 
 public class MariaDbAuthServiceTest : AuthServiceTestBase
 {
-    public MariaDbAuthServiceTest(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() {
-            DbType = FusionTestDbType.MariaDb
-        })
-    { }
+    public MariaDbAuthServiceTest(ITestOutputHelper @out) : base(@out)
+        => DbType = FusionTestDbType.MariaDb;
 }
 
 public class SqlServerAuthServiceTest : AuthServiceTestBase
 {
-    public SqlServerAuthServiceTest(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() {
-            DbType = FusionTestDbType.SqlServer
-        })
-    { }
+    public SqlServerAuthServiceTest(ITestOutputHelper @out) : base(@out)
+        => DbType = FusionTestDbType.SqlServer;
 }
 
 public class InMemoryAuthServiceTest : AuthServiceTestBase
 {
-    public InMemoryAuthServiceTest(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() {
-            DbType = FusionTestDbType.InMemory
-        })
-    { }
+    public InMemoryAuthServiceTest(ITestOutputHelper @out) : base(@out)
+        => DbType = FusionTestDbType.InMemory;
 }
 
 public class InMemoryInMemoryAuthServiceTest : AuthServiceTestBase
 {
-    public InMemoryInMemoryAuthServiceTest(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() {
-            DbType = FusionTestDbType.InMemory,
-            UseInMemoryAuthService = true } )
-    { }
+    public InMemoryInMemoryAuthServiceTest(ITestOutputHelper @out) : base(@out)
+    {
+        DbType = FusionTestDbType.InMemory;
+        UseInMemoryAuthService = true;
+    }
 }
 
 public abstract class AuthServiceTestBase : FusionTestBase
 {
-    protected AuthServiceTestBase(ITestOutputHelper @out, FusionTestOptions? options = null)
-        : base(@out, options) { }
+    protected AuthServiceTestBase(ITestOutputHelper @out) : base(@out) { }
 
     [Fact]
     public async Task ContainerConfigTest()
@@ -84,7 +68,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
 
         var auth = Services.GetRequiredService<IAuth>();
         var tAuthService = typeof(DbAuthService<TestDbContext, DbAuthSessionInfo, DbAuthUser, long>);
-        if (Options.UseInMemoryAuthService)
+        if (UseInMemoryAuthService)
             tAuthService = typeof(InMemoryAuthService);
         auth.GetType().NonProxyType().Should().Be(tAuthService);
     }
@@ -108,7 +92,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         var u1 = new User("Bob1").WithIdentity("g:1");
         var s1 = await CreateUser(u1);
         var u2 = new User("100500", "Bob2").WithIdentity("g:2");
-        if (Options.DbType == FusionTestDbType.SqlServer)
+        if (DbType == FusionTestDbType.SqlServer)
             u2 = u2 with { Id = "" }; // SQL Server doesn't support identity inserts by default
         var s2 = await CreateUser(u2);
         await Assert.ThrowsAsync<FormatException>(async () => {
@@ -174,7 +158,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         user.ToClaimsPrincipal().Identity!.IsAuthenticated.Should().BeTrue();
 
         // Checking if local service is able to see the same user & sessions
-        if (!Options.UseInMemoryAuthService) {
+        if (!UseInMemoryAuthService) {
             await Delay(0.5);
             user = await auth.GetUser(session);
             user.Should().NotBeNull();
@@ -195,7 +179,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         await Delay(0.5);
         user = await authClient.GetUser(sessionA);
         user.Should().BeNull();
-        if (!Options.UseInMemoryAuthService) {
+        if (!UseInMemoryAuthService) {
             user = await auth.GetUser(sessionA);
             user.Should().BeNull();
         }
@@ -253,7 +237,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         user.Claims.Count.Should().Be(2);
 
         // Checking if local service is able to see the same user & sessions
-        if (!Options.UseInMemoryAuthService) {
+        if (!UseInMemoryAuthService) {
             await Delay(0.5);
             user = await auth.GetUser(session);
             user.Should().NotBeNull();
@@ -274,7 +258,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         await Delay(0.5);
         user = await authClient.GetUser(sessionA);
         user.Should().BeNull();
-        if (!Options.UseInMemoryAuthService) {
+        if (!UseInMemoryAuthService) {
             user = await auth.GetUser(sessionA);
             user.Should().BeNull();
         }
@@ -341,8 +325,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         user!.Name.Should().Be("John");
 
 #if NET5_0_OR_GREATER
-        if (Options.DbType != FusionTestDbType.InMemory
-            && Options.DbType != FusionTestDbType.MariaDb) {
+        if (DbType != FusionTestDbType.InMemory && DbType != FusionTestDbType.MariaDb) {
             await Assert.ThrowsAnyAsync<Exception>(async () => {
                 await commander.Call(new EditUserCommand(session, "Jo"));
             });

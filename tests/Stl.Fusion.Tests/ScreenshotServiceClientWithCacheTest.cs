@@ -4,11 +4,10 @@ using Stl.OS;
 
 namespace Stl.Fusion.Tests;
 
-public class ScreenshotServiceClientWithReplicaCacheTest : FusionTestBase
+public class ScreenshotServiceClientWithCacheTest : FusionTestBase
 {
-    public ScreenshotServiceClientWithReplicaCacheTest(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() { UseReplicaCache = true})
-    { }
+    public ScreenshotServiceClientWithCacheTest(ITestOutputHelper @out) : base(@out)
+        => UseClientComputedCache = true;
 
     [Fact]
     public async Task GetScreenshotTest()

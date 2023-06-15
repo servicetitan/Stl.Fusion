@@ -40,8 +40,8 @@ public abstract class ClientComputedCache : IHasServices
     public async ValueTask Set<T>(ComputeMethodInput input, Result<T>? output, CancellationToken cancellationToken)
     {
         try {
-            var replicaCacheBehavior = input.MethodDef.ComputedOptions.ClientCacheBehavior;
-            switch (replicaCacheBehavior) {
+            var cacheBehavior = input.MethodDef.ComputedOptions.ClientCacheBehavior;
+            switch (cacheBehavior) {
                 case ClientCacheBehavior.None:
                     return;
                 case ClientCacheBehavior.DefaultValue:

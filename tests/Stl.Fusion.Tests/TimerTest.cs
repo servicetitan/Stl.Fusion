@@ -4,8 +4,7 @@ namespace Stl.Fusion.Tests;
 
 public class TimerTest : FusionTestBase
 {
-    public TimerTest(ITestOutputHelper @out, FusionTestOptions? options = null)
-        : base(@out, options) { }
+    public TimerTest(ITestOutputHelper @out) : base(@out) { }
 
     [Fact]
     public async Task BasicTest()

@@ -4,9 +4,8 @@ namespace Stl.Fusion.Tests.Extensions;
 
 public class FusionTimeTest : FusionTestBase
 {
-    public FusionTimeTest(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() { UseTestClock = true })
-    { }
+    public FusionTimeTest(ITestOutputHelper @out) : base(@out)
+        => UseTestClock = true;
 
     [Fact]
     public async Task BasicTest()

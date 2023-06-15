@@ -6,7 +6,7 @@ namespace Stl.Fusion.Tests;
 
 public class EdgeCaseServiceTest : FusionTestBase
 {
-    public EdgeCaseServiceTest(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out, options) { }
+    public EdgeCaseServiceTest(ITestOutputHelper @out) : base(@out) { }
 
     [Fact(Timeout = 30_000)]
     public async Task TestService()

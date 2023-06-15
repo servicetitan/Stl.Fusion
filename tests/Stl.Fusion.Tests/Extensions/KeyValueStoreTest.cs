@@ -16,12 +16,11 @@ public class DbKeyValueStoreTest : KeyValueStoreTestBase
 
 public abstract class KeyValueStoreTestBase : FusionTestBase
 {
-    protected KeyValueStoreTestBase(ITestOutputHelper @out, bool useInMemoryKeyValueStore)
-        : base(@out, new FusionTestOptions() {
-            UseTestClock = true,
-            UseInMemoryKeyValueStore = useInMemoryKeyValueStore,
-        })
-    { }
+    protected KeyValueStoreTestBase(ITestOutputHelper @out, bool useInMemoryKeyValueStore) : base(@out)
+    {
+        UseTestClock = true;
+        UseInMemoryKeyValueStore = useInMemoryKeyValueStore;
+    }
 
     [Fact]
     public async Task BasicTest()

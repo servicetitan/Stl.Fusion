@@ -5,7 +5,7 @@ namespace Stl.Fusion.Tests;
 
 public class ScreenshotServiceClientTest : FusionTestBase
 {
-    public ScreenshotServiceClientTest(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out, options) { }
+    public ScreenshotServiceClientTest(ITestOutputHelper @out) : base(@out) { }
 
     [Fact]
     public async Task BasicTest()

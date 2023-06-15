@@ -1,3 +1,4 @@
+using Stl.Diagnostics;
 using Stl.Locking;
 using Stl.RestEase;
 using Stl.Rpc;
@@ -9,37 +10,29 @@ using Xunit.DependencyInjection.Logging;
 
 namespace Stl.Tests;
 
-public class RpcTestOptions
-{
-    public bool UseLogging { get; set; } = true;
-    public bool UseTestClock { get; set; }
-}
-
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public abstract class RpcTestBase : TestBase, IAsyncLifetime
 {
     private static readonly ReentrantAsyncLock InitializeLock = new(LockReentryMode.CheckedFail);
     protected static readonly Symbol ClientPeerId = RpcDefaults.DefaultPeerId;
 
-    public RpcTestOptions Options { get; }
-    public bool IsLoggingEnabled { get; set; } = true;
-    public RpcWebHost WebHost { get; }
-    public IServiceProvider Services { get; }
-    public IServiceProvider WebServices => WebHost.Services;
-    public IServiceProvider ClientServices { get; }
-    public ILogger Log { get; }
+    private IServiceProvider? _services;
+    private IServiceProvider? _clientServices;
+    private RpcWebHost? _webHost;
+    private ILogger? _log;
 
-    protected RpcTestBase(ITestOutputHelper @out, RpcTestOptions? options = null) : base(@out)
-    {
-        Options = options ?? new RpcTestOptions();
-        // ReSharper disable once VirtualMemberCallInConstructor
-        Services = CreateServices();
-        WebHost = Services.GetRequiredService<RpcWebHost>();
-        ClientServices = CreateServices(true);
-        Log = Options.UseLogging
-            ? Services.LogFor(GetType())
-            : NullLogger.Instance;
-    }
+    public bool UseLogging { get; init; }
+    public bool UseTestClock { get; init; }
+    public bool IsLogEnabled { get; init; } = true;
+
+    public IServiceProvider Services => _services ??= CreateServices();
+    public IServiceProvider ClientServices => _clientServices ??= CreateServices(true);
+    public IServiceProvider WebServices => WebHost.Services;
+    public RpcWebHost WebHost => _webHost ??= Services.GetRequiredService<RpcWebHost>();
+    public ILogger? Log => (_log ??= Services.LogFor(GetType())).IfEnabled(LogLevel.Debug, IsLogEnabled);
+
+    protected RpcTestBase(ITestOutputHelper @out) : base(@out)
+    { }
 
     public override async Task InitializeAsync()
     {
@@ -80,12 +73,12 @@ public abstract class RpcTestBase : TestBase, IAsyncLifetime
 
     protected virtual void ConfigureServices(IServiceCollection services, bool isClient)
     {
-        if (Options.UseTestClock)
+        if (UseTestClock)
             services.AddSingleton(new MomentClockSet(new TestClock()));
         services.AddSingleton(Out);
 
         // Logging
-        if (Options.UseLogging)
+        if (UseLogging)
             services.AddLogging(logging => {
                 var debugCategories = new List<string> {
                     "Stl.Rpc",
@@ -101,7 +94,7 @@ public abstract class RpcTestBase : TestBase, IAsyncLifetime
                 };
 
                 bool LogFilter(string? category, LogLevel level)
-                    => IsLoggingEnabled &&
+                    => IsLogEnabled &&
                         debugCategories.Any(x => category?.StartsWith(x) ?? false)
                         && level >= LogLevel.Debug;
 

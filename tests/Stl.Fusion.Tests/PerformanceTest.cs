@@ -9,9 +9,10 @@ public abstract class PerformanceTestBase : FusionTestBase
 {
     public int UserCount = 1000;
 
-    protected PerformanceTestBase(ITestOutputHelper @out, FusionTestOptions? options = null)
-        : base(@out, options)
-    { }
+    protected PerformanceTestBase(ITestOutputHelper @out) : base(@out)
+    {
+        UseLogging = false;
+    }
 
     public override async Task InitializeAsync()
     {
@@ -46,7 +47,7 @@ public abstract class PerformanceTestBase : FusionTestBase
         var enableSerialization = false;
 
         Out.WriteLine($".NET: {RuntimeInfo.DotNetCore.VersionString}");
-        Out.WriteLine($"Database: {Options.DbType}");
+        Out.WriteLine($"Database: {DbType}");
         Out.WriteLine("With Stl.Fusion:");
         if (enableSerialization)
             await Test("Multiple readers + serialization, 1 mutator", users, withSerialization, true,
@@ -145,50 +146,30 @@ public abstract class PerformanceTestBase : FusionTestBase
 
 public class PerformanceTest_Sqlite : PerformanceTestBase
 {
-    public PerformanceTest_Sqlite(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() {
-            DbType = FusionTestDbType.Sqlite,
-            UseLogging = false,
-        })
-    { }
+    public PerformanceTest_Sqlite(ITestOutputHelper @out) : base(@out)
+        => DbType = FusionTestDbType.Sqlite;
 }
 
 public class PerformanceTest_PostgreSql : PerformanceTestBase
 {
-    public PerformanceTest_PostgreSql(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() {
-            UseLogging = false,
-            DbType = FusionTestDbType.PostgreSql,
-        })
-    { }
+    public PerformanceTest_PostgreSql(ITestOutputHelper @out) : base(@out)
+        => DbType = FusionTestDbType.PostgreSql;
 }
 
 public class PerformanceTest_MariaDb : PerformanceTestBase
 {
-    public PerformanceTest_MariaDb(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() {
-            UseLogging = false,
-            DbType = FusionTestDbType.MariaDb,
-        })
-    { }
+    public PerformanceTest_MariaDb(ITestOutputHelper @out) : base(@out)
+        => DbType = FusionTestDbType.MariaDb;
 }
 
 public class PerformanceTest_SqlServer : PerformanceTestBase
 {
-    public PerformanceTest_SqlServer(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() {
-            UseLogging = false,
-            DbType = FusionTestDbType.SqlServer,
-        })
-    { }
+    public PerformanceTest_SqlServer(ITestOutputHelper @out) : base(@out)
+        => DbType = FusionTestDbType.SqlServer;
 }
 
 public class PerformanceTest_InMemoryDb : PerformanceTestBase
 {
-    public PerformanceTest_InMemoryDb(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() {
-            DbType = FusionTestDbType.InMemory,
-            UseLogging = false,
-        })
-    { }
+    public PerformanceTest_InMemoryDb(ITestOutputHelper @out) : base(@out)
+        => DbType = FusionTestDbType.InMemory;
 }

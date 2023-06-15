@@ -5,7 +5,7 @@ namespace Stl.Fusion.Tests;
 
 public class KeyValueModelTest : FusionTestBase
 {
-    public KeyValueModelTest(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out, options) { }
+    public KeyValueModelTest(ITestOutputHelper @out) : base(@out) { }
 
     [Fact]
     public async Task BasicTest()

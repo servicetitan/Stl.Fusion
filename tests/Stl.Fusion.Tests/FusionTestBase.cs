@@ -16,11 +16,7 @@ using Stl.Fusion.Tests.UIModels;
 using Stl.Locking;
 using Stl.Rpc;
 using Stl.Testing.Collections;
-using Stl.Testing.Output;
 using Stl.Tests;
-using Stl.Tests.Rpc;
-using Stl.Time.Testing;
-using Xunit.DependencyInjection.Logging;
 using User = Stl.Fusion.Tests.Model.User;
 
 namespace Stl.Fusion.Tests;
@@ -34,22 +30,18 @@ public enum FusionTestDbType
     InMemory = 4,
 }
 
-public class FusionTestOptions : RpcTestOptions
-{
-    public FusionTestDbType DbType { get; set; } = FusionTestDbType.Sqlite;
-    public bool UseRedisOperationLogChangeTracking { get; set; } = !TestRunnerInfo.IsBuildAgent();
-    public bool UseInMemoryKeyValueStore { get; set; }
-    public bool UseInMemoryAuthService { get; set; }
-    public bool UseReplicaCache { get; set; }
-}
-
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public abstract class FusionTestBase : RpcTestBase
 {
     private static readonly ReentrantAsyncLock InitializeLock = new(LockReentryMode.CheckedFail);
-    protected static readonly ConcurrentDictionary<Symbol, string> ReplicaCache = new();
+    protected static readonly ConcurrentDictionary<Symbol, string> ClientComputedCacheStore = new();
 
-    public new FusionTestOptions Options { get; }
+    public FusionTestDbType DbType { get; init; } = FusionTestDbType.Sqlite;
+    public bool UseRedisOperationLogChangeTracking { get; init; } = !TestRunnerInfo.IsBuildAgent();
+    public bool UseInMemoryKeyValueStore { get; init; }
+    public bool UseInMemoryAuthService { get; init; }
+    public bool UseClientComputedCache { get; init; }
+
     public FilePath SqliteDbPath { get; protected set; }
     public string PostgreSqlConnectionString { get; protected set; } =
         "Server=localhost;Database=stl_fusion_tests;Port=5432;User Id=postgres;Password=postgres";
@@ -58,10 +50,8 @@ public abstract class FusionTestBase : RpcTestBase
     public string SqlServerConnectionString { get; protected set; } =
         "Server=localhost,1433;Database=stl_fusion_tests;MultipleActiveResultSets=true;TrustServerCertificate=true;User Id=sa;Password=SqlServer1";
 
-    protected FusionTestBase(ITestOutputHelper @out, FusionTestOptions? options = null)
-        : base(@out, options ??= new())
+    protected FusionTestBase(ITestOutputHelper @out) : base(@out)
     {
-        Options = options;
         var appTempDir = FilePath.GetApplicationTempDirectory("", true);
         SqliteDbPath = appTempDir & FilePath.GetHashedName($"{GetType().Name}_{GetType().Namespace}.db");
     }
@@ -96,7 +86,7 @@ public abstract class FusionTestBase : RpcTestBase
 
     protected virtual bool MustSkip()
         => TestRunnerInfo.IsGitHubAction()
-            && Options.DbType
+            && DbType
                 is FusionTestDbType.PostgreSql
                 or FusionTestDbType.MariaDb
                 or FusionTestDbType.SqlServer;
@@ -140,18 +130,18 @@ public abstract class FusionTestBase : RpcTestBase
 #if !NETFRAMEWORK
             fusionServer.AddAuthentication();
 #endif
-            if (Options.UseInMemoryAuthService)
+            if (UseInMemoryAuthService)
                 fusion.AddInMemoryAuthService();
             else
                 fusion.AddDbAuthService<TestDbContext, DbAuthSessionInfo, DbAuthUser, long>();
-            if (Options.UseInMemoryKeyValueStore)
+            if (UseInMemoryKeyValueStore)
                 fusion.AddInMemoryKeyValueStore();
             else
                 fusion.AddDbKeyValueStore<TestDbContext>();
 
             // DbContext & related services
             services.AddPooledDbContextFactory<TestDbContext>(builder => {
-                switch (Options.DbType) {
+                switch (DbType) {
                 case FusionTestDbType.Sqlite:
                     builder.UseSqlite($"Data Source={SqliteDbPath}");
                     break;
@@ -186,13 +176,13 @@ public abstract class FusionTestBase : RpcTestBase
                     throw new NotSupportedException();
                 }
 #if NET5_0_OR_GREATER
-                if (Options.DbType != FusionTestDbType.InMemory)
+                if (DbType != FusionTestDbType.InMemory)
                     builder.UseValidationCheckConstraints(c => c.UseRegex(false));
 #endif
                 builder.EnableSensitiveDataLogging();
             }, 256);
             services.AddDbContextServices<TestDbContext>(db => {
-                if (Options.UseRedisOperationLogChangeTracking)
+                if (UseRedisOperationLogChangeTracking)
                     db.AddRedisDb("localhost", "Fusion.Tests");
                 db.AddOperations(operations => {
                     operations.ConfigureOperationLogReader(_ => new() {
@@ -200,9 +190,9 @@ public abstract class FusionTestBase : RpcTestBase
                         // Enable this if you debug multi-host invalidation
                         // MaxCommitDuration = TimeSpan.FromMinutes(5),
                     });
-                    if (Options.UseRedisOperationLogChangeTracking)
+                    if (UseRedisOperationLogChangeTracking)
                         operations.AddRedisOperationLogChangeTracking();
-                    else if (Options.DbType == FusionTestDbType.PostgreSql)
+                    else if (DbType == FusionTestDbType.PostgreSql)
                         operations.AddNpgsqlOperationLogChangeTracking();
                     else
                         operations.AddFileBasedOperationLogChangeTracking();
@@ -212,10 +202,9 @@ public abstract class FusionTestBase : RpcTestBase
             });
         }
         else {
-            // Custom replica cache
             services.AddSingleton(_ => new InMemoryComputedCache.Options() {
-                IsEnabled = Options.UseReplicaCache,
-                Cache = ReplicaCache,
+                IsEnabled = UseClientComputedCache,
+                Cache = ClientComputedCacheStore,
             });
             services.AddSingleton<ClientComputedCache, InMemoryComputedCache>();
 

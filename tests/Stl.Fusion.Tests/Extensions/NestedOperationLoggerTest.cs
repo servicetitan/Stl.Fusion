@@ -5,9 +5,8 @@ namespace Stl.Fusion.Tests.Extensions;
 
 public class NestedOperationLoggerTest : FusionTestBase
 {
-    public NestedOperationLoggerTest(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() { UseTestClock = true })
-    { }
+    public NestedOperationLoggerTest(ITestOutputHelper @out) : base(@out)
+        => UseTestClock = true;
 
     [Fact]
     public async Task BasicTest()

@@ -5,7 +5,7 @@ namespace Stl.Fusion.Tests;
 
 public class ClientTimeServiceTest : FusionTestBase
 {
-    public ClientTimeServiceTest(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out, options) { }
+    public ClientTimeServiceTest(ITestOutputHelper @out) : base(@out) { }
 
     private TimeSpan GetEpsilon()
     {

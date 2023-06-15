@@ -99,7 +99,7 @@ public class UserProviderTest : FusionTestBase
                 var now = await time.GetTime().ConfigureAwait(false);
                 return $"@ {now:hh:mm:ss.fff}: {norris?.Name ?? "(none)"}";
             }).Update();
-        sText.Updated += (s, _) => Log.LogInformation($"{s.Value}");
+        sText.Updated += (s, _) => Log?.LogInformation($"{s.Value}");
 
         for (var i = 1; i <= 10; i += 1) {
             u = u with { Name = $"Chuck Norris Lvl{i}" };

@@ -4,7 +4,7 @@ namespace Stl.Fusion.Tests;
 
 public class ServerTimeModelTest : FusionTestBase
 {
-    public ServerTimeModelTest(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out, options) { }
+    public ServerTimeModelTest(ITestOutputHelper @out) : base(@out) { }
 
     [Fact]
     public async Task ServerTimeModelTest1()
