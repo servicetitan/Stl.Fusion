@@ -1,4 +1,4 @@
-using Stl.Fusion.Bridge.Interception;
+using Stl.Fusion.Client.Interception;
 using Stl.Fusion.Tests.Services;
 using Stl.OS;
 
@@ -30,7 +30,7 @@ public class ScreenshotServiceClientWithReplicaCacheTest : FusionTestBase
         var c1 = await GetScreenshotComputed(service1);
         Out.WriteLine($"Miss in: {sw.ElapsedMilliseconds}ms");
         c1.Replica.Should().NotBeNull(); // First cache miss should resolve via replica
-        c1.Options.ReplicaCacheBehavior.Should().Be(ReplicaCacheBehavior.Standard);
+        c1.Options.ReplicaCacheBehavior.Should().Be(ClientCacheBehavior.Standard);
 
         sw.Restart();
         var c2 = await GetScreenshotComputed(service2);
@@ -66,8 +66,8 @@ public class ScreenshotServiceClientWithReplicaCacheTest : FusionTestBase
         var sw = Stopwatch.StartNew();
         var c1 = await GetScreenshotAltComputed(service1);
         Out.WriteLine($"Miss in: {sw.ElapsedMilliseconds}ms");
-        c1.Replica.Should().BeNull(); // First cache miss should resolve via replica
-        c1.Options.ReplicaCacheBehavior.Should().Be(ReplicaCacheBehavior.DefaultValue);
+        c1.Call!.ResultTask.Should().NotBeNull(); // First cache miss should resolve via replica
+        c1.Options.CacheBehavior.Should().Be(ClientCacheBehavior.DefaultValue);
         c1.Output.UntypedValue.Should().BeNull();
 
         sw.Restart();
@@ -87,9 +87,9 @@ public class ScreenshotServiceClientWithReplicaCacheTest : FusionTestBase
         c2.Output.UntypedValue.Should().NotBeNull();
     }
 
-    private static async Task<IReplicaMethodComputed> GetScreenshotComputed(IScreenshotServiceClient service)
-        => (IReplicaMethodComputed)await Computed.Capture(() => service.GetScreenshot(100));
+    private static async Task<IClientComputed> GetScreenshotComputed(IScreenshotServiceClient service)
+        => (IClientComputed)await Computed.Capture(() => service.GetScreenshot(100));
 
-    private static async Task<IReplicaMethodComputed> GetScreenshotAltComputed(IScreenshotServiceClient service)
-        => (IReplicaMethodComputed)await Computed.Capture(() => service.GetScreenshotAlt(100));
+    private static async Task<IClientComputed> GetScreenshotAltComputed(IScreenshotServiceClient service)
+        => (IClientComputed)await Computed.Capture(() => service.GetScreenshotAlt(100));
 }

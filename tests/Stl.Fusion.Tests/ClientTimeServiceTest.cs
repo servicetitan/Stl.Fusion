@@ -1,4 +1,3 @@
-using Stl.Fusion.Bridge;
 using Stl.Fusion.Tests.Services;
 
 namespace Stl.Fusion.Tests;

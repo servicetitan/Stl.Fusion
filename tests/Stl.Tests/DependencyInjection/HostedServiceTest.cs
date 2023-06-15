@@ -34,10 +34,13 @@ public class HostedServiceTest
 
     private static ServiceProvider CreateServices()
     {
+        static KeyValuePair<string, string> NewPair(string key, string value)
+            => new(key, value);
+
         var cfg = new ConfigurationBuilder()
             .Add(new MemoryConfigurationSource {
                 InitialData = new[] {
-                    KeyValuePair.Create("TestSettings:Value", "1"),
+                    NewPair("TestSettings:Value", "1"),
                 }!
             })
             .Build();

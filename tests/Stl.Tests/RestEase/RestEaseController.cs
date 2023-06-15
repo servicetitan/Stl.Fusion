@@ -1,26 +1,24 @@
 #if NETCOREAPP
 using Microsoft.AspNetCore.Mvc;
-using Stl.Fusion.Tests.UIModels;
 #else
 using System.Web.Http;
 using ControllerBase = System.Web.Http.ApiController;
 #endif
-using Stl.Serialization;
 
-namespace Stl.Fusion.Tests.Services;
+namespace Stl.Tests.RestEase;
 
 public sealed class RestEaseController : ControllerBase
 {
     [HttpGet]
-    public Task<string> GetFromQueryImplicit(string str, CancellationToken cancellationToken) 
+    public Task<string> GetFromQueryImplicit(string str, CancellationToken cancellationToken)
         => Task.FromResult(str);
 
 #if NETCOREAPP
     [HttpGet]
-    public Task<string> GetFromQuery([FromQuery]string str, CancellationToken cancellationToken)
+    public Task<string> GetFromQuery([FromQuery] string str, CancellationToken cancellationToken)
 #else
     [HttpGet]
-    public Task<string> GetFromQuery([FromUri]string str, CancellationToken cancellationToken)
+    public Task<string> GetFromQuery([FromUri] string str, CancellationToken cancellationToken)
 #endif
     {
         return Task.FromResult(str);
@@ -31,7 +29,7 @@ public sealed class RestEaseController : ControllerBase
     public Task<QueryParamModel> GetFromQueryComplex([FromQuery] QueryParamModel str, CancellationToken cancellationToken)
 #else
     [HttpGet]
-    public Task<Stl.Fusion.Tests.UIModels.QueryParamModel> GetFromQueryComplex ([FromUri] Stl.Fusion.Tests.UIModels.QueryParamModel str, CancellationToken cancellationToken)
+    public Task<QueryParamModel> GetFromQueryComplex ([FromUri] QueryParamModel str, CancellationToken cancellationToken)
 #endif
     {
         return Task.FromResult(str);
@@ -45,7 +43,7 @@ public sealed class RestEaseController : ControllerBase
     }
 
 #if NETCOREAPP
-    [HttpGet("api/restease/getFromPath/{str}")]
+    [HttpGet("~/api/restEase/getFromPath/{str}")]
     public Task<string> GetFromPath(string str, CancellationToken cancellationToken)
 #else
     [HttpGet]
@@ -65,10 +63,10 @@ public sealed class RestEaseController : ControllerBase
 
 #if NETCOREAPP
     [HttpPost]
-    public Task<JsonString> PostFromQuery([FromQuery]string str, CancellationToken cancellationToken)
+    public Task<JsonString> PostFromQuery([FromQuery] string str, CancellationToken cancellationToken)
 #else
     [HttpPost]
-    public Task<JsonString> PostFromQuery([FromUri]string str, CancellationToken cancellationToken)
+    public Task<JsonString> PostFromQuery([FromUri] string str, CancellationToken cancellationToken)
 #endif
     {
         var jsonString = new JsonString(str);
@@ -76,7 +74,7 @@ public sealed class RestEaseController : ControllerBase
     }
 
 #if NETCOREAPP
-    [HttpPost("api/restease/postFromPath/{str}")]
+    [HttpPost("~/api/restEase/postFromPath/{str}")]
 #else
     [HttpPost]
     [Route("api/restease/postFromPath/{str}")]
@@ -88,14 +86,14 @@ public sealed class RestEaseController : ControllerBase
     }
 
     [HttpPost]
-    public Task<JsonString> PostWithBody([FromBody]StringWrapper wrapper, CancellationToken cancellationToken)
+    public Task<JsonString> PostWithBody([FromBody] StringWrapper wrapper, CancellationToken cancellationToken)
     {
         var jsonString = new JsonString(wrapper.Body);
         return Task.FromResult(jsonString);
     }
 
 #if NETCOREAPP
-    [HttpPost("api/restease/concatQueryAndPath/{b}")]
+    [HttpPost("~/api/restEase/concatQueryAndPath/{b}")]
     public Task<JsonString> ConcatQueryAndPath(string a, string b, CancellationToken cancellationToken)
 #else
     [HttpPost]
@@ -109,7 +107,7 @@ public sealed class RestEaseController : ControllerBase
     }
 
 #if NETCOREAPP
-    [HttpPost("api/restease/concatPathAndBody/{a}")]
+    [HttpPost("~/api/restEase/concatPathAndBody/{a}")]
     public async Task<JsonString> ConcatPathAndBody(string a, CancellationToken cancellationToken)
 #else
     [HttpPost]
@@ -128,5 +126,3 @@ public sealed class RestEaseController : ControllerBase
         return jsonString;
     }
 }
-
-public record StringWrapper(string Body);

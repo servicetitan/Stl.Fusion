@@ -35,10 +35,4 @@ public class ListArgumentTest : SimpleFusionTestBase
 #endif
         }
     }
-
-    protected override void ConfigureServices(ServiceCollection services)
-    {
-        base.ConfigureServices(services);
-        services.AddFusion().AddAuthentication();
-    }
 }

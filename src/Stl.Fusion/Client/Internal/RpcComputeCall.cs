@@ -1,4 +1,4 @@
-namespace Stl.Fusion.Rpc.Internal;
+namespace Stl.Fusion.Client.Internal;
 
 public static class RpcComputeCall
 {

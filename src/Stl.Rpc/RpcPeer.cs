@@ -140,14 +140,14 @@ public abstract class RpcPeer : WorkerBase
                 if (semaphore == null)
                     while (await channelReader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
                     while (channelReader.TryRead(out var message)) {
-                        _ = ProcessMessage(message, null, cancellationToken);
+                        _ = ProcessMessage(message, cancellationToken);
                     }
                 else
                     while (await channelReader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
                     while (channelReader.TryRead(out var message)) {
                         if (Equals(message.Service, RpcSystemCalls.Name.Value)) {
                             // System calls are exempt from semaphore use
-                            _ = ProcessMessage(message, null, cancellationToken);
+                            _ = ProcessMessage(message, cancellationToken);
                         }
                         else {
                             await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -182,7 +182,6 @@ public abstract class RpcPeer : WorkerBase
 
     protected async Task ProcessMessage(
         RpcMessage message,
-        SemaphoreSlim? semaphore,
         CancellationToken cancellationToken)
     {
         var context = InboundContextFactory.Invoke(this, message, cancellationToken);
@@ -195,7 +194,25 @@ public abstract class RpcPeer : WorkerBase
         }
         finally {
             scope.Dispose();
-            semaphore?.Release();
+        }
+    }
+
+    protected async Task ProcessMessage(
+        RpcMessage message,
+        SemaphoreSlim semaphore,
+        CancellationToken cancellationToken)
+    {
+        var context = InboundContextFactory.Invoke(this, message, cancellationToken);
+        var scope = context.Activate();
+        try {
+            await context.Call.Invoke().ConfigureAwait(false);
+        }
+        catch (Exception e) when (e is not OperationCanceledException) {
+            Log.LogError(e, "Failed to process message: {Message}", context.Message);
+        }
+        finally {
+            scope.Dispose();
+            semaphore.Release();
         }
     }
 

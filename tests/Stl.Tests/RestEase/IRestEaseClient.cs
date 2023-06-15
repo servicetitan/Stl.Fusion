@@ -1,11 +1,8 @@
 using RestEase;
-using Stl.Fusion.Client;
-using Stl.Fusion.Tests.UIModels;
 
-namespace Stl.Fusion.Tests.Services;
+namespace Stl.Tests.RestEase;
 
-[RegisterRestEaseReplicaService(Scope = ServiceScope.ClientServices)]
-[BasePath("RestEase")]
+[BasePath("restEase")]
 [SerializationMethods(Query = QuerySerializationMethod.Serialized)]
 public interface IRestEaseClient : IComputeService
 {

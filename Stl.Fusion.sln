@@ -101,6 +101,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Fusion.Ext.Services", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Fusion.Blazor.Authentication", "src\Stl.Fusion.Blazor.Authentication\Stl.Fusion.Blazor.Authentication.csproj", "{5A8530A3-E69B-4BD3-B7A7-01A916D166EB}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{91471F20-7F3C-471C-B34B-CAD21D464C95}"
+	ProjectSection(SolutionItems) = preProject
+		docs\Overview.md = docs\Overview.md
+		docs\QA.md = docs\QA.md
+		docs\README.md = docs\README.md
+		docs\Story.md = docs\Story.md
+		docs\TaskList-AY.md = docs\TaskList-AY.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

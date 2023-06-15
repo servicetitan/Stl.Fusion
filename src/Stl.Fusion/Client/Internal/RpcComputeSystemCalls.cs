@@ -1,7 +1,7 @@
 using Stl.Rpc;
 using Stl.Rpc.Infrastructure;
 
-namespace Stl.Fusion.Rpc.Internal;
+namespace Stl.Fusion.Client.Internal;
 
 public interface IRpcComputeSystemCalls : IRpcSystemService
 {
@@ -10,7 +10,7 @@ public interface IRpcComputeSystemCalls : IRpcSystemService
 
 public class RpcComputeSystemCalls : RpcServiceBase, IRpcComputeSystemCalls
 {
-    public static readonly Symbol Name = "$c-sys";
+    public static readonly Symbol Name = "$sys-c";
 
     public RpcComputeSystemCalls(IServiceProvider services) : base(services)
     { }

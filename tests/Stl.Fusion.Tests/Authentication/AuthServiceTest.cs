@@ -1,9 +1,7 @@
 using System.Security;
-using System.Security.Principal;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Authentication.Commands;
-using Stl.Fusion.Authentication.Internal;
-using Stl.Fusion.EntityFramework.Authentication;
+using Stl.Fusion.Authentication.Services;
 using Stl.Fusion.Tests.Model;
 using Stl.Reflection;
 using User = Stl.Fusion.Authentication.User;

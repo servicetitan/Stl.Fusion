@@ -1,11 +1,25 @@
-using Stl.Fusion.Tests.Services;
+using Stl.RestEase;
+using Stl.Tests.Rpc;
 
-namespace Stl.Fusion.Tests;
+namespace Stl.Tests.RestEase;
 
 // Checks different request patterns with RestEase
-public class RestEaseTest : FusionTestBase
+public class RestEaseTest : RpbWebTestBase
 {
     public RestEaseTest(ITestOutputHelper @out) : base(@out) { }
+
+    protected override void ConfigureServices(IServiceCollection services, bool isClient = false)
+    {
+        base.ConfigureServices(services, isClient);
+        if (isClient) {
+            var restEase = services.AddRestEase();
+            restEase.ConfigureHttpClient((_, _, options) => {
+                var apiUri = new Uri($"{WebHost.ServerUri}api/");
+                options.HttpClientActions.Add(c => c.BaseAddress = apiUri);
+            });
+            restEase.AddClient<IRestEaseClient>();
+        }
+    }
 
     [Fact]
     public async Task GetFromQueryImplicit()
@@ -49,7 +63,7 @@ public class RestEaseTest : FusionTestBase
         await using var serving = await WebHost.Serve();
         var service = ClientServices.GetRequiredService<IRestEaseClient>();
 
-        var jsonString = (await service.PostFromQueryImplicit("abcD"));
+        var jsonString = await service.PostFromQueryImplicit("abcD");
         jsonString.Value.Should().Be("abcD");
     }
 
@@ -59,7 +73,7 @@ public class RestEaseTest : FusionTestBase
         await using var serving = await WebHost.Serve();
         var service = ClientServices.GetRequiredService<IRestEaseClient>();
 
-        var jsonString = (await service.PostFromQuery("abcD"));
+        var jsonString = await service.PostFromQuery("abcD");
         jsonString.Value.Should().Be("abcD");
     }
 
@@ -70,7 +84,7 @@ public class RestEaseTest : FusionTestBase
         await using var serving = await WebHost.Serve();
         var service = ClientServices.GetRequiredService<IRestEaseClient>();
 
-        var model = new UIModels.QueryParamModel { Name = "alex", Description = "mercer" };
+        var model = new QueryParamModel { Name = "alex", Description = "mercer" };
         var result = await service.GetFromQueryComplex(model);
         result.Name.Should().Be(model.Name);
         result.Description.Should().Be(model.Description);
@@ -83,7 +97,7 @@ public class RestEaseTest : FusionTestBase
         await using var serving = await WebHost.Serve();
         var service = ClientServices.GetRequiredService<IRestEaseClient>();
 
-        var jsonString = (await service.PostFromPath("abcD"));
+        var jsonString = await service.PostFromPath("abcD");
         jsonString.Value.Should().Be("abcD");
     }
 
@@ -103,7 +117,7 @@ public class RestEaseTest : FusionTestBase
         await using var serving = await WebHost.Serve();
         var service = ClientServices.GetRequiredService<IRestEaseClient>();
 
-        var jsonString = (await service.ConcatQueryAndPath("ab", "cD"));
+        var jsonString = await service.ConcatQueryAndPath("ab", "cD");
         jsonString.Value.Should().Be("abcD");
     }
 
@@ -113,7 +127,7 @@ public class RestEaseTest : FusionTestBase
         await using var serving = await WebHost.Serve();
         var service = ClientServices.GetRequiredService<IRestEaseClient>();
 
-        var jsonString = (await service.ConcatPathAndBody("ab", "cD"));
+        var jsonString = await service.ConcatPathAndBody("ab", "cD");
         jsonString.Value.Should().Be("abcD");
     }
 }

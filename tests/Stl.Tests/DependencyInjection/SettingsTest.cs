@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Memory;
 
@@ -59,13 +58,16 @@ public class SettingsTest
 
     private static IServiceProvider CreateServices()
     {
+        static KeyValuePair<string, string> NewPair(string key, string value)
+            => new(key, value);
+
         var cfg = new ConfigurationBuilder()
             .Add(new MemoryConfigurationSource {
                 InitialData = new[] {
-                    KeyValuePair.Create("XSettings_Manual:Value", "1"),
-                    KeyValuePair.Create("YSettings:Value", "2"),
-                    KeyValuePair.Create("Z:Value", "3"),
-                    KeyValuePair.Create("F:Value", ""),
+                    NewPair("XSettings_Manual:Value", "1"),
+                    NewPair("YSettings:Value", "2"),
+                    NewPair("Z:Value", "3"),
+                    NewPair("F:Value", ""),
                 }!
             })
             .Build();

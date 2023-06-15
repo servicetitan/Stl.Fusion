@@ -1,10 +1,10 @@
 using Stl.Fusion.Interception;
 
-namespace Stl.Fusion.Rpc.Cache;
+namespace Stl.Fusion.Client.Cache;
 
-public sealed class RpcNoComputedCache : RpcComputedCache
+public sealed class NoClientComputedCache : ClientComputedCache
 {
-    public RpcNoComputedCache(IServiceProvider services) : base(services) { }
+    public NoClientComputedCache(IServiceProvider services) : base(services) { }
 
     protected override ValueTask<Result<T>?> GetInternal<T>(ComputeMethodInput input, CancellationToken cancellationToken)
         => ValueTaskExt.FromResult((Result<T>?)null);

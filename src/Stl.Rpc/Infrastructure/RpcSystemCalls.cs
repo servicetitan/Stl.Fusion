@@ -1,4 +1,5 @@
 using Stl.Interception;
+using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
 
@@ -7,6 +8,7 @@ public interface IRpcSystemCalls : IRpcSystemService
     Task<RpcNoWait> Ok(object? result);
     Task<RpcNoWait> Error(ExceptionInfo error);
     Task<RpcNoWait> Cancel();
+    Task<Unit> NotFound(string serviceName, string methodName);
 }
 
 public class RpcSystemCalls : RpcServiceBase, IRpcSystemCalls, IRpcArgumentListTypeResolver
@@ -48,6 +50,9 @@ public class RpcSystemCalls : RpcServiceBase, IRpcSystemCalls, IRpcArgumentListT
             inboundCall.Cancel();
         return RpcNoWait.Tasks.Completed;
     }
+
+    public Task<Unit> NotFound(string serviceName, string methodName)
+        => throw Errors.EndpointNotFound(serviceName, methodName);
 
     public Type? GetArgumentListType(RpcInboundContext context)
     {

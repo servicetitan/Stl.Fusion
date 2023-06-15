@@ -1,4 +1,3 @@
-using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Tests.Services;
 using Stl.Interception;
 

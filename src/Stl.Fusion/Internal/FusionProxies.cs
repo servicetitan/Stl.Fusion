@@ -1,5 +1,5 @@
 using Stl.Fusion.Interception;
-using Stl.Fusion.Rpc.Interception;
+using Stl.Fusion.Client.Interception;
 using Stl.Interception;
 using Stl.Rpc;
 using Stl.Rpc.Infrastructure;
@@ -26,7 +26,7 @@ public static class FusionProxies
         var client = RpcProxies.NewClientProxy(services, serviceType, serviceType);
         var serviceDef = rpcHub.ServiceRegistry[serviceType];
 
-        var clientInterceptor = services.GetRequiredService<RpcComputeClientInterceptor>();
+        var clientInterceptor = services.GetRequiredService<ClientComputeServiceInterceptor>();
         clientInterceptor.Setup(serviceDef);
         clientInterceptor.ValidateType(serviceType);
         var clientProxy = Proxies.New(serviceType, clientInterceptor, client);

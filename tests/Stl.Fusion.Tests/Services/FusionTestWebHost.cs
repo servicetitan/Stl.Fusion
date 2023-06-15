@@ -1,6 +1,7 @@
 using System.Reflection;
 using Microsoft.Extensions.Hosting;
 using Stl.Fusion.Server;
+using Stl.Rpc.Server;
 #if NETCOREAPP
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -70,7 +71,7 @@ public class FusionTestWebHost : TestWebHostBase
             app.UseEndpoints(endpoints => {
                 endpoints.MapControllerRoute(name: "DefaultApi", pattern: "api/{controller}/{action}");
                 endpoints.MapControllers();
-                endpoints.MapFusionWebSocketServer();
+                endpoints.MapRpcServer();
             });
         });
     }

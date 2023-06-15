@@ -1,41 +1,41 @@
 using Cysharp.Text;
+using Stl.Fusion.Client.Cache;
+using Stl.Fusion.Client.Internal;
 using Stl.Fusion.Interception;
-using Stl.Fusion.Rpc.Cache;
-using Stl.Fusion.Rpc.Internal;
 using Stl.Rpc.Infrastructure;
 using Stl.Versioning;
 using Errors = Stl.Internal.Errors;
 
-namespace Stl.Fusion.Rpc.Interception;
+namespace Stl.Fusion.Client.Interception;
 
-public interface IRpcComputeMethodFunction : IComputeMethodFunction
+public interface IClientComputeMethodFunction : IComputeMethodFunction
 {
-    void OnInvalidated(IRpcComputed computed);
+    void OnInvalidated(IClientComputed computed);
 }
 
-public class RpcComputeMethodFunction<T> : ComputeFunctionBase<T>, IRpcComputeMethodFunction
+public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientComputeMethodFunction
 {
     private string? _toString;
 
     public VersionGenerator<LTag> VersionGenerator { get; }
-    public RpcComputedCache RpcComputedCache { get; }
+    public ClientComputedCache Cache { get; }
 
-    public RpcComputeMethodFunction(
+    public ClientComputeMethodFunction(
         ComputeMethodDef methodDef,
         VersionGenerator<LTag> versionGenerator,
-        RpcComputedCache cache,
+        ClientComputedCache cache,
         IServiceProvider services)
         : base(methodDef, services)
     {
         VersionGenerator = versionGenerator;
-        RpcComputedCache = cache;
+        Cache = cache;
     }
 
     public override string ToString()
         => _toString ??= ZString.Concat('*', base.ToString());
 
-    public void OnInvalidated(IRpcComputed computed)
-        => _ = RpcComputedCache.Set<T>((ComputeMethodInput)computed.Input, null, CancellationToken.None);
+    public void OnInvalidated(IClientComputed computed)
+        => _ = Cache.Set<T>((ComputeMethodInput)computed.Input, null, CancellationToken.None);
 
     protected override ValueTask<Computed<T>> Compute(
         ComputedInput input, Computed<T>? existing,
@@ -82,7 +82,7 @@ public class RpcComputeMethodFunction<T> : ComputeFunctionBase<T>, IRpcComputeMe
         catch (Exception error) {
             result = new Result<T>(default!, error);
         }
-        return new RpcComputed<T>(
+        return new ClientComputed<T>(
             input.MethodDef.ComputedOptions,
             input, result, VersionGenerator.NextVersion(), true,
             call);

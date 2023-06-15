@@ -1,8 +1,6 @@
-using System.Collections.Concurrent;
 using Stl.Locking;
 using Stl.Rpc;
 using Stl.Rpc.Clients;
-using Stl.Rpc.Server;
 using Stl.Testing.Collections;
 using Stl.Testing.Output;
 using Xunit.DependencyInjection.Logging;
@@ -83,6 +81,7 @@ public class RpbWebTestBase : TestBase, IAsyncLifetime
                 var debugCategories = new List<string> {
                     "Stl.Rpc",
                     "Stl.CommandR",
+                    "Stl.Testing",
                     "Stl.Tests",
                     // DbLoggerCategory.Database.Transaction.Name,
                     // DbLoggerCategory.Database.Connection.Name,
@@ -112,9 +111,7 @@ public class RpbWebTestBase : TestBase, IAsyncLifetime
 
         var rpc = services.AddRpc();
         if (!isClient) {
-            var webHost = (RpcTestWebHost?)WebHost;
-            if (webHost == null)
-                webHost = new RpcTestWebHost(services);
+            var webHost = (RpcTestWebHost?)WebHost ?? new RpcTestWebHost(services, GetType().Assembly);
             services.AddSingleton(_ => webHost);
             // rpc.UseWebSocketServer(); // Not necessary - RpcTestWebHost already does this
         }

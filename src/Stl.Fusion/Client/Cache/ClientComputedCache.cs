@@ -1,14 +1,14 @@
 using Stl.Fusion.Interception;
 
-namespace Stl.Fusion.Rpc.Cache;
+namespace Stl.Fusion.Client.Cache;
 
-public abstract class RpcComputedCache : IHasServices
+public abstract class ClientComputedCache : IHasServices
 {
     protected ILogger Log { get; }
 
     public IServiceProvider Services { get; }
 
-    protected RpcComputedCache(IServiceProvider services)
+    protected ClientComputedCache(IServiceProvider services)
     {
         Services = services;
         Log = services.LogFor(GetType());
@@ -17,16 +17,16 @@ public abstract class RpcComputedCache : IHasServices
     public async ValueTask<Result<T>?> Get<T>(ComputeMethodInput input, CancellationToken cancellationToken)
     {
         try {
-            var replicaCacheBehavior = input.MethodDef.ComputedOptions.ReplicaCacheBehavior;
-            switch (replicaCacheBehavior) {
-                case ReplicaCacheBehavior.None:
+            var clientCacheBehavior = input.MethodDef.ComputedOptions.ClientCacheBehavior;
+            switch (clientCacheBehavior) {
+                case ClientCacheBehavior.None:
                     return null;
-                case ReplicaCacheBehavior.DefaultValue:
+                case ClientCacheBehavior.DefaultValue:
                     return Result.New(default(T)!);
             }
 
             var output = await GetInternal<T>(input, cancellationToken).ConfigureAwait(false);
-            if (!output.HasValue && replicaCacheBehavior == ReplicaCacheBehavior.DefaultValueOnMiss)
+            if (!output.HasValue && clientCacheBehavior == ClientCacheBehavior.DefaultValueOnMiss)
                 return Result.New(default(T)!);
 
             return output;
@@ -40,11 +40,11 @@ public abstract class RpcComputedCache : IHasServices
     public async ValueTask Set<T>(ComputeMethodInput input, Result<T>? output, CancellationToken cancellationToken)
     {
         try {
-            var replicaCacheBehavior = input.MethodDef.ComputedOptions.ReplicaCacheBehavior;
+            var replicaCacheBehavior = input.MethodDef.ComputedOptions.ClientCacheBehavior;
             switch (replicaCacheBehavior) {
-                case ReplicaCacheBehavior.None:
+                case ClientCacheBehavior.None:
                     return;
-                case ReplicaCacheBehavior.DefaultValue:
+                case ClientCacheBehavior.DefaultValue:
                     return;
             }
 

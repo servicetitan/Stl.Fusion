@@ -1,23 +1,23 @@
+using Stl.Fusion.Client.Cache;
 using Stl.Fusion.Interception;
-using Stl.Fusion.Rpc.Cache;
 using Stl.Interception;
 using Stl.Rpc;
 using Stl.Rpc.Infrastructure;
 
-namespace Stl.Fusion.Rpc.Interception;
+namespace Stl.Fusion.Client.Interception;
 
-public class RpcComputeClientInterceptor : ComputeServiceInterceptorBase
+public class ClientComputeServiceInterceptor : ComputeServiceInterceptorBase
 {
     public new record Options : ComputeServiceInterceptorBase.Options;
 
     protected readonly RpcClientInterceptor RpcClientInterceptor;
-    protected readonly RpcComputedCache Cache;
+    protected readonly ClientComputedCache Cache;
 
-    public RpcComputeClientInterceptor(Options options, IServiceProvider services)
+    public ClientComputeServiceInterceptor(Options options, IServiceProvider services)
         : base(options, services)
     {
         RpcClientInterceptor = services.GetRequiredService<RpcClientInterceptor>();
-        Cache = services.GetRequiredService<RpcComputedCache>();
+        Cache = services.GetRequiredService<ClientComputedCache>();
     }
 
     public virtual void Setup(RpcServiceDef serviceDef)
@@ -41,7 +41,7 @@ public class RpcComputeClientInterceptor : ComputeServiceInterceptorBase
     }
 
     protected override ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method)
-        => new RpcComputeMethodFunction<T>(method, Hub.LTagVersionGenerator, Cache, Services);
+        => new ClientComputeMethodFunction<T>(method, Hub.LTagVersionGenerator, Cache, Services);
 
     protected override void ValidateTypeInternal(Type type) { }
 }

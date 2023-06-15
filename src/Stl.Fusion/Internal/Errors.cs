@@ -49,15 +49,6 @@ public static class Errors
         => new InvalidOperationException($"{nameof(ComputeMethodAttribute)} is applied to a method " +
             $"returning non-generic Task/ValueTask: '{method}'.");
 
-    public static Exception UnsupportedReplicaType(Type replicaType)
-        => new NotSupportedException(
-            $"Replica<{replicaType.GetName()}> isn't supported by the current client, " +
-            $"most likely because there is no good way to intercept the deserialization " +
-            $"of results of this type.");
-
-    public static Exception UnsupportedComputedOptions(Type unsupportedBy)
-        => new NotSupportedException($"Specified {nameof(ComputedOptions)} aren't supported by '{unsupportedBy}'.");
-
     public static Exception InvalidContextCallOptions(CallOptions callOptions)
         => new InvalidOperationException(
             $"{nameof(ComputeContext)} with {nameof(CallOptions)} = {callOptions} cannot be used here.");

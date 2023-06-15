@@ -29,7 +29,7 @@ public sealed class RpcSystemCallSender : RpcServiceBase
             ? Ok(peer, callId, value, headers)
             : Error(peer, callId, result.Error!, headers);
 
-    public async ValueTask Ok<TResult>(RpcPeer peer, long callId, TResult result, List<RpcHeader>? headers = null)
+    public ValueTask Ok<TResult>(RpcPeer peer, long callId, TResult result, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
@@ -37,10 +37,10 @@ public sealed class RpcSystemCallSender : RpcServiceBase
         };
         // An optimized version of Client.Ok(result):
         var call = context.SetCall(OkMethodDef, ArgumentList.New(result))!;
-        await call.Send().ConfigureAwait(false);
+        return call.Send();
     }
 
-    public async ValueTask Error(RpcPeer peer, long callId, Exception error, List<RpcHeader>? headers = null)
+    public ValueTask Error(RpcPeer peer, long callId, Exception error, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
@@ -48,10 +48,10 @@ public sealed class RpcSystemCallSender : RpcServiceBase
         };
         // An optimized version of Client.Error(result):
         var call = context.SetCall(ErrorMethodDef, ArgumentList.New(error.ToExceptionInfo()))!;
-        await call.Send().ConfigureAwait(false);
+        return call.Send();
     }
 
-    public async ValueTask Cancel(RpcPeer peer, long callId, List<RpcHeader>? headers = null)
+    public ValueTask Cancel(RpcPeer peer, long callId, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
@@ -59,6 +59,6 @@ public sealed class RpcSystemCallSender : RpcServiceBase
         };
         // An optimized version of Client.Error(result):
         var call = context.SetCall(CancelMethodDef, ArgumentList.Empty)!;
-        await call.Send().ConfigureAwait(false);
+        return call.Send();
     }
 }

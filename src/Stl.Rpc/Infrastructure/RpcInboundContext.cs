@@ -28,7 +28,7 @@ public class RpcInboundContext
         CancellationToken = cancellationToken;
         if (initializeCall) {
             var callTypeHeader = message.Headers.GetOrDefault(RpcSystemHeaders.CallType.Name);
-            var callType = Peer.Hub.Configuration.InboundCallTypes[callTypeHeader?.Value ?? ""];
+            Peer.Hub.Configuration.InboundCallTypes.TryGetValue(callTypeHeader?.Value ?? "", out var callType);
             Call = RpcInboundCall.New(callType, this, GetMethodDef());
         }
         else
@@ -38,18 +38,19 @@ public class RpcInboundContext
     public Scope Activate()
         => new(this);
 
-    // Private methods
-
-    private RpcMethodDef GetMethodDef()
-    {
-        var serviceDef = Peer.Hub.ServiceRegistry[Message.Service];
-        if (!serviceDef.IsSystem && !Peer.LocalServiceFilter.Invoke(serviceDef))
-            throw Errors.ServiceIsNotWhiteListed(serviceDef);
-
-        return serviceDef[Message.Method];
-    }
-
     // Nested types
+
+    private RpcMethodDef? GetMethodDef()
+    {
+        var serviceDef = Peer.Hub.ServiceRegistry.Get(Message.Service);
+        if (serviceDef == null)
+            return null;
+
+        if (!serviceDef.IsSystem && !Peer.LocalServiceFilter.Invoke(serviceDef))
+            return null;
+
+        return serviceDef.Get(Message.Method);
+    }
 
     public readonly struct Scope : IDisposable
     {

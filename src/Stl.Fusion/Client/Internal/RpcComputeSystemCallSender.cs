@@ -2,7 +2,7 @@ using Stl.Interception;
 using Stl.Rpc;
 using Stl.Rpc.Infrastructure;
 
-namespace Stl.Fusion.Rpc.Internal;
+namespace Stl.Fusion.Client.Internal;
 
 public sealed class RpcComputeSystemCallSender : RpcServiceBase
 {

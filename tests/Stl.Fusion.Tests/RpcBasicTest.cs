@@ -1,4 +1,5 @@
 using Stl.Fusion.Tests.Services;
+using Stl.Rpc;
 using Stl.Testing.Collections;
 
 namespace Stl.Fusion.Tests;
@@ -34,9 +35,6 @@ public class RpcBasicTest : SimpleFusionTestBase
     {
         base.ConfigureServices(services);
         var fusion = services.AddFusion();
-        fusion.AddService<CounterService>();
-
-        var fusionRpc = fusion.AddRpc();
-        fusionRpc.AddRouter<ICounterService, CounterService>();
+        fusion.AddService<ICounterService, CounterService>(RpcServiceMode.Router);
     }
 }

@@ -1,6 +1,5 @@
 using Stl.Rpc;
 using Stl.Testing.Collections;
-using Stl.Tests.Rpc.StlInterceptionProxies;
 
 namespace Stl.Tests.Rpc;
 

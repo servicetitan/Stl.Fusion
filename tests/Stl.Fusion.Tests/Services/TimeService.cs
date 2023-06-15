@@ -16,7 +16,8 @@ public interface ITimeService : IComputeService
     Task<DateTime> GetTimeWithOffset(TimeSpan offset);
 }
 
-[RegisterComputeService(typeof(ITimeService), Scope = ServiceScope.Services)]
+public interface IClientTimeService : ITimeService { }
+
 public class TimeService : ITimeService
 {
     private readonly ILogger _log;
@@ -41,7 +42,7 @@ public class TimeService : ITimeService
         => Task.FromResult(Time);
 
     [ComputeMethod(AutoInvalidationDelay = 0.25)]
-    public virtual Task<DateTime> GetTimeNoControllerMethod(CancellationToken cancellationToken = default) 
+    public virtual Task<DateTime> GetTimeNoControllerMethod(CancellationToken cancellationToken = default)
         => Task.FromResult(Time);
 
     [ComputeMethod(AutoInvalidationDelay = 0.25)]

@@ -1,10 +1,6 @@
 using System.Collections.Concurrent;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Stl.IO;
-using Stl.Fusion.Bridge;
-using Stl.Fusion.Bridge.Messages;
-using Stl.Fusion.Client;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.EntityFramework.Npgsql;
 using Stl.Fusion.EntityFramework.Redis;
@@ -13,7 +9,6 @@ using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;
 using Stl.Locking;
-using Stl.RegisterAttributes;
 using Stl.Testing.Collections;
 using Stl.Testing.Output;
 using Stl.Time.Testing;
@@ -292,11 +287,11 @@ public class FusionTestBase : TestBase, IAsyncLifetime
             fusion.AddAuthentication(fusionAuth => fusionAuth.AddRestEaseClient());
 
             // Custom replica cache
-            services.AddSingleton(_ => new InMemoryReplicaCache.Options() {
+            services.AddSingleton(_ => new InMemoryClientCache.Options() {
                 IsEnabled = Options.UseReplicaCache,
                 Cache = ReplicaCache,
             });
-            services.AddSingleton<ReplicaCache, InMemoryReplicaCache>();
+            services.AddSingleton<ReplicaCache, InMemoryClientCache>();
 
             // Custom computed state
             services.AddSingleton(c => c.StateFactory().NewComputed<ServerTimeModel2>(

@@ -60,7 +60,7 @@ public class Startup
             }
         });
 
-        // ComputedService/ReplicaService/etc. type validation should be off in release
+        // IComputeService validation should be off in release
 #if !DEBUG
         InterceptorBase.Options.Defaults.IsValidationEnabled = true;
 #endif

@@ -26,13 +26,14 @@ public static class Errors
         => new InvalidOperationException($"Can't resolve service by type: '{serviceType.GetName()}'.");
     public static Exception NoService(string serviceName)
         => new InvalidOperationException($"Can't resolve service by name: '{serviceName}'.");
-    public static Exception ServiceIsNotWhiteListed(RpcServiceDef serviceDef)
-        => new InvalidOperationException($"Service '{serviceDef.Type.GetName()}' isn't white-listed.");
 
     public static Exception NoMethod(Type serviceType, MethodInfo method)
         => new InvalidOperationException($"Can't resolve method '{method.Name}' (by MethodInfo) of '{serviceType.GetName()}'.");
     public static Exception NoMethod(Type serviceType, string methodName)
         => new InvalidOperationException($"Can't resolve method '{methodName}' (by name) of '{serviceType.GetName()}'.");
+
+    public static Exception EndpointNotFound(string serviceName, string methodName)
+        => new RpcException($"Can't resolve endpoint: '{serviceName}.{methodName}'.");
 
     public static Exception AlreadyConnected()
         => new InvalidOperationException($"This {nameof(RpcPeer)} is already connected.");

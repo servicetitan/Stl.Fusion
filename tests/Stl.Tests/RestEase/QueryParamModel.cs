@@ -1,4 +1,4 @@
-namespace Stl.Fusion.Tests.UIModels;
+namespace Stl.Tests.RestEase;
 
 public record QueryParamModel
 {

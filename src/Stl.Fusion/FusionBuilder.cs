@@ -5,9 +5,9 @@ using Stl.Fusion.Internal;
 using Stl.Fusion.Multitenancy;
 using Stl.Fusion.Operations.Internal;
 using Stl.Fusion.Operations.Reprocessing;
-using Stl.Fusion.Rpc.Cache;
-using Stl.Fusion.Rpc.Interception;
-using Stl.Fusion.Rpc.Internal;
+using Stl.Fusion.Client.Cache;
+using Stl.Fusion.Client.Interception;
+using Stl.Fusion.Client.Internal;
 using Stl.Fusion.UI;
 using Stl.Multitenancy;
 using Stl.Rpc;
@@ -145,12 +145,12 @@ public readonly struct FusionBuilder
         }
 
         // Compute call interceptor
-        services.TryAddSingleton(_ => new RpcComputeClientInterceptor.Options());
-        services.TryAddTransient(c => new RpcComputeClientInterceptor(
-            c.GetRequiredService<RpcComputeClientInterceptor.Options>(), c));
+        services.TryAddSingleton(_ => new ClientComputeServiceInterceptor.Options());
+        services.TryAddTransient(c => new ClientComputeServiceInterceptor(
+            c.GetRequiredService<ClientComputeServiceInterceptor.Options>(), c));
 
         // Compute call cache
-        services.AddSingleton(c => (RpcComputedCache)new RpcNoComputedCache(c));
+        services.AddSingleton(c => (ClientComputedCache)new NoClientComputedCache(c));
 
         configure?.Invoke(this);
     }

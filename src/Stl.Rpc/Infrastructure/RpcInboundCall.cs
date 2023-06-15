@@ -20,13 +20,21 @@ public abstract class RpcInboundCall : RpcCall
     public bool NoWait => Id == 0;
     public List<RpcHeader> ResultHeaders { get; } = new();
 
-    public static RpcInboundCall New(Type type, RpcInboundContext context, RpcMethodDef methodDef)
-        => FactoryCache.GetOrAdd((type, methodDef.UnwrappedReturnType), static key => {
+    public static RpcInboundCall New(Type? callType, RpcInboundContext context, RpcMethodDef? methodDef)
+    {
+        if (methodDef == null || callType == null) {
+            var systemCallsServiceDef = context.Peer.Hub.ServiceRegistry[typeof(IRpcSystemCalls)];
+            var notFoundMethodDef = systemCallsServiceDef[nameof(IRpcSystemCalls.NotFound)];
+            return new RpcInbound404Call<Unit>(context, notFoundMethodDef);
+        }
+
+        return FactoryCache.GetOrAdd((callType, methodDef.UnwrappedReturnType), static key => {
             var (tGeneric, tResult) = key;
             var tInbound = tGeneric.MakeGenericType(tResult);
             return (Func<RpcInboundContext, RpcMethodDef, RpcInboundCall>)tInbound
                 .GetConstructorDelegate(typeof(RpcInboundContext), typeof(RpcMethodDef))!;
         }).Invoke(context, methodDef);
+    }
 
     protected RpcInboundCall(RpcInboundContext context, RpcMethodDef methodDef)
         : base(methodDef)
@@ -140,7 +148,7 @@ public class RpcInboundCall<TResult> : RpcInboundCall
         var isSystemServiceCall = ServiceDef.IsSystem;
 
         if (!isSystemServiceCall && !peer.LocalServiceFilter.Invoke(ServiceDef))
-            throw Errors.ServiceIsNotWhiteListed(ServiceDef);
+            throw Errors.NoService(ServiceDef.Type);
 
         var arguments = ArgumentList.Empty;
         var argumentListType = MethodDef.RemoteArgumentListType;

@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.Tests.Model;
 using Stl.Reflection;
-using Stl.RegisterAttributes;
 
 namespace Stl.Fusion.Tests.Services;
 

@@ -1,6 +1,5 @@
 using System.Net;
 using Newtonsoft.Json.Linq;
-using Stl.Fusion.Client.Internal;
 
 namespace Stl.RestEase.Internal;
 

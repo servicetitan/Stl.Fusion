@@ -6,7 +6,7 @@ using Stl.Fusion.Blazor;
 using Stl.Fusion.Blazor.Authentication;
 using Stl.Fusion.Diagnostics;
 using Stl.Fusion.Extensions;
-using Stl.Fusion.Rpc.Interception;
+using Stl.Fusion.Client.Interception;
 using Stl.Fusion.UI;
 using Stl.OS;
 using Stl.Rpc;
@@ -74,7 +74,7 @@ public static class StartupHelper
                     : TimeSpan.FromMinutes(1).ToRandom(0.25),
                 CollectPeriod = TimeSpan.FromSeconds(isWasm ? 3 : 60),
                 AccessFilter = isWasm
-                    ? static computed => computed.Input.Function is IRpcComputeMethodFunction
+                    ? static computed => computed.Input.Function is IClientComputeMethodFunction
                     : static computed => true,
                 AccessStatisticsPreprocessor = StatisticsPreprocessor,
                 RegistrationStatisticsPreprocessor = StatisticsPreprocessor,

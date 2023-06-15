@@ -1,20 +1,20 @@
+using Stl.Fusion.Client.Internal;
 using Stl.Fusion.Interception;
-using Stl.Fusion.Rpc.Internal;
 using Stl.Rpc.Infrastructure;
 
-namespace Stl.Fusion.Rpc.Interception;
+namespace Stl.Fusion.Client.Interception;
 
-public interface IRpcComputed : IComputed, IDisposable
+public interface IClientComputed : IComputed, IDisposable
 {
     RpcOutboundCall? Call { get; }
 }
 
-public class RpcComputed<T> : ComputeMethodComputed<T>, IRpcComputed
+public class ClientComputed<T> : ComputeMethodComputed<T>, IClientComputed
 {
-    RpcOutboundCall? IRpcComputed.Call => Call;
+    RpcOutboundCall? IClientComputed.Call => Call;
     public RpcOutboundComputeCall<T>? Call { get; }
 
-    public RpcComputed(
+    public ClientComputed(
         ComputedOptions options,
         ComputeMethodInput input,
         Result<T> output,
@@ -41,7 +41,7 @@ public class RpcComputed<T> : ComputeMethodComputed<T>, IRpcComputed
     }
 
 #pragma warning disable MA0055
-    ~RpcComputed() => Dispose();
+    ~ClientComputed() => Dispose();
 #pragma warning restore MA0055
 
     public void Dispose()
@@ -66,14 +66,11 @@ public class RpcComputed<T> : ComputeMethodComputed<T>, IRpcComputed
         // PseudoUnregister is used here just to trigger the
         // Unregistered event in ComputedRegistry.
         // We want to keep this computed while it's possible:
-        // ReplicaMethodFunction.Compute tries to use it
-        // to find a Replica to update through.
-        // If this computed instance is gone from registry,
-        // a new Replica is going to be created for each call
-        // to replica method.
+        // ClientComputeMethodFunction.Compute tries to reuse it
+        // to avoid the computation (RPC call).
         ComputedRegistry.Instance.PseudoUnregister(this);
         CancelTimeouts();
-        if (Function is IRpcComputeMethodFunction fn)
+        if (Function is IClientComputeMethodFunction fn)
             fn.OnInvalidated(this);
     }
 }

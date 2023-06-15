@@ -107,7 +107,7 @@ public sealed class ComputedRegistry : IDisposable
                     return;
                 }
                 if (target is { ConsistencyState: not ConsistencyState.Invalidated }) {
-                    // This typically triggers Unregister - except for ReplicaMethodComputed
+                    // This typically triggers Unregister - except for ClientComputed
                     target.Invalidate();
                 }
                 if (_storage.TryRemove(key, handle))

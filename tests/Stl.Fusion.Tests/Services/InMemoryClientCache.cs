@@ -1,12 +1,12 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
-using Stl.Fusion.Bridge;
+using Stl.Fusion.Client.Cache;
 using Stl.Fusion.Interception;
 using Stl.Reflection;
 
 namespace Stl.Fusion.Tests.Services;
 
-public class InMemoryReplicaCache : ReplicaCache
+public class InMemoryClientCache : ClientComputedCache
 {
     public record Options
     {
@@ -24,7 +24,7 @@ public class InMemoryReplicaCache : ReplicaCache
     private ITextSerializer KeySerializer => Settings.KeySerializer;
     private ITextSerializer ValueSerializer => Settings.ValueSerializer;
 
-    public InMemoryReplicaCache(Options settings, IServiceProvider services)
+    public InMemoryClientCache(Options settings, IServiceProvider services)
         : base(services)
         => Settings = settings;
 
@@ -55,7 +55,7 @@ public class InMemoryReplicaCache : ReplicaCache
             Cache[key] = value;
         }
         else
-            Cache.Remove(key, out _);
+            Cache.TryRemove(key, out _);
         return default;
     }
 
