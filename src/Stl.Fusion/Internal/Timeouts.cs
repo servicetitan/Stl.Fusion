@@ -32,5 +32,5 @@ public static class Timeouts
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static long GetKeepAliveSlot(Moment moment)
-        => (moment - StartedAt).Ticks >> KeepAliveQuantaPo2;
+        => (moment.EpochOffsetTicks - StartedAt.EpochOffsetTicks) >> KeepAliveQuantaPo2;
 }
