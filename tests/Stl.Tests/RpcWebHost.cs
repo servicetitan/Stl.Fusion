@@ -3,22 +3,23 @@ using Microsoft.Extensions.Hosting;
 using Stl.Rpc;
 using Stl.Rpc.Server;
 
-#if NETCOREAPP
-using Microsoft.AspNetCore.Server.Kestrel.Core;
+#if NETFRAMEWORK
+using Owin;
+using System.Web.Http;
+using Stl.Fusion.Server;
+#else
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-#else
-using Owin;
 #endif
 
-namespace Stl.Tests.Rpc;
+namespace Stl.Tests;
 
-public class RpcTestWebHost : TestWebHostBase
+public class RpcWebHost : TestWebHostBase
 {
     public IServiceCollection BaseServices { get; }
     public Assembly? ControllerAssembly { get; set; }
 
-    public RpcTestWebHost(IServiceCollection baseServices, Assembly? controllerAssembly = null)
+    public RpcWebHost(IServiceCollection baseServices, Assembly? controllerAssembly = null)
     {
         BaseServices = baseServices;
         ControllerAssembly = controllerAssembly;
@@ -59,6 +60,12 @@ public class RpcTestWebHost : TestWebHostBase
         });
     }
 #else
+    protected override void ConfigureHttp(IServiceProvider services, HttpConfiguration config)
+    {
+        base.ConfigureHttp(services, config);
+        config.Formatters.Insert(0, new TextMediaTypeFormatter());
+    }
+
     protected override void ConfigureAppBuilder(IServiceProvider services, IAppBuilder builder)
     {
         base.ConfigureAppBuilder(services, builder);

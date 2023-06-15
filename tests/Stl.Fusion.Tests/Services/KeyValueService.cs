@@ -55,7 +55,7 @@ public class KeyValueService<TValue> : IKeyValueService<TValue>
     {
         if (key.EndsWith("error"))
             throw new ArgumentException("Error!", nameof(key));
-        return _values.GetValueOrDefault(key)!;
+        return _values.TryGetValue(key, out var value) ? value : default!;
     }
 
     public Task Set(string key, TValue value, CancellationToken cancellationToken = default)
@@ -85,10 +85,4 @@ public class KeyValueService<TValue> : IKeyValueService<TValue>
         }
         return Task.CompletedTask;
     }
-}
-
-[RegisterComputeService(typeof(IKeyValueService<string>), Scope = ServiceScope.Services)]
-public class StringKeyValueService : KeyValueService<string>
-{
-    public StringKeyValueService(IServiceProvider services) : base(services) { }
 }

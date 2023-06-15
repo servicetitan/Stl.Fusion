@@ -52,6 +52,7 @@
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
     <ProjectReference Include="..\..\src\Stl.Rpc.Server.NetFx\Stl.Rpc.Server.NetFx.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Fusion.Server.NetFx\Stl.Fusion.Server.NetFx.csproj" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Stl.Generators\Stl.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />

@@ -20,7 +20,7 @@ public class KeyValueModelTest : FusionTestBase
         (await kv.Get("")).Should().Be("1");
 
         using var kvm = ClientServices.GetRequiredService<IComputedState<KeyValueModel<string>>>();
-        var kvc = ClientServices.GetRequiredService<IKeyValueServiceClient<string>>();
+        var kvc = ClientServices.GetRequiredService<IKeyValueService<string>>();
 
         // First read
         var c = kvm.Computed;
@@ -70,7 +70,7 @@ public class KeyValueModelTest : FusionTestBase
 
         // Client commands
         var clientCommander = ClientServices.Commander();
-        var kvc = ClientServices.GetRequiredService<IKeyValueServiceClient<string>>();
+        var kvc = ClientServices.GetRequiredService<IKeyValueService<string>>();
         (await kv.Get("")).Should().Be("2");
 
         await clientCommander.Call(new IKeyValueService<string>.SetCommand("", "1"));
@@ -99,7 +99,7 @@ public class KeyValueModelTest : FusionTestBase
             ae.Message.Should().StartWith("Error!");
         }
 
-        var kvc = ClientServices.GetRequiredService<IKeyValueServiceClient<string>>();
+        var kvc = ClientServices.GetRequiredService<IKeyValueService<string>>();
         try {
             await kvc.Get("error");
         }
@@ -112,7 +112,7 @@ public class KeyValueModelTest : FusionTestBase
     public async Task ClientExceptionTest()
     {
         await using var _ = await WebHost.Serve();
-        var kv = ClientServices.GetRequiredService<IKeyValueServiceClient<string>>();
+        var kv = ClientServices.GetRequiredService<IKeyValueService<string>>();
 
         try {
             await kv.Get("error");
@@ -121,7 +121,7 @@ public class KeyValueModelTest : FusionTestBase
             ae.Message.Should().StartWith("Error!");
         }
 
-        var kvc = ClientServices.GetRequiredService<IKeyValueServiceClient<string>>();
+        var kvc = ClientServices.GetRequiredService<IKeyValueService<string>>();
         try {
             await kvc.Get("error");
         }

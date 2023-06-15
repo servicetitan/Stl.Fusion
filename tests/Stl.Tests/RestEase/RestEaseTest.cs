@@ -4,19 +4,15 @@ using Stl.Tests.Rpc;
 namespace Stl.Tests.RestEase;
 
 // Checks different request patterns with RestEase
-public class RestEaseTest : RpbWebTestBase
+public class RestEaseTest : RpcTestBase
 {
     public RestEaseTest(ITestOutputHelper @out) : base(@out) { }
 
-    protected override void ConfigureServices(IServiceCollection services, bool isClient = false)
+    protected override void ConfigureServices(IServiceCollection services, bool isClient)
     {
         base.ConfigureServices(services, isClient);
         if (isClient) {
             var restEase = services.AddRestEase();
-            restEase.ConfigureHttpClient((_, _, options) => {
-                var apiUri = new Uri($"{WebHost.ServerUri}api/");
-                options.HttpClientActions.Add(c => c.BaseAddress = apiUri);
-            });
             restEase.AddClient<IRestEaseClient>();
         }
     }

@@ -28,7 +28,7 @@ public abstract class KeyValueStoreTestBase : FusionTestBase
     {
         var kvs = Services.GetRequiredService<IKeyValueStore>();
         var tenantId = Tenant.Default.Id;
-        
+
         await kvs.Set(tenantId, "1", "1v");
         (await kvs.Get(tenantId, "1")).Should().Be("1v");
         await kvs.Remove(tenantId, "1");

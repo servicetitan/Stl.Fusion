@@ -48,8 +48,6 @@ public interface IUserService : IComputeService
     Task Invalidate();
 }
 
-[RegisterComputeService(typeof(IUserService), Scope = ServiceScope.Services)] // Fusion version
-[RegisterService] // "No Fusion" version
 public class UserService : DbServiceBase<TestDbContext>, IUserService
 {
     public bool IsProxy { get; }

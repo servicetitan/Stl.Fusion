@@ -25,7 +25,6 @@ public interface ISimplestProvider
     Task SetValue(SetValueCommand command, CancellationToken cancellationToken = default);
 }
 
-[RegisterComputeService(typeof(ISimplestProvider), Lifetime = ServiceLifetime.Scoped, Scope = ServiceScope.Services)]
 public class SimplestProvider : ISimplestProvider, IHasId<Type>, IComputeService
 {
     private static volatile string _value = "";

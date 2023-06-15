@@ -24,12 +24,14 @@ public interface IScreenshotService : IComputeService
 
 #pragma warning disable CA1416
 
-[RegisterComputeService(typeof(IScreenshotService), Scope = ServiceScope.Services)]
 public class ScreenshotService : IScreenshotService
 {
     private readonly ImageCodecInfo _jpegEncoder;
     private readonly EncoderParameters _jpegEncoderParameters;
     private readonly Rectangle _displayDimensions;
+    private volatile int _screenshotCount;
+
+    public int ScreenshotCount => _screenshotCount;
 
     public ScreenshotService()
     {
@@ -78,6 +80,8 @@ public class ScreenshotService : IScreenshotService
     [ComputeMethod(AutoInvalidationDelay = 0.01)]
     protected virtual Task<Bitmap> GetScreenshot(CancellationToken cancellationToken = default)
     {
+        Interlocked.Increment(ref _screenshotCount);
+
         // This method takes a full-resolution screenshot
         var (w, h) = (_displayDimensions.Width, _displayDimensions.Height);
         var bScreen = new Bitmap(w, h);

@@ -1,13 +1,9 @@
 namespace Stl.Fusion.Tests.Services;
 
-public interface ITimeService : IComputeService
+public interface ITimeServer : IComputeService
 {
     [ComputeMethod]
     Task<DateTime> GetTime(CancellationToken cancellationToken = default);
-    [ComputeMethod]
-    Task<DateTime> GetTimeNoControllerMethod(CancellationToken cancellationToken = default);
-    [ComputeMethod]
-    Task<DateTime> GetTimeNoPublication(CancellationToken cancellationToken = default);
     [ComputeMethod]
     Task<DateTime> GetTimeWithDelay(CancellationToken cancellationToken = default);
     [ComputeMethod]
@@ -16,7 +12,11 @@ public interface ITimeService : IComputeService
     Task<DateTime> GetTimeWithOffset(TimeSpan offset);
 }
 
-public interface IClientTimeService : ITimeService { }
+public interface ITimeService : ITimeServer
+{
+    [ComputeMethod]
+    Task<DateTime> GetTimeNoMethod(CancellationToken cancellationToken = default);
+}
 
 public class TimeService : ITimeService
 {
@@ -42,7 +42,7 @@ public class TimeService : ITimeService
         => Task.FromResult(Time);
 
     [ComputeMethod(AutoInvalidationDelay = 0.25)]
-    public virtual Task<DateTime> GetTimeNoControllerMethod(CancellationToken cancellationToken = default)
+    public virtual Task<DateTime> GetTimeNoMethod(CancellationToken cancellationToken = default)
         => Task.FromResult(Time);
 
     [ComputeMethod(AutoInvalidationDelay = 0.25)]

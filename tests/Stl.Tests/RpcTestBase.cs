@@ -1,37 +1,40 @@
 using Stl.Locking;
+using Stl.RestEase;
 using Stl.Rpc;
 using Stl.Rpc.Clients;
 using Stl.Testing.Collections;
 using Stl.Testing.Output;
+using Stl.Time.Testing;
 using Xunit.DependencyInjection.Logging;
 
-namespace Stl.Tests.Rpc;
+namespace Stl.Tests;
 
-public class RpcWebTestOptions
+public class RpcTestOptions
 {
     public bool UseLogging { get; set; } = true;
+    public bool UseTestClock { get; set; }
 }
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class RpbWebTestBase : TestBase, IAsyncLifetime
+public abstract class RpcTestBase : TestBase, IAsyncLifetime
 {
     private static readonly ReentrantAsyncLock InitializeLock = new(LockReentryMode.CheckedFail);
     protected static readonly Symbol ClientPeerId = RpcDefaults.DefaultPeerId;
 
-    public RpcWebTestOptions Options { get; }
+    public RpcTestOptions Options { get; }
     public bool IsLoggingEnabled { get; set; } = true;
-    public RpcTestWebHost WebHost { get; }
+    public RpcWebHost WebHost { get; }
     public IServiceProvider Services { get; }
     public IServiceProvider WebServices => WebHost.Services;
     public IServiceProvider ClientServices { get; }
     public ILogger Log { get; }
 
-    public RpbWebTestBase(ITestOutputHelper @out, RpcWebTestOptions? options = null) : base(@out)
+    protected RpcTestBase(ITestOutputHelper @out, RpcTestOptions? options = null) : base(@out)
     {
-        Options = options ?? new RpcWebTestOptions();
+        Options = options ?? new RpcTestOptions();
         // ReSharper disable once VirtualMemberCallInConstructor
         Services = CreateServices();
-        WebHost = Services.GetRequiredService<RpcTestWebHost>();
+        WebHost = Services.GetRequiredService<RpcWebHost>();
         ClientServices = CreateServices(true);
         Log = Options.UseLogging
             ? Services.LogFor(GetType())
@@ -68,11 +71,17 @@ public class RpbWebTestBase : TestBase, IAsyncLifetime
     {
         var services = (IServiceCollection)new ServiceCollection();
         ConfigureServices(services, isClient);
+        ConfigureTestServices(services, isClient);
         return services.BuildServiceProvider();
     }
 
-    protected virtual void ConfigureServices(IServiceCollection services, bool isClient = false)
+    protected virtual void ConfigureTestServices(IServiceCollection services, bool isClient)
+    { }
+
+    protected virtual void ConfigureServices(IServiceCollection services, bool isClient)
     {
+        if (Options.UseTestClock)
+            services.AddSingleton(new MomentClockSet(new TestClock()));
         services.AddSingleton(Out);
 
         // Logging
@@ -80,9 +89,10 @@ public class RpbWebTestBase : TestBase, IAsyncLifetime
             services.AddLogging(logging => {
                 var debugCategories = new List<string> {
                     "Stl.Rpc",
+                    "Stl.Fusion",
                     "Stl.CommandR",
-                    "Stl.Testing",
                     "Stl.Tests",
+                    "Stl.Tests.Fusion",
                     // DbLoggerCategory.Database.Transaction.Name,
                     // DbLoggerCategory.Database.Connection.Name,
                     // DbLoggerCategory.Database.Command.Name,
@@ -111,13 +121,19 @@ public class RpbWebTestBase : TestBase, IAsyncLifetime
 
         var rpc = services.AddRpc();
         if (!isClient) {
-            var webHost = (RpcTestWebHost?)WebHost ?? new RpcTestWebHost(services, GetType().Assembly);
+            var webHost = (RpcWebHost?)WebHost ?? new RpcWebHost(services, GetType().Assembly);
             services.AddSingleton(_ => webHost);
             // rpc.UseWebSocketServer(); // Not necessary - RpcTestWebHost already does this
         }
-        else
+        else {
             rpc.AddWebSocketClient(_ => RpcWebSocketClient.Options.Default with {
                 HostUrlResolver = (_, _) => WebHost.ServerUri.ToString(),
             });
+            var restEase = services.AddRestEase();
+            restEase.ConfigureHttpClient((_, _, options) => {
+                var apiUri = new Uri($"{WebHost.ServerUri}api/");
+                options.HttpClientActions.Add(c => c.BaseAddress = apiUri);
+            });
+        }
     }
 }

@@ -12,7 +12,7 @@ public class TimerTest : FusionTestBase
     {
         await using var serving = await WebHost.Serve();
         var tp = WebServices.GetRequiredService<ITimeService>();
-        var ctp = ClientServices.GetRequiredService<IClientTimeService>();
+        var ctp = ClientServices.GetRequiredService<ITimeService>();
 
         var cTime = await Computed.Capture(() => ctp.GetTime()).AsTask().WaitAsync(TimeSpan.FromMinutes(1));
         var count = 0;

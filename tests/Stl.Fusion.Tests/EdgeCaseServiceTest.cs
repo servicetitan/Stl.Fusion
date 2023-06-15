@@ -1,3 +1,4 @@
+using Stl.Fusion.Client.Interception;
 using Stl.Fusion.Tests.Services;
 using Stl.Interception;
 
@@ -19,7 +20,7 @@ public class EdgeCaseServiceTest : FusionTestBase
     public async Task TestClient()
     {
         await using var serving = await WebHost.Serve();
-        var client = ClientServices.GetRequiredService<IEdgeCaseClient>();
+        var client = ClientServices.GetRequiredService<IEdgeCaseService>();
         var tfv = ClientServices.TypeViewFactory<IEdgeCaseService>();
         var service = tfv.CreateView(client);
         await ActualTest(service);
@@ -29,7 +30,7 @@ public class EdgeCaseServiceTest : FusionTestBase
     public async Task TestNullable()
     {
         await using var serving = await WebHost.Serve();
-        var client = ClientServices.GetRequiredService<IEdgeCaseClient>();
+        var client = ClientServices.GetRequiredService<IEdgeCaseService>();
         var tfv = ClientServices.TypeViewFactory<IEdgeCaseService>();
         var service = tfv.CreateView(client);
         var actualService = WebServices.GetRequiredService<IEdgeCaseService>();
@@ -95,13 +96,8 @@ public class EdgeCaseServiceTest : FusionTestBase
 
     private async Task<Computed<T>> Update<T>(Computed<T> computed, CancellationToken cancellationToken = default)
     {
-        if (computed is IReplicaMethodComputed rc)
-            await rc.Replica!
-                .RequestUpdateUntyped(true)
-                .WaitAsync(TimeSpan.FromSeconds(0.5), cancellationToken)
-                .SilentAwait();
-        // Why WaitAsync? If it is consistent, the update comes only once it gets invalidated,
-        // so if there is no timeout, it might wait for it indefinitely long.
+        if (computed is IClientComputed clientComputed)
+            clientComputed.Invalidate();
         return await computed.Update(cancellationToken);
     }
 }

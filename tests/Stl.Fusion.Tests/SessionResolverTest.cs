@@ -9,8 +9,9 @@ public class SessionResolverTest
     public void BasicTest()
     {
         var services = new ServiceCollection()
-            .AddFusion().AddAuthentication()
-            .Services
+            .AddFusion(fusion => {
+                fusion.AddInMemoryAuthService();
+            })
             .BuildServiceProvider();
 
         var session = new Session(RandomSymbolGenerator.Default.Next());

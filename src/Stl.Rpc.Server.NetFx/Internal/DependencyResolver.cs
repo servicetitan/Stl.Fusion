@@ -2,15 +2,15 @@ using System.Web.Http.Dependencies;
 
 namespace Stl.Rpc.Server.Internal;
 
-public class DefaultDependencyResolver : IDependencyResolver
+public class DependencyResolver : IDependencyResolver
 {
     private readonly IServiceProvider _services;
     private readonly IServiceScope? _scope;
 
-    public DefaultDependencyResolver(IServiceProvider services)
+    public DependencyResolver(IServiceProvider services)
         => _services = services;
 
-    private DefaultDependencyResolver(IServiceScope scope)
+    private DependencyResolver(IServiceScope scope)
     {
         _services = scope.ServiceProvider;
         _scope = scope;
@@ -31,5 +31,5 @@ public class DefaultDependencyResolver : IDependencyResolver
     }
 
     public IDependencyScope BeginScope()
-        => new DefaultDependencyResolver(_services.CreateScope());
+        => new DependencyResolver(_services.CreateScope());
 }

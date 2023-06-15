@@ -1,6 +1,5 @@
 namespace Stl.Fusion.Tests.Services;
 
-[RegisterComputeService(typeof(IEdgeCaseService), Scope = ServiceScope.Services)]
 public class EdgeCaseService : IEdgeCaseService
 {
     public IMutableState<string> SuffixState { get; }

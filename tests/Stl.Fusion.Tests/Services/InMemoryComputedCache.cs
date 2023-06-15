@@ -6,7 +6,7 @@ using Stl.Reflection;
 
 namespace Stl.Fusion.Tests.Services;
 
-public class InMemoryClientCache : ClientComputedCache
+public class InMemoryComputedCache : ClientComputedCache
 {
     public record Options
     {
@@ -24,7 +24,7 @@ public class InMemoryClientCache : ClientComputedCache
     private ITextSerializer KeySerializer => Settings.KeySerializer;
     private ITextSerializer ValueSerializer => Settings.ValueSerializer;
 
-    public InMemoryClientCache(Options settings, IServiceProvider services)
+    public InMemoryComputedCache(Options settings, IServiceProvider services)
         : base(services)
         => Settings = settings;
 

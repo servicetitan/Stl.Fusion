@@ -1,4 +1,5 @@
 using Stl.Fusion.Tests.Services;
+using Stl.Rpc;
 
 namespace Stl.Fusion.Tests;
 
@@ -22,7 +23,7 @@ public class ClientTimeServiceTest : FusionTestBase
         var epsilon = GetEpsilon();
 
         await using var serving = await WebHost.Serve();
-        var client = ClientServices.GetRequiredService<IClientTimeService>();
+        var client = ClientServices.GetRequiredService<ITimeService>();
         var cTime = await Computed.Capture(() => client.GetTime());
 
         cTime.Options.AutoInvalidationDelay.Should().Be(ComputedOptions.Default.AutoInvalidationDelay);
@@ -47,7 +48,7 @@ public class ClientTimeServiceTest : FusionTestBase
             epsilon = epsilon.Multiply(2);
 
         await using var serving = await WebHost.Serve();
-        var service = ClientServices.GetRequiredService<IClientTimeService>();
+        var service = ClientServices.GetRequiredService<ITimeService>();
 
         for (int i = 0; i < 20; i++) {
             var time = await service.GetTime();
@@ -60,7 +61,7 @@ public class ClientTimeServiceTest : FusionTestBase
     public async Task TestFormattedTime()
     {
         await using var serving = await WebHost.Serve();
-        var service = ClientServices.GetRequiredService<IClientTimeService>();
+        var service = ClientServices.GetRequiredService<ITimeService>();
 
         (await service.GetFormattedTime("")).Should().Be("");
         (await service.GetFormattedTime("null")).Should().Be("");
@@ -83,21 +84,10 @@ public class ClientTimeServiceTest : FusionTestBase
     public async Task TestNoControllerMethod()
     {
         await using var serving = await WebHost.Serve();
-        var service = ClientServices.GetRequiredService<IClientTimeService>();
+        var service = ClientServices.GetRequiredService<ITimeService>();
 
-        await Assert.ThrowsAsync<ReplicaException>(async () => {
-            await service.GetTimeNoControllerMethod();
-        });
-    }
-
-    [Fact]
-    public async Task TestNoPublication()
-    {
-        await using var serving = await WebHost.Serve();
-        var service = ClientServices.GetRequiredService<IClientTimeService>();
-
-        await Assert.ThrowsAsync<ReplicaException>(async () => {
-            await service.GetTimeNoPublication();
+        await Assert.ThrowsAsync<RpcException>(async () => {
+            await service.GetTimeNoMethod();
         });
     }
 }

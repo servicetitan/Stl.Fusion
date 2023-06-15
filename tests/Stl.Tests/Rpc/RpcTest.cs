@@ -1,17 +1,20 @@
+using Stl.OS;
 using Stl.Rpc;
 using Stl.Testing.Collections;
 
 namespace Stl.Tests.Rpc;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class RpcTest : RpcLocalTestBase
+public class RpcTest : RpcTestBase
 {
     public RpcTest(ITestOutputHelper @out) : base(@out) { }
 
     [Fact]
     public async Task BasicTest()
     {
-        var services = CreateServices();
+        await using var _ = await WebHost.Serve();
+        var services = ClientServices;
+        var peer = services.RpcHub().GetPeer(ClientPeerId);
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         (await client.Div(6, 2)).Should().Be(3);
         (await client.Div(6, 2)).Should().Be(3);
@@ -20,7 +23,6 @@ public class RpcTest : RpcLocalTestBase
         await Assert.ThrowsAsync<DivideByZeroException>(
             () => client.Div(1, 0));
 
-        var peer = services.RpcHub().GetPeer(ClientPeerId);
         peer.Calls.Outbound.Count.Should().Be(0);
         peer.Calls.Inbound.Count.Should().Be(0);
     }
@@ -28,11 +30,12 @@ public class RpcTest : RpcLocalTestBase
     [Fact]
     public async Task CommandTest()
     {
-        var services = CreateServices();
-        var client = services.GetRequiredService<ISimpleRpcServiceClient>();
-        await client.OnDummyCommand(new ISimpleRpcService.DummyCommand("ok"));
+        await using var _ = await WebHost.Serve();
+        var services = ClientServices;
+        var commander = services.Commander();
+        await commander.Call(new ISimpleRpcService.DummyCommand("ok"));
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => client.OnDummyCommand(new ISimpleRpcService.DummyCommand("error")));
+            () => commander.Call(new ISimpleRpcService.DummyCommand("error")));
 
         var peer = services.RpcHub().GetPeer(ClientPeerId);
         peer.Calls.Outbound.Count.Should().Be(0);
@@ -42,15 +45,16 @@ public class RpcTest : RpcLocalTestBase
     [Fact]
     public async Task DelayTest()
     {
-        var services = CreateServices();
+        await using var _ = await WebHost.Serve();
+        var services = ClientServices;
+        var peer = services.RpcHub().GetPeer(ClientPeerId);
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         var startedAt = CpuTimestamp.Now;
         await client.Delay(TimeSpan.FromMilliseconds(200));
         startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(100, 500);
-
-        var peer = services.RpcHub().GetPeer(ClientPeerId);
         peer.Calls.Outbound.Count.Should().Be(0);
         peer.Calls.Inbound.Count.Should().Be(0);
+
         {
             using var cts = new CancellationTokenSource(1);
             startedAt = CpuTimestamp.Now;
@@ -73,37 +77,54 @@ public class RpcTest : RpcLocalTestBase
     }
 
     [Theory]
+    [InlineData(100)]
     [InlineData(1000)]
-    [InlineData(5000)]
-    [InlineData(10_000)]
-    [InlineData(30_000)]
-    [InlineData(100_000)]
+    [InlineData(50_000)]
     public async Task PerformanceTest(int iterationCount)
     {
-        var services = CreateServices();
-        var client = services.GetRequiredService<ISimpleRpcServiceClient>();
-        await client.Div(1, 1);
-
-        var startedAt = CpuTimestamp.Now;
-        for (var i = iterationCount; i > 0; i--)
-            if (i != await client.Div(i, 1).ConfigureAwait(false))
-                Assert.Fail("Wrong result.");
-        var elapsed = startedAt.Elapsed;
-        Out.WriteLine($"{iterationCount}: {iterationCount / elapsed.TotalSeconds:F} ops/s");
-
+        await using var _ = await WebHost.Serve();
+        var services = ClientServices;
         var peer = services.RpcHub().GetPeer(ClientPeerId);
+        var client = services.GetRequiredService<ISimpleRpcServiceClient>();
+
+        var threadCount = Math.Max(1, HardwareInfo.ProcessorCount);
+        var tasks = new Task[threadCount];
+        await Run(10); // Warmup
+        var elapsed = await Run(iterationCount);
+
+        var totalIterationCount = threadCount * iterationCount;
+        Out.WriteLine($"{iterationCount}: {totalIterationCount / elapsed.TotalSeconds:F} ops/s using {threadCount} threads");
         peer.Calls.Outbound.Count.Should().Be(0);
         peer.Calls.Inbound.Count.Should().Be(0);
+
+        async Task<TimeSpan> Run(int count)
+        {
+            var startedAt = CpuTimestamp.Now;
+            for (var threadIndex = 0; threadIndex < threadCount; threadIndex++) {
+                tasks[threadIndex] = Task.Run(async () => {
+                    for (var i = count; i > 0; i--)
+                        if (i != await client.Div(i, 1).ConfigureAwait(false))
+                            Assert.Fail("Wrong result.");
+                }, CancellationToken.None);
+            }
+
+            await Task.WhenAll(tasks);
+            return elapsed = startedAt.Elapsed;
+        }
     }
 
-    protected override void ConfigureServices(ServiceCollection services)
+    protected override void ConfigureServices(IServiceCollection services, bool isClient)
     {
-        base.ConfigureServices(services);
-        var commander = services.AddCommander();
-        commander.AddCommandService<SimpleRpcService>();
-
+        base.ConfigureServices(services, isClient);
         var rpc = services.AddRpc();
-        rpc.AddServer<ISimpleRpcService, SimpleRpcService>();
-        rpc.AddClient<ISimpleRpcService, ISimpleRpcServiceClient>();
+        var commander = services.AddCommander();
+        if (isClient) {
+            rpc.AddClient<ISimpleRpcService, ISimpleRpcServiceClient>();
+            commander.AddCommandService<ISimpleRpcServiceClient>();
+        }
+        else {
+            rpc.AddServer<ISimpleRpcService, SimpleRpcService>();
+            commander.AddCommandService<SimpleRpcService>();
+        }
     }
 }
