@@ -16,7 +16,7 @@ public class ScreenshotServiceTest : FusionTestBase
 
         var c = await GetScreenshotComputed();
         for (var i = 0; i < 10; i++) {
-            c.Value.Image.Data.Length.Should().BeGreaterThan(0);
+            c.Value.Image.Length.Should().BeGreaterThan(0);
             await TestExt.WhenMet(
                 () => c.IsConsistent().Should().BeFalse(),
                 TimeSpan.FromSeconds(0.5));

@@ -67,9 +67,20 @@ public class SerializationTest : TestBase
         var s = new Screenshot {
             Width = 10,
             Height = 20,
-            CapturedAt = Moment.EpochStart,
-            Image = new Base64Encoded(new byte[] { 1, 2, 3 })
+            CapturedAt = SystemClock.Now,
+            Image = new byte[] { 1, 2, 3 },
         };
+        var t = s.PassThroughAllSerializers();
+        t.Width.Should().Be(s.Width);
+        t.Height.Should().Be(s.Height);
+        t.CapturedAt.Should().Be(s.CapturedAt);
+        t.Image.Should().Equal(s.Image);
+    }
+
+    [Fact]
+    public void Base64EncodedSerialization()
+    {
+        var s = new Base64Encoded(new byte[] { 1, 2, 3 });
         s.AssertPassesThroughAllSerializers();
     }
 

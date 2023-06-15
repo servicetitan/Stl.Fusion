@@ -6,5 +6,13 @@ public record RpcMessage(
     [property: DataMember(Order = 1)] string Service,
     [property: DataMember(Order = 2)] string Method,
     [property: DataMember(Order = 3)] TextOrBytes ArgumentData,
-    [property: DataMember(Order = 4)] List<RpcHeader> Headers
-);
+    [property: DataMember(Order = 4)] List<RpcHeader>? Headers)
+{
+    public override string ToString()
+    {
+        var headers = Headers.OrEmpty();
+        return $"{nameof(RpcMessage)}({CallId} -> '{Service}.{Method}', " +
+            $"ArgumentData: {ArgumentData.ToString(16)}, " +
+            $"Headers({headers.Count}): {headers.ToDelimitedString()})";
+    }
+};

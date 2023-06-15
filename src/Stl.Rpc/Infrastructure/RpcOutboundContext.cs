@@ -9,7 +9,7 @@ public sealed class RpcOutboundContext
 
     public static RpcOutboundContext? Current => _current;
 
-    public List<RpcHeader> Headers { get; set; }
+    public List<RpcHeader>? Headers { get; set; }
     public RpcMethodDef? MethodDef { get; private set; }
     public ArgumentList? Arguments { get; private set; }
     public CancellationToken CancellationToken { get; private set; } = default;
@@ -26,7 +26,7 @@ public sealed class RpcOutboundContext
     }
 
     public RpcOutboundContext(List<RpcHeader>? headers = null)
-        => Headers = headers ?? new();
+        => Headers = headers;
 
     public RpcOutboundCall? SetCall(RpcMethodDef methodDef, ArgumentList arguments)
     {

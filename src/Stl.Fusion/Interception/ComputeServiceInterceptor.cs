@@ -16,6 +16,7 @@ public class ComputeServiceInterceptor : ComputeServiceInterceptorBase
 
     protected override void ValidateTypeInternal(Type type)
     {
+        base.ValidateTypeInternal(type);
         var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic
             | BindingFlags.Instance | BindingFlags.Static
             | BindingFlags.FlattenHierarchy;

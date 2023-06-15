@@ -17,7 +17,7 @@ public class RpcOutboundComputeCall<TResult> : RpcOutboundCall<TResult>, IRpcOut
 
     public RpcOutboundComputeCall(RpcOutboundContext context)
         : base(context)
-        => context.Headers.Add(RpcSystemHeaders.CallType.With(RpcComputeCall.CallTypeId));
+        => context.Headers = context.Headers.TryAdd(RpcSystemHeaders.CallType.With(RpcComputeCall.CallTypeId));
 
     public override bool TryCompleteWithOk(object? result, RpcInboundContext context)
     {

@@ -35,6 +35,6 @@ public class RpcBasicTest : SimpleFusionTestBase
     {
         base.ConfigureServices(services);
         var fusion = services.AddFusion();
-        fusion.AddService<ICounterService, CounterService>(RpcServiceMode.Router);
+        fusion.AddService<ICounterService, CounterService>(RpcServiceMode.RoutingServer);
     }
 }

@@ -35,7 +35,9 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
         => _toString ??= ZString.Concat('*', base.ToString());
 
     public void OnInvalidated(IClientComputed computed)
-        => _ = Cache.Set<T>((ComputeMethodInput)computed.Input, null, CancellationToken.None);
+    {
+        // _ = Cache.Set<T>((ComputeMethodInput)computed.Input, null, CancellationToken.None);
+    }
 
     protected override ValueTask<Computed<T>> Compute(
         ComputedInput input, Computed<T>? existing,

@@ -26,6 +26,8 @@ public readonly record struct TextOrBytes(
 
     public TextOrBytes(string text)
         : this(text.AsMemory()) { }
+    public TextOrBytes(byte[] bytes)
+        : this(DataFormat.Bytes, bytes.AsMemory()) { }
     public TextOrBytes(ReadOnlyMemory<char> text)
         : this(DataFormat.Text, text.Cast<char, byte>()) { }
     public TextOrBytes(ReadOnlyMemory<byte> bytes)

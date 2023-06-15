@@ -59,7 +59,7 @@ public abstract class RpcOutboundCall : RpcCall
                     gParameters[i] = itemType;
                     var typeRef = new TypeRef(itemType);
                     var h = RpcSystemHeaders.ArgumentTypes[i].With(typeRef.AssemblyQualifiedName);
-                    headers.Add(h);
+                    headers = headers.TryAdd(h);
                 }
                 argumentListType = argumentListType
                     .GetGenericTypeDefinition()

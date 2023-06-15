@@ -37,7 +37,7 @@ public readonly record struct RpcHeader(string Name, string Value = "")
     }
 
     public override string ToString()
-        => $"RpcHeader({Name} = `{Value}`)";
+        => $"(`{Name}`, `{Value}`)";
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public RpcHeader With(string value)

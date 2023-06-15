@@ -70,11 +70,13 @@ public class RpcInboundComputeCall<TResult> : RpcInboundCall<TResult>
         }
 
         var computed = Computed;
+        var resultHeaders = ResultHeaders;
+        ResultHeaders = null;
         if (computed != null)
-            ResultHeaders.Add(FusionRpcHeaders.Version with { Value = computed.Version.ToString() });
+            resultHeaders = resultHeaders.TryAdd(FusionRpcHeaders.Version with { Value = computed.Version.ToString() });
 
         var systemCallSender = Hub.InternalServices.SystemCallSender;
-        return systemCallSender.Complete(Context.Peer, Id, Result, ResultHeaders);
+        return systemCallSender.Complete(Context.Peer, Id, Result, resultHeaders);
     }
 
     public virtual ValueTask Invalidate()
@@ -87,8 +89,7 @@ public class RpcInboundComputeCall<TResult> : RpcInboundCall<TResult>
             return default;
         }
 
-        ResultHeaders.Clear();
         var computeSystemCallSender = Hub.Services.GetRequiredService<RpcComputeSystemCallSender>();
-        return computeSystemCallSender.Invalidate(Context.Peer, Id, ResultHeaders);
+        return computeSystemCallSender.Invalidate(Context.Peer, Id);
     }
 }

@@ -316,7 +316,12 @@ public sealed class WebSocketChannel<T> : Channel<T>
                 var sizeSpan = buffer.GetSpan(4).Cast<byte, int>();
                 buffer.Advance(4);
                 _byteSerializer.Write(buffer, value);
-                sizeSpan[0] = buffer.WrittenCount - startOffset;
+                var size = buffer.WrittenCount - startOffset;
+                sizeSpan[0] = size;
+
+                // Log?.LogInformation("Wrote: {Value}", value);
+                // Log?.LogInformation("Data({Size}): {Data}",
+                //     size - 4, new Base64Encoded(buffer.WrittenMemory[(startOffset + 4)..].ToArray()).Encode());
             }
             return true;
         }
@@ -337,7 +342,15 @@ public sealed class WebSocketChannel<T> : Channel<T>
             if (!isSizeValid)
                 throw Errors.InvalidMessageSize();
 
-            value = _byteSerializer.Read(bytes[4..], out int _);
+            var data = bytes[4..size];
+            value = _byteSerializer.Read(data, out int readSize);
+            if (readSize != size - 4)
+                throw Errors.InvalidMessageSize();
+
+            // Log?.LogInformation("Read: {Value}", value);
+            // Log?.LogInformation("Data({Size}): {Data}",
+            //     readSize, new Base64Encoded(data.ToArray()).Encode());
+
             bytes = bytes[size..];
             return true;
         }

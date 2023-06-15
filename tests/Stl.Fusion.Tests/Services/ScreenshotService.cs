@@ -11,7 +11,7 @@ public record Screenshot
     [DataMember] public int Width { get; init; }
     [DataMember] public int Height { get; init; }
     [DataMember] public Moment CapturedAt { get; init; }
-    [DataMember] public Base64Encoded Image { get; init; } = "";
+    [DataMember] public byte[] Image { get; init; } = Array.Empty<byte>();
 }
 
 public interface IScreenshotService : IComputeService
@@ -67,13 +67,11 @@ public class ScreenshotService : IScreenshotService
 
         using var stream = new MemoryStream();
         bOut.Save(stream, _jpegEncoder, _jpegEncoderParameters);
-        var bytes = stream.ToArray();
-        var base64Content = Convert.ToBase64String(bytes);
         return new Screenshot {
             Width = ow,
             Height = oh,
             CapturedAt = SystemClock.Now,
-            Image = base64Content
+            Image = stream.ToArray(),
         };
     }
 

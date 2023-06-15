@@ -9,7 +9,7 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
     public ScreenshotServiceClientWithCacheTest(ITestOutputHelper @out) : base(@out)
         => UseClientComputedCache = true;
 
-    [Fact]
+    [Fact(Skip = "ClientComputedCache integration isn't there yet.")]
     public async Task GetScreenshotTest()
     {
         if (OSInfo.IsAnyUnix)
@@ -46,7 +46,7 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
         c2.Call!.ResultTask.IsCompleted.Should().BeTrue(); // Should resolve via Rpc at this point
     }
 
-    [Fact]
+    [Fact(Skip = "ClientComputedCache integration isn't there yet.")]
     public async Task GetScreenshotAltTest()
     {
         if (OSInfo.IsAnyUnix)

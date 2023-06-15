@@ -68,4 +68,9 @@ public abstract class ComputeServiceInterceptorBase : InterceptorBase
         var methodDef = new ComputeMethodDef(type, method, this);
         return methodDef.IsValid ? methodDef : null;
     }
+
+    protected override void ValidateTypeInternal(Type type)
+    {
+        Hub.CommandServiceInterceptor.ValidateType(type);
+    }
 }

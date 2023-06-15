@@ -43,5 +43,8 @@ public class ClientComputeServiceInterceptor : ComputeServiceInterceptorBase
     protected override ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method)
         => new ClientComputeMethodFunction<T>(method, Hub.LTagVersionGenerator, Cache, Services);
 
-    protected override void ValidateTypeInternal(Type type) { }
+    protected override void ValidateTypeInternal(Type type)
+    {
+        Hub.CommandServiceInterceptor.ValidateType(type);
+    }
 }

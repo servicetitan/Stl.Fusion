@@ -11,7 +11,7 @@ public class RpcInboundContext
     public RpcPeer Peer { get; }
     public RpcMessage Message { get; }
     public CancellationToken CancellationToken { get; }
-    public List<RpcHeader> Headers => Message.Headers;
+    public List<RpcHeader>? Headers => Message.Headers;
     public RpcInboundCall Call { get; protected init; }
 
     public static RpcInboundContext GetCurrent()

@@ -64,7 +64,7 @@ public class KeyValueService<TValue> : IKeyValueService<TValue>
     public Task Remove(string key, CancellationToken cancellationToken = default)
         => Commander.Call(new IKeyValueService<TValue>.RemoveCommand(key), cancellationToken);
 
-    public Task SetCmd(IKeyValueService<TValue>.SetCommand cmd, CancellationToken cancellationToken = default)
+    public virtual Task SetCmd(IKeyValueService<TValue>.SetCommand cmd, CancellationToken cancellationToken = default)
     {
         _values[cmd.Key] = cmd.Value;
 
@@ -75,7 +75,7 @@ public class KeyValueService<TValue> : IKeyValueService<TValue>
         return Task.CompletedTask;
     }
 
-    public Task RemoveCmd(IKeyValueService<TValue>.RemoveCommand cmd, CancellationToken cancellationToken = default)
+    public virtual Task RemoveCmd(IKeyValueService<TValue>.RemoveCommand cmd, CancellationToken cancellationToken = default)
     {
         _values.TryRemove(cmd.Key, out _);
 
