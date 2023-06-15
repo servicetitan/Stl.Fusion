@@ -7,24 +7,30 @@ public static class Timeouts
     public static readonly IMomentClock Clock;
     public static readonly ConcurrentTimerSet<object> KeepAlive;
     public static readonly ConcurrentTimerSet<IComputed> Invalidate;
+    public static readonly Moment StartedAt;
+    public const int KeepAliveQuantaPo2 = 21; // ~ 2M ticks or 0.2 sec.
+    public static readonly TimeSpan KeepAliveQuanta = TimeSpan.FromTicks(1L << KeepAliveQuantaPo2);
 
     static Timeouts()
     {
         Clock = MomentClockSet.Default.CpuClock;
-        var keepAliveQuanta = TimeSpan.FromMilliseconds(250);
-        var invalidateQuanta = TimeSpan.FromMilliseconds(250);
+        StartedAt = Clock.Now - KeepAliveQuanta.Multiply(2); // In past to make timer priorities strictly positive
         KeepAlive = new ConcurrentTimerSet<object>(
             new() {
-                Quanta = keepAliveQuanta,
+                Quanta = KeepAliveQuanta,
                 ConcurrencyLevel = HardwareInfo.GetProcessorCountPo2Factor(),
                 Clock = Clock,
-            }, null, Clock.Now - keepAliveQuanta.Multiply(2)); // Start in past makes timer priorities strictly positive
+            }, null, StartedAt);
         Invalidate = new ConcurrentTimerSet<IComputed>(
             new() {
-                Quanta = invalidateQuanta,
+                Quanta = KeepAliveQuanta,
                 ConcurrencyLevel = HardwareInfo.GetProcessorCountPo2Factor(),
                 Clock = Clock,
             },
-            t => t.Invalidate(true));
+            t => t.Invalidate(true), StartedAt);
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static long GetKeepAliveSlot(Moment moment)
+        => (moment - StartedAt).Ticks >> KeepAliveQuantaPo2;
 }

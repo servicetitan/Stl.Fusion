@@ -242,8 +242,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
 
         var minCacheDuration = Options.MinCacheDuration;
         if (minCacheDuration != default) {
-            // We quantize keepAliveUntil here to prevent too frequent AddOrUpdateToLater calls
-            var keepAliveSlot = Timeouts.KeepAlive.GetPriority(Timeouts.Clock.Now + minCacheDuration);
+            var keepAliveSlot = Timeouts.GetKeepAliveSlot(Timeouts.Clock.Now + minCacheDuration);
             var lastKeepAliveSlot = Interlocked.Exchange(ref _lastKeepAliveSlot, keepAliveSlot);
             if (lastKeepAliveSlot != keepAliveSlot)
                 Timeouts.KeepAlive.AddOrUpdateToLater(this, keepAliveSlot);

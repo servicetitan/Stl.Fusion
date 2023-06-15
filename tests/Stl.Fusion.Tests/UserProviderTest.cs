@@ -1,3 +1,4 @@
+using Stl.Fusion.Internal;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 
@@ -143,6 +144,18 @@ public class UserProviderTest : FusionTestBase
         s2.Computed.Invalidate(); // Should increment c2, but shouldn't impact c12
         var v12c = await s12.Use();
         v12c.Should().Be(v12b);
+    }
+
+    [Fact]
+    public void KeepAliveSlotTest()
+    {
+        var q = Timeouts.KeepAliveQuanta;
+        q.TotalSeconds.Should().BeGreaterThan(0.2);
+        q.TotalSeconds.Should().BeLessThan(0.21);
+
+        Timeouts.GetKeepAliveSlot(Timeouts.StartedAt).Should().Be(0L);
+        Timeouts.GetKeepAliveSlot(Timeouts.StartedAt + q).Should().Be(1L);
+        Timeouts.GetKeepAliveSlot(Timeouts.StartedAt + q.Multiply(2)).Should().Be(2L);
     }
 
     [Fact]
