@@ -23,8 +23,7 @@ public abstract class RpcInboundCall : RpcCall
     public static RpcInboundCall New(Type? callType, RpcInboundContext context, RpcMethodDef? methodDef)
     {
         if (methodDef == null || callType == null) {
-            var systemCallsServiceDef = context.Peer.Hub.ServiceRegistry[typeof(IRpcSystemCalls)];
-            var notFoundMethodDef = systemCallsServiceDef[nameof(IRpcSystemCalls.NotFound)];
+            var notFoundMethodDef = context.Peer.Hub.SystemCallSender.NotFoundMethodDef;
             return new RpcInbound404Call<Unit>(context, notFoundMethodDef);
         }
 

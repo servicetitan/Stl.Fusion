@@ -9,17 +9,20 @@ public sealed class RpcSystemCallSender : RpcServiceBase
     private RpcMethodDef? _okMethodDef;
     private RpcMethodDef? _errorMethodDef;
     private RpcMethodDef? _cancelMethodDef;
+    private RpcMethodDef? _notFoundMethodDef;
 
-    private IRpcSystemCalls Client => _client
+    public IRpcSystemCalls Client => _client
         ??= Services.GetRequiredService<IRpcSystemCalls>();
-    private RpcServiceDef SystemCallsServiceDef => _systemCallsServiceDef
+    public RpcServiceDef SystemCallsServiceDef => _systemCallsServiceDef
         ??= Hub.ServiceRegistry.Get<IRpcSystemCalls>()!;
-    private RpcMethodDef OkMethodDef => _okMethodDef
+    public RpcMethodDef OkMethodDef => _okMethodDef
         ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.Ok)));
-    private RpcMethodDef ErrorMethodDef => _errorMethodDef
+    public RpcMethodDef ErrorMethodDef => _errorMethodDef
         ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.Error)));
-    private RpcMethodDef CancelMethodDef => _cancelMethodDef
+    public RpcMethodDef CancelMethodDef => _cancelMethodDef
         ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.Cancel)));
+    public RpcMethodDef NotFoundMethodDef => _notFoundMethodDef
+        ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.NotFound)));
 
     public RpcSystemCallSender(IServiceProvider services) : base(services)
     { }

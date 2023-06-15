@@ -64,7 +64,7 @@ public class ClientTimeServiceTest : FusionTestBase
         var service = ClientServices.GetRequiredService<ITimeService>();
 
         (await service.GetFormattedTime("")).Should().Be("");
-        (await service.GetFormattedTime("null")).Should().Be("");
+        (await service.GetFormattedTime("null")).Should().Be(null);
 
         var format = "{0}";
         var matchCount = 0;
@@ -81,7 +81,7 @@ public class ClientTimeServiceTest : FusionTestBase
     }
 
     [Fact]
-    public async Task TestNoControllerMethod()
+    public async Task TestNoMethod()
     {
         await using var serving = await WebHost.Serve();
         var service = ClientServices.GetRequiredService<ITimeService>();
