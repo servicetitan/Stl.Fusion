@@ -114,8 +114,7 @@ public abstract class RpcTestBase : TestBase, IAsyncLifetime
 
         var rpc = services.AddRpc();
         if (!isClient) {
-            var webHost = (RpcWebHost?)WebHost ?? new RpcWebHost(services, GetType().Assembly);
-            services.AddSingleton(_ => webHost);
+            services.AddSingleton(_ => new RpcWebHost(services, GetType().Assembly));
             // rpc.UseWebSocketServer(); // Not necessary - RpcTestWebHost already does this
         }
         else {

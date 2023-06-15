@@ -25,13 +25,12 @@ public readonly struct DbAuthServiceBuilder<TDbContext, TDbSessionInfo, TDbUser,
         Fusion = fusion;
         DbContext = fusion.Services.AddDbContextServices<TDbContext>();
         var services = Services;
-        if (!services.HasService<DbOperationScopeProvider<TDbContext>>())
-            throw Errors.NoOperationsFrameworkServices();
-
         if (services.HasService<DbSessionInfoTrimmer<TDbContext>>()) {
             configure?.Invoke(this);
             return;
         }
+
+        DbContext.AddOperations();
 
         // DbAuthService
         fusion.AddAuthService<DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId>>();

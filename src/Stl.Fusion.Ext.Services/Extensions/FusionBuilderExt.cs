@@ -50,6 +50,7 @@ public static class FusionBuilderExt
             return fusion;
 
         var dbContext = services.AddDbContextServices<TDbContext>();
+        dbContext.AddOperations();
         dbContext.TryAddEntityResolver<string, TDbKeyValue>();
         fusion.AddService<IKeyValueStore, DbKeyValueStore<TDbContext, TDbKeyValue>>();
 
