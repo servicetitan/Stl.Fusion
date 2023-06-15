@@ -24,8 +24,8 @@ public sealed class ServiceResolver
 
     public override string ToString()
         => Resolver == null
-            ? $"{nameof(ServiceResolver)}({Type.GetName()})"
-            : $"{nameof(ServiceResolver)}({Type.GetName()} -> custom)";
+            ? Type.GetName()
+            : "*" + Type.GetName();
 
     public static implicit operator ServiceResolver(Type type) => New(type);
 }

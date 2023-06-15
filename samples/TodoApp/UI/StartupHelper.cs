@@ -22,8 +22,7 @@ public static class StartupHelper
         builder.Logging.SetMinimumLevel(LogLevel.Warning);
         builder.Logging.AddFilter(typeof(App).Namespace, LogLevel.Information);
         builder.Logging.AddFilter(typeof(FusionMonitor).Namespace, LogLevel.Information);
-        builder.Logging.AddFilter(typeof(RpcHub).Namespace, LogLevel.Information);
-        builder.Logging.AddFilter(typeof(WebSocketChannel<>).Namespace, LogLevel.Information);
+        builder.Logging.AddFilter(typeof(RpcHub).Namespace, LogLevel.Debug);
 
         // Fusion services
         var fusion = services.AddFusion();

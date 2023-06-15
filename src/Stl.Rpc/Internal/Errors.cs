@@ -23,17 +23,17 @@ public static class Errors
         => new InvalidOperationException($"Service '{methodDef.Service.Type.GetName()}' has 2 or more methods named '{methodDef.Name}'.");
 
     public static Exception NoService(Type serviceType)
-        => new InvalidOperationException($"Can't resolve service by type: '{serviceType.GetName()}'.");
+        => new KeyNotFoundException($"Can't resolve service by type: '{serviceType.GetName()}'.");
     public static Exception NoService(string serviceName)
-        => new InvalidOperationException($"Can't resolve service by name: '{serviceName}'.");
+        => new KeyNotFoundException($"Can't resolve service by name: '{serviceName}'.");
 
     public static Exception NoMethod(Type serviceType, MethodInfo method)
-        => new InvalidOperationException($"Can't resolve method '{method.Name}' (by MethodInfo) of '{serviceType.GetName()}'.");
+        => new KeyNotFoundException($"Can't resolve method '{method.Name}' (by MethodInfo) of '{serviceType.GetName()}'.");
     public static Exception NoMethod(Type serviceType, string methodName)
-        => new InvalidOperationException($"Can't resolve method '{methodName}' (by name) of '{serviceType.GetName()}'.");
+        => new KeyNotFoundException($"Can't resolve method '{methodName}' (by name) of '{serviceType.GetName()}'.");
 
     public static Exception EndpointNotFound(string serviceName, string methodName)
-        => new RpcException($"Can't resolve endpoint: '{serviceName}.{methodName}'.");
+        => new RpcException($"Endpoint not found: '{serviceName}.{methodName}'.");
 
     public static Exception AlreadyConnected()
         => new InvalidOperationException($"This {nameof(RpcPeer)} is already connected.");

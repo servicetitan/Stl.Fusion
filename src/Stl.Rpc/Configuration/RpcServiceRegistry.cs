@@ -1,3 +1,4 @@
+using System.Text;
 using Cysharp.Text;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Internal;
@@ -38,18 +39,44 @@ public sealed class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<Rpc
             _services.Add(serviceDef.Type, serviceDef);
             _serviceByName.Add(serviceDef.Name, serviceDef);
         }
-        Log.LogInformation("{RpcServiceRegistry}", ToString());
+        DumpTo(Log, LogLevel.Debug, "Registered services:");
     }
 
     public override string ToString()
+        => $"{GetType().GetName()}({_services.Count} service(s))";
+
+    public string Dump(bool dumpMethods = true, string indent = "")
     {
-        using var sb = ZString.CreateStringBuilder();
-        sb.AppendLine($"{GetType().GetName()}({_services.Count} service(s)):");
+        var sb = StringBuilderExt.Acquire();
+        DumpTo(sb, dumpMethods, indent);
+        return sb.ToStringAndRelease().TrimEnd();
+    }
+
+    public void DumpTo(ILogger? log, LogLevel logLevel, string title, bool dumpMethods = true)
+    {
+        log = log.IfEnabled(logLevel);
+        if (log == null)
+            return;
+
+        var sb = StringBuilderExt.Acquire();
+        sb.AppendLine(title);
+        DumpTo(sb, dumpMethods);
+        log.Log(logLevel, sb.ToStringAndRelease().TrimEnd());
+    }
+
+    public void DumpTo(StringBuilder sb, bool dumpMethods = true, string indent = "")
+    {
         foreach (var serviceDef in _serviceByName.Values.OrderBy(s => s.Name)) {
-            var serverInfo = serviceDef.HasServer  ? "" : $", Serving: {serviceDef.ServerResolver}";
-            sb.AppendLine($"- '{serviceDef.Name}' -> {serviceDef.Type.GetName()}, {serviceDef.MethodCount} method(s){serverInfo}");
+            var serverInfo = serviceDef.HasServer  ? $" -> {serviceDef.ServerResolver}" : "";
+            sb.AppendLine($"{indent}'{serviceDef.Name}': {serviceDef.Type.GetName()}{serverInfo}, {serviceDef.MethodCount} method(s)");
+            if (!dumpMethods)
+                continue;
+
+            foreach (var methodDef in serviceDef.Methods.OrderBy(m => m.Name)) {
+                var arguments = methodDef.RemoteParameterTypes.Select(t => t.GetName()).ToDelimitedString();
+                sb.AppendLine($"{indent}- '{methodDef.Name}': ({arguments}) -> {methodDef.UnwrappedReturnType.GetName()}");
+            }
         }
-        return sb.ToString().TrimEnd();
     }
 
     public RpcServiceDef? Get<TService>()

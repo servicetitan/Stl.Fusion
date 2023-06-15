@@ -1,7 +1,6 @@
 Now:
 - Fix tests
-- Fix RpcServiceRegistry dump
-- Respond with an error on "miss" calls
+- Respond with an error on "miss" calls - add test
 - Default timeouts for calls
 - RpcClientPeer.Options
 - Client-side ArgumentList preprocessing
