@@ -2,6 +2,8 @@ namespace Stl.Time;
 
 public record TimerSetOptions
 {
+    public static readonly TimerSetOptions Default = new();
+
     // ReSharper disable once StaticMemberInGenericType
     public static TimeSpan MinQuanta { get; } = TimeSpan.FromMilliseconds(10);
 
@@ -38,9 +40,11 @@ public sealed class TimerSet<TTimer> : WorkerBase
         _ = Run();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long GetPriority(Moment time)
         => (time - _start).Ticks / Quanta.Ticks;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AddOrUpdate(TTimer timer, Moment time)
         => AddOrUpdate(timer, GetPriority(time));
     public void AddOrUpdate(TTimer timer, long priority)
@@ -49,22 +53,22 @@ public sealed class TimerSet<TTimer> : WorkerBase
             _timers.AddOrUpdate(FixPriority(priority), timer);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool AddOrUpdateToEarlier(TTimer timer, Moment time)
         => AddOrUpdateToEarlier(timer, GetPriority(time));
     public bool AddOrUpdateToEarlier(TTimer timer, long priority)
     {
-        lock (_lock) {
+        lock (_lock)
             return _timers.AddOrUpdateToLower(FixPriority(priority), timer);
-        }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool AddOrUpdateToLater(TTimer timer, Moment time)
         => AddOrUpdateToLater(timer, GetPriority(time));
     public bool AddOrUpdateToLater(TTimer timer, long priority)
     {
-        lock (_lock) {
+        lock (_lock)
             return _timers.AddOrUpdateToHigher(FixPriority(priority), timer);
-        }
     }
 
     public bool Remove(TTimer timer)

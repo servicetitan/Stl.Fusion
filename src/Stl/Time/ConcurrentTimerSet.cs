@@ -4,7 +4,7 @@ namespace Stl.Time;
 
 public record ConcurrentTimerSetOptions : TimerSetOptions
 {
-    public static new ConcurrentTimerSetOptions Default { get; } = new();
+    public static new readonly ConcurrentTimerSetOptions Default = new();
 
     public int ConcurrencyLevel { get; init; } = HardwareInfo.GetProcessorCountPo2Factor();
 }
@@ -46,24 +46,32 @@ public sealed class ConcurrentTimerSet<TTimer> : SafeAsyncDisposableBase
         return Task.WhenAll(tasks);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public long GetPriority(Moment time)
         => (time - _start).Ticks / Quanta.Ticks;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AddOrUpdate(TTimer timer, Moment time)
         => GetTimerSet(timer).AddOrUpdate(timer, time);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AddOrUpdate(TTimer timer, long priority)
         => GetTimerSet(timer).AddOrUpdate(timer, priority);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool AddOrUpdateToEarlier(TTimer timer, Moment time)
         => GetTimerSet(timer).AddOrUpdateToEarlier(timer, time);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool AddOrUpdateToEarlier(TTimer timer, long priority)
         => GetTimerSet(timer).AddOrUpdateToEarlier(timer, priority);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool AddOrUpdateToLater(TTimer timer, Moment time)
         => GetTimerSet(timer).AddOrUpdateToLater(timer, time);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool AddOrUpdateToLater(TTimer timer, long priority)
         => GetTimerSet(timer).AddOrUpdateToLater(timer, priority);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Remove(TTimer timer)
         => GetTimerSet(timer).Remove(timer);
 

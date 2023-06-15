@@ -246,7 +246,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
             var keepAliveSlot = Timeouts.KeepAlive.GetPriority(Timeouts.Clock.Now + minCacheDuration);
             var lastKeepAliveSlot = Interlocked.Exchange(ref _lastKeepAliveSlot, keepAliveSlot);
             if (lastKeepAliveSlot != keepAliveSlot)
-                Timeouts.KeepAlive.AddOrUpdateToLater(this, new Moment(keepAliveSlot));
+                Timeouts.KeepAlive.AddOrUpdateToLater(this, keepAliveSlot);
         }
 
         ComputedRegistry.Instance.ReportAccess(this, isNew);
