@@ -8,6 +8,7 @@ public interface ISimpleRpcService : ICommandService
     Task Delay(TimeSpan duration, CancellationToken cancellationToken = default);
     [CommandHandler]
     Task OnDummyCommand(DummyCommand command, CancellationToken cancellationToken = default);
+    Task<ITuple> Polymorph(ITuple argument, CancellationToken cancellationToken = default);
 
     [DataContract]
     public record DummyCommand([property: DataMember] string Input) : ICommand<Unit>;
@@ -23,6 +24,9 @@ public class SimpleRpcService : ISimpleRpcService
 
     public Task Delay(TimeSpan duration, CancellationToken cancellationToken = default)
         => Task.Delay(duration, cancellationToken);
+
+    public Task<ITuple> Polymorph(ITuple argument, CancellationToken cancellationToken = default)
+        => Task.FromResult(argument);
 
     public virtual Task OnDummyCommand(ISimpleRpcService.DummyCommand command, CancellationToken cancellationToken = default)
     {

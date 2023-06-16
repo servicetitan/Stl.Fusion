@@ -76,6 +76,17 @@ public class RpcTest : RpcTestBase
         }
     }
 
+    [Fact]
+    public async Task PolymorphTest()
+    {
+        await using var _ = await WebHost.Serve();
+        var client = ClientServices.GetRequiredService<ISimpleRpcServiceClient>();
+        var a1 = new Tuple<int>(1);
+        var r1 = await client.Polymorph(a1);
+        r1.Should().Be(a1);
+        r1.Should().NotBeSameAs(a1);
+    }
+
     [Theory]
     [InlineData(100)]
     [InlineData(1000)]
