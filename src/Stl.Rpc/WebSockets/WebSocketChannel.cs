@@ -16,18 +16,18 @@ public sealed class WebSocketChannel<T> : Channel<T>
 
         public bool OwnsWebSocket { get; init; } = true;
         public int WritePacketSize { get; init; } = 1400;
-        public int WriteBufferSize { get; init; } = 16_000; // Rented ~just once, so it can be large
-        public int ReadBufferSize { get; init; } = 16_000; // Rented ~just once, so it can be large
+        public int WriteBufferSize { get; init; } = 8_000; // Rented ~just once, so it can be large
+        public int ReadBufferSize { get; init; } = 8_000; // Rented ~just once, so it can be large
         public int RetainedBufferSize { get; init; } = 64_000; // Any buffer is released when it hits this size
         public TimeSpan CloseTimeout { get; init; } = TimeSpan.FromSeconds(10);
         public DualSerializer<T> Serializer { get; init; } = new();
-        public BoundedChannelOptions ReadChannelOptions { get; init; } = new(16) {
+        public BoundedChannelOptions ReadChannelOptions { get; init; } = new(64) {
             FullMode = BoundedChannelFullMode.Wait,
             SingleReader = true,
             SingleWriter = true,
             AllowSynchronousContinuations = true,
         };
-        public BoundedChannelOptions WriteChannelOptions { get; init; } = new(16) {
+        public BoundedChannelOptions WriteChannelOptions { get; init; } = new(64) {
             FullMode = BoundedChannelFullMode.Wait,
             SingleReader = true,
             SingleWriter = false,
