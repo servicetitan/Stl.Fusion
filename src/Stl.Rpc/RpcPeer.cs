@@ -6,6 +6,8 @@ namespace Stl.Rpc;
 
 public abstract class RpcPeer : WorkerBase
 {
+    private static readonly ConcurrentDictionary<Type, Func<RpcHub, RpcPeerRef, RpcPeer>> FactoryCache = new();
+
     private ILogger? _log;
     private IMomentClock? _clock;
     private volatile AsyncEvent<RpcPeerConnectionState> _connectionState = new(RpcPeerConnectionState.Initial, true);
@@ -15,7 +17,7 @@ public abstract class RpcPeer : WorkerBase
     protected IMomentClock Clock => _clock ??= Services.Clocks().CpuClock;
 
     public RpcHub Hub { get; }
-    public Symbol Id { get; }
+    public RpcPeerRef Ref { get; }
     public RpcArgumentSerializer ArgumentSerializer { get; init; }
     public Func<RpcServiceDef, bool> LocalServiceFilter { get; init; }
     public RpcInboundContextFactory InboundContextFactory { get; init; }
@@ -23,10 +25,16 @@ public abstract class RpcPeer : WorkerBase
     public int InboundConcurrencyLevel { get; init; } = 0; // 0 = no concurrency limit, 1 = one call at a time, etc.
     public AsyncEvent<RpcPeerConnectionState> ConnectionState => _connectionState;
 
-    protected RpcPeer(RpcHub hub, Symbol id)
+    public static RpcPeer New(RpcHub hub, RpcPeerRef peerRef)
+        => FactoryCache.GetOrAdd(peerRef.PeerType,
+            static type => (Func<RpcHub, RpcPeerRef, RpcPeer>)
+                type.GetConstructorDelegate(typeof(RpcHub), typeof(RpcPeerRef))!
+        ).Invoke(hub, peerRef);
+
+    protected RpcPeer(RpcHub hub, RpcPeerRef @ref)
     {
         Hub = hub;
-        Id = id;
+        Ref = @ref;
         ArgumentSerializer = Hub.ArgumentSerializer;
         LocalServiceFilter = null!; // To make sure any descendant has to set it
         InboundContextFactory = Hub.InboundContextFactory;
@@ -51,21 +59,21 @@ public abstract class RpcPeer : WorkerBase
         }
 
         if (channel != null)
-            Log.LogInformation("'{PeerId}': Connected", Id);
+            Log.LogInformation("'{PeerId}': Connected", Ref);
         else {
             if (error != null) {
                 if (Hub.UnrecoverableErrorDetector.Invoke(error, StopToken)) {
                     if (StopToken.IsCancellationRequested && error is OperationCanceledException) {
-                        Log.LogInformation("'{PeerId}': Can't (re)connect, will shut down: stopped", Id);
+                        Log.LogInformation("'{PeerId}': Can't (re)connect, will shut down: stopped", Ref);
                         return;
                     }
                 }
                 Log.LogInformation(
                     "'{PeerId}': Disconnected: {ErrorType}: {ErrorMessage}",
-                    Id, error.GetType().GetName(), error.Message);
+                    Ref, error.GetType().GetName(), error.Message);
             }
             else
-                Log.LogInformation("'{PeerId}': Disconnected", Id);
+                Log.LogInformation("'{PeerId}': Disconnected", Ref);
         }
     }
 
@@ -166,7 +174,7 @@ public abstract class RpcPeer : WorkerBase
 
     protected override Task OnStart(CancellationToken cancellationToken)
     {
-        Log.LogInformation("'{PeerId}': Started", Id);
+        Log.LogInformation("'{PeerId}': Started", Ref);
         foreach (var peerTracker in Hub.PeerTrackers)
             peerTracker.Invoke(this);
         return Task.CompletedTask;
@@ -174,9 +182,9 @@ public abstract class RpcPeer : WorkerBase
 
     protected override Task OnStop()
     {
-        Hub.Peers.TryRemove(Id, this);
+        Hub.Peers.TryRemove(Ref, this);
         _ = DisposeAsync();
-        Log.LogInformation("'{PeerId}': Stopped", Id);
+        Log.LogInformation("'{PeerId}': Stopped", Ref);
         return Task.CompletedTask;
     }
 

@@ -14,7 +14,7 @@ namespace Stl.Tests;
 public abstract class RpcTestBase : TestBase, IAsyncLifetime
 {
     private static readonly ReentrantAsyncLock InitializeLock = new(LockReentryMode.CheckedFail);
-    protected static readonly Symbol ClientPeerId = RpcDefaults.DefaultPeerId;
+    protected static readonly RpcPeerRef ClientPeerRef = RpcPeerRef.Default;
 
     private IServiceProvider? _services;
     private IServiceProvider? _clientServices;

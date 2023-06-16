@@ -31,16 +31,15 @@ public readonly struct RpcBuilder
 
         // Common services
         services.TryAddSingleton(c => new RpcServiceRegistry(c));
-        services.TryAddSingleton(_ => RpcDefaults.ServiceNameBuilder);
-        services.TryAddSingleton(_ => RpcDefaults.MethodNameBuilder);
-        services.TryAddSingleton(_ => RpcDefaults.PeerFactory);
-        services.TryAddSingleton(_ => RpcDefaults.CallRouter);
-        services.TryAddSingleton(_ => RpcDefaults.InboundContextFactory);
-        services.TryAddSingleton(_ => RpcDefaults.ArgumentSerializer);
-        services.TryAddSingleton(_ => RpcDefaults.ClientIdGenerator);
-        services.TryAddSingleton(_ => RpcDefaults.BackendServiceDetector);
-        services.TryAddSingleton(_ => RpcDefaults.UnrecoverableErrorDetector);
-        services.TryAddSingleton(_ => RpcDefaults.ClientChannelFactory);
+        services.TryAddSingleton(_ => RpcDefaultDelegates.ServiceNameBuilder);
+        services.TryAddSingleton(_ => RpcDefaultDelegates.MethodNameBuilder);
+        services.TryAddSingleton(_ => RpcDefaultDelegates.CallRouter);
+        services.TryAddSingleton(_ => RpcDefaultDelegates.InboundContextFactory);
+        services.TryAddSingleton(_ => RpcDefaultDelegates.ClientIdGenerator);
+        services.TryAddSingleton(_ => RpcDefaultDelegates.BackendServiceDetector);
+        services.TryAddSingleton(_ => RpcDefaultDelegates.UnrecoverableErrorDetector);
+        services.TryAddSingleton(_ => RpcDefaultDelegates.ClientChannelFactory);
+        services.TryAddSingleton(_ => RpcArgumentSerializer.Default);
 
         // Interceptors
         services.TryAddSingleton(_ => RpcClientInterceptor.Options.Default);

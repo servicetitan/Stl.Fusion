@@ -13,7 +13,6 @@ public sealed class RpcHub : ProcessorBase, IHasServices
 
     internal RpcServiceNameBuilder ServiceNameBuilder { get; }
     internal RpcMethodNameBuilder MethodNameBuilder { get; }
-    internal RpcPeerFactory PeerFactory { get; }
     internal RpcCallRouter CallRouter { get; }
     internal RpcArgumentSerializer ArgumentSerializer { get; }
     internal RpcInboundContextFactory InboundContextFactory { get; }
@@ -30,7 +29,7 @@ public sealed class RpcHub : ProcessorBase, IHasServices
     public RpcServiceRegistry ServiceRegistry => _serviceRegistry ??= Services.GetRequiredService<RpcServiceRegistry>();
     public RpcInternalServices InternalServices => new(this);
 
-    public ConcurrentDictionary<Symbol, RpcPeer> Peers { get; } = new();
+    public ConcurrentDictionary<RpcPeerRef, RpcPeer> Peers { get; } = new();
 
     public RpcHub(IServiceProvider services)
     {
@@ -41,7 +40,6 @@ public sealed class RpcHub : ProcessorBase, IHasServices
         // Delegates
         ServiceNameBuilder = services.GetRequiredService<RpcServiceNameBuilder>();
         MethodNameBuilder = services.GetRequiredService<RpcMethodNameBuilder>();
-        PeerFactory = services.GetRequiredService<RpcPeerFactory>();
         CallRouter = services.GetRequiredService<RpcCallRouter>();
         ArgumentSerializer = services.GetRequiredService<RpcArgumentSerializer>();
         InboundContextFactory = services.GetRequiredService<RpcInboundContextFactory>();
@@ -59,10 +57,10 @@ public sealed class RpcHub : ProcessorBase, IHasServices
         return Task.WhenAll(disposeTasks);
     }
 
-    public RpcPeer GetPeer(Symbol id)
+    public RpcPeer GetPeer(RpcPeerRef peerRef)
     {
         while (true) {
-            var peer = Peers.GetOrAdd(id, CreatePeer);
+            var peer = Peers.GetOrAdd(peerRef, CreatePeer);
             if (peer.WhenRunning?.IsCompleted == false)
                 return peer;
         }
@@ -70,12 +68,12 @@ public sealed class RpcHub : ProcessorBase, IHasServices
 
     // Private methods
 
-    private RpcPeer CreatePeer(Symbol id)
+    private RpcPeer CreatePeer(RpcPeerRef peerRef)
     {
         if (WhenDisposed != null)
             throw Errors.AlreadyDisposed();
 
-        var peer = PeerFactory.Invoke(this, id);
+        var peer = RpcPeer.New(this, peerRef);
         _ = peer.Run();
         return peer;
     }

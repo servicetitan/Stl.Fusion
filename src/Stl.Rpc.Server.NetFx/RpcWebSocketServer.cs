@@ -24,10 +24,14 @@ public class RpcWebSocketServer : RpcServiceBase
     }
 
     public Options Settings { get; }
+    public RpcWebSocketServerPeerRefFactory PeerRefFactory { get; }
 
     public RpcWebSocketServer(Options settings, IServiceProvider services)
         : base(services)
-        => Settings = settings;
+    {
+        Settings = settings;
+        PeerRefFactory = services.GetRequiredService<RpcWebSocketServerPeerRefFactory>();
+    }
 
     public HttpStatusCode HandleRequest(IOwinContext context)
     {
@@ -37,10 +41,8 @@ public class RpcWebSocketServer : RpcServiceBase
         if (acceptToken == null)
             return HttpStatusCode.BadRequest;
 
-        var query = context.Request.Query;
-        var clientId = query[Settings.ClientIdParameterName];
-        var peerId = RpcServerPeer.FormatId(clientId);
-        if (Hub.GetPeer(peerId) is not RpcServerPeer)
+        var peerRef = PeerRefFactory.Invoke(this, context);
+        if (Hub.GetPeer(peerRef) is not RpcServerPeer)
             return HttpStatusCode.Unauthorized;
 
         var requestHeaders =
@@ -68,10 +70,8 @@ public class RpcWebSocketServer : RpcServiceBase
         var channel = new WebSocketChannel<RpcMessage>(
             Settings.WebSocketChannelOptions, webSocket, Services, cancellationToken);
 
-        var query = context.Request.Query;
-        var clientId = query[Settings.ClientIdParameterName];
-        var peerId = RpcServerPeer.FormatId(clientId);
-        if (Hub.GetPeer(peerId) is not RpcServerPeer peer)
+        var peerRef = PeerRefFactory.Invoke(this, context);
+        if (Hub.GetPeer(peerRef) is not RpcServerPeer peer)
             return;
 
         peer.SetConnectionState(channel);

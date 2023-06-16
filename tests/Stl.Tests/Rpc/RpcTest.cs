@@ -14,7 +14,7 @@ public class RpcTest : RpcTestBase
     {
         await using var _ = await WebHost.Serve();
         var services = ClientServices;
-        var peer = services.RpcHub().GetPeer(ClientPeerId);
+        var peer = services.RpcHub().GetPeer(ClientPeerRef);
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         (await client.Div(6, 2)).Should().Be(3);
         (await client.Div(6, 2)).Should().Be(3);
@@ -37,7 +37,7 @@ public class RpcTest : RpcTestBase
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
             () => commander.Call(new ISimpleRpcService.DummyCommand("error")));
 
-        var peer = services.RpcHub().GetPeer(ClientPeerId);
+        var peer = services.RpcHub().GetPeer(ClientPeerRef);
         peer.Calls.Outbound.Count.Should().Be(0);
         peer.Calls.Inbound.Count.Should().Be(0);
     }
@@ -47,7 +47,7 @@ public class RpcTest : RpcTestBase
     {
         await using var _ = await WebHost.Serve();
         var services = ClientServices;
-        var peer = services.RpcHub().GetPeer(ClientPeerId);
+        var peer = services.RpcHub().GetPeer(ClientPeerRef);
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         var startedAt = CpuTimestamp.Now;
         await client.Delay(TimeSpan.FromMilliseconds(200));
@@ -95,7 +95,7 @@ public class RpcTest : RpcTestBase
     {
         await using var _ = await WebHost.Serve();
         var services = ClientServices;
-        var peer = services.RpcHub().GetPeer(ClientPeerId);
+        var peer = services.RpcHub().GetPeer(ClientPeerRef);
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
 
         var threadCount = Math.Max(1, HardwareInfo.ProcessorCount);

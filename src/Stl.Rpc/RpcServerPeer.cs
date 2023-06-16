@@ -1,31 +1,14 @@
 using Stl.Rpc.Infrastructure;
-using Stl.Rpc.Internal;
 
 namespace Stl.Rpc;
 
 public class RpcServerPeer : RpcPeer
 {
-    public static string IdPrefix { get; set; } = "@inbound-";
-
-    public static Symbol FormatId(string clientId)
-    {
-        if (clientId.IsNullOrEmpty())
-            throw new ArgumentOutOfRangeException(nameof(clientId));
-
-        return IdPrefix + clientId;
-    }
-
-    public Symbol ClientId { get; init; }
     public TimeSpan CloseTimeout { get; init; } = TimeSpan.FromMinutes(1);
 
-    public RpcServerPeer(RpcHub hub, Symbol id) : base(hub, id)
-    {
-        if (!id.Value.StartsWith(IdPrefix, StringComparison.Ordinal))
-            throw new ArgumentOutOfRangeException(nameof(id));
-
-        ClientId = id.Value[IdPrefix.Length..];
-        LocalServiceFilter = static serviceDef => !serviceDef.IsBackend;
-    }
+    public RpcServerPeer(RpcHub hub, RpcPeerRef @ref)
+        : base(hub, @ref)
+        => LocalServiceFilter = static serviceDef => !serviceDef.IsBackend;
 
     // Protected methods
 
