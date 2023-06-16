@@ -15,19 +15,19 @@ public sealed class WebSocketChannel<T> : Channel<T>
         public static Options Default { get; } = new();
 
         public bool OwnsWebSocket { get; init; } = true;
-        public int WritePacketSize { get; init; } = 1400;
-        public int WriteBufferSize { get; init; } = 8_000; // Rented ~just once, so it can be large
-        public int ReadBufferSize { get; init; } = 8_000; // Rented ~just once, so it can be large
+        public int WriteFrameSize { get; init; } = 4400;
+        public int WriteBufferSize { get; init; } = 16_000; // Rented ~just once, so it can be large
+        public int ReadBufferSize { get; init; } = 16_000; // Rented ~just once, so it can be large
         public int RetainedBufferSize { get; init; } = 64_000; // Any buffer is released when it hits this size
         public TimeSpan CloseTimeout { get; init; } = TimeSpan.FromSeconds(10);
         public DualSerializer<T> Serializer { get; init; } = new();
-        public BoundedChannelOptions ReadChannelOptions { get; init; } = new(64) {
+        public BoundedChannelOptions ReadChannelOptions { get; init; } = new(128) {
             FullMode = BoundedChannelFullMode.Wait,
             SingleReader = true,
             SingleWriter = true,
             AllowSynchronousContinuations = true,
         };
-        public BoundedChannelOptions WriteChannelOptions { get; init; } = new(64) {
+        public BoundedChannelOptions WriteChannelOptions { get; init; } = new(128) {
             FullMode = BoundedChannelFullMode.Wait,
             SingleReader = true,
             SingleWriter = false,
@@ -39,7 +39,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
     private readonly Channel<T> _readChannel;
     private readonly Channel<T> _writeChannel;
     private ArrayPoolBufferWriter<byte> _writeBuffer;
-    private readonly int _writePacketSize;
+    private readonly int _writeFrameSize;
     private readonly int _writeBufferSize;
     private readonly int _releaseBufferSize;
     private readonly IByteSerializer<T> _byteSerializer;
@@ -80,7 +80,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
         _stopCts = cancellationToken.CreateLinkedTokenSource();
         StopToken = _stopCts.Token;
 
-        _writePacketSize = settings.WritePacketSize;
+        _writeFrameSize = settings.WriteFrameSize;
         _writeBufferSize = settings.WriteBufferSize;
         _releaseBufferSize = settings.RetainedBufferSize;
         _byteSerializer = settings.Serializer.ByteSerializer;
@@ -163,7 +163,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
                 // Binary -> we build frames
                 while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)) {
                     while (reader.TryRead(out var item)) {
-                        if (TrySerialize(item, _writeBuffer) && _writeBuffer.WrittenCount >= _writePacketSize)
+                        if (TrySerialize(item, _writeBuffer) && _writeBuffer.WrittenCount >= _writeFrameSize)
                             await FlushWriteBuffer(false, cancellationToken).ConfigureAwait(false);
                     }
                     if (_writeBuffer.WrittenCount > 0)
@@ -192,12 +192,12 @@ public sealed class WebSocketChannel<T> : Channel<T>
                 return;
 
             var memory = _writeBuffer.WrittenMemory;
-            for (var start = 0; start < memory.Length; start += _writePacketSize) {
-                var length = Math.Min(_writePacketSize, memory.Length - start);
+            for (var start = 0; start < memory.Length; start += _writeFrameSize) {
+                var length = Math.Min(_writeFrameSize, memory.Length - start);
                 // length is always > 0 below
                 var end = start + length;
                 var part = memory[start..end];
-                if (length < _writePacketSize && !completely) {
+                if (length < _writeFrameSize && !completely) {
                     if (start == 0)
                         return; // Nothing to copy
 
