@@ -139,9 +139,7 @@ public readonly struct FusionBuilder
             Rpc.Service<IRpcComputeSystemCalls>().HasServer<RpcComputeSystemCalls>().HasName(RpcComputeSystemCalls.Name);
             services.AddSingleton(c => new RpcComputeSystemCalls(c));
             services.AddSingleton(c => new RpcComputeSystemCallSender(c));
-            Rpc.Configuration.InboundCallTypes.Add(
-                RpcComputeCall.CallTypeId,
-                typeof(RpcInboundComputeCall<>));
+            RpcComputeCallType.Register();
         }
 
         // Compute call interceptor

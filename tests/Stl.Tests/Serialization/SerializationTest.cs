@@ -106,21 +106,21 @@ public class SerializationTest : TestBase
     [Fact]
     public void RpcMessageSerialization()
     {
-        Test(new RpcMessage(3, "s", "m",
+        Test(new RpcMessage(0, 3, "s", "m",
             new TextOrBytes(new byte[] { 1, 2, 3 }),
             null));
 
-        Test(new RpcMessage(3, "s", "m",
+        Test(new RpcMessage(1, 3, "s", "m",
             new TextOrBytes(new byte[] { 1, 2, 3 }),
             new()));
 
-        Test(new RpcMessage(3, "s", "m",
+        Test(new RpcMessage(2, 3, "s", "m",
             new TextOrBytes(new byte[] { 1, 2, 3 }),
             new List<RpcHeader>() {
                 new("v", "@OVhtp0TRc"),
             }));
 
-        Test(new RpcMessage(3, "s", "m",
+        Test(new RpcMessage(0, 3, "s", "m",
             new TextOrBytes(new byte[] { 1, 2, 3 }),
             new List<RpcHeader>() {
                 new("a", "b"),

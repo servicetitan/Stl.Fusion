@@ -15,9 +15,8 @@ public class RpcOutboundComputeCall<TResult> : RpcOutboundCall<TResult>, IRpcOut
     public LTag ResultVersion { get; protected set; } = default;
     public Task WhenInvalidated => WhenInvalidatedSource.Task;
 
-    public RpcOutboundComputeCall(RpcOutboundContext context)
-        : base(context)
-        => context.Headers = context.Headers.TryAdd(RpcSystemHeaders.CallType.With(RpcComputeCall.CallTypeId));
+    public RpcOutboundComputeCall(RpcOutboundContext context) : base(context)
+    { }
 
     public override bool TryCompleteWithOk(object? result, RpcInboundContext context)
     {
@@ -37,7 +36,7 @@ public class RpcOutboundComputeCall<TResult> : RpcOutboundCall<TResult>, IRpcOut
 
     private bool TryComplete(RpcInboundContext? context)
     {
-        var versionHeader = context?.Headers.GetOrDefault(FusionRpcHeaders.Version.Name);
+        var versionHeader = context?.Message.Headers.GetOrDefault(FusionRpcHeaders.Version.Name);
         ResultVersion = versionHeader is { } vVersionHeader
             ? LTag.TryParse(vVersionHeader.Value, out var v) ? v : default
             : default;

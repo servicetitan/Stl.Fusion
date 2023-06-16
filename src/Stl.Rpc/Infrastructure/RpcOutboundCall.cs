@@ -4,17 +4,19 @@ namespace Stl.Rpc.Infrastructure;
 
 public abstract class RpcOutboundCall : RpcCall
 {
-    private static readonly ConcurrentDictionary<(Type, Type), Func<RpcOutboundContext, RpcOutboundCall>> FactoryCache = new();
+    private static readonly ConcurrentDictionary<(byte, Type), Func<RpcOutboundContext, RpcOutboundCall>> FactoryCache = new();
 
     public RpcOutboundContext Context { get; }
     public long Id { get; protected set; }
     public Task ResultTask { get; protected init; } = null!;
 
     public static RpcOutboundCall New(RpcOutboundContext context)
-        => FactoryCache.GetOrAdd((context.CallType, context.MethodDef!.UnwrappedReturnType), static key => {
-            var (tGeneric, tResult) = key;
-            var tInbound = tGeneric.MakeGenericType(tResult);
-            return (Func<RpcOutboundContext, RpcOutboundCall>)tInbound.GetConstructorDelegate(typeof(RpcOutboundContext))!;
+        => FactoryCache.GetOrAdd((context.CallTypeId, context.MethodDef!.UnwrappedReturnType), static key => {
+            var (callTypeId, tResult) = key;
+            var type = RpcCallTypeRegistry.Resolve(callTypeId)
+                .OutboundCallType
+                .MakeGenericType(tResult);
+            return (Func<RpcOutboundContext, RpcOutboundCall>)type.GetConstructorDelegate(typeof(RpcOutboundContext))!;
         }).Invoke(context);
 
     protected RpcOutboundCall(RpcOutboundContext context)
@@ -70,7 +72,7 @@ public abstract class RpcOutboundCall : RpcCall
             }
         }
         var argumentData = peer.ArgumentSerializer.Serialize(arguments);
-        var message = new RpcMessage(callId, methodDef.Service.Name, methodDef.Name, argumentData, headers);
+        var message = new RpcMessage(Context.CallTypeId, callId, methodDef.Service.Name, methodDef.Name, argumentData, headers);
         return message;
     }
 

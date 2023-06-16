@@ -13,8 +13,8 @@ public sealed class RpcOutboundContext
     public RpcMethodDef? MethodDef { get; private set; }
     public ArgumentList? Arguments { get; private set; }
     public CancellationToken CancellationToken { get; private set; } = default;
-    public Type CallType { get; set; } = typeof(RpcOutboundCall<>);
-    public RpcOutboundCall? Call { get; internal set; }
+    public byte CallTypeId { get; set; }
+    public RpcOutboundCall? Call { get; private set; }
     public RpcPeer? Peer { get; set; }
     public long RelatedCallId { get; set; }
 
@@ -22,6 +22,14 @@ public sealed class RpcOutboundContext
     {
         var oldContext = _current;
         var context = oldContext ?? new RpcOutboundContext();
+        return new Scope(context, oldContext);
+    }
+
+    public static Scope Use(byte callTypeId)
+    {
+        var oldContext = _current;
+        var context = oldContext ?? new RpcOutboundContext();
+        context.CallTypeId = callTypeId;
         return new Scope(context, oldContext);
     }
 

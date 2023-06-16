@@ -94,13 +94,9 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
         ComputeMethodInput input,
         CancellationToken cancellationToken)
     {
-        using var scope = RpcOutboundContext.Use();
-        var context = scope.Context;
-        if (context.CallType != typeof(RpcOutboundComputeCall<>))
-            context.CallType = typeof(RpcOutboundComputeCall<>);
-
+        using var scope = RpcOutboundContext.Use(RpcComputeCallType.Id);
         input.InvokeOriginalFunction(cancellationToken);
-        var call = (RpcOutboundComputeCall<T>?)context.Call;
+        var call = (RpcOutboundComputeCall<T>?)scope.Context.Call;
         if (call == null)
             throw Errors.InternalError(
                 "No call is sent, which means the service behind this proxy isn't an RPC client proxy (misconfiguration), " +

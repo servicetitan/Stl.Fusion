@@ -9,6 +9,9 @@ public static class Errors
     public static Exception RpcOptionsIsNotRegistered()
         => new InvalidOperationException("RpcOptions instance is not registered.");
 
+    public static Exception UnknownCallType(byte callTypeId)
+        => new KeyNotFoundException($"Unknown CallTypeId: {callTypeId}.");
+
     public static Exception ServiceAlreadyExists(Type type)
         => new InvalidOperationException($"Service of type '{type}' is already added.");
     public static Exception ServiceTypeCannotBeChanged(Type originalType, Type type)

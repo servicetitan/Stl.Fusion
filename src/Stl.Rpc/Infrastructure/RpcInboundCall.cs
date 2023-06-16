@@ -9,7 +9,7 @@ namespace Stl.Rpc.Infrastructure;
 
 public abstract class RpcInboundCall : RpcCall
 {
-    private static readonly ConcurrentDictionary<(Type, Type), Func<RpcInboundContext, RpcMethodDef, RpcInboundCall>> FactoryCache = new();
+    private static readonly ConcurrentDictionary<(byte, Type), Func<RpcInboundContext, RpcMethodDef, RpcInboundCall>> FactoryCache = new();
 
     protected CancellationTokenSource? CancellationTokenSource { get; set; }
 
@@ -20,17 +20,19 @@ public abstract class RpcInboundCall : RpcCall
     public bool NoWait => Id == 0;
     public List<RpcHeader>? ResultHeaders { get; set; }
 
-    public static RpcInboundCall New(Type? callType, RpcInboundContext context, RpcMethodDef? methodDef)
+    public static RpcInboundCall New(byte callTypeId, RpcInboundContext context, RpcMethodDef? methodDef)
     {
-        if (methodDef == null || callType == null) {
+        if (methodDef == null) {
             var notFoundMethodDef = context.Peer.Hub.SystemCallSender.NotFoundMethodDef;
             return new RpcInbound404Call<Unit>(context, notFoundMethodDef);
         }
 
-        return FactoryCache.GetOrAdd((callType, methodDef.UnwrappedReturnType), static key => {
-            var (tGeneric, tResult) = key;
-            var tInbound = tGeneric.MakeGenericType(tResult);
-            return (Func<RpcInboundContext, RpcMethodDef, RpcInboundCall>)tInbound
+        return FactoryCache.GetOrAdd((callTypeId, methodDef.UnwrappedReturnType), static key => {
+            var (callTypeId, tResult) = key;
+            var type = RpcCallTypeRegistry.Resolve(callTypeId)
+                .InboundCallType
+                .MakeGenericType(tResult);
+            return (Func<RpcInboundContext, RpcMethodDef, RpcInboundCall>)type
                 .GetConstructorDelegate(typeof(RpcInboundContext), typeof(RpcMethodDef))!;
         }).Invoke(context, methodDef);
     }
@@ -157,7 +159,7 @@ public class RpcInboundCall<TResult> : RpcInboundCall
         }
 
         if (argumentListType.IsGenericType) { // == Has 1+ arguments
-            var headers = Context.Headers.OrEmpty();
+            var headers = Context.Message.Headers.OrEmpty();
             if (headers.Any(static h => h.Name.StartsWith(RpcSystemHeaders.ArgumentTypeHeaderPrefix, StringComparison.Ordinal))) {
                 var argumentTypes = argumentListType.GetGenericArguments();
                 foreach (var h in headers) {

@@ -5,8 +5,6 @@ namespace Stl.Rpc.Infrastructure;
 
 public static class RpcSystemHeaders
 {
-    public static readonly RpcHeader CallType = new("@ct");
-
     public static readonly string ArgumentTypeHeaderPrefix = "@t:";
     public static readonly ImmutableArray<RpcHeader> ArgumentTypes =
         Enumerable.Range(0, ArgumentList.Types.Length)

@@ -11,7 +11,6 @@ public class RpcInboundContext
     public RpcPeer Peer { get; }
     public RpcMessage Message { get; }
     public CancellationToken CancellationToken { get; }
-    public List<RpcHeader>? Headers => Message.Headers;
     public RpcInboundCall Call { get; protected init; }
 
     public static RpcInboundContext GetCurrent()
@@ -27,9 +26,7 @@ public class RpcInboundContext
         Message = message;
         CancellationToken = cancellationToken;
         if (initializeCall) {
-            var callTypeHeader = message.Headers.GetOrDefault(RpcSystemHeaders.CallType.Name);
-            Peer.Hub.Configuration.InboundCallTypes.TryGetValue(callTypeHeader?.Value ?? "", out var callType);
-            Call = RpcInboundCall.New(callType, this, GetMethodDef());
+            Call = RpcInboundCall.New(message.CallTypeId, this, GetMethodDef());
         }
         else
             Call = null!;
