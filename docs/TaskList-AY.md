@@ -1,4 +1,5 @@
 Now:
+- record PeerRef, IServerPeerRef / IClientPeerRef
 - Inbound & Outbound call trackers
   - ActivitySource integration
   - Properly handle repeating inbound calls
