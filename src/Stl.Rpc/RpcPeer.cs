@@ -22,7 +22,7 @@ public abstract class RpcPeer : WorkerBase
     public RpcCallRegistry Calls { get; init; }
     public int InboundConcurrencyLevel { get; init; } = 0; // 0 = no concurrency limit, 1 = one call at a time, etc.
     public AsyncEvent<RpcPeerConnectionState> ConnectionState => _connectionState;
-    public object Session { get; init; }
+    public object? Session { get; init; }
 
     protected RpcPeer(RpcHub hub, Symbol id)
     {
