@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using MemoryPack;
 using Stl.Internal;
 
 namespace Stl;
@@ -35,11 +36,12 @@ public readonly struct Option<T> : IEquatable<Option<T>>, IOption
     /// <summary>
     /// Retrieves option's value. Throws <see cref="InvalidOperationException"/> in case option doesn't have one.
     /// </summary>
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public T Value {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get { AssertHasValue(); return ValueOrDefault!; }
     }
+
     /// <inheritdoc />
     // ReSharper disable once HeapView.BoxingAllocation
     object? IOption.Value => Value;
@@ -62,7 +64,7 @@ public readonly struct Option<T> : IEquatable<Option<T>>, IOption
     /// </summary>
     /// <param name="hasValue"><see cref="HasValue"/> value.</param>
     /// <param name="valueOrDefault"><see cref="ValueOrDefault"/> value.</param>
-    [JsonConstructor, Newtonsoft.Json.JsonConstructor]
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Option(bool hasValue, T? valueOrDefault)
     {

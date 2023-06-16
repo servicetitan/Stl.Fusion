@@ -1,3 +1,5 @@
+using MemoryPack;
+
 namespace Stl.Internal;
 
 [DataContract]
@@ -7,6 +9,7 @@ public abstract class ValueOf
     private static readonly MethodInfo FactoryMethod =
         typeof(ValueOf).GetMethod(nameof(Factory), BindingFlags.Static | BindingFlags.NonPublic)!;
 
+    [MemoryPackIgnore]
     public abstract object UntypedValue { get; }
 
     public static ValueOf<T> New<T>(T value) => new(value);
@@ -20,8 +23,8 @@ public abstract class ValueOf
         => new ValueOf<T>((T) value);
 }
 
-[DataContract]
-public sealed class ValueOf<T> : ValueOf
+[DataContract, MemoryPackable]
+public sealed partial class ValueOf<T> : ValueOf
 {
     [DataMember(Order = 0)]
     public T Value { get; }
@@ -30,8 +33,9 @@ public sealed class ValueOf<T> : ValueOf
     public override object UntypedValue => Value;
 #pragma warning restore CS8603
 
-    [JsonConstructor, Newtonsoft.Json.JsonConstructor]
-    public ValueOf(T value) => Value = value;
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
+    public ValueOf(T value)
+        => Value = value;
 
     public override string ToString()
         => $"{GetType().Name}({Value})";

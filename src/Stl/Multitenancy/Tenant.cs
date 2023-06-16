@@ -1,7 +1,9 @@
+using MemoryPack;
+
 namespace Stl.Multitenancy;
 
-[DataContract]
-public record Tenant : IHasId<Symbol>
+[DataContract, MemoryPackable]
+public partial record Tenant : IHasId<Symbol>
 {
     public static Tenant Default { get; } = new(Symbol.Empty, "The only tenant", "");
     public static Tenant Dummy { get; } = new("*", "Example tenant", "__example");
@@ -11,6 +13,7 @@ public record Tenant : IHasId<Symbol>
     [DataMember] public string StorageId { get; init; } = "";
 
     public Tenant() { }
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
     public Tenant(Symbol id, string? title = null, string? storageId = null)
     {
         Id = id;

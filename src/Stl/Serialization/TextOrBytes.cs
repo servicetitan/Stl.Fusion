@@ -1,4 +1,5 @@
 using Cysharp.Text;
+using MemoryPack;
 using Microsoft.Toolkit.HighPerformance;
 
 namespace Stl.Serialization;
@@ -9,19 +10,21 @@ public enum DataFormat
     Text = 1,
 }
 
-[DataContract]
+[DataContract, MemoryPackable(SerializeLayout.Explicit)]
 [StructLayout(LayoutKind.Auto)]
-public readonly record struct TextOrBytes(
-    [property: DataMember(Order = 0)]
+public readonly partial record struct TextOrBytes(
+    [property: DataMember(Order = 0), MemoryPackOrder(0)]
     DataFormat Format,
-    [property: JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [property: JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     ReadOnlyMemory<byte> Data)
 {
     public static readonly TextOrBytes EmptyBytes = new(DataFormat.Bytes, default!);
     public static readonly TextOrBytes EmptyText = new(DataFormat.Text, default!);
 
-    [DataMember(Order = 1)]
+    [DataMember(Order = 1), MemoryPackOrder(1)]
     public byte[] Bytes => Data.ToArray();
+
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public bool IsEmpty => Data.Length == 0;
 
     public TextOrBytes(string text)
@@ -32,7 +35,8 @@ public readonly record struct TextOrBytes(
         : this(DataFormat.Text, text.Cast<char, byte>()) { }
     public TextOrBytes(ReadOnlyMemory<byte> bytes)
         : this(DataFormat.Bytes, bytes) { }
-    [JsonConstructor, Newtonsoft.Json.JsonConstructor]
+
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
     public TextOrBytes(DataFormat format, byte[] bytes)
         : this(format, bytes.AsMemory()) { }
 

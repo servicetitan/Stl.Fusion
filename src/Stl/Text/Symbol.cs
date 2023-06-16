@@ -1,14 +1,15 @@
 using System.ComponentModel;
+using MemoryPack;
 using Stl.Conversion;
 using Stl.Text.Internal;
 
 namespace Stl.Text;
 
-[DataContract]
+[DataContract, MemoryPackable]
 [JsonConverter(typeof(SymbolJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(SymbolNewtonsoftJsonConverter))]
 [TypeConverter(typeof(SymbolTypeConverter))]
-public readonly struct Symbol : IRequirementTarget,
+public readonly partial struct Symbol : IRequirementTarget,
     IEquatable<Symbol>, IComparable<Symbol>, IConvertibleTo<string>,
     ISerializable
 {
@@ -19,9 +20,13 @@ public readonly struct Symbol : IRequirementTarget,
 
     [DataMember(Order = 0)]
     public string Value => _value ?? "";
+
+    [MemoryPackIgnore]
     public int HashCode => _hashCode;
+    [MemoryPackIgnore]
     public bool IsEmpty => Value.Length == 0;
 
+    [MemoryPackConstructor]
     public Symbol(string? value)
     {
         _value = value ?? "";

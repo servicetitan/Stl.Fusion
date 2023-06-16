@@ -1,30 +1,37 @@
 using System.ComponentModel;
+using MemoryPack;
 using Stl.Reflection.Internal;
 
 namespace Stl.Reflection;
 
-[DataContract]
+[DataContract, MemoryPackable]
 [JsonConverter(typeof(TypeRefJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(TypeRefNewtonsoftJsonConverter))]
 [TypeConverter(typeof(TypeRefTypeConverter))]
-public readonly struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRef>, ISerializable
+public readonly partial struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRef>, ISerializable
 {
     public static readonly TypeRef None = default;
 
     [DataMember(Order = 0)]
     public Symbol AssemblyQualifiedName { get; }
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public string TypeName => AssemblyQualifiedName.Value[..AssemblyQualifiedName.Value.IndexOf(',')];
 
-    public TypeRef(Type type) : this(type.AssemblyQualifiedName!) { }
-    [JsonConstructor, Newtonsoft.Json.JsonConstructor]
-    public TypeRef(Symbol assemblyQualifiedName) => AssemblyQualifiedName = assemblyQualifiedName;
-    public TypeRef(string assemblyQualifiedName) => AssemblyQualifiedName = assemblyQualifiedName;
+    public TypeRef(Type type)
+        : this(type.AssemblyQualifiedName!) { }
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
+    public TypeRef(Symbol assemblyQualifiedName)
+        => AssemblyQualifiedName = assemblyQualifiedName;
+    public TypeRef(string assemblyQualifiedName)
+        => AssemblyQualifiedName = assemblyQualifiedName;
 
-    public override string ToString() => AssemblyQualifiedName.Value;
+    public override string ToString()
+        => AssemblyQualifiedName.Value;
 
-    public Type? TryResolve() => Resolve(AssemblyQualifiedName);
-    public Type Resolve() => Resolve(AssemblyQualifiedName)
-        ?? throw Errors.TypeNotFound(AssemblyQualifiedName);
+    public Type? TryResolve()
+        => Resolve(AssemblyQualifiedName);
+    public Type Resolve()
+        => Resolve(AssemblyQualifiedName) ?? throw Errors.TypeNotFound(AssemblyQualifiedName);
 
     public TypeRef TrimAssemblyVersion()
     {

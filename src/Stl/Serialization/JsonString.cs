@@ -1,15 +1,16 @@
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using MemoryPack;
 using Stl.Conversion;
 using Stl.Serialization.Internal;
 
 namespace Stl.Serialization;
 
-[DataContract]
+[DataContract, MemoryPackable]
 [JsonConverter(typeof(JsonStringJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(JsonStringNewtonsoftJsonConverter))]
 [TypeConverter(typeof(JsonStringTypeConverter))]
-public class JsonString :
+public partial class JsonString :
     IEquatable<JsonString>,
     IComparable<JsonString>,
     IConvertibleTo<string?>
@@ -25,6 +26,7 @@ public class JsonString :
     public static JsonString? New(string? value)
         => value == null ? Null : new JsonString(value);
 
+    [MemoryPackConstructor]
     public JsonString(string value)
         => _value = value;
 

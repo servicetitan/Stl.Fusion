@@ -1,3 +1,5 @@
+using MemoryPack;
+
 namespace Stl.Serialization;
 
 public static class MessagePackSerialized
@@ -7,13 +9,15 @@ public static class MessagePackSerialized
     public static MessagePackSerialized<TValue> New<TValue>(byte[] data) => new(data);
 }
 
-[DataContract]
+[DataContract, MemoryPackable]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
-public class MessagePackSerialized<T> : ByteSerialized<T>
+public partial class MessagePackSerialized<T> : ByteSerialized<T>
 {
     [ThreadStatic] private static IByteSerializer<T>? _serializer;
 
     public MessagePackSerialized() { }
+
+    [MemoryPackConstructor]
     public MessagePackSerialized(byte[] data) : base(data) { }
 
     protected override IByteSerializer<T> GetSerializer()

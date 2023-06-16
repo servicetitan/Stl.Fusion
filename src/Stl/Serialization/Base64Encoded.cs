@@ -1,28 +1,34 @@
 using System.ComponentModel;
+using MemoryPack;
 using Stl.Serialization.Internal;
 
 namespace Stl.Serialization;
 
-[DataContract]
+[DataContract, MemoryPackable]
 [JsonConverter(typeof(Base64EncodedJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(Base64EncodedNewtonsoftJsonConverter))]
 [TypeConverter(typeof(Base64EncodedTypeConverter))]
-public readonly struct Base64Encoded : IEquatable<Base64Encoded>, IReadOnlyCollection<byte>
+public readonly partial struct Base64Encoded : IEquatable<Base64Encoded>, IReadOnlyCollection<byte>
 {
     private readonly byte[]? _data;
 
     [DataMember(Order = 0)]
     public byte[] Data => _data ?? Array.Empty<byte>();
 
-    // Convenience shortcuts
+    [MemoryPackIgnore]
     public int Count => Data.Length;
+
     public byte this[int index] {
         get => Data[index];
         set => Data[index] = value;
     }
 
-    public Base64Encoded(byte[] data) => _data = data;
-    public override string ToString() => $"{GetType().Name}({Count} byte(s))";
+    [MemoryPackConstructor]
+    public Base64Encoded(byte[] data)
+        => _data = data;
+
+    public override string ToString()
+        => $"{GetType().Name}({Count} byte(s))";
 
     // IEnumerable
     IEnumerator IEnumerable.GetEnumerator() => Data.GetEnumerator();

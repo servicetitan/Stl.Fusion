@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using MemoryPack;
 using Stl.Internal;
 
 namespace Stl;
@@ -6,11 +7,11 @@ namespace Stl;
 /// <summary>
 /// Encapsulates <see cref="Int64"/>-typed version.
 /// </summary>
-[DataContract]
+[DataContract, MemoryPackable]
 [JsonConverter(typeof(LTagJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(LTagNewtonsoftJsonConverter))]
 [TypeConverter(typeof(LTagTypeConverter))]
-public readonly struct LTag : IEquatable<LTag>
+public readonly partial struct LTag : IEquatable<LTag>
 {
     public static readonly string Base62Digits = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     public static readonly LTag Default = default;
@@ -25,6 +26,7 @@ public readonly struct LTag : IEquatable<LTag>
     /// Special versions are just versions with negative numbers, which
     /// may or may not be treated differently.
     /// </summary>
+    [MemoryPackIgnore]
     public bool IsSpecial => Value <= 0;
 
     /// <summary>
@@ -32,7 +34,8 @@ public readonly struct LTag : IEquatable<LTag>
     /// </summary>
     /// <param name="value">Its <see cref="Value"/> value.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public LTag(long value) => Value = value;
+    public LTag(long value)
+        => Value = value;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static explicit operator LTag(long value) => new(value);

@@ -1,3 +1,5 @@
+using MemoryPack;
+
 namespace Stl.Serialization;
 
 public static class ByteSerialized
@@ -7,14 +9,14 @@ public static class ByteSerialized
     public static ByteSerialized<TValue> New<TValue>(byte[] data) => new(data);
 }
 
-[DataContract]
+[DataContract, MemoryPackable]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
-public class ByteSerialized<T> : IEquatable<ByteSerialized<T>>
+public partial class ByteSerialized<T> : IEquatable<ByteSerialized<T>>
 {
     private Option<T> _valueOption;
     private Option<byte[]> _dataOption;
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public T Value {
         get => _valueOption.IsSome(out var v) ? v : Deserialize();
         set {
@@ -33,6 +35,8 @@ public class ByteSerialized<T> : IEquatable<ByteSerialized<T>>
     }
 
     public ByteSerialized() { }
+
+    [MemoryPackConstructor]
     public ByteSerialized(byte[] data)
         => _dataOption = data;
 

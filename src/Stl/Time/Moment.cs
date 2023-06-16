@@ -1,14 +1,15 @@
 using System.ComponentModel;
 using System.Globalization;
+using MemoryPack;
 using Stl.Time.Internal;
 
 namespace Stl.Time;
 
-[DataContract]
+[DataContract, MemoryPackable]
 [JsonConverter(typeof(MomentJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(MomentNewtonsoftJsonConverter))]
 [TypeConverter(typeof(MomentTypeConverter))]
-public readonly struct Moment : IEquatable<Moment>, IComparable<Moment>
+public readonly partial struct Moment : IEquatable<Moment>, IComparable<Moment>
 {
     public static readonly Moment MinValue = new(long.MinValue);
     public static readonly Moment MaxValue = new(long.MaxValue);
@@ -17,6 +18,7 @@ public readonly struct Moment : IEquatable<Moment>, IComparable<Moment>
     // AKA Unix Time
     [DataMember(Order = 0)]
     public long EpochOffsetTicks { get; }
+    [MemoryPackIgnore]
     public TimeSpan EpochOffset => new(EpochOffsetTicks);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -1,9 +1,10 @@
+using MemoryPack;
 using Stl.Serialization.Internal;
 
 namespace Stl.Serialization;
 
-[DataContract]
-public readonly struct ExceptionInfo : IEquatable<ExceptionInfo>
+[DataContract, MemoryPackable]
+public readonly partial struct ExceptionInfo : IEquatable<ExceptionInfo>
 {
     private static readonly Type[] ExceptionCtorArgumentTypes1 = { typeof(string), typeof(Exception) };
     private static readonly Type[] ExceptionCtorArgumentTypes2 = { typeof(string) };
@@ -19,12 +20,12 @@ public readonly struct ExceptionInfo : IEquatable<ExceptionInfo>
     public string Message => _message ?? "";
     [DataMember(Order = 2)]
     public TypeRef WrappedTypeRef { get; }
-    [IgnoreDataMember]
+    [IgnoreDataMember, MemoryPackIgnore]
     public bool IsNone => TypeRef.AssemblyQualifiedName.IsEmpty;
-    [IgnoreDataMember]
+    [IgnoreDataMember, MemoryPackIgnore]
     public bool HasWrappedTypeRef => !WrappedTypeRef.AssemblyQualifiedName.IsEmpty;
 
-    [JsonConstructor, Newtonsoft.Json.JsonConstructor]
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
     public ExceptionInfo(TypeRef typeRef, string? message, TypeRef wrappedTypeRef = default)
     {
         TypeRef = typeRef;
