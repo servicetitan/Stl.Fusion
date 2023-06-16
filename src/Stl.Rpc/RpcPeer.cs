@@ -77,9 +77,7 @@ public abstract class RpcPeer : WorkerBase
         }
     }
 
-    public ValueTask<Channel<RpcMessage>> GetChannel(CancellationToken cancellationToken)
-        => GetChannel(Timeout.InfiniteTimeSpan, cancellationToken);
-    public async ValueTask<Channel<RpcMessage>> GetChannel(TimeSpan timeout, CancellationToken cancellationToken)
+    public async ValueTask<Channel<RpcMessage>> GetChannel()
     {
         // ReSharper disable once InconsistentlySynchronizedField
         var connectionState = ConnectionState;
@@ -95,23 +93,24 @@ public abstract class RpcPeer : WorkerBase
                     return channel;
             }
 
-            connectionState = await whenNextConnectionState.WaitAsync(timeout, cancellationToken).ConfigureAwait(false);
+            connectionState = await whenNextConnectionState.ConfigureAwait(false);
         }
     }
 
     public ValueTask Send(RpcMessage message)
     {
+        // !!! Send should never throw an exception.
         // This method is optimized to run as quickly as possible,
         // that's why it is a bit complicated.
 
-        var channelTask = GetChannel(default);
-        if (!channelTask.IsCompletedSuccessfully)
-            return CompleteTrySend(channelTask, message);
+        try {
+            var channelTask = GetChannel();
+            if (!channelTask.IsCompletedSuccessfully)
+                return CompleteTrySend(channelTask, message);
 
 #pragma warning disable VSTHRD103
-        var channel = channelTask.Result;
+            var channel = channelTask.Result;
 #pragma warning restore VSTHRD103
-        try {
             if (channel.Writer.TryWrite(message))
                 return default;
 
@@ -224,8 +223,9 @@ public abstract class RpcPeer : WorkerBase
 
     private async ValueTask CompleteTrySend(ValueTask<Channel<RpcMessage>> channelTask, RpcMessage message)
     {
-        var channel = await channelTask.ConfigureAwait(false);
+        // !!! This method should never fail
         try {
+            var channel = await channelTask.ConfigureAwait(false);
             while (!channel.Writer.TryWrite(message))
                 await channel.Writer.WaitToWriteAsync(StopToken).ConfigureAwait(false);
         }
@@ -238,6 +238,7 @@ public abstract class RpcPeer : WorkerBase
 
     private async ValueTask CompleteTrySend(Channel<RpcMessage> channel, RpcMessage message)
     {
+        // !!! This method should never fail
         try {
             // If we're here, WaitToWriteAsync call is required to continue
             await channel.Writer.WaitToWriteAsync(StopToken).ConfigureAwait(false);
