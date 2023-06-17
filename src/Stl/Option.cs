@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using MemoryPack;
 using Stl.Internal;
 
 namespace Stl;

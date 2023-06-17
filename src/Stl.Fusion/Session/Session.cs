@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Globalization;
-using MemoryPack;
 using Microsoft.Toolkit.HighPerformance;
 using Stl.Conversion;
 using Stl.Fusion.Internal;

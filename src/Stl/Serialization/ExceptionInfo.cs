@@ -1,4 +1,3 @@
-using MemoryPack;
 using Stl.Serialization.Internal;
 
 namespace Stl.Serialization;

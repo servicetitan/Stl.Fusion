@@ -1,5 +1,3 @@
-using MemoryPack;
-
 namespace Stl.Rpc;
 
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]

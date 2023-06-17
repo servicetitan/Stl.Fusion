@@ -1,5 +1,4 @@
 using Cysharp.Text;
-using MemoryPack;
 using Microsoft.Toolkit.HighPerformance;
 
 namespace Stl.Serialization;

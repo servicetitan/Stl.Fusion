@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using MemoryPack;
 
 namespace Stl.Fusion.Tests.Model;
 

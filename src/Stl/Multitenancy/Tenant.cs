@@ -1,5 +1,3 @@
-using MemoryPack;
-
 namespace Stl.Multitenancy;
 
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]

@@ -1,5 +1,3 @@
-using MemoryPack;
-
 namespace Stl.Fusion.Tests.Model;
 
 [DataContract, MemoryPackable]

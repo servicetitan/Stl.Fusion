@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using MemoryPack;
 using Microsoft.EntityFrameworkCore;
 
 namespace Stl.Fusion.Tests.Model;

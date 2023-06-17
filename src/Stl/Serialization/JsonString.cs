@@ -1,8 +1,10 @@
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
-using MemoryPack;
 using Stl.Conversion;
 using Stl.Serialization.Internal;
+
+#if !NETSTANDARD2_0
+using System.Diagnostics.CodeAnalysis;
+#endif
 
 namespace Stl.Serialization;
 

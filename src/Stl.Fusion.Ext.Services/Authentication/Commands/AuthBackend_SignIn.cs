@@ -1,5 +1,3 @@
-using MemoryPack;
-
 namespace Stl.Fusion.Authentication;
 
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]

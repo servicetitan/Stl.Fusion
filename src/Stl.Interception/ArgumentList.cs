@@ -1,8 +1,7 @@
-// ReSharper disable UnusedAutoPropertyAccessor.Global
+﻿// ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable ArrangeConstructorOrDestructorBody
 using Cysharp.Text;
-using MemoryPack;
 using System.Reflection.Emit;
 using System.Text.Json;
 

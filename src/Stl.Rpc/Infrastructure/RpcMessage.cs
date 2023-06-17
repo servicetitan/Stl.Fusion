@@ -1,5 +1,3 @@
-using MemoryPack;
-
 namespace Stl.Rpc.Infrastructure;
 
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
@@ -18,4 +16,4 @@ public partial record RpcMessage(
             $"ArgumentData: {ArgumentData.ToString(16)}, " +
             $"Headers({headers.Count}): {headers.ToDelimitedString()})";
     }
-};
+}

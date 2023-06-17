@@ -1,4 +1,3 @@
-using MemoryPack;
 using Stl.Mathematics.Internal;
 
 namespace Stl.Mathematics;

@@ -1,4 +1,3 @@
-using MemoryPack;
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.Tests.Model;

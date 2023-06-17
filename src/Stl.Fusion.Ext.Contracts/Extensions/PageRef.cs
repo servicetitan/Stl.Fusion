@@ -1,5 +1,4 @@
 using System.Globalization;
-using MemoryPack;
 
 namespace Stl.Fusion.Extensions;
 

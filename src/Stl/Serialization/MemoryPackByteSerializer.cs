@@ -1,5 +1,4 @@
 using System.Buffers;
-using MemoryPack;
 using Stl.Serialization.Internal;
 
 #if NETSTANDARD2_0

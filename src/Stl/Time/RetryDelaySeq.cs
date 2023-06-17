@@ -1,5 +1,3 @@
-using MemoryPack;
-
 namespace Stl.Time;
 
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]

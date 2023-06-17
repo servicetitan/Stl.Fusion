@@ -1,4 +1,3 @@
-using MemoryPack;
 using Stl.Rpc;
 
 namespace Stl.Tests.Rpc;

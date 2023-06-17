@@ -1,4 +1,3 @@
-using MemoryPack;
 using Stl.Fusion.Extensions;
 
 namespace Stl.Fusion.Tests.Extensions;

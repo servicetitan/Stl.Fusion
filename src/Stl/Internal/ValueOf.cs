@@ -1,5 +1,3 @@
-using MemoryPack;
-
 namespace Stl.Internal;
 
 public abstract class ValueOf

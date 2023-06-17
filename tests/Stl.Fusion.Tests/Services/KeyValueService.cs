@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using MemoryPack;
 using Stl.Reflection;
 
 namespace Stl.Fusion.Tests.Services;

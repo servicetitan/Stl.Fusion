@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Security;
 using System.Security.Claims;
-using MemoryPack;
 using Stl.Versioning;
 
 namespace Stl.Fusion.Authentication;

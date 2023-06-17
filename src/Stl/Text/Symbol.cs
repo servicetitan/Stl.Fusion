@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using MemoryPack;
 using Stl.Conversion;
 using Stl.Text.Internal;
 

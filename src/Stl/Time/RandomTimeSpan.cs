@@ -1,4 +1,3 @@
-using MemoryPack;
 using Stl.Generators;
 
 namespace Stl.Time;

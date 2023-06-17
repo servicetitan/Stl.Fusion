@@ -1,5 +1,3 @@
-using MemoryPack;
-
 namespace Stl.Fusion.Extensions;
 
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]

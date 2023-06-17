@@ -1,5 +1,3 @@
-using MemoryPack;
-
 namespace Stl.Serialization;
 
 public static class TextSerialized

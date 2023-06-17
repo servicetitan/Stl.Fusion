@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Globalization;
-using MemoryPack;
 using Stl.Time.Internal;
 
 namespace Stl.Time;

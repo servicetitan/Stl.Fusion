@@ -1,6 +1,8 @@
 // Source (with light edits):
 // - https://github.com/Cysharp/MemoryPack/blob/main/src/MemoryPack.Core/Attributes.cs
 
+using System.IO.Compression;
+
 #if NETSTANDARD2_0
 
 // ReSharper disable once CheckNamespace
@@ -98,8 +100,6 @@ public sealed class MemoryPackOrderAttribute : Attribute
     }
 }
 
-#if !UNITY_2021_2_OR_NEWER
-
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
 public abstract class MemoryPackCustomFormatterAttribute<T> : Attribute
 {
@@ -110,8 +110,6 @@ public abstract class MemoryPackCustomFormatterAttribute<TFormatter, T> : Attrib
     where TFormatter : class
 {
 }
-
-#endif
 
 // similar naming as System.Text.Json attribtues
 // https://docs.microsoft.com/en-us/dotnet/api/system.text.json.serialization.jsonattribute
@@ -156,6 +154,26 @@ public sealed class MemoryPackOnDeserializedAttribute : Attribute
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, AllowMultiple = false, Inherited = false)]
 public sealed class GenerateTypeScriptAttribute : Attribute
 {
+}
+
+[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
+public sealed class BrotliFormatterAttribute : Attribute
+{
+    public CompressionLevel CompressionLevel { get; }
+
+    public int Window { get; }
+
+    public int DecompressionSizeLimit { get; }
+
+    public BrotliFormatterAttribute(
+        CompressionLevel compressionLevel = CompressionLevel.Fastest,
+        int window = 22,
+        int decompressionSizeLimit = 134217728)
+    {
+        this.CompressionLevel = compressionLevel;
+        this.Window = window;
+        this.DecompressionSizeLimit = decompressionSizeLimit;
+    }
 }
 
 #endif

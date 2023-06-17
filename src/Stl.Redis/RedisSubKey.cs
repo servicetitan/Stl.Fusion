@@ -1,4 +1,3 @@
-using MemoryPack;
 using StackExchange.Redis;
 
 namespace Stl.Redis;
