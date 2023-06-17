@@ -8,7 +8,7 @@
 <#@ import namespace="System.Collections.Generic" #>
 <#@ import namespace="System.Xml.Linq" #>
 <#@ import namespace="System.Linq" #>
-<# 
+<#
     const int maxItemCount = 10;
 
     IEnumerable<int> AllBut(int count, int exceptIndex)
@@ -41,11 +41,12 @@
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable ArrangeConstructorOrDestructorBody
 using Cysharp.Text;
+using MemoryPack;
 using System.Reflection.Emit;
+using System.Text.Json;
 
 namespace Stl.Interception;
 
-[DataContract]
 public abstract record ArgumentList
 {
     protected static readonly ConcurrentDictionary<(Type, MethodInfo), Func<object, ArgumentList, object?>> InvokerCache = new();
@@ -59,7 +60,7 @@ public abstract record ArgumentList
 <# } #>
     });
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public abstract int Length { get; }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -83,12 +84,12 @@ public abstract record ArgumentList
         => null;
 
 #pragma warning disable MA0012
-<# 
+<#
     for (var t = 0; t < maxItemCount; t++) {
 #>
     public virtual T Get<#=t#><T>() => throw new IndexOutOfRangeException();
 <#
-    } 
+    }
 #>
 #pragma warning restore MA0012
 
@@ -133,8 +134,8 @@ public abstract record ArgumentList
     public abstract int GetHashCode(int skipIndex);
 }
 
-[DataContract]
-public sealed record ArgumentList0 : ArgumentList
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public sealed partial record ArgumentList0 : ArgumentList
 {
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 0;
@@ -183,43 +184,54 @@ public sealed record ArgumentList0 : ArgumentList
 }
 
 <# for (var itemCount = 1; itemCount <= maxItemCount; itemCount++) {
-    var argumentTypes = ItemList("T{0}", itemCount);
+       var argumentTypes = ItemList("T{0}", itemCount);
+       var arguments = ItemList("T{0} item{0}", itemCount);
 #>
-[DataContract]
 public abstract record ArgumentList<#=itemCount#> : ArgumentList
 {
     protected static Type?[] CreateNonDefaultItemTypes()
         => new Type?[<#=itemCount#>];
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public override int Length => <#=itemCount#>;
 }
 
-[DataContract]
-public sealed record ArgumentList<<#=argumentTypes#>>(
-<# 
-    for (var t = 0; t < itemCount; t++) {
-        var comma = t < (itemCount - 1) ? "," : "";
-#>
-    T<#=t#> Item<#=t#><#=comma#>
-<#
-    } 
-#>
-) : ArgumentList<#=itemCount#>
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public sealed partial record ArgumentList<<#=argumentTypes#>> : ArgumentList<#=itemCount#>
 {
 <# for (var t = 0; t < itemCount; t++) { #>
-    private T<#=t#> _item<#=t#> = Item<#=t#>;
+    private T<#=t#> _item<#=t#>;
 <# } #>
 
 <# for (var t = 0; t < itemCount; t++) { #>
-    [DataMember(Order = <#=t#>)] public T<#=t#> Item<#=t#> { get => _item<#=t#>; init => _item<#=t#> = value; }
+    [DataMember(Order = <#=t#>), MemoryPackOrder(<#=t#>)]
+    public T<#=t#> Item<#=t#> { get => _item<#=t#>; init => _item<#=t#> = value; }
 <# } #>
 
-    // Default constructor
+    // Constructors
 
     public ArgumentList()
-        : this(<# Write(ItemList("default(T{0})!", itemCount)); #>)
-    { }
+    {
+<#
+    for (var t = 0; t < itemCount; t++) {
+#>
+        _item<#=t#> = default!;
+<#
+    }
+#>
+    }
+
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
+    public ArgumentList(<#=arguments#>)
+    {
+<#
+    for (var t = 0; t < itemCount; t++) {
+#>
+        _item<#=t#> = item<#=t#>;
+<#
+    }
+#>
+    }
 
     // ToString & ToArray
 
@@ -253,12 +265,12 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
         };
 <# } #>
 
-    // GetNonDefaultItemTypes 
+    // GetNonDefaultItemTypes
 
     public override Type?[]? GetNonDefaultItemTypes() {
         var itemTypes = (Type?[]?)null;
         Type? itemType;
-<# 
+<#
     for (var t = 0; t < itemCount; t++) {
 #>
         if (!typeof(T<#=t#>).IsValueType) {
@@ -269,19 +281,19 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
             }
         }
 <#
-    } 
+    }
 #>
         return itemTypes;
     }
 
     // Get
 
-<# 
+<#
     for (var t = 0; t < itemCount; t++) {
 #>
     public override T Get<#=t#><T>() => Item<#=t#> is T value ? value : default!;
 <#
-    } 
+    }
 #>
 
     public override T Get<T>(int index)
@@ -354,12 +366,12 @@ public sealed record ArgumentList<<#=argumentTypes#>>(
 
     public override void SetFrom(ArgumentList other)
     {
-<# 
+<#
     for (var t = 0; t < itemCount; t++) {
 #>
         _item<#=t#> = other.Get<#=t#><T<#=t#>>();
 <#
-    } 
+    }
 #>
     }
 

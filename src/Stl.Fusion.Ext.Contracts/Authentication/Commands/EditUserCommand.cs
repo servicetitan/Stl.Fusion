@@ -1,13 +1,16 @@
+using MemoryPack;
+
 namespace Stl.Fusion.Authentication.Commands;
 
-[DataContract]
-public record EditUserCommand(
-    [property: DataMember] Session Session
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public partial record EditUserCommand(
+    [property: DataMember, MemoryPackOrder(0)] Session Session
     ) : ISessionCommand<Unit>
 {
-    [DataMember] public string? Name { get; init; }
+    [DataMember, MemoryPackOrder(1)]
+    public string? Name { get; init; }
 
-    public EditUserCommand() : this(Session.Null) { }
+    [MemoryPackConstructor]
     public EditUserCommand(Session session, string? name = null) : this(session)
         => Name = name;
 }

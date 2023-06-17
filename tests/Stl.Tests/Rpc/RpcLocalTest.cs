@@ -30,9 +30,9 @@ public class RpcLocalTest : RpcLocalTestBase
     {
         var services = CreateServices();
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
-        await client.OnDummyCommand(new ISimpleRpcService.DummyCommand("ok"));
+        await client.OnDummyCommand(new SimpleRpcServiceDummyCommand("ok"));
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => client.OnDummyCommand(new ISimpleRpcService.DummyCommand("error")));
+            () => client.OnDummyCommand(new SimpleRpcServiceDummyCommand("error")));
 
         var peer = services.RpcHub().GetPeer(ClientPeerRef);
         peer.Calls.Outbound.Count.Should().Be(0);

@@ -3,13 +3,13 @@ using Stl.Mathematics.Internal;
 
 namespace Stl.Mathematics;
 
-[DataContract, MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
 [StructLayout(LayoutKind.Auto)]
 public readonly partial struct Tile<T>
     where T : notnull
 {
-    [DataMember(Order = 0)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     public Range<T> Range { get; }
     [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public TileLayer<T> Layer { get; }

@@ -9,7 +9,7 @@ public static class TypeDecoratingSystemJsonSerialized
     public static TypeDecoratingSystemJsonSerialized<TValue> New<TValue>(string data) => new(data);
 }
 
-[DataContract, MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
 public partial class TypeDecoratingSystemJsonSerialized<T> : TextSerialized<T>
 {

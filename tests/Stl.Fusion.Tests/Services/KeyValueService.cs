@@ -1,26 +1,21 @@
 using System.Collections.Concurrent;
+using MemoryPack;
 using Stl.Reflection;
 
 namespace Stl.Fusion.Tests.Services;
 
 public interface IKeyValueService<TValue> : IComputeService
 {
-    [DataContract]
-    public record SetCommand(
+    [DataContract, MemoryPackable]
+    public partial record SetCommand(
         [property: DataMember] string Key,
         [property: DataMember] TValue Value
-        ) : ICommand<Unit>
-    {
-        public SetCommand() : this(null!, default!) { }
-    }
+    ) : ICommand<Unit>;
 
-    [DataContract]
-    public record RemoveCommand(
+    [DataContract, MemoryPackable]
+    public partial record RemoveCommand(
         [property: DataMember] string Key
-        ) : ICommand<Unit>
-    {
-        public RemoveCommand() : this(default(string)!) { }
-    }
+    ) : ICommand<Unit>;
 
     [ComputeMethod]
     Task<Option<TValue>> TryGet(string key, CancellationToken cancellationToken = default);

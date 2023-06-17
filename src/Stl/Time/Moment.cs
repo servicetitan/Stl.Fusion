@@ -18,7 +18,6 @@ public readonly partial struct Moment : IEquatable<Moment>, IComparable<Moment>
     // AKA Unix Time
     [DataMember(Order = 0)]
     public long EpochOffsetTicks { get; }
-    [MemoryPackIgnore]
     public TimeSpan EpochOffset => new(EpochOffsetTicks);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

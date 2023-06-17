@@ -2,7 +2,7 @@ using MemoryPack;
 
 namespace Stl.Collections;
 
-[DataContract, MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
 public partial class OptionSet : IServiceProvider
 {
@@ -14,7 +14,7 @@ public partial class OptionSet : IServiceProvider
         set => _items = value;
     }
 
-    [DataMember(Order = 0)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     [JsonPropertyName(nameof(Items)),  Newtonsoft.Json.JsonIgnore]
     public Dictionary<string, NewtonsoftJsonSerialized<object>> JsonCompatibleItems
         => Items.ToDictionary(

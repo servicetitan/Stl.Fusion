@@ -1,24 +1,26 @@
+using MemoryPack;
+
 namespace Stl.Fusion.Authentication;
 
-[DataContract]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
-public readonly struct UserIdentity : IEquatable<UserIdentity>
+public readonly partial struct UserIdentity : IEquatable<UserIdentity>
 {
     private static readonly ListFormat IdFormat = ListFormat.SlashSeparated;
 
     public static UserIdentity None { get; } = default;
     public static string DefaultSchema { get; } = "Default";
 
-    [DataMember(Order = 0)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     public Symbol Id { get; }
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public string Schema => ParseId(Id.Value).Schema;
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public string SchemaBoundId => ParseId(Id.Value).SchemaBoundId;
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public bool IsValid => !Id.IsEmpty;
 
-    [JsonConstructor, Newtonsoft.Json.JsonConstructor]
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
     public UserIdentity(Symbol id)
         => Id = id;
     public UserIdentity(string id)

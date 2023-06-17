@@ -5,7 +5,7 @@ using Stl.IO.Internal;
 
 namespace Stl.IO;
 
-[DataContract, MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [JsonConverter(typeof(FilePathJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(FilePathNewtonsoftJsonConverter))]
 [TypeConverter(typeof(FilePathTypeConverter))]
@@ -15,7 +15,7 @@ public readonly partial struct FilePath : IEquatable<FilePath>, IComparable<File
 
     private readonly string? _value;
 
-    [DataMember(Order = 0)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     public string Value => _value ?? "";
 
     [MemoryPackIgnore] public int Length => Value.Length;

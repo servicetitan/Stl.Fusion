@@ -20,18 +20,18 @@ public interface IOption
     object? Value { get; }
 }
 
-[DataContract]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [DebuggerDisplay("{" + nameof(DebugValue) + "}")]
 [StructLayout(LayoutKind.Auto)]
-public readonly struct Option<T> : IEquatable<Option<T>>, IOption
+public readonly partial struct Option<T> : IEquatable<Option<T>>, IOption
 {
     /// <inheritdoc />
-    [DataMember(Order = 0)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     public bool HasValue { get; }
     /// <summary>
     /// Retrieves option's value. Returns <code>default(T)</code> in case option doesn't have one.
     /// </summary>
-    [DataMember(Order = 1)]
+    [DataMember(Order = 1), MemoryPackOrder(1)]
     public T? ValueOrDefault { get; }
     /// <summary>
     /// Retrieves option's value. Throws <see cref="InvalidOperationException"/> in case option doesn't have one.

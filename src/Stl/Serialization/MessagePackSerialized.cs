@@ -9,7 +9,7 @@ public static class MessagePackSerialized
     public static MessagePackSerialized<TValue> New<TValue>(byte[] data) => new(data);
 }
 
-[DataContract, MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
 public partial class MessagePackSerialized<T> : ByteSerialized<T>
 {

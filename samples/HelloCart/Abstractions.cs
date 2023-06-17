@@ -1,22 +1,23 @@
 using System.Runtime.Serialization;
+using MemoryPack;
 
 namespace Samples.HelloCart;
 
-[DataContract]
+[DataContract, MemoryPackable]
 public record Product : IHasId<string>
 {
     [DataMember] public string Id { get; init; } = "";
     [DataMember] public decimal Price { get; init; } = 0;
 }
 
-[DataContract]
+[DataContract, MemoryPackable]
 public record Cart : IHasId<string>
 {
     [DataMember] public string Id { get; init; } = "";
     [DataMember] public ImmutableDictionary<string, decimal> Items { get; init; } = ImmutableDictionary<string, decimal>.Empty;
 }
 
-[DataContract]
+[DataContract, MemoryPackable]
 public record EditCommand<TValue>(
     [property: DataMember] string Id,
     [property: DataMember] TValue? Value = null

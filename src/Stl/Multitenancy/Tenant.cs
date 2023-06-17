@@ -2,15 +2,18 @@ using MemoryPack;
 
 namespace Stl.Multitenancy;
 
-[DataContract, MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 public partial record Tenant : IHasId<Symbol>
 {
     public static Tenant Default { get; } = new(Symbol.Empty, "The only tenant", "");
     public static Tenant Dummy { get; } = new("*", "Example tenant", "__example");
 
-    [DataMember] public Symbol Id { get; init; } = Symbol.Empty;
-    [DataMember] public string Title { get; init; } = "";
-    [DataMember] public string StorageId { get; init; } = "";
+    [DataMember, MemoryPackOrder(0)]
+    public Symbol Id { get; init; } = Symbol.Empty;
+    [DataMember, MemoryPackOrder(1)]
+    public string Title { get; init; } = "";
+    [DataMember, MemoryPackOrder(2)]
+    public string StorageId { get; init; } = "";
 
     public Tenant() { }
     [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]

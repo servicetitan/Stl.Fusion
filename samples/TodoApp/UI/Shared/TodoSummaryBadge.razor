@@ -5,7 +5,7 @@
 
 @{
     Log.LogInformation("Rendering");
-    var summary = State.ValueOrDefault ?? new();
+    var summary = State.ValueOrDefault ?? TodoSummary.None;
 }
 
 <Badge Color="Color.Success"><b>@summary.DoneCount</b> done</Badge>

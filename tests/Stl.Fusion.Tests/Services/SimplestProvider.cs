@@ -1,7 +1,9 @@
+using MemoryPack;
+
 namespace Stl.Fusion.Tests.Services;
 
-[DataContract]
-public record SetValueCommand : ICommand<Unit>
+[DataContract, MemoryPackable]
+public partial record SetValueCommand : ICommand<Unit>
 {
     [DataMember]
     public string Value { get; init; } = "";

@@ -4,7 +4,7 @@ using Stl.Serialization.Internal;
 
 namespace Stl.Serialization;
 
-[DataContract, MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [JsonConverter(typeof(Base64EncodedJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(Base64EncodedNewtonsoftJsonConverter))]
 [TypeConverter(typeof(Base64EncodedTypeConverter))]
@@ -12,7 +12,7 @@ public readonly partial struct Base64Encoded : IEquatable<Base64Encoded>, IReadO
 {
     private readonly byte[]? _data;
 
-    [DataMember(Order = 0)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     public byte[] Data => _data ?? Array.Empty<byte>();
 
     [MemoryPackIgnore]

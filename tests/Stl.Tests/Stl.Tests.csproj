@@ -9,6 +9,9 @@
   <ItemGroup>
     <PackageReference Include="System.Net.WebSockets.Client" />
   </ItemGroup>
+  <ItemGroup Condition="!$(TargetFramework.StartsWith('net4'))">
+    <PackageReference Include="MemoryPack.Generator" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />

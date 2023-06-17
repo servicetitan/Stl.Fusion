@@ -46,6 +46,8 @@ public static class SerializationTestExt
         v = v.PassThroughNewtonsoftJsonSerialized(output);
         v = v.PassThroughMessagePackByteSerializer(output);
         v = v.PassThroughMessagePackSerialized(output);
+        v = v.PassThroughMemoryPackByteSerializer(output);
+        v = v.PassThroughMemoryPackSerialized(output);
         return v;
     }
 
@@ -113,6 +115,26 @@ public static class SerializationTestExt
         var v1 = MessagePackSerialized.New(value);
         output?.WriteLine($"MessagePackSerialized: {v1.Data}");
         var v2 = MessagePackSerialized.New<T>(v1.Data);
+        return v2.Value;
+    }
+
+    // MemoryPack serializer
+
+    public static T PassThroughMemoryPackByteSerializer<T>(this T value, ITestOutputHelper? output = null)
+    {
+        var s = new MemoryPackByteSerializer().ToTyped<T>();
+        using var bufferWriter = s.Write(value);
+        var data = bufferWriter.WrittenMemory.ToArray();
+        output?.WriteLine($"MemoryPackByteSerializer: {JsonFormatter.Format(data)}");
+        var v1 = s.Read(data);
+        return v1;
+    }
+
+    public static T PassThroughMemoryPackSerialized<T>(this T value, ITestOutputHelper? output = null)
+    {
+        var v1 = MemoryPackSerialized.New(value);
+        output?.WriteLine($"MemoryPackSerialized: {v1.Data}");
+        var v2 = MemoryPackSerialized.New<T>(v1.Data);
         return v2.Value;
     }
 }

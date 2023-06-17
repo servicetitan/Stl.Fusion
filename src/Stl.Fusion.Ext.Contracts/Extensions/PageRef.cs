@@ -1,4 +1,5 @@
 using System.Globalization;
+using MemoryPack;
 
 namespace Stl.Fusion.Extensions;
 
@@ -17,13 +18,13 @@ public abstract record PageRef : IHasJsonCompatibleToString
             : SystemJsonSerializer.Default.Read<PageRef<TKey>>(value);
 }
 
-[DataContract]
-public record PageRef<TKey>(
-    [property: DataMember(Order = 0)] int Count,
-    [property: DataMember(Order = 1)] Option<TKey> After = default) : PageRef
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public partial record PageRef<TKey>(
+    [property: DataMember(Order = 0), MemoryPackOrder(0)]
+    int Count,
+    [property: DataMember(Order = 1), MemoryPackOrder(1)]
+    Option<TKey> After = default) : PageRef
 {
-    public PageRef() : this(0) { }
-
     public override string ToString()
         => After.IsNone()
             ? Count.ToString(CultureInfo.InvariantCulture)

@@ -10,7 +10,7 @@ public enum DataFormat
     Text = 1,
 }
 
-[DataContract, MemoryPackable(SerializeLayout.Explicit)]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [StructLayout(LayoutKind.Auto)]
 public readonly partial record struct TextOrBytes(
     [property: DataMember(Order = 0), MemoryPackOrder(0)]

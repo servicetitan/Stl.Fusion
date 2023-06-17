@@ -2,7 +2,6 @@ using MemoryPack;
 
 namespace Stl.Internal;
 
-[DataContract]
 public abstract class ValueOf
 {
     private static readonly ConcurrentDictionary<Type, Func<object, ValueOf>> FactoryCache = new();
@@ -23,10 +22,10 @@ public abstract class ValueOf
         => new ValueOf<T>((T) value);
 }
 
-[DataContract, MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 public sealed partial class ValueOf<T> : ValueOf
 {
-    [DataMember(Order = 0)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     public T Value { get; }
 
 #pragma warning disable CS8603

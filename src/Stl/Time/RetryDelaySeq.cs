@@ -2,17 +2,17 @@ using MemoryPack;
 
 namespace Stl.Time;
 
-[DataContract, MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 public sealed partial record RetryDelaySeq(
-    [property: DataMember] TimeSpan Min,
-    [property: DataMember] TimeSpan Max,
-    [property: DataMember] double MaxDelta = 0.1)
+    [property: DataMember, MemoryPackOrder(0)] TimeSpan Min,
+    [property: DataMember, MemoryPackOrder(1)] TimeSpan Max,
+    [property: DataMember, MemoryPackOrder(2)] double MaxDelta = 0.1)
     : IEnumerable<TimeSpan>
 {
     private static readonly TimeSpan DefaultMin = TimeSpan.FromSeconds(0.5);
     private static readonly TimeSpan DefaultMax = TimeSpan.FromMinutes(5);
 
-    [DataMember]
+    [DataMember, MemoryPackOrder(3)]
     public double Multiplier { get; init; } = Math.Sqrt(2);
 
     public TimeSpan this[int failedTryCount] {

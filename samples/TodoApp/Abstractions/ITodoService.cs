@@ -1,38 +1,37 @@
 using System.Runtime.Serialization;
+using MemoryPack;
 using Stl.Fusion.Blazor;
 using Stl.Fusion.Extensions;
 
 namespace Templates.TodoApp.Abstractions;
 
-[DataContract]
+[DataContract, MemoryPackable]
 [ParameterComparer(typeof(ByValueParameterComparer))]
-public sealed record Todo(
+public sealed partial record Todo(
     [property: DataMember] string Id,
     [property: DataMember] string Title,
-    [property: DataMember] bool IsDone = false)
-{
-    public Todo() : this("", "") { }
-}
+    [property: DataMember] bool IsDone = false
+);
 
-[DataContract]
-public sealed record TodoSummary(
+[DataContract, MemoryPackable]
+public sealed partial record TodoSummary(
     [property: DataMember] int Count,
     [property: DataMember] int DoneCount)
 {
-    public TodoSummary() : this(0, 0) { }
-}
+    public static TodoSummary None = new(0, 0);
+};
 
-[DataContract]
-public sealed record AddOrUpdateTodoCommand(
+[DataContract, MemoryPackable]
+public sealed partial record AddOrUpdateTodoCommand(
     [property: DataMember] Session Session,
     [property: DataMember] Todo Item
-    ) : ISessionCommand<Todo>;
+) : ISessionCommand<Todo>;
 
-[DataContract]
-public sealed record RemoveTodoCommand(
+[DataContract, MemoryPackable]
+public sealed partial record RemoveTodoCommand(
     [property: DataMember] Session Session,
     [property: DataMember] string Id
-    ) : ISessionCommand<Unit>;
+) : ISessionCommand<Unit>;
 
 public interface ITodoService : IComputeService
 {

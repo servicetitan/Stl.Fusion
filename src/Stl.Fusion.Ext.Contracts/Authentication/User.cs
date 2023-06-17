@@ -1,13 +1,14 @@
 using System.Globalization;
 using System.Security;
 using System.Security.Claims;
+using MemoryPack;
 using Stl.Versioning;
 
 namespace Stl.Fusion.Authentication;
 
-[DataContract]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
-public record User : IHasId<Symbol>, IHasVersion<long>, IRequirementTarget
+public partial record User : IHasId<Symbol>, IHasVersion<long>, IRequirementTarget
 {
     public static string GuestName { get; set; } = "Guest";
     public static Requirement<User> MustExist { get; set; } = Requirement.New(
@@ -19,18 +20,18 @@ public record User : IHasId<Symbol>, IHasVersion<long>, IRequirementTarget
 
     private Lazy<ClaimsPrincipal>? _claimsPrincipalLazy;
 
-    [DataMember]
+    [DataMember, MemoryPackOrder(0)]
     public Symbol Id { get; init; }
-    [DataMember]
+    [DataMember, MemoryPackOrder(1)]
     public string Name { get; init; }
-    [DataMember]
+    [DataMember, MemoryPackOrder(2)]
     public long Version { get; init; }
-    [DataMember]
+    [DataMember, MemoryPackOrder(3)]
     public ImmutableDictionary<string, string> Claims { get; init; }
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public ImmutableDictionary<UserIdentity, string> Identities { get; init; }
 
-    [DataMember(Name = nameof(Identities))]
+    [DataMember(Name = nameof(Identities)), MemoryPackOrder(4)]
     [JsonPropertyName(nameof(Identities)),  Newtonsoft.Json.JsonProperty(nameof(Identities))]
     public Dictionary<string, string> JsonCompatibleIdentities {
         get => Identities.ToDictionary(p => p.Key.Id.Value, p => p.Value, StringComparer.Ordinal);
@@ -49,7 +50,7 @@ public record User : IHasId<Symbol>, IHasVersion<long>, IRequirementTarget
         Identities = ImmutableDictionary<UserIdentity, string>.Empty;
     }
 
-    [JsonConstructor, Newtonsoft.Json.JsonConstructor]
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
     public User(
         Symbol id,
         string name,

@@ -1,10 +1,9 @@
+using MemoryPack;
+
 namespace Stl.Fusion.Extensions.Commands;
 
-[DataContract]
-public record RemoveCommand(
-    [property: DataMember] Symbol TenantId,
-    [property: DataMember] string[] Keys
-    ) : ICommand<Unit>, IBackendCommand
-{
-    public RemoveCommand() : this(default, Array.Empty<string>()) { }
-}
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public partial record RemoveCommand(
+    [property: DataMember, MemoryPackOrder(0)] Symbol TenantId,
+    [property: DataMember, MemoryPackOrder(1)] string[] Keys
+) : ICommand<Unit>, IBackendCommand;

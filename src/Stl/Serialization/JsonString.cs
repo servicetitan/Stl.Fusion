@@ -6,7 +6,7 @@ using Stl.Serialization.Internal;
 
 namespace Stl.Serialization;
 
-[DataContract, MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [JsonConverter(typeof(JsonStringJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(JsonStringNewtonsoftJsonConverter))]
 [TypeConverter(typeof(JsonStringTypeConverter))]
@@ -20,7 +20,7 @@ public partial class JsonString :
 
     private readonly string? _value;
 
-    [DataMember(Order = 0)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     public string Value => _value ?? string.Empty;
 
     public static JsonString? New(string? value)

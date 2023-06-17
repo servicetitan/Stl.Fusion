@@ -4,7 +4,7 @@ using Stl.Reflection.Internal;
 
 namespace Stl.Reflection;
 
-[DataContract, MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [JsonConverter(typeof(TypeRefJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(TypeRefNewtonsoftJsonConverter))]
 [TypeConverter(typeof(TypeRefTypeConverter))]
@@ -12,7 +12,7 @@ public readonly partial struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRe
 {
     public static readonly TypeRef None = default;
 
-    [DataMember(Order = 0)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     public Symbol AssemblyQualifiedName { get; }
     [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public string TypeName => AssemblyQualifiedName.Value[..AssemblyQualifiedName.Value.IndexOf(',')];

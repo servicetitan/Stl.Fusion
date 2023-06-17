@@ -1,12 +1,9 @@
-using Stl.Fusion.Authentication;
+using MemoryPack;
 
 namespace Stl.Fusion.Extensions.Commands;
 
-[DataContract]
-public record SandboxedRemoveCommand(
-    [property: DataMember] Session Session,
-    [property: DataMember] string[] Keys
-    ) : ISessionCommand<Unit>
-{
-    public SandboxedRemoveCommand() : this(Session.Null, Array.Empty<string>()) { }
-}
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public partial record SandboxedRemoveCommand(
+    [property: DataMember, MemoryPackOrder(0)] Session Session,
+    [property: DataMember, MemoryPackOrder(1)] string[] Keys
+) : ISessionCommand<Unit>;

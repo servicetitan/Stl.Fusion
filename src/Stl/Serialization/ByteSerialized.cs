@@ -9,7 +9,7 @@ public static class ByteSerialized
     public static ByteSerialized<TValue> New<TValue>(byte[] data) => new(data);
 }
 
-[DataContract, MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
 public partial class ByteSerialized<T> : IEquatable<ByteSerialized<T>>
 {
@@ -25,7 +25,7 @@ public partial class ByteSerialized<T> : IEquatable<ByteSerialized<T>>
         }
     }
 
-    [DataMember(Order = 0)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     public byte[] Data {
         get => _dataOption.IsSome(out var v) ? v : Serialize();
         set {

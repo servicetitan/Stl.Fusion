@@ -1,12 +1,11 @@
+using MemoryPack;
+
 namespace Stl.Fusion.Authentication.Commands;
 
-[DataContract]
-public record SetupSessionCommand(
-    [property: DataMember] Session Session,
-    [property: DataMember] string IPAddress = "",
-    [property: DataMember] string UserAgent = "",
-    [property: DataMember] ImmutableOptionSet Options = default
-    ) : ISessionCommand<SessionInfo>, IBackendCommand, INotLogged
-{
-    public SetupSessionCommand() : this(Session.Null) { }
-}
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public partial record SetupSessionCommand(
+    [property: DataMember, MemoryPackOrder(0)] Session Session,
+    [property: DataMember, MemoryPackOrder(1)] string IPAddress = "",
+    [property: DataMember, MemoryPackOrder(2)] string UserAgent = "",
+    [property: DataMember, MemoryPackOrder(3)] ImmutableOptionSet Options = default
+) : ISessionCommand<SessionInfo>, IBackendCommand, INotLogged;

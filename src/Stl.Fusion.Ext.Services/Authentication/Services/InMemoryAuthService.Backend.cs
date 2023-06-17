@@ -12,7 +12,7 @@ public partial class InMemoryAuthService
     // [CommandHandler] inherited
     public virtual async Task SignIn(SignInCommand command, CancellationToken cancellationToken = default)
     {
-        var (session, user, authenticatedIdentity) = command;
+        var (session, user, authenticatedIdentity) = (command.Session, command.User, command.AuthenticatedIdentity);
         var context = CommandContext.GetCurrent();
         var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
 

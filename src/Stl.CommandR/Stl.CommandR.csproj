@@ -8,6 +8,10 @@
     --></Description>
   </PropertyGroup>
 
+  <ItemGroup Condition="!$(TargetFramework.StartsWith('netstandard2.0'))">
+    <PackageReference Include="MemoryPack.Generator" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Stl\Stl.csproj" />
     <ProjectReference Include="..\Stl.Interception\Stl.Interception.csproj" />

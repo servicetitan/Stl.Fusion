@@ -1,3 +1,4 @@
+using MemoryPack;
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.Tests.Services;
@@ -84,22 +85,14 @@ public class SerializationTest : TestBase
         s.AssertPassesThroughAllSerializers();
     }
 
-    [DataContract]
-    public record HasStringId(
+    [DataContract, MemoryPackable]
+    public partial record HasStringId(
         [property: DataMember] string Id
-        ) : IHasId<string>
-    {
-        public HasStringId() : this("") { }
-    }
+    ) : IHasId<string>;
 
-    [DataContract]
-    public record TestCommand<TValue>(
+    [DataContract, MemoryPackable]
+    public partial record TestCommand<TValue>(
         [property: DataMember] string Id,
         [property: DataMember] TValue? Value = null
-        ) : ICommand<Unit>
-        where TValue : class, IHasId<string>
-    {
-        public TestCommand(TValue value) : this(value.Id, value) { }
-        public TestCommand() : this("") { }
-    }
+    ) : ICommand<Unit> where TValue : class, IHasId<string>;
 }

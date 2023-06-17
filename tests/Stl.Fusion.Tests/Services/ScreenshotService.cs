@@ -1,12 +1,13 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using MemoryPack;
 using Stl.OS;
 
 namespace Stl.Fusion.Tests.Services;
 
-[DataContract]
-public record Screenshot
+[DataContract, MemoryPackable]
+public partial record Screenshot
 {
     [DataMember] public int Width { get; init; }
     [DataMember] public int Height { get; init; }

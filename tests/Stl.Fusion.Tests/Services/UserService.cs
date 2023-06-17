@@ -1,3 +1,4 @@
+using MemoryPack;
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.Tests.Model;
@@ -7,30 +8,21 @@ namespace Stl.Fusion.Tests.Services;
 
 public interface IUserService : IComputeService
 {
-    [DataContract]
-    public record AddCommand(
+    [DataContract, MemoryPackable]
+    public partial record AddCommand(
         [property: DataMember] User User,
         [property: DataMember] bool OrUpdate = false
-        ) : ICommand<Unit>
-    {
-        public AddCommand() : this(null!, false) { }
-    }
+    ) : ICommand<Unit>;
 
-    [DataContract]
-    public record UpdateCommand(
+    [DataContract, MemoryPackable]
+    public partial record UpdateCommand(
         [property: DataMember] User User
-        ) : ICommand<Unit>
-    {
-        public UpdateCommand() : this(default(User)!) { }
-    }
+    ) : ICommand<Unit>;
 
-    [DataContract]
-    public record DeleteCommand(
+    [DataContract, MemoryPackable]
+    public partial record DeleteCommand(
         [property: DataMember] User User
-        ) : ICommand<bool>
-    {
-        public DeleteCommand() : this(default(User)!) { }
-    }
+    ) : ICommand<bool>;
 
     [CommandHandler]
     Task Create(AddCommand command, CancellationToken cancellationToken = default);

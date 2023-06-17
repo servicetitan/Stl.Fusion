@@ -4,12 +4,12 @@ using Stl.Generators;
 namespace Stl.Time;
 
 [StructLayout(LayoutKind.Auto)]
-[DataContract, MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 public readonly partial record struct RandomTimeSpan
 {
-    [DataMember(Order = 0)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     public TimeSpan Origin { get; init; }
-    [DataMember(Order = 1)]
+    [DataMember(Order = 1), MemoryPackOrder(1)]
     public TimeSpan MaxDelta { get; init; }
     [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public TimeSpan Min => (Origin - MaxDelta).Positive();

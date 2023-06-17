@@ -1,11 +1,10 @@
+using MemoryPack;
+
 namespace Stl.Fusion.Authentication.Commands;
 
-[DataContract]
-public record SetSessionOptionsCommand(
-    [property: DataMember] Session Session,
-    [property: DataMember] ImmutableOptionSet Options,
-    [property: DataMember] long? ExpectedVersion = null
-    ) : ISessionCommand<Unit>
-{
-    public SetSessionOptionsCommand() : this(Session.Null, ImmutableOptionSet.Empty) { }
-}
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public partial record SetSessionOptionsCommand(
+    [property: DataMember, MemoryPackOrder(0)] Session Session,
+    [property: DataMember, MemoryPackOrder(1)] ImmutableOptionSet Options,
+    [property: DataMember, MemoryPackOrder(2)] long? ExpectedVersion = null
+) : ISessionCommand<Unit>;

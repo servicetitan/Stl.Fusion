@@ -1,16 +1,17 @@
 using System.ComponentModel;
 using System.Globalization;
+using MemoryPack;
 using Microsoft.Toolkit.HighPerformance;
 using Stl.Conversion;
 using Stl.Fusion.Internal;
 
 namespace Stl.Fusion;
 
-[DataContract]
+[DataContract, MemoryPackable]
 [JsonConverter(typeof(SessionJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(SessionNewtonsoftJsonConverter))]
 [TypeConverter(typeof(SessionTypeConverter))]
-public sealed class Session : IHasId<Symbol>, IRequirementTarget,
+public sealed partial class Session : IHasId<Symbol>, IRequirementTarget,
     IEquatable<Session>, IConvertibleTo<string>, IConvertibleTo<Symbol>,
     IHasJsonCompatibleToString
 {
@@ -21,9 +22,10 @@ public sealed class Session : IHasId<Symbol>, IRequirementTarget,
 
     [DataMember(Order = 0)]
     public Symbol Id { get; }
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public string Hash => _hash ??= ComputeHash();
 
+    [MemoryPackConstructor]
     public Session(Symbol id)
     {
         // The check is here to prevent use of sessions with empty or other special Ids,

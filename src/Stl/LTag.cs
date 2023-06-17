@@ -26,7 +26,6 @@ public readonly partial struct LTag : IEquatable<LTag>
     /// Special versions are just versions with negative numbers, which
     /// may or may not be treated differently.
     /// </summary>
-    [MemoryPackIgnore]
     public bool IsSpecial => Value <= 0;
 
     /// <summary>

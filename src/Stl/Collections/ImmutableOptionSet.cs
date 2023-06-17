@@ -2,7 +2,7 @@ using MemoryPack;
 
 namespace Stl.Collections;
 
-[DataContract, MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
 public readonly partial struct ImmutableOptionSet : IServiceProvider, IEquatable<ImmutableOptionSet>
 {
@@ -14,7 +14,7 @@ public readonly partial struct ImmutableOptionSet : IServiceProvider, IEquatable
     public ImmutableDictionary<Symbol, object> Items
         => _items ?? ImmutableDictionary<Symbol, object>.Empty;
 
-    [DataMember(Order = 0)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     [JsonPropertyName(nameof(Items)),  Newtonsoft.Json.JsonIgnore]
     public Dictionary<string, NewtonsoftJsonSerialized<object>> JsonCompatibleItems
         => Items.ToDictionary(
