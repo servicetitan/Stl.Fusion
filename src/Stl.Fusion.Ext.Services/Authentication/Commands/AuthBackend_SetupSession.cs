@@ -1,9 +1,10 @@
 using MemoryPack;
 
-namespace Stl.Fusion.Authentication.Commands;
+namespace Stl.Fusion.Authentication;
 
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
-public partial record SetupSessionCommand(
+// ReSharper disable once InconsistentNaming
+public partial record AuthBackend_SetupSession(
     [property: DataMember, MemoryPackOrder(0)] Session Session,
     [property: DataMember, MemoryPackOrder(1)] string IPAddress = "",
     [property: DataMember, MemoryPackOrder(2)] string UserAgent = "",

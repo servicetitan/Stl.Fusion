@@ -43,7 +43,7 @@ public static class StartupHelper
         // fusion.AddComputeService<ITodoService, TodoService>();
 
         // Option 4: Remote TodoService, SandboxedKeyValueStore, and DbKeyValueStore
-        fusion.AddClient<ITodoService>();
+        fusion.AddClient<ITodos>();
 
         ConfigureSharedServices(services);
     }

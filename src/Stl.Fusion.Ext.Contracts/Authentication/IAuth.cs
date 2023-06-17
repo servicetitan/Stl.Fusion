@@ -1,14 +1,12 @@
-using Stl.Fusion.Authentication.Commands;
-
 namespace Stl.Fusion.Authentication;
 
 public interface IAuth : IComputeService
 {
     // Commands
     [CommandHandler]
-    Task SignOut(SignOutCommand command, CancellationToken cancellationToken = default);
+    Task SignOut(Auth_SignOut command, CancellationToken cancellationToken = default);
     [CommandHandler]
-    Task EditUser(EditUserCommand command, CancellationToken cancellationToken = default);
+    Task EditUser(Auth_EditUser command, CancellationToken cancellationToken = default);
     Task UpdatePresence(Session session, CancellationToken cancellationToken = default);
 
     // Queries

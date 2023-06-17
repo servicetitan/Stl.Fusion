@@ -1,9 +1,10 @@
 using MemoryPack;
 
-namespace Stl.Fusion.Extensions.Commands;
+namespace Stl.Fusion.Extensions;
 
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
-public partial record SandboxedRemoveCommand(
+// ReSharper disable once InconsistentNaming
+public partial record SandboxedKeyValueStore_Remove(
     [property: DataMember, MemoryPackOrder(0)] Session Session,
     [property: DataMember, MemoryPackOrder(1)] string[] Keys
 ) : ISessionCommand<Unit>;

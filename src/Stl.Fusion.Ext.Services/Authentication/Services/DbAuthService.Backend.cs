@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.Internal;
 using Stl.Multitenancy;
@@ -13,7 +12,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
 
     // [CommandHandler] inherited
     public override async Task SignIn(
-        SignInCommand command, CancellationToken cancellationToken = default)
+        AuthBackend_SignIn command, CancellationToken cancellationToken = default)
     {
         var (session, user, authenticatedIdentity) = (command.Session, command.User, command.AuthenticatedIdentity);
         var context = CommandContext.GetCurrent();
@@ -33,7 +32,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         if (!user.Identities.ContainsKey(authenticatedIdentity))
 #pragma warning disable MA0015
             throw new ArgumentOutOfRangeException(
-                $"{nameof(command)}.{nameof(SignInCommand.AuthenticatedIdentity)}");
+                $"{nameof(command)}.{nameof(AuthBackend_SignIn.AuthenticatedIdentity)}");
 #pragma warning restore MA0015
 
         var dbContext = await CreateCommandDbContext(tenant, cancellationToken).ConfigureAwait(false);
@@ -78,7 +77,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
 
     // [CommandHandler] inherited
     public override async Task<SessionInfo> SetupSession(
-        SetupSessionCommand command, CancellationToken cancellationToken = default)
+        AuthBackend_SetupSession command, CancellationToken cancellationToken = default)
     {
         var (session, ipAddress, userAgent, options) = command;
         var context = CommandContext.GetCurrent();
@@ -139,7 +138,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
 
     // [CommandHandler] inherited
     public override async Task SetOptions(
-        SetSessionOptionsCommand command, CancellationToken cancellationToken = default)
+        Auth_SetSessionOptions command, CancellationToken cancellationToken = default)
     {
         var (session, options, expectedVersion) = command;
         var context = CommandContext.GetCurrent();

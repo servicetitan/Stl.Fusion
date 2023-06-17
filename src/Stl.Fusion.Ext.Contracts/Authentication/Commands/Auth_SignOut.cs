@@ -1,9 +1,10 @@
 using MemoryPack;
 
-namespace Stl.Fusion.Authentication.Commands;
+namespace Stl.Fusion.Authentication;
 
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
-public partial record SignOutCommand: ISessionCommand<Unit>
+// ReSharper disable once InconsistentNaming
+public partial record Auth_SignOut: ISessionCommand<Unit>
 {
     [DataMember, MemoryPackOrder(0)]
     public Session Session { get; init; } = Session.Null;
@@ -14,13 +15,13 @@ public partial record SignOutCommand: ISessionCommand<Unit>
     [DataMember, MemoryPackOrder(3)]
     public bool Force { get; init; }
 
-    public SignOutCommand(Session session, bool force = false)
+    public Auth_SignOut(Session session, bool force = false)
     {
         Session = session;
         Force = force;
     }
 
-    public SignOutCommand(Session session, string kickUserSessionHash, bool force = false)
+    public Auth_SignOut(Session session, string kickUserSessionHash, bool force = false)
     {
         Session = session;
         KickUserSessionHash = kickUserSessionHash;
@@ -28,7 +29,7 @@ public partial record SignOutCommand: ISessionCommand<Unit>
     }
 
     [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
-    public SignOutCommand(Session session, string? kickUserSessionHash, bool kickAllUserSessions, bool force)
+    public Auth_SignOut(Session session, string? kickUserSessionHash, bool kickAllUserSessions, bool force)
     {
         Session = session;
         KickUserSessionHash = kickUserSessionHash;

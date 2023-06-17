@@ -1,5 +1,3 @@
-using Stl.Fusion.Extensions.Commands;
-
 namespace Stl.Fusion.Extensions;
 
 public static class KeyValueStoreExt
@@ -27,16 +25,16 @@ public static class KeyValueStoreExt
     public static Task Set(this IKeyValueStore keyValueStore,
         Symbol tenantId, string key, string value, Moment? expiresAt, CancellationToken cancellationToken = default)
     {
-        var command = new SetCommand(tenantId, new[] { (key, value, expiresAt) });
+        var command = new KeyValueStore_Set(tenantId, new[] { (key, value, expiresAt) });
         return keyValueStore.GetCommander().Call(command, cancellationToken);
     }
 
     public static Task Set(this IKeyValueStore keyValueStore,
-        Symbol tenantId, 
+        Symbol tenantId,
         (string Key, string Value, Moment? ExpiresAt)[] items,
         CancellationToken cancellationToken = default)
     {
-        var command = new SetCommand(tenantId, items);
+        var command = new KeyValueStore_Set(tenantId, items);
         return keyValueStore.GetCommander().Call(command, cancellationToken);
     }
 
@@ -45,14 +43,14 @@ public static class KeyValueStoreExt
     public static Task Remove(this IKeyValueStore keyValueStore,
         Symbol tenantId, string key, CancellationToken cancellationToken = default)
     {
-        var command = new RemoveCommand(tenantId, new[] { key });
+        var command = new KeyValueStore_Remove(tenantId, new[] { key });
         return keyValueStore.GetCommander().Call(command, cancellationToken);
     }
 
     public static Task Remove(this IKeyValueStore keyValueStore,
         Symbol tenantId, string[] keys, CancellationToken cancellationToken = default)
     {
-        var command = new RemoveCommand(tenantId, keys);
+        var command = new KeyValueStore_Remove(tenantId, keys);
         return keyValueStore.GetCommander().Call(command, cancellationToken);
     }
 
@@ -75,7 +73,7 @@ public static class KeyValueStoreExt
     // ListKeysByPrefix
 
     public static Task<string[]> ListKeySuffixes(this IKeyValueStore keyValueStore,
-        Symbol tenantId, 
+        Symbol tenantId,
         string prefix,
         PageRef<string> pageRef,
         CancellationToken cancellationToken = default)

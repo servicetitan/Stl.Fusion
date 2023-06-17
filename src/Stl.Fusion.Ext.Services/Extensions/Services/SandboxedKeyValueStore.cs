@@ -1,6 +1,5 @@
 using System.Globalization;
 using Stl.Fusion.Authentication;
-using Stl.Fusion.Extensions.Commands;
 using Stl.Multitenancy;
 using Stl.Fusion.Extensions.Internal;
 
@@ -34,7 +33,7 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
         Clock = settings.Clock ?? services.Clocks().SystemClock;
     }
 
-    public virtual async Task Set(SandboxedSetCommand command, CancellationToken cancellationToken = default)
+    public virtual async Task Set(SandboxedKeyValueStore_Set command, CancellationToken cancellationToken = default)
     {
         if (Computed.IsInvalidating()) return;
 
@@ -53,7 +52,7 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
         await Store.Set(tenant.Id, newItems, cancellationToken).ConfigureAwait(false);
     }
 
-    public virtual async Task Remove(SandboxedRemoveCommand command, CancellationToken cancellationToken = default)
+    public virtual async Task Remove(SandboxedKeyValueStore_Remove command, CancellationToken cancellationToken = default)
     {
         if (Computed.IsInvalidating()) return;
 

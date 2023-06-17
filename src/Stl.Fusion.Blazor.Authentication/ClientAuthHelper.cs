@@ -1,6 +1,5 @@
 using Microsoft.JSInterop;
 using Stl.Fusion.Authentication;
-using Stl.Fusion.Authentication.Commands;
 
 namespace Stl.Fusion.Blazor.Authentication;
 
@@ -47,9 +46,9 @@ public class ClientAuthHelper : IHasServices
     public virtual ValueTask SignOut()
         => JSRuntime.InvokeVoidAsync("FusionAuth.signOut");
     public virtual Task SignOut(Session session, bool force = false)
-        => Commander.Call(new SignOutCommand(session, force));
+        => Commander.Call(new Auth_SignOut(session, force));
     public virtual Task SignOutEverywhere(bool force = true)
-        => Commander.Call(new SignOutCommand(Session, force) { KickAllUserSessions = true });
+        => Commander.Call(new Auth_SignOut(Session, force) { KickAllUserSessions = true });
     public virtual Task Kick(Session session, string otherSessionHash, bool force = false)
-        => Commander.Call(new SignOutCommand(session, otherSessionHash, force));
+        => Commander.Call(new Auth_SignOut(session, otherSessionHash, force));
 }

@@ -1,16 +1,14 @@
-using Stl.Fusion.Authentication.Commands;
-
 namespace Stl.Fusion.Authentication;
 
 public interface IAuthBackend : IComputeService
 {
     // Commands
     [CommandHandler]
-    Task SignIn(SignInCommand command, CancellationToken cancellationToken = default);
+    Task SignIn(AuthBackend_SignIn command, CancellationToken cancellationToken = default);
     [CommandHandler]
-    Task<SessionInfo> SetupSession(SetupSessionCommand command, CancellationToken cancellationToken = default);
+    Task<SessionInfo> SetupSession(AuthBackend_SetupSession command, CancellationToken cancellationToken = default);
     [CommandHandler]
-    Task SetOptions(SetSessionOptionsCommand command, CancellationToken cancellationToken = default);
+    Task SetOptions(Auth_SetSessionOptions command, CancellationToken cancellationToken = default);
 
     // Queries
     [ComputeMethod(MinCacheDuration = 10)]

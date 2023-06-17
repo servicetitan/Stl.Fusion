@@ -1,14 +1,11 @@
-using Stl.Fusion.Authentication;
-using Stl.Fusion.Extensions.Commands;
-
 namespace Stl.Fusion.Extensions;
 
 public interface ISandboxedKeyValueStore : IComputeService
 {
     [CommandHandler]
-    Task Set(SandboxedSetCommand command, CancellationToken cancellationToken = default);
+    Task Set(SandboxedKeyValueStore_Set command, CancellationToken cancellationToken = default);
     [CommandHandler]
-    Task Remove(SandboxedRemoveCommand command, CancellationToken cancellationToken = default);
+    Task Remove(SandboxedKeyValueStore_Remove command, CancellationToken cancellationToken = default);
 
     [ComputeMethod]
     Task<string?> Get(Session session, string key, CancellationToken cancellationToken = default);

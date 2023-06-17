@@ -2,8 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Fusion.Authentication.Services;
 using Stl.Fusion.EntityFramework;
-using Stl.Fusion.EntityFramework.Internal;
-using Stl.Fusion.EntityFramework.Operations;
 
 namespace Stl.Fusion.Authentication;
 
@@ -112,5 +110,4 @@ public readonly struct DbAuthServiceBuilder<TDbContext, TDbSessionInfo, TDbUser,
         Services.AddSingleton(optionsFactory);
         return this;
     }
-
 }

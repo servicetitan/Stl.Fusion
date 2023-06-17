@@ -18,28 +18,30 @@ public sealed partial record TodoSummary(
     [property: DataMember] int Count,
     [property: DataMember] int DoneCount)
 {
-    public static TodoSummary None = new(0, 0);
+    public static readonly TodoSummary None = new(0, 0);
 };
 
 [DataContract, MemoryPackable]
-public sealed partial record AddOrUpdateTodoCommand(
+// ReSharper disable once InconsistentNaming
+public sealed partial record Todos_AddOrUpdate(
     [property: DataMember] Session Session,
     [property: DataMember] Todo Item
 ) : ISessionCommand<Todo>;
 
 [DataContract, MemoryPackable]
-public sealed partial record RemoveTodoCommand(
+// ReSharper disable once InconsistentNaming
+public sealed partial record Todos_Remove(
     [property: DataMember] Session Session,
     [property: DataMember] string Id
 ) : ISessionCommand<Unit>;
 
-public interface ITodoService : IComputeService
+public interface ITodos : IComputeService
 {
     // Commands
     [CommandHandler]
-    Task<Todo> AddOrUpdate(AddOrUpdateTodoCommand command, CancellationToken cancellationToken = default);
+    Task<Todo> AddOrUpdate(Todos_AddOrUpdate command, CancellationToken cancellationToken = default);
     [CommandHandler]
-    Task Remove(RemoveTodoCommand command, CancellationToken cancellationToken = default);
+    Task Remove(Todos_Remove command, CancellationToken cancellationToken = default);
 
     // Queries
     [ComputeMethod]

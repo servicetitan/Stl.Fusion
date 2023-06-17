@@ -5,13 +5,13 @@ namespace Templates.TodoApp.Services;
 
 #pragma warning disable 1998
 
-public class SimpleTodoService : ITodoService
+public class SimpleTodos : ITodos
 {
     private ImmutableList<Todo> _store = ImmutableList<Todo>.Empty; // It's always sorted by Id though
 
     // Commands
 
-    public virtual async Task<Todo> AddOrUpdate(AddOrUpdateTodoCommand command, CancellationToken cancellationToken = default)
+    public virtual async Task<Todo> AddOrUpdate(Todos_AddOrUpdate command, CancellationToken cancellationToken = default)
     {
         if (Computed.IsInvalidating())
             return null!;
@@ -27,7 +27,7 @@ public class SimpleTodoService : ITodoService
         return todo;
     }
 
-    public virtual async Task Remove(RemoveTodoCommand command, CancellationToken cancellationToken = default)
+    public virtual async Task Remove(Todos_Remove command, CancellationToken cancellationToken = default)
     {
         if (Computed.IsInvalidating())
             return;

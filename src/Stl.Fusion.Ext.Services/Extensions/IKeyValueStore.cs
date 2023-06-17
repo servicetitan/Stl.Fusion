@@ -1,13 +1,11 @@
-using Stl.Fusion.Extensions.Commands;
-
 namespace Stl.Fusion.Extensions;
 
 public interface IKeyValueStore : IComputeService
 {
     [CommandHandler]
-    Task Set(SetCommand command, CancellationToken cancellationToken = default);
+    Task Set(KeyValueStore_Set command, CancellationToken cancellationToken = default);
     [CommandHandler]
-    Task Remove(RemoveCommand command, CancellationToken cancellationToken = default);
+    Task Remove(KeyValueStore_Remove command, CancellationToken cancellationToken = default);
 
     [ComputeMethod]
     Task<string?> Get(Symbol tenantId, string key, CancellationToken cancellationToken = default);

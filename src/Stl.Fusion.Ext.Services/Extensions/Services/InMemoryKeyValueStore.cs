@@ -1,5 +1,3 @@
-using Stl.Fusion.Extensions.Commands;
-
 namespace Stl.Fusion.Extensions.Services;
 
 public class InMemoryKeyValueStore : WorkerBase, IKeyValueStore
@@ -25,7 +23,7 @@ public class InMemoryKeyValueStore : WorkerBase, IKeyValueStore
 
     // Commands
 
-    public virtual Task Set(SetCommand command, CancellationToken cancellationToken = default)
+    public virtual Task Set(KeyValueStore_Set command, CancellationToken cancellationToken = default)
     {
         var items = command.Items;
         var tenantId = command.TenantId;
@@ -41,7 +39,7 @@ public class InMemoryKeyValueStore : WorkerBase, IKeyValueStore
         return Task.CompletedTask;
     }
 
-    public virtual Task Remove(RemoveCommand command, CancellationToken cancellationToken = default)
+    public virtual Task Remove(KeyValueStore_Remove command, CancellationToken cancellationToken = default)
     {
         var keys = command.Keys;
         var tenantId = command.TenantId;

@@ -1,9 +1,9 @@
 using MemoryPack;
 
-namespace Stl.Fusion.Authentication.Commands;
+namespace Stl.Fusion.Authentication;
 
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
-public partial record SignInCommand : ISessionCommand<Unit>, IBackendCommand
+public partial record AuthBackend_SignIn : ISessionCommand<Unit>, IBackendCommand
 {
     [DataMember, MemoryPackOrder(0)]
     public Session Session { get; init; }
@@ -12,12 +12,12 @@ public partial record SignInCommand : ISessionCommand<Unit>, IBackendCommand
     [DataMember, MemoryPackOrder(2)]
     public UserIdentity AuthenticatedIdentity { get; init; }
 
-    public SignInCommand() : this(Session.Null, null!, null!) { }
-    public SignInCommand(Session session, User user)
+    public AuthBackend_SignIn() : this(Session.Null, null!, null!) { }
+    public AuthBackend_SignIn(Session session, User user)
         : this(session, user, user.Identities.Single().Key) { }
 
     [MemoryPackConstructor]
-    public SignInCommand(Session Session, User User, UserIdentity AuthenticatedIdentity)
+    public AuthBackend_SignIn(Session Session, User User, UserIdentity AuthenticatedIdentity)
     {
         this.Session = Session;
         this.User = User;

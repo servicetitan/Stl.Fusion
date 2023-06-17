@@ -1,4 +1,3 @@
-using Stl.Fusion.Authentication.Commands;
 using Stl.Multitenancy;
 using Stl.Versioning;
 
@@ -30,7 +29,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
     // Command handlers
 
     // [CommandHandler] inherited
-    public virtual async Task SignOut(SignOutCommand command, CancellationToken cancellationToken = default)
+    public virtual async Task SignOut(Auth_SignOut command, CancellationToken cancellationToken = default)
     {
         var session = command.Session;
         var kickUserSessionHash = command.KickUserSessionHash;
@@ -68,7 +67,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
                 ? userSessions
                 : userSessions.Where(p => Equals(p.SessionInfo.SessionHash, kickUserSessionHash));
             foreach (var (sessionId, _) in signOutSessions) {
-                var otherSessionSignOutCommand = new SignOutCommand(new Session(sessionId), force);
+                var otherSessionSignOutCommand = new Auth_SignOut(new Session(sessionId), force);
                 await Commander.Run(otherSessionSignOutCommand, isOutermost: true, cancellationToken)
                     .ConfigureAwait(false);
             }
@@ -90,7 +89,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
     }
 
     // [CommandHandler] inherited
-    public virtual async Task EditUser(EditUserCommand command, CancellationToken cancellationToken = default)
+    public virtual async Task EditUser(Auth_EditUser command, CancellationToken cancellationToken = default)
     {
         var session = command.Session;
         var context = CommandContext.GetCurrent();
@@ -131,7 +130,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
         var delta = Clocks.SystemClock.Now - sessionInfo.LastSeenAt;
         if (delta < TimeSpan.FromSeconds(10))
             return; // We don't want to update this too frequently
-        var command = new SetupSessionCommand(session);
+        var command = new AuthBackend_SetupSession(session);
         await Commander.Call(command, cancellationToken).ConfigureAwait(false);
     }
 

@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.EntityFramework;
 using Stl.Multitenancy;
 
@@ -36,7 +35,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
 
     // [CommandHandler] inherited
     public override async Task SignOut(
-        SignOutCommand command, CancellationToken cancellationToken = default)
+        Auth_SignOut command, CancellationToken cancellationToken = default)
     {
         var session = command.Session;
         var kickUserSessionHash = command.KickUserSessionHash;
@@ -75,7 +74,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
                 ? userSessions
                 : userSessions.Where(p => Equals(p.SessionInfo.SessionHash, kickUserSessionHash));
             foreach (var (sessionId, _) in signOutSessions) {
-                var otherSessionSignOutCommand = new SignOutCommand(new Session(sessionId), force);
+                var otherSessionSignOutCommand = new Auth_SignOut(new Session(sessionId), force);
                 await Commander.Run(otherSessionSignOutCommand, isOutermost: true, cancellationToken)
                     .ConfigureAwait(false);
             }
@@ -101,7 +100,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     }
 
     // [CommandHandler] inherited
-    public override async Task EditUser(EditUserCommand command, CancellationToken cancellationToken = default)
+    public override async Task EditUser(Auth_EditUser command, CancellationToken cancellationToken = default)
     {
         var session = command.Session;
         var context = CommandContext.GetCurrent();
@@ -141,7 +140,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         if (delta < Settings.MinUpdatePresencePeriod)
             return; // We don't want to update this too frequently
 
-        var command = new SetupSessionCommand(session);
+        var command = new AuthBackend_SetupSession(session);
         await Commander.Call(command, cancellationToken).ConfigureAwait(false);
     }
 

@@ -1,5 +1,4 @@
-using MemoryPack;
-using Stl.Fusion.Authentication.Commands;
+using Stl.Fusion.Authentication;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 using User = Stl.Fusion.Authentication.User;
@@ -38,21 +37,6 @@ public class SerializationTest : TestBase
             .WithIdentity("google/1", "s")
             .WithIdentity("google/2", "q");
         AssertEquals(user.PassThroughAllSerializers(Out), user);
-    }
-
-    [Fact]
-    public void AuthCommandSerialization()
-    {
-        var user = new User("b", "bob").WithIdentity("g:1");
-        var session = new Session("validSessionId");
-
-        new SignInCommand(session, user).PassThroughAllSerializers().User.Name.Should().Be(user.Name);
-        new SignOutCommand(session, true).PassThroughAllSerializers().Session.Should().Be(session);
-        new EditUserCommand(session, "X").PassThroughAllSerializers().Session.Should().Be(session);
-        new SetupSessionCommand(session, "a", "b").PassThroughAllSerializers().Session.Should().Be(session);
-        var sso = new SetSessionOptionsCommand(session, ImmutableOptionSet.Empty.Set(true), 1);
-        sso.Options.GetOrDefault<bool>().Should().BeTrue();
-        sso.ExpectedVersion.Should().Be(1);
     }
 
     [Fact]

@@ -1,5 +1,4 @@
 using Stl.Fusion.Authentication;
-using Stl.Fusion.Extensions.Commands;
 
 namespace Stl.Fusion.Extensions;
 
@@ -25,7 +24,7 @@ public static class SandboxedKeyValueStoreExt
     public static Task Set(this ISandboxedKeyValueStore keyValueStore,
         Session session, string key, string value, Moment? expiresAt, CancellationToken cancellationToken = default)
     {
-        var command = new SandboxedSetCommand(session, new[] { (key, value, expiresAt) });
+        var command = new SandboxedKeyValueStore_Set(session, new[] { (key, value, expiresAt) });
         return keyValueStore.GetCommander().Call(command, cancellationToken);
     }
 
@@ -33,7 +32,7 @@ public static class SandboxedKeyValueStoreExt
         Session session, (string Key, string Value, Moment? ExpiresAt)[] items,
         CancellationToken cancellationToken = default)
     {
-        var command = new SandboxedSetCommand(session, items);
+        var command = new SandboxedKeyValueStore_Set(session, items);
         return keyValueStore.GetCommander().Call(command, cancellationToken);
     }
 
@@ -42,14 +41,14 @@ public static class SandboxedKeyValueStoreExt
     public static Task Remove(this ISandboxedKeyValueStore keyValueStore,
         Session session, string key, CancellationToken cancellationToken = default)
     {
-        var command = new SandboxedRemoveCommand(session, new[] { key });
+        var command = new SandboxedKeyValueStore_Remove(session, new[] { key });
         return keyValueStore.GetCommander().Call(command, cancellationToken);
     }
 
     public static Task Remove(this ISandboxedKeyValueStore keyValueStore,
         Session session, string[] keys, CancellationToken cancellationToken = default)
     {
-        var command = new SandboxedRemoveCommand(session, keys);
+        var command = new SandboxedKeyValueStore_Remove(session, keys);
         return keyValueStore.GetCommander().Call(command, cancellationToken);
     }
 

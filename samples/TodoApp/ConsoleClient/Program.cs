@@ -7,7 +7,7 @@ var sessionId = ReadLine()!.Trim();
 var session = new Session(sessionId);
 
 var services = CreateServiceProvider();
-var todoService = services.GetRequiredService<ITodoService>();
+var todoService = services.GetRequiredService<ITodos>();
 var computed = await Computed.Capture(() => todoService.GetSummary(session));
 await foreach (var c in computed.Changes()) {
     WriteLine($"- {c.Value}");

@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Stl.Fusion.Authentication;
-using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.Server.Internal;
 using Stl.Multitenancy;
 
@@ -137,7 +136,7 @@ public class ServerAuthHelper : IHasServices
         Session session, SessionInfo? sessionInfo, string ipAddress, string userAgent,
         CancellationToken cancellationToken)
     {
-        var setupSessionCommand = new SetupSessionCommand(session, ipAddress, userAgent);
+        var setupSessionCommand = new AuthBackend_SetupSession(session, ipAddress, userAgent);
         return Commander.Call(setupSessionCommand, true, cancellationToken);
     }
 
@@ -147,7 +146,7 @@ public class ServerAuthHelper : IHasServices
         CancellationToken cancellationToken)
     {
         var (newUser, authenticatedIdentity) = CreateOrUpdateUser(user, httpUser, httpAuthenticationSchema);
-        var signInCommand = new SignInCommand(session, newUser, authenticatedIdentity);
+        var signInCommand = new AuthBackend_SignIn(session, newUser, authenticatedIdentity);
         return Commander.Call(signInCommand, true, cancellationToken);
     }
 
@@ -155,7 +154,7 @@ public class ServerAuthHelper : IHasServices
         Session session, SessionInfo sessionInfo,
         CancellationToken cancellationToken)
     {
-        var signOutCommand = new SignOutCommand(session);
+        var signOutCommand = new Auth_SignOut(session);
         return Commander.Call(signOutCommand, true, cancellationToken);
     }
 

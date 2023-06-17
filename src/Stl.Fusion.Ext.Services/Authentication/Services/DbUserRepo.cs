@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.EntityFramework;
 using Stl.Multitenancy;
 
@@ -18,7 +17,7 @@ public interface IDbUserRepo<in TDbContext, TDbUser, TDbUserId>
     Task<(TDbUser DbUser, bool IsCreated)> GetOrCreateOnSignIn(
         TDbContext dbContext, User user, CancellationToken cancellationToken = default);
     Task Edit(
-        TDbContext dbContext, TDbUser dbUser, EditUserCommand command, CancellationToken cancellationToken = default);
+        TDbContext dbContext, TDbUser dbUser, Auth_EditUser command, CancellationToken cancellationToken = default);
     Task Remove(
         TDbContext dbContext, TDbUser dbUser, CancellationToken cancellationToken = default);
 
@@ -95,7 +94,7 @@ public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbConte
         return (dbUser, true);
     }
 
-    public virtual async Task Edit(TDbContext dbContext, TDbUser dbUser, EditUserCommand command,
+    public virtual async Task Edit(TDbContext dbContext, TDbUser dbUser, Auth_EditUser command,
         CancellationToken cancellationToken = default)
     {
         if (command.Name != null) {

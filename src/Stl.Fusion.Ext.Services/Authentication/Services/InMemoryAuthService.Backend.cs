@@ -1,5 +1,4 @@
 using System.Globalization;
-using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.Internal;
 using Stl.Versioning;
 
@@ -10,7 +9,7 @@ public partial class InMemoryAuthService
     // Command handlers
 
     // [CommandHandler] inherited
-    public virtual async Task SignIn(SignInCommand command, CancellationToken cancellationToken = default)
+    public virtual async Task SignIn(AuthBackend_SignIn command, CancellationToken cancellationToken = default)
     {
         var (session, user, authenticatedIdentity) = (command.Session, command.User, command.AuthenticatedIdentity);
         var context = CommandContext.GetCurrent();
@@ -30,7 +29,7 @@ public partial class InMemoryAuthService
         if (!user.Identities.ContainsKey(authenticatedIdentity))
 #pragma warning disable MA0015
             throw new ArgumentOutOfRangeException(
-                $"{nameof(command)}.{nameof(SignInCommand.AuthenticatedIdentity)}");
+                $"{nameof(command)}.{nameof(AuthBackend_SignIn.AuthenticatedIdentity)}");
 #pragma warning restore MA0015
 
         var sessionInfo = SessionInfos.GetValueOrDefault((tenant, session.Id));
@@ -80,7 +79,7 @@ public partial class InMemoryAuthService
 
     // [CommandHandler] inherited
     public virtual async Task<SessionInfo> SetupSession(
-        SetupSessionCommand command, CancellationToken cancellationToken = default)
+        AuthBackend_SetupSession command, CancellationToken cancellationToken = default)
     {
         var (session, ipAddress, userAgent, options) = command;
         var context = CommandContext.GetCurrent();
@@ -113,7 +112,7 @@ public partial class InMemoryAuthService
     }
 
     // [CommandHandler] inherited
-    public virtual async Task SetOptions(SetSessionOptionsCommand command, CancellationToken cancellationToken = default)
+    public virtual async Task SetOptions(Auth_SetSessionOptions command, CancellationToken cancellationToken = default)
     {
         var (session, options, baseVersion) = command;
         var context = CommandContext.GetCurrent();

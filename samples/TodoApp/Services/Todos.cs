@@ -5,12 +5,12 @@ using Templates.TodoApp.Abstractions;
 
 namespace Templates.TodoApp.Services;
 
-public class TodoService : ITodoService
+public class Todos : ITodos
 {
     private readonly ISandboxedKeyValueStore _store;
     private readonly IAuth _auth;
 
-    public TodoService(ISandboxedKeyValueStore store, IAuth auth)
+    public Todos(ISandboxedKeyValueStore store, IAuth auth)
     {
         _store = store;
         _auth = auth;
@@ -18,7 +18,7 @@ public class TodoService : ITodoService
 
     // Commands
 
-    public virtual async Task<Todo> AddOrUpdate(AddOrUpdateTodoCommand command, CancellationToken cancellationToken = default)
+    public virtual async Task<Todo> AddOrUpdate(Todos_AddOrUpdate command, CancellationToken cancellationToken = default)
     {
         if (Computed.IsInvalidating()) 
             return default!;
@@ -53,7 +53,7 @@ public class TodoService : ITodoService
         return todo;
     }
 
-    public virtual async Task Remove(RemoveTodoCommand command, CancellationToken cancellationToken = default)
+    public virtual async Task Remove(Todos_Remove command, CancellationToken cancellationToken = default)
     {
         if (Computed.IsInvalidating()) return;
         var (session, id) = command;

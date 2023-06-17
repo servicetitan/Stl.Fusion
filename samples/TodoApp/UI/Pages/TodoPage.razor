@@ -1,7 +1,7 @@
 @page "/todo"
 @using System.Globalization
 @inherits ComputedStateComponent<Todo[]>
-@inject ITodoService Todos
+@inject ITodos Todos
 @inject Session Session
 @inject UICommander UICommander
 @inject ILogger<TodoPage> Log
@@ -99,6 +99,6 @@
     {
         var todo = new Todo("", NewTodoTitle);
         NewTodoTitle = "";
-        _ = UICommander.Run(new AddOrUpdateTodoCommand(Session, todo));
+        _ = UICommander.Run(new Todos_AddOrUpdate(Session, todo));
     }
 }

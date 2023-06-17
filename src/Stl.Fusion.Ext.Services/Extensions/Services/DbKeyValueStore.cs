@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework;
-using Stl.Fusion.Extensions.Commands;
 
 namespace Stl.Fusion.Extensions.Services;
 
@@ -15,7 +14,7 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
 
     // Commands
 
-    public virtual async Task Set(SetCommand command, CancellationToken cancellationToken = default)
+    public virtual async Task Set(KeyValueStore_Set command, CancellationToken cancellationToken = default)
     {
         var items = command.Items;
         var tenantId = command.TenantId;
@@ -52,7 +51,7 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    public virtual async Task Remove(RemoveCommand command, CancellationToken cancellationToken = default)
+    public virtual async Task Remove(KeyValueStore_Remove command, CancellationToken cancellationToken = default)
     {
         var keys = command.Keys;
         var tenantId = command.TenantId;
