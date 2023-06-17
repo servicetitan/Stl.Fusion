@@ -54,7 +54,7 @@ public class ClientComputed<T> : ComputeMethodComputed<T>, IClientComputed
         if (peer == null)
             return;
 
-        peer.Calls.Outbound.Remove(call.Id, out _);
+        peer.OutboundCalls.Unregister(call);
         if (!this.IsInvalidated()) {
             try {
                 var systemCallSender = peer.Hub.InternalServices.SystemCallSender;

@@ -23,8 +23,8 @@ public class RpcTest : RpcTestBase
         await Assert.ThrowsAsync<DivideByZeroException>(
             () => client.Div(1, 0));
 
-        peer.Calls.Outbound.Count.Should().Be(0);
-        peer.Calls.Inbound.Count.Should().Be(0);
+        peer.OutboundCalls.Count.Should().Be(0);
+        peer.InboundCalls.Count.Should().Be(0);
     }
 
     [Fact]
@@ -38,8 +38,8 @@ public class RpcTest : RpcTestBase
             () => commander.Call(new SimpleRpcServiceDummyCommand("error")));
 
         var peer = services.RpcHub().GetPeer(ClientPeerRef);
-        peer.Calls.Outbound.Count.Should().Be(0);
-        peer.Calls.Inbound.Count.Should().Be(0);
+        peer.OutboundCalls.Count.Should().Be(0);
+        peer.InboundCalls.Count.Should().Be(0);
     }
 
     [Fact]
@@ -52,8 +52,8 @@ public class RpcTest : RpcTestBase
         var startedAt = CpuTimestamp.Now;
         await client.Delay(TimeSpan.FromMilliseconds(200));
         startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(100, 500);
-        peer.Calls.Outbound.Count.Should().Be(0);
-        peer.Calls.Inbound.Count.Should().Be(0);
+        peer.OutboundCalls.Count.Should().Be(0);
+        peer.InboundCalls.Count.Should().Be(0);
 
         {
             using var cts = new CancellationTokenSource(1);
@@ -61,8 +61,8 @@ public class RpcTest : RpcTestBase
             await Assert.ThrowsAnyAsync<OperationCanceledException>(
                 () => client.Delay(TimeSpan.FromHours(1), cts.Token));
             startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(0, 500);
-            peer.Calls.Outbound.Count.Should().Be(0);
-            peer.Calls.Inbound.Count.Should().Be(0);
+            peer.OutboundCalls.Count.Should().Be(0);
+            peer.InboundCalls.Count.Should().Be(0);
         }
 
         {
@@ -71,8 +71,8 @@ public class RpcTest : RpcTestBase
             await Assert.ThrowsAnyAsync<OperationCanceledException>(
                 () => client.Delay(TimeSpan.FromHours(1), cts.Token));
             startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(300, 1000);
-            peer.Calls.Outbound.Count.Should().Be(0);
-            peer.Calls.Inbound.Count.Should().Be(0);
+            peer.OutboundCalls.Count.Should().Be(0);
+            peer.InboundCalls.Count.Should().Be(0);
         }
     }
 
@@ -105,8 +105,8 @@ public class RpcTest : RpcTestBase
 
         var totalIterationCount = threadCount * iterationCount;
         Out.WriteLine($"{iterationCount}: {totalIterationCount / elapsed.TotalSeconds:F} ops/s using {threadCount} threads");
-        peer.Calls.Outbound.Count.Should().Be(0);
-        peer.Calls.Inbound.Count.Should().Be(0);
+        peer.OutboundCalls.Count.Should().Be(0);
+        peer.InboundCalls.Count.Should().Be(0);
 
         async Task<TimeSpan> Run(int count)
         {

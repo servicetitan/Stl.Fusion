@@ -18,11 +18,12 @@ public abstract class RpcPeer : WorkerBase
 
     public RpcHub Hub { get; }
     public RpcPeerRef Ref { get; }
+    public int InboundConcurrencyLevel { get; init; } = 0; // 0 = no concurrency limit, 1 = one call at a time, etc.
     public RpcArgumentSerializer ArgumentSerializer { get; init; }
     public Func<RpcServiceDef, bool> LocalServiceFilter { get; init; }
     public RpcInboundContextFactory InboundContextFactory { get; init; }
-    public RpcCallRegistry Calls { get; init; }
-    public int InboundConcurrencyLevel { get; init; } = 0; // 0 = no concurrency limit, 1 = one call at a time, etc.
+    public RpcInboundCallTracker InboundCalls { get; init; }
+    public RpcOutboundCallTracker OutboundCalls { get; init; }
     public AsyncEvent<RpcPeerConnectionState> ConnectionState => _connectionState;
 
     public static RpcPeer New(RpcHub hub, RpcPeerRef peerRef)
@@ -38,7 +39,10 @@ public abstract class RpcPeer : WorkerBase
         ArgumentSerializer = Hub.ArgumentSerializer;
         LocalServiceFilter = null!; // To make sure any descendant has to set it
         InboundContextFactory = Hub.InboundContextFactory;
-        Calls = new RpcCallRegistry(this);
+        InboundCalls = Services.GetRequiredService<RpcInboundCallTracker>();
+        InboundCalls.Initialize(this);
+        OutboundCalls = Services.GetRequiredService<RpcOutboundCallTracker>();
+        OutboundCalls.Initialize(this);
     }
 
     public void SetConnectionState(Channel<RpcMessage>? channel, Exception? error = null)
@@ -139,7 +143,7 @@ public abstract class RpcPeer : WorkerBase
                     throw Errors.ConnectionUnrecoverable();
 
                 SetConnectionState(channel);
-                foreach (var call in Calls.Outbound.Values) {
+                foreach (var call in OutboundCalls) {
                     cancellationToken.ThrowIfCancellationRequested();
                     await call.Send().ConfigureAwait(false);
                 }

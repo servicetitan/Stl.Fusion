@@ -14,10 +14,8 @@ public abstract class RpcInboundCall : RpcCall
     protected CancellationTokenSource? CancellationTokenSource { get; set; }
 
     public RpcInboundContext Context { get; }
-    public long Id { get; }
     public CancellationToken CancellationToken { get; }
     public ArgumentList? Arguments { get; protected set; } = null;
-    public bool NoWait => Id == 0;
     public List<RpcHeader>? ResultHeaders { get; set; }
 
     public static RpcInboundCall New(byte callTypeId, RpcInboundContext context, RpcMethodDef? methodDef)
@@ -78,8 +76,7 @@ public abstract class RpcInboundCall : RpcCall
 
     protected bool TryRegister()
     {
-        // NoWait should always return true here!
-        if (NoWait || Context.Peer.Calls.Inbound.TryAdd(Id, this))
+        if (Context.Peer.InboundCalls.Register(this))
             return true;
 
         var log = Hub.Services.LogFor(GetType());
@@ -90,10 +87,7 @@ public abstract class RpcInboundCall : RpcCall
     }
 
     protected void Unregister()
-    {
-        if (!NoWait)
-            Context.Peer.Calls.Inbound.TryRemove(Id, this);
-    }
+        => Context.Peer.InboundCalls.Unregister(this);
 }
 
 public class RpcInboundCall<TResult> : RpcInboundCall

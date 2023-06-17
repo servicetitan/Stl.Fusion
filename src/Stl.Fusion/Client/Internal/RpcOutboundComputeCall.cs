@@ -41,7 +41,7 @@ public class RpcOutboundComputeCall<TResult> : RpcOutboundCall<TResult>, IRpcOut
             ? LTag.TryParse(vVersionHeader.Value, out var v) ? v : default
             : default;
         if (ResultVersion == default)
-            Context.Peer!.Calls.Outbound.Remove(Id, out _);
+            Context.Peer!.OutboundCalls.Unregister(this);
         return true;
     }
 }

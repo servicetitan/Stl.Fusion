@@ -40,6 +40,8 @@ public readonly struct RpcBuilder
         services.TryAddSingleton(_ => RpcDefaultDelegates.UnrecoverableErrorDetector);
         services.TryAddSingleton(_ => RpcDefaultDelegates.ClientChannelFactory);
         services.TryAddSingleton(_ => RpcArgumentSerializer.Default);
+        services.TryAddTransient(_ => new RpcInboundCallTracker());
+        services.TryAddTransient(_ => new RpcOutboundCallTracker());
 
         // Interceptors
         services.TryAddSingleton(_ => RpcClientInterceptor.Options.Default);

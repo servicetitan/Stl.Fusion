@@ -26,8 +26,7 @@ public class RpcSystemCalls : RpcServiceBase, IRpcSystemCalls, IRpcArgumentListT
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
         var outboundCallId = context.Message.CallId;
-        if (peer.Calls.Outbound.TryGetValue(outboundCallId, out var outboundCall))
-            outboundCall.TryCompleteWithOk(result, context);
+        peer.OutboundCalls.Get(outboundCallId)?.TryCompleteWithOk(result, context);
         return RpcNoWait.Tasks.Completed;
     }
 
@@ -36,8 +35,7 @@ public class RpcSystemCalls : RpcServiceBase, IRpcSystemCalls, IRpcArgumentListT
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
         var outboundCallId = context.Message.CallId;
-        if (peer.Calls.Outbound.TryGetValue(outboundCallId, out var outboundCall))
-            outboundCall.TryCompleteWithError(error.ToException()!, context);
+        peer.OutboundCalls.Get(outboundCallId)?.TryCompleteWithError(error.ToException()!, context);
         return RpcNoWait.Tasks.Completed;
     }
 
@@ -46,8 +44,7 @@ public class RpcSystemCalls : RpcServiceBase, IRpcSystemCalls, IRpcArgumentListT
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
         var inboundCallId = context.Message.CallId;
-        if (peer.Calls.Inbound.TryGetValue(inboundCallId, out var inboundCall))
-            inboundCall.Cancel();
+        peer.InboundCalls.Get(inboundCallId)?.Cancel();
         return RpcNoWait.Tasks.Completed;
     }
 
@@ -59,7 +56,8 @@ public class RpcSystemCalls : RpcServiceBase, IRpcSystemCalls, IRpcArgumentListT
         var call = context.Call!;
         if (call.MethodDef.Method.Name == OkMethodName) {
             var outboundCallId = context.Message.CallId;
-            if (!context.Peer.Calls.Outbound.TryGetValue(outboundCallId, out var outboundCall))
+            var outboundCall = context.Peer.OutboundCalls.Get(outboundCallId);
+            if (outboundCall == null)
                 return null;
 
             return OkMethodArgumentListTypeCache.GetOrAdd(

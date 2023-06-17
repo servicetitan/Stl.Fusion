@@ -21,8 +21,8 @@ public class RpcLocalTest : RpcLocalTestBase
             () => client.Div(1, 0));
 
         var peer = services.RpcHub().GetPeer(ClientPeerRef);
-        peer.Calls.Outbound.Count.Should().Be(0);
-        peer.Calls.Inbound.Count.Should().Be(0);
+        peer.OutboundCalls.Count.Should().Be(0);
+        peer.InboundCalls.Count.Should().Be(0);
     }
 
     [Fact]
@@ -35,8 +35,8 @@ public class RpcLocalTest : RpcLocalTestBase
             () => client.OnDummyCommand(new SimpleRpcServiceDummyCommand("error")));
 
         var peer = services.RpcHub().GetPeer(ClientPeerRef);
-        peer.Calls.Outbound.Count.Should().Be(0);
-        peer.Calls.Inbound.Count.Should().Be(0);
+        peer.OutboundCalls.Count.Should().Be(0);
+        peer.InboundCalls.Count.Should().Be(0);
     }
 
     [Fact]
@@ -49,16 +49,16 @@ public class RpcLocalTest : RpcLocalTestBase
         startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(100, 500);
 
         var peer = services.RpcHub().GetPeer(ClientPeerRef);
-        peer.Calls.Outbound.Count.Should().Be(0);
-        peer.Calls.Inbound.Count.Should().Be(0);
+        peer.OutboundCalls.Count.Should().Be(0);
+        peer.InboundCalls.Count.Should().Be(0);
         {
             using var cts = new CancellationTokenSource(1);
             startedAt = CpuTimestamp.Now;
             await Assert.ThrowsAnyAsync<OperationCanceledException>(
                 () => client.Delay(TimeSpan.FromHours(1), cts.Token));
             startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(0, 500);
-            peer.Calls.Outbound.Count.Should().Be(0);
-            peer.Calls.Inbound.Count.Should().Be(0);
+            peer.OutboundCalls.Count.Should().Be(0);
+            peer.InboundCalls.Count.Should().Be(0);
         }
 
         {
@@ -67,8 +67,8 @@ public class RpcLocalTest : RpcLocalTestBase
             await Assert.ThrowsAnyAsync<OperationCanceledException>(
                 () => client.Delay(TimeSpan.FromHours(1), cts.Token));
             startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(300, 1000);
-            peer.Calls.Outbound.Count.Should().Be(0);
-            peer.Calls.Inbound.Count.Should().Be(0);
+            peer.OutboundCalls.Count.Should().Be(0);
+            peer.InboundCalls.Count.Should().Be(0);
         }
     }
 
@@ -103,8 +103,8 @@ public class RpcLocalTest : RpcLocalTestBase
         Out.WriteLine($"{iterationCount}: {iterationCount / elapsed.TotalSeconds:F} ops/s");
 
         var peer = services.RpcHub().GetPeer(ClientPeerRef);
-        peer.Calls.Outbound.Count.Should().Be(0);
-        peer.Calls.Inbound.Count.Should().Be(0);
+        peer.OutboundCalls.Count.Should().Be(0);
+        peer.InboundCalls.Count.Should().Be(0);
     }
 
     protected override void ConfigureServices(ServiceCollection services)

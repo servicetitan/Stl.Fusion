@@ -7,7 +7,6 @@ public abstract class RpcOutboundCall : RpcCall
     private static readonly ConcurrentDictionary<(byte, Type), Func<RpcOutboundContext, RpcOutboundCall>> FactoryCache = new();
 
     public RpcOutboundContext Context { get; }
-    public long Id { get; protected set; }
     public Task ResultTask { get; protected init; } = null!;
 
     public static RpcOutboundCall New(RpcOutboundContext context)
@@ -30,9 +29,9 @@ public abstract class RpcOutboundCall : RpcCall
         if (Context.MethodDef!.NoWait)
             message = CreateMessage(Context.RelatedCallId);
         else if (Id == 0) {
-            Id = peer.Calls.NextId;
+            Id = peer.OutboundCalls.NextId;
             message = CreateMessage(Id);
-            peer.Calls.Outbound.TryAdd(Id, this);
+            peer.OutboundCalls.Register(this);
         }
         else
             message = CreateMessage(Id);
@@ -96,24 +95,19 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
 
     public override bool TryCompleteWithOk(object? result, RpcInboundContext context)
     {
-        try {
-            Context.Peer!.Calls.Outbound.Remove(Id, out _);
-            return ResultSource.TrySetResult((TResult)result!);
-        }
-        catch (Exception e) {
-            return TryCompleteWithError(e, context);
-        }
+        Context.Peer!.OutboundCalls.Unregister(this);
+        return ResultSource.TrySetResult((TResult)result!);
     }
 
     public override bool TryCompleteWithError(Exception error, RpcInboundContext? context)
     {
-        Context.Peer!.Calls.Outbound.Remove(Id, out _);
+        Context.Peer!.OutboundCalls.Unregister(this);
         return ResultSource.TrySetException(error);
     }
 
     public override bool TryCompleteWithCancel(CancellationToken cancellationToken, RpcInboundContext? context)
     {
-        Context.Peer!.Calls.Outbound.Remove(Id, out _);
+        Context.Peer!.OutboundCalls.Unregister(this);
         return ResultSource.TrySetCanceled(cancellationToken);
     }
 }
