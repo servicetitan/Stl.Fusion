@@ -75,9 +75,14 @@ public abstract class RpcOutboundCall : RpcCall
         return message;
     }
 
-    public abstract bool TryCompleteWithOk(object? result, RpcInboundContext context);
-    public abstract bool TryCompleteWithError(Exception error, RpcInboundContext? context);
-    public abstract bool TryCompleteWithCancel(CancellationToken cancellationToken, RpcInboundContext? context);
+    public abstract void SetResult(object? result, RpcInboundContext context);
+    public abstract void SetError(Exception error, RpcInboundContext? context);
+    public abstract bool SetCancelled(CancellationToken cancellationToken, RpcInboundContext? context);
+
+    // Protected methods
+
+    protected bool Unregister()
+        => Context.Peer!.OutboundCalls.Unregister(this);
 }
 
 public class RpcOutboundCall<TResult> : RpcOutboundCall
@@ -93,21 +98,23 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
         ResultTask = ResultSource.Task;
     }
 
-    public override bool TryCompleteWithOk(object? result, RpcInboundContext context)
+    public override void SetResult(object? result, RpcInboundContext context)
     {
-        Context.Peer!.OutboundCalls.Unregister(this);
-        return ResultSource.TrySetResult((TResult)result!);
+        if (ResultSource.TrySetResult((TResult)result!))
+            Unregister();
     }
 
-    public override bool TryCompleteWithError(Exception error, RpcInboundContext? context)
+    public override void SetError(Exception error, RpcInboundContext? context)
     {
-        Context.Peer!.OutboundCalls.Unregister(this);
-        return ResultSource.TrySetException(error);
+        if (ResultSource.TrySetException(error))
+            Unregister();
     }
 
-    public override bool TryCompleteWithCancel(CancellationToken cancellationToken, RpcInboundContext? context)
+    public override bool SetCancelled(CancellationToken cancellationToken, RpcInboundContext? context)
     {
-        Context.Peer!.OutboundCalls.Unregister(this);
-        return ResultSource.TrySetCanceled(cancellationToken);
+        var isCancelled = ResultSource.TrySetCanceled(cancellationToken);
+        if (isCancelled)
+            Unregister();
+        return isCancelled;
     }
 }

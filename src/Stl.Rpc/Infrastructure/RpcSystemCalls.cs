@@ -26,7 +26,7 @@ public class RpcSystemCalls : RpcServiceBase, IRpcSystemCalls, IRpcArgumentListT
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
         var outboundCallId = context.Message.CallId;
-        peer.OutboundCalls.Get(outboundCallId)?.TryCompleteWithOk(result, context);
+        peer.OutboundCalls.Get(outboundCallId)?.SetResult(result, context);
         return RpcNoWait.Tasks.Completed;
     }
 
@@ -35,7 +35,7 @@ public class RpcSystemCalls : RpcServiceBase, IRpcSystemCalls, IRpcArgumentListT
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
         var outboundCallId = context.Message.CallId;
-        peer.OutboundCalls.Get(outboundCallId)?.TryCompleteWithError(error.ToException()!, context);
+        peer.OutboundCalls.Get(outboundCallId)?.SetError(error.ToException()!, context);
         return RpcNoWait.Tasks.Completed;
     }
 
@@ -44,7 +44,9 @@ public class RpcSystemCalls : RpcServiceBase, IRpcSystemCalls, IRpcArgumentListT
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
         var inboundCallId = context.Message.CallId;
-        peer.InboundCalls.Get(inboundCallId)?.Cancel();
+        var inboundCall = peer.InboundCalls.Get(inboundCallId);
+        if (inboundCall != null)
+            _ = inboundCall.Complete(silentCancel: true);
         return RpcNoWait.Tasks.Completed;
     }
 
@@ -53,7 +55,7 @@ public class RpcSystemCalls : RpcServiceBase, IRpcSystemCalls, IRpcArgumentListT
 
     public Type? GetArgumentListType(RpcInboundContext context)
     {
-        var call = context.Call!;
+        var call = context.Call;
         if (call.MethodDef.Method.Name == OkMethodName) {
             var outboundCallId = context.Message.CallId;
             var outboundCall = context.Peer.OutboundCalls.Get(outboundCallId);

@@ -21,7 +21,7 @@ public class RpcComputeSystemCalls : RpcServiceBase, IRpcComputeSystemCalls
         var peer = context.Peer;
         var outboundCallId = context.Message.CallId;
         if (peer.OutboundCalls.Get(outboundCallId) is IRpcOutboundComputeCall outboundCall)
-            outboundCall.TryInvalidate(context);
+            outboundCall.SetInvalidated(context);
         return RpcNoWait.Tasks.Completed;
     }
 }

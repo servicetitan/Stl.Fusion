@@ -53,7 +53,7 @@ public class RpcClientInterceptor : RpcInterceptorBase
         }
         catch (Exception error) {
             // Should never happen, but
-            call.TryCompleteWithError(error, null);
+            call.SetError(error, null);
             return;
         }
         CompleteSend(call);
@@ -65,7 +65,7 @@ public class RpcClientInterceptor : RpcInterceptorBase
         var ctr = call.Context.CancellationToken.Register(static state => {
             var call1 = (RpcOutboundCall)state!;
             var context1 = call1.Context;
-            if (!call1.TryCompleteWithCancel(context1.CancellationToken, null))
+            if (!call1.SetCancelled(context1.CancellationToken, null))
                 return;
 
             // If we're here, we know the outgoing call is successfully cancelled.

@@ -7,14 +7,16 @@ using System.Globalization;
 
 namespace Stl.Rpc.Infrastructure;
 
+#pragma warning disable VSTHRD103
+
 public abstract class RpcInboundCall : RpcCall
 {
     private static readonly ConcurrentDictionary<(byte, Type), Func<RpcInboundContext, RpcMethodDef, RpcInboundCall>> FactoryCache = new();
 
-    protected CancellationTokenSource? CancellationTokenSource { get; set; }
+    protected CancellationTokenSource? CancellationTokenSource { get; private set; }
 
     public RpcInboundContext Context { get; }
-    public CancellationToken CancellationToken { get; }
+    public CancellationToken CancellationToken { get; private set; }
     public ArgumentList? Arguments { get; protected set; } = null;
     public List<RpcHeader>? ResultHeaders { get; set; }
 
@@ -40,8 +42,7 @@ public abstract class RpcInboundCall : RpcCall
     {
         Context = context;
         Id =  methodDef.NoWait ? 0 : context.Message.CallId;
-        var cancellationToken = context.CancellationToken;
-
+        var cancellationToken = Context.CancellationToken;
         if (NoWait)
             CancellationToken = cancellationToken;
         else {
@@ -50,91 +51,106 @@ public abstract class RpcInboundCall : RpcCall
         }
     }
 
-    public abstract Task Invoke();
+    public abstract ValueTask Run();
 
-    public abstract ValueTask Complete();
+    public abstract ValueTask Complete(bool silentCancel = false);
 
-    public void Cancel()
-        => TryComplete(true);
+    public abstract bool Restart();
 
     // Protected methods
 
-    protected bool TryComplete(bool mustCancel)
+    protected bool PrepareToStart()
     {
-        var cts = CancellationTokenSource;
-        if (cts == null) // NoWait, already completed, or cancelled
-            return false;
+        var inboundCalls = Context.Peer.InboundCalls;
+        while (true) {
+            var existingCall = inboundCalls.Register(this);
+            if (existingCall == this)
+                break;
 
-        CancellationTokenSource = null;
-        if (mustCancel)
-            cts.CancelAndDisposeSilently();
-        else
-            cts.Dispose();
-        Unregister();
+            if (existingCall.Restart())
+                return false;
+        }
         return true;
     }
 
-    protected bool TryRegister()
+    protected bool PrepareToComplete(bool cancel = false)
     {
-        if (Context.Peer.InboundCalls.Register(this))
-            return true;
+        if (!Context.Peer.InboundCalls.Unregister(this))
+            return false; // Already completed or NoWait
 
-        var log = Hub.Services.LogFor(GetType());
-        log.LogWarning("Inbound {MethodDef} call with duplicate Id = {Id}", MethodDef, Id);
-        CancellationTokenSource.CancelAndDisposeSilently();
-        CancellationTokenSource = null;
-        return false;
+        if (cancel)
+            CancellationTokenSource.CancelAndDisposeSilently();
+        else
+            CancellationTokenSource?.Dispose();
+        return true;
     }
-
-    protected void Unregister()
-        => Context.Peer.InboundCalls.Unregister(this);
 }
 
 public class RpcInboundCall<TResult> : RpcInboundCall
 {
-    public Result<TResult> Result { get; protected set; }
+    private static readonly Result<TResult> CancelledResult = new(default!, new TaskCanceledException());
+
+    public Task<TResult> ResultTask { get; private set; } = null!;
 
     public RpcInboundCall(RpcInboundContext context, RpcMethodDef methodDef)
         : base(context, methodDef)
     { }
 
-    public override async Task Invoke()
+    public override ValueTask Run()
     {
-        if (!TryRegister())
-            return;
+        if (NoWait) {
+            try {
+                Arguments = DeserializeArguments();
+                _ = InvokeTarget();
+            }
+            catch {
+                // Intended
+            }
+            return default;
+        }
 
-        try {
-            Arguments = DeserializeArguments();
-            Result = await InvokeService().ConfigureAwait(false);
+        lock (Lock) {
+            if (!PrepareToStart())
+                return default;
+
+            try {
+                Arguments = DeserializeArguments();
+                ResultTask = InvokeTarget();
+            }
+            catch (Exception error) {
+                ResultTask = Task.FromException<TResult>(error);
+            }
         }
-        catch (Exception error) {
-            Result = new Result<TResult>(default!, error);
-        }
-        await Complete().ConfigureAwait(false);
+
+        return ResultTask.IsCompleted
+            ? Complete()
+            : new ValueTask(CompleteEventually());
     }
 
-    public override ValueTask Complete()
+    public override ValueTask Complete(bool silentCancel = false)
     {
-        if (!TryComplete(false))
-            return default;
+        silentCancel |= CancellationToken.IsCancellationRequested;
+        return PrepareToComplete(silentCancel) && !silentCancel
+            ? SendResult()
+            : default;
+    }
 
-        if (CancellationToken.IsCancellationRequested) {
-            // Call is cancelled @ the outbound end or Peer is disposed
-            return default;
-        }
+    public override bool Restart()
+    {
+        if (!ResultTask.IsCompleted)
+            return true; // Result isn't produced yet
 
-        var systemCallSender = Hub.SystemCallSender;
-        return systemCallSender.Complete(Context.Peer, Id, Result, ResultHeaders);
+        // Result is produced
+        var inboundCalls = Context.Peer.InboundCalls;
+        if (inboundCalls.Get(Id) == this)
+            return true; // CompleteEventually haven't started yet -> let it do the job
+
+        // Result might be sent, but likely isn't delivered - let's re-send it
+        _ = SendResult();
+        return true;
     }
 
     // Protected methods
-
-    protected Task<TResult> InvokeService()
-    {
-        var methodDef = MethodDef;
-        var server = methodDef.Service.Server;
-        return (Task<TResult>)methodDef.Invoker.Invoke(server, Arguments!);
-    }
 
     protected ArgumentList DeserializeArguments()
     {
@@ -203,4 +219,39 @@ public class RpcInboundCall<TResult> : RpcInboundCall
 
         return arguments;
     }
+
+    protected virtual Task<TResult> InvokeTarget()
+    {
+        var methodDef = MethodDef;
+        var server = methodDef.Service.Server;
+        return (Task<TResult>)methodDef.Invoker.Invoke(server, Arguments!);
+    }
+
+    protected ValueTask SendResult()
+    {
+        var resultTask = ResultTask;
+        Result<TResult> result;
+        if (!resultTask.IsCompleted)
+            result = InvocationIsStillInProgressErrorResult();
+        else if (resultTask.Exception is { } error)
+            result = new Result<TResult>(default!, error.GetBaseException());
+        else if (resultTask.IsCanceled)
+            result = new Result<TResult>(default!, new TaskCanceledException());
+        else
+            result = resultTask.Result;
+
+        var systemCallSender = Hub.SystemCallSender;
+        return systemCallSender.Complete(Context.Peer, Id, result, ResultHeaders);
+    }
+
+    protected Task CompleteEventually()
+        => ResultTask.ContinueWith(
+            _ => Complete(),
+            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+
+    // Private methods
+
+    private static Result<TResult> InvocationIsStillInProgressErrorResult() =>
+        new(default!, Stl.Internal.Errors.InternalError(
+            "Something is off: remote method isn't completed yet, but the result is requested to be sent."));
 }

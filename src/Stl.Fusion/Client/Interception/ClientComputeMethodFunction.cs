@@ -84,9 +84,10 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
         catch (Exception error) {
             result = new Result<T>(default!, error);
         }
+        var isConsistent = call?.WhenInvalidated.IsCompletedSuccessfully() != true;
         return new ClientComputed<T>(
             input.MethodDef.ComputedOptions,
-            input, result, VersionGenerator.NextVersion(), true,
+            input, result, VersionGenerator.NextVersion(), isConsistent,
             call);
     }
 

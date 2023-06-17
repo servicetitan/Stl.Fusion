@@ -6,6 +6,8 @@ namespace Stl.Rpc.Infrastructure;
 
 public abstract class RpcCall
 {
+    protected object Lock => this;
+
     public RpcHub Hub => MethodDef.Hub;
     public RpcServiceDef ServiceDef => MethodDef.Service;
     public RpcMethodDef MethodDef { get; }

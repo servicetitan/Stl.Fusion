@@ -32,9 +32,15 @@ public abstract class RpcCallTracker<TRpcCall> : IEnumerable<TRpcCall>
     public TRpcCall? Get(long callId)
         => Calls.GetValueOrDefault(callId);
 
-    public virtual bool Register(TRpcCall call)
-        // NoWait should always return true here!
-        => call.NoWait || Calls.TryAdd(call.Id, call);
+    public virtual TRpcCall Register(TRpcCall call)
+    {
+        if (call.NoWait || Calls.TryAdd(call.Id, call))
+            return call;
+
+        // We could use this call earlier, but it's more expensive,
+        // and we should rarely land here, so we do this separately
+        return Calls.GetOrAdd(call.Id, static (_, call1) => call1, call);
+    }
 
     public virtual bool Unregister(TRpcCall call)
         // NoWait should always return true here!
