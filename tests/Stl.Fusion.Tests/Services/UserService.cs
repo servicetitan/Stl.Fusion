@@ -8,37 +8,40 @@ namespace Stl.Fusion.Tests.Services;
 
 public interface IUserService : IComputeService
 {
-    [DataContract, MemoryPackable]
-    public partial record AddCommand(
-        [property: DataMember] User User,
-        [property: DataMember] bool OrUpdate = false
-    ) : ICommand<Unit>;
-
-    [DataContract, MemoryPackable]
-    public partial record UpdateCommand(
-        [property: DataMember] User User
-    ) : ICommand<Unit>;
-
-    [DataContract, MemoryPackable]
-    public partial record DeleteCommand(
-        [property: DataMember] User User
-    ) : ICommand<bool>;
-
     [CommandHandler]
-    Task Create(AddCommand command, CancellationToken cancellationToken = default);
+    Task Create(UserService_Add command, CancellationToken cancellationToken = default);
     [CommandHandler]
-    Task Update(UpdateCommand command, CancellationToken cancellationToken = default);
+    Task Update(UserService_Update command, CancellationToken cancellationToken = default);
     [CommandHandler]
-    Task<bool> Delete(DeleteCommand command, CancellationToken cancellationToken = default);
+    Task<bool> Delete(UserService_Delete command, CancellationToken cancellationToken = default);
 
     [ComputeMethod(MinCacheDuration = 60)]
     Task<User?> Get(long userId, CancellationToken cancellationToken = default);
     [ComputeMethod(MinCacheDuration = 60)]
     Task<long> Count(CancellationToken cancellationToken = default);
 
-    Task UpdateDirectly(UpdateCommand command, CancellationToken cancellationToken = default);
+    Task UpdateDirectly(UserService_Update command, CancellationToken cancellationToken = default);
     Task Invalidate();
 }
+
+[DataContract, MemoryPackable]
+// ReSharper disable once InconsistentNaming
+public partial record UserService_Add(
+    [property: DataMember] User User,
+    [property: DataMember] bool OrUpdate = false
+) : ICommand<Unit>;
+
+[DataContract, MemoryPackable]
+// ReSharper disable once InconsistentNaming
+public partial record UserService_Update(
+    [property: DataMember] User User
+) : ICommand<Unit>;
+
+[DataContract, MemoryPackable]
+// ReSharper disable once InconsistentNaming
+public partial record UserService_Delete(
+    [property: DataMember] User User
+) : ICommand<bool>;
 
 public class UserService : DbServiceBase<TestDbContext>, IUserService
 {
@@ -50,7 +53,7 @@ public class UserService : DbServiceBase<TestDbContext>, IUserService
         IsProxy = type != type.NonProxyType();
     }
 
-    public virtual async Task Create(IUserService.AddCommand command, CancellationToken cancellationToken = default)
+    public virtual async Task Create(UserService_Add command, CancellationToken cancellationToken = default)
     {
         var (user, orUpdate) = command;
         var existingUser = (User?) null;
@@ -79,7 +82,7 @@ public class UserService : DbServiceBase<TestDbContext>, IUserService
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    public virtual async Task Update(IUserService.UpdateCommand command, CancellationToken cancellationToken = default)
+    public virtual async Task Update(UserService_Update command, CancellationToken cancellationToken = default)
     {
         var user = command.User;
         if (Computed.IsInvalidating()) {
@@ -94,7 +97,7 @@ public class UserService : DbServiceBase<TestDbContext>, IUserService
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task UpdateDirectly(IUserService.UpdateCommand command, CancellationToken cancellationToken = default)
+    public async Task UpdateDirectly(UserService_Update command, CancellationToken cancellationToken = default)
     {
         var user = command.User;
         await using (var dbContext = CreateDbContext(true)) {
@@ -105,7 +108,7 @@ public class UserService : DbServiceBase<TestDbContext>, IUserService
             _ = Get(user.Id, default).AssertCompleted();
     }
 
-    public virtual async Task<bool> Delete(IUserService.DeleteCommand command, CancellationToken cancellationToken = default)
+    public virtual async Task<bool> Delete(UserService_Delete command, CancellationToken cancellationToken = default)
     {
         var user = command.User;
         var context = CommandContext.GetCurrent();

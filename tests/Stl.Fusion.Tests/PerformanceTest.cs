@@ -20,7 +20,7 @@ public abstract class PerformanceTestBase : FusionTestBase
         var commander = Services.Commander();
         var tasks = new List<Task>();
         for (var i = 0; i < UserCount; i++)
-            tasks.Add(commander.Call(new IUserService.AddCommand(new User() {
+            tasks.Add(commander.Call(new UserService_Add(new User() {
                 Id = i,
                 Name = $"User_{i}",
             }, true)));
@@ -86,7 +86,7 @@ public abstract class PerformanceTestBase : FusionTestBase
                 var user = await users.Get(userId, cancellationToken).ConfigureAwait(false);
                 user = user! with { Email = $"{++count}@counter.org" };
                 // Log.LogDebug($"{name}: R done, U {user}");
-                var updateCommand = new IUserService.UpdateCommand(user);
+                var updateCommand = new UserService_Update(user);
                 await users.UpdateDirectly(updateCommand, cancellationToken).ConfigureAwait(false);
 
                 // Log.LogDebug($"{name}: U {user} done");

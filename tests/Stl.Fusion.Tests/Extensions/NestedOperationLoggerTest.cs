@@ -22,7 +22,7 @@ public class NestedOperationLoggerTest : FusionTestBase
         c3.Value.Should().BeNull();
 
         var commander = Services.Commander();
-        var command = new NestedOperationLoggerTester.SetManyCommand(
+        var command = new NestedOperationLoggerTester_SetMany(
             new[] {"1", "2", "3"}, "v");
         await commander.Call(command);
 

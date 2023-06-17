@@ -1,7 +1,8 @@
 using MemoryPack;
-using Stl.Fusion.Authentication;
 using Stl.Fusion.Authentication.Commands;
+using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
+using User = Stl.Fusion.Authentication.User;
 
 namespace Stl.Fusion.Tests;
 
@@ -84,15 +85,4 @@ public class SerializationTest : TestBase
         var s = new Base64Encoded(new byte[] { 1, 2, 3 });
         s.AssertPassesThroughAllSerializers();
     }
-
-    [DataContract, MemoryPackable]
-    public partial record HasStringId(
-        [property: DataMember] string Id
-    ) : IHasId<string>;
-
-    [DataContract, MemoryPackable]
-    public partial record TestCommand<TValue>(
-        [property: DataMember] string Id,
-        [property: DataMember] TValue? Value = null
-    ) : ICommand<Unit> where TValue : class, IHasId<string>;
 }

@@ -5,7 +5,12 @@ namespace Stl.Serialization;
 
 public static class ByteSerializer
 {
-    public static IByteSerializer Default { get; set; } = MessagePackByteSerializer.Default;
+    public static IByteSerializer Default { get; set; } =
+#if !NETSTANDARD2_0
+        MemoryPackByteSerializer.Default;
+#else
+        MessagePackByteSerializer.Default;
+#endif
     public static readonly IByteSerializer None = NoneByteSerializer.Instance;
     public static readonly IByteSerializer Null = NullByteSerializer.Instance;
 

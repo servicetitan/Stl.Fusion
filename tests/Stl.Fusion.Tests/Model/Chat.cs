@@ -1,13 +1,15 @@
 using System.ComponentModel.DataAnnotations;
+using MemoryPack;
 using Microsoft.EntityFrameworkCore;
 
 namespace Stl.Fusion.Tests.Model;
 
+[DataContract, MemoryPackable]
 [Index(nameof(Title))]
-public record Chat : LongKeyedEntity
+public partial record Chat : LongKeyedEntity
 {
-    [Required, MaxLength(120)]
+    [DataMember, Required, MaxLength(120)]
     public string Title { get; init; } = "";
-    [Required]
+    [DataMember, Required]
     public User Author { get; init; } = default!;
 }

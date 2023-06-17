@@ -1,10 +1,12 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using MemoryPack;
 
 namespace Stl.Fusion.Tests.Model;
 
-public record LongKeyedEntity : IHasId<long>
+[DataContract, MemoryPackable]
+public partial record LongKeyedEntity : IHasId<long>
 {
-    [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
+    [DataMember, Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
     public long Id { get; init; }
 }

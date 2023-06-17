@@ -6,17 +6,6 @@ namespace Stl.Fusion.Tests.Services;
 
 public interface IKeyValueService<TValue> : IComputeService
 {
-    [DataContract, MemoryPackable]
-    public partial record SetCommand(
-        [property: DataMember] string Key,
-        [property: DataMember] TValue Value
-    ) : ICommand<Unit>;
-
-    [DataContract, MemoryPackable]
-    public partial record RemoveCommand(
-        [property: DataMember] string Key
-    ) : ICommand<Unit>;
-
     [ComputeMethod]
     Task<Option<TValue>> TryGet(string key, CancellationToken cancellationToken = default);
     [ComputeMethod]
@@ -24,10 +13,23 @@ public interface IKeyValueService<TValue> : IComputeService
     Task Set(string key, TValue value, CancellationToken cancellationToken = default);
     Task Remove(string key, CancellationToken cancellationToken = default);
     [CommandHandler]
-    Task SetCmd(SetCommand cmd, CancellationToken cancellationToken = default);
+    Task SetCmd(KeyValueService_Set<TValue> cmd, CancellationToken cancellationToken = default);
     [CommandHandler]
-    Task RemoveCmd(RemoveCommand cmd, CancellationToken cancellationToken = default);
+    Task RemoveCmd(KeyValueService_Remove cmd, CancellationToken cancellationToken = default);
 }
+
+[DataContract, MemoryPackable]
+// ReSharper disable once InconsistentNaming
+public partial record KeyValueService_Remove(
+    [property: DataMember] string Key
+) : ICommand<Unit>;
+
+[DataContract, MemoryPackable]
+// ReSharper disable once InconsistentNaming
+public partial record KeyValueService_Set<TValue>(
+    [property: DataMember] string Key,
+    [property: DataMember] TValue Value
+) : ICommand<Unit>;
 
 public class KeyValueService<TValue> : IKeyValueService<TValue>
 {
@@ -54,12 +56,12 @@ public class KeyValueService<TValue> : IKeyValueService<TValue>
     }
 
     public Task Set(string key, TValue value, CancellationToken cancellationToken = default)
-        => Commander.Call(new IKeyValueService<TValue>.SetCommand(key, value), cancellationToken);
+        => Commander.Call(new KeyValueService_Set<TValue>(key, value), cancellationToken);
 
     public Task Remove(string key, CancellationToken cancellationToken = default)
-        => Commander.Call(new IKeyValueService<TValue>.RemoveCommand(key), cancellationToken);
+        => Commander.Call(new KeyValueService_Remove(key), cancellationToken);
 
-    public virtual Task SetCmd(IKeyValueService<TValue>.SetCommand cmd, CancellationToken cancellationToken = default)
+    public virtual Task SetCmd(KeyValueService_Set<TValue> cmd, CancellationToken cancellationToken = default)
     {
         _values[cmd.Key] = cmd.Value;
 
@@ -70,7 +72,7 @@ public class KeyValueService<TValue> : IKeyValueService<TValue>
         return Task.CompletedTask;
     }
 
-    public virtual Task RemoveCmd(IKeyValueService<TValue>.RemoveCommand cmd, CancellationToken cancellationToken = default)
+    public virtual Task RemoveCmd(KeyValueService_Remove cmd, CancellationToken cancellationToken = default)
     {
         _values.TryRemove(cmd.Key, out _);
 
