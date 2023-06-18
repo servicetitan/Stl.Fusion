@@ -6,11 +6,10 @@ namespace Stl.Rpc;
 
 public abstract class RpcPeer : WorkerBase
 {
-    private static readonly ConcurrentDictionary<Type, Func<RpcHub, RpcPeerRef, RpcPeer>> FactoryCache = new();
-
     private ILogger? _log;
     private IMomentClock? _clock;
-    private volatile AsyncEvent<RpcPeerConnectionState> _connectionState = new(RpcPeerConnectionState.Initial, true);
+    private volatile AsyncEvent<RpcPeerConnectionState> _connectionState = new(RpcPeerConnectionState.Initial, false);
+    private volatile ChannelWriter<RpcMessage>? _sendChannel;
 
     protected IServiceProvider Services => Hub.Services;
     protected ILogger Log => _log ??= Services.LogFor(GetType());
@@ -25,12 +24,7 @@ public abstract class RpcPeer : WorkerBase
     public RpcInboundCallTracker InboundCalls { get; init; }
     public RpcOutboundCallTracker OutboundCalls { get; init; }
     public AsyncEvent<RpcPeerConnectionState> ConnectionState => _connectionState;
-
-    public static RpcPeer New(RpcHub hub, RpcPeerRef peerRef)
-        => FactoryCache.GetOrAdd(peerRef.PeerType,
-            static type => (Func<RpcHub, RpcPeerRef, RpcPeer>)
-                type.GetConstructorDelegate(typeof(RpcHub), typeof(RpcPeerRef))!
-        ).Invoke(hub, peerRef);
+    public ChannelWriter<RpcMessage>? SendChannel => _sendChannel;
 
     protected RpcPeer(RpcHub hub, RpcPeerRef @ref)
     {
@@ -45,84 +39,33 @@ public abstract class RpcPeer : WorkerBase
         OutboundCalls.Initialize(this);
     }
 
-    public void SetConnectionState(Channel<RpcMessage>? channel, Exception? error = null)
-    {
-        lock (Lock) {
-            var connectionState = _connectionState;
-            var state = connectionState.Value;
-            var (oldChannel, oldError, _) = state;
-            if (oldChannel == channel && oldError == error)
-                return;
-            if (oldError != null && Hub.UnrecoverableErrorDetector.Invoke(oldError, StopToken))
-                return;
-
-            var nextState = state.Next(channel, error);
-            _connectionState = connectionState.CreateNext(nextState);
-            if (oldChannel != null)
-                oldChannel.Writer.TryComplete(error);
-        }
-
-        if (channel != null)
-            Log.LogInformation("'{PeerId}': Connected", Ref);
-        else {
-            if (error != null) {
-                if (Hub.UnrecoverableErrorDetector.Invoke(error, StopToken)) {
-                    if (StopToken.IsCancellationRequested && error is OperationCanceledException) {
-                        Log.LogInformation("'{PeerId}': Can't (re)connect, will shut down: stopped", Ref);
-                        return;
-                    }
-                }
-                Log.LogInformation(
-                    "'{PeerId}': Disconnected: {ErrorType}: {ErrorMessage}",
-                    Ref, error.GetType().GetName(), error.Message);
-            }
-            else
-                Log.LogInformation("'{PeerId}': Disconnected", Ref);
-        }
-    }
-
-    public async ValueTask<Channel<RpcMessage>> GetChannel()
-    {
-        // ReSharper disable once InconsistentlySynchronizedField
-        var connectionState = ConnectionState;
-        while (true) {
-            // ReSharper disable once MethodSupportsCancellation
-            var whenNextConnectionState = connectionState.WhenNext();
-            if (!whenNextConnectionState.IsCompleted) {
-                var (channel, error, _) = connectionState.Value;
-                if (error != null && Hub.UnrecoverableErrorDetector.Invoke(error, StopToken))
-                    throw error;
-
-                if (channel != null)
-                    return channel;
-            }
-
-            connectionState = await whenNextConnectionState.ConfigureAwait(false);
-        }
-    }
-
     public ValueTask Send(RpcMessage message)
     {
         // !!! Send should never throw an exception.
         // This method is optimized to run as quickly as possible,
         // that's why it is a bit complicated.
 
+        var sendChannel = SendChannel;
         try {
-            var channelTask = GetChannel();
-            if (!channelTask.IsCompletedSuccessfully)
-                return CompleteTrySend(channelTask, message);
-
-#pragma warning disable VSTHRD103
-            var channel = channelTask.Result;
-#pragma warning restore VSTHRD103
-            if (channel.Writer.TryWrite(message))
+            if (sendChannel == null || sendChannel.TryWrite(message))
                 return default;
 
-            return CompleteTrySend(channel, message);
+            return CompleteTrySend(sendChannel, message);
         }
         catch (Exception e) {
             Log.LogError(e, "Send failed");
             return default;
+        }
+    }
+
+    public void Disconnect(Exception? error = null)
+    {
+        lock (Lock) {
+            var sendChannel = _sendChannel;
+            if (sendChannel != null) {
+                _sendChannel = null;
+                sendChannel.TryComplete(error);
+            }
         }
     }
 
@@ -139,10 +82,10 @@ public abstract class RpcPeer : WorkerBase
             try {
                 var channel = await GetChannelOrReconnect(cancellationToken).ConfigureAwait(false);
                 // ReSharper disable once SuspiciousTypeConversion.Global
-                if (channel is null or IEmptyChannel)
+                if (channel is null)
                     throw Errors.ConnectionUnrecoverable();
 
-                SetConnectionState(channel);
+                SetConnectionState(channel, null, true);
                 foreach (var call in OutboundCalls) {
                     cancellationToken.ThrowIfCancellationRequested();
                     await call.Send().ConfigureAwait(false);
@@ -165,10 +108,10 @@ public abstract class RpcPeer : WorkerBase
                             _ = ProcessMessage(message, semaphore, cancellationToken);
                         }
                     }
-                SetConnectionState(null);
+                SetConnectionState(null, null, true);
             }
             catch (Exception e) {
-                SetConnectionState(null, e);
+                SetConnectionState(null, e, true);
                 if (Hub.UnrecoverableErrorDetector.Invoke(e, StopToken))
                     throw;
             }
@@ -225,29 +168,56 @@ public abstract class RpcPeer : WorkerBase
 
     // Private methods
 
-    private async ValueTask CompleteTrySend(ValueTask<Channel<RpcMessage>> channelTask, RpcMessage message)
+    protected void SetConnectionState(Channel<RpcMessage>? channel, Exception? error, bool setSendChannel)
     {
-        // !!! This method should never fail
+        Monitor.Enter(Lock);
         try {
-            var channel = await channelTask.ConfigureAwait(false);
-            while (!channel.Writer.TryWrite(message))
-                await channel.Writer.WaitToWriteAsync(StopToken).ConfigureAwait(false);
+            var connectionState = _connectionState;
+            var state = connectionState.Value;
+            var (oldChannel, oldError, _) = state;
+            if (oldChannel == channel && oldError == error)
+                return;
+
+            if (oldError != null && Hub.UnrecoverableErrorDetector.Invoke(oldError, StopToken))
+                return;
+
+            var nextState = state.Next(channel, error);
+            _connectionState = connectionState.CreateNext(nextState);
+            oldChannel?.Writer.TryComplete(error);
         }
-#pragma warning disable RCS1075
-        catch (Exception e) {
-            Log.LogError(e, "Send failed");
+        finally {
+            if (setSendChannel)
+                _sendChannel = channel?.Writer;
+            Monitor.Exit(Lock);
         }
-#pragma warning restore RCS1075
+
+        if (channel != null)
+            Log.LogInformation("'{PeerId}': Connected", Ref);
+        else {
+            if (error != null) {
+                if (Hub.UnrecoverableErrorDetector.Invoke(error, StopToken)) {
+                    if (StopToken.IsCancellationRequested && error is OperationCanceledException) {
+                        Log.LogInformation("'{PeerId}': Can't (re)connect, will shut down: stopped", Ref);
+                        return;
+                    }
+                }
+                Log.LogInformation(
+                    "'{PeerId}': Disconnected: {ErrorType}: {ErrorMessage}",
+                    Ref, error.GetType().GetName(), error.Message);
+            }
+            else
+                Log.LogInformation("'{PeerId}': Disconnected", Ref);
+        }
     }
 
-    private async ValueTask CompleteTrySend(Channel<RpcMessage> channel, RpcMessage message)
+    private async ValueTask CompleteTrySend(ChannelWriter<RpcMessage> sendChannel, RpcMessage message)
     {
         // !!! This method should never fail
         try {
             // If we're here, WaitToWriteAsync call is required to continue
-            await channel.Writer.WaitToWriteAsync(StopToken).ConfigureAwait(false);
-            while (!channel.Writer.TryWrite(message))
-                await channel.Writer.WaitToWriteAsync(StopToken).ConfigureAwait(false);
+            await sendChannel.WaitToWriteAsync(StopToken).ConfigureAwait(false);
+            while (!sendChannel.TryWrite(message))
+                await sendChannel.WaitToWriteAsync(StopToken).ConfigureAwait(false);
         }
 #pragma warning disable RCS1075
         catch (Exception e) {

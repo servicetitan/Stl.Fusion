@@ -16,6 +16,7 @@ public sealed class RpcHub : ProcessorBase, IHasServices
     internal RpcCallRouter CallRouter { get; }
     internal RpcArgumentSerializer ArgumentSerializer { get; }
     internal RpcInboundContextFactory InboundContextFactory { get; }
+    internal RpcPeerFactory PeerFactory { get; }
     internal RpcClientChannelFactory ClientChannelFactory { get; }
     internal RpcClientIdGenerator ClientIdGenerator { get; }
     internal RpcBackendServiceDetector BackendServiceDetector { get; }
@@ -43,6 +44,7 @@ public sealed class RpcHub : ProcessorBase, IHasServices
         CallRouter = services.GetRequiredService<RpcCallRouter>();
         ArgumentSerializer = services.GetRequiredService<RpcArgumentSerializer>();
         InboundContextFactory = services.GetRequiredService<RpcInboundContextFactory>();
+        PeerFactory = services.GetRequiredService<RpcPeerFactory>();
         ClientChannelFactory = services.GetRequiredService<RpcClientChannelFactory>();
         ClientIdGenerator = services.GetRequiredService<RpcClientIdGenerator>();
         BackendServiceDetector = services.GetRequiredService<RpcBackendServiceDetector>();
@@ -73,7 +75,7 @@ public sealed class RpcHub : ProcessorBase, IHasServices
         if (WhenDisposed != null)
             throw Errors.AlreadyDisposed();
 
-        var peer = RpcPeer.New(this, peerRef);
+        var peer = PeerFactory.Invoke(this, peerRef);
         _ = peer.Run();
         return peer;
     }

@@ -6,6 +6,7 @@ public sealed class AsyncEvent<T>
     private readonly TaskCompletionSource<AsyncEvent<T>> _nextSource;
 
     public T Value { get; }
+    public bool IsLatest => !_nextSource.Task.IsCompleted;
 
     public AsyncEvent(T value, bool runContinuationsAsynchronously)
     {
@@ -17,10 +18,42 @@ public sealed class AsyncEvent<T>
     public override string ToString()
         => $"{GetType().GetName()}({Value})";
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Task<AsyncEvent<T>> WhenNext()
         => _nextSource.Task;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Task<AsyncEvent<T>> WhenNext(CancellationToken cancellationToken)
         => _nextSource.Task.WaitAsync(cancellationToken);
+
+    public async Task<AsyncEvent<T>> When(Func<T, bool> predicate, CancellationToken cancellationToken = default)
+    {
+        var current = this;
+        while (!predicate.Invoke(current.Value))
+            current = await current.WhenNext(cancellationToken).ConfigureAwait(false);
+        return current;
+    }
+
+    public AsyncEvent<T> GetLatest()
+    {
+        var current = this;
+        while (true) {
+            var whenNext = current.WhenNext();
+            if (!whenNext.IsCompleted)
+                return current;
+
+            current = whenNext.GetAwaiter().GetResult();
+        }
+    }
+
+    public AsyncEvent<T>? TryGetNext()
+    {
+        var whenNext = WhenNext();
+        if (whenNext.IsCompleted)
+            return whenNext.GetAwaiter().GetResult();
+
+        return null;
+    }
 
     public AsyncEvent<T> CreateNext(T value)
     {

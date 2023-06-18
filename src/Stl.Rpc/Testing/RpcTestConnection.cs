@@ -7,20 +7,18 @@ namespace Stl.Rpc.Testing;
 public class RpcTestConnection
 {
     private readonly object _lock = new();
-    private ChannelPair<RpcMessage>? _nextChannelPair;
-    private ChannelPair<RpcMessage>? _channelPair;
-
-    public Channel<RpcMessage>? ClientChannel => _channelPair?.Channel1;
-    public Channel<RpcMessage>? ServerChannel => _channelPair?.Channel2;
+    private volatile AsyncEvent<ChannelPair<RpcMessage>?> _connectionSource = new(null, false);
 
     public RpcTestClient TestClient { get; }
     public RpcHub Hub => TestClient.Hub;
     public RpcClientPeer ClientPeer { get; }
     public RpcServerPeer ServerPeer { get; }
+    // ReSharper disable once InconsistentlySynchronizedField
+    public bool IsTerminated => _connectionSource.GetLatest().Value == ChannelPair<RpcMessage>.Null;
 
     public RpcTestConnection(RpcTestClient testClient, RpcPeerRef clientPeerRef, RpcPeerRef serverPeerRef)
     {
-        if (!clientPeerRef.IsClient)
+        if (clientPeerRef.IsServer)
             throw new ArgumentOutOfRangeException(nameof(clientPeerRef));
         if (!serverPeerRef.IsServer)
             throw new ArgumentOutOfRangeException(nameof(serverPeerRef));
@@ -30,50 +28,84 @@ public class RpcTestConnection
         ServerPeer = (RpcServerPeer)Hub.GetPeer(serverPeerRef);
     }
 
-    public void Connect()
-        => Connect(TestClient.Settings.ConnectionFactory.Invoke(TestClient));
+    public Task Connect(CancellationToken cancellationToken = default)
+        => Connect(TestClient.Settings.ConnectionFactory.Invoke(TestClient), cancellationToken);
 
-    public void Connect(ChannelPair<RpcMessage> connection)
+    public async Task Connect(ChannelPair<RpcMessage> connection, CancellationToken cancellationToken = default)
     {
-        lock (_lock) {
-            DisconnectClient();
-            _nextChannelPair = connection;
-        }
+        Disconnect();
+        await ClientPeer.ConnectionState
+            .When(s => s.Channel == null, cancellationToken)
+            .ConfigureAwait(false);
+        await ServerPeer.ConnectionState
+            .When(s => s.Channel == null, cancellationToken)
+            .ConfigureAwait(false);
+
+        SetNextConnection(connection);
+        await ClientPeer.ConnectionState
+            .When(s => s.Channel != null, cancellationToken)
+            .ConfigureAwait(false);
     }
 
-    public void DisconnectClient(Exception? error = null)
+    public void Disconnect(Exception? error = null)
     {
-        lock (_lock) {
-            _channelPair?.Channel1.Writer.TryComplete(error);
-        }
-    }
-
-    public void DisconnectServer(Exception? error = null)
-    {
-        lock (_lock) {
-            _channelPair?.Channel2.Writer.TryComplete(error);
-        }
+        ClientPeer.Disconnect(error);
+        ServerPeer.Disconnect(error);
     }
 
     public void Terminate()
     {
         lock (_lock) {
-            DisconnectClient();
-            _nextChannelPair = ChannelPair<RpcMessage>.Null;
+            if (IsTerminated)
+                return;
+
+            _connectionSource = _connectionSource.CreateNext(ChannelPair<RpcMessage>.Null);
         }
+        ClientPeer.Disconnect();
+        ServerPeer.Disconnect();
     }
 
-    public Channel<RpcMessage> NextClientChannel()
+    public async Task<Channel<RpcMessage>> PullClientChannel(CancellationToken cancellationToken)
+    {
+        // ReSharper disable once InconsistentlySynchronizedField
+        var connectionSource = _connectionSource;
+        while (true) {
+            while (true) {
+                if (connectionSource.Value == ChannelPair<RpcMessage>.Null)
+                    throw Errors.ConnectionUnrecoverable();
+
+                if (connectionSource is { IsLatest: true, Value: not null })
+                    break;
+
+                connectionSource = await connectionSource.WhenNext(cancellationToken).ConfigureAwait(false);
+            }
+
+            lock (_lock) {
+                if (_connectionSource == connectionSource) {
+                    _connectionSource = _connectionSource.CreateNext(null);
+                    break;
+                }
+                connectionSource = _connectionSource;
+            }
+        }
+
+        var connection = connectionSource.Value;
+        await ServerPeer.Connect(connection.Channel2, cancellationToken).ConfigureAwait(false);
+        return connection.Channel1;
+    }
+
+    public RpcTestConnection AssertNotTerminated()
+        => !IsTerminated
+            ? this
+            : throw Errors.TestConnectionIsTerminated();
+
+    // Protected methods
+
+    protected void SetNextConnection(ChannelPair<RpcMessage>? connection)
     {
         lock (_lock) {
-            var connection = _nextChannelPair;
-            if (ReferenceEquals(connection, ChannelPair<RpcMessage>.Null))
-                throw Errors.ConnectionUnrecoverable();
-
-            _channelPair = connection ?? throw new InvalidOperationException("Connection is off now.");
-            _nextChannelPair = null;
-            ServerPeer.SetConnectionState(connection.Channel2);
-            return connection.Channel1;
+            AssertNotTerminated();
+            _connectionSource = _connectionSource.CreateNext(connection);
         }
     }
 }

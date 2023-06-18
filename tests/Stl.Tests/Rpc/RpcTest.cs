@@ -5,9 +5,9 @@ using Stl.Testing.Collections;
 namespace Stl.Tests.Rpc;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class RpcTest : RpcTestBase
+public class RpcWebSocketTest : RpcTestBase
 {
-    public RpcTest(ITestOutputHelper @out) : base(@out) { }
+    public RpcWebSocketTest(ITestOutputHelper @out) : base(@out) { }
 
     [Fact]
     public async Task BasicTest()

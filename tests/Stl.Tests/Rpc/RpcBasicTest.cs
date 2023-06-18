@@ -5,9 +5,9 @@ using Stl.Testing.Collections;
 namespace Stl.Tests.Rpc;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class RpcLocalTest : RpcLocalTestBase
+public class RpcBasicTest : RpcLocalTestBase
 {
-    public RpcLocalTest(ITestOutputHelper @out) : base(@out) { }
+    public RpcBasicTest(ITestOutputHelper @out) : base(@out) { }
 
     protected override void ConfigureServices(ServiceCollection services)
     {
@@ -23,7 +23,7 @@ public class RpcLocalTest : RpcLocalTestBase
     [Fact]
     public async Task BasicTest()
     {
-        var services = CreateServices();
+        await using var services = CreateServices();
         var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         (await client.Div(6, 2)).Should().Be(3);
@@ -38,7 +38,7 @@ public class RpcLocalTest : RpcLocalTestBase
     [Fact]
     public async Task CommandTest()
     {
-        var services = CreateServices();
+        await using var services = CreateServices();
         var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         await client.OnDummyCommand(new SimpleRpcServiceDummyCommand("ok"));
@@ -50,9 +50,11 @@ public class RpcLocalTest : RpcLocalTestBase
     [Fact]
     public async Task DelayTest()
     {
-        var services = CreateServices();
+        await using var services = CreateServices();
         var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
+        await client.Add(1, 1); // Warm-up
+
         var startedAt = CpuTimestamp.Now;
         await client.Delay(TimeSpan.FromMilliseconds(200));
         startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(100, 500);
@@ -80,12 +82,29 @@ public class RpcLocalTest : RpcLocalTestBase
     [Fact]
     public async Task PolymorphTest()
     {
-        var services = CreateServices();
+        await using var services = CreateServices();
+        var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         var a1 = new Tuple<int>(1);
         var r1 = await client.Polymorph(a1);
         r1.Should().Be(a1);
         r1.Should().NotBeSameAs(a1);
+        await AssertNoCalls(clientPeer);
+    }
+
+    [Fact]
+    public async Task CancellationTest()
+    {
+        await using var services = CreateServices();
+        var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
+        var client = services.GetRequiredService<ISimpleRpcServiceClient>();
+
+        var cts = new CancellationTokenSource(100);
+        var result = await client.Delay(TimeSpan.FromMilliseconds(300), cts.Token).ResultAwait();
+        result.Error.Should().BeAssignableTo<OperationCanceledException>();
+        var cancellationCount = await client.GetCancellationCount();
+        cancellationCount.Should().Be(1);
+        await AssertNoCalls(clientPeer);
     }
 
     [Theory]
@@ -96,7 +115,7 @@ public class RpcLocalTest : RpcLocalTestBase
     [InlineData(50_000)]
     public async Task PerformanceTest(int iterationCount)
     {
-        var services = CreateServices();
+        await using var services = CreateServices();
         var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         await client.Div(1, 1);

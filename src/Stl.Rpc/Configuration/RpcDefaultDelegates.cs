@@ -8,6 +8,7 @@ namespace Stl.Rpc;
 public delegate Symbol RpcServiceNameBuilder(Type serviceType);
 public delegate Symbol RpcMethodNameBuilder(RpcMethodDef methodDef);
 public delegate void RpcPeerTracker(RpcPeer peer);
+public delegate RpcPeer RpcPeerFactory(RpcHub hub, RpcPeerRef peerRef);
 public delegate RpcInboundContext RpcInboundContextFactory(RpcPeer peer, RpcMessage message, CancellationToken cancellationToken);
 public delegate RpcPeer? RpcCallRouter(RpcMethodDef methodDef, ArgumentList arguments);
 public delegate Task<Channel<RpcMessage>> RpcClientChannelFactory(RpcClientPeer peer, CancellationToken cancellationToken);
@@ -28,6 +29,11 @@ public static class RpcDefaultDelegates
 
     public static RpcInboundContextFactory InboundContextFactory { get; set; } =
         static (peer, message, cancellationToken) => new RpcInboundContext(peer, message, cancellationToken);
+
+    public static RpcPeerFactory PeerFactory { get; set; } =
+        static (hub, peerRef) => peerRef.IsServer
+            ? new RpcServerPeer(hub, peerRef)
+            : new RpcClientPeer(hub, peerRef);
 
     public static RpcClientChannelFactory ClientChannelFactory { get; set; } =
         static (peer, cancellationToken) => peer.Hub.Client.CreateChannel(peer, cancellationToken);

@@ -11,7 +11,8 @@ public partial interface ISimpleRpcService : ICommandService
 {
     Task<int?> Div(int? a, int b);
     Task<int?> Add(int? a, int b);
-    Task Delay(TimeSpan duration, CancellationToken cancellationToken = default);
+    Task<TimeSpan> Delay(TimeSpan duration, CancellationToken cancellationToken = default);
+    Task<int> GetCancellationCount();
     Task<ITuple> Polymorph(ITuple argument, CancellationToken cancellationToken = default);
 
     [CommandHandler]
@@ -23,14 +24,28 @@ public interface ISimpleRpcServiceClient : ISimpleRpcService, IRpcService
 
 public class SimpleRpcService : ISimpleRpcService
 {
+    private volatile int _cancellationCount;
+
     public Task<int?> Div(int? a, int b)
         => Task.FromResult(a / b);
 
     public Task<int?> Add(int? a, int b)
         => Task.FromResult(a + b);
 
-    public Task Delay(TimeSpan duration, CancellationToken cancellationToken = default)
-        => Task.Delay(duration, cancellationToken);
+    public async Task<TimeSpan> Delay(TimeSpan duration, CancellationToken cancellationToken = default)
+    {
+        try {
+            await Task.Delay(duration, cancellationToken);
+            return duration;
+        }
+        catch (OperationCanceledException) {
+            Interlocked.Increment(ref _cancellationCount);
+            throw;
+        }
+    }
+
+    public Task<int> GetCancellationCount()
+        => Task.FromResult(_cancellationCount);
 
     public Task<ITuple> Polymorph(ITuple argument, CancellationToken cancellationToken = default)
         => Task.FromResult(argument);

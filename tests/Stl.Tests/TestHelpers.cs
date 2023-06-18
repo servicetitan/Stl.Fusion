@@ -21,5 +21,5 @@ public static class TestHelpers
         => TestExt.WhenMet(() => {
             peer.OutboundCalls.Count.Should().Be(0);
             peer.InboundCalls.Count.Should().Be(0);
-        }, TimeSpan.FromSeconds(0.5));
+        }, TimeSpan.FromSeconds(1));
 }

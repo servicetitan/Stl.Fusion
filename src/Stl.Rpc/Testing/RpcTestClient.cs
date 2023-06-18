@@ -50,8 +50,8 @@ public class RpcTestClient : RpcClient, IEnumerable<RpcTestConnection>
 
     public RpcTestConnection CreateConnection(Symbol clientId, Symbol serverId)
     {
-        var clientPeerRef = new RpcPeerRef(typeof(RpcClientPeer), clientId);
-        var serverPeerRef = new RpcPeerRef(typeof(RpcServerPeer), serverId);
+        var clientPeerRef = RpcPeerRef.NewClient(clientId);
+        var serverPeerRef = RpcPeerRef.NewServer(serverId);
         return CreateConnection(clientPeerRef, serverPeerRef);
     }
 
@@ -67,5 +67,5 @@ public class RpcTestClient : RpcClient, IEnumerable<RpcTestConnection>
     }
 
     public override Task<Channel<RpcMessage>> CreateChannel(RpcClientPeer peer, CancellationToken cancellationToken)
-        => Task.FromResult(this[peer].NextClientChannel());
+        => this[peer].PullClientChannel(cancellationToken);
 }

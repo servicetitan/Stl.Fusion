@@ -7,7 +7,7 @@ public class RpcClientPeer : RpcPeer
 {
     public RpcClientChannelFactory ChannelFactory { get; init; }
     public RetryDelaySeq ReconnectDelays { get; init; } = new();
-    public int ReconnectRetryLimit { get; init; } = int.MaxValue;
+    public int? ReconnectRetryLimit { get; init; }
 
     public RpcClientPeer(RpcHub hub, RpcPeerRef @ref)
         : base(hub, @ref)
@@ -26,7 +26,7 @@ public class RpcClientPeer : RpcPeer
 
         if (error != null && Hub.UnrecoverableErrorDetector.Invoke(error, StopToken))
             throw error;
-        if (tryIndex >= ReconnectRetryLimit) {
+        if (ReconnectRetryLimit is { } limit && tryIndex >= limit) {
             Log.LogWarning(error, "'{PeerId}': Reconnect retry limit exceeded", Ref);
             throw Errors.ConnectionUnrecoverable();
         }
@@ -35,6 +35,7 @@ public class RpcClientPeer : RpcPeer
             Log.LogInformation("'{PeerId}': Connecting...", Ref);
         else  {
             var delay = ReconnectDelays[tryIndex];
+            delay = TimeSpanExt.Max(TimeSpan.FromMilliseconds(1), delay);
             Log.LogInformation(
                 "'{PeerId}': Reconnecting (#{TryIndex}) after {Delay}...",
                 Ref, tryIndex, delay.ToShortString());

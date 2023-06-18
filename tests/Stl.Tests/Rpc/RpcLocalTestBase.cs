@@ -1,4 +1,3 @@
-using Stl.Internal;
 using Stl.Rpc;
 using Stl.Rpc.Testing;
 using Stl.Testing.Output;
@@ -10,7 +9,7 @@ public abstract class RpcLocalTestBase : TestBase
 {
     protected RpcLocalTestBase(ITestOutputHelper @out) : base(@out) { }
 
-    protected virtual IServiceProvider CreateServices(
+    protected virtual ServiceProvider CreateServices(
         Action<IServiceCollection>? configureServices = null)
     {
         var services = new ServiceCollection();
@@ -26,7 +25,7 @@ public abstract class RpcLocalTestBase : TestBase
     {
         var testClient = services.GetRequiredService<RpcTestClient>();
         var connection = testClient.CreateDefaultConnection();
-        connection.Connect();
+        _ = connection.Connect();
     }
 
     protected virtual void ConfigureServices(ServiceCollection services)

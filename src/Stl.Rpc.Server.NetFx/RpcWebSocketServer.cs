@@ -74,8 +74,8 @@ public class RpcWebSocketServer : RpcServiceBase
         if (Hub.GetPeer(peerRef) is not RpcServerPeer peer)
             return;
 
-        peer.SetConnectionState(channel);
         try {
+            await peer.Connect(channel, cancellationToken).ConfigureAwait(false);
             await channel.WhenClosed.ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {

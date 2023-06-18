@@ -1,19 +1,16 @@
 namespace Stl.Rpc;
 
-public record RpcPeerRef(Type PeerType, Symbol Id)
+public record RpcPeerRef(Symbol Id, bool IsServer = false)
 {
     public static RpcPeerRef Default { get; set; } = NewClient("default");
 
     public static RpcPeerRef NewServer(Symbol id)
-        => new(typeof(RpcServerPeer), id);
+        => new(id, true);
     public static RpcPeerRef NewClient(Symbol id)
-        => new(typeof(RpcClientPeer), id);
-
-    public bool IsClient => typeof(RpcClientPeer).IsAssignableFrom(PeerType);
-    public bool IsServer => typeof(RpcServerPeer).IsAssignableFrom(PeerType);
+        => new(id);
 
     public override string ToString()
-        => $"{PeerType.Name}:{Id}";
+        => $"{(IsServer ? "server" : "client")}:{Id}";
 
     // Operators
 
