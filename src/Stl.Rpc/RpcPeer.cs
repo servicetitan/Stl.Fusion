@@ -8,7 +8,7 @@ public abstract class RpcPeer : WorkerBase
 {
     private ILogger? _log;
     private IMomentClock? _clock;
-    private volatile AsyncEvent<RpcPeerConnectionState> _connectionState = new(RpcPeerConnectionState.Initial, false);
+    private volatile AsyncEvent<RpcPeerConnectionState> _connectionState = new(RpcPeerConnectionState.Initial, true);
     private volatile ChannelWriter<RpcMessage>? _sendChannel;
 
     protected IServiceProvider Services => Hub.Services;
@@ -60,13 +60,13 @@ public abstract class RpcPeer : WorkerBase
 
     public void Disconnect(Exception? error = null)
     {
+        ChannelWriter<RpcMessage>? sendChannel;
         lock (Lock) {
-            var sendChannel = _sendChannel;
-            if (sendChannel != null) {
+            sendChannel = _sendChannel;
+            if (sendChannel != null)
                 _sendChannel = null;
-                sendChannel.TryComplete(error);
-            }
         }
+        sendChannel?.TryComplete(error);
     }
 
     // Protected methods

@@ -7,12 +7,17 @@ namespace Stl.Rpc.Testing;
 public class RpcTestConnection
 {
     private readonly object _lock = new();
-    private volatile AsyncEvent<ChannelPair<RpcMessage>?> _connectionSource = new(null, false);
+    private volatile AsyncEvent<ChannelPair<RpcMessage>?> _connectionSource = new(null, true);
+    private RpcClientPeer? _clientPeer;
+    private RpcServerPeer? _serverPeer;
 
     public RpcTestClient TestClient { get; }
     public RpcHub Hub => TestClient.Hub;
-    public RpcClientPeer ClientPeer { get; }
-    public RpcServerPeer ServerPeer { get; }
+    public RpcPeerRef ClientPeerRef { get; }
+    public RpcPeerRef ServerPeerRef { get; }
+    public RpcClientPeer ClientPeer => _clientPeer ??= (RpcClientPeer)Hub.GetPeer(ClientPeerRef);
+    public RpcServerPeer ServerPeer => _serverPeer ??= (RpcServerPeer)Hub.GetPeer(ServerPeerRef);
+
     // ReSharper disable once InconsistentlySynchronizedField
     public bool IsTerminated => _connectionSource.GetLatest().Value == ChannelPair<RpcMessage>.Null;
 
@@ -24,8 +29,8 @@ public class RpcTestConnection
             throw new ArgumentOutOfRangeException(nameof(serverPeerRef));
 
         TestClient = testClient;
-        ClientPeer = (RpcClientPeer)Hub.GetPeer(clientPeerRef);
-        ServerPeer = (RpcServerPeer)Hub.GetPeer(serverPeerRef);
+        ClientPeerRef = clientPeerRef;
+        ServerPeerRef = serverPeerRef;
     }
 
     public Task Connect(CancellationToken cancellationToken = default)
