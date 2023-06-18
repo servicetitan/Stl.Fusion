@@ -10,6 +10,7 @@ public partial record SimpleRpcServiceDummyCommand(
 public partial interface ISimpleRpcService : ICommandService
 {
     Task<int?> Div(int? a, int b);
+    Task<int?> Add(int? a, int b);
     Task Delay(TimeSpan duration, CancellationToken cancellationToken = default);
     Task<ITuple> Polymorph(ITuple argument, CancellationToken cancellationToken = default);
 
@@ -24,6 +25,9 @@ public class SimpleRpcService : ISimpleRpcService
 {
     public Task<int?> Div(int? a, int b)
         => Task.FromResult(a / b);
+
+    public Task<int?> Add(int? a, int b)
+        => Task.FromResult(a + b);
 
     public Task Delay(TimeSpan duration, CancellationToken cancellationToken = default)
         => Task.Delay(duration, cancellationToken);

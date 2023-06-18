@@ -14,7 +14,6 @@ public class RpcTest : RpcTestBase
     {
         await using var _ = await WebHost.Serve();
         var services = ClientServices;
-        var peer = services.RpcHub().GetPeer(ClientPeerRef);
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         (await client.Div(6, 2)).Should().Be(3);
         (await client.Div(6, 2)).Should().Be(3);
@@ -23,8 +22,8 @@ public class RpcTest : RpcTestBase
         await Assert.ThrowsAsync<DivideByZeroException>(
             () => client.Div(1, 0));
 
-        peer.OutboundCalls.Count.Should().Be(0);
-        peer.InboundCalls.Count.Should().Be(0);
+        var peer = services.RpcHub().GetPeer(ClientPeerRef);
+        await AssertNoCalls(peer);
     }
 
     [Fact]
@@ -38,8 +37,7 @@ public class RpcTest : RpcTestBase
             () => commander.Call(new SimpleRpcServiceDummyCommand("error")));
 
         var peer = services.RpcHub().GetPeer(ClientPeerRef);
-        peer.OutboundCalls.Count.Should().Be(0);
-        peer.InboundCalls.Count.Should().Be(0);
+        await AssertNoCalls(peer);
     }
 
     [Fact]
@@ -52,8 +50,7 @@ public class RpcTest : RpcTestBase
         var startedAt = CpuTimestamp.Now;
         await client.Delay(TimeSpan.FromMilliseconds(200));
         startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(100, 500);
-        peer.OutboundCalls.Count.Should().Be(0);
-        peer.InboundCalls.Count.Should().Be(0);
+        await AssertNoCalls(peer);
 
         {
             using var cts = new CancellationTokenSource(1);
@@ -61,8 +58,7 @@ public class RpcTest : RpcTestBase
             await Assert.ThrowsAnyAsync<OperationCanceledException>(
                 () => client.Delay(TimeSpan.FromHours(1), cts.Token));
             startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(0, 500);
-            peer.OutboundCalls.Count.Should().Be(0);
-            peer.InboundCalls.Count.Should().Be(0);
+            await AssertNoCalls(peer);
         }
 
         {
@@ -71,8 +67,7 @@ public class RpcTest : RpcTestBase
             await Assert.ThrowsAnyAsync<OperationCanceledException>(
                 () => client.Delay(TimeSpan.FromHours(1), cts.Token));
             startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(300, 1000);
-            peer.OutboundCalls.Count.Should().Be(0);
-            peer.InboundCalls.Count.Should().Be(0);
+            await AssertNoCalls(peer);
         }
     }
 
@@ -105,8 +100,7 @@ public class RpcTest : RpcTestBase
 
         var totalIterationCount = threadCount * iterationCount;
         Out.WriteLine($"{iterationCount}: {totalIterationCount / elapsed.TotalSeconds:F} ops/s using {threadCount} threads");
-        peer.OutboundCalls.Count.Should().Be(0);
-        peer.InboundCalls.Count.Should().Be(0);
+        await AssertNoCalls(peer);
 
         async Task<TimeSpan> Run(int count)
         {

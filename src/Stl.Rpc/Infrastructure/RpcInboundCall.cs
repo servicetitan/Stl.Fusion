@@ -98,9 +98,14 @@ public class RpcInboundCall<TResult> : RpcInboundCall
 
     public override ValueTask Run()
     {
+        ArgumentList? arguments;
         if (NoWait) {
             try {
-                Arguments = DeserializeArguments();
+                arguments = DeserializeArguments();
+                if (arguments == null)
+                    return default; // No way to resolve argument list type -> the related call is already gone
+
+                Arguments = arguments;
                 _ = InvokeTarget();
             }
             catch {
@@ -114,7 +119,11 @@ public class RpcInboundCall<TResult> : RpcInboundCall
                 return default;
 
             try {
-                Arguments = DeserializeArguments();
+                arguments = DeserializeArguments();
+                if (arguments == null)
+                    return default; // No way to resolve argument list type -> the related call is already gone
+
+                Arguments = arguments;
                 ResultTask = InvokeTarget();
             }
             catch (Exception error) {
@@ -152,7 +161,7 @@ public class RpcInboundCall<TResult> : RpcInboundCall
 
     // Protected methods
 
-    protected ArgumentList DeserializeArguments()
+    protected ArgumentList? DeserializeArguments()
     {
         var peer = Context.Peer;
         var message = Context.Message;
@@ -165,7 +174,9 @@ public class RpcInboundCall<TResult> : RpcInboundCall
         var argumentListType = MethodDef.RemoteArgumentListType;
         if (MethodDef.HasObjectTypedArguments) {
             var argumentListTypeResolver = (IRpcArgumentListTypeResolver)ServiceDef.Server;
-            argumentListType = argumentListTypeResolver.GetArgumentListType(Context) ?? argumentListType;
+            argumentListType = argumentListTypeResolver.GetArgumentListType(Context);
+            if (argumentListType == null)
+                return null;
         }
 
         if (argumentListType.IsGenericType) { // == Has 1+ arguments

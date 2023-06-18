@@ -22,7 +22,7 @@ public abstract class RpcOutboundCall : RpcCall
         : base(context.MethodDef!)
         => Context = context;
 
-    public async ValueTask Send()
+    public ValueTask Send()
     {
         RpcMessage message;
         var peer = Context.Peer!;
@@ -35,7 +35,7 @@ public abstract class RpcOutboundCall : RpcCall
         }
         else
             message = CreateMessage(Id);
-        await peer.Send(message).ConfigureAwait(false);
+        return peer.Send(message);
     }
 
     public virtual RpcMessage CreateMessage(long callId)
