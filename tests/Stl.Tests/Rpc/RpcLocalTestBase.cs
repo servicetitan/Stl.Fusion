@@ -1,3 +1,4 @@
+using Stl.Internal;
 using Stl.Rpc;
 using Stl.Rpc.Testing;
 using Stl.Testing.Output;
@@ -7,7 +8,12 @@ namespace Stl.Tests.Rpc;
 
 public abstract class RpcLocalTestBase : TestBase
 {
-    protected RpcTestConnection Connection;
+    private RpcTestConnection? _connection;
+
+    protected RpcTestConnection Connection {
+        get => _connection ?? throw Errors.NotInitialized(nameof(Connection));
+        set => _connection = value;
+    }
 
     protected RpcLocalTestBase(ITestOutputHelper @out) : base(@out) { }
 

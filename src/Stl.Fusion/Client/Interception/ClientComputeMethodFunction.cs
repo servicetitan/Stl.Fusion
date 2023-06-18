@@ -73,8 +73,10 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
     {
         RpcOutboundComputeCall<T>? call = null;
         Result<T> result;
-        var isConsistent = false;
-        for (var i = 0; i < 3; i++) {
+        bool isConsistent;
+
+        var retryIndex = 0;
+        while (true) {
             // We repeat this 3 times in case we get a result,
             // which is instantly inconsistent.
             // This is possible, if the call is re-sent on reconnect,
@@ -92,12 +94,13 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
                 result = new Result<T>(default!, error);
             }
             isConsistent = call?.WhenInvalidated.IsCompletedSuccessfully() != true;
-            if (isConsistent)
+            if (isConsistent || ++retryIndex >= 3)
                 break;
 
             // A small pause before retrying
             await Task.Delay(50, cancellationToken).ConfigureAwait(false);
         }
+
         return new ClientComputed<T>(
             input.MethodDef.ComputedOptions,
             input, result, VersionGenerator.NextVersion(), isConsistent,
