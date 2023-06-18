@@ -73,18 +73,31 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
     {
         RpcOutboundComputeCall<T>? call = null;
         Result<T> result;
-        try {
-            call = SendRpcCall(input, cancellationToken);
-            var resultTask = (Task<T>)call.ResultTask;
-            result = await resultTask.ConfigureAwait(false);
+        var isConsistent = false;
+        for (var i = 0; i < 3; i++) {
+            // We repeat this 3 times in case we get a result,
+            // which is instantly inconsistent.
+            // This is possible, if the call is re-sent on reconnect,
+            // and the very first response that passes through is
+            // invalidation.
+            try {
+                call = SendRpcCall(input, cancellationToken);
+                var resultTask = (Task<T>)call.ResultTask;
+                result = await resultTask.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) {
+                throw;
+            }
+            catch (Exception error) {
+                result = new Result<T>(default!, error);
+            }
+            isConsistent = call?.WhenInvalidated.IsCompletedSuccessfully() != true;
+            if (isConsistent)
+                break;
+
+            // A small pause before retrying
+            await Task.Delay(50, cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) {
-            throw;
-        }
-        catch (Exception error) {
-            result = new Result<T>(default!, error);
-        }
-        var isConsistent = call?.WhenInvalidated.IsCompletedSuccessfully() != true;
         return new ClientComputed<T>(
             input.MethodDef.ComputedOptions,
             input, result, VersionGenerator.NextVersion(), isConsistent,
