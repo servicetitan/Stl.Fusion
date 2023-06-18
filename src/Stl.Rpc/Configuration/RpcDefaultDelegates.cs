@@ -30,7 +30,7 @@ public static class RpcDefaultDelegates
         static (peer, message, cancellationToken) => new RpcInboundContext(peer, message, cancellationToken);
 
     public static RpcClientChannelFactory ClientChannelFactory { get; set; } =
-        static (peer, cancellationToken) => peer.Hub.Client.GetChannel(peer, cancellationToken);
+        static (peer, cancellationToken) => peer.Hub.Client.CreateChannel(peer, cancellationToken);
 
     public static RpcClientIdGenerator ClientIdGenerator { get; set; } =
         static () => RandomStringGenerator.Default.Next(32);

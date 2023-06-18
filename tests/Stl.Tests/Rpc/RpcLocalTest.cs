@@ -20,7 +20,7 @@ public class RpcLocalTest : RpcLocalTestBase
         await Assert.ThrowsAsync<DivideByZeroException>(
             () => client.Div(1, 0));
 
-        var peer = services.RpcHub().GetPeer(ClientPeerRef);
+        var peer = Connection.ClientPeer;
         peer.OutboundCalls.Count.Should().Be(0);
         peer.InboundCalls.Count.Should().Be(0);
     }
@@ -34,7 +34,7 @@ public class RpcLocalTest : RpcLocalTestBase
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
             () => client.OnDummyCommand(new SimpleRpcServiceDummyCommand("error")));
 
-        var peer = services.RpcHub().GetPeer(ClientPeerRef);
+        var peer = Connection.ClientPeer;
         peer.OutboundCalls.Count.Should().Be(0);
         peer.InboundCalls.Count.Should().Be(0);
     }
@@ -48,7 +48,7 @@ public class RpcLocalTest : RpcLocalTestBase
         await client.Delay(TimeSpan.FromMilliseconds(200));
         startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(100, 500);
 
-        var peer = services.RpcHub().GetPeer(ClientPeerRef);
+        var peer = Connection.ClientPeer;
         peer.OutboundCalls.Count.Should().Be(0);
         peer.InboundCalls.Count.Should().Be(0);
         {
@@ -102,7 +102,7 @@ public class RpcLocalTest : RpcLocalTestBase
         var elapsed = startedAt.Elapsed;
         Out.WriteLine($"{iterationCount}: {iterationCount / elapsed.TotalSeconds:F} ops/s");
 
-        var peer = services.RpcHub().GetPeer(ClientPeerRef);
+        var peer = Connection.ClientPeer;
         peer.OutboundCalls.Count.Should().Be(0);
         peer.InboundCalls.Count.Should().Be(0);
     }

@@ -9,6 +9,13 @@ public record RpcPeerRef(Type PeerType, Symbol Id)
     public static RpcPeerRef NewClient(Symbol id)
         => new(typeof(RpcClientPeer), id);
 
+    public bool IsClient => typeof(RpcClientPeer).IsAssignableFrom(PeerType);
+    public bool IsServer => typeof(RpcServerPeer).IsAssignableFrom(PeerType);
+
     public override string ToString()
         => $"{PeerType.Name}:{Id}";
+
+    // Operators
+
+    public static implicit operator RpcPeerRef(RpcPeer peer) => peer.Ref;
 }

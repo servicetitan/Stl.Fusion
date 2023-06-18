@@ -26,4 +26,8 @@
     <ProjectReference Include="..\Stl.Generators\Stl.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Servers\" />
+  </ItemGroup>
+
 </Project>

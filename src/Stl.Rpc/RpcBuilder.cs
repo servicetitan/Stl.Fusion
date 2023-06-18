@@ -57,6 +57,8 @@ public readonly struct RpcBuilder
         }
     }
 
+    // WebSocket client
+
     public RpcBuilder AddWebSocketClient(Uri hostUri)
         => AddWebSocketClient(_ => hostUri.ToString());
 
