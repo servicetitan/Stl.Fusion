@@ -8,13 +8,6 @@ namespace Stl.Tests.Rpc;
 
 public abstract class RpcLocalTestBase : TestBase
 {
-    private RpcTestConnection? _connection;
-
-    protected RpcTestConnection Connection {
-        get => _connection ?? throw Errors.NotInitialized(nameof(Connection));
-        set => _connection = value;
-    }
-
     protected RpcLocalTestBase(ITestOutputHelper @out) : base(@out) { }
 
     protected virtual IServiceProvider CreateServices(
@@ -32,8 +25,8 @@ public abstract class RpcLocalTestBase : TestBase
     protected virtual void StartServices(IServiceProvider services)
     {
         var testClient = services.GetRequiredService<RpcTestClient>();
-        Connection = testClient.CreateDefault();
-        Connection.Connect();
+        var connection = testClient.CreateDefaultConnection();
+        connection.Connect();
     }
 
     protected virtual void ConfigureServices(ServiceCollection services)

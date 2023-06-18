@@ -4,7 +4,7 @@ using Stl.Rpc.WebSockets;
 
 namespace Stl.Rpc.Testing;
 
-public class RpcTestClient : RpcClient
+public class RpcTestClient : RpcClient, IEnumerable<RpcTestConnection>
 {
     public record Options
     {
@@ -23,45 +23,46 @@ public class RpcTestClient : RpcClient
         }
     }
 
-    private readonly ConcurrentDictionary<RpcPeerRef, RpcTestConnection> _peerStates = new();
+    private readonly ConcurrentDictionary<RpcPeerRef, RpcTestConnection> _connections = new();
     private long _lastPairId;
 
     public Options Settings { get; init; }
     public new RpcHub Hub => base.Hub;
 
     public RpcTestConnection this[RpcPeerRef peerRef]
-        => _peerStates.GetValueOrDefault(peerRef) ?? throw new KeyNotFoundException();
+        => _connections.GetValueOrDefault(peerRef) ?? throw new KeyNotFoundException();
 
     public RpcTestClient(Options settings, IServiceProvider services)
         : base(services)
         => Settings = settings;
 
-    public RpcTestConnection Create()
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    public IEnumerator<RpcTestConnection> GetEnumerator() => _connections.Values.Distinct().GetEnumerator();
+
+    public RpcTestConnection CreateDefaultConnection()
+        => CreateConnection(RpcPeerRef.Default.Id, "server-default");
+
+    public RpcTestConnection CreateRandomConnection()
     {
         var pairId = Interlocked.Increment(ref _lastPairId);
-        return Create($"client-{pairId}", $"server-{pairId}");
+        return CreateConnection($"client-{pairId}", $"server-{pairId}");
     }
 
-    public RpcTestConnection CreateDefault()
-    {
-        return Create(RpcPeerRef.Default.Id, "server-default");
-    }
-
-    public RpcTestConnection Create(Symbol clientId, Symbol serverId)
+    public RpcTestConnection CreateConnection(Symbol clientId, Symbol serverId)
     {
         var clientPeerRef = new RpcPeerRef(typeof(RpcClientPeer), clientId);
         var serverPeerRef = new RpcPeerRef(typeof(RpcServerPeer), serverId);
-        return Create(clientPeerRef, serverPeerRef);
+        return CreateConnection(clientPeerRef, serverPeerRef);
     }
 
-    public RpcTestConnection Create(RpcPeerRef clientPeerRef, RpcPeerRef serverPeerRef)
+    public RpcTestConnection CreateConnection(RpcPeerRef clientPeerRef, RpcPeerRef serverPeerRef)
     {
-        if (_peerStates.TryGetValue(clientPeerRef, out var peerState))
+        if (_connections.TryGetValue(clientPeerRef, out var peerState))
             return peerState;
 
         peerState = new RpcTestConnection(this, clientPeerRef, serverPeerRef);
-        _peerStates.TryAdd(clientPeerRef, peerState);
-        _peerStates.TryAdd(serverPeerRef, peerState);
+        _connections.TryAdd(clientPeerRef, peerState);
+        _connections.TryAdd(serverPeerRef, peerState);
         return peerState;
     }
 

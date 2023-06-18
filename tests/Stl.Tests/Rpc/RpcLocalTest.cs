@@ -1,4 +1,5 @@
 using Stl.Rpc;
+using Stl.Rpc.Testing;
 using Stl.Testing.Collections;
 
 namespace Stl.Tests.Rpc;
@@ -8,10 +9,22 @@ public class RpcLocalTest : RpcLocalTestBase
 {
     public RpcLocalTest(ITestOutputHelper @out) : base(@out) { }
 
+    protected override void ConfigureServices(ServiceCollection services)
+    {
+        base.ConfigureServices(services);
+        var commander = services.AddCommander();
+        commander.AddCommandService<SimpleRpcService>();
+
+        var rpc = services.AddRpc();
+        rpc.AddServer<ISimpleRpcService, SimpleRpcService>();
+        rpc.AddClient<ISimpleRpcService, ISimpleRpcServiceClient>();
+    }
+
     [Fact]
     public async Task BasicTest()
     {
         var services = CreateServices();
+        var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         (await client.Div(6, 2)).Should().Be(3);
         (await client.Div(6, 2)).Should().Be(3);
@@ -19,29 +32,31 @@ public class RpcLocalTest : RpcLocalTestBase
         (await client.Div(null, 2)).Should().Be(null);
         await Assert.ThrowsAsync<DivideByZeroException>(
             () => client.Div(1, 0));
-        await AssertNoCalls(Connection.ClientPeer);
+        await AssertNoCalls(clientPeer);
     }
 
     [Fact]
     public async Task CommandTest()
     {
         var services = CreateServices();
+        var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         await client.OnDummyCommand(new SimpleRpcServiceDummyCommand("ok"));
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
             () => client.OnDummyCommand(new SimpleRpcServiceDummyCommand("error")));
-        await AssertNoCalls(Connection.ClientPeer);
+        await AssertNoCalls(clientPeer);
     }
 
     [Fact]
     public async Task DelayTest()
     {
         var services = CreateServices();
+        var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
         var startedAt = CpuTimestamp.Now;
         await client.Delay(TimeSpan.FromMilliseconds(200));
         startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(100, 500);
-        await AssertNoCalls(Connection.ClientPeer);
+        await AssertNoCalls(clientPeer);
 
         {
             using var cts = new CancellationTokenSource(1);
@@ -49,7 +64,7 @@ public class RpcLocalTest : RpcLocalTestBase
             await Assert.ThrowsAnyAsync<OperationCanceledException>(
                 () => client.Delay(TimeSpan.FromHours(1), cts.Token));
             startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(0, 500);
-            await AssertNoCalls(Connection.ClientPeer);
+            await AssertNoCalls(clientPeer);
         }
 
         {
@@ -58,7 +73,7 @@ public class RpcLocalTest : RpcLocalTestBase
             await Assert.ThrowsAnyAsync<OperationCanceledException>(
                 () => client.Delay(TimeSpan.FromHours(1), cts.Token));
             startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(300, 1000);
-            await AssertNoCalls(Connection.ClientPeer);
+            await AssertNoCalls(clientPeer);
         }
     }
 
@@ -82,10 +97,10 @@ public class RpcLocalTest : RpcLocalTestBase
     public async Task PerformanceTest(int iterationCount)
     {
         var services = CreateServices();
+        var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
         var client = services.GetRequiredService<ISimpleRpcServiceClient>();
-        var peer = Connection.ClientPeer;
         await client.Div(1, 1);
-        await AssertNoCalls(peer);
+        await AssertNoCalls(clientPeer);
 
         var startedAt = CpuTimestamp.Now;
         for (var i = iterationCount; i > 0; i--)
@@ -93,17 +108,6 @@ public class RpcLocalTest : RpcLocalTestBase
                 Assert.Fail("Wrong result.");
         var elapsed = startedAt.Elapsed;
         Out.WriteLine($"{iterationCount}: {iterationCount / elapsed.TotalSeconds:F} ops/s");
-        await AssertNoCalls(peer);
-    }
-
-    protected override void ConfigureServices(ServiceCollection services)
-    {
-        base.ConfigureServices(services);
-        var commander = services.AddCommander();
-        commander.AddCommandService<SimpleRpcService>();
-
-        var rpc = services.AddRpc();
-        rpc.AddServer<ISimpleRpcService, SimpleRpcService>();
-        rpc.AddClient<ISimpleRpcService, ISimpleRpcServiceClient>();
+        await AssertNoCalls(clientPeer);
     }
 }
