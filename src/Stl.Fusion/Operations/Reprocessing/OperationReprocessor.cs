@@ -86,9 +86,11 @@ public class OperationReprocessor : IOperationReprocessor
     {
         if (FailedTryCount > Options.MaxRetryCount)
             return false;
+
         var operationScope = CommandContext.Items.Get<IOperationScope>();
         if (operationScope is TransientOperationScope)
             return false;
+
         return IsTransientFailure(allErrors);
     }
 
@@ -118,11 +120,11 @@ public class OperationReprocessor : IOperationReprocessor
                 break;
             }
             catch (Exception error) when (error is not OperationCanceledException) {
+                LastError = error;
+                FailedTryCount++;
                 if (!this.WillRetry(error))
                     throw;
 
-                LastError = error;
-                FailedTryCount++;
                 context.Items.Items = itemsBackup;
                 context.ExecutionState = executionStateBackup;
                 var delay = Options.RetryDelays[FailedTryCount];
