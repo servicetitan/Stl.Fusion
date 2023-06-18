@@ -42,7 +42,7 @@ public class RpcReconnectionTest : RpcLocalTestBase
     }
 
     [Theory]
-    [InlineData(5)]
+    [InlineData(10)]
     public async Task ReconnectionTest(double testDuration)
     {
         var workerCount = HardwareInfo.ProcessorCount;
