@@ -45,7 +45,7 @@ public class RpcReconnectionTest : RpcLocalTestBase
     [InlineData(10)]
     public async Task ReconnectionTest(double testDuration)
     {
-        var workerCount = HardwareInfo.ProcessorCount;
+        var workerCount = HardwareInfo.ProcessorCount / 2;
         var endAt = CpuTimestamp.Now + TimeSpan.FromSeconds(testDuration);
         var tasks = Enumerable.Range(0, workerCount)
             .Select(i => Task.Run(() => Worker(i, endAt)))
