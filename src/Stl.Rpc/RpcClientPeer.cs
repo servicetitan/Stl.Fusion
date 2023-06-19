@@ -20,7 +20,7 @@ public class RpcClientPeer : RpcPeer
 
     protected override async Task<Channel<RpcMessage>> GetChannel(CancellationToken cancellationToken)
     {
-        var (channel, error, _, tryIndex) = ConnectionState.ThrowIfTerminal().Value;
+        var (channel, error, _, tryIndex) = ConnectionState.LatestOrThrow().Value;
         if (channel != null)
             return channel;
 

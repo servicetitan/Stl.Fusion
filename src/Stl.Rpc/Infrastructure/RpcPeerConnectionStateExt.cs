@@ -8,9 +8,21 @@ public static class RpcPeerConnectionStateExt
         CancellationToken cancellationToken = default)
         => connectionState.When(static s => s.IsConnected(), cancellationToken);
 
-    public static Task<RpcPeerConnectionState> WhenDisconnected(this AsyncEvent<RpcPeerConnectionState> connectionState,
+    public static async Task<RpcPeerConnectionState> WhenDisconnected(this AsyncEvent<RpcPeerConnectionState> connectionState,
         CancellationToken cancellationToken = default)
-        => connectionState.When(static s => !s.IsConnected(), cancellationToken);
+    {
+        try {
+            return await connectionState
+                .When(static s => !s.IsConnected(), cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (AsyncEventSequenceCompletedException) {
+            return connectionState.Latest().Value;
+        }
+        catch (ConnectionUnrecoverableException) {
+            return connectionState.Latest().Value;
+        }
+    }
 
     public static async IAsyncEnumerable<bool> IsConnectedChanges(this AsyncEvent<RpcPeerConnectionState>? connectionState,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -24,7 +36,7 @@ public static class RpcPeerConnectionStateExt
             }
             try {
                 connectionState = await connectionState.WhenNext(cancellationToken).ConfigureAwait(false);
-                isConnected = connectionState.Value.IsConnected();
+                isConnected = connectionState!.Value.IsConnected();
             }
             catch (ConnectionUnrecoverableException) {
                 connectionState = null;

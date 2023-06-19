@@ -42,6 +42,8 @@ public sealed class Connector<TConnection> : WorkerBase
                 }
                 catch (Exception e) when (e is not OperationCanceledException) {
                     state = await state.WhenNext(cancellationToken).ConfigureAwait(false);
+                    if (state == null)
+                        throw new OperationCanceledException();
                 }
             }
         }
@@ -59,7 +61,7 @@ public sealed class Connector<TConnection> : WorkerBase
                 return; // The connection is already renewed
 #pragma warning restore VSTHRD104
 
-            _state = prevState.CreateNext(State.New() with {
+            _state = prevState.AppendNext(State.New() with {
                 LastError = error,
                 RetryIndex = prevState.Value.RetryIndex + 1,
             });
@@ -71,7 +73,7 @@ public sealed class Connector<TConnection> : WorkerBase
 
     protected override async Task OnRun(CancellationToken cancellationToken)
     {
-        AsyncEvent<State> state;
+        AsyncEvent<State>? state;
         lock (Lock)
             state = _state;
         while (true) {
@@ -107,7 +109,7 @@ public sealed class Connector<TConnection> : WorkerBase
 
             lock (Lock) {
                 if (state == _state) {
-                    _state = state.CreateNext(State.New() with {
+                    _state = state.AppendNext(State.New() with {
                         LastError = error,
                         RetryIndex = state.Value.RetryIndex + 1,
                     });
@@ -146,8 +148,8 @@ public sealed class Connector<TConnection> : WorkerBase
             if (!prevState.Value.ConnectionTask.IsCompleted)
                 prevState.Value.ConnectionSource.TrySetCanceled();
 
-            _state = prevState.CreateNext(State.NewCancelled(StopToken));
-            _state.MakeTerminal(StopToken);
+            _state = prevState.AppendNext(State.NewCancelled(StopToken));
+            _state.Complete(StopToken);
             prevState.Value.Dispose();
         }
         IsConnected.Value = false;

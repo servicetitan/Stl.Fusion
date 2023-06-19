@@ -73,7 +73,7 @@ public abstract class RpcPeer : WorkerBase
         lock (Lock) {
             // We want to make sure ConnectionState doesn't change while this method runs
             // and no one else cancels ReaderAbortSource
-            connectionState = _connectionState.ThrowIfTerminal();
+            connectionState = _connectionState;
             var readerAbortSource = connectionState.Value.ReaderAbortSource;
             if (readerAbortSource == null || readerAbortSource.IsCancellationRequested)
                 return;
@@ -209,13 +209,11 @@ public abstract class RpcPeer : WorkerBase
             channel = null;
 
         Monitor.Enter(Lock);
-        var connectionState = _connectionState;
+        var connectionState = _connectionState.LatestOrThrow();
         var oldState = connectionState.Value;
         var state = oldState;
         Exception? terminalError = null;
         try {
-            connectionState.ThrowIfTerminal();
-
             var readerAbortSource = state.ReaderAbortSource;
             if (channel == null || readerAbortSource?.IsCancellationRequested == true)
                 readerAbortSource = null;
@@ -231,13 +229,13 @@ public abstract class RpcPeer : WorkerBase
                 return connectionState.Value; // Nothing is changed
 
             state = new RpcPeerConnectionState(channel, error, readerAbortSource, tryIndex);
-            _connectionState = connectionState = connectionState.CreateNext(state);
+            _connectionState = connectionState = connectionState.AppendNext(state);
 
             if (error != null && Hub.UnrecoverableErrorDetector.Invoke(error, StopToken)) {
                 terminalError = error is ConnectionUnrecoverableException
                     ? error
                     : Errors.ConnectionUnrecoverable(error);
-                connectionState.MakeTerminal(terminalError);
+                connectionState.Complete(terminalError);
                 throw terminalError;
             }
 

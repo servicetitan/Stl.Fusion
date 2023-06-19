@@ -34,8 +34,8 @@ public sealed class UIActionTracker : ProcessorBase, IHasServices
     {
         Interlocked.Exchange(ref _runningActionCount, 0);
         var error = new ObjectDisposedException(GetType().Name);
-        _lastActionEvent.MakeTerminal(error);
-        _lastResultEvent.MakeTerminal(error);
+        _lastActionEvent.Complete(error);
+        _lastResultEvent.Complete(error);
         return Task.CompletedTask;
     }
 
@@ -46,15 +46,16 @@ public sealed class UIActionTracker : ProcessorBase, IHasServices
                 return;
 
             Interlocked.Increment(ref _runningActionCount);
-
             try {
-                _lastActionEvent = _lastActionEvent.CreateNext(action);
+                _lastActionEvent = _lastActionEvent.AppendNext(action);
             }
             catch (Exception e) {
                 // We need to keep this count consistent if above block somehow fails
                 Interlocked.Decrement(ref _runningActionCount);
-                if (e is not OperationCanceledException)
-                    Log.LogError("UI action registration failed: {Action}", action);
+                if (e is InvalidOperationException)
+                    return; // Already stopped
+
+                Log.LogError("UI action registration failed: {Action}", action);
                 throw;
             }
         }
@@ -71,7 +72,7 @@ public sealed class UIActionTracker : ProcessorBase, IHasServices
                     Log.LogError("UI action has completed w/o a result: {Action}", action);
                     return;
                 }
-                _lastResultEvent = _lastResultEvent.CreateNext(result);
+                _lastResultEvent = _lastResultEvent.TryAppendNext(result);
             }
         }, default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
     }

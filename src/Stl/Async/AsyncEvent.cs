@@ -3,16 +3,15 @@ namespace Stl.Async;
 public sealed class AsyncEvent<T>
 {
     private readonly bool _runContinuationsAsynchronously;
-    private readonly TaskCompletionSource<AsyncEvent<T>> _nextSource;
+    private readonly TaskCompletionSource<AsyncEvent<T>?> _nextSource;
 
     public T Value { get; }
     public bool IsLatest => !_nextSource.Task.IsCompleted;
-    public bool IsTerminal => _nextSource.Task.IsFaultedOrCancelled();
 
     public AsyncEvent(T value, bool runContinuationsAsynchronously)
     {
         _runContinuationsAsynchronously = runContinuationsAsynchronously;
-        _nextSource = TaskCompletionSourceExt.New<AsyncEvent<T>>(runContinuationsAsynchronously);
+        _nextSource = TaskCompletionSourceExt.New<AsyncEvent<T>?>(runContinuationsAsynchronously);
         Value = value;
     }
 
@@ -20,18 +19,21 @@ public sealed class AsyncEvent<T>
         => $"{GetType().GetName()}({Value})";
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Task<AsyncEvent<T>> WhenNext()
+    public Task<AsyncEvent<T>?> WhenNext()
         => _nextSource.Task;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Task<AsyncEvent<T>> WhenNext(CancellationToken cancellationToken)
+    public Task<AsyncEvent<T>?> WhenNext(CancellationToken cancellationToken)
         => _nextSource.Task.WaitAsync(cancellationToken);
 
     public async Task<T> When(Func<T, bool> predicate, CancellationToken cancellationToken = default)
     {
         var current = this;
-        while (!predicate.Invoke(current.Value))
+        while (!predicate.Invoke(current.Value)) {
             current = await current.WhenNext(cancellationToken).ConfigureAwait(false);
+            if (current == null)
+                throw new AsyncEventSequenceCompletedException();
+        }
         return current.Value;
     }
 
@@ -41,11 +43,29 @@ public sealed class AsyncEvent<T>
         while (true) {
             yield return current.Value;
             current = await current.WhenNext(cancellationToken).ConfigureAwait(false);
+            if (current == null)
+                break;
         }
         // ReSharper disable once IteratorNeverReturns
     }
 
-    public AsyncEvent<T> GetLatest()
+    public AsyncEvent<T> Latest()
+    {
+        var current = this;
+        while (true) {
+            var whenNext = current.WhenNext();
+            if (!whenNext.IsCompleted)
+                return current;
+
+            var next = whenNext.GetAwaiter().GetResult();
+            if (next == null)
+                return current;
+
+            current = next;
+        }
+    }
+
+    public AsyncEvent<T> LatestOrThrow()
     {
         var current = this;
         while (true) {
@@ -54,6 +74,8 @@ public sealed class AsyncEvent<T>
                 return current;
 
             current = whenNext.GetAwaiter().GetResult();
+            if (current == null)
+                throw new AsyncEventSequenceCompletedException();
         }
     }
 
@@ -63,25 +85,26 @@ public sealed class AsyncEvent<T>
         return whenNext.IsCompleted ? whenNext.GetAwaiter().GetResult() : null;
     }
 
-    public AsyncEvent<T> ThrowIfTerminal()
-    {
-        var whenNext = WhenNext();
-        if (whenNext.IsFaultedOrCancelled())
-            whenNext.GetAwaiter().GetResult(); // This should always throw
-        return this;
-    }
-
-    public AsyncEvent<T> CreateNext(T value)
+    public AsyncEvent<T> AppendNext(T value)
     {
         var next = new AsyncEvent<T>(value, _runContinuationsAsynchronously);
         _nextSource.SetResult(next);
         return next;
     }
 
-    public void MakeTerminal(Exception error)
+    public AsyncEvent<T> TryAppendNext(T value)
+    {
+        var next = new AsyncEvent<T>(value, _runContinuationsAsynchronously);
+        return _nextSource.TrySetResult(next) ? next : this;
+    }
+
+    public void Complete()
+        => _nextSource.SetResult(null);
+
+    public void Complete(Exception error)
         => _nextSource.SetException(error);
 
-    public void MakeTerminal(CancellationToken cancellationToken)
+    public void Complete(CancellationToken cancellationToken)
     {
 #if NET5_0_OR_GREATER
         _nextSource.SetCanceled(cancellationToken);
@@ -89,4 +112,10 @@ public sealed class AsyncEvent<T>
         _nextSource.SetCanceled();
 #endif
     }
+
+    public bool TryComplete(Exception error)
+        => _nextSource.TrySetException(error);
+
+    public bool TryComplete(CancellationToken cancellationToken)
+        => _nextSource.TrySetCanceled(cancellationToken);
 }

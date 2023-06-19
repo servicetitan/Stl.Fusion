@@ -35,6 +35,9 @@ public class UIActionFailureTracker : MutableList<IUIActionResult>, IHasServices
         var lastResultEvent = uiActionTracker.LastResultEvent;
         while (true) {
             lastResultEvent = await lastResultEvent.WhenNext(cancellationToken).ConfigureAwait(false);
+            if (lastResultEvent == null)
+                return;
+
             var result = lastResultEvent.Value;
             if (result != null)
                 TryAddFailure(result);

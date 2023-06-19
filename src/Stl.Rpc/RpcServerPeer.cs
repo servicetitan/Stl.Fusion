@@ -12,9 +12,12 @@ public class RpcServerPeer : RpcPeer
 
     public async Task Connect(Channel<RpcMessage> channel, CancellationToken cancellationToken = default)
     {
-        Disconnect();
-        using var cts = cancellationToken.LinkWith(StopToken);
-        await ConnectionState.WhenDisconnected(cts.Token).ConfigureAwait(false);
+        var connectionState = ConnectionState.LatestOrThrow();
+        if (connectionState.Value.IsConnected()) {
+            Disconnect();
+            using var cts = cancellationToken.LinkWith(StopToken);
+            await connectionState.WhenDisconnected(cts.Token).ConfigureAwait(false);
+        }
         SetConnectionState(channel, null);
     }
 
@@ -25,10 +28,12 @@ public class RpcServerPeer : RpcPeer
         while (true) {
             var cts = cancellationToken.CreateLinkedTokenSource();
             try {
-                var connectionState = await ConnectionState
+                await ConnectionState
                     .WhenConnected(cts.Token)
                     .WaitAsync(CloseTimeout, cancellationToken)
                     .ConfigureAwait(false);
+
+                var connectionState = ConnectionState.LatestOrThrow().Value;
                 if (connectionState.Channel != null)
                     return connectionState.Channel;
             }
