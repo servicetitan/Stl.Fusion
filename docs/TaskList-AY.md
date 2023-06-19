@@ -1,15 +1,13 @@
 Now:
 - Robust reconnection tests
+  - Compute method call tests
 - Inbound & Outbound call trackers
   - ActivitySource integration
-- RpcOutboundCallPreprocessors
-    - Default / send timeout for command handler RPC calls
+- RpcOutboundMiddleware
+  - Command calls should wait for peer connection
+  - Timeout for command calls
+- RpcInboundMiddleware
     - Default session
-- RpcInboundCallPreprocessors
-    - Default session
-- Robust cleanup:
-  - Compute method call cleanup tests
-  - Ensure all incoming calls are cancelled when RpcHub/RpcPeer is disposed.
 - BackendStatus 
 
 Near-term:

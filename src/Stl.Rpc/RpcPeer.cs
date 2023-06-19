@@ -9,11 +9,12 @@ public abstract class RpcPeer : WorkerBase
     private ILogger? _log;
     private IMomentClock? _clock;
     private volatile AsyncEvent<RpcPeerConnectionState> _connectionState = new(RpcPeerConnectionState.Initial, true);
-    private volatile ChannelWriter<RpcMessage>? _sendChannel;
+    private volatile ChannelWriter<RpcMessage>? _sender;
 
     protected IServiceProvider Services => Hub.Services;
     protected ILogger Log => _log ??= Services.LogFor(GetType());
     protected IMomentClock Clock => _clock ??= Services.Clocks().CpuClock;
+    protected ChannelWriter<RpcMessage>? Sender => _sender;
 
     public RpcHub Hub { get; }
     public RpcPeerRef Ref { get; }
@@ -24,7 +25,6 @@ public abstract class RpcPeer : WorkerBase
     public RpcInboundCallTracker InboundCalls { get; init; }
     public RpcOutboundCallTracker OutboundCalls { get; init; }
     public AsyncEvent<RpcPeerConnectionState> ConnectionState => _connectionState;
-    public ChannelWriter<RpcMessage>? SendChannel => _sendChannel;
 
     protected RpcPeer(RpcHub hub, RpcPeerRef @ref)
     {
@@ -45,7 +45,7 @@ public abstract class RpcPeer : WorkerBase
         // This method is optimized to run as quickly as possible,
         // that's why it is a bit complicated.
 
-        var sendChannel = SendChannel;
+        var sendChannel = Sender;
         try {
             if (sendChannel == null || sendChannel.TryWrite(message))
                 return default;
@@ -62,16 +62,35 @@ public abstract class RpcPeer : WorkerBase
     {
         ChannelWriter<RpcMessage>? sendChannel;
         lock (Lock) {
-            sendChannel = _sendChannel;
+            sendChannel = _sender;
             if (sendChannel != null)
-                _sendChannel = null;
+                _sender = null;
         }
         sendChannel?.TryComplete(error);
     }
 
+    public async Task Reset(CancellationToken cancellationToken = default)
+    {
+        AsyncEvent<RpcPeerConnectionState> connectionState;
+        lock (Lock) {
+            // We want to make sure ConnectionState doesn't change while this method runs
+            // and no one else cancels ReaderAbortSource
+            connectionState = _connectionState.ThrowIfTerminal();
+            var readerAbortSource = connectionState.Value.ReaderAbortSource;
+            if (readerAbortSource == null || readerAbortSource.IsCancellationRequested)
+                return;
+
+            readerAbortSource.CancelAndDisposeSilently();
+        }
+
+        // There going to be at least one ConnectionState change when the abort is processed,
+        // see the last "catch" block in Run method to understand why.
+        await connectionState.WhenNext(cancellationToken).ConfigureAwait(false);
+    }
+
     // Protected methods
 
-    protected abstract Task<Channel<RpcMessage>> GetChannelOrReconnect(CancellationToken cancellationToken);
+    protected abstract Task<Channel<RpcMessage>> GetChannel(CancellationToken cancellationToken);
 
     protected override async Task OnRun(CancellationToken cancellationToken)
     {
@@ -79,41 +98,59 @@ public abstract class RpcPeer : WorkerBase
             ? new SemaphoreSlim(InboundConcurrencyLevel, InboundConcurrencyLevel)
             : null;
         while (true) {
+            var readerAbortToken = CancellationToken.None;
+            Channel<RpcMessage>? channel = null;
             try {
-                var channel = await GetChannelOrReconnect(cancellationToken).ConfigureAwait(false);
+                channel = await GetChannel(cancellationToken).ConfigureAwait(false);
                 // ReSharper disable once SuspiciousTypeConversion.Global
                 if (channel is null)
                     throw Errors.ConnectionUnrecoverable();
 
-                SetConnectionState(channel, null, true);
+                var connectionState = SetConnectionState(channel, null, true);
+                Interlocked.Exchange(ref _sender, channel.Writer);
+                readerAbortToken = connectionState.ReaderAbortSource!.Token;
+
+                // Recovery: let's re-send all outbound calls
                 foreach (var call in OutboundCalls) {
-                    cancellationToken.ThrowIfCancellationRequested();
+                    readerAbortToken.ThrowIfCancellationRequested();
                     await call.Send().ConfigureAwait(false);
                 }
+
                 var channelReader = channel.Reader;
                 if (semaphore == null)
-                    while (await channelReader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
+                    while (await channelReader.WaitToReadAsync(readerAbortToken).ConfigureAwait(false))
                     while (channelReader.TryRead(out var message)) {
                         _ = ProcessMessage(message, cancellationToken);
                     }
                 else
-                    while (await channelReader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
+                    while (await channelReader.WaitToReadAsync(readerAbortToken).ConfigureAwait(false))
                     while (channelReader.TryRead(out var message)) {
                         if (Equals(message.Service, RpcSystemCalls.Name.Value)) {
                             // System calls are exempt from semaphore use
                             _ = ProcessMessage(message, cancellationToken);
                         }
                         else {
-                            await semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+                            await semaphore.WaitAsync(readerAbortToken).ConfigureAwait(false);
                             _ = ProcessMessage(message, semaphore, cancellationToken);
                         }
                     }
-                SetConnectionState(null, null, true);
+                Interlocked.Exchange(ref _sender, null);
+                SetConnectionState(null, null);
             }
             catch (Exception e) {
-                SetConnectionState(null, e, true);
-                if (Hub.UnrecoverableErrorDetector.Invoke(e, StopToken))
-                    throw;
+                Interlocked.Exchange(ref _sender, null);
+                var isReaderAbort = e is OperationCanceledException
+                    && readerAbortToken.IsCancellationRequested
+                    && !cancellationToken.IsCancellationRequested;
+                if (isReaderAbort) {
+                    // We can continue using the same channel, but we need to call
+                    // SetConnectionState to nullify ReaderAbortSource there & trigger
+                    // at least one state change - see Reset method code to understand why.
+                    SetConnectionState(channel, null);
+                    Log.LogInformation("'{PeerId}': Reset", Ref);
+                }
+                else
+                    SetConnectionState(null, e);
             }
         }
     }
@@ -168,45 +205,69 @@ public abstract class RpcPeer : WorkerBase
 
     // Private methods
 
-    protected void SetConnectionState(Channel<RpcMessage>? channel, Exception? error, bool setSendChannel)
+    protected RpcPeerConnectionState SetConnectionState(Channel<RpcMessage>? channel, Exception? error, bool renewReaderAbortSource = false)
     {
+        if (error != null)
+            channel = null;
+
         Monitor.Enter(Lock);
+        var connectionState = _connectionState;
+        var oldState = connectionState.Value;
+        var state = oldState;
+        Exception? terminalError = null;
         try {
-            var connectionState = _connectionState;
-            var state = connectionState.Value;
-            var (oldChannel, oldError, _) = state;
-            if (oldChannel == channel && oldError == error)
-                return;
+            connectionState.ThrowIfTerminal();
 
-            if (oldError != null && Hub.UnrecoverableErrorDetector.Invoke(oldError, StopToken))
-                return;
+            var readerAbortSource = state.ReaderAbortSource;
+            if (channel == null || readerAbortSource?.IsCancellationRequested == true)
+                readerAbortSource = null;
+            else if (renewReaderAbortSource)
+                readerAbortSource = StopToken.CreateLinkedTokenSource();
+            var tryIndex = error == null ? 0 : state.TryIndex + 1;
 
-            var nextState = state.Next(channel, error);
-            _connectionState = connectionState.CreateNext(nextState);
-            oldChannel?.Writer.TryComplete(error);
+            // Let's check if any changes are made at all
+            if (oldState.Channel == channel
+                && oldState.Error == error
+                && oldState.ReaderAbortSource == readerAbortSource
+                && oldState.TryIndex == tryIndex)
+                return connectionState.Value; // Nothing is changed
+
+            state = new RpcPeerConnectionState(channel, error, readerAbortSource, tryIndex);
+            _connectionState = connectionState = connectionState.CreateNext(state);
+
+            if (error != null && Hub.UnrecoverableErrorDetector.Invoke(error, StopToken)) {
+                terminalError = error is ConnectionUnrecoverableException
+                    ? error
+                    : Errors.ConnectionUnrecoverable(error);
+                connectionState.Terminate(terminalError);
+                throw terminalError;
+            }
+
+            return connectionState.Value;
         }
         finally {
-            if (setSendChannel)
-                _sendChannel = channel?.Writer;
+            if (state.ReaderAbortSource != oldState.ReaderAbortSource)
+                oldState.ReaderAbortSource.CancelAndDisposeSilently();
+            if (state.Channel != oldState.Channel)
+                oldState.Channel?.Writer.TryComplete(error); // Reliably shut down the old channel
             Monitor.Exit(Lock);
-        }
 
-        if (channel != null)
-            Log.LogInformation("'{PeerId}': Connected", Ref);
-        else {
-            if (error != null) {
-                if (Hub.UnrecoverableErrorDetector.Invoke(error, StopToken)) {
-                    if (StopToken.IsCancellationRequested && error is OperationCanceledException) {
-                        Log.LogInformation("'{PeerId}': Can't (re)connect, will shut down: stopped", Ref);
-                        return;
-                    }
+            // The code below is responsible solely for logging - all important stuff is already done
+            if (terminalError != null)
+                Log.LogInformation("'{PeerId}': Can't (re)connect, will shut down", Ref);
+            else if (state.IsConnected() != oldState.IsConnected()) {
+                if (state.IsConnected())
+                    Log.LogInformation("'{PeerId}': Connected", Ref);
+                else {
+                    var e = state.Error;
+                    if (e != null)
+                        Log.LogInformation(
+                            "'{PeerId}': Disconnected: {ErrorType}: {ErrorMessage}",
+                            Ref, e.GetType().GetName(), e.Message);
+                    else
+                        Log.LogInformation("'{PeerId}': Disconnected", Ref);
                 }
-                Log.LogInformation(
-                    "'{PeerId}': Disconnected: {ErrorType}: {ErrorMessage}",
-                    Ref, error.GetType().GetName(), error.Message);
             }
-            else
-                Log.LogInformation("'{PeerId}': Disconnected", Ref);
         }
     }
 

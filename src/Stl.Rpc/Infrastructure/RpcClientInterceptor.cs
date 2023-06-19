@@ -19,10 +19,11 @@ public class RpcClientInterceptor : RpcInterceptorBase
         var rpcMethodDef = (RpcMethodDef)methodDef;
         return invocation => {
             RpcOutboundCall? call;
-            ValueTask sendTask;
+            ValueTask sendTask = default;
             using (var scope = RpcOutboundContext.Use()) {
                 call = scope.Context.SetCall(rpcMethodDef, invocation.Arguments);
-                sendTask = call?.Send() ?? default(ValueTask);
+                if (call != null)
+                    sendTask = call.Send();
             }
             if (call == null) {
                 // No call == no peer -> we invoke it locally

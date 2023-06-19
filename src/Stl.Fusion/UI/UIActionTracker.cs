@@ -1,3 +1,5 @@
+using Stl.Internal;
+
 namespace Stl.Fusion.UI;
 
 public sealed class UIActionTracker : ProcessorBase, IHasServices
@@ -31,8 +33,9 @@ public sealed class UIActionTracker : ProcessorBase, IHasServices
     protected override Task DisposeAsyncCore()
     {
         Interlocked.Exchange(ref _runningActionCount, 0);
-        _lastActionEvent.CancelNext(StopToken);
-        _lastResultEvent.CancelNext(StopToken);
+        var error = new ObjectDisposedException(GetType().Name);
+        _lastActionEvent.Terminate(error);
+        _lastResultEvent.Terminate(error);
         return Task.CompletedTask;
     }
 

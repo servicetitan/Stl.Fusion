@@ -18,14 +18,12 @@ public class RpcClientPeer : RpcPeer
 
     // Protected methods
 
-    protected override async Task<Channel<RpcMessage>> GetChannelOrReconnect(CancellationToken cancellationToken)
+    protected override async Task<Channel<RpcMessage>> GetChannel(CancellationToken cancellationToken)
     {
-        var (channel, error, tryIndex) = ConnectionState.Value;
+        var (channel, error, _, tryIndex) = ConnectionState.ThrowIfTerminal().Value;
         if (channel != null)
             return channel;
 
-        if (error != null && Hub.UnrecoverableErrorDetector.Invoke(error, StopToken))
-            throw error;
         if (ReconnectRetryLimit is { } limit && tryIndex >= limit) {
             Log.LogWarning(error, "'{PeerId}': Reconnect retry limit exceeded", Ref);
             throw Errors.ConnectionUnrecoverable();

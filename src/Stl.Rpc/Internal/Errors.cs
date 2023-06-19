@@ -46,8 +46,10 @@ public static class Errors
         => new TimeoutException($"Connection time-out ({timeout.ToShortString()}).");
     public static Exception ConnectionRetryLimitExceeded()
         => new ConnectionUnrecoverableException("Can't reconnect: retry limit exceeded.");
-    public static Exception ConnectionUnrecoverable()
-        => new ConnectionUnrecoverableException();
+    public static Exception ConnectionReset(Exception? innerException = null)
+        => new OperationCanceledException("Connection reset.", innerException);
+    public static Exception ConnectionUnrecoverable(Exception? innerException = null)
+        => new ConnectionUnrecoverableException(innerException);
 
     public static Exception NoCurrentRpcInboundContext()
         => new InvalidOperationException($"{nameof(RpcInboundContext)}.{nameof(RpcInboundContext.Current)} is unavailable.");

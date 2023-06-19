@@ -16,4 +16,8 @@ public static partial class TaskExt
         return task.IsCompletedSuccessfully;
 #endif
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsFaultedOrCancelled(this Task task)
+        => task.Status is TaskStatus.Faulted or TaskStatus.Canceled;
 }

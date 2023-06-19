@@ -7,6 +7,7 @@ public sealed class AsyncEvent<T>
 
     public T Value { get; }
     public bool IsLatest => !_nextSource.Task.IsCompleted;
+    public bool IsTerminal => _nextSource.Task.IsFaultedOrCancelled();
 
     public AsyncEvent(T value, bool runContinuationsAsynchronously)
     {
@@ -26,12 +27,22 @@ public sealed class AsyncEvent<T>
     public Task<AsyncEvent<T>> WhenNext(CancellationToken cancellationToken)
         => _nextSource.Task.WaitAsync(cancellationToken);
 
-    public async Task<AsyncEvent<T>> When(Func<T, bool> predicate, CancellationToken cancellationToken = default)
+    public async Task<T> When(Func<T, bool> predicate, CancellationToken cancellationToken = default)
     {
         var current = this;
         while (!predicate.Invoke(current.Value))
             current = await current.WhenNext(cancellationToken).ConfigureAwait(false);
-        return current;
+        return current.Value;
+    }
+
+    public async IAsyncEnumerable<T> Changes([EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var current = this;
+        while (true) {
+            yield return current.Value;
+            current = await current.WhenNext(cancellationToken).ConfigureAwait(false);
+        }
+        // ReSharper disable once IteratorNeverReturns
     }
 
     public AsyncEvent<T> GetLatest()
@@ -49,10 +60,15 @@ public sealed class AsyncEvent<T>
     public AsyncEvent<T>? TryGetNext()
     {
         var whenNext = WhenNext();
-        if (whenNext.IsCompleted)
-            return whenNext.GetAwaiter().GetResult();
+        return whenNext.IsCompleted ? whenNext.GetAwaiter().GetResult() : null;
+    }
 
-        return null;
+    public AsyncEvent<T> ThrowIfTerminal()
+    {
+        var whenNext = WhenNext();
+        if (whenNext.IsFaultedOrCancelled())
+            whenNext.GetAwaiter().GetResult(); // This should always throw
+        return this;
     }
 
     public AsyncEvent<T> CreateNext(T value)
@@ -62,7 +78,10 @@ public sealed class AsyncEvent<T>
         return next;
     }
 
-    public void CancelNext(CancellationToken cancellationToken = default)
+    public void Terminate(Exception error)
+        => _nextSource.SetException(error);
+
+    public void Terminate(CancellationToken cancellationToken)
     {
 #if NET5_0_OR_GREATER
         _nextSource.SetCanceled(cancellationToken);

@@ -39,17 +39,11 @@ public class RpcTestConnection
     public async Task Connect(ChannelPair<RpcMessage> connection, CancellationToken cancellationToken = default)
     {
         Disconnect();
-        await ClientPeer.ConnectionState
-            .When(s => s.Channel == null, cancellationToken)
-            .ConfigureAwait(false);
-        await ServerPeer.ConnectionState
-            .When(s => s.Channel == null, cancellationToken)
-            .ConfigureAwait(false);
+        await ClientPeer.ConnectionState.WhenDisconnected(cancellationToken).ConfigureAwait(false);
+        await ServerPeer.ConnectionState.WhenDisconnected(cancellationToken).ConfigureAwait(false);
 
         SetNextConnection(connection);
-        await ClientPeer.ConnectionState
-            .When(s => s.Channel != null, cancellationToken)
-            .ConfigureAwait(false);
+        await ClientPeer.ConnectionState.WhenConnected(cancellationToken).ConfigureAwait(false);
     }
 
     public void Disconnect(Exception? error = null)

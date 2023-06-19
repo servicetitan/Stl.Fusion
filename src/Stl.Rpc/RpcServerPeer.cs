@@ -14,29 +14,27 @@ public class RpcServerPeer : RpcPeer
     {
         Disconnect();
         using var cts = cancellationToken.LinkWith(StopToken);
-        await ConnectionState.When(s => s.Channel == null, cts.Token).ConfigureAwait(false);
-        SetConnectionState(channel, null, false);
+        await ConnectionState.WhenDisconnected(cts.Token).ConfigureAwait(false);
+        SetConnectionState(channel, null);
     }
 
     // Protected methods
 
-    protected override async Task<Channel<RpcMessage>> GetChannelOrReconnect(CancellationToken cancellationToken)
+    protected override async Task<Channel<RpcMessage>> GetChannel(CancellationToken cancellationToken)
     {
-        // ReSharper disable once InconsistentlySynchronizedField
-        var connectionState = ConnectionState;
         while (true) {
-            // ReSharper disable once MethodSupportsCancellation
-            var whenNextConnectionState = connectionState.WhenNext();
-            if (!whenNextConnectionState.IsCompleted) {
-                var (channel, error, _) = connectionState.Value;
-                if (error != null && Hub.UnrecoverableErrorDetector.Invoke(error, StopToken))
-                    throw error;
-
-                if (channel != null)
-                    return channel;
+            var cts = cancellationToken.CreateLinkedTokenSource();
+            try {
+                var connectionState = await ConnectionState
+                    .WhenConnected(cts.Token)
+                    .WaitAsync(CloseTimeout, cancellationToken)
+                    .ConfigureAwait(false);
+                if (connectionState.Channel != null)
+                    return connectionState.Channel;
             }
-
-            connectionState = await whenNextConnectionState.WaitAsync(CloseTimeout, cancellationToken).ConfigureAwait(false);
+            finally {
+                cts.CancelAndDisposeSilently();
+            }
         }
     }
 }
