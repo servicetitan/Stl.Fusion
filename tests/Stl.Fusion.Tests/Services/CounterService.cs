@@ -14,9 +14,6 @@ public interface ICounterService : IComputeService
     Task SetOffset(int offset, CancellationToken cancellationToken = default);
 }
 
-public interface ICounterServiceClient : ICounterService
-{ }
-
 public class CounterService : ICounterService
 {
     private readonly ConcurrentDictionary<string, int> _counters = new(StringComparer.Ordinal);

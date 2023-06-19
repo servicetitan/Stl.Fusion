@@ -7,9 +7,16 @@ using Stl.Testing.Collections;
 namespace Stl.Fusion.Tests;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class RpcBasicTest : SimpleFusionTestBase
+public class FusionRpcBasicTest : SimpleFusionTestBase
 {
-    public RpcBasicTest(ITestOutputHelper @out) : base(@out) { }
+    public FusionRpcBasicTest(ITestOutputHelper @out) : base(@out) { }
+
+    protected override void ConfigureServices(ServiceCollection services)
+    {
+        base.ConfigureServices(services);
+        var fusion = services.AddFusion();
+        fusion.AddService<ICounterService, CounterService>(RpcServiceMode.RoutingServer);
+    }
 
     [Fact]
     public async Task BasicTest()
@@ -39,7 +46,9 @@ public class RpcBasicTest : SimpleFusionTestBase
         var services = CreateServices();
         var testClient = services.GetRequiredService<RpcTestClient>();
         var clientPeer = testClient.Single().ClientPeer;
-        var connectionMonitor = new RpcPeerConnectionMonitor(services);
+        var connectionMonitor = new RpcPeerConnectionMonitor(services) {
+            StartDelay = TimeSpan.Zero,
+        };
         connectionMonitor.Start();
 
         await connectionMonitor.IsConnected.When(x => x == true)
@@ -57,12 +66,5 @@ public class RpcBasicTest : SimpleFusionTestBase
         await testClient[clientPeer].Connect();
         await connectionMonitor.IsConnected.When(x => x == true)
             .WaitAsync(TimeSpan.FromSeconds(1));
-    }
-
-    protected override void ConfigureServices(ServiceCollection services)
-    {
-        base.ConfigureServices(services);
-        var fusion = services.AddFusion();
-        fusion.AddService<ICounterService, CounterService>(RpcServiceMode.RoutingServer);
     }
 }

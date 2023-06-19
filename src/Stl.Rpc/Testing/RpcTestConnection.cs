@@ -52,6 +52,17 @@ public class RpcTestConnection
         ServerPeer.Disconnect(error);
     }
 
+    public Task Reconnect(CancellationToken cancellationToken = default)
+        => Reconnect(null, cancellationToken);
+    public async Task Reconnect(TimeSpan? connectDelay, CancellationToken cancellationToken = default)
+    {
+        Disconnect();
+        var delay = (connectDelay ?? TimeSpan.FromMilliseconds(50)).Positive();
+        if (delay > TimeSpan.Zero)
+            await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+        await Connect(cancellationToken).ConfigureAwait(false);
+    }
+
     public void Terminate()
     {
         lock (_lock) {

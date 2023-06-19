@@ -92,9 +92,8 @@ public class RpcInboundComputeCall<TResult> : RpcInboundCall<TResult>
         }
         finally {
             if (ccs.Context.TryGetCaptured<TResult>(out var computed)) {
-                lock (Lock) {
+                lock (Lock)
                     Computed = computed;
-                }
             }
             ccs.Dispose();
         }
@@ -103,6 +102,6 @@ public class RpcInboundComputeCall<TResult> : RpcInboundCall<TResult>
     private ValueTask SendInvalidation()
     {
         var computeSystemCallSender = Hub.Services.GetRequiredService<RpcComputeSystemCallSender>();
-        return computeSystemCallSender.Invalidate(Context.Peer, Id);
+        return computeSystemCallSender.Invalidate(Context.Peer, Id, ResultHeaders);
     }
 }

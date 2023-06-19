@@ -1,4 +1,3 @@
-using Stl.Channels;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Internal;
 
@@ -8,8 +7,8 @@ public abstract class RpcPeer : WorkerBase
 {
     private ILogger? _log;
     private IMomentClock? _clock;
-    private volatile AsyncEvent<RpcPeerConnectionState> _connectionState = new(RpcPeerConnectionState.Initial, true);
-    private volatile ChannelWriter<RpcMessage>? _sender;
+    private AsyncEvent<RpcPeerConnectionState> _connectionState = new(RpcPeerConnectionState.Initial, true);
+    private ChannelWriter<RpcMessage>? _sender;
 
     protected IServiceProvider Services => Hub.Services;
     protected ILogger Log => _log ??= Services.LogFor(GetType());
@@ -60,13 +59,12 @@ public abstract class RpcPeer : WorkerBase
 
     public void Disconnect(Exception? error = null)
     {
-        ChannelWriter<RpcMessage>? sendChannel;
+        ChannelWriter<RpcMessage>? sender;
         lock (Lock) {
-            sendChannel = _sender;
-            if (sendChannel != null)
-                _sender = null;
+            sender = _sender;
+            _sender = null;
         }
-        sendChannel?.TryComplete(error);
+        sender?.TryComplete(error);
     }
 
     public async Task Reset(CancellationToken cancellationToken = default)
@@ -107,7 +105,6 @@ public abstract class RpcPeer : WorkerBase
                     throw Errors.ConnectionUnrecoverable();
 
                 var connectionState = SetConnectionState(channel, null, true);
-                Interlocked.Exchange(ref _sender, channel.Writer);
                 readerAbortToken = connectionState.ReaderAbortSource!.Token;
 
                 // Recovery: let's re-send all outbound calls
@@ -134,11 +131,9 @@ public abstract class RpcPeer : WorkerBase
                             _ = ProcessMessage(message, semaphore, cancellationToken);
                         }
                     }
-                Interlocked.Exchange(ref _sender, null);
                 SetConnectionState(null, null);
             }
             catch (Exception e) {
-                Interlocked.Exchange(ref _sender, null);
                 var isReaderAbort = e is OperationCanceledException
                     && readerAbortToken.IsCancellationRequested
                     && !cancellationToken.IsCancellationRequested;
@@ -149,8 +144,11 @@ public abstract class RpcPeer : WorkerBase
                     SetConnectionState(channel, null);
                     Log.LogInformation("'{PeerId}': Reset", Ref);
                 }
-                else
+                else {
+                    // Resetting sender isn't necessary here - SetConnectionState
+                    // will do it automatically
                     SetConnectionState(null, e);
+                }
             }
         }
     }
@@ -246,8 +244,10 @@ public abstract class RpcPeer : WorkerBase
             return connectionState.Value;
         }
         finally {
-            if (state.ReaderAbortSource != oldState.ReaderAbortSource)
+            if (state.ReaderAbortSource != oldState.ReaderAbortSource) {
                 oldState.ReaderAbortSource.CancelAndDisposeSilently();
+                _sender = state.Channel?.Writer;
+            }
             if (state.Channel != oldState.Channel)
                 oldState.Channel?.Writer.TryComplete(error); // Reliably shut down the old channel
             Monitor.Exit(Lock);

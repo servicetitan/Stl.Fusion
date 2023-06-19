@@ -1,3 +1,4 @@
+using Stl.Generators;
 using Stl.Rpc;
 
 namespace Stl.Tests;
@@ -6,6 +7,12 @@ public static class TestHelpers
 {
     public static Task Delay(double seconds, CancellationToken cancellationToken = default)
         => Task.Delay(TimeSpan.FromSeconds(seconds), cancellationToken);
+
+    public static Task RandomDelay(double maxSeconds, CancellationToken cancellationToken = default)
+    {
+        var seconds = ConcurrentRandomDoubleGenerator.Default.Next() * maxSeconds;
+        return Task.Delay(TimeSpan.FromSeconds(seconds), cancellationToken);
+    }
 
     public static void GCCollect()
     {

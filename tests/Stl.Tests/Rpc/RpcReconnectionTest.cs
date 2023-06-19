@@ -1,4 +1,3 @@
-using Stl.Diagnostics;
 using Stl.OS;
 using Stl.Rpc;
 using Stl.Rpc.Testing;
@@ -77,6 +76,7 @@ public class RpcReconnectionTest : RpcLocalTestBase
             disruptorCts.CancelAndDisposeSilently();
             await disruptorTask.SilentAwait();
             await connection.Connect();
+            await Delay(0.2); // Just in case
 
             await AssertNoCalls(connection.ClientPeer);
             await AssertNoCalls(connection.ServerPeer);

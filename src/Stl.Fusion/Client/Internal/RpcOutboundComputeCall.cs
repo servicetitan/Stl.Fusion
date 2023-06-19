@@ -10,7 +10,7 @@ public interface IRpcOutboundComputeCall
 
 public class RpcOutboundComputeCall<TResult> : RpcOutboundCall<TResult>, IRpcOutboundComputeCall
 {
-    protected readonly TaskCompletionSource<Unit> WhenInvalidatedSource = new();
+    protected readonly TaskCompletionSource<Unit> WhenInvalidatedSource = TaskCompletionSourceExt.New<Unit>();
 
     public LTag ResultVersion { get; protected set; } = default;
     public Task WhenInvalidated => WhenInvalidatedSource.Task;
@@ -20,33 +20,75 @@ public class RpcOutboundComputeCall<TResult> : RpcOutboundCall<TResult>, IRpcOut
 
     public override void SetResult(object? result, RpcInboundContext context)
     {
-        if (ResultSource.TrySetResult((TResult)result!))
-            UnregisterIfVersionIsMissing(context);
+        var resultVersion = GetResultVersion(context);
+        // We always use Lock to update ResultSource in this type
+        lock (Lock) {
+            if (resultVersion == default || (ResultTask.IsCompleted && ResultVersion != resultVersion)) {
+                // Not a compute call or a result w/ different version
+                InvalidateAndUnregister();
+                return;
+            }
+            ResultVersion = resultVersion;
+            ResultSource.TrySetResult((TResult)result!);
+        }
     }
 
     public override void SetError(Exception error, RpcInboundContext? context)
     {
-        if (ResultSource.TrySetException(error))
-            UnregisterIfVersionIsMissing(context);
+        var resultVersion = GetResultVersion(context);
+        // We always use Lock to update ResultSource in this type
+        lock (Lock) {
+            if (resultVersion == default || (ResultTask.IsCompleted && ResultVersion != resultVersion)) {
+                // Not a compute call or a result w/ different version
+                InvalidateAndUnregister();
+                return;
+            }
+            ResultVersion = resultVersion;
+            ResultSource.TrySetException(error);
+        }
+    }
+
+    public override bool SetCancelled(CancellationToken cancellationToken, RpcInboundContext? context)
+    {
+        // We always use Lock to update ResultSource in this type
+        lock (Lock) {
+            // No need to call WhenInvalidatedSource.TrySetResult() here,
+            // coz ClientComputeMethodFunction won't get to a point
+            // where it's going to await for invalidation.
+            return base.SetCancelled(cancellationToken, context);
+        }
     }
 
     public void SetInvalidated(RpcInboundContext context)
     {
-        if (WhenInvalidatedSource.TrySetResult(default)) {
-            ResultSource.TrySetResult(default!);
+        var resultVersion = GetResultVersion(context);
+        lock (Lock) {
+            if (!ResultTask.IsCompleted || (resultVersion != default && ResultVersion != resultVersion))
+                return; // Invalidation of some earlier call
+
+            if (!WhenInvalidatedSource.TrySetResult(default))
+                return; // Already invalidated & unregistered
+
             Unregister();
         }
     }
 
     // Private methods
 
-    private void UnregisterIfVersionIsMissing(RpcInboundContext? context)
+    private LTag GetResultVersion(RpcInboundContext? context)
     {
         var versionHeader = context?.Message.Headers.GetOrDefault(FusionRpcHeaders.Version.Name);
-        ResultVersion = versionHeader is { } vVersionHeader
+        return versionHeader is { } vVersionHeader
             ? LTag.TryParse(vVersionHeader.Value, out var v) ? v : default
             : default;
-        if (ResultVersion == default)
-            Unregister();
+    }
+
+    private void InvalidateAndUnregister()
+    {
+        if (!WhenInvalidatedSource.TrySetResult(default))
+            return; // Already invalidated & unregistered
+
+        ResultSource.TrySetResult(default!); // This has to be done anyway
+        Unregister();
     }
 }

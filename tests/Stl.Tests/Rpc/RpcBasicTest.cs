@@ -113,6 +113,7 @@ public class RpcBasicTest : RpcLocalTestBase
     [InlineData(5000)]
     [InlineData(10_000)]
     [InlineData(50_000)]
+    [InlineData(200_000)]
     public async Task PerformanceTest(int iterationCount)
     {
         await using var services = CreateServices();
