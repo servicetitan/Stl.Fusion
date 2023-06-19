@@ -78,10 +78,10 @@ public sealed class AsyncEvent<T>
         return next;
     }
 
-    public void Terminate(Exception error)
+    public void MakeTerminal(Exception error)
         => _nextSource.SetException(error);
 
-    public void Terminate(CancellationToken cancellationToken)
+    public void MakeTerminal(CancellationToken cancellationToken)
     {
 #if NET5_0_OR_GREATER
         _nextSource.SetCanceled(cancellationToken);

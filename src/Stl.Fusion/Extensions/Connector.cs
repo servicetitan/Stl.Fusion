@@ -1,21 +1,12 @@
-namespace Stl.Rpc.Helpers;
-
-public readonly record struct ConnectorState(
-    bool IsConnected = false,
-    Exception? Error = null
-);
+namespace Stl.Fusion.Extensions;
 
 public sealed class Connector<TConnection> : WorkerBase
     where TConnection : class
 {
     private readonly Func<CancellationToken, Task<TConnection>> _connectionFactory;
-    private volatile AsyncEvent<InternalState> _internalState = new(InternalState.New(), true);
-    private volatile AsyncEvent<ConnectorState> _state = new(default, true);
+    private volatile AsyncEvent<State> _state = new(State.New(), true);
 
-    public AsyncEvent<ConnectorState> State {
-        get => _state;
-        private set => Interlocked.Exchange(ref _state, value);
-    }
+    public IMutableState<bool> IsConnected { get; }
 
     public Func<TConnection, CancellationToken, Task>? Connected { get; init; }
     public Func<TConnection?, Exception?, CancellationToken, Task>? Disconnected { get; init; }
@@ -25,13 +16,18 @@ public sealed class Connector<TConnection> : WorkerBase
     public LogLevel LogLevel { get; init; } = LogLevel.Debug;
     public string LogTag { get; init; } = "(Unknown)";
 
-    public Connector(Func<CancellationToken, Task<TConnection>> connectionFactory)
-        => _connectionFactory = connectionFactory;
+    public Connector(
+        Func<CancellationToken, Task<TConnection>> connectionFactory,
+        IStateFactory stateFactory)
+    {
+        _connectionFactory = connectionFactory;
+        IsConnected = stateFactory.NewMutable<bool>();
+    }
 
     public Task<TConnection> GetConnection(CancellationToken cancellationToken)
     {
         // ReSharper disable once InconsistentlySynchronizedField
-        var state = _internalState;
+        var state = _state;
         var stateValue = state.Value;
         return stateValue.ConnectionTask.IsCompletedSuccessfully()
             ? stateValue.ConnectionTask
@@ -53,9 +49,9 @@ public sealed class Connector<TConnection> : WorkerBase
 
     public void DropConnection(TConnection connection, Exception? error)
     {
-        AsyncEvent<InternalState> prevState;
+        AsyncEvent<State> prevState;
         lock (Lock) {
-            prevState = _internalState;
+            prevState = _state;
             if (!prevState.Value.ConnectionTask.IsCompleted)
                 return; // Nothing to do: not yet connected
 #pragma warning disable VSTHRD104
@@ -63,7 +59,7 @@ public sealed class Connector<TConnection> : WorkerBase
                 return; // The connection is already renewed
 #pragma warning restore VSTHRD104
 
-            _internalState = prevState.CreateNext(InternalState.New() with {
+            _state = prevState.CreateNext(State.New() with {
                 LastError = error,
                 RetryIndex = prevState.Value.RetryIndex + 1,
             });
@@ -75,9 +71,9 @@ public sealed class Connector<TConnection> : WorkerBase
 
     protected override async Task OnRun(CancellationToken cancellationToken)
     {
-        AsyncEvent<InternalState> state;
+        AsyncEvent<State> state;
         lock (Lock)
-            state = _internalState;
+            state = _state;
         while (true) {
             var connectionSource = state.Value.ConnectionSource;
             var connectionTask = connectionSource.Task;
@@ -97,7 +93,7 @@ public sealed class Connector<TConnection> : WorkerBase
             }
 
             if (connection != null) {
-                State = State.CreateNext(new(true));
+                IsConnected.Value = true;
                 Log?.Log(LogLevel, "{LogTag}: Connected", LogTag);
                 try {
                     if (Connected != null)
@@ -110,8 +106,8 @@ public sealed class Connector<TConnection> : WorkerBase
             }
 
             lock (Lock) {
-                if (state == _internalState) {
-                    _internalState = state.CreateNext(InternalState.New() with {
+                if (state == _state) {
+                    _state = state.CreateNext(State.New() with {
                         LastError = error,
                         RetryIndex = state.Value.RetryIndex + 1,
                     });
@@ -119,17 +115,17 @@ public sealed class Connector<TConnection> : WorkerBase
                 }
                 else {
                     // It was updated by Reconnect, so we just switch to the new state
-                    state = _internalState;
+                    state = _state;
                     error = state.Value.LastError;
                 }
             }
 
             if (error != null) {
-                State = State.CreateNext(new(false, error));
+                IsConnected.Error = error;
                 Log?.LogError(error, "{LogTag}: Disconnected", LogTag);
             }
             else {
-                State = State.CreateNext(new(false));
+                IsConnected.Value = false;
                 Log?.LogError("{LogTag}: Disconnected", LogTag);
             }
             if (Disconnected != null)
@@ -146,31 +142,30 @@ public sealed class Connector<TConnection> : WorkerBase
     protected override Task OnStop()
     {
         lock (Lock) {
-            var prevState = _internalState;
+            var prevState = _state;
             if (!prevState.Value.ConnectionTask.IsCompleted)
                 prevState.Value.ConnectionSource.TrySetCanceled();
 
-            _internalState = prevState.CreateNext(InternalState.NewCancelled(StopToken));
-            _internalState.MakeTerminal(StopToken);
+            _state = prevState.CreateNext(State.NewCancelled(StopToken));
+            _state.MakeTerminal(StopToken);
             prevState.Value.Dispose();
         }
-        State = State.CreateNext(new(false));
-        State.MakeTerminal(StopToken);
+        IsConnected.Value = false;
         return Task.CompletedTask;
     }
 
     // Nested types
 
-    private readonly record struct InternalState(
+    private readonly record struct State(
         TaskCompletionSource<TConnection> ConnectionSource,
         Exception? LastError = null,
         int RetryIndex = 0) : IDisposable
     {
         public Task<TConnection> ConnectionTask => ConnectionSource.Task;
 
-        public static InternalState New()
+        public static State New()
             => new (TaskCompletionSourceExt.New<TConnection>());
-        public static InternalState NewCancelled(CancellationToken cancellationToken)
+        public static State NewCancelled(CancellationToken cancellationToken)
             => new (TaskCompletionSourceExt.New<TConnection>().WithCancellation(cancellationToken));
 
         public void Dispose()

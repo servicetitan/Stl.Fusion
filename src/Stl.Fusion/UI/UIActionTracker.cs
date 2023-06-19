@@ -34,8 +34,8 @@ public sealed class UIActionTracker : ProcessorBase, IHasServices
     {
         Interlocked.Exchange(ref _runningActionCount, 0);
         var error = new ObjectDisposedException(GetType().Name);
-        _lastActionEvent.Terminate(error);
-        _lastResultEvent.Terminate(error);
+        _lastActionEvent.MakeTerminal(error);
+        _lastResultEvent.MakeTerminal(error);
         return Task.CompletedTask;
     }
 

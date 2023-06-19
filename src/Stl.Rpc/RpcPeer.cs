@@ -239,7 +239,7 @@ public abstract class RpcPeer : WorkerBase
                 terminalError = error is ConnectionUnrecoverableException
                     ? error
                     : Errors.ConnectionUnrecoverable(error);
-                connectionState.Terminate(terminalError);
+                connectionState.MakeTerminal(terminalError);
                 throw terminalError;
             }
 

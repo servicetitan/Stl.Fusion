@@ -10,7 +10,6 @@ using Stl.Fusion.Client.Interception;
 using Stl.Fusion.UI;
 using Stl.OS;
 using Stl.Rpc;
-using Stl.Rpc.WebSockets;
 using Templates.TodoApp.Abstractions;
 
 namespace Templates.TodoApp.UI;
@@ -21,13 +20,14 @@ public static class StartupHelper
     {
         builder.Logging.SetMinimumLevel(LogLevel.Warning);
         builder.Logging.AddFilter(typeof(App).Namespace, LogLevel.Information);
-        builder.Logging.AddFilter(typeof(FusionMonitor).Namespace, LogLevel.Information);
+        builder.Logging.AddFilter(typeof(Computed).Namespace, LogLevel.Information);
         builder.Logging.AddFilter(typeof(RpcHub).Namespace, LogLevel.Debug);
 
         // Fusion services
         var fusion = services.AddFusion();
         fusion.Rpc.AddWebSocketClient(builder.HostEnvironment.BaseAddress);
         fusion.AddAuthClient();
+        fusion.AddRpcPeerConnectionMonitor();
         fusion.AddBlazor().AddAuthentication().AddPresenceReporter();
 
         // Option 1: Client-side SimpleTodoService (no RPC)
@@ -59,7 +59,6 @@ public static class StartupHelper
         var fusion = services.AddFusion();
         fusion.AddComputedGraphPruner(_ => new() { CheckPeriod = TimeSpan.FromSeconds(30) });
         fusion.AddFusionTime();
-        // fusion.AddBackendStatus();
 
         // Default update delay is 0.5s
         services.AddScoped<IUpdateDelayer>(c => new UpdateDelayer(c.UIActionTracker(), 0.5));
