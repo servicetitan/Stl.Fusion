@@ -25,11 +25,11 @@ public class RpcOutboundComputeCall<TResult> : RpcOutboundCall<TResult>, IRpcOut
         lock (Lock) {
             if (resultVersion == default || (ResultTask.IsCompleted && ResultVersion != resultVersion)) {
                 // Not a compute call or a result w/ different version
-                InvalidateAndUnregister();
-                return;
+                if (WhenInvalidatedSource.TrySetResult(default))
+                    Unregister();
             }
-            ResultVersion = resultVersion;
-            ResultSource.TrySetResult((TResult)result!);
+            if (ResultSource.TrySetResult((TResult)result!))
+                ResultVersion = resultVersion;
         }
     }
 
@@ -40,11 +40,11 @@ public class RpcOutboundComputeCall<TResult> : RpcOutboundCall<TResult>, IRpcOut
         lock (Lock) {
             if (resultVersion == default || (ResultTask.IsCompleted && ResultVersion != resultVersion)) {
                 // Not a compute call or a result w/ different version
-                InvalidateAndUnregister();
-                return;
+                if (WhenInvalidatedSource.TrySetResult(default))
+                    Unregister();
             }
-            ResultVersion = resultVersion;
-            ResultSource.TrySetException(error);
+            if (ResultSource.TrySetException(error))
+                ResultVersion = resultVersion;
         }
     }
 
@@ -66,10 +66,8 @@ public class RpcOutboundComputeCall<TResult> : RpcOutboundCall<TResult>, IRpcOut
             if (!ResultTask.IsCompleted || (resultVersion != default && ResultVersion != resultVersion))
                 return; // Invalidation of some earlier call
 
-            if (!WhenInvalidatedSource.TrySetResult(default))
-                return; // Already invalidated & unregistered
-
-            Unregister();
+            if (WhenInvalidatedSource.TrySetResult(default))
+                Unregister();
         }
     }
 
@@ -81,14 +79,5 @@ public class RpcOutboundComputeCall<TResult> : RpcOutboundCall<TResult>, IRpcOut
         return versionHeader is { } vVersionHeader
             ? LTag.TryParse(vVersionHeader.Value, out var v) ? v : default
             : default;
-    }
-
-    private void InvalidateAndUnregister()
-    {
-        if (!WhenInvalidatedSource.TrySetResult(default))
-            return; // Already invalidated & unregistered
-
-        ResultSource.TrySetResult(default!); // This has to be done anyway
-        Unregister();
     }
 }

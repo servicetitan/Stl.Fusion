@@ -64,7 +64,10 @@ public class FusionRpcBasicTest : SimpleFusionTestBase
         }
 
         await testClient[clientPeer].Connect();
-        await connectionMonitor.IsConnected.When(x => x == true)
+        await connectionMonitor.IsConnected
+            .Changes()
+            .FirstAsync(c => c.ValueOrDefault == true)
+            .AsTask()
             .WaitAsync(TimeSpan.FromSeconds(1));
     }
 }
