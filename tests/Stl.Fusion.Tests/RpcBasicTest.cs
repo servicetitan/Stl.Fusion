@@ -42,12 +42,12 @@ public class RpcBasicTest : SimpleFusionTestBase
         var connectionMonitor = new RpcPeerConnectionMonitor(services);
         connectionMonitor.Start();
 
-        await connectionMonitor.IsConnected.When(x => x)
+        await connectionMonitor.IsConnected.When(x => x == true)
             .WaitAsync(TimeSpan.FromSeconds(1));
 
         clientPeer.Disconnect(new InvalidOperationException("Disconnected!"));
         try {
-            await connectionMonitor.IsConnected.When(x => !x)
+            await connectionMonitor.IsConnected.When(x => x == false)
                 .WaitAsync(TimeSpan.FromSeconds(1));
         }
         catch (InvalidOperationException) {
@@ -55,7 +55,7 @@ public class RpcBasicTest : SimpleFusionTestBase
         }
 
         await testClient[clientPeer].Connect();
-        await connectionMonitor.IsConnected.When(x => x)
+        await connectionMonitor.IsConnected.When(x => x == true)
             .WaitAsync(TimeSpan.FromSeconds(1));
     }
 
