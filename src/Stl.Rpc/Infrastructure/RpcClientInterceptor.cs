@@ -1,5 +1,6 @@
 using Stl.Interception;
 using Stl.Interception.Interceptors;
+using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
 
@@ -46,10 +47,15 @@ public class RpcClientInterceptor : RpcInterceptorBase
     private static async Task<T> GetResultTaskWithConnectTimeout<T>(RpcOutboundCall call)
     {
         var cancellationToken = call.Context.CancellationToken;
-        await call.Peer.ConnectionState
-            .WhenConnected(cancellationToken)
-            .WaitAsync(TimeSpan.FromSeconds(call.ConnectTimeoutMs), cancellationToken)
-            .ConfigureAwait(false);
+        try {
+            await call.Peer.ConnectionState
+                .WhenConnected(cancellationToken)
+                .WaitAsync(TimeSpan.FromMilliseconds(call.ConnectTimeoutMs), cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (TimeoutException) {
+            throw Errors.PeerDisconnected();
+        }
 
         _ = call.RegisterAndSend();
         var typedResultTask = (Task<T>)call.ResultTask;

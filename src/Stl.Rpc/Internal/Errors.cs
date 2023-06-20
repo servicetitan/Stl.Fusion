@@ -76,4 +76,6 @@ public static class Errors
 
     public static Exception CallTimeout()
         => new TimeoutException("Remote call is timed out.");
+    public static Exception PeerDisconnected()
+        => new DisconnectedException();
 }

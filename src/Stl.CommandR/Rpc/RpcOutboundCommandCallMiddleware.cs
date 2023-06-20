@@ -6,7 +6,7 @@ public class RpcOutboundCommandCallMiddleware : RpcOutboundMiddleware
 {
     public const int DefaultPriority = 10;
 
-    public int ConnectionTimeoutMs { get; set; } = 1500;
+    public int ConnectTimeoutMs { get; set; } = 1500;
     public int TimeoutMs { get; set; } = 10_000;
 
     public RpcOutboundCommandCallMiddleware(IServiceProvider services)
@@ -24,7 +24,7 @@ public class RpcOutboundCommandCallMiddleware : RpcOutboundMiddleware
             return;
 
         var call = context.Call!;
-        call.ConnectTimeoutMs = ConnectionTimeoutMs;
+        call.ConnectTimeoutMs = ConnectTimeoutMs;
         call.TimeoutMs = TimeoutMs;
     }
 }

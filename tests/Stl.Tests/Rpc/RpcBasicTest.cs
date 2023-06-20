@@ -1,4 +1,5 @@
 using Stl.Rpc;
+using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Testing;
 using Stl.Testing.Collections;
 
@@ -39,13 +40,22 @@ public class RpcBasicTest : RpcLocalTestBase
     public async Task CommandTest()
     {
         await using var services = CreateServices();
-        var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
+        var connection = services.GetRequiredService<RpcTestClient>().Single();
+        var clientPeer = connection.ClientPeer;
         var client = services.GetRequiredService<ITestRpcServiceClient>();
 
         (await client.OnHello(new HelloCommand("X"))).Should().Be("Hello, X!");
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
             () => client.OnHello(new HelloCommand("error")));
 
+        connection.Disconnect();
+        await clientPeer.ConnectionState.WhenDisconnected();
+        await Assert.ThrowsAsync<DisconnectedException>(
+            () => client.OnHello(new HelloCommand("X", TimeSpan.FromSeconds(2))));
+        await Delay(0.1);
+        await AssertNoCalls(clientPeer);
+
+        await connection.Connect();
         await Assert.ThrowsAsync<TimeoutException>(
             () => client.OnHello(new HelloCommand("X", TimeSpan.FromSeconds(11))));
 

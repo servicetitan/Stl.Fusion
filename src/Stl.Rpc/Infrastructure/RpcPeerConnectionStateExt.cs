@@ -1,5 +1,3 @@
-using Stl.Rpc.Internal;
-
 namespace Stl.Rpc.Infrastructure;
 
 public static class RpcPeerConnectionStateExt

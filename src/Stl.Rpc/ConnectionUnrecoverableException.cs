@@ -1,4 +1,4 @@
-namespace Stl.Rpc.Internal;
+namespace Stl.Rpc;
 
 [Serializable]
 public class ConnectionUnrecoverableException : Exception
