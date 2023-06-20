@@ -34,7 +34,15 @@ public abstract class RpcOutboundCall : RpcCall
             return SendNoWait();
 
         Peer.OutboundCalls.Register(this);
-        return SendRegistered();
+        var sendTask = SendRegistered();
+
+        // RegisterCancellationHandler must follow SendRegistered,
+        // coz it's possible that ResultTask is already completed
+        // at this point (e.g. due to an error), and thus
+        // cancellation handler isn't necessary.
+        if (!ResultTask.IsCompleted)
+            RegisterCancellationHandler();
+        return sendTask;
     }
 
     public ValueTask SendNoWait()
@@ -43,15 +51,15 @@ public abstract class RpcOutboundCall : RpcCall
         return Peer.Send(message);
     }
 
-    public ValueTask SendRegistered()
+    public ValueTask SendRegistered(bool notifyCancelled = false)
     {
         RpcMessage message;
         try {
             message = CreateMessage(Id);
         }
-        catch {
-            Peer.OutboundCalls.Unregister(this);
-            throw;
+        catch (Exception error) {
+            SetError(error, null, notifyCancelled);
+            return default;
         }
         return Peer.Send(message);
     }
@@ -93,15 +101,20 @@ public abstract class RpcOutboundCall : RpcCall
     }
 
     public abstract void SetResult(object? result, RpcInboundContext context);
-    public abstract void SetError(Exception error, RpcInboundContext? context);
+    public abstract void SetError(Exception error, RpcInboundContext? context, bool notifyCancelled = false);
     public abstract bool SetCancelled(CancellationToken cancellationToken, RpcInboundContext? context);
 
-    public void Unregister(bool notifyPeer = false)
+    public void Unregister(bool notifyCancelled = false)
     {
-        Peer.OutboundCalls.Unregister(this);
-        if (!notifyPeer)
-            return;
+        if (!Peer.OutboundCalls.Unregister(this))
+            return; // Already unregistered
 
+        if (notifyCancelled)
+            NotifyCancelled();
+    }
+
+    public void NotifyCancelled()
+    {
         try {
             var systemCallSender = Peer.Hub.InternalServices.SystemCallSender;
             _ = systemCallSender.Cancel(Peer, Id);
@@ -114,6 +127,19 @@ public abstract class RpcOutboundCall : RpcCall
             // be gone as well after that, so every call there
             // will be cancelled anyway.
         }
+    }
+
+    // Protected methods
+
+    protected void RegisterCancellationHandler()
+    {
+        var ctr = Context.CancellationToken.Register(static state => {
+            var call = (RpcOutboundCall)state!;
+            call.SetCancelled(call.Context.CancellationToken, null);
+        }, this, useSynchronizationContext: false);
+        _ = ResultTask.ContinueWith(
+            _ => ctr.Dispose(),
+            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
     }
 }
 
@@ -136,17 +162,17 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
             Unregister();
     }
 
-    public override void SetError(Exception error, RpcInboundContext? context)
+    public override void SetError(Exception error, RpcInboundContext? context, bool notifyCancelled = false)
     {
         if (ResultSource.TrySetException(error))
-            Unregister();
+            Unregister(notifyCancelled);
     }
 
     public override bool SetCancelled(CancellationToken cancellationToken, RpcInboundContext? context)
     {
         var isCancelled = ResultSource.TrySetCanceled(cancellationToken);
         if (isCancelled)
-            Unregister();
+            Unregister(true);
         return isCancelled;
     }
 }

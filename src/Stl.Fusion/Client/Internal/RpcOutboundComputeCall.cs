@@ -33,13 +33,13 @@ public class RpcOutboundComputeCall<TResult> : RpcOutboundCall<TResult>, IRpcOut
         }
     }
 
-    public override void SetError(Exception error, RpcInboundContext? context)
+    public override void SetError(Exception error, RpcInboundContext? context, bool notifyCancelled = false)
     {
         var resultVersion = GetResultVersion(context);
         // We always use Lock to update ResultSource in this type
         lock (Lock) {
-            if (resultVersion == default || (ResultTask.IsCompleted && ResultVersion != resultVersion)) {
-                // Not a compute call or a result w/ different version
+            if (notifyCancelled || resultVersion == default || (ResultTask.IsCompleted && ResultVersion != resultVersion)) {
+                // Early failure, not a compute call or a result w/ different version
                 if (WhenInvalidatedSource.TrySetResult(default))
                     Unregister(true);
             }
