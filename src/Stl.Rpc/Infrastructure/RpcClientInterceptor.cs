@@ -21,9 +21,9 @@ public class RpcClientInterceptor : RpcInterceptorBase
             RpcOutboundCall? call;
             ValueTask sendTask = default;
             using (var scope = RpcOutboundContext.Use()) {
-                call = scope.Context.SetCall(rpcMethodDef, invocation.Arguments);
+                call = scope.Context.PrepareCall(rpcMethodDef, invocation.Arguments);
                 if (call != null)
-                    sendTask = call.Send();
+                    sendTask = call.RegisterAndSend();
             }
             if (call == null) {
                 // No call == no peer -> we invoke it locally
@@ -31,7 +31,7 @@ public class RpcClientInterceptor : RpcInterceptorBase
                 return rpcMethodDef.Invoker.Invoke(server, invocation.Arguments);
             }
 
-            if (!rpcMethodDef.NoWait) {
+            if (!call.NoWait) {
                 if (sendTask.IsCompletedSuccessfully)
                     CompleteSend(call);
                 else

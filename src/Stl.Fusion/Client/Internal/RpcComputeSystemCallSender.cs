@@ -27,7 +27,7 @@ public sealed class RpcComputeSystemCallSender : RpcServiceBase
             RelatedCallId = callId,
         };
         // An optimized version of Client.Error(result):
-        var call = context.SetCall(InvalidateMethodDef, ArgumentList.Empty)!;
-        await call.Send().ConfigureAwait(false);
+        var call = context.PrepareCall(InvalidateMethodDef, ArgumentList.Empty)!;
+        await call.SendNoWait().ConfigureAwait(false);
     }
 }

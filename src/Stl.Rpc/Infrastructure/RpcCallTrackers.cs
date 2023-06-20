@@ -32,7 +32,14 @@ public abstract class RpcCallTracker<TRpcCall> : IEnumerable<TRpcCall>
     public TRpcCall? Get(long callId)
         => Calls.GetValueOrDefault(callId);
 
-    public virtual TRpcCall Register(TRpcCall call)
+    public bool Unregister(TRpcCall call)
+        // NoWait should always return true here!
+        => call.NoWait || Calls.TryRemove(call.Id, call);
+}
+
+public class RpcInboundCallTracker : RpcCallTracker<RpcInboundCall>
+{
+    public RpcInboundCall GetOrRegister(RpcInboundCall call)
     {
         if (call.NoWait || Calls.TryAdd(call.Id, call))
             return call;
@@ -41,18 +48,21 @@ public abstract class RpcCallTracker<TRpcCall> : IEnumerable<TRpcCall>
         // and we should rarely land here, so we do this separately
         return Calls.GetOrAdd(call.Id, static (_, call1) => call1, call);
     }
-
-    public virtual bool Unregister(TRpcCall call)
-        // NoWait should always return true here!
-        => call.NoWait || Calls.TryRemove(call.Id, call);
 }
-
-public class RpcInboundCallTracker : RpcCallTracker<RpcInboundCall>
-{ }
 
 public class RpcOutboundCallTracker : RpcCallTracker<RpcOutboundCall>
 {
     private long _lastId;
 
-    public long NextId => Interlocked.Increment(ref _lastId);
+    public void Register(RpcOutboundCall call)
+    {
+        if (call.NoWait || call.Id != 0)
+            return;
+
+        while (true) {
+            call.Id = Interlocked.Increment(ref _lastId);
+            if (Calls.TryAdd(call.Id, call))
+                return;
+        }
+    }
 }

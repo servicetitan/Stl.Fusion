@@ -110,7 +110,7 @@ public abstract class RpcPeer : WorkerBase
                 // Recovery: let's re-send all outbound calls
                 foreach (var call in OutboundCalls) {
                     readerAbortToken.ThrowIfCancellationRequested();
-                    await call.Send().ConfigureAwait(false);
+                    await call.SendRegistered().ConfigureAwait(false);
                 }
 
                 var channelReader = channel.Reader;

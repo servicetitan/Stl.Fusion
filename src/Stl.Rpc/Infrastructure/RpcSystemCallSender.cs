@@ -39,8 +39,8 @@ public sealed class RpcSystemCallSender : RpcServiceBase
             RelatedCallId = callId,
         };
         // An optimized version of Client.Ok(result):
-        var call = context.SetCall(OkMethodDef, ArgumentList.New(result))!;
-        return call.Send();
+        var call = context.PrepareCall(OkMethodDef, ArgumentList.New(result))!;
+        return call.SendNoWait();
     }
 
     public ValueTask Error(RpcPeer peer, long callId, Exception error, List<RpcHeader>? headers = null)
@@ -50,8 +50,8 @@ public sealed class RpcSystemCallSender : RpcServiceBase
             RelatedCallId = callId,
         };
         // An optimized version of Client.Error(result):
-        var call = context.SetCall(ErrorMethodDef, ArgumentList.New(error.ToExceptionInfo()))!;
-        return call.Send();
+        var call = context.PrepareCall(ErrorMethodDef, ArgumentList.New(error.ToExceptionInfo()))!;
+        return call.SendNoWait();
     }
 
     public ValueTask Cancel(RpcPeer peer, long callId, List<RpcHeader>? headers = null)
@@ -61,7 +61,7 @@ public sealed class RpcSystemCallSender : RpcServiceBase
             RelatedCallId = callId,
         };
         // An optimized version of Client.Error(result):
-        var call = context.SetCall(CancelMethodDef, ArgumentList.Empty)!;
-        return call.Send();
+        var call = context.PrepareCall(CancelMethodDef, ArgumentList.Empty)!;
+        return call.SendNoWait();
     }
 }

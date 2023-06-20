@@ -15,10 +15,10 @@ public abstract class RpcInboundCall : RpcCall
 
     protected CancellationTokenSource? CancellationTokenSource { get; private set; }
 
-    public RpcInboundContext Context { get; }
-    public CancellationToken CancellationToken { get; private set; }
-    public ArgumentList? Arguments { get; protected set; } = null;
-    public List<RpcHeader>? ResultHeaders { get; set; }
+    public readonly RpcInboundContext Context;
+    public readonly CancellationToken CancellationToken;
+    public ArgumentList? Arguments;
+    public List<RpcHeader>? ResultHeaders;
 
     public static RpcInboundCall New(byte callTypeId, RpcInboundContext context, RpcMethodDef? methodDef)
     {
@@ -41,7 +41,7 @@ public abstract class RpcInboundCall : RpcCall
         : base(methodDef)
     {
         Context = context;
-        Id =  methodDef.NoWait ? 0 : context.Message.CallId;
+        Id = NoWait ? 0 : context.Message.CallId;
         var cancellationToken = Context.CancellationToken;
         if (NoWait)
             CancellationToken = cancellationToken;
@@ -63,7 +63,7 @@ public abstract class RpcInboundCall : RpcCall
     {
         var inboundCalls = Context.Peer.InboundCalls;
         while (true) {
-            var existingCall = inboundCalls.Register(this);
+            var existingCall = inboundCalls.GetOrRegister(this);
             if (existingCall == this)
                 break;
 

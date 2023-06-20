@@ -9,6 +9,8 @@ public readonly record struct RpcInternalServices(RpcHub Hub)
     public RpcCallRouter CallRouter => Hub.CallRouter;
     public RpcArgumentSerializer ArgumentSerializer => Hub.ArgumentSerializer;
     public RpcInboundContextFactory InboundContextFactory => Hub.InboundContextFactory;
+    public RpcInboundMiddlewares InboundMiddlewares => Hub.InboundMiddlewares;
+    public RpcOutboundMiddlewares OutboundMiddlewares => Hub.OutboundMiddlewares;
     public RpcPeerFactory PeerFactory => Hub.PeerFactory;
     public RpcClientChannelFactory ClientChannelFactory => Hub.ClientChannelFactory;
     public RpcClientIdGenerator ClientIdGenerator => Hub.ClientIdGenerator;

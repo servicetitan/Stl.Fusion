@@ -8,9 +8,9 @@ public class RpcInboundContext
 
     public static RpcInboundContext? Current => CurrentLocal.Value;
 
-    public RpcPeer Peer { get; }
-    public RpcMessage Message { get; }
-    public CancellationToken CancellationToken { get; }
+    public readonly RpcPeer Peer;
+    public readonly RpcMessage Message;
+    public readonly CancellationToken CancellationToken;
     public RpcInboundCall Call { get; protected init; }
 
     public static RpcInboundContext GetCurrent()
@@ -25,9 +25,8 @@ public class RpcInboundContext
         Peer = peer;
         Message = message;
         CancellationToken = cancellationToken;
-        if (initializeCall) {
+        if (initializeCall)
             Call = RpcInboundCall.New(message.CallTypeId, this, GetMethodDef());
-        }
         else
             Call = null!;
     }

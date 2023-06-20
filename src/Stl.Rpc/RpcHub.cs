@@ -16,6 +16,8 @@ public sealed class RpcHub : ProcessorBase, IHasServices
     internal RpcCallRouter CallRouter { get; }
     internal RpcArgumentSerializer ArgumentSerializer { get; }
     internal RpcInboundContextFactory InboundContextFactory { get; }
+    internal RpcInboundMiddlewares InboundMiddlewares { get; }
+    internal RpcOutboundMiddlewares OutboundMiddlewares { get; }
     internal RpcPeerFactory PeerFactory { get; }
     internal RpcClientChannelFactory ClientChannelFactory { get; }
     internal RpcClientIdGenerator ClientIdGenerator { get; }
@@ -44,6 +46,8 @@ public sealed class RpcHub : ProcessorBase, IHasServices
         CallRouter = services.GetRequiredService<RpcCallRouter>();
         ArgumentSerializer = services.GetRequiredService<RpcArgumentSerializer>();
         InboundContextFactory = services.GetRequiredService<RpcInboundContextFactory>();
+        InboundMiddlewares = services.GetRequiredService<RpcInboundMiddlewares>();
+        OutboundMiddlewares = services.GetRequiredService<RpcOutboundMiddlewares>();
         PeerFactory = services.GetRequiredService<RpcPeerFactory>();
         ClientChannelFactory = services.GetRequiredService<RpcClientChannelFactory>();
         ClientIdGenerator = services.GetRequiredService<RpcClientIdGenerator>();

@@ -6,8 +6,11 @@ public abstract class RpcOutboundCall : RpcCall
 {
     private static readonly ConcurrentDictionary<(byte, Type), Func<RpcOutboundContext, RpcOutboundCall>> FactoryCache = new();
 
-    public RpcOutboundContext Context { get; }
+    public readonly RpcOutboundContext Context;
+    public readonly RpcPeer Peer;
     public Task ResultTask { get; protected init; } = null!;
+    public int ConnectTimeoutMs;
+    public int CallTimeoutMs;
 
     public static RpcOutboundCall New(RpcOutboundContext context)
         => FactoryCache.GetOrAdd((context.CallTypeId, context.MethodDef!.UnwrappedReturnType), static key => {
@@ -20,22 +23,37 @@ public abstract class RpcOutboundCall : RpcCall
 
     protected RpcOutboundCall(RpcOutboundContext context)
         : base(context.MethodDef!)
-        => Context = context;
+    {
+        Context = context;
+        Peer = context.Peer!; // Calls
+    }
 
-    public ValueTask Send()
+    public ValueTask RegisterAndSend()
+    {
+        if (NoWait)
+            return SendNoWait();
+
+        Context.Peer!.OutboundCalls.Register(this);
+        return SendRegistered();
+    }
+
+    public ValueTask SendNoWait()
+    {
+        var message = CreateMessage(Context.RelatedCallId);
+        return Context.Peer!.Send(message);
+    }
+
+    public ValueTask SendRegistered()
     {
         RpcMessage message;
-        var peer = Context.Peer!;
-        if (Context.MethodDef!.NoWait)
-            message = CreateMessage(Context.RelatedCallId);
-        else if (Id == 0) {
-            Id = peer.OutboundCalls.NextId;
+        try {
             message = CreateMessage(Id);
-            peer.OutboundCalls.Register(this);
         }
-        else
-            message = CreateMessage(Id);
-        return peer.Send(message);
+        catch {
+            Context.Peer!.OutboundCalls.Unregister(this);
+            throw;
+        }
+        return Context.Peer!.Send(message);
     }
 
     public virtual RpcMessage CreateMessage(long callId)
@@ -92,7 +110,7 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
     public RpcOutboundCall(RpcOutboundContext context)
         : base(context)
     {
-        ResultSource = context.MethodDef!.NoWait
+        ResultSource = NoWait
             ? (TaskCompletionSource<TResult>)(object)RpcNoWait.TaskSources.Completed
             : new TaskCompletionSource<TResult>();
         ResultTask = ResultSource.Task;
