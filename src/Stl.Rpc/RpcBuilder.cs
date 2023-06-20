@@ -188,6 +188,35 @@ public readonly struct RpcBuilder
         return service;
     }
 
+    public RpcBuilder AddInboundMiddleware<TMiddleware>()
+        where TMiddleware : RpcInboundMiddleware
+        => AddInboundMiddleware(typeof(TMiddleware));
+
+    public RpcBuilder AddInboundMiddleware(Type middlewareType)
+    {
+        if (!typeof(RpcInboundMiddleware).IsAssignableFrom(middlewareType))
+            throw Stl.Internal.Errors.MustBeAssignableTo<RpcInboundMiddleware>(middlewareType, nameof(middlewareType));
+
+        var descriptor = ServiceDescriptor.Singleton(typeof(RpcInboundMiddleware), middlewareType);
+        Services.TryAddEnumerable(descriptor);
+        return this;
+    }
+
+
+    public RpcBuilder AddOutboundMiddleware<TMiddleware>()
+        where TMiddleware : RpcOutboundMiddleware
+        => AddOutboundMiddleware(typeof(TMiddleware));
+
+    public RpcBuilder AddOutboundMiddleware(Type middlewareType)
+    {
+        if (!typeof(RpcOutboundMiddleware).IsAssignableFrom(middlewareType))
+            throw Stl.Internal.Errors.MustBeAssignableTo<RpcOutboundMiddleware>(middlewareType, nameof(middlewareType));
+
+        var descriptor = ServiceDescriptor.Singleton(typeof(RpcOutboundMiddleware), middlewareType);
+        Services.TryAddEnumerable(descriptor);
+        return this;
+    }
+
     // Private methods
 
     private static RpcConfiguration? GetConfiguration(IServiceCollection services)

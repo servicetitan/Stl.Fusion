@@ -4,9 +4,10 @@ using Stl.Rpc;
 namespace Stl.Tests.Rpc;
 
 [DataContract, MemoryPackable]
-public partial record SimpleRpcServiceDummyCommand(
-    [property: DataMember] string Input
-) : ICommand<Unit>;
+public partial record HelloCommand(
+    [property: DataMember] string Name,
+    [property: DataMember] TimeSpan Delay = default
+) : ICommand<string>;
 
 public partial interface ITestRpcService : ICommandService
 {
@@ -21,7 +22,7 @@ public partial interface ITestRpcService : ICommandService
     ValueTask<string?> Get(string key);
 
     [CommandHandler]
-    Task OnDummyCommand(SimpleRpcServiceDummyCommand command, CancellationToken cancellationToken = default);
+    Task<string> OnHello(HelloCommand command, CancellationToken cancellationToken = default);
 }
 
 public interface ITestRpcServiceClient : ITestRpcService, IRpcService
@@ -68,10 +69,14 @@ public class TestRpcService : ITestRpcService
     public ValueTask<string?> Get(string key)
         => new(_values.GetValueOrDefault(key));
 
-    public virtual Task OnDummyCommand(SimpleRpcServiceDummyCommand command, CancellationToken cancellationToken = default)
+    public virtual async Task<string> OnHello(HelloCommand command, CancellationToken cancellationToken = default)
     {
-        if (Equals(command.Input, "error"))
+        if (command.Delay > TimeSpan.Zero)
+            await Task.Delay(command.Delay, cancellationToken);
+
+        if (Equals(command.Name, "error"))
             throw new ArgumentOutOfRangeException(nameof(command));
-        return Task.CompletedTask;
+
+        return $"Hello, {command.Name}!";
     }
 }

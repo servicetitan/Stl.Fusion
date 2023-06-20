@@ -32,9 +32,9 @@ public class RpcWebSocketTest : RpcTestBase
         await using var _ = await WebHost.Serve();
         var services = ClientServices;
         var commander = services.Commander();
-        await commander.Call(new SimpleRpcServiceDummyCommand("ok"));
+        await commander.Call(new HelloCommand("ok"));
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => commander.Call(new SimpleRpcServiceDummyCommand("error")));
+            () => commander.Call(new HelloCommand("error")));
 
         var peer = services.RpcHub().GetPeer(ClientPeerRef);
         await AssertNoCalls(peer);

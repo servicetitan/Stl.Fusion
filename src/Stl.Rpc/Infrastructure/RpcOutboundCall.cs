@@ -1,4 +1,5 @@
 using Stl.Interception;
+using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
 
@@ -10,7 +11,7 @@ public abstract class RpcOutboundCall : RpcCall
     public readonly RpcPeer Peer;
     public Task ResultTask { get; protected init; } = null!;
     public int ConnectTimeoutMs;
-    public int CallTimeoutMs;
+    public int TimeoutMs;
 
     public static RpcOutboundCall New(RpcOutboundContext context)
         => FactoryCache.GetOrAdd((context.CallTypeId, context.MethodDef!.UnwrappedReturnType), static key => {
@@ -133,12 +134,29 @@ public abstract class RpcOutboundCall : RpcCall
 
     protected void RegisterCancellationHandler()
     {
-        var ctr = Context.CancellationToken.Register(static state => {
+        var cancellationToken = Context.CancellationToken;
+        CancellationTokenSource? timeoutCts = null;
+        CancellationTokenSource? linkedCts = null;
+        if (TimeoutMs > 0) {
+            timeoutCts = new CancellationTokenSource(TimeoutMs);
+            linkedCts = timeoutCts.Token.LinkWith(cancellationToken);
+            cancellationToken = linkedCts.Token;
+        }
+        var ctr = cancellationToken.Register(static state => {
             var call = (RpcOutboundCall)state!;
-            call.SetCancelled(call.Context.CancellationToken, null);
+            if (call.Context.CancellationToken.IsCancellationRequested)
+                call.SetCancelled(call.Context.CancellationToken, null);
+            else {
+                // timeoutCts is timed out
+                var error = Errors.CallTimeout();
+                call.SetError(error, null, true);
+            }
         }, this, useSynchronizationContext: false);
-        _ = ResultTask.ContinueWith(
-            _ => ctr.Dispose(),
+        _ = ResultTask.ContinueWith(_ => {
+                ctr.Dispose();
+                linkedCts?.Dispose();
+                timeoutCts?.Dispose();
+            },
             CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
     }
 }

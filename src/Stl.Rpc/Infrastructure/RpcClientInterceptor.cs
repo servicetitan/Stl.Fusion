@@ -27,8 +27,14 @@ public class RpcClientInterceptor : RpcInterceptorBase
                 return rpcMethodDef.Invoker.Invoke(server, invocation.Arguments);
             }
 
-            _ = call.RegisterAndSend();
-            var resultTask = call.ResultTask;
+            Task resultTask;
+            if (call.ConnectTimeoutMs > 0 && !call.Peer.ConnectionState.Value.IsConnected())
+                resultTask = GetResultTaskWithConnectTimeout<T>(call);
+            else {
+                _ = call.RegisterAndSend();
+                resultTask = call.ResultTask;
+            }
+
             return rpcMethodDef.ReturnsTask
                 ? resultTask
                 : rpcMethodDef.IsAsyncVoidMethod
@@ -37,4 +43,16 @@ public class RpcClientInterceptor : RpcInterceptorBase
         };
     }
 
+    private static async Task<T> GetResultTaskWithConnectTimeout<T>(RpcOutboundCall call)
+    {
+        var cancellationToken = call.Context.CancellationToken;
+        await call.Peer.ConnectionState
+            .WhenConnected(cancellationToken)
+            .WaitAsync(TimeSpan.FromSeconds(call.ConnectTimeoutMs), cancellationToken)
+            .ConfigureAwait(false);
+
+        _ = call.RegisterAndSend();
+        var typedResultTask = (Task<T>)call.ResultTask;
+        return await typedResultTask.ConfigureAwait(false);
+    }
 }

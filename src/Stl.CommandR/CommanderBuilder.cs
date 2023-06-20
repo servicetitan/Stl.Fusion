@@ -2,7 +2,8 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.CommandR.Diagnostics;
 using Stl.CommandR.Interception;
 using Stl.CommandR.Internal;
-using Stl.Interception;
+using Stl.CommandR.Rpc;
+using Stl.Rpc;
 
 namespace Stl.CommandR;
 
@@ -48,6 +49,10 @@ public readonly struct CommanderBuilder
         AddHandlers<CommandTracer>();
         services.AddSingleton(_ => new LocalCommandRunner());
         AddHandlers<LocalCommandRunner>();
+
+        // Rpc
+        var rpc = services.AddRpc();
+        rpc.AddOutboundMiddleware<RpcOutboundCommandCallMiddleware>();
 
         configure?.Invoke(this);
     }

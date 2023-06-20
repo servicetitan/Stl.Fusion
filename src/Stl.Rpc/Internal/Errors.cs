@@ -74,6 +74,6 @@ public static class Errors
     public static Exception InvalidMessageSize()
         => new SerializationException("Invalid item size. The remainder of the message will be dropped.");
 
-    public static Exception TestConnectionIsTerminated()
-        => new InvalidOperationException("Test connection is terminated.");
+    public static Exception CallTimeout()
+        => new TimeoutException("Remote call is timed out.");
 }

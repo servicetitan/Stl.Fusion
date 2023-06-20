@@ -41,9 +41,14 @@ public class RpcBasicTest : RpcLocalTestBase
         await using var services = CreateServices();
         var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
         var client = services.GetRequiredService<ITestRpcServiceClient>();
-        await client.OnDummyCommand(new SimpleRpcServiceDummyCommand("ok"));
+
+        (await client.OnHello(new HelloCommand("X"))).Should().Be("Hello, X!");
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
-            () => client.OnDummyCommand(new SimpleRpcServiceDummyCommand("error")));
+            () => client.OnHello(new HelloCommand("error")));
+
+        await Assert.ThrowsAsync<TimeoutException>(
+            () => client.OnHello(new HelloCommand("X", TimeSpan.FromSeconds(11))));
+
         await AssertNoCalls(clientPeer);
     }
 
