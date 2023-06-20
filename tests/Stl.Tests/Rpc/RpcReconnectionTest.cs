@@ -14,11 +14,11 @@ public class RpcReconnectionTest : RpcLocalTestBase
     {
         base.ConfigureServices(services);
         var commander = services.AddCommander();
-        commander.AddCommandService<SimpleRpcService>();
+        commander.AddCommandService<TestRpcService>();
 
         var rpc = services.AddRpc();
-        rpc.AddServer<ISimpleRpcService, SimpleRpcService>();
-        rpc.AddClient<ISimpleRpcService, ISimpleRpcServiceClient>();
+        rpc.AddServer<ITestRpcService, TestRpcService>();
+        rpc.AddClient<ITestRpcService, ITestRpcServiceClient>();
     }
 
     [Fact]
@@ -27,7 +27,7 @@ public class RpcReconnectionTest : RpcLocalTestBase
         await using var services = CreateServices();
         var connection = services.GetRequiredService<RpcTestClient>().Single();
         var clientPeer = connection.ClientPeer;
-        var client = services.GetRequiredService<ISimpleRpcServiceClient>();
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
         await client.Add(1, 1); // Warm-up
 
         var delay = TimeSpan.FromMilliseconds(100);
@@ -58,7 +58,7 @@ public class RpcReconnectionTest : RpcLocalTestBase
     {
         await using var services = CreateServices();
         var connection = services.GetRequiredService<RpcTestClient>().Single();
-        var client = services.GetRequiredService<ISimpleRpcServiceClient>();
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
         await client.Add(1, 1); // Warm-up
 
         var disruptorCts = new CancellationTokenSource();

@@ -46,29 +46,10 @@ public class ClientComputed<T> : ComputeMethodComputed<T>, IClientComputed
 
     public void Dispose()
     {
-        var call = Call;
-        if (call == null)
+        if (Call is not { } call)
             return;
 
-        var peer = call.Context.Peer;
-        if (peer == null)
-            return;
-
-        peer.OutboundCalls.Unregister(call);
-        if (!this.IsInvalidated()) {
-            try {
-                var systemCallSender = peer.Hub.InternalServices.SystemCallSender;
-                _ = systemCallSender.Cancel(peer, call.Id);
-            }
-            catch {
-                // It's totally fine to ignore any error here:
-                // peer.Hub might be already disposed at this point,
-                // so SystemCallSender might not be available.
-                // In any case, peer on the other side is going to
-                // be gone as well after that, so every call there
-                // will be cancelled anyway.
-            }
-        }
+        call.Unregister(!this.IsInvalidated());
     }
 
     protected override void OnInvalidated()

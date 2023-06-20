@@ -33,14 +33,14 @@ public abstract class RpcOutboundCall : RpcCall
         if (NoWait)
             return SendNoWait();
 
-        Context.Peer!.OutboundCalls.Register(this);
+        Peer.OutboundCalls.Register(this);
         return SendRegistered();
     }
 
     public ValueTask SendNoWait()
     {
         var message = CreateMessage(Context.RelatedCallId);
-        return Context.Peer!.Send(message);
+        return Peer.Send(message);
     }
 
     public ValueTask SendRegistered()
@@ -50,16 +50,15 @@ public abstract class RpcOutboundCall : RpcCall
             message = CreateMessage(Id);
         }
         catch {
-            Context.Peer!.OutboundCalls.Unregister(this);
+            Peer.OutboundCalls.Unregister(this);
             throw;
         }
-        return Context.Peer!.Send(message);
+        return Peer.Send(message);
     }
 
     public virtual RpcMessage CreateMessage(long callId)
     {
         var headers = Context.Headers;
-        var peer = Context.Peer!;
         var arguments = Context.Arguments!;
         var methodDef = MethodDef;
         if (methodDef.CancellationTokenIndex >= 0)
@@ -88,7 +87,7 @@ public abstract class RpcOutboundCall : RpcCall
                 arguments.SetFrom(oldArguments);
             }
         }
-        var argumentData = peer.ArgumentSerializer.Serialize(arguments);
+        var argumentData = Peer.ArgumentSerializer.Serialize(arguments);
         var message = new RpcMessage(Context.CallTypeId, callId, methodDef.Service.Name, methodDef.Name, argumentData, headers);
         return message;
     }
@@ -97,10 +96,25 @@ public abstract class RpcOutboundCall : RpcCall
     public abstract void SetError(Exception error, RpcInboundContext? context);
     public abstract bool SetCancelled(CancellationToken cancellationToken, RpcInboundContext? context);
 
-    // Protected methods
+    public void Unregister(bool notifyPeer = false)
+    {
+        Peer.OutboundCalls.Unregister(this);
+        if (!notifyPeer)
+            return;
 
-    protected bool Unregister()
-        => Context.Peer!.OutboundCalls.Unregister(this);
+        try {
+            var systemCallSender = Peer.Hub.InternalServices.SystemCallSender;
+            _ = systemCallSender.Cancel(Peer, Id);
+        }
+        catch {
+            // It's totally fine to ignore any error here:
+            // peer.Hub might be already disposed at this point,
+            // so SystemCallSender might not be available.
+            // In any case, peer on the other side is going to
+            // be gone as well after that, so every call there
+            // will be cancelled anyway.
+        }
+    }
 }
 
 public class RpcOutboundCall<TResult> : RpcOutboundCall

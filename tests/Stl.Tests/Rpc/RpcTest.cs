@@ -14,7 +14,7 @@ public class RpcWebSocketTest : RpcTestBase
     {
         await using var _ = await WebHost.Serve();
         var services = ClientServices;
-        var client = services.GetRequiredService<ISimpleRpcServiceClient>();
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
         (await client.Div(6, 2)).Should().Be(3);
         (await client.Div(6, 2)).Should().Be(3);
         (await client.Div(10, 2)).Should().Be(5);
@@ -41,12 +41,38 @@ public class RpcWebSocketTest : RpcTestBase
     }
 
     [Fact]
+    public async Task NoWaitTest()
+    {
+        await using var _ = await WebHost.Serve();
+        var services = ClientServices;
+        var peer = services.RpcHub().GetPeer(ClientPeerRef);
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
+
+        // We need to make sure the connection is there before the next call
+        await client.Add(1, 1);
+
+        await client.MaybeSet("a", "b");
+        await TestExt.WhenMetAsync(async () => {
+            var result = await client.Get("a");
+            result.Should().Be("b");
+        }, TimeSpan.FromSeconds(1));
+
+        await client.MaybeSet("a", "c");
+        await TestExt.WhenMetAsync(async () => {
+            var result = await client.Get("a");
+            result.Should().Be("c");
+        }, TimeSpan.FromSeconds(1));
+
+        await AssertNoCalls(peer);
+    }
+
+    [Fact]
     public async Task DelayTest()
     {
         await using var _ = await WebHost.Serve();
         var services = ClientServices;
         var peer = services.RpcHub().GetPeer(ClientPeerRef);
-        var client = services.GetRequiredService<ISimpleRpcServiceClient>();
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
         var startedAt = CpuTimestamp.Now;
         await client.Delay(TimeSpan.FromMilliseconds(200));
         startedAt.Elapsed.TotalMilliseconds.Should().BeInRange(100, 500);
@@ -75,7 +101,7 @@ public class RpcWebSocketTest : RpcTestBase
     public async Task PolymorphTest()
     {
         await using var _ = await WebHost.Serve();
-        var client = ClientServices.GetRequiredService<ISimpleRpcServiceClient>();
+        var client = ClientServices.GetRequiredService<ITestRpcServiceClient>();
         var a1 = new Tuple<int>(1);
         var r1 = await client.Polymorph(a1);
         r1.Should().Be(a1);
@@ -91,7 +117,7 @@ public class RpcWebSocketTest : RpcTestBase
         await using var _ = await WebHost.Serve();
         var services = ClientServices;
         var peer = services.RpcHub().GetPeer(ClientPeerRef);
-        var client = services.GetRequiredService<ISimpleRpcServiceClient>();
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
 
         var threadCount = Math.Max(1, HardwareInfo.ProcessorCount);
         var tasks = new Task[threadCount];
@@ -124,12 +150,12 @@ public class RpcWebSocketTest : RpcTestBase
         var rpc = services.AddRpc();
         var commander = services.AddCommander();
         if (isClient) {
-            rpc.AddClient<ISimpleRpcService, ISimpleRpcServiceClient>();
-            commander.AddCommandService<ISimpleRpcServiceClient>();
+            rpc.AddClient<ITestRpcService, ITestRpcServiceClient>();
+            commander.AddCommandService<ITestRpcServiceClient>();
         }
         else {
-            rpc.AddServer<ISimpleRpcService, SimpleRpcService>();
-            commander.AddCommandService<SimpleRpcService>();
+            rpc.AddServer<ITestRpcService, TestRpcService>();
+            commander.AddCommandService<TestRpcService>();
         }
     }
 }

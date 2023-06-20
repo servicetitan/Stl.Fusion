@@ -13,11 +13,11 @@ public class RpcBasicTest : RpcLocalTestBase
     {
         base.ConfigureServices(services);
         var commander = services.AddCommander();
-        commander.AddCommandService<SimpleRpcService>();
+        commander.AddCommandService<TestRpcService>();
 
         var rpc = services.AddRpc();
-        rpc.AddServer<ISimpleRpcService, SimpleRpcService>();
-        rpc.AddClient<ISimpleRpcService, ISimpleRpcServiceClient>();
+        rpc.AddServer<ITestRpcService, TestRpcService>();
+        rpc.AddClient<ITestRpcService, ITestRpcServiceClient>();
     }
 
     [Fact]
@@ -25,7 +25,7 @@ public class RpcBasicTest : RpcLocalTestBase
     {
         await using var services = CreateServices();
         var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
-        var client = services.GetRequiredService<ISimpleRpcServiceClient>();
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
         (await client.Div(6, 2)).Should().Be(3);
         (await client.Div(6, 2)).Should().Be(3);
         (await client.Div(10, 2)).Should().Be(5);
@@ -40,10 +40,35 @@ public class RpcBasicTest : RpcLocalTestBase
     {
         await using var services = CreateServices();
         var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
-        var client = services.GetRequiredService<ISimpleRpcServiceClient>();
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
         await client.OnDummyCommand(new SimpleRpcServiceDummyCommand("ok"));
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
             () => client.OnDummyCommand(new SimpleRpcServiceDummyCommand("error")));
+        await AssertNoCalls(clientPeer);
+    }
+
+    [Fact]
+    public async Task NoWaitTest()
+    {
+        await using var services = CreateServices();
+        var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
+
+        // We need to make sure the connection is there before the next call
+        await client.Add(1, 1);
+
+        await client.MaybeSet("a", "b");
+        await TestExt.WhenMetAsync(async () => {
+            var result = await client.Get("a");
+            result.Should().Be("b");
+        }, TimeSpan.FromSeconds(1));
+
+        await client.MaybeSet("a", "c");
+        await TestExt.WhenMetAsync(async () => {
+            var result = await client.Get("a");
+            result.Should().Be("c");
+        }, TimeSpan.FromSeconds(1));
+
         await AssertNoCalls(clientPeer);
     }
 
@@ -52,7 +77,7 @@ public class RpcBasicTest : RpcLocalTestBase
     {
         await using var services = CreateServices();
         var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
-        var client = services.GetRequiredService<ISimpleRpcServiceClient>();
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
         await client.Add(1, 1); // Warm-up
 
         var startedAt = CpuTimestamp.Now;
@@ -84,7 +109,7 @@ public class RpcBasicTest : RpcLocalTestBase
     {
         await using var services = CreateServices();
         var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
-        var client = services.GetRequiredService<ISimpleRpcServiceClient>();
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
         var a1 = new Tuple<int>(1);
         var r1 = await client.Polymorph(a1);
         r1.Should().Be(a1);
@@ -97,7 +122,7 @@ public class RpcBasicTest : RpcLocalTestBase
     {
         await using var services = CreateServices();
         var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
-        var client = services.GetRequiredService<ISimpleRpcServiceClient>();
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
 
         var cts = new CancellationTokenSource(100);
         var result = await client.Delay(TimeSpan.FromMilliseconds(300), cts.Token).ResultAwait();
@@ -118,7 +143,7 @@ public class RpcBasicTest : RpcLocalTestBase
     {
         await using var services = CreateServices();
         var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
-        var client = services.GetRequiredService<ISimpleRpcServiceClient>();
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
         await client.Div(1, 1);
         await AssertNoCalls(clientPeer);
 

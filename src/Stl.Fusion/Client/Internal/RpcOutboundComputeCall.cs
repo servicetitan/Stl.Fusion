@@ -26,7 +26,7 @@ public class RpcOutboundComputeCall<TResult> : RpcOutboundCall<TResult>, IRpcOut
             if (resultVersion == default || (ResultTask.IsCompleted && ResultVersion != resultVersion)) {
                 // Not a compute call or a result w/ different version
                 if (WhenInvalidatedSource.TrySetResult(default))
-                    Unregister();
+                    Unregister(true);
             }
             if (ResultSource.TrySetResult((TResult)result!))
                 ResultVersion = resultVersion;
@@ -41,7 +41,7 @@ public class RpcOutboundComputeCall<TResult> : RpcOutboundCall<TResult>, IRpcOut
             if (resultVersion == default || (ResultTask.IsCompleted && ResultVersion != resultVersion)) {
                 // Not a compute call or a result w/ different version
                 if (WhenInvalidatedSource.TrySetResult(default))
-                    Unregister();
+                    Unregister(true);
             }
             if (ResultSource.TrySetException(error))
                 ResultVersion = resultVersion;

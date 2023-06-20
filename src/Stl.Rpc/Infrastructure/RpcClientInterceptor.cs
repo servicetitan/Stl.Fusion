@@ -65,15 +65,14 @@ public class RpcClientInterceptor : RpcInterceptorBase
         // Send succeeded -> wire up cancellation
         var ctr = call.Context.CancellationToken.Register(static state => {
             var call1 = (RpcOutboundCall)state!;
-            var context1 = call1.Context;
-            if (!call1.SetCancelled(context1.CancellationToken, null))
+            if (!call1.SetCancelled(call1.Context.CancellationToken, null))
                 return;
 
             // If we're here, we know the outgoing call is successfully cancelled.
             // We notify peer about that only in this case.
-            var peer1 = context1.Peer!;
-            var systemCallSender = peer1.Hub.SystemCallSender;
-            _ = systemCallSender.Cancel(peer1, call1.Id);
+            var peer = call1.Peer;
+            var systemCallSender = peer.Hub.SystemCallSender;
+            _ = systemCallSender.Cancel(peer, call1.Id);
         }, call, false);
         _ = call.ResultTask.ContinueWith(
             _ => ctr.Dispose(),
