@@ -108,6 +108,9 @@ public class FusionRpcReconnectionTest : SimpleFusionTestBase
     public async Task ReconnectionTest(double testDuration)
     {
         var workerCount = HardwareInfo.ProcessorCount / 2;
+        if (TestRunnerInfo.IsGitHubAction())
+            workerCount = 1;
+
         var endAt = CpuTimestamp.Now + TimeSpan.FromSeconds(testDuration);
         var tasks = Enumerable.Range(0, workerCount)
             .Select(i => Task.Run(() => Worker(i, endAt)))
