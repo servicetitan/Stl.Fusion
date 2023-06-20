@@ -5,8 +5,6 @@ namespace Stl.Rpc.Infrastructure;
 
 public static class RpcSystemHeaders
 {
-    public static readonly RpcHeader CallType = new("@ct");
-
     public static readonly string ArgumentTypeHeaderPrefix = "@t:";
     public static readonly ImmutableArray<RpcHeader> ArgumentTypes =
         Enumerable.Range(0, ArgumentList.Types.Length)
@@ -14,30 +12,33 @@ public static class RpcSystemHeaders
             .ToImmutableArray();
 }
 
-[DataContract]
-public readonly record struct RpcHeader(string Name, string Value = "")
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public readonly partial record struct RpcHeader
 {
-    private readonly string? _name = Name;
-    private readonly string? _value = Value;
+    private readonly string? _name;
+    private readonly string? _value;
 
-    [DataMember(Order = 0)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     public string Name {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => _name ?? "";
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         init => _name = value;
     }
 
-    [DataMember(Order = 1)]
+    [DataMember(Order = 1), MemoryPackOrder(1)]
     public string Value {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => _value ?? "";
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         init => _value = value;
     }
 
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
+    public RpcHeader(string? name, string? value = "")
+    {
+        _name = name;
+        _value = value;
+    }
+
     public override string ToString()
-        => $"RpcHeader({Name} = `{Value}`)";
+        => $"({Name}: `{Value}`)";
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public RpcHeader With(string value)

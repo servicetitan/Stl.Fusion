@@ -54,6 +54,7 @@ public static class ServiceProviderExt
         var singleton = services.GetRequiredService<MixedModeService<T>.Singleton>();
         if (ReferenceEquals(singleton.Services, services))
             return singleton.Service;
+
         var scoped = services.GetRequiredService<MixedModeService<T>.Scoped>();
         return scoped.Service;
     }

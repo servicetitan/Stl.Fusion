@@ -33,6 +33,8 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
 {
     public record Options
     {
+        public static Options Default { get; set; } = new();
+
         public string? KeyPropertyName { get; init; }
         public Func<Expression, Expression>? KeyExtractorExpressionBuilder { get; init; }
         public Func<IQueryable<TDbEntity>, IQueryable<TDbEntity>> QueryTransformer { get; init; } = q => q;

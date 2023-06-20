@@ -11,9 +11,10 @@ public sealed class RpcServiceDef
 
     public RpcHub Hub { get; }
     public Type Type { get; }
-    public CustomResolver? ServerResolver { get; }
+    public ServiceResolver? ServerResolver { get; }
     public Symbol Name { get; }
     public bool IsSystem { get; }
+    public bool IsBackend { get; }
     public int MethodCount => _methods.Count;
     public IEnumerable<RpcMethodDef> Methods => _methods.Values;
     public bool HasServer => ServerResolver != null;
@@ -22,29 +23,33 @@ public sealed class RpcServiceDef
     public RpcMethodDef this[MethodInfo method] => Get(method) ?? throw Errors.NoMethod(Type, method);
     public RpcMethodDef this[Symbol methodName] => Get(methodName) ?? throw Errors.NoMethod(Type, methodName);
 
-    public RpcServiceDef(RpcHub hub, Symbol name, RpcServiceBuilder source, Func<RpcMethodDef, Symbol> methodNameBuilder)
+    public RpcServiceDef(RpcHub hub, Symbol name, RpcServiceBuilder source)
     {
         Hub = hub;
         Name = name;
         Type = source.Type;
         ServerResolver = source.ServerResolver;
         IsSystem = typeof(IRpcSystemService).IsAssignableFrom(Type);
+        IsBackend = hub.BackendServiceDetector.Invoke(Type, name);
 
         _methods = new Dictionary<MethodInfo, RpcMethodDef>();
         _methodByName = new Dictionary<Symbol, RpcMethodDef>();
-        foreach (var method in Type.GetMethods(BindingFlags.Instance | BindingFlags.Public)) {
-            if (method.IsGenericMethodDefinition)
-                continue;
+        var baseTypes = Type.GetAllBaseTypes(true, true);
+        foreach (var type in baseTypes) {
+            foreach (var method in type.GetMethods(BindingFlags.Instance | BindingFlags.Public)) {
+                if (method.IsGenericMethodDefinition)
+                    continue;
 
-            var methodDef = new RpcMethodDef(this, method, methodNameBuilder);
-            if (!methodDef.IsValid)
-                continue;
+                var methodDef = new RpcMethodDef(this, method);
+                if (!methodDef.IsValid)
+                    continue;
 
-            if (_methodByName.ContainsKey(methodDef.Name))
-                throw Errors.MethodNameConflict(methodDef);
+                if (_methodByName.ContainsKey(methodDef.Name))
+                    throw Errors.MethodNameConflict(methodDef);
 
-            _methods.Add(method, methodDef);
-            _methodByName.Add(methodDef.Name, methodDef);
+                _methods.Add(method, methodDef);
+                _methodByName.Add(methodDef.Name, methodDef);
+            }
         }
     }
 

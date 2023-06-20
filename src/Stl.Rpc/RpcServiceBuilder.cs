@@ -8,8 +8,7 @@ public sealed class RpcServiceBuilder
     public RpcBuilder Rpc { get; }
     public Type Type { get; }
     public Symbol Name { get; set; }
-    public Type? ClientType { get; private set; }
-    public CustomResolver? ServerResolver { get; private set; }
+    public ServiceResolver? ServerResolver { get; private set; }
 
     public RpcServiceBuilder(RpcBuilder rpc, Type type, Symbol name = default)
     {
@@ -29,9 +28,9 @@ public sealed class RpcServiceBuilder
 
     public RpcServiceBuilder HasServer<TServer>()
         => HasServer(typeof(TServer));
-    public RpcServiceBuilder HasServer(CustomResolver? serverResolver = null)
+    public RpcServiceBuilder HasServer(ServiceResolver? serverResolver = null)
     {
-        serverResolver ??= CustomResolver.New(Type);
+        serverResolver ??= ServiceResolver.New(Type);
         if (!Type.IsAssignableFrom(serverResolver.Type))
             throw Errors.MustBeAssignableTo(serverResolver.Type, Type, nameof(serverResolver));
 
@@ -42,26 +41,6 @@ public sealed class RpcServiceBuilder
     public RpcServiceBuilder HasNoServer()
     {
         ServerResolver = null;
-        return this;
-    }
-
-    public RpcServiceBuilder HasClient<TClient>()
-        => HasClient(typeof(TClient));
-    public RpcServiceBuilder HasClient(Type? clientType = null)
-    {
-        clientType ??= Type;
-        if (!Type.IsAssignableFrom(clientType))
-            throw Errors.MustBeAssignableTo(clientType, Type, nameof(clientType));
-
-        Rpc.Services.AddSingleton(clientType, c => c.RpcHub().CreateClient(Type, clientType));
-        return this;
-    }
-
-    public RpcServiceBuilder HasNoClient()
-    {
-        if (ClientType != null)
-            Rpc.Services.RemoveAll(ClientType);
-        ClientType = null;
         return this;
     }
 

@@ -1,6 +1,5 @@
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.UI;
-using Stl.RegisterAttributes;
 
 namespace Stl.Fusion.Tests.UIModels;
 
@@ -11,13 +10,12 @@ public class KeyValueModel<TValue>
     public int UpdateCount { get; set; }
 }
 
-[RegisterService(typeof(IComputedState<KeyValueModel<string>>))]
 public class StringKeyValueModelState : ComputedState<KeyValueModel<string>>
 {
     private IMutableState<string> Locals { get; }
 
-    private IKeyValueServiceClient<string> KeyValueServiceClient
-        => Services.GetRequiredService<IKeyValueServiceClient<string>>();
+    private IKeyValueService<string> KeyValueService
+        => Services.GetRequiredService<IKeyValueService<string>>();
 
     public StringKeyValueModelState(IServiceProvider services)
         : base(null!, services, false)
@@ -36,7 +34,7 @@ public class StringKeyValueModelState : ComputedState<KeyValueModel<string>>
     {
         var updateCount = ValueOrDefault?.UpdateCount ?? 0;
         var key = Locals.ValueOrDefault ?? "";
-        var value = await KeyValueServiceClient.Get(key, cancellationToken).ConfigureAwait(false);
+        var value = await KeyValueService.Get(key, cancellationToken).ConfigureAwait(false);
         return new KeyValueModel<string>() {
             Key = key,
             Value = value,

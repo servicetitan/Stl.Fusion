@@ -1,8 +1,5 @@
-using Stl.RegisterAttributes;
-
 namespace Stl.Tests.CommandR.Services;
 
-[RegisterService, RegisterCommandHandlers]
 public class LogCommandHandler : ServiceBase, ICommandHandler<LogCommand>, ICommandHandler<LogEvent>
 {
     public LogCommandHandler(IServiceProvider services) : base(services) { }

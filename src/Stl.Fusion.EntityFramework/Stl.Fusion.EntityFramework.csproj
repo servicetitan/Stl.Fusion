@@ -29,8 +29,5 @@
   <ItemGroup>
     <ProjectReference Include="..\Stl.Fusion\Stl.Fusion.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Stl.Generators\Stl.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-  </ItemGroup>
 
 </Project>

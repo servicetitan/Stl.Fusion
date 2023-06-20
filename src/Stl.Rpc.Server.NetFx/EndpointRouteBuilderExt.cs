@@ -11,7 +11,7 @@ public static class EndpointRouteBuilderExt
         if (appBuilder == null) throw new ArgumentNullException(nameof(appBuilder));
         if (services == null) throw new ArgumentNullException(nameof(services));
 
-        var server = services.GetRequiredService<RpcServer>();
+        var server = services.GetRequiredService<RpcWebSocketServer>();
 
         return appBuilder.Map(pattern ?? server.Settings.RequestPath, app => {
             app.Run(delegate(IOwinContext context) {

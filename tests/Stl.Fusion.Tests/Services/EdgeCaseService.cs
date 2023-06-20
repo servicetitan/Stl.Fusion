@@ -1,6 +1,19 @@
 namespace Stl.Fusion.Tests.Services;
 
-[RegisterComputeService(typeof(IEdgeCaseService), Scope = ServiceScope.Services)]
+public interface IEdgeCaseService : IComputeService
+{
+    [ComputeMethod(MinCacheDuration = 10)]
+    Task<string> GetSuffix(CancellationToken cancellationToken = default);
+    Task SetSuffix(string suffix, CancellationToken cancellationToken = default);
+
+    [ComputeMethod(MinCacheDuration = 10)]
+    Task<long?> GetNullable(long source, CancellationToken cancellationToken = default);
+
+    [ComputeMethod(MinCacheDuration = 10)]
+    Task<string> ThrowIfContainsError(string source, CancellationToken cancellationToken = default);
+    Task<string> ThrowIfContainsErrorNonCompute(string source, CancellationToken cancellationToken = default);
+}
+
 public class EdgeCaseService : IEdgeCaseService
 {
     public IMutableState<string> SuffixState { get; }

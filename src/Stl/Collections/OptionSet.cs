@@ -1,18 +1,18 @@
 namespace Stl.Collections;
 
-[DataContract]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
-public class OptionSet : IServiceProvider
+public partial class OptionSet : IServiceProvider
 {
     private volatile ImmutableDictionary<Symbol, object> _items;
 
-    [JsonIgnore]
+    [JsonIgnore, MemoryPackIgnore]
     public ImmutableDictionary<Symbol, object> Items {
         get => _items;
         set => _items = value;
     }
 
-    [DataMember(Order = 0)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     [JsonPropertyName(nameof(Items)),  Newtonsoft.Json.JsonIgnore]
     public Dictionary<string, NewtonsoftJsonSerialized<object>> JsonCompatibleItems
         => Items.ToDictionary(
@@ -50,7 +50,7 @@ public class OptionSet : IServiceProvider
     public OptionSet(ImmutableDictionary<Symbol, object>? items)
         => _items = items ?? ImmutableDictionary<Symbol, object>.Empty;
 
-    [JsonConstructor]
+    [JsonConstructor, MemoryPackConstructor]
     public OptionSet(Dictionary<string, NewtonsoftJsonSerialized<object>>? jsonCompatibleItems)
         : this(jsonCompatibleItems?.ToImmutableDictionary(p => (Symbol) p.Key, p => p.Value.Value))
     { }

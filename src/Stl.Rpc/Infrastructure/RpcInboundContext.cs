@@ -6,16 +6,15 @@ public class RpcInboundContext
 {
     private static readonly AsyncLocal<RpcInboundContext?> CurrentLocal = new();
 
-    public static readonly RpcInboundContextFactory DefaultFactory =
-        static (peer, message, cancellationToken) => new RpcInboundContext(peer, message, cancellationToken);
-    public static RpcInboundContext Current => CurrentLocal.Value
-        ?? throw Errors.NoCurrentRpcInboundContext();
+    public static RpcInboundContext? Current => CurrentLocal.Value;
 
-    public RpcPeer Peer { get; }
-    public RpcMessage Message { get; }
-    public CancellationToken CancellationToken { get; }
-    public List<RpcHeader> Headers => Message.Headers;
+    public readonly RpcPeer Peer;
+    public readonly RpcMessage Message;
+    public readonly CancellationToken CancellationToken;
     public RpcInboundCall Call { get; protected init; }
+
+    public static RpcInboundContext GetCurrent()
+        => CurrentLocal.Value ?? throw Errors.NoCurrentRpcInboundContext();
 
     public RpcInboundContext(RpcPeer peer, RpcMessage message, CancellationToken cancellationToken)
         : this(peer, message, cancellationToken, true)
@@ -26,11 +25,8 @@ public class RpcInboundContext
         Peer = peer;
         Message = message;
         CancellationToken = cancellationToken;
-        if (initializeCall) {
-            var callTypeHeader = message.Headers.GetOrDefault(RpcSystemHeaders.CallType.Name);
-            var callType = Peer.Hub.Configuration.InboundCallTypes[callTypeHeader?.Value ?? ""];
-            Call = RpcInboundCall.New(callType, this, GetMethodDef());
-        }
+        if (initializeCall)
+            Call = RpcInboundCall.New(message.CallTypeId, this, GetMethodDef());
         else
             Call = null!;
     }
@@ -38,18 +34,19 @@ public class RpcInboundContext
     public Scope Activate()
         => new(this);
 
-    // Private methods
-
-    private RpcMethodDef GetMethodDef()
-    {
-        var serviceDef = Peer.Hub.ServiceRegistry[Message.Service];
-        if (!serviceDef.IsSystem && !Peer.LocalServiceFilter.Invoke(serviceDef))
-            throw Errors.ServiceIsNotWhiteListed(serviceDef);
-
-        return serviceDef[Message.Method];
-    }
-
     // Nested types
+
+    private RpcMethodDef? GetMethodDef()
+    {
+        var serviceDef = Peer.Hub.ServiceRegistry.Get(Message.Service);
+        if (serviceDef == null)
+            return null;
+
+        if (!serviceDef.IsSystem && !Peer.LocalServiceFilter.Invoke(serviceDef))
+            return null;
+
+        return serviceDef.Get(Message.Method);
+    }
 
     public readonly struct Scope : IDisposable
     {

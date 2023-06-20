@@ -7,10 +7,12 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
+    <PackageReference Include="MemoryPack.Generator" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Stl.Fusion.Client\Stl.Fusion.Client.csproj" />
+    <ProjectReference Include="..\..\..\src\Stl.Fusion\Stl.Fusion.csproj" />
+    <ProjectReference Include="..\..\..\src\Stl.Fusion.Ext.Contracts\Stl.Fusion.Ext.Contracts.csproj" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Stl.Generators\Stl.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />

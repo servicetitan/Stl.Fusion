@@ -12,6 +12,10 @@
     <ProjectReference Include="..\Stl\Stl.csproj" />
   </ItemGroup>
 
+  <ItemGroup Condition="!$(TargetFramework.StartsWith('netstandard2.0'))">
+    <PackageReference Include="MemoryPack.Generator" />
+  </ItemGroup>
+
   <ItemGroup>
     <None Update="ArgumentList.tt">
       <Generator>TextTemplatingFileGenerator</Generator>

@@ -7,14 +7,14 @@ public static class TextSerialized
     public static TextSerialized<TValue> New<TValue>(string data) => new(data);
 }
 
-[DataContract]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
-public class TextSerialized<T> : IEquatable<TextSerialized<T>>
+public partial class TextSerialized<T> : IEquatable<TextSerialized<T>>
 {
     private Option<T> _valueOption;
     private Option<string> _dataOption;
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public T Value {
         get => _valueOption.IsSome(out var v) ? v : Deserialize();
         set {
@@ -23,7 +23,7 @@ public class TextSerialized<T> : IEquatable<TextSerialized<T>>
         }
     }
 
-    [DataMember(Order = 0)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     public string Data {
         get => _dataOption.IsSome(out var v) ? v : Serialize();
         set {
@@ -35,6 +35,8 @@ public class TextSerialized<T> : IEquatable<TextSerialized<T>>
     // ToString
 
     public TextSerialized() { }
+
+    [MemoryPackConstructor]
     public TextSerialized(string data)
         => _dataOption = data;
 

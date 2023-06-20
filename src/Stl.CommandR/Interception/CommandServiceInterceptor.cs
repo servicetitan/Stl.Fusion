@@ -1,6 +1,7 @@
 using Stl.CommandR.Internal;
 using Stl.Interception;
 using Stl.Interception.Interceptors;
+using Stl.Rpc.Infrastructure;
 
 namespace Stl.CommandR.Interception;
 
@@ -19,8 +20,37 @@ public class CommandServiceInterceptor : InterceptorBase
             var arguments = invocation.Arguments;
             var command = arguments.Get<ICommand>(0);
             var context = CommandContext.Current;
-            if (!ReferenceEquals(command, context?.UntypedCommand)) {
-                // We're outside the ICommander pipeline, so we either have to block this call...
+            if (context == null) {
+                var rpcInboundCallContext = RpcInboundContext.Current;
+                if (rpcInboundCallContext != null) {
+                    var call = rpcInboundCallContext.Call;
+                    var callMethodDef = call.MethodDef;
+                    var callServiceDef = callMethodDef.Service;
+                    var callArguments = call.Arguments;
+                    if (callArguments is { Length: <= 2 }
+                        && callServiceDef.HasServer
+                        && Equals(callMethodDef.Method.Name, invocation.Method.Name)
+                        && callServiceDef.Type.IsInstanceOfType(invocation.Proxy)
+                        && ReferenceEquals(callArguments.GetUntyped(0), command)) {
+                        var cancellationToken = callArguments.Length == 2
+                            ? arguments.GetCancellationToken(1)
+                            : default;
+
+
+                        var resultTask = Commander.Call(command, isOutermost: true, cancellationToken);
+                        return methodDef.ReturnsTask
+                            ? resultTask
+                            : methodDef.IsAsyncVoidMethod
+                                ? resultTask.ToValueTask()
+                                : ((Task<T>)resultTask).ToValueTask();
+                    }
+                }
+                // We're outside the ICommander pipeline
+                // and current inbound Rpc call isn't "ours"
+                throw Errors.DirectCommandHandlerCallsAreNotAllowed();
+            }
+            if (!ReferenceEquals(command, context.UntypedCommand)) {
+                // We're outside the ICommander pipeline
                 throw Errors.DirectCommandHandlerCallsAreNotAllowed();
             }
 

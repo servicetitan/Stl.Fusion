@@ -7,10 +7,12 @@ public abstract class AppBase
     public IServiceProvider HostServices { get; protected set; } = null!;
     public IProductService HostProductService => HostServices.GetRequiredService<IProductService>();
     public ICartService HostCartService => HostServices.GetRequiredService<ICartService>();
+    public ICommander HostCommander => HostServices.Commander();
 
     public IServiceProvider ClientServices { get; protected set; } = null!;
     public IProductService ClientProductService => ClientServices.GetRequiredService<IProductService>();
     public ICartService ClientCartService => ClientServices.GetRequiredService<ICartService>();
+    public ICommander ClientCommander => ClientServices.Commander();
 
     public Product[] ExistingProducts { get; set; } = Array.Empty<Product>();
     public Cart[] ExistingCarts { get; set; } = Array.Empty<Cart>();
@@ -23,7 +25,7 @@ public abstract class AppBase
         var pCarrot = new Product { Id = "carrot", Price = 1M };
         ExistingProducts = new [] { pApple, pBanana, pCarrot };
         foreach (var product in ExistingProducts)
-            await HostProductService.Edit(new EditCommand<Product>(product));
+            await HostCommander.Call(new EditCommand<Product>(product));
 
         var cart1 = new Cart() { Id = "cart:apple=1,banana=2",
             Items = ImmutableDictionary<string, decimal>.Empty
@@ -37,7 +39,7 @@ public abstract class AppBase
         };
         ExistingCarts = new [] { cart1, cart2 };
         foreach (var cart in ExistingCarts)
-            await HostCartService.Edit(new EditCommand<Cart>(cart));
+            await HostCommander.Call(new EditCommand<Cart>(cart));
     }
 
     public virtual async ValueTask DisposeAsync()

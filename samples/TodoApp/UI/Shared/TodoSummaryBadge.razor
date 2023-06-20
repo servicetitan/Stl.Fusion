@@ -1,11 +1,11 @@
 @inherits ComputedStateComponent<TodoSummary>
 @inject Session Session
-@inject ITodoService Todos
+@inject ITodos Todos
 @inject ILogger<TodoSummaryBadge> Log
 
 @{
     Log.LogInformation("Rendering");
-    var summary = State.ValueOrDefault ?? new();
+    var summary = State.ValueOrDefault ?? TodoSummary.None;
 }
 
 <Badge Color="Color.Success"><b>@summary.DoneCount</b> done</Badge>

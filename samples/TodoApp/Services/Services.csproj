@@ -6,7 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\Stl.Fusion.EntityFramework\Stl.Fusion.EntityFramework.csproj" />
+    <ProjectReference Include="..\..\..\src\Stl.Fusion\Stl.Fusion.csproj" />
+    <ProjectReference Include="..\..\..\src\Stl.Fusion.Ext.Services\Stl.Fusion.Ext.Services.csproj" />
     <ProjectReference Include="..\Abstractions\Abstractions.csproj" />
   </ItemGroup>
   <ItemGroup>

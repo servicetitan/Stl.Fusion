@@ -1,15 +1,18 @@
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using Stl.Conversion;
 using Stl.Serialization.Internal;
 
+#if !NETSTANDARD2_0
+using System.Diagnostics.CodeAnalysis;
+#endif
+
 namespace Stl.Serialization;
 
-[DataContract]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [JsonConverter(typeof(JsonStringJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(JsonStringNewtonsoftJsonConverter))]
 [TypeConverter(typeof(JsonStringTypeConverter))]
-public class JsonString :
+public partial class JsonString :
     IEquatable<JsonString>,
     IComparable<JsonString>,
     IConvertibleTo<string?>
@@ -19,12 +22,13 @@ public class JsonString :
 
     private readonly string? _value;
 
-    [DataMember(Order = 0)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     public string Value => _value ?? string.Empty;
 
     public static JsonString? New(string? value)
         => value == null ? Null : new JsonString(value);
 
+    [MemoryPackConstructor]
     public JsonString(string value)
         => _value = value;
 

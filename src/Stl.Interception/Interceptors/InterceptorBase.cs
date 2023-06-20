@@ -95,7 +95,7 @@ public abstract class InterceptorBase : Interceptor, IHasServices
         if (methodDef == null)
             return null;
 
-        return (Func<Invocation, object?>) CreateTypedHandlerMethod
+        return (Func<Invocation, object?>)CreateTypedHandlerMethod
             .MakeGenericMethod(methodDef.UnwrappedReturnType)
             .Invoke(this, new object[] { initialInvocation, methodDef })!;
     }

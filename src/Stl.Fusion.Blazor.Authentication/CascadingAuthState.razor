@@ -1,0 +1,61 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.JSInterop
+@using Stl.Fusion.Authentication
+@using Stl.Fusion.Blazor.Authentication.Internal
+@using Stl.Fusion.Blazor.Internal
+@implements IDisposable
+
+<CascadingAuthenticationState>
+    <CascadingValue TValue="Task<AuthState>" Value="@GetAuthState()" ChildContent="@ChildContent"/>
+</CascadingAuthenticationState>
+
+@code {
+    [Inject] protected IServiceProvider Services { get; init; } = null!;
+    [Inject] protected Session Session { get; init; } = null!;
+    [Inject] protected AuthStateProvider AuthStateProvider  { get; init; } = null!;
+
+    [Parameter] public RenderFragment ChildContent { get; set; } = _ => { };
+    [Parameter] public bool UsePresenceReporter { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (Session.Id.IsEmpty)
+            throw Errors.NoSessionId();
+
+        AuthStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+        OnAuthenticationStateChanged(AuthStateProvider.GetAuthenticationStateAsync());
+        if (UsePresenceReporter) {
+            var presenceReporter = Services.GetRequiredService<PresenceReporter>();
+            presenceReporter.Start();
+        }
+    }
+
+    void IDisposable.Dispose()
+        => AuthStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+
+
+    private void OnAuthenticationStateChanged(Task<AuthenticationState> newAuthStateTask)
+    {
+        _ = newAuthStateTask.ContinueWith(t => {
+            if (!t.IsCompletedSuccessfully)
+                return; // Will react to the next change
+
+            var authState = (AuthState)t.Result;
+            if (!authState.IsSignOutForced)
+                return;
+
+            // Current Session is unusable due to forced sign-out.
+            // The only way to get an usable one is to reload the page.
+            _ = InvokeAsync(() => {
+                var nav = Services.GetRequiredService<NavigationManager>();
+                nav.NavigateTo(nav.Uri, true);
+            });
+        }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
+    }
+
+    private Task<AuthState> GetAuthState()
+        => AuthStateProvider.GetAuthenticationStateAsync()
+            .ContinueWith(
+                t => (AuthState)t.Result,
+                CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Current);
+}

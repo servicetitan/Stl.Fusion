@@ -4,6 +4,6 @@ namespace Stl.Fusion;
 
 public static class ComputeServiceExt
 {
-    public static bool IsReplicaService(this IComputeService service)
+    public static bool IsClient(this IComputeService service)
         => service is InterfaceProxy;
 }

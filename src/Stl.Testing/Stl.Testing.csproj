@@ -8,6 +8,9 @@
     -->testing helpers used by Stl.Fusion tests.</Description>
   </PropertyGroup>
 
+  <ItemGroup Condition="!$(TargetFramework.StartsWith('netstandard2.0'))">
+    <PackageReference Include="MemoryPack.Generator" />
+  </ItemGroup>
   <ItemGroup Condition="!$(TargetFramework.StartsWith('net4'))">
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>

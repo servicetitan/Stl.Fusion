@@ -1,5 +1,3 @@
-using System.Security;
-
 namespace Stl.Internal;
 
 public static class Errors
@@ -7,6 +5,14 @@ public static class Errors
     public static Exception MustBeClass(Type type, string? argumentName = null)
     {
         var message = $"'{type}' must be reference type (class).";
+        return argumentName.IsNullOrEmpty()
+            ? new InvalidOperationException(message)
+            : new ArgumentOutOfRangeException(argumentName, message);
+    }
+
+    public static Exception MustBeInterface(Type type, string? argumentName = null)
+    {
+        var message = $"'{type}' must be interface type.";
         return argumentName.IsNullOrEmpty()
             ? new InvalidOperationException(message)
             : new ArgumentOutOfRangeException(argumentName, message);

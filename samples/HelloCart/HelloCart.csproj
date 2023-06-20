@@ -13,7 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Stl.Fusion.Client\Stl.Fusion.Client.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework\Stl.Fusion.EntityFramework.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework.Redis\Stl.Fusion.EntityFramework.Redis.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.Server\Stl.Fusion.Server.csproj" />

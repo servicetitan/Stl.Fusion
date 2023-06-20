@@ -5,18 +5,18 @@ using Stl.OS;
 
 namespace Stl.Fusion.Tests.Services;
 
-[DataContract]
-public record Screenshot
+[DataContract, MemoryPackable]
+public partial record Screenshot
 {
     [DataMember] public int Width { get; init; }
     [DataMember] public int Height { get; init; }
     [DataMember] public Moment CapturedAt { get; init; }
-    [DataMember] public Base64Encoded Image { get; init; } = "";
+    [DataMember] public byte[] Image { get; init; } = Array.Empty<byte>();
 }
 
 public interface IScreenshotService : IComputeService
 {
-    [ComputeMethod]
+    [ComputeMethod, ClientComputeMethod(ClientCacheBehavior = ClientCacheBehavior.DefaultValue)]
     Task<Screenshot> GetScreenshotAlt(int width, CancellationToken cancellationToken = default);
     [ComputeMethod(MinCacheDuration = 0.3)]
     Task<Screenshot> GetScreenshot(int width, CancellationToken cancellationToken = default);
@@ -24,12 +24,14 @@ public interface IScreenshotService : IComputeService
 
 #pragma warning disable CA1416
 
-[RegisterComputeService(typeof(IScreenshotService), Scope = ServiceScope.Services)]
 public class ScreenshotService : IScreenshotService
 {
     private readonly ImageCodecInfo _jpegEncoder;
     private readonly EncoderParameters _jpegEncoderParameters;
     private readonly Rectangle _displayDimensions;
+    private volatile int _screenshotCount;
+
+    public int ScreenshotCount => _screenshotCount;
 
     public ScreenshotService()
     {
@@ -65,19 +67,19 @@ public class ScreenshotService : IScreenshotService
 
         using var stream = new MemoryStream();
         bOut.Save(stream, _jpegEncoder, _jpegEncoderParameters);
-        var bytes = stream.ToArray();
-        var base64Content = Convert.ToBase64String(bytes);
         return new Screenshot {
             Width = ow,
             Height = oh,
             CapturedAt = SystemClock.Now,
-            Image = base64Content
+            Image = stream.ToArray(),
         };
     }
 
     [ComputeMethod(AutoInvalidationDelay = 0.01)]
     protected virtual Task<Bitmap> GetScreenshot(CancellationToken cancellationToken = default)
     {
+        Interlocked.Increment(ref _screenshotCount);
+
         // This method takes a full-resolution screenshot
         var (w, h) = (_displayDimensions.Width, _displayDimensions.Height);
         var bScreen = new Bitmap(w, h);

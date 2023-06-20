@@ -22,6 +22,8 @@ public interface IOperationReprocessor : ICommandHandler<ICommand>
 
 public record OperationReprocessorOptions
 {
+    public static OperationReprocessorOptions Default { get; set; } = new();
+
     public int MaxRetryCount { get; init; } = 3;
     public RetryDelaySeq RetryDelays { get; init; } = new(0.50, 3, 0.33) { Multiplier = Math.Sqrt(2) };
     public IMomentClock? DelayClock { get; init; }
@@ -38,7 +40,7 @@ public class OperationReprocessor : IOperationReprocessor
     private ILogger? _log;
 
     protected IServiceProvider Services { get; }
-    protected ITransientErrorDetector<IOperationReprocessor> TransientErrorDetector => 
+    protected ITransientErrorDetector<IOperationReprocessor> TransientErrorDetector =>
         _transientErrorDetector ??= Services.GetRequiredService<ITransientErrorDetector<IOperationReprocessor>>();
     protected HashSet<Exception> KnownTransientFailures { get; } = new();
     protected ILogger Log => _log ??= Services.LogFor(GetType());
@@ -84,9 +86,11 @@ public class OperationReprocessor : IOperationReprocessor
     {
         if (FailedTryCount > Options.MaxRetryCount)
             return false;
+
         var operationScope = CommandContext.Items.Get<IOperationScope>();
         if (operationScope is TransientOperationScope)
             return false;
+
         return IsTransientFailure(allErrors);
     }
 
@@ -116,11 +120,11 @@ public class OperationReprocessor : IOperationReprocessor
                 break;
             }
             catch (Exception error) when (error is not OperationCanceledException) {
+                LastError = error;
+                FailedTryCount++;
                 if (!this.WillRetry(error))
                     throw;
 
-                LastError = error;
-                FailedTryCount++;
                 context.Items.Items = itemsBackup;
                 context.ExecutionState = executionStateBackup;
                 var delay = Options.RetryDelays[FailedTryCount];

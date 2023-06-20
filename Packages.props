@@ -38,10 +38,13 @@
     <EntityFrameworkCoreMySqlVersion5>$(AspNetCoreVersion5)</EntityFrameworkCoreMySqlVersion5>
     <EntityFrameworkCoreMySqlVersion3>$(AspNetCoreVersion3)</EntityFrameworkCoreMySqlVersion3>
     <!-- Serialization -->
-    <NewtonsoftJsonVersion>13.0.*</NewtonsoftJsonVersion>
-    <MessagePackVersion>2.5.*</MessagePackVersion>
     <AspNetCoreNewtonsoftJsonVersion>$(AspNetCoreVersion)</AspNetCoreNewtonsoftJsonVersion>
     <AspNetCoreNewtonsoftJsonVersion6>$(AspNetCoreVersion6)</AspNetCoreNewtonsoftJsonVersion6>
+    <NewtonsoftJsonVersion>13.0.*</NewtonsoftJsonVersion>
+    <MemoryPackVersion>1.9.*</MemoryPackVersion>
+    <MessagePackVersion>2.5.*</MessagePackVersion>
+    <!-- Other -->
+    <RestEaseVersion>1.6.*</RestEaseVersion>
     <!-- Testing -->
     <AspNetCoreMvcTestingVersion>$(AspNetCoreVersion6)</AspNetCoreMvcTestingVersion>
     <AspNetCoreMvcTestingVersion6>$(AspNetCoreVersion6)</AspNetCoreMvcTestingVersion6>
@@ -65,6 +68,9 @@
     <PackageReference Update="DataAnnotationsValidatorNetStandard" Version="1.0.*" />
     <PackageReference Update="EFCore.CheckConstraints" Version="$(EntityFrameworkCoreVersion)" />
     <PackageReference Update="Enums.NET" Version="4.0.*" />
+    <PackageReference Update="MemoryPack" Version="$(MemoryPackVersion)" />
+    <PackageReference Update="MemoryPack.Core" Version="$(MemoryPackVersion)" />
+    <PackageReference Update="MemoryPack" Version="$(MemoryPackVersion)" />
     <PackageReference Update="MessagePack" Version="$(MessagePackVersion)" />
     <PackageReference Update="Microsoft.AspNetCore.Authentication.Cookies" Version="2.2.*" />
     <PackageReference Update="Microsoft.AspNetCore.Authentication.Google" Version="$(AspNetCoreVersion)" />
@@ -108,8 +114,7 @@
     <PackageReference Update="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
     <PackageReference Update="Pluralize.NET" Version="1.0.*" />
     <PackageReference Update="Pomelo.EntityFrameworkCore.MySql" Version="$(EntityFrameworkCoreMySqlVersion)" />
-    <PackageReference Update="RestEase" Version="1.6.*" />
-    <PackageReference Update="RestEase.SourceGenerator" Version="1.6.*" />
+    <PackageReference Update="RestEase" Version="$(RestEaseVersion)" />
     <PackageReference Update="StackExchange.Redis" Version="2.6.*" />
     <PackageReference Update="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageReference Update="System.Collections.Immutable" Version="$(SystemXxxVersion)" />
@@ -140,7 +145,7 @@
     <PackageReference Update="Microsoft.Owin" Version="4.2.2" />
     <PackageReference Update="Owin" Version="1.0.0" />
     <PackageReference Update="System.Reflection.Emit.Lightweight" Version="4.7.0" />
-    
+
     <!-- Test time only -->
     <PackageReference Update="AutoFixture.AutoMoq" Version="4.18.*" />
     <PackageReference Update="coverlet.collector" Version="6.0.0" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
@@ -168,12 +173,10 @@
     <PackageReference Update="Microsoft.VisualStudio.Threading.Analyzers" Version="17.6.*" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
     <PackageReference Update="Roslynator.Analyzers" Version="4.3.*" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers"/>
     <PackageReference Update="Meziantou.Analyzer" Version="2.0.*" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers"/>
-    
+
     <!-- Generators -->
-    <PackageReference Update="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Update="MemoryPack.Generator" Version="$(MemoryPackVersion)" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
     <PackageReference Update="Microsoft.CodeAnalysis.CSharp" Version="$(CSharpVersion)" />
+    <PackageReference Update="Microsoft.CodeAnalysis.Analyzers" Version="3.3.4" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive"/>
   </ItemGroup>
 </Project>

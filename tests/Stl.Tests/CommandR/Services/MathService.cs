@@ -1,11 +1,10 @@
 namespace Stl.Tests.CommandR.Services;
 
-[RegisterCommandService]
 public class MathService : ServiceBase, ICommandService
 {
     private readonly object _lock = new();
 
-    private ICommander Commander { get; } 
+    private ICommander Commander { get; }
 
     public long Value { get; set; }
 

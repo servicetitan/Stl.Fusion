@@ -7,22 +7,21 @@ public class ComputeServiceInterceptor : ComputeServiceInterceptorBase
 {
     public new record Options : ComputeServiceInterceptorBase.Options;
 
-    protected readonly VersionGenerator<LTag> VersionGenerator;
-
     public ComputeServiceInterceptor(Options options, IServiceProvider services)
         : base(options, services)
-        => VersionGenerator = services.VersionGenerator<LTag>();
+    { }
 
     protected override ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method)
-        => new ComputeMethodFunction<T>(method, Services, VersionGenerator);
+        => new ComputeMethodFunction<T>(method, Services, Hub.LTagVersionGenerator);
 
     protected override void ValidateTypeInternal(Type type)
     {
+        base.ValidateTypeInternal(type);
         var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic
             | BindingFlags.Instance | BindingFlags.Static
             | BindingFlags.FlattenHierarchy;
         foreach (var method in type.GetMethods(bindingFlags)) {
-            var options = ComputedOptionsProvider.GetComputedOptions(type, method);
+            var options = Hub.ComputedOptionsProvider.GetComputedOptions(type, method);
             if (options == null)
                 continue;
 

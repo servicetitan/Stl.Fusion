@@ -1,4 +1,3 @@
-using Stl.Channels;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Internal;
 
@@ -6,47 +5,41 @@ namespace Stl.Rpc;
 
 public class RpcClientPeer : RpcPeer
 {
-    public RpcClientChannelProvider ChannelProvider { get; init; }
+    public RpcClientChannelFactory ChannelFactory { get; init; }
     public RetryDelaySeq ReconnectDelays { get; init; } = new();
-    public int ReconnectRetryLimit { get; init; } = int.MaxValue;
+    public int? ReconnectRetryLimit { get; init; }
 
-    public RpcClientPeer(RpcHub hub, Symbol name) : base(hub, name)
+    public RpcClientPeer(RpcHub hub, RpcPeerRef @ref)
+        : base(hub, @ref)
     {
         LocalServiceFilter = static _ => false;
-        ChannelProvider = Hub.ClientChannelProvider;
+        ChannelFactory = Hub.ClientChannelFactory;
     }
 
     // Protected methods
 
-    protected override async Task<Channel<RpcMessage>> GetChannelOrReconnect(CancellationToken cancellationToken)
+    protected override async Task<Channel<RpcMessage>> GetChannel(CancellationToken cancellationToken)
     {
-        var (channel, error, tryIndex) = GetConnectionState().Value;
+        var (channel, error, _, tryIndex) = ConnectionState.LatestOrThrow().Value;
         if (channel != null)
             return channel;
 
-        if (error is OperationCanceledException) {
-            Log.LogInformation("'{Name}': Connection cancelled, shutting down", Name);
-            throw error;
-        }
-        if (error is ImpossibleToConnectException or TimeoutException) {
-            Log.LogWarning(error, "'{Name}': Can't (re)connect, shutting down", Name);
-            throw error;
-        }
-        if (tryIndex >= ReconnectRetryLimit) {
-            Log.LogWarning(error, "'{Name}': Reconnect retry limit exceeded", Name);
-            throw Errors.ImpossibleToReconnect();
+        if (ReconnectRetryLimit is { } limit && tryIndex >= limit) {
+            Log.LogWarning(error, "'{PeerId}': Reconnect retry limit exceeded", Ref);
+            throw Errors.ConnectionUnrecoverable();
         }
 
         if (tryIndex == 0)
-            Log.LogInformation("'{Name}': Connecting...", Name);
+            Log.LogInformation("'{PeerId}': Connecting...", Ref);
         else  {
             var delay = ReconnectDelays[tryIndex];
+            delay = TimeSpanExt.Max(TimeSpan.FromMilliseconds(1), delay);
             Log.LogInformation(
-                "'{Name}': Reconnecting (#{TryIndex}) after {Delay}...",
-                Name, tryIndex, delay.ToShortString());
+                "'{PeerId}': Reconnecting (#{TryIndex}) after {Delay}...",
+                Ref, tryIndex, delay.ToShortString());
             await Clock.Delay(delay, cancellationToken).ConfigureAwait(false);
         }
 
-        return await ChannelProvider.Invoke(this, cancellationToken).ConfigureAwait(false);
+        return await ChannelFactory.Invoke(this, cancellationToken).ConfigureAwait(false);
     }
 }

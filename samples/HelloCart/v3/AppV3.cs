@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Samples.HelloCart.V2;
 using Stl.Fusion.EntityFramework;
-using Stl.Fusion.EntityFramework.Operations;
 using Stl.IO;
 
 namespace Samples.HelloCart.V3;
@@ -20,8 +19,8 @@ public class AppV3 : AppBase
         });
 
         services.AddFusion(fusion => {
-            fusion.AddComputeService<IProductService, DbProductService2>();
-            fusion.AddComputeService<ICartService, DbCartService2>();
+            fusion.AddService<IProductService, DbProductService2>();
+            fusion.AddService<ICartService, DbCartService2>();
         });
 
         // Add AppDbContext & related services

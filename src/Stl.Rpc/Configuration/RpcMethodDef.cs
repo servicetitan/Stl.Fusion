@@ -15,7 +15,7 @@ public sealed class RpcMethodDef : MethodDef
     public bool HasObjectTypedArguments { get; }
     public bool NoWait { get; }
 
-    public RpcMethodDef(RpcServiceDef service, MethodInfo method, Func<RpcMethodDef, Symbol> methodNameBuilder)
+    public RpcMethodDef(RpcServiceDef service, MethodInfo method)
         : base(service.Type, method)
     {
         Hub = service.Hub;
@@ -31,9 +31,9 @@ public sealed class RpcMethodDef : MethodDef
                     remoteParameterTypes[i - 1] = ParameterTypes[i];
             }
             RemoteParameterTypes = remoteParameterTypes;
-            RemoteArgumentListType = ArgumentList
-                .Types[remoteParameterTypes.Length]
-                .MakeGenericType(remoteParameterTypes);
+            RemoteArgumentListType = remoteParameterTypes.Length == 0
+                ? typeof(ArgumentList0)
+                : ArgumentList.Types[remoteParameterTypes.Length].MakeGenericType(remoteParameterTypes);
         }
         else {
             RemoteParameterTypes = ParameterTypes;
@@ -43,7 +43,7 @@ public sealed class RpcMethodDef : MethodDef
         NoWait = UnwrappedReturnType == typeof(RpcNoWait);
 
         Service = service;
-        Name = methodNameBuilder.Invoke(this);
+        Name = Hub.MethodNameBuilder.Invoke(this);
 
         if (!IsAsyncMethod)
             IsValid = false;

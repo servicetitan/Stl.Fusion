@@ -14,6 +14,9 @@
   <ItemGroup>
     <PackageReference Include="System.Net.WebSockets.Client" />
   </ItemGroup>
+  <ItemGroup Condition="!$(TargetFramework.StartsWith('net4'))">
+    <PackageReference Include="MemoryPack.Generator" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="EFCore.CheckConstraints" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
@@ -52,10 +55,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Stl\Stl.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion\Stl.Fusion.csproj" />
-    <ProjectReference Include="..\..\src\Stl.Fusion.RegisterAttributes\Stl.Fusion.RegisterAttributes.csproj" />
-    <ProjectReference Include="..\..\src\Stl.Fusion.Client\Stl.Fusion.Client.csproj" />
-    <ProjectReference Include="..\..\src\Stl.Fusion.Client.RegisterAttributes\Stl.Fusion.Client.RegisterAttributes.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Fusion.Ext.Services\Stl.Fusion.Ext.Services.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework\Stl.Fusion.EntityFramework.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework.Npgsql\Stl.Fusion.EntityFramework.Npgsql.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework.Redis\Stl.Fusion.EntityFramework.Redis.csproj" />
@@ -67,6 +69,7 @@
   </ItemGroup>
   <ItemGroup Condition="!$(TargetFramework.StartsWith('net4'))">
     <ProjectReference Include="..\..\src\Stl.Fusion.Blazor\Stl.Fusion.Blazor.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Fusion.Blazor.Authentication\Stl.Fusion.Blazor.Authentication.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.Server\Stl.Fusion.Server.csproj" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">

@@ -2,12 +2,15 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Stl.Fusion.Authentication;
+
 namespace Stl.Fusion.Server.Authentication;
 
 public class SessionMiddleware : IMiddleware, IHasServices
 {
     public record Options
     {
+        public static Options Default { get; set; } = new();
+
         public CookieBuilder Cookie { get; init; } = new() {
             Name = "FusionAuth.SessionId",
             IsEssential = true,
@@ -36,7 +39,7 @@ public class SessionMiddleware : IMiddleware, IHasServices
     public ILogger Log { get; }
 
     public IAuth? Auth { get; }
-    public ISessionProvider SessionProvider { get; }
+    public ISessionResolver SessionResolver { get; }
     public ISessionFactory SessionFactory { get; }
 
     public SessionMiddleware(Options settings, IServiceProvider services)
@@ -46,14 +49,14 @@ public class SessionMiddleware : IMiddleware, IHasServices
         Log = services.LogFor(GetType());
 
         Auth = services.GetService<IAuth>();
-        SessionProvider = services.GetRequiredService<ISessionProvider>();
+        SessionResolver = services.GetRequiredService<ISessionResolver>();
         SessionFactory = services.GetRequiredService<ISessionFactory>();
     }
 
     public async Task InvokeAsync(HttpContext httpContext, RequestDelegate next)
     {
         if (Settings.RequestFilter.Invoke(httpContext))
-            SessionProvider.Session = await GetOrCreateSession(httpContext).ConfigureAwait(false);
+            SessionResolver.Session = await GetOrCreateSession(httpContext).ConfigureAwait(false);
         await next(httpContext).ConfigureAwait(false);
     }
 

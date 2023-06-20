@@ -1,33 +1,55 @@
 @using Stl
-@inherits ComputedStateComponent<ImmutableList<(string Backend, Exception Error)>>
+@using Stl.DependencyInjection
+@using Stl.Fusion.Internal
+@inherits ComputedStateComponent<bool?>
 @inject Session Session
-@inject BackendStatus BackendStatus
 
 @{
-    var errors = State.ValueOrDefault ?? ImmutableList<(string Backend, Exception Error)>.Empty;
+    var error = State.Error;
+    var isConnected = error == null && (State.Value ?? true); // null = "Unknown state", we view it as "connected" here
+    var message = isConnected
+        ? "Connected."
+        : error?.Message ?? "Unknown error";
+    var iconName = isConnected
+        ? FontAwesomeIcons.Cloud
+        : FontAwesomeIcons.ExclamationTriangle;
+    var textColor = isConnected
+        ? TextColor.Default
+        : TextColor.Warning;
 }
 
-@if (errors.Any()) {
-    <BarItem>
-        <BarDropdown Class="@CssClass">
-            <BarDropdownToggle>
-                <BarIcon IconName="@FontAwesomeIcons.ExclamationTriangle" TextColor="TextColor.Danger"></BarIcon>
-            </BarDropdownToggle>
-            <BarDropdownMenu RightAligned="true">
-                @foreach (var (backend, error) in errors) {
-                    <BarDropdownItem TextColor="TextColor.Danger">
-                        <b>@backend:</b> @(error.Message.NullIfEmpty() ?? "Unknown error")
-                    </BarDropdownItem>
-                }
-            </BarDropdownMenu>
-        </BarDropdown>
-    </BarItem>
-}
+<BarItem>
+    <BarDropdown Class="@CssClass">
+        <BarDropdownToggle>
+            <BarIcon IconName="@iconName" TextColor="@textColor"></BarIcon>
+        </BarDropdownToggle>
+        <BarDropdownMenu RightAligned="true">
+            <BarDropdownItem TextColor="@textColor">
+                @message
+            </BarDropdownItem>
+        </BarDropdownMenu>
+    </BarDropdown>
+</BarItem>
 
 @code {
+    private RpcPeerConnectionMonitor? _connectionMonitor;
+
     [Parameter]
     public string CssClass { get; set; } = "";
 
-    protected override Task<ImmutableList<(string Backend, Exception Error)>> ComputeState(CancellationToken cancellationToken)
-        => BackendStatus.GetAllErrors(Session, cancellationToken);
+    protected override void OnInitialized()
+    {
+        _connectionMonitor = Services.GetService<RpcPeerConnectionMonitor>();
+        _connectionMonitor?.Start();
+        base.OnInitialized();
+    }
+
+    protected override async Task<bool?> ComputeState(CancellationToken cancellationToken)
+    {
+        if (_connectionMonitor == null)
+            return null;
+
+        var isConnected = await _connectionMonitor.IsConnected.Use(cancellationToken).ConfigureAwait(false);
+        return isConnected ?? true; // null is "unknown", we want to show it as "connected"
+    }
 }

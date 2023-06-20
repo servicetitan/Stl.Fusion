@@ -1,9 +1,6 @@
 using System.Security;
-using System.Security.Principal;
 using Stl.Fusion.Authentication;
-using Stl.Fusion.Authentication.Commands;
-using Stl.Fusion.Authentication.Internal;
-using Stl.Fusion.EntityFramework.Authentication;
+using Stl.Fusion.Authentication.Services;
 using Stl.Fusion.Tests.Model;
 using Stl.Reflection;
 using User = Stl.Fusion.Authentication.User;
@@ -12,62 +9,46 @@ namespace Stl.Fusion.Tests.Authentication;
 
 public class SqliteAuthServiceTest : AuthServiceTestBase
 {
-    public SqliteAuthServiceTest(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() {
-            DbType = FusionTestDbType.Sqlite
-        })
-    { }
+    public SqliteAuthServiceTest(ITestOutputHelper @out) : base(@out)
+        => DbType = FusionTestDbType.Sqlite;
 }
 
 public class PostgreSqlAuthServiceTest : AuthServiceTestBase
 {
-    public PostgreSqlAuthServiceTest(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() {
-            DbType = FusionTestDbType.PostgreSql
-        })
-    { }
+    public PostgreSqlAuthServiceTest(ITestOutputHelper @out) : base(@out)
+        => DbType = FusionTestDbType.PostgreSql;
 }
 
 public class MariaDbAuthServiceTest : AuthServiceTestBase
 {
-    public MariaDbAuthServiceTest(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() {
-            DbType = FusionTestDbType.MariaDb
-        })
-    { }
+    public MariaDbAuthServiceTest(ITestOutputHelper @out) : base(@out)
+        => DbType = FusionTestDbType.MariaDb;
 }
 
 public class SqlServerAuthServiceTest : AuthServiceTestBase
 {
-    public SqlServerAuthServiceTest(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() {
-            DbType = FusionTestDbType.SqlServer
-        })
-    { }
+    public SqlServerAuthServiceTest(ITestOutputHelper @out) : base(@out)
+        => DbType = FusionTestDbType.SqlServer;
 }
 
 public class InMemoryAuthServiceTest : AuthServiceTestBase
 {
-    public InMemoryAuthServiceTest(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() {
-            DbType = FusionTestDbType.InMemory
-        })
-    { }
+    public InMemoryAuthServiceTest(ITestOutputHelper @out) : base(@out)
+        => DbType = FusionTestDbType.InMemory;
 }
 
 public class InMemoryInMemoryAuthServiceTest : AuthServiceTestBase
 {
-    public InMemoryInMemoryAuthServiceTest(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() {
-            DbType = FusionTestDbType.InMemory,
-            UseInMemoryAuthService = true } )
-    { }
+    public InMemoryInMemoryAuthServiceTest(ITestOutputHelper @out) : base(@out)
+    {
+        DbType = FusionTestDbType.InMemory;
+        UseInMemoryAuthService = true;
+    }
 }
 
 public abstract class AuthServiceTestBase : FusionTestBase
 {
-    protected AuthServiceTestBase(ITestOutputHelper @out, FusionTestOptions? options = null)
-        : base(@out, options) { }
+    protected AuthServiceTestBase(ITestOutputHelper @out) : base(@out) { }
 
     [Fact]
     public async Task ContainerConfigTest()
@@ -86,7 +67,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
 
         var auth = Services.GetRequiredService<IAuth>();
         var tAuthService = typeof(DbAuthService<TestDbContext, DbAuthSessionInfo, DbAuthUser, long>);
-        if (Options.UseInMemoryAuthService)
+        if (UseInMemoryAuthService)
             tAuthService = typeof(InMemoryAuthService);
         auth.GetType().NonProxyType().Should().Be(tAuthService);
     }
@@ -110,7 +91,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         var u1 = new User("Bob1").WithIdentity("g:1");
         var s1 = await CreateUser(u1);
         var u2 = new User("100500", "Bob2").WithIdentity("g:2");
-        if (Options.DbType == FusionTestDbType.SqlServer)
+        if (DbType == FusionTestDbType.SqlServer)
             u2 = u2 with { Id = "" }; // SQL Server doesn't support identity inserts by default
         var s2 = await CreateUser(u2);
         await Assert.ThrowsAsync<FormatException>(async () => {
@@ -120,7 +101,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         async Task<Session> CreateUser(User source)
         {
             var session = sessionFactory.CreateSession();
-            await WebServices.Commander().Call(new SignInCommand(session, source));
+            await WebServices.Commander().Call(new AuthBackend_SignIn(session, source));
 
             var user = await authClient.GetUser(session);
             user.Should().NotBeNull();
@@ -148,7 +129,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         var bob = new User("Bob").WithIdentity("g:1");
 
         var session = sessionA;
-        await webCommander.Call(new SignInCommand(session, bob));
+        await webCommander.Call(new AuthBackend_SignIn(session, bob));
         var user = await webAuth.GetUser(session);
         user.Should().NotBeNull();
         user!.Name.Should().Be(bob.Name);
@@ -158,7 +139,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
 
         // Trying to edit user name
         var newName = "Bobby";
-        await webCommander.Call(new EditUserCommand(session, newName));
+        await webCommander.Call(new Auth_EditUser(session, newName));
         user = await webAuth.GetUser(session);
         user.Should().NotBeNull();
         user!.Name.Should().Be(newName);
@@ -176,7 +157,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         user.ToClaimsPrincipal().Identity!.IsAuthenticated.Should().BeTrue();
 
         // Checking if local service is able to see the same user & sessions
-        if (!Options.UseInMemoryAuthService) {
+        if (!UseInMemoryAuthService) {
             await Delay(0.5);
             user = await auth.GetUser(session);
             user.Should().NotBeNull();
@@ -190,14 +171,14 @@ public abstract class AuthServiceTestBase : FusionTestBase
         user.Should().BeNull();
 
         // Checking sign-out
-        await WebServices.Commander().Call(new SignOutCommand(sessionA));
+        await WebServices.Commander().Call(new Auth_SignOut(sessionA));
         user = await webAuth.GetUser(sessionA);
         user.Should().BeNull();
 
         await Delay(0.5);
         user = await authClient.GetUser(sessionA);
         user.Should().BeNull();
-        if (!Options.UseInMemoryAuthService) {
+        if (!UseInMemoryAuthService) {
             user = await auth.GetUser(sessionA);
             user.Should().BeNull();
         }
@@ -224,7 +205,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
             .WithIdentity("g:1");
 
         var session = sessionA;
-        await webCommander.Call(new SignInCommand(session, bob));
+        await webCommander.Call(new AuthBackend_SignIn(session, bob));
         var user = await webAuth.GetUser(session);
         user.Should().NotBeNull();
         user!.Name.Should().Be(bob.Name);
@@ -234,7 +215,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         _ = user.Identities.Single(); // Client-side users shouldn't have them
 
         bob = bob.WithClaim("id", "robert");
-        await webCommander.Call(new SignInCommand(session, bob));
+        await webCommander.Call(new AuthBackend_SignIn(session, bob));
         user = await webAuth.GetUser(session);
         user.Should().NotBeNull();
         user!.Claims.Count.Should().Be(2);
@@ -255,7 +236,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         user.Claims.Count.Should().Be(2);
 
         // Checking if local service is able to see the same user & sessions
-        if (!Options.UseInMemoryAuthService) {
+        if (!UseInMemoryAuthService) {
             await Delay(0.5);
             user = await auth.GetUser(session);
             user.Should().NotBeNull();
@@ -269,14 +250,14 @@ public abstract class AuthServiceTestBase : FusionTestBase
         user.Should().BeNull();
 
         // Checking sign-out
-        await webCommander.Call(new SignOutCommand(sessionA));
+        await webCommander.Call(new Auth_SignOut(sessionA));
         user = await webAuth.GetUser(sessionA);
         user.Should().BeNull();
 
         await Delay(0.5);
         user = await authClient.GetUser(sessionA);
         user.Should().BeNull();
-        if (!Options.UseInMemoryAuthService) {
+        if (!UseInMemoryAuthService) {
             user = await auth.GetUser(sessionA);
             user.Should().BeNull();
         }
@@ -312,7 +293,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         await Assert.ThrowsAsync<InvalidOperationException>(async() => {
             try {
                 var guest = new User("notANumber", "Guest").WithIdentity("n:1");
-                await commander.Call(new SignInCommand(session, guest));
+                await commander.Call(new AuthBackend_SignIn(session, guest));
             }
             catch (FormatException) {
                 // Thrown by InMemoryAuthService
@@ -332,21 +313,20 @@ public abstract class AuthServiceTestBase : FusionTestBase
 
         var session = sessionFactory.CreateSession();
         var bob = new User("Bob").WithIdentity("b:1");
-        await commander.Call(new SignInCommand(session, bob));
+        await commander.Call(new AuthBackend_SignIn(session, bob));
         var user = await auth.GetUser(session);
         user.Should().NotBeNull();
         user!.Name.Should().Be("Bob");
 
-        await commander.Call(new EditUserCommand(session, "John"));
+        await commander.Call(new Auth_EditUser(session, "John"));
         user = await auth.GetUser(session);
         user.Should().NotBeNull();
         user!.Name.Should().Be("John");
 
 #if NET5_0_OR_GREATER
-        if (Options.DbType != FusionTestDbType.InMemory
-            && Options.DbType != FusionTestDbType.MariaDb) {
+        if (DbType != FusionTestDbType.InMemory && DbType != FusionTestDbType.MariaDb) {
             await Assert.ThrowsAnyAsync<Exception>(async () => {
-                await commander.Call(new EditUserCommand(session, "Jo"));
+                await commander.Call(new Auth_EditUser(session, "Jo"));
             });
         }
 #endif
@@ -373,7 +353,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         sessions.Length.Should().Be(0);
 
         var bob = new User("Bob").WithIdentity("g:1");
-        await commander.Call(new SignInCommand(sessionA, bob));
+        await commander.Call(new AuthBackend_SignIn(sessionA, bob));
         var user = await auth.GetUser(sessionA);
         user.Should().NotBeNull();
         user!.Name.Should().Be(bob.Name);
@@ -384,7 +364,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         sessions = await auth.GetUserSessions(sessionB);
         sessions.Length.Should().Be(0);
 
-        await commander.Call(new SignInCommand(sessionB, bob));
+        await commander.Call(new AuthBackend_SignIn(sessionB, bob));
         user = await auth.GetUser(sessionB);
         user.Should().NotBeNull();
         user!.Name.Should().Be(bob.Name);
@@ -394,7 +374,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         sessions = await auth.GetUserSessions(sessionB);
         sessions.Select(s => s.SessionHash).Should().BeEquivalentTo(sessionA.Hash, sessionB.Hash);
 
-        await commander.Call(new SignOutCommand(sessionA));
+        await commander.Call(new Auth_SignOut(sessionA));
         (await auth.IsSignOutForced(sessionB)).Should().BeFalse();
         user = await auth.GetUser(sessionA);
         user.Should().BeNull();
@@ -404,7 +384,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         sessions = await auth.GetUserSessions(sessionB);
         sessions.Select(s => s.SessionHash).Should().BeEquivalentTo(sessionB.Hash);
 
-        await commander.Call(new SignInCommand(sessionA, bob));
+        await commander.Call(new AuthBackend_SignIn(sessionA, bob));
         user = await auth.GetUser(sessionA);
         user.Should().NotBeNull();
         user!.Name.Should().Be(bob.Name);
@@ -414,7 +394,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
         sessions = await auth.GetUserSessions(sessionB);
         sessions.Select(s => s.SessionHash).Should().BeEquivalentTo(sessionA.Hash, sessionB.Hash);
 
-        await commander.Call(new SignOutCommand(sessionB, true));
+        await commander.Call(new Auth_SignOut(sessionB, true));
         (await auth.IsSignOutForced(sessionB)).Should().BeTrue();
         (await auth.GetAuthInfo(sessionB))!.IsSignOutForced.Should().BeTrue();
         user = await auth.GetUser(sessionB);
@@ -427,11 +407,11 @@ public abstract class AuthServiceTestBase : FusionTestBase
 
         await Assert.ThrowsAsync<SecurityException>(async() => {
             _ = await auth.GetAuthInfo(sessionB);
-            await commander.Call(new SetupSessionCommand(sessionB));
+            await commander.Call(new AuthBackend_SetupSession(sessionB));
         });
 
         await Assert.ThrowsAsync<SecurityException>(async() => {
-            await commander.Call(new SignInCommand(sessionB, bob));
+            await commander.Call(new AuthBackend_SignIn(sessionB, bob));
         });
     }
 }

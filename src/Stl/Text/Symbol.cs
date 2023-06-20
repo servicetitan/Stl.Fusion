@@ -4,11 +4,11 @@ using Stl.Text.Internal;
 
 namespace Stl.Text;
 
-[DataContract]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [JsonConverter(typeof(SymbolJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(SymbolNewtonsoftJsonConverter))]
 [TypeConverter(typeof(SymbolTypeConverter))]
-public readonly struct Symbol : IRequirementTarget,
+public readonly partial struct Symbol : IRequirementTarget,
     IEquatable<Symbol>, IComparable<Symbol>, IConvertibleTo<string>,
     ISerializable
 {
@@ -17,11 +17,15 @@ public readonly struct Symbol : IRequirementTarget,
     private readonly string? _value;
     private readonly int _hashCode;
 
-    [DataMember(Order = 0)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     public string Value => _value ?? "";
+
+    [MemoryPackIgnore]
     public int HashCode => _hashCode;
+    [MemoryPackIgnore]
     public bool IsEmpty => Value.Length == 0;
 
+    [MemoryPackConstructor]
     public Symbol(string? value)
     {
         _value = value ?? "";

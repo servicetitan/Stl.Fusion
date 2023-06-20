@@ -1,11 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration.Memory;
 using Samples.HelloCart.V2;
-using Stl.Fusion.Client;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.EntityFramework.Redis;
 using Stl.Fusion.Server;
 using Stl.IO;
+using Stl.Rpc;
+using Stl.Rpc.Server;
 
 namespace Samples.HelloCart.V4;
 
@@ -34,9 +35,9 @@ public class AppV4 : AppBase
             .ConfigureWebHostDefaults(webHost => webHost
                 .ConfigureServices(services => {
                     ConfigureLogging(services);
-                    services.AddFusion(fusion => {
-                        fusion.AddComputeService<IProductService, DbProductService>();
-                        fusion.AddComputeService<ICartService, DbCartService>();
+                    services.AddFusion(RpcServiceMode.Server, fusion => {
+                        fusion.AddService<IProductService, DbProductService>();
+                        fusion.AddService<ICartService, DbCartService>();
                         fusion.AddWebServer();
                     });
 
@@ -68,7 +69,7 @@ public class AppV4 : AppBase
                     });
                     app.UseRouting();
                     app.UseEndpoints(endpoints => {
-                        endpoints.MapFusionWebSocketServer();
+                        endpoints.MapRpcServer();
                         endpoints.MapControllers();
                     });
                 })
@@ -80,15 +81,9 @@ public class AppV4 : AppBase
         var services = new ServiceCollection();
         ConfigureLogging(services);
         services.AddFusion(fusion => {
-            fusion.AddRestEaseClient(client => {
-                client.ConfigureWebSocketChannel(_ => new() { BaseUri = baseUri });
-                client.ConfigureHttpClient((_, name, options) => {
-                    var apiBaseUri = new Uri($"{baseUri}api/");
-                    options.HttpClientActions.Add(httpClient => httpClient.BaseAddress = apiBaseUri);
-                });
-                client.AddReplicaService<IProductService, IProductClientDef>();
-                client.AddReplicaService<ICartService, ICartClientDef>();
-            });
+            fusion.Rpc.AddWebSocketClient(baseUri);
+            fusion.AddClient<IProductService>();
+            fusion.AddClient<ICartService>();
         });
         return services.BuildServiceProvider();
     }

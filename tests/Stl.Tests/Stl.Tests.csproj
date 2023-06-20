@@ -9,6 +9,9 @@
   <ItemGroup>
     <PackageReference Include="System.Net.WebSockets.Client" />
   </ItemGroup>
+  <ItemGroup Condition="!$(TargetFramework.StartsWith('net4'))">
+    <PackageReference Include="MemoryPack.Generator" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
@@ -30,17 +33,21 @@
     <PackageReference Include="System.Drawing.Common" VersionOverride="$(SystemXxxVersion5)" />
     <PackageReference Include="Microsoft.CSharp" />
   </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
+    <PackageReference Include="IndexRange" />
+    <PackageReference Include="System.Memory" />
+    <PackageReference Include="Microsoft.AspNet.WebApi.OwinSelfHost" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Stl\Stl.csproj" />
     <ProjectReference Include="..\..\src\Stl.CommandR\Stl.CommandR.csproj" />
-    <ProjectReference Include="..\..\src\Stl.CommandR.RegisterAttributes\Stl.CommandR.RegisterAttributes.csproj" />
     <ProjectReference Include="..\..\src\Stl.Interception\Stl.Interception.csproj" />
+    <ProjectReference Include="..\..\src\Stl.RestEase\Stl.RestEase.csproj" />
     <ProjectReference Include="..\..\src\Stl.Rpc\Stl.Rpc.csproj" />
     <ProjectReference Include="..\..\src\Stl.Redis\Stl.Redis.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework\Stl.Fusion.EntityFramework.csproj" />
     <ProjectReference Include="..\..\src\Stl.Plugins\Stl.Plugins.csproj" />
-    <ProjectReference Include="..\..\src\Stl.RegisterAttributes\Stl.RegisterAttributes.csproj" />
     <ProjectReference Include="..\..\src\Stl.Testing\Stl.Testing.csproj" />
   </ItemGroup>
   <ItemGroup Condition="!$(TargetFramework.StartsWith('net4'))">
@@ -48,6 +55,7 @@
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
     <ProjectReference Include="..\..\src\Stl.Rpc.Server.NetFx\Stl.Rpc.Server.NetFx.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Fusion.Server.NetFx\Stl.Fusion.Server.NetFx.csproj" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Stl.Generators\Stl.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />

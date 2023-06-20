@@ -2,6 +2,8 @@ namespace Stl.Channels;
 
 public class ChannelPair<T>
 {
+    public static readonly ChannelPair<T> Null = new(NullChannel<T>.Instance, NullChannel<T>.Instance);
+
     public Channel<T> Channel1 { get; protected set; } = null!;
     public Channel<T> Channel2 { get; protected set; } = null!;
 

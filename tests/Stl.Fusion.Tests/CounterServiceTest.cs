@@ -100,6 +100,6 @@ public class CounterServiceTest : SimpleFusionTestBase
     protected override void ConfigureServices(ServiceCollection services)
     {
         base.ConfigureServices(services);
-        services.AddFusion().AddComputeService<CounterService>();
+        services.AddFusion().AddService<CounterService>();
     }
 }

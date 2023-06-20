@@ -18,7 +18,7 @@ public class ComputedInterceptorTest : FusionTestBase
             FixedDelayer.Instant,
             async (_, ct) => await c.Use(ct));
         state.Updated += (s, _)
-            => Log.LogInformation($"{++count} -> {s.Value:hh:mm:ss:fff}");
+            => Log?.LogInformation($"{++count} -> {s.Value:hh:mm:ss:fff}");
 
         await TestExt.WhenMet(
             () => count.Should().BeGreaterThan(2),

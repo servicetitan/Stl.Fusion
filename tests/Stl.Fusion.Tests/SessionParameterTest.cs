@@ -7,8 +7,6 @@ public class SessionParameterTest : SimpleFusionTestBase
 {
     public SessionParameterTest(ITestOutputHelper @out) : base(@out) { }
 
-    private static object _lock = new();
-
     [Fact]
     public async Task BasicTest()
     {
@@ -72,6 +70,6 @@ public class SessionParameterTest : SimpleFusionTestBase
     protected override void ConfigureServices(ServiceCollection services)
     {
         base.ConfigureServices(services);
-        services.AddFusion().AddAuthentication();
+        services.AddFusion().AddInMemoryAuthService();
     }
 }

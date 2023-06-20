@@ -1,6 +1,6 @@
 namespace Stl.Channels;
 
-public class NullChannel<T> : Channel<T, T>
+public class NullChannel<T> : Channel<T>
 {
     public static readonly NullChannel<T> Instance = new();
 

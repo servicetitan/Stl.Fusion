@@ -9,6 +9,8 @@ public class SignInController : Controller
 {
     public record Options
     {
+        public static Options Default { get; set; } = new();
+
         public string DefaultScheme { get; init; } = "";
         public string SignOutAuthenticationScheme { get; init; } = CookieAuthenticationDefaults.AuthenticationScheme;
         public Action<HttpContext, AuthenticationProperties>? SignInPropertiesBuilder { get; init; } = null;

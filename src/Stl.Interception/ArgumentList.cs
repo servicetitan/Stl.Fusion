@@ -1,12 +1,12 @@
-// ReSharper disable UnusedAutoPropertyAccessor.Global
+﻿// ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable ArrangeConstructorOrDestructorBody
 using Cysharp.Text;
 using System.Reflection.Emit;
+using System.Text.Json;
 
 namespace Stl.Interception;
 
-[DataContract]
 public abstract record ArgumentList
 {
     protected static readonly ConcurrentDictionary<(Type, MethodInfo), Func<object, ArgumentList, object?>> InvokerCache = new();
@@ -26,7 +26,7 @@ public abstract record ArgumentList
         typeof(ArgumentList<, , , , , , , , , >),
     });
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public abstract int Length { get; }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -124,8 +124,8 @@ public abstract record ArgumentList
     public abstract int GetHashCode(int skipIndex);
 }
 
-[DataContract]
-public sealed record ArgumentList0 : ArgumentList
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public sealed partial record ArgumentList0 : ArgumentList
 {
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 0;
@@ -173,30 +173,35 @@ public sealed record ArgumentList0 : ArgumentList
     public override int GetHashCode(int skipIndex) => 1;
 }
 
-[DataContract]
 public abstract record ArgumentList1 : ArgumentList
 {
     protected static Type?[] CreateNonDefaultItemTypes()
         => new Type?[1];
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public override int Length => 1;
 }
 
-[DataContract]
-public sealed record ArgumentList<T0>(
-    T0 Item0
-) : ArgumentList1
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public sealed partial record ArgumentList<T0> : ArgumentList1
 {
-    private T0 _item0 = Item0;
+    private T0 _item0;
 
-    [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
+    [DataMember(Order = 0), MemoryPackOrder(0)]
+    public T0 Item0 { get => _item0; init => _item0 = value; }
 
-    // Default constructor
+    // Constructors
 
     public ArgumentList()
-        : this(default(T0)!)
-    { }
+    {
+        _item0 = default!;
+    }
+
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
+    public ArgumentList(T0 item0)
+    {
+        _item0 = item0;
+    }
 
     // ToString & ToArray
 
@@ -217,7 +222,7 @@ public sealed record ArgumentList<T0>(
             ? Array.Empty<object?>()
             : throw new ArgumentOutOfRangeException(nameof(skipIndex));
 
-    // GetNonDefaultItemTypes 
+    // GetNonDefaultItemTypes
 
     public override Type?[]? GetNonDefaultItemTypes() {
         var itemTypes = (Type?[]?)null;
@@ -403,33 +408,40 @@ public sealed record ArgumentList<T0>(
     }
 }
 
-[DataContract]
 public abstract record ArgumentList2 : ArgumentList
 {
     protected static Type?[] CreateNonDefaultItemTypes()
         => new Type?[2];
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public override int Length => 2;
 }
 
-[DataContract]
-public sealed record ArgumentList<T0, T1>(
-    T0 Item0,
-    T1 Item1
-) : ArgumentList2
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public sealed partial record ArgumentList<T0, T1> : ArgumentList2
 {
-    private T0 _item0 = Item0;
-    private T1 _item1 = Item1;
+    private T0 _item0;
+    private T1 _item1;
 
-    [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
-    [DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
+    [DataMember(Order = 0), MemoryPackOrder(0)]
+    public T0 Item0 { get => _item0; init => _item0 = value; }
+    [DataMember(Order = 1), MemoryPackOrder(1)]
+    public T1 Item1 { get => _item1; init => _item1 = value; }
 
-    // Default constructor
+    // Constructors
 
     public ArgumentList()
-        : this(default(T0)!, default(T1)!)
-    { }
+    {
+        _item0 = default!;
+        _item1 = default!;
+    }
+
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
+    public ArgumentList(T0 item0, T1 item1)
+    {
+        _item0 = item0;
+        _item1 = item1;
+    }
 
     // ToString & ToArray
 
@@ -454,7 +466,7 @@ public sealed record ArgumentList<T0, T1>(
             _ => throw new ArgumentOutOfRangeException(nameof(skipIndex))
         };
 
-    // GetNonDefaultItemTypes 
+    // GetNonDefaultItemTypes
 
     public override Type?[]? GetNonDefaultItemTypes() {
         var itemTypes = (Type?[]?)null;
@@ -675,36 +687,45 @@ public sealed record ArgumentList<T0, T1>(
     }
 }
 
-[DataContract]
 public abstract record ArgumentList3 : ArgumentList
 {
     protected static Type?[] CreateNonDefaultItemTypes()
         => new Type?[3];
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public override int Length => 3;
 }
 
-[DataContract]
-public sealed record ArgumentList<T0, T1, T2>(
-    T0 Item0,
-    T1 Item1,
-    T2 Item2
-) : ArgumentList3
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public sealed partial record ArgumentList<T0, T1, T2> : ArgumentList3
 {
-    private T0 _item0 = Item0;
-    private T1 _item1 = Item1;
-    private T2 _item2 = Item2;
+    private T0 _item0;
+    private T1 _item1;
+    private T2 _item2;
 
-    [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
-    [DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
-    [DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
+    [DataMember(Order = 0), MemoryPackOrder(0)]
+    public T0 Item0 { get => _item0; init => _item0 = value; }
+    [DataMember(Order = 1), MemoryPackOrder(1)]
+    public T1 Item1 { get => _item1; init => _item1 = value; }
+    [DataMember(Order = 2), MemoryPackOrder(2)]
+    public T2 Item2 { get => _item2; init => _item2 = value; }
 
-    // Default constructor
+    // Constructors
 
     public ArgumentList()
-        : this(default(T0)!, default(T1)!, default(T2)!)
-    { }
+    {
+        _item0 = default!;
+        _item1 = default!;
+        _item2 = default!;
+    }
+
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
+    public ArgumentList(T0 item0, T1 item1, T2 item2)
+    {
+        _item0 = item0;
+        _item1 = item1;
+        _item2 = item2;
+    }
 
     // ToString & ToArray
 
@@ -732,7 +753,7 @@ public sealed record ArgumentList<T0, T1, T2>(
             _ => throw new ArgumentOutOfRangeException(nameof(skipIndex))
         };
 
-    // GetNonDefaultItemTypes 
+    // GetNonDefaultItemTypes
 
     public override Type?[]? GetNonDefaultItemTypes() {
         var itemTypes = (Type?[]?)null;
@@ -988,39 +1009,50 @@ public sealed record ArgumentList<T0, T1, T2>(
     }
 }
 
-[DataContract]
 public abstract record ArgumentList4 : ArgumentList
 {
     protected static Type?[] CreateNonDefaultItemTypes()
         => new Type?[4];
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public override int Length => 4;
 }
 
-[DataContract]
-public sealed record ArgumentList<T0, T1, T2, T3>(
-    T0 Item0,
-    T1 Item1,
-    T2 Item2,
-    T3 Item3
-) : ArgumentList4
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public sealed partial record ArgumentList<T0, T1, T2, T3> : ArgumentList4
 {
-    private T0 _item0 = Item0;
-    private T1 _item1 = Item1;
-    private T2 _item2 = Item2;
-    private T3 _item3 = Item3;
+    private T0 _item0;
+    private T1 _item1;
+    private T2 _item2;
+    private T3 _item3;
 
-    [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
-    [DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
-    [DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
-    [DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
+    [DataMember(Order = 0), MemoryPackOrder(0)]
+    public T0 Item0 { get => _item0; init => _item0 = value; }
+    [DataMember(Order = 1), MemoryPackOrder(1)]
+    public T1 Item1 { get => _item1; init => _item1 = value; }
+    [DataMember(Order = 2), MemoryPackOrder(2)]
+    public T2 Item2 { get => _item2; init => _item2 = value; }
+    [DataMember(Order = 3), MemoryPackOrder(3)]
+    public T3 Item3 { get => _item3; init => _item3 = value; }
 
-    // Default constructor
+    // Constructors
 
     public ArgumentList()
-        : this(default(T0)!, default(T1)!, default(T2)!, default(T3)!)
-    { }
+    {
+        _item0 = default!;
+        _item1 = default!;
+        _item2 = default!;
+        _item3 = default!;
+    }
+
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
+    public ArgumentList(T0 item0, T1 item1, T2 item2, T3 item3)
+    {
+        _item0 = item0;
+        _item1 = item1;
+        _item2 = item2;
+        _item3 = item3;
+    }
 
     // ToString & ToArray
 
@@ -1051,7 +1083,7 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
             _ => throw new ArgumentOutOfRangeException(nameof(skipIndex))
         };
 
-    // GetNonDefaultItemTypes 
+    // GetNonDefaultItemTypes
 
     public override Type?[]? GetNonDefaultItemTypes() {
         var itemTypes = (Type?[]?)null;
@@ -1342,42 +1374,55 @@ public sealed record ArgumentList<T0, T1, T2, T3>(
     }
 }
 
-[DataContract]
 public abstract record ArgumentList5 : ArgumentList
 {
     protected static Type?[] CreateNonDefaultItemTypes()
         => new Type?[5];
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public override int Length => 5;
 }
 
-[DataContract]
-public sealed record ArgumentList<T0, T1, T2, T3, T4>(
-    T0 Item0,
-    T1 Item1,
-    T2 Item2,
-    T3 Item3,
-    T4 Item4
-) : ArgumentList5
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public sealed partial record ArgumentList<T0, T1, T2, T3, T4> : ArgumentList5
 {
-    private T0 _item0 = Item0;
-    private T1 _item1 = Item1;
-    private T2 _item2 = Item2;
-    private T3 _item3 = Item3;
-    private T4 _item4 = Item4;
+    private T0 _item0;
+    private T1 _item1;
+    private T2 _item2;
+    private T3 _item3;
+    private T4 _item4;
 
-    [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
-    [DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
-    [DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
-    [DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
-    [DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
+    [DataMember(Order = 0), MemoryPackOrder(0)]
+    public T0 Item0 { get => _item0; init => _item0 = value; }
+    [DataMember(Order = 1), MemoryPackOrder(1)]
+    public T1 Item1 { get => _item1; init => _item1 = value; }
+    [DataMember(Order = 2), MemoryPackOrder(2)]
+    public T2 Item2 { get => _item2; init => _item2 = value; }
+    [DataMember(Order = 3), MemoryPackOrder(3)]
+    public T3 Item3 { get => _item3; init => _item3 = value; }
+    [DataMember(Order = 4), MemoryPackOrder(4)]
+    public T4 Item4 { get => _item4; init => _item4 = value; }
 
-    // Default constructor
+    // Constructors
 
     public ArgumentList()
-        : this(default(T0)!, default(T1)!, default(T2)!, default(T3)!, default(T4)!)
-    { }
+    {
+        _item0 = default!;
+        _item1 = default!;
+        _item2 = default!;
+        _item3 = default!;
+        _item4 = default!;
+    }
+
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
+    public ArgumentList(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4)
+    {
+        _item0 = item0;
+        _item1 = item1;
+        _item2 = item2;
+        _item3 = item3;
+        _item4 = item4;
+    }
 
     // ToString & ToArray
 
@@ -1411,7 +1456,7 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
             _ => throw new ArgumentOutOfRangeException(nameof(skipIndex))
         };
 
-    // GetNonDefaultItemTypes 
+    // GetNonDefaultItemTypes
 
     public override Type?[]? GetNonDefaultItemTypes() {
         var itemTypes = (Type?[]?)null;
@@ -1737,45 +1782,60 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4>(
     }
 }
 
-[DataContract]
 public abstract record ArgumentList6 : ArgumentList
 {
     protected static Type?[] CreateNonDefaultItemTypes()
         => new Type?[6];
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public override int Length => 6;
 }
 
-[DataContract]
-public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
-    T0 Item0,
-    T1 Item1,
-    T2 Item2,
-    T3 Item3,
-    T4 Item4,
-    T5 Item5
-) : ArgumentList6
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5> : ArgumentList6
 {
-    private T0 _item0 = Item0;
-    private T1 _item1 = Item1;
-    private T2 _item2 = Item2;
-    private T3 _item3 = Item3;
-    private T4 _item4 = Item4;
-    private T5 _item5 = Item5;
+    private T0 _item0;
+    private T1 _item1;
+    private T2 _item2;
+    private T3 _item3;
+    private T4 _item4;
+    private T5 _item5;
 
-    [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
-    [DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
-    [DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
-    [DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
-    [DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
-    [DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
+    [DataMember(Order = 0), MemoryPackOrder(0)]
+    public T0 Item0 { get => _item0; init => _item0 = value; }
+    [DataMember(Order = 1), MemoryPackOrder(1)]
+    public T1 Item1 { get => _item1; init => _item1 = value; }
+    [DataMember(Order = 2), MemoryPackOrder(2)]
+    public T2 Item2 { get => _item2; init => _item2 = value; }
+    [DataMember(Order = 3), MemoryPackOrder(3)]
+    public T3 Item3 { get => _item3; init => _item3 = value; }
+    [DataMember(Order = 4), MemoryPackOrder(4)]
+    public T4 Item4 { get => _item4; init => _item4 = value; }
+    [DataMember(Order = 5), MemoryPackOrder(5)]
+    public T5 Item5 { get => _item5; init => _item5 = value; }
 
-    // Default constructor
+    // Constructors
 
     public ArgumentList()
-        : this(default(T0)!, default(T1)!, default(T2)!, default(T3)!, default(T4)!, default(T5)!)
-    { }
+    {
+        _item0 = default!;
+        _item1 = default!;
+        _item2 = default!;
+        _item3 = default!;
+        _item4 = default!;
+        _item5 = default!;
+    }
+
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
+    public ArgumentList(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5)
+    {
+        _item0 = item0;
+        _item1 = item1;
+        _item2 = item2;
+        _item3 = item3;
+        _item4 = item4;
+        _item5 = item5;
+    }
 
     // ToString & ToArray
 
@@ -1812,7 +1872,7 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
             _ => throw new ArgumentOutOfRangeException(nameof(skipIndex))
         };
 
-    // GetNonDefaultItemTypes 
+    // GetNonDefaultItemTypes
 
     public override Type?[]? GetNonDefaultItemTypes() {
         var itemTypes = (Type?[]?)null;
@@ -2173,48 +2233,65 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5>(
     }
 }
 
-[DataContract]
 public abstract record ArgumentList7 : ArgumentList
 {
     protected static Type?[] CreateNonDefaultItemTypes()
         => new Type?[7];
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public override int Length => 7;
 }
 
-[DataContract]
-public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
-    T0 Item0,
-    T1 Item1,
-    T2 Item2,
-    T3 Item3,
-    T4 Item4,
-    T5 Item5,
-    T6 Item6
-) : ArgumentList7
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5, T6> : ArgumentList7
 {
-    private T0 _item0 = Item0;
-    private T1 _item1 = Item1;
-    private T2 _item2 = Item2;
-    private T3 _item3 = Item3;
-    private T4 _item4 = Item4;
-    private T5 _item5 = Item5;
-    private T6 _item6 = Item6;
+    private T0 _item0;
+    private T1 _item1;
+    private T2 _item2;
+    private T3 _item3;
+    private T4 _item4;
+    private T5 _item5;
+    private T6 _item6;
 
-    [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
-    [DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
-    [DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
-    [DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
-    [DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
-    [DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
-    [DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
+    [DataMember(Order = 0), MemoryPackOrder(0)]
+    public T0 Item0 { get => _item0; init => _item0 = value; }
+    [DataMember(Order = 1), MemoryPackOrder(1)]
+    public T1 Item1 { get => _item1; init => _item1 = value; }
+    [DataMember(Order = 2), MemoryPackOrder(2)]
+    public T2 Item2 { get => _item2; init => _item2 = value; }
+    [DataMember(Order = 3), MemoryPackOrder(3)]
+    public T3 Item3 { get => _item3; init => _item3 = value; }
+    [DataMember(Order = 4), MemoryPackOrder(4)]
+    public T4 Item4 { get => _item4; init => _item4 = value; }
+    [DataMember(Order = 5), MemoryPackOrder(5)]
+    public T5 Item5 { get => _item5; init => _item5 = value; }
+    [DataMember(Order = 6), MemoryPackOrder(6)]
+    public T6 Item6 { get => _item6; init => _item6 = value; }
 
-    // Default constructor
+    // Constructors
 
     public ArgumentList()
-        : this(default(T0)!, default(T1)!, default(T2)!, default(T3)!, default(T4)!, default(T5)!, default(T6)!)
-    { }
+    {
+        _item0 = default!;
+        _item1 = default!;
+        _item2 = default!;
+        _item3 = default!;
+        _item4 = default!;
+        _item5 = default!;
+        _item6 = default!;
+    }
+
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
+    public ArgumentList(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6)
+    {
+        _item0 = item0;
+        _item1 = item1;
+        _item2 = item2;
+        _item3 = item3;
+        _item4 = item4;
+        _item5 = item5;
+        _item6 = item6;
+    }
 
     // ToString & ToArray
 
@@ -2254,7 +2331,7 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
             _ => throw new ArgumentOutOfRangeException(nameof(skipIndex))
         };
 
-    // GetNonDefaultItemTypes 
+    // GetNonDefaultItemTypes
 
     public override Type?[]? GetNonDefaultItemTypes() {
         var itemTypes = (Type?[]?)null;
@@ -2650,51 +2727,70 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6>(
     }
 }
 
-[DataContract]
 public abstract record ArgumentList8 : ArgumentList
 {
     protected static Type?[] CreateNonDefaultItemTypes()
         => new Type?[8];
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public override int Length => 8;
 }
 
-[DataContract]
-public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
-    T0 Item0,
-    T1 Item1,
-    T2 Item2,
-    T3 Item3,
-    T4 Item4,
-    T5 Item5,
-    T6 Item6,
-    T7 Item7
-) : ArgumentList8
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7> : ArgumentList8
 {
-    private T0 _item0 = Item0;
-    private T1 _item1 = Item1;
-    private T2 _item2 = Item2;
-    private T3 _item3 = Item3;
-    private T4 _item4 = Item4;
-    private T5 _item5 = Item5;
-    private T6 _item6 = Item6;
-    private T7 _item7 = Item7;
+    private T0 _item0;
+    private T1 _item1;
+    private T2 _item2;
+    private T3 _item3;
+    private T4 _item4;
+    private T5 _item5;
+    private T6 _item6;
+    private T7 _item7;
 
-    [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
-    [DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
-    [DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
-    [DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
-    [DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
-    [DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
-    [DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
-    [DataMember(Order = 7)] public T7 Item7 { get => _item7; init => _item7 = value; }
+    [DataMember(Order = 0), MemoryPackOrder(0)]
+    public T0 Item0 { get => _item0; init => _item0 = value; }
+    [DataMember(Order = 1), MemoryPackOrder(1)]
+    public T1 Item1 { get => _item1; init => _item1 = value; }
+    [DataMember(Order = 2), MemoryPackOrder(2)]
+    public T2 Item2 { get => _item2; init => _item2 = value; }
+    [DataMember(Order = 3), MemoryPackOrder(3)]
+    public T3 Item3 { get => _item3; init => _item3 = value; }
+    [DataMember(Order = 4), MemoryPackOrder(4)]
+    public T4 Item4 { get => _item4; init => _item4 = value; }
+    [DataMember(Order = 5), MemoryPackOrder(5)]
+    public T5 Item5 { get => _item5; init => _item5 = value; }
+    [DataMember(Order = 6), MemoryPackOrder(6)]
+    public T6 Item6 { get => _item6; init => _item6 = value; }
+    [DataMember(Order = 7), MemoryPackOrder(7)]
+    public T7 Item7 { get => _item7; init => _item7 = value; }
 
-    // Default constructor
+    // Constructors
 
     public ArgumentList()
-        : this(default(T0)!, default(T1)!, default(T2)!, default(T3)!, default(T4)!, default(T5)!, default(T6)!, default(T7)!)
-    { }
+    {
+        _item0 = default!;
+        _item1 = default!;
+        _item2 = default!;
+        _item3 = default!;
+        _item4 = default!;
+        _item5 = default!;
+        _item6 = default!;
+        _item7 = default!;
+    }
+
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
+    public ArgumentList(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7)
+    {
+        _item0 = item0;
+        _item1 = item1;
+        _item2 = item2;
+        _item3 = item3;
+        _item4 = item4;
+        _item5 = item5;
+        _item6 = item6;
+        _item7 = item7;
+    }
 
     // ToString & ToArray
 
@@ -2737,7 +2833,7 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
             _ => throw new ArgumentOutOfRangeException(nameof(skipIndex))
         };
 
-    // GetNonDefaultItemTypes 
+    // GetNonDefaultItemTypes
 
     public override Type?[]? GetNonDefaultItemTypes() {
         var itemTypes = (Type?[]?)null;
@@ -3168,54 +3264,75 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7>(
     }
 }
 
-[DataContract]
 public abstract record ArgumentList9 : ArgumentList
 {
     protected static Type?[] CreateNonDefaultItemTypes()
         => new Type?[9];
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public override int Length => 9;
 }
 
-[DataContract]
-public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
-    T0 Item0,
-    T1 Item1,
-    T2 Item2,
-    T3 Item3,
-    T4 Item4,
-    T5 Item5,
-    T6 Item6,
-    T7 Item7,
-    T8 Item8
-) : ArgumentList9
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8> : ArgumentList9
 {
-    private T0 _item0 = Item0;
-    private T1 _item1 = Item1;
-    private T2 _item2 = Item2;
-    private T3 _item3 = Item3;
-    private T4 _item4 = Item4;
-    private T5 _item5 = Item5;
-    private T6 _item6 = Item6;
-    private T7 _item7 = Item7;
-    private T8 _item8 = Item8;
+    private T0 _item0;
+    private T1 _item1;
+    private T2 _item2;
+    private T3 _item3;
+    private T4 _item4;
+    private T5 _item5;
+    private T6 _item6;
+    private T7 _item7;
+    private T8 _item8;
 
-    [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
-    [DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
-    [DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
-    [DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
-    [DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
-    [DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
-    [DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
-    [DataMember(Order = 7)] public T7 Item7 { get => _item7; init => _item7 = value; }
-    [DataMember(Order = 8)] public T8 Item8 { get => _item8; init => _item8 = value; }
+    [DataMember(Order = 0), MemoryPackOrder(0)]
+    public T0 Item0 { get => _item0; init => _item0 = value; }
+    [DataMember(Order = 1), MemoryPackOrder(1)]
+    public T1 Item1 { get => _item1; init => _item1 = value; }
+    [DataMember(Order = 2), MemoryPackOrder(2)]
+    public T2 Item2 { get => _item2; init => _item2 = value; }
+    [DataMember(Order = 3), MemoryPackOrder(3)]
+    public T3 Item3 { get => _item3; init => _item3 = value; }
+    [DataMember(Order = 4), MemoryPackOrder(4)]
+    public T4 Item4 { get => _item4; init => _item4 = value; }
+    [DataMember(Order = 5), MemoryPackOrder(5)]
+    public T5 Item5 { get => _item5; init => _item5 = value; }
+    [DataMember(Order = 6), MemoryPackOrder(6)]
+    public T6 Item6 { get => _item6; init => _item6 = value; }
+    [DataMember(Order = 7), MemoryPackOrder(7)]
+    public T7 Item7 { get => _item7; init => _item7 = value; }
+    [DataMember(Order = 8), MemoryPackOrder(8)]
+    public T8 Item8 { get => _item8; init => _item8 = value; }
 
-    // Default constructor
+    // Constructors
 
     public ArgumentList()
-        : this(default(T0)!, default(T1)!, default(T2)!, default(T3)!, default(T4)!, default(T5)!, default(T6)!, default(T7)!, default(T8)!)
-    { }
+    {
+        _item0 = default!;
+        _item1 = default!;
+        _item2 = default!;
+        _item3 = default!;
+        _item4 = default!;
+        _item5 = default!;
+        _item6 = default!;
+        _item7 = default!;
+        _item8 = default!;
+    }
+
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
+    public ArgumentList(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8)
+    {
+        _item0 = item0;
+        _item1 = item1;
+        _item2 = item2;
+        _item3 = item3;
+        _item4 = item4;
+        _item5 = item5;
+        _item6 = item6;
+        _item7 = item7;
+        _item8 = item8;
+    }
 
     // ToString & ToArray
 
@@ -3261,7 +3378,7 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
             _ => throw new ArgumentOutOfRangeException(nameof(skipIndex))
         };
 
-    // GetNonDefaultItemTypes 
+    // GetNonDefaultItemTypes
 
     public override Type?[]? GetNonDefaultItemTypes() {
         var itemTypes = (Type?[]?)null;
@@ -3727,57 +3844,80 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8>(
     }
 }
 
-[DataContract]
 public abstract record ArgumentList10 : ArgumentList
 {
     protected static Type?[] CreateNonDefaultItemTypes()
         => new Type?[10];
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public override int Length => 10;
 }
 
-[DataContract]
-public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
-    T0 Item0,
-    T1 Item1,
-    T2 Item2,
-    T3 Item3,
-    T4 Item4,
-    T5 Item5,
-    T6 Item6,
-    T7 Item7,
-    T8 Item8,
-    T9 Item9
-) : ArgumentList10
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> : ArgumentList10
 {
-    private T0 _item0 = Item0;
-    private T1 _item1 = Item1;
-    private T2 _item2 = Item2;
-    private T3 _item3 = Item3;
-    private T4 _item4 = Item4;
-    private T5 _item5 = Item5;
-    private T6 _item6 = Item6;
-    private T7 _item7 = Item7;
-    private T8 _item8 = Item8;
-    private T9 _item9 = Item9;
+    private T0 _item0;
+    private T1 _item1;
+    private T2 _item2;
+    private T3 _item3;
+    private T4 _item4;
+    private T5 _item5;
+    private T6 _item6;
+    private T7 _item7;
+    private T8 _item8;
+    private T9 _item9;
 
-    [DataMember(Order = 0)] public T0 Item0 { get => _item0; init => _item0 = value; }
-    [DataMember(Order = 1)] public T1 Item1 { get => _item1; init => _item1 = value; }
-    [DataMember(Order = 2)] public T2 Item2 { get => _item2; init => _item2 = value; }
-    [DataMember(Order = 3)] public T3 Item3 { get => _item3; init => _item3 = value; }
-    [DataMember(Order = 4)] public T4 Item4 { get => _item4; init => _item4 = value; }
-    [DataMember(Order = 5)] public T5 Item5 { get => _item5; init => _item5 = value; }
-    [DataMember(Order = 6)] public T6 Item6 { get => _item6; init => _item6 = value; }
-    [DataMember(Order = 7)] public T7 Item7 { get => _item7; init => _item7 = value; }
-    [DataMember(Order = 8)] public T8 Item8 { get => _item8; init => _item8 = value; }
-    [DataMember(Order = 9)] public T9 Item9 { get => _item9; init => _item9 = value; }
+    [DataMember(Order = 0), MemoryPackOrder(0)]
+    public T0 Item0 { get => _item0; init => _item0 = value; }
+    [DataMember(Order = 1), MemoryPackOrder(1)]
+    public T1 Item1 { get => _item1; init => _item1 = value; }
+    [DataMember(Order = 2), MemoryPackOrder(2)]
+    public T2 Item2 { get => _item2; init => _item2 = value; }
+    [DataMember(Order = 3), MemoryPackOrder(3)]
+    public T3 Item3 { get => _item3; init => _item3 = value; }
+    [DataMember(Order = 4), MemoryPackOrder(4)]
+    public T4 Item4 { get => _item4; init => _item4 = value; }
+    [DataMember(Order = 5), MemoryPackOrder(5)]
+    public T5 Item5 { get => _item5; init => _item5 = value; }
+    [DataMember(Order = 6), MemoryPackOrder(6)]
+    public T6 Item6 { get => _item6; init => _item6 = value; }
+    [DataMember(Order = 7), MemoryPackOrder(7)]
+    public T7 Item7 { get => _item7; init => _item7 = value; }
+    [DataMember(Order = 8), MemoryPackOrder(8)]
+    public T8 Item8 { get => _item8; init => _item8 = value; }
+    [DataMember(Order = 9), MemoryPackOrder(9)]
+    public T9 Item9 { get => _item9; init => _item9 = value; }
 
-    // Default constructor
+    // Constructors
 
     public ArgumentList()
-        : this(default(T0)!, default(T1)!, default(T2)!, default(T3)!, default(T4)!, default(T5)!, default(T6)!, default(T7)!, default(T8)!, default(T9)!)
-    { }
+    {
+        _item0 = default!;
+        _item1 = default!;
+        _item2 = default!;
+        _item3 = default!;
+        _item4 = default!;
+        _item5 = default!;
+        _item6 = default!;
+        _item7 = default!;
+        _item8 = default!;
+        _item9 = default!;
+    }
+
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
+    public ArgumentList(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8, T9 item9)
+    {
+        _item0 = item0;
+        _item1 = item1;
+        _item2 = item2;
+        _item3 = item3;
+        _item4 = item4;
+        _item5 = item5;
+        _item6 = item6;
+        _item7 = item7;
+        _item8 = item8;
+        _item9 = item9;
+    }
 
     // ToString & ToArray
 
@@ -3826,7 +3966,7 @@ public sealed record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(
             _ => throw new ArgumentOutOfRangeException(nameof(skipIndex))
         };
 
-    // GetNonDefaultItemTypes 
+    // GetNonDefaultItemTypes
 
     public override Type?[]? GetNonDefaultItemTypes() {
         var itemTypes = (Type?[]?)null;

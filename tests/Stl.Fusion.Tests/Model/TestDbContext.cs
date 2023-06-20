@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Stl.Fusion.Authentication.Services;
 using Stl.Fusion.EntityFramework;
-using Stl.Fusion.EntityFramework.Authentication;
-using Stl.Fusion.EntityFramework.Extensions;
 using Stl.Fusion.EntityFramework.Operations;
+using Stl.Fusion.Extensions.Services;
 
 namespace Stl.Fusion.Tests.Model;
 

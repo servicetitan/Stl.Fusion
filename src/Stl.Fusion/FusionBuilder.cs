@@ -1,41 +1,52 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Conversion;
-using Stl.Fusion.Authentication;
-using Stl.Fusion.Bridge;
-using Stl.Fusion.Bridge.Interception;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
 using Stl.Fusion.Multitenancy;
 using Stl.Fusion.Operations.Internal;
 using Stl.Fusion.Operations.Reprocessing;
-using Stl.Fusion.Rpc;
+using Stl.Fusion.Client.Cache;
+using Stl.Fusion.Client.Interception;
+using Stl.Fusion.Client.Internal;
 using Stl.Fusion.UI;
-using Stl.Interception;
 using Stl.Multitenancy;
+using Stl.Rpc;
 using Stl.Versioning.Providers;
 
 namespace Stl.Fusion;
 
 public readonly struct FusionBuilder
 {
-    private class AddedTag { }
-    private static readonly ServiceDescriptor AddedTagDescriptor = new(typeof(AddedTag), new AddedTag());
-
     public IServiceCollection Services { get; }
+    public CommanderBuilder Commander { get; }
+    public RpcBuilder Rpc { get; }
+    public RpcServiceMode ServiceMode { get; }
 
     internal FusionBuilder(
         IServiceCollection services,
-        Action<FusionBuilder>? configure)
+        Action<FusionBuilder>? configure,
+        RpcServiceMode serviceMode,
+        bool setDefaultServiceMode)
     {
         Services = services;
-        if (services.Contains(AddedTagDescriptor)) {
+        Commander = services.AddCommander();
+        Rpc = services.AddRpc();
+        var dFusionTag = services.FirstOrDefault(d => d.ServiceType == typeof(FusionTag));
+        if (dFusionTag is { ImplementationInstance: FusionTag fusionTag }) {
+            ServiceMode = serviceMode.Or(fusionTag.ServiceMode);
+            if (setDefaultServiceMode)
+                fusionTag.ServiceMode = ServiceMode;
+
             configure?.Invoke(this);
             return;
         }
 
-        // We want above Contains call to run in O(1), so...
-        services.Insert(0, AddedTagDescriptor);
-        services.AddCommander();
+        // We want above FusionTag lookup to run in O(1), so...
+        ServiceMode = serviceMode.OrNone();
+        services.RemoveAll<FusionTag>();
+        services.Insert(0, new ServiceDescriptor(
+            typeof(FusionTag),
+            new FusionTag(setDefaultServiceMode ? ServiceMode : RpcServiceMode.None)));
 
         // Common services
         services.AddOptions();
@@ -44,6 +55,7 @@ public readonly struct FusionBuilder
         services.TryAddSingleton(c => c.GetRequiredService<MomentClockSet>().SystemClock);
         services.TryAddSingleton(_ => LTagVersionGenerator.Default);
         services.TryAddSingleton(_ => ClockBasedVersionGenerator.DefaultCoarse);
+        services.TryAddSingleton(c => new FusionInternalHub(c));
 
         // Compute services & their dependencies
         services.TryAddSingleton(_ => new ComputedOptionsProvider());
@@ -66,7 +78,7 @@ public readonly struct FusionBuilder
         services.TryAddScoped<IUpdateDelayer>(c => new UpdateDelayer(c.UIActionTracker()));
 
         // CommandR, command completion and invalidation
-        var commander = services.AddCommander();
+        var commander = Commander;
         services.TryAddSingleton(_ => new AgentInfo());
         services.TryAddSingleton(c => new InvalidationInfoProvider(
             c.Commander(), c.GetRequiredService<CommandHandlerResolver>()));
@@ -106,114 +118,188 @@ public readonly struct FusionBuilder
             commander.AddHandlers<CompletionTerminator>();
         }
 
+        // Core authentication services
+        services.TryAddScoped<ISessionResolver>(c => new SessionResolver(c));
+        services.TryAddScoped(c => c.GetRequiredService<ISessionResolver>().Session);
+        services.TryAddSingleton<ISessionFactory>(_ => new SessionFactory());
+
         // Core multitenancy services
         services.TryAddSingleton<ITenantRegistry<Unit>>(_ => new SingleTenantRegistry<Unit>());
         services.TryAddSingleton<DefaultTenantResolver<Unit>.Options>();
         services.TryAddSingleton<ITenantResolver<Unit>>(c => new DefaultTenantResolver<Unit>(
             c.GetRequiredService<DefaultTenantResolver<Unit>.Options>(), c));
         // And make it default
-        services.TryAddSingleton<ITenantRegistry>(c => c.GetRequiredService<ITenantRegistry<Unit>>());
-        services.TryAddSingleton<ITenantResolver>(c => c.GetRequiredService<ITenantResolver<Unit>>());
+        services.TryAddAlias<ITenantRegistry, ITenantRegistry<Unit>>();
+        services.TryAddAlias<ITenantResolver, ITenantResolver<Unit>>();
+
+        // RPC
+
+        // Compute system calls service + call type
+        if (!Rpc.Configuration.Services.ContainsKey(typeof(IRpcComputeSystemCalls))) {
+            Rpc.Service<IRpcComputeSystemCalls>().HasServer<RpcComputeSystemCalls>().HasName(RpcComputeSystemCalls.Name);
+            services.AddSingleton(c => new RpcComputeSystemCalls(c));
+            services.AddSingleton(c => new RpcComputeSystemCallSender(c));
+            RpcComputeCallType.Register();
+        }
+
+        // Compute call interceptor
+        services.TryAddSingleton(_ => new ClientComputeServiceInterceptor.Options());
+        services.TryAddTransient(c => new ClientComputeServiceInterceptor(
+            c.GetRequiredService<ClientComputeServiceInterceptor.Options>(), c));
+
+        // Compute call cache
+        services.AddSingleton(c => (ClientComputedCache)new NoClientComputedCache(c));
 
         configure?.Invoke(this);
     }
 
-    // AddRpc
-
-    public FusionRpcBuilder AddRpc()
-        => new(this, null);
-
-    public FusionBuilder AddRpc(Action<FusionRpcBuilder> configure)
-        => new FusionRpcBuilder(this, configure).Fusion;
-
-    // AddPublisher, AddReplicator
-
-    public FusionBuilder AddPublisher(
-        Func<IServiceProvider, PublisherOptions>? optionsFactory = null)
+    internal FusionBuilder(FusionBuilder fusion, RpcServiceMode serviceMode, bool setDefaultServiceMode)
     {
-        if (optionsFactory != null)
-            Services.AddSingleton(optionsFactory);
-        else
-            Services.TryAddSingleton(_ => new PublisherOptions());
-        Services.TryAddSingleton<IPublisher>(c => new Publisher(c.GetRequiredService<PublisherOptions>(), c));
-        return this;
+        Services = fusion.Services;
+        Commander = fusion.Commander;
+        Rpc = fusion.Rpc;
+        ServiceMode = serviceMode;
+        if (!setDefaultServiceMode)
+            return;
+
+        var dFusionTag = Services.FirstOrDefault(d => d.ServiceType == typeof(FusionTag));
+        if (dFusionTag is { ImplementationInstance: FusionTag fusionTag }) {
+            ServiceMode = serviceMode.Or(fusionTag.ServiceMode);
+            fusionTag.ServiceMode = ServiceMode;
+        }
     }
 
-    public FusionBuilder AddReplicator(
-        Func<IServiceProvider, ReplicatorOptions>? optionsFactory = null)
-    {
-        var services = Services;
-        if (optionsFactory != null)
-            services.AddSingleton(optionsFactory);
-        else
-            services.TryAddSingleton(_ => new ReplicatorOptions());
-        if (services.HasService<IReplicator>())
-            return this;
+    public FusionBuilder WithServiceMode(
+        RpcServiceMode serviceMode,
+        bool makeDefault = false)
+        => new(this, serviceMode, makeDefault);
 
-        // ReplicaCache
-        services.TryAddSingleton<ReplicaCache>(c => new NoReplicaCache(c));
+    // ComputeService
 
-        // Interceptors
-        services.TryAddSingleton(_ => new ReplicaServiceInterceptor.Options());
-        services.TryAddSingleton(c => new ReplicaServiceInterceptor(
-            c.GetRequiredService<ReplicaServiceInterceptor.Options>(), c));
-
-        // Replicator
-        services.TryAddSingleton<IReplicator>(c => new Replicator(
-            c.GetRequiredService<ReplicatorOptions>(), c));
-        return this;
-    }
-
-    // AddComputeService
-
-    public FusionBuilder AddComputeService<TService>(
-        ServiceLifetime lifetime = ServiceLifetime.Singleton)
+    public FusionBuilder AddService<TService>(RpcServiceMode mode)
         where TService : class, IComputeService
-        => AddComputeService(typeof(TService), typeof(TService), lifetime);
-    public FusionBuilder AddComputeService<TService, TImplementation>(
-        ServiceLifetime lifetime = ServiceLifetime.Singleton)
+        => AddService(typeof(TService), typeof(TService), ServiceLifetime.Singleton, mode);
+    public FusionBuilder AddService<TService, TImplementation>(RpcServiceMode mode)
         where TService : class
         where TImplementation : class, TService, IComputeService
-        => AddComputeService(typeof(TService), typeof(TImplementation), lifetime);
+        => AddService(typeof(TService), typeof(TImplementation), ServiceLifetime.Singleton, mode);
+    public FusionBuilder AddService<TService>(
+        ServiceLifetime lifetime = ServiceLifetime.Singleton,
+        RpcServiceMode mode = RpcServiceMode.Default)
+        where TService : class, IComputeService
+        => AddService(typeof(TService), typeof(TService), lifetime, mode);
+    public FusionBuilder AddService<TService, TImplementation>(
+        ServiceLifetime lifetime = ServiceLifetime.Singleton,
+        RpcServiceMode mode = RpcServiceMode.Default)
+        where TService : class
+        where TImplementation : class, TService, IComputeService
+        => AddService(typeof(TService), typeof(TImplementation), lifetime, mode);
 
-    public FusionBuilder AddComputeService(
+    public FusionBuilder AddService(Type serviceType, RpcServiceMode mode)
+        => AddService(serviceType, serviceType, ServiceLifetime.Singleton, mode);
+    public FusionBuilder AddService(Type serviceType, Type implementationType, RpcServiceMode mode)
+        => AddService(serviceType, implementationType, ServiceLifetime.Singleton, mode);
+    public FusionBuilder AddService(
         Type serviceType,
-        ServiceLifetime lifetime = ServiceLifetime.Singleton)
-        => AddComputeService(serviceType, serviceType, lifetime);
-    public FusionBuilder AddComputeService(
+        ServiceLifetime lifetime = ServiceLifetime.Singleton,
+        RpcServiceMode mode = RpcServiceMode.Default)
+        => AddService(serviceType, serviceType, lifetime, mode);
+    public FusionBuilder AddService(
         Type serviceType, Type implementationType,
-        ServiceLifetime lifetime = ServiceLifetime.Singleton)
+        ServiceLifetime lifetime = ServiceLifetime.Singleton,
+        RpcServiceMode mode = RpcServiceMode.Default)
     {
         if (!serviceType.IsAssignableFrom(implementationType))
-            throw new ArgumentOutOfRangeException(nameof(implementationType));
+            throw Stl.Internal.Errors.MustBeAssignableTo(implementationType, serviceType, nameof(implementationType));
         if (!typeof(IComputeService).IsAssignableFrom(implementationType))
             throw Stl.Internal.Errors.MustImplement<IComputeService>(implementationType, nameof(implementationType));
-        if (Services.Any(d => d.ServiceType == serviceType))
-            return this;
 
-        object Factory(IServiceProvider c)
-        {
-            // We should try to validate it here because if the type doesn't
-            // have any virtual methods (which might be a mistake), no calls
-            // will be intercepted, so no error will be thrown later.
-            var interceptor = c.GetRequiredService<ComputeServiceInterceptor>();
-            interceptor.ValidateType(implementationType);
-            return c.ActivateProxy(implementationType, interceptor);
-        }
+        if (lifetime != ServiceLifetime.Singleton)
+            return AddServiceImpl(serviceType, implementationType, lifetime);
 
-        var descriptor = new ServiceDescriptor(serviceType, Factory, lifetime);
-        Services.Add(descriptor);
-        Services.AddCommander().AddHandlers(serviceType, implementationType);
+        mode = mode.Or(ServiceMode);
+        return mode switch {
+            RpcServiceMode.Server => AddServer(serviceType, implementationType),
+            RpcServiceMode.Router => AddRouter(serviceType, implementationType),
+            RpcServiceMode.RoutingServer => AddRoutingServer(serviceType, implementationType),
+            RpcServiceMode.ServingRouter => AddServingRouter(serviceType, implementationType),
+            _ => AddServiceImpl(serviceType, implementationType)
+        };
+    }
+
+    public FusionBuilder AddServer<TService, TImplementation>(Symbol name = default)
+        => AddServer(typeof(TService), typeof(TImplementation), name);
+    public FusionBuilder AddServer(Type serviceType, Type implementationType, Symbol name = default)
+    {
+        if (!serviceType.IsAssignableFrom(implementationType))
+            throw Stl.Internal.Errors.MustBeAssignableTo(implementationType, serviceType, nameof(implementationType));
+        if (!typeof(IComputeService).IsAssignableFrom(implementationType))
+            throw Stl.Internal.Errors.MustImplement<IComputeService>(implementationType, nameof(implementationType));
+
+        AddServiceImpl(serviceType, implementationType);
+        Rpc.Service(serviceType).HasServer(serviceType).HasName(name);
         return this;
     }
 
-    // AddAuthentication
+    public FusionBuilder AddClient<TService>(Symbol name = default)
+        => AddClient(typeof(TService), name);
+    public FusionBuilder AddClient(Type serviceType, Symbol name = default)
+    {
+        if (!serviceType.IsInterface)
+            throw Stl.Internal.Errors.MustBeInterface(serviceType, nameof(serviceType));
+        if (!typeof(IComputeService).IsAssignableFrom(serviceType))
+            throw Stl.Internal.Errors.MustImplement<IComputeService>(serviceType, nameof(serviceType));
 
-    public FusionAuthenticationBuilder AddAuthentication()
-        => new(this, null);
+        Services.AddSingleton(serviceType, c => FusionProxies.NewClientProxy(c, serviceType));
+        Commander.AddHandlers(serviceType);
+        Rpc.Service(serviceType).HasName(name);
+        return this;
+    }
 
-    public FusionBuilder AddAuthentication(Action<FusionAuthenticationBuilder> configure)
-        => new FusionAuthenticationBuilder(this, configure).Fusion;
+    public FusionBuilder AddRouter<TService, TImplementation>(Symbol name = default)
+        => AddRouter(typeof(TService), typeof(TImplementation), name);
+    public FusionBuilder AddRouter(Type serviceType, Type implementationType, Symbol name = default)
+    {
+        if (!serviceType.IsInterface)
+            throw Stl.Internal.Errors.MustBeInterface(serviceType, nameof(serviceType));
+        if (!serviceType.IsAssignableFrom(implementationType))
+            throw Stl.Internal.Errors.MustBeAssignableTo(implementationType, serviceType, nameof(implementationType));
+        if (!typeof(IComputeService).IsAssignableFrom(implementationType))
+            throw Stl.Internal.Errors.MustImplement<IComputeService>(implementationType, nameof(implementationType));
+
+        var serverResolver = ServiceResolver.New(c => FusionProxies.NewServiceProxy(c, implementationType));
+        Services.AddSingleton(serviceType, c => FusionProxies.NewRoutingProxy(c, serviceType, serverResolver));
+        Commander.AddHandlers(serviceType);
+        Rpc.Service(serviceType).HasName(name);
+        return this;
+    }
+
+    public FusionBuilder AddServingRouter<TService, TImplementation>(Symbol name = default)
+        => AddServingRouter(typeof(TService), typeof(TImplementation), name);
+    public FusionBuilder AddServingRouter(Type serviceType, Type implementationType, Symbol name = default)
+    {
+        AddRouter(serviceType, implementationType);
+        Rpc.Service(serviceType).HasServer(serviceType).HasName(name);
+        return this;
+    }
+
+    public FusionBuilder AddRoutingServer<TService, TImplementation>(Symbol name = default)
+        => AddRoutingServer(typeof(TService), typeof(TImplementation), name);
+    public FusionBuilder AddRoutingServer(Type serviceType, Type implementationType, Symbol name = default)
+    {
+        if (!serviceType.IsInterface)
+            throw Stl.Internal.Errors.MustBeInterface(serviceType, nameof(serviceType));
+        if (!serviceType.IsAssignableFrom(implementationType))
+            throw Stl.Internal.Errors.MustBeAssignableTo(implementationType, serviceType, nameof(implementationType));
+        if (!typeof(IComputeService).IsAssignableFrom(implementationType))
+            throw Stl.Internal.Errors.MustImplement<IComputeService>(implementationType, nameof(implementationType));
+
+        Services.AddSingleton(implementationType, c => FusionProxies.NewServiceProxy(c, implementationType));
+        Services.AddSingleton(serviceType, c => FusionProxies.NewRoutingProxy(c, serviceType, implementationType));
+        Commander.AddHandlers(serviceType, implementationType);
+        Rpc.Service(serviceType).HasServer(implementationType).HasName(name);
+        return this;
+    }
 
     // AddOperationReprocessor
 
@@ -226,17 +312,14 @@ public readonly struct FusionBuilder
         where TOperationReprocessor : class, IOperationReprocessor
     {
         var services = Services;
-        if (optionsFactory != null)
-            services.AddSingleton(optionsFactory);
-        else
-            services.TryAddSingleton<OperationReprocessorOptions>();
+        services.AddSingleton(optionsFactory, _ => OperationReprocessorOptions.Default);
+        if (services.HasService<TOperationReprocessor>())
+            return this;
 
-        if (!services.HasService<IOperationReprocessor>()) {
-            services.AddSingleton(TransientErrorDetector.DefaultPreferNonTransient.For<IOperationReprocessor>());
-            services.AddTransient<TOperationReprocessor>();
-            services.AddTransient<IOperationReprocessor>(c => c.GetRequiredService<TOperationReprocessor>());
-            services.AddCommander().AddHandlers<TOperationReprocessor>();
-        }
+        services.AddTransient<TOperationReprocessor>();
+        services.AddAlias<IOperationReprocessor, TOperationReprocessor>(ServiceLifetime.Transient);
+        Commander.AddHandlers<TOperationReprocessor>();
+        services.AddSingleton(TransientErrorDetector.DefaultPreferNonTransient.For<IOperationReprocessor>());
         return this;
     }
 
@@ -246,14 +329,46 @@ public readonly struct FusionBuilder
         Func<IServiceProvider, ComputedGraphPruner.Options>? optionsFactory = null)
     {
         var services = Services;
-        if (optionsFactory != null)
-            services.AddSingleton(optionsFactory);
-        else
-            services.TryAddSingleton(_ => new ComputedGraphPruner.Options());
+        services.AddSingleton(optionsFactory, _ => ComputedGraphPruner.Options.Default);
+        if (services.HasService<ComputedGraphPruner>())
+            return this;
 
-        services.TryAddSingleton(c => new ComputedGraphPruner(
+        services.AddSingleton(c => new ComputedGraphPruner(
             c.GetRequiredService<ComputedGraphPruner.Options>(), c));
         services.AddHostedService(c => c.GetRequiredService<ComputedGraphPruner>());
         return this;
+    }
+
+    // Private methods
+
+    private FusionBuilder AddServiceImpl(
+        Type serviceType, Type implementationType,
+        bool addCommandHandlers)
+        => AddServiceImpl(serviceType, implementationType, ServiceLifetime.Singleton, addCommandHandlers);
+    private FusionBuilder AddServiceImpl(
+        Type serviceType, Type implementationType,
+        ServiceLifetime lifetime = ServiceLifetime.Singleton,
+        bool addCommandHandlers = true)
+    {
+        var descriptor = new ServiceDescriptor(serviceType, c => FusionProxies.NewServiceProxy(c, implementationType), lifetime);
+        Services.Add(descriptor);
+        if (addCommandHandlers)
+            Commander.AddHandlers(serviceType);
+        return this;
+    }
+
+    // Nested types
+
+    public class FusionTag
+    {
+        private RpcServiceMode _serviceMode;
+
+        public RpcServiceMode ServiceMode {
+            get => _serviceMode;
+            set => _serviceMode = value.OrNone();
+        }
+
+        public FusionTag(RpcServiceMode serviceMode)
+            => ServiceMode = serviceMode;
     }
 }

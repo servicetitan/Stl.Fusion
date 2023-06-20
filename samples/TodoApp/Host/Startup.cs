@@ -1,38 +1,27 @@
 using System.Data;
 using System.Globalization;
-using System.IO;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Hosting.StaticWebAssets;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi.Models;
 using Templates.TodoApp.Services;
 using Stl.DependencyInjection;
-using Stl.Fusion.Blazor;
-using Stl.Fusion.Bridge;
-using Stl.Fusion.Client;
-using Stl.Fusion.Server;
 using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Hosting;
+using Stl.Fusion.Blazor;
+using Stl.Fusion.Blazor.Authentication;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.EntityFramework.Npgsql;
-using Stl.Fusion.EntityFramework.Operations;
 using Stl.Fusion.Extensions;
-using Stl.Fusion.Operations.Reprocessing;
+using Stl.Fusion.Server;
 using Stl.Fusion.Server.Authentication;
-using Stl.Fusion.Server.Controllers;
-using Stl.Generators;
 using Stl.Interception.Interceptors;
 using Stl.IO;
 using Stl.Multitenancy;
 using Stl.OS;
+using Stl.Rpc;
+using Stl.Rpc.Server;
 using Templates.TodoApp.Abstractions;
 using Templates.TodoApp.UI;
 
@@ -71,7 +60,7 @@ public class Startup
             }
         });
 
-        // ComputedService/ReplicaService/etc. type validation should be off in release 
+        // IComputeService validation should be off in release
 #if !DEBUG
         InterceptorBase.Options.Defaults.IsValidationEnabled = true;
 #endif
@@ -86,7 +75,7 @@ public class Startup
             DefaultIsolationLevel = IsolationLevel.RepeatableRead,
         });
         services.AddDbContextServices<AppDbContext>(db => {
-            // Uncomment if you'll be using AddRedisOperationLogChangeTracking 
+            // Uncomment if you'll be using AddRedisOperationLogChangeTracking
             // db.AddRedisDb("localhost", "Fusion.Samples.TodoApp");
             db.AddOperations(operations => {
                 operations.ConfigureOperationLogReader(_ => new() {
@@ -97,9 +86,6 @@ public class Startup
                 operations.AddFileBasedOperationLogChangeTracking();
                 // db.AddRedisOperationLogChangeTracking();
             });
-            if (!HostSettings.UseInMemoryAuthService)
-                db.AddAuthentication<string>();
-            db.AddKeyValueStore();
 
             if (HostSettings.UseMultitenancy) {
                 db.AddMultitenancy(multitenancy => {
@@ -124,40 +110,35 @@ public class Startup
         });
 
         // Fusion services
-        var fusion = services.AddFusion();
+        var fusion = services.AddFusion(RpcServiceMode.Server, true);
         var fusionServer = fusion.AddWebServer();
-        services.AddSingleton(new PublisherOptions() {
-            // Id = "p",
-            Id = $"p-{RandomStringGenerator.Default.Next(8)}",
-        });
-        services.AddSingleton(new WebSocketServer.Options() {
-            ConfigureWebSocket = () => new WebSocketAcceptContext() {
-                DangerousEnableCompression = true,
-            }
-        });
+        if (HostSettings.UseInMemoryAuthService)
+            fusion.AddInMemoryAuthService();
+        else
+            fusion.AddDbAuthService<AppDbContext, string>();
+        fusion.AddDbKeyValueStore<AppDbContext>();
 
+        fusionServer.AddAuthentication();
         if (HostSettings.UseMultitenancy)
             fusionServer.ConfigureSessionMiddleware(_ => new() {
                 TenantIdExtractor = TenantIdExtractors.FromSubdomain(".localhost")
                     .Or(TenantIdExtractors.FromPort((5005, 5010)))
                     .WithValidator(tenantId => tenantId.Value.StartsWith("tenant")),
             });
-        var fusionClient = fusion.AddRestEaseClient();
-        var fusionAuth = fusion.AddAuthentication().AddServer(
-            signInControllerOptionsFactory: _ => new() {
-                DefaultScheme = MicrosoftAccountDefaults.AuthenticationScheme,
-                SignInPropertiesBuilder = (_, properties) => {
-                    properties.IsPersistent = true;
-                }
-            },
-            serverAuthHelperOptionsFactory: _ => new() {
-                NameClaimKeys = Array.Empty<string>(),
-            });
+        fusionServer.ConfigureSignInController(_ => new() {
+            DefaultScheme = MicrosoftAccountDefaults.AuthenticationScheme,
+            SignInPropertiesBuilder = (_, properties) => {
+                properties.IsPersistent = true;
+            }
+        });
+        fusionServer.ConfigureServerAuthHelper(_ => new() {
+            NameClaimKeys = Array.Empty<string>(),
+        });
         fusion.AddSandboxedKeyValueStore();
         fusion.AddOperationReprocessor();
 
         // Compute service(s)
-        fusion.AddComputeService<ITodoService, TodoService>();
+        fusion.AddService<ITodos, Todos>();
 
         // Shared services
         StartupHelper.ConfigureSharedServices(services);
@@ -197,7 +178,7 @@ public class Startup
         services.AddRouting();
         services.AddMvc().AddApplicationPart(Assembly.GetExecutingAssembly());
         services.AddServerSideBlazor(o => o.DetailedErrors = true);
-        fusionAuth.AddBlazor(o => { }); // Must follow services.AddServerSideBlazor()!
+        fusion.AddBlazor().AddAuthentication().AddPresenceReporter(); // Must follow services.AddServerSideBlazor()!
 
         // Swagger & debug tools
         services.AddSwaggerGen(c => {
@@ -267,7 +248,7 @@ public class Startup
             CultureInfo.CurrentUICulture = culture;
             await next().ConfigureAwait(false);
         });
-        
+
         // Static + Swagger
         app.UseBlazorFrameworkFiles();
         app.UseStaticFiles();
@@ -282,7 +263,7 @@ public class Startup
         app.UseAuthorization();
         app.UseEndpoints(endpoints => {
             endpoints.MapBlazorHub();
-            endpoints.MapFusionWebSocketServer();
+            endpoints.MapRpcServer();
             endpoints.MapControllers();
             endpoints.MapFallbackToPage("/_Host");
         });

@@ -2,9 +2,10 @@ namespace Stl.Time;
 
 public record TimerSetOptions
 {
+    public static readonly TimerSetOptions Default = new();
+
     // ReSharper disable once StaticMemberInGenericType
     public static TimeSpan MinQuanta { get; } = TimeSpan.FromMilliseconds(10);
-    public static TimerSetOptions Default { get; } = new();
 
     public TimeSpan Quanta { get; init; } = TimeSpan.FromSeconds(1);
     public IMomentClock Clock { get; init; } = MomentClockSet.Default.CpuClock;
@@ -27,39 +28,47 @@ public sealed class TimerSet<TTimer> : WorkerBase
         }
     }
 
-    public TimerSet(TimerSetOptions options, Action<TTimer>? fireHandler = null)
+    public TimerSet(TimerSetOptions options, Action<TTimer>? fireHandler = null, Moment? start = null)
     {
         if (options.Quanta < TimerSetOptions.MinQuanta)
             throw new ArgumentOutOfRangeException(nameof(options), "Quanta < MinQuanta.");
+
         Quanta = options.Quanta;
         Clock = options.Clock;
         _fireHandler = fireHandler;
-        _start = Clock.Now;
+        _start = start ?? Clock.Now;
         _ = Run();
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public long GetPriority(Moment time)
+        => (time - _start).Ticks / Quanta.Ticks;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AddOrUpdate(TTimer timer, Moment time)
+        => AddOrUpdate(timer, GetPriority(time));
+    public void AddOrUpdate(TTimer timer, long priority)
     {
-        lock (_lock) {
-            var priority = GetPriority(time); // Should be inside the "lock" block
-            _timers.AddOrUpdate(priority, timer);
-        }
+        lock (_lock)
+            _timers.AddOrUpdate(FixPriority(priority), timer);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool AddOrUpdateToEarlier(TTimer timer, Moment time)
+        => AddOrUpdateToEarlier(timer, GetPriority(time));
+    public bool AddOrUpdateToEarlier(TTimer timer, long priority)
     {
-        lock (_lock) {
-            var priority = GetPriority(time); // Should be inside the "lock" block
-            return _timers.AddOrUpdateToLower(priority, timer);
-        }
+        lock (_lock)
+            return _timers.AddOrUpdateToLower(FixPriority(priority), timer);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool AddOrUpdateToLater(TTimer timer, Moment time)
+        => AddOrUpdateToLater(timer, GetPriority(time));
+    public bool AddOrUpdateToLater(TTimer timer, long priority)
     {
-        lock (_lock) {
-            var priority = GetPriority(time); // Should be inside the "lock" block
-            return _timers.AddOrUpdateToHigher(priority, timer);
-        }
+        lock (_lock)
+            return _timers.AddOrUpdateToHigher(FixPriority(priority), timer);
     }
 
     public bool Remove(TTimer timer)
@@ -98,9 +107,9 @@ public sealed class TimerSet<TTimer> : WorkerBase
         }
     }
 
-    private long GetPriority(Moment time)
-    {
-        var priority = (time - _start).Ticks / Quanta.Ticks;
-        return Math.Max(_minPriority, priority);
-    }
+    // Private methods
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private long FixPriority(long priority)
+        => Math.Max(_minPriority, priority);
 }

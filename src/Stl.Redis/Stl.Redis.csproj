@@ -9,6 +9,9 @@
   <ItemGroup>
     <PackageReference Include="StackExchange.Redis" />
   </ItemGroup>
+  <ItemGroup Condition="!$(TargetFramework.StartsWith('netstandard2.0'))">
+    <PackageReference Include="MemoryPack.Generator" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Stl\Stl.csproj" />

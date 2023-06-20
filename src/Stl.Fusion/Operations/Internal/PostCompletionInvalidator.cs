@@ -49,9 +49,9 @@ public class PostCompletionInvalidator : ICommandHandler<ICompletion>
             var useOriginalCommandHandler = finalHandler == null
                 || finalHandler.GetHandlerService(command, context) is CompletionTerminator;
             if (useOriginalCommandHandler) {
-                if (InvalidationInfoProvider.IsReplicaServiceCommand(originalCommand)) {
+                if (InvalidationInfoProvider.IsClientComputeServiceCommand(originalCommand)) {
                     log?.Log(Settings.LogLevel,
-                        "No invalidation for replica service command '{CommandType}'",
+                        "No invalidation for client compute service command '{CommandType}'",
                         originalCommand.GetType());
                     return;
                 }

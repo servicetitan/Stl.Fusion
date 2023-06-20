@@ -1,6 +1,7 @@
 using Stl.Fusion.Authentication;
-using Stl.Fusion.Authentication.Commands;
+using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
+using User = Stl.Fusion.Authentication.User;
 
 namespace Stl.Fusion.Tests;
 
@@ -39,21 +40,6 @@ public class SerializationTest : TestBase
     }
 
     [Fact]
-    public void AuthCommandSerialization()
-    {
-        var user = new User("b", "bob").WithIdentity("g:1");
-        var session = new Session("validSessionId");
-
-        new SignInCommand(session, user).PassThroughAllSerializers().User.Name.Should().Be(user.Name);
-        new SignOutCommand(session, true).PassThroughAllSerializers().Session.Should().Be(session);
-        new EditUserCommand(session, "X").PassThroughAllSerializers().Session.Should().Be(session);
-        new SetupSessionCommand(session, "a", "b").PassThroughAllSerializers().Session.Should().Be(session);
-        var sso = new SetSessionOptionsCommand(session, ImmutableOptionSet.Empty.Set(true), 1);
-        sso.Options.GetOrDefault<bool>().Should().BeTrue();
-        sso.ExpectedVersion.Should().Be(1);
-    }
-
-    [Fact]
     public void TestCommandSerialization()
     {
         var c = new TestCommand<HasStringId>("1", new("2")).PassThroughAllSerializers();
@@ -67,28 +53,20 @@ public class SerializationTest : TestBase
         var s = new Screenshot {
             Width = 10,
             Height = 20,
-            CapturedAt = Moment.EpochStart,
-            Image = new Base64Encoded(new byte[] { 1, 2, 3 })
+            CapturedAt = SystemClock.Now,
+            Image = new byte[] { 1, 2, 3 },
         };
+        var t = s.PassThroughAllSerializers();
+        t.Width.Should().Be(s.Width);
+        t.Height.Should().Be(s.Height);
+        t.CapturedAt.Should().Be(s.CapturedAt);
+        t.Image.Should().Equal(s.Image);
+    }
+
+    [Fact]
+    public void Base64EncodedSerialization()
+    {
+        var s = new Base64Encoded(new byte[] { 1, 2, 3 });
         s.AssertPassesThroughAllSerializers();
-    }
-
-    [DataContract]
-    public record HasStringId(
-        [property: DataMember] string Id
-        ) : IHasId<string>
-    {
-        public HasStringId() : this("") { }
-    }
-
-    [DataContract]
-    public record TestCommand<TValue>(
-        [property: DataMember] string Id,
-        [property: DataMember] TValue? Value = null
-        ) : ICommand<Unit>
-        where TValue : class, IHasId<string>
-    {
-        public TestCommand(TValue value) : this(value.Id, value) { }
-        public TestCommand() : this("") { }
     }
 }

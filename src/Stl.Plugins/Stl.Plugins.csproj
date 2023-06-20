@@ -21,6 +21,9 @@
     <ProjectReference Include="..\Stl\Stl.csproj" />
   </ItemGroup>
 
+  <ItemGroup Condition="!$(TargetFramework.StartsWith('netstandard2.0'))">
+    <PackageReference Include="MemoryPack.Generator" />
+  </ItemGroup>
   <ItemGroup Condition="!$(TargetFramework.StartsWith('net4'))">
     <PackageReference Include="System.Runtime.Loader" />
   </ItemGroup>

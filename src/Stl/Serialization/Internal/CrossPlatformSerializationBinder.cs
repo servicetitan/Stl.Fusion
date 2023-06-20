@@ -11,7 +11,7 @@ public class CrossPlatformSerializationBinder : SerializationBinder
     private static readonly Regex MsCorLibRe = new("^" + Regex.Escape(MsCorLibName));
     private static bool IsMonoPlatform { get; }
 
-    public new static readonly ISerializationBinder Instance = new CrossPlatformSerializationBinder();
+    public static new readonly ISerializationBinder Instance = new CrossPlatformSerializationBinder();
 
     static CrossPlatformSerializationBinder()
     {

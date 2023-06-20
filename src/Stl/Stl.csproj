@@ -40,6 +40,11 @@
     <PackageReference Include="System.Threading.Channels" VersionOverride="$(SystemXxxVersion6)" />
   </ItemGroup>
 
+  <ItemGroup Condition="!$(TargetFramework.StartsWith('netstandard2.0'))">
+    <PackageReference Include="MemoryPack.Core" />
+    <PackageReference Include="MemoryPack.Generator" />
+  </ItemGroup>
+
   <ItemGroup Condition="$(TargetFramework.StartsWith('netstandard2.0'))">
     <PackageReference Include="IndexRange" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />

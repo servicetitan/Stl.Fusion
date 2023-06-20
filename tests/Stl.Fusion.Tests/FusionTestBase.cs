@@ -2,26 +2,22 @@ using System.Collections.Concurrent;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Stl.IO;
-using Stl.Fusion.Bridge;
-using Stl.Fusion.Bridge.Messages;
-using Stl.Fusion.Client;
+using Stl.Fusion.Authentication;
+using Stl.Fusion.Client.Cache;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.EntityFramework.Npgsql;
 using Stl.Fusion.EntityFramework.Redis;
 using Stl.Fusion.Extensions;
+using Stl.Fusion.Server;
+using Stl.Fusion.Tests.Extensions;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
 using Stl.Fusion.Tests.UIModels;
 using Stl.Locking;
-using Stl.RegisterAttributes;
+using Stl.Rpc;
 using Stl.Testing.Collections;
-using Stl.Testing.Output;
-using Stl.Time.Testing;
-using Xunit.DependencyInjection.Logging;
-
-#if !NETCOREAPP
-using Stl.Fusion.Server;
-#endif
+using Stl.Tests;
+using User = Stl.Fusion.Tests.Model.User;
 
 namespace Stl.Fusion.Tests;
 
@@ -34,25 +30,18 @@ public enum FusionTestDbType
     InMemory = 4,
 }
 
-public class FusionTestOptions
-{
-    public FusionTestDbType DbType { get; set; } = FusionTestDbType.Sqlite;
-    public bool UseRedisOperationLogChangeTracking { get; set; } = !TestRunnerInfo.IsBuildAgent();
-    public bool UseInMemoryKeyValueStore { get; set; }
-    public bool UseInMemoryAuthService { get; set; }
-    public bool UseReplicaCache { get; set; }
-    public bool UseTestClock { get; set; }
-    public bool UseLogging { get; set; } = true;
-}
-
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class FusionTestBase : TestBase, IAsyncLifetime
+public abstract class FusionTestBase : RpcTestBase
 {
     private static readonly ReentrantAsyncLock InitializeLock = new(LockReentryMode.CheckedFail);
-    protected static readonly ConcurrentDictionary<Symbol, string> ReplicaCache = new();
+    protected static readonly ConcurrentDictionary<Symbol, string> ClientComputedCacheStore = new();
 
-    public FusionTestOptions Options { get; }
-    public bool IsLoggingEnabled { get; set; } = true;
+    public FusionTestDbType DbType { get; init; } = FusionTestDbType.Sqlite;
+    public bool UseRedisOperationLogChangeTracking { get; init; } = !TestRunnerInfo.IsBuildAgent();
+    public bool UseInMemoryKeyValueStore { get; init; }
+    public bool UseInMemoryAuthService { get; init; }
+    public bool UseClientComputedCache { get; init; }
+
     public FilePath SqliteDbPath { get; protected set; }
     public string PostgreSqlConnectionString { get; protected set; } =
         "Server=localhost;Database=stl_fusion_tests;Port=5432;User Id=postgres;Password=postgres";
@@ -60,26 +49,11 @@ public class FusionTestBase : TestBase, IAsyncLifetime
         "Server=localhost;Database=stl_fusion_tests;Port=3306;User=root;Password=mariadb";
     public string SqlServerConnectionString { get; protected set; } =
         "Server=localhost,1433;Database=stl_fusion_tests;MultipleActiveResultSets=true;TrustServerCertificate=true;User Id=sa;Password=SqlServer1";
-    public FusionTestWebHost WebHost { get; }
-    public IServiceProvider Services { get; }
-    public IServiceProvider WebServices => WebHost.Services;
-    public IServiceProvider ClientServices { get; }
-    public ILogger Log { get; }
 
-    public FusionTestBase(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out)
+    protected FusionTestBase(ITestOutputHelper @out) : base(@out)
     {
-        Options = options ?? new FusionTestOptions();
         var appTempDir = FilePath.GetApplicationTempDirectory("", true);
         SqliteDbPath = appTempDir & FilePath.GetHashedName($"{GetType().Name}_{GetType().Namespace}.db");
-
-        // ReSharper disable once VirtualMemberCallInConstructor
-        Services = CreateServices();
-        WebHost = Services.GetRequiredService<FusionTestWebHost>();
-        ClientServices = CreateServices(true);
-        if (Options.UseLogging)
-            Log = (ILogger) Services.GetRequiredService(typeof(ILogger<>).MakeGenericType(GetType()));
-        else
-            Log = NullLogger.Instance;
     }
 
     public override async Task InitializeAsync()
@@ -110,99 +84,66 @@ public class FusionTestBase : TestBase, IAsyncLifetime
         await Services.HostedServices().Start();
     }
 
-    public override async Task DisposeAsync()
-    {
-        if (ClientServices is IAsyncDisposable adcs)
-            await adcs.DisposeAsync();
-        if (ClientServices is IDisposable dcs)
-            dcs.Dispose();
-
-        try {
-            await Services.HostedServices().Stop();
-        }
-        catch {
-            // Intended
-        }
-
-        if (Services is IAsyncDisposable ads)
-            await ads.DisposeAsync();
-        if (Services is IDisposable ds)
-            ds.Dispose();
-    }
-
-    protected bool MustSkip()
+    protected virtual bool MustSkip()
         => TestRunnerInfo.IsGitHubAction()
-            && Options.DbType
+            && DbType
                 is FusionTestDbType.PostgreSql
                 or FusionTestDbType.MariaDb
                 or FusionTestDbType.SqlServer;
 
-    protected IServiceProvider CreateServices(bool isClient = false)
+    protected override void ConfigureTestServices(IServiceCollection services, bool isClient)
     {
-        var services = (IServiceCollection) new ServiceCollection();
-        ConfigureServices(services, isClient);
-        return services.BuildServiceProvider();
+        var fusion = services.AddFusion();
+        var rpc = fusion.Rpc;
+        if (!isClient) {
+            fusion.AddService<ITimeService, TimeService>();
+            rpc.Service<ITimeService>().Remove();
+            rpc.Service<ITimeServer>().HasServer<ITimeService>().HasName(nameof(ITimeService));
+            fusion.AddService<IUserService, UserService>();
+            fusion.AddService<IScreenshotService, ScreenshotService>();
+            fusion.AddService<IEdgeCaseService, EdgeCaseService>();
+            fusion.AddService<IKeyValueService<string>, KeyValueService<string>>();
+        } else {
+            fusion.AddClient<ITimeService>();
+            fusion.AddClient<IUserService>();
+            fusion.AddClient<IScreenshotService>();
+            fusion.AddClient<IEdgeCaseService>();
+            fusion.AddClient<IKeyValueService<string>>();
+        }
+        services.AddSingleton<UserService>();
+        services.AddSingleton<IComputedState<ServerTimeModel1>, ServerTimeModel1State>();
+        services.AddSingleton<IComputedState<KeyValueModel<string>>, StringKeyValueModelState>();
+        fusion.AddService<ISimplestProvider, SimplestProvider>(ServiceLifetime.Scoped);
+        fusion.AddService<NestedOperationLoggerTester>();
     }
 
-    protected virtual void ConfigureServices(IServiceCollection services, bool isClient = false)
+    protected override void ConfigureServices(IServiceCollection services, bool isClient)
     {
-        if (Options.UseTestClock)
-            services.AddSingleton(new MomentClockSet(new TestClock()));
-        services.AddSingleton(Out);
-
-        // Logging
-        if (Options.UseLogging)
-            services.AddLogging(logging => {
-                var debugCategories = new List<string> {
-                    "Stl.Fusion",
-                    "Stl.CommandR",
-                    "Stl.Tests.Fusion",
-                    // DbLoggerCategory.Database.Transaction.Name,
-                    // DbLoggerCategory.Database.Connection.Name,
-                    // DbLoggerCategory.Database.Command.Name,
-                    // DbLoggerCategory.Query.Name,
-                    // DbLoggerCategory.Update.Name,
-                };
-
-                bool LogFilter(string? category, LogLevel level)
-                    => IsLoggingEnabled &&
-                        debugCategories.Any(x => category?.StartsWith(x) ?? false)
-                        && level >= LogLevel.Debug;
-
-                logging.ClearProviders();
-                logging.SetMinimumLevel(LogLevel.Debug);
-                logging.AddFilter(LogFilter);
-                logging.AddDebug();
-                // XUnit logging requires weird setup b/c otherwise it filters out
-                // everything below LogLevel.Information
-                logging.AddProvider(
-#pragma warning disable CS0618
-                    new XunitTestOutputLoggerProvider(
-                        new TestOutputHelperAccessor(Out),
-                        LogFilter));
-#pragma warning restore CS0618
-            });
+        base.ConfigureServices(services, isClient);
 
         // Core Fusion services
         var fusion = services.AddFusion();
         fusion.AddOperationReprocessor();
         fusion.AddFusionTime();
 
-        // Auto-discovered services
-        var testType = GetType();
-        services.UseRegisterAttributeScanner()
-            .WithTypeFilter(testType.Namespace!)
-            .RegisterFrom(testType.Assembly);
-
         if (!isClient) {
-            // Configuring Services and ServerServices
-            services.UseRegisterAttributeScanner(ServiceScope.Services)
-                .WithTypeFilter(testType.Namespace!)
-                .RegisterFrom(testType.Assembly);
+            fusion = fusion.WithServiceMode(RpcServiceMode.Server, true);
+            var fusionServer = fusion.AddWebServer();
+#if !NETFRAMEWORK
+            fusionServer.AddAuthentication();
+#endif
+            if (UseInMemoryAuthService)
+                fusion.AddInMemoryAuthService();
+            else
+                fusion.AddDbAuthService<TestDbContext, DbAuthSessionInfo, DbAuthUser, long>();
+            if (UseInMemoryKeyValueStore)
+                fusion.AddInMemoryKeyValueStore();
+            else
+                fusion.AddDbKeyValueStore<TestDbContext>();
 
             // DbContext & related services
             services.AddPooledDbContextFactory<TestDbContext>(builder => {
-                switch (Options.DbType) {
+                switch (DbType) {
                 case FusionTestDbType.Sqlite:
                     builder.UseSqlite($"Data Source={SqliteDbPath}");
                     break;
@@ -237,13 +178,13 @@ public class FusionTestBase : TestBase, IAsyncLifetime
                     throw new NotSupportedException();
                 }
 #if NET5_0_OR_GREATER
-                if (Options.DbType != FusionTestDbType.InMemory)
+                if (DbType != FusionTestDbType.InMemory)
                     builder.UseValidationCheckConstraints(c => c.UseRegex(false));
 #endif
                 builder.EnableSensitiveDataLogging();
             }, 256);
             services.AddDbContextServices<TestDbContext>(db => {
-                if (Options.UseRedisOperationLogChangeTracking)
+                if (UseRedisOperationLogChangeTracking)
                     db.AddRedisDb("localhost", "Fusion.Tests");
                 db.AddOperations(operations => {
                     operations.ConfigureOperationLogReader(_ => new() {
@@ -251,70 +192,30 @@ public class FusionTestBase : TestBase, IAsyncLifetime
                         // Enable this if you debug multi-host invalidation
                         // MaxCommitDuration = TimeSpan.FromMinutes(5),
                     });
-                    if (Options.UseRedisOperationLogChangeTracking)
+                    if (UseRedisOperationLogChangeTracking)
                         operations.AddRedisOperationLogChangeTracking();
-                    else if (Options.DbType == FusionTestDbType.PostgreSql)
+                    else if (DbType == FusionTestDbType.PostgreSql)
                         operations.AddNpgsqlOperationLogChangeTracking();
                     else
                         operations.AddFileBasedOperationLogChangeTracking();
                 });
 
-                if (!Options.UseInMemoryAuthService)
-                    db.AddAuthentication<DbAuthSessionInfo, DbAuthUser, long>();
-                if (!Options.UseInMemoryKeyValueStore)
-                    db.AddKeyValueStore();
                 db.AddEntityResolver<long, User>();
             });
-            if (Options.UseInMemoryKeyValueStore)
-                fusion.AddInMemoryKeyValueStore();
-            if (Options.UseInMemoryAuthService)
-                fusion.AddAuthentication().AddBackend();
-
-            // WebHost
-            var webHost = (FusionTestWebHost?) WebHost;
-            if (webHost == null) {
-                var webHostOptions = new FusionTestWebHostOptions();
-#if NETFRAMEWORK
-                var controllerTypes = testType.Assembly.GetControllerTypes(testType.Namespace).ToArray();
-                webHostOptions.ControllerTypes = controllerTypes;
-#endif
-                webHost = new FusionTestWebHost(services, webHostOptions);
-            }
-            services.AddSingleton(_ => webHost);
         }
         else {
-            // Configuring ClientServices
-            services.UseRegisterAttributeScanner(ServiceScope.ClientServices)
-                .WithTypeFilter(testType.Namespace!)
-                .RegisterFrom(testType.Assembly);
-
-            // Fusion client
-            var fusionClient = fusion.AddRestEaseClient();
-            fusionClient.ConfigureHttpClient((_, name, options) => {
-                var baseUri = WebHost.ServerUri;
-                var apiUri = new Uri($"{baseUri}api/");
-                var isFusionService = !(name ?? "").Contains("Tests");
-                var clientBaseUri = isFusionService ? baseUri : apiUri;
-                options.HttpClientActions.Add(c => c.BaseAddress = clientBaseUri);
+            fusion.AddAuthClient();
+            services.AddSingleton(_ => new InMemoryComputedCache.Options() {
+                IsEnabled = UseClientComputedCache,
+                Cache = ClientComputedCacheStore,
             });
-            fusionClient.ConfigureWebSocketChannel(_ => new() {
-                BaseUri = WebHost.ServerUri,
-                MessageLogLevel = LogLevel.Information,
-            });
-            fusion.AddAuthentication(fusionAuth => fusionAuth.AddRestEaseClient());
-
-            // Custom replica cache
-            services.AddSingleton(_ => new InMemoryReplicaCache.Options() {
-                IsEnabled = Options.UseReplicaCache,
-                Cache = ReplicaCache,
-            });
-            services.AddSingleton<ReplicaCache, InMemoryReplicaCache>();
+            services.AddSingleton<ClientComputedCache, InMemoryComputedCache>();
 
             // Custom computed state
             services.AddSingleton(c => c.StateFactory().NewComputed<ServerTimeModel2>(
                 new() { InitialValue = new(default) },
                 async (_, cancellationToken) => {
-                    var client = c.GetRequiredService<IClientTimeService>();
+                    var client = c.GetRequiredService<ITimeService>();
                     var time = await client.GetTime(cancellationToken).ConfigureAwait(false);
                     return new ServerTimeModel2(time);
                 }));
@@ -323,11 +224,4 @@ public class FusionTestBase : TestBase, IAsyncLifetime
 
     protected TestDbContext CreateDbContext()
         => Services.GetRequiredService<DbHub<TestDbContext>>().CreateDbContext(readWrite: true);
-
-    protected Task<Channel<BridgeMessage>> ConnectToPublisher(CancellationToken cancellationToken = default)
-    {
-        var publisher = WebServices.GetRequiredService<IPublisher>();
-        var channelProvider = ClientServices.GetRequiredService<IChannelProvider>();
-        return channelProvider.CreateChannel(publisher.Id, cancellationToken);
-    }
 }

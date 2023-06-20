@@ -1,6 +1,5 @@
 using System.Net.WebSockets;
-using Stl.Fusion.Bridge;
-using Stl.Fusion.Bridge.Messages;
+using System.Security;
 
 namespace Stl.Fusion.Internal;
 
@@ -37,25 +36,6 @@ public static class Errors
     public static Exception AnonymousComputedSourceIsNotComputedYet()
         => new InvalidOperationException("This anonymous computed source isn't computed yet.");
 
-    public static Exception WrongPublisher()
-        => new PublisherException("Wrong publisher.");
-    public static Exception WrongPublisher(IPublisher expected, Symbol providedPublisherId)
-        => new PublisherException($"Wrong publisher: {expected.Id} (expected) != {providedPublisherId} (provided).");
-    public static Exception UnknownChannel(Channel<BridgeMessage> channel)
-        => new PublisherException("Unknown channel.");
-
-    public static Exception PublicationAbsents()
-        => new ReplicaException("The Publication absents on the server.");
-    public static Exception NoPublicationStateInfo()
-        => new ReplicaException(
-            "No publication state info was found. " +
-            "Typically this indicates you're hitting a wrong endpoint " +
-            "(check your client definition interface) " +
-            "or forgot to add [Publish] attribute to the controller's method.");
-
-    public static Exception ReplicaHasNeverBeenUpdated()
-        => new ReplicaException("The Replica has never been updated.");
-
     public static Exception WebSocketConnectTimeout()
         => new WebSocketException("Connection timeout.");
 
@@ -69,16 +49,19 @@ public static class Errors
         => new InvalidOperationException($"{nameof(ComputeMethodAttribute)} is applied to a method " +
             $"returning non-generic Task/ValueTask: '{method}'.");
 
-    public static Exception UnsupportedReplicaType(Type replicaType)
-        => new NotSupportedException(
-            $"Replica<{replicaType.GetName()}> isn't supported by the current client, " +
-            $"most likely because there is no good way to intercept the deserialization " +
-            $"of results of this type.");
-
-    public static Exception UnsupportedComputedOptions(Type unsupportedBy)
-        => new NotSupportedException($"Specified {nameof(ComputedOptions)} aren't supported by '{unsupportedBy}'.");
-
     public static Exception InvalidContextCallOptions(CallOptions callOptions)
         => new InvalidOperationException(
             $"{nameof(ComputeContext)} with {nameof(CallOptions)} = {callOptions} cannot be used here.");
+
+    // Session-related
+
+    public static Exception InvalidSessionId(string parameterName)
+        => new ArgumentOutOfRangeException(parameterName, "Provided Session.Id is invalid.");
+    public static Exception SessionResolverSessionCannotBeSetForRootInstance()
+        => new InvalidOperationException("ISessionResolver.Session can't be set for root (non-scoped) ISessionResolver.");
+
+    public static Exception SessionUnavailable()
+        => new SecurityException("The Session is unavailable.");
+    public static Exception NotAuthenticated()
+        => new SecurityException("You must sign in to perform this action.");
 }

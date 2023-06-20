@@ -48,4 +48,37 @@ public static class TestExt
             await Task.Delay(timeout, cancellationToken).SuppressCancellationAwait(false);
         }
     }
+
+    public static Task WhenMetAsync(Func<Task> condition,
+        TimeSpan waitDuration)
+        => WhenMetAsync(condition, null, waitDuration);
+
+    public static async Task WhenMetAsync(Func<Task> condition,
+        IEnumerable<TimeSpan>? checkIntervals,
+        TimeSpan waitDuration)
+    {
+        using var cts = new CancellationTokenSource(waitDuration);
+        await WhenMetAsync(condition, checkIntervals, cts.Token).ConfigureAwait(false);
+    }
+
+    public static async Task WhenMetAsync(Func<Task> condition,
+        IEnumerable<TimeSpan>? checkIntervals,
+        CancellationToken cancellationToken)
+    {
+        foreach (var timeout in checkIntervals ?? DefaultCheckIntervals) {
+            using (var scope = new AssertionScope()) {
+                try {
+                    await condition.Invoke().ConfigureAwait(false);
+                }
+                catch (Exception error) {
+                    error.Should().BeNull("An exception other than assertion was thrown.");
+                }
+                if (!scope.HasFailures())
+                    return;
+                if (!cancellationToken.IsCancellationRequested)
+                    scope.Discard();
+            }
+            await Task.Delay(timeout, cancellationToken).SuppressCancellationAwait(false);
+        }
+    }
 }

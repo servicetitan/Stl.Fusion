@@ -1,46 +1,73 @@
 using Stl.Interception;
+using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
 
 public abstract class RpcOutboundCall : RpcCall
 {
-    private static readonly ConcurrentDictionary<(Type, Type), Func<RpcOutboundContext, RpcOutboundCall>> FactoryCache = new();
+    private static readonly ConcurrentDictionary<(byte, Type), Func<RpcOutboundContext, RpcOutboundCall>> FactoryCache = new();
 
-    public RpcOutboundContext Context { get; }
-    public long Id { get; protected set; }
+    public readonly RpcOutboundContext Context;
+    public readonly RpcPeer Peer;
     public Task ResultTask { get; protected init; } = null!;
+    public int ConnectTimeoutMs;
+    public int TimeoutMs;
 
     public static RpcOutboundCall New(RpcOutboundContext context)
-        => FactoryCache.GetOrAdd((context.CallType, context.MethodDef!.UnwrappedReturnType), static key => {
-            var (tGeneric, tResult) = key;
-            var tInbound = tGeneric.MakeGenericType(tResult);
-            return (Func<RpcOutboundContext, RpcOutboundCall>)tInbound.GetConstructorDelegate(typeof(RpcOutboundContext))!;
+        => FactoryCache.GetOrAdd((context.CallTypeId, context.MethodDef!.UnwrappedReturnType), static key => {
+            var (callTypeId, tResult) = key;
+            var type = RpcCallTypeRegistry.Resolve(callTypeId)
+                .OutboundCallType
+                .MakeGenericType(tResult);
+            return (Func<RpcOutboundContext, RpcOutboundCall>)type.GetConstructorDelegate(typeof(RpcOutboundContext))!;
         }).Invoke(context);
 
     protected RpcOutboundCall(RpcOutboundContext context)
         : base(context.MethodDef!)
-        => Context = context;
-
-    public ValueTask Send(bool isRetry = false)
     {
-        var peer = Context.Peer!;
+        Context = context;
+        Peer = context.Peer!; // Calls
+    }
+
+    public ValueTask RegisterAndSend()
+    {
+        if (NoWait)
+            return SendNoWait();
+
+        Peer.OutboundCalls.Register(this);
+        var sendTask = SendRegistered();
+
+        // RegisterCancellationHandler must follow SendRegistered,
+        // coz it's possible that ResultTask is already completed
+        // at this point (e.g. due to an error), and thus
+        // cancellation handler isn't necessary.
+        if (!ResultTask.IsCompleted)
+            RegisterCancellationHandler();
+        return sendTask;
+    }
+
+    public ValueTask SendNoWait()
+    {
+        var message = CreateMessage(Context.RelatedCallId);
+        return Peer.Send(message);
+    }
+
+    public ValueTask SendRegistered(bool notifyCancelled = false)
+    {
         RpcMessage message;
-        if (Context.MethodDef!.NoWait)
-            message = CreateMessage(Context.RelatedCallId);
-        else if (Id == 0) {
-            Id = peer.Calls.NextId;
+        try {
             message = CreateMessage(Id);
-            peer.Calls.Outbound.TryAdd(Id, this);
         }
-        else
-            message = CreateMessage(Id);
-        return peer.Send(message, Context.CancellationToken);
+        catch (Exception error) {
+            SetError(error, null, notifyCancelled);
+            return default;
+        }
+        return Peer.Send(message);
     }
 
     public virtual RpcMessage CreateMessage(long callId)
     {
         var headers = Context.Headers;
-        var peer = Context.Peer!;
         var arguments = Context.Arguments!;
         var methodDef = MethodDef;
         if (methodDef.CancellationTokenIndex >= 0)
@@ -59,7 +86,7 @@ public abstract class RpcOutboundCall : RpcCall
                     gParameters[i] = itemType;
                     var typeRef = new TypeRef(itemType);
                     var h = RpcSystemHeaders.ArgumentTypes[i].With(typeRef.AssemblyQualifiedName);
-                    headers.Add(h);
+                    headers = headers.TryAdd(h);
                 }
                 argumentListType = argumentListType
                     .GetGenericTypeDefinition()
@@ -69,14 +96,69 @@ public abstract class RpcOutboundCall : RpcCall
                 arguments.SetFrom(oldArguments);
             }
         }
-        var argumentData = peer.ArgumentSerializer.Serialize(arguments);
-        var message = new RpcMessage(callId, methodDef.Service.Name, methodDef.Name, argumentData, headers);
+        var argumentData = Peer.ArgumentSerializer.Serialize(arguments);
+        var message = new RpcMessage(Context.CallTypeId, callId, methodDef.Service.Name, methodDef.Name, argumentData, headers);
         return message;
     }
 
-    public abstract bool TryCompleteWithOk(object? result, RpcInboundContext context);
-    public abstract bool TryCompleteWithError(Exception error, RpcInboundContext? context);
-    public abstract bool TryCompleteWithCancel(CancellationToken cancellationToken, RpcInboundContext? context);
+    public abstract void SetResult(object? result, RpcInboundContext context);
+    public abstract void SetError(Exception error, RpcInboundContext? context, bool notifyCancelled = false);
+    public abstract bool SetCancelled(CancellationToken cancellationToken, RpcInboundContext? context);
+
+    public void Unregister(bool notifyCancelled = false)
+    {
+        if (!Peer.OutboundCalls.Unregister(this))
+            return; // Already unregistered
+
+        if (notifyCancelled)
+            NotifyCancelled();
+    }
+
+    public void NotifyCancelled()
+    {
+        try {
+            var systemCallSender = Peer.Hub.InternalServices.SystemCallSender;
+            _ = systemCallSender.Cancel(Peer, Id);
+        }
+        catch {
+            // It's totally fine to ignore any error here:
+            // peer.Hub might be already disposed at this point,
+            // so SystemCallSender might not be available.
+            // In any case, peer on the other side is going to
+            // be gone as well after that, so every call there
+            // will be cancelled anyway.
+        }
+    }
+
+    // Protected methods
+
+    protected void RegisterCancellationHandler()
+    {
+        var cancellationToken = Context.CancellationToken;
+        CancellationTokenSource? timeoutCts = null;
+        CancellationTokenSource? linkedCts = null;
+        if (TimeoutMs > 0) {
+            timeoutCts = new CancellationTokenSource(TimeoutMs);
+            linkedCts = timeoutCts.Token.LinkWith(cancellationToken);
+            cancellationToken = linkedCts.Token;
+        }
+        var ctr = cancellationToken.Register(static state => {
+            var call = (RpcOutboundCall)state!;
+            if (call.Context.CancellationToken.IsCancellationRequested)
+                call.SetCancelled(call.Context.CancellationToken, null);
+            else {
+                // timeoutCts is timed out
+                var error = Errors.CallTimeout();
+                call.SetError(error, null, true);
+            }
+        }, this, useSynchronizationContext: false);
+        _ = ResultTask.ContinueWith(_ => {
+                ctr.Dispose();
+                linkedCts?.Dispose();
+                timeoutCts?.Dispose();
+            },
+            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+    }
 }
 
 public class RpcOutboundCall<TResult> : RpcOutboundCall
@@ -86,41 +168,29 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
     public RpcOutboundCall(RpcOutboundContext context)
         : base(context)
     {
-        ResultSource = context.MethodDef!.NoWait
+        ResultSource = NoWait
             ? (TaskCompletionSource<TResult>)(object)RpcNoWait.TaskSources.Completed
-            : TaskCompletionSourceExt.New<TResult>();
+            : new TaskCompletionSource<TResult>();
         ResultTask = ResultSource.Task;
     }
 
-    public override bool TryCompleteWithOk(object? result, RpcInboundContext context)
+    public override void SetResult(object? result, RpcInboundContext context)
     {
-        try {
-            if (!ResultSource.TrySetResult((TResult)result!))
-                return false;
-
-            Context.Peer!.Calls.Outbound.TryRemove(Id, this);
-            return true;
-        }
-        catch (Exception e) {
-            return TryCompleteWithError(e, context);
-        }
+        if (ResultSource.TrySetResult((TResult)result!))
+            Unregister();
     }
 
-    public override bool TryCompleteWithError(Exception error, RpcInboundContext? context)
+    public override void SetError(Exception error, RpcInboundContext? context, bool notifyCancelled = false)
     {
-        if (!ResultSource.TrySetException(error))
-            return false;
-
-        Context.Peer!.Calls.Outbound.TryRemove(Id, this);
-        return true;
+        if (ResultSource.TrySetException(error))
+            Unregister(notifyCancelled);
     }
 
-    public override bool TryCompleteWithCancel(CancellationToken cancellationToken, RpcInboundContext? context)
+    public override bool SetCancelled(CancellationToken cancellationToken, RpcInboundContext? context)
     {
-        if (!ResultSource.TrySetCanceled(cancellationToken))
-            return false;
-
-        Context.Peer!.Calls.Outbound.TryRemove(Id, this);
-        return true;
+        var isCancelled = ResultSource.TrySetCanceled(cancellationToken);
+        if (isCancelled)
+            Unregister(true);
+        return isCancelled;
     }
 }

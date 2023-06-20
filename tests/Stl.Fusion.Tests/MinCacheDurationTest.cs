@@ -35,7 +35,7 @@ public class MinCacheDurationTest : TestBase
             InitialCapacity = 16,
         });
         var services = new ServiceCollection();
-        services.AddFusion().AddComputeService<TService>();
+        services.AddFusion().AddService<TService>();
         return services.BuildServiceProvider();
     }
 

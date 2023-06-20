@@ -14,7 +14,7 @@ public static class ComputedStateComponent
         DefaultOptions = ComputedStateComponentOptions.SynchronizeComputeState
             | ComputedStateComponentOptions.RecomputeOnParametersSet;
         if (HardwareInfo.IsSingleThreaded)
-            DefaultOptions = ComputedStateComponentOptions.RecomputeOnParametersSet;
+           DefaultOptions = ComputedStateComponentOptions.RecomputeOnParametersSet;
     }
 
     public static string GetStateCategory(Type componentType)
@@ -64,8 +64,19 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
         {
             var tcs = TaskCompletionSourceExt.New<TState>();
             _ = InvokeAsync(() => {
-                var computeStateTask = ComputeState(cancellationToken);
-                return tcs.TrySetFromTaskAsync(computeStateTask, cancellationToken);
+                try {
+                    var computeStateTask = ComputeState(cancellationToken);
+                    _ = tcs.TrySetFromTaskAsync(computeStateTask, cancellationToken);
+                }
+                catch (OperationCanceledException) {
+                    if (cancellationToken.IsCancellationRequested)
+                        tcs.TrySetCanceled(cancellationToken);
+                    else
+                        tcs.TrySetCanceled();
+                }
+                catch (Exception e) {
+                    tcs.TrySetException(e);
+                }
             });
             return tcs.Task;
         }
@@ -78,15 +89,37 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
             if (executionContext == null) {
                 // Nothing to restore
                 _ = InvokeAsync(() => {
-                    var computeStateTask = ComputeState(cancellationToken);
-                    return tcs.TrySetFromTaskAsync(computeStateTask, cancellationToken);
+                    try {
+                        var computeStateTask = ComputeState(cancellationToken);
+                        _ = tcs.TrySetFromTaskAsync(computeStateTask, cancellationToken);
+                    }
+                    catch (OperationCanceledException) {
+                        if (cancellationToken.IsCancellationRequested)
+                            tcs.TrySetCanceled(cancellationToken);
+                        else
+                            tcs.TrySetCanceled();
+                    }
+                    catch (Exception e) {
+                        tcs.TrySetException(e);
+                    }
                 });
             }
             else {
                 _ = InvokeAsync(() => {
-                    ExecutionContext.Run(executionContext, _ => {
-                        var computeStateTask = ComputeState(cancellationToken);
-                        _ = tcs.TrySetFromTaskAsync(computeStateTask, cancellationToken);
+                    ExecutionContext.Run(executionContext, _1 => {
+                        try {
+                            var computeStateTask = ComputeState(cancellationToken);
+                            _ = tcs.TrySetFromTaskAsync(computeStateTask, cancellationToken);
+                        }
+                        catch (OperationCanceledException) {
+                            if (cancellationToken.IsCancellationRequested)
+                                tcs.TrySetCanceled(cancellationToken);
+                            else
+                                tcs.TrySetCanceled();
+                        }
+                        catch (Exception e) {
+                            tcs.TrySetException(e);
+                        }
                     }, null);
                     return tcs.Task;
                 });

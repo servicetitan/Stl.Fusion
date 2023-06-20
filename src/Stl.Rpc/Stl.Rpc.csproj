@@ -10,22 +10,24 @@
     <PackageReference Include="System.Net.WebSockets" />
     <PackageReference Include="Microsoft.Extensions.Http" />
   </ItemGroup>
+  <ItemGroup Condition="!$(TargetFramework.StartsWith('netstandard2.0'))">
+    <PackageReference Include="MemoryPack.Generator" />
+  </ItemGroup>
   <ItemGroup Condition="!$(TargetFramework.StartsWith('net7'))">
     <PackageReference Include="Microsoft.Extensions.Http" VersionOverride="$(MicrosoftExtensionsVersion6)" />
-  </ItemGroup>
-  <ItemGroup Condition="$(TargetFramework.StartsWith('netstandard'))">
-    <PackageReference Include="IndexRange" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
-    <PackageReference Include="System.Memory" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Stl\Stl.csproj" />
     <ProjectReference Include="..\Stl.Interception\Stl.Interception.csproj" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <ProjectReference Include="..\Stl.Generators\Stl.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Servers\" />
   </ItemGroup>
 
 </Project>

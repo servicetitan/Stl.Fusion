@@ -7,13 +7,15 @@ public static class SystemJsonSerialized
     public static SystemJsonSerialized<TValue> New<TValue>(string data) => new(data);
 }
 
-[DataContract]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
-public class SystemJsonSerialized<T> : TextSerialized<T>
+public partial class SystemJsonSerialized<T> : TextSerialized<T>
 {
     [ThreadStatic] private static ITextSerializer<T>? _serializer;
 
     public SystemJsonSerialized() { }
+
+    [MemoryPackConstructor]
     public SystemJsonSerialized(string data) : base(data) { }
 
     protected override ITextSerializer<T> GetSerializer()

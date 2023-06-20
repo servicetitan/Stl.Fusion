@@ -3,14 +3,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Stl.Fusion.Tests.Model;
 
+[DataContract, MemoryPackable]
 [Index(nameof(Date))]
-public record Message : LongKeyedEntity
+public partial record Message : LongKeyedEntity
 {
+    [DataMember]
     public DateTime Date { get; init; }
-    [Required, MaxLength(1_000_000)]
+    [DataMember, Required, MaxLength(1_000_000)]
     public string Text { get; init; } = "";
-    [Required]
+    [DataMember, Required]
     public User Author { get; init; } = default!;
-    [Required]
+    [DataMember, Required]
     public Chat Chat { get; init; } = default!;
 }

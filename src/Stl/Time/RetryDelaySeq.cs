@@ -1,16 +1,17 @@
 namespace Stl.Time;
 
-[DataContract]
-public sealed record RetryDelaySeq(
-    [property: DataMember] TimeSpan Min,
-    [property: DataMember] TimeSpan Max,
-    [property: DataMember] double MaxDelta = 0.1)
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public sealed partial record RetryDelaySeq(
+    [property: DataMember, MemoryPackOrder(0)] TimeSpan Min,
+    [property: DataMember, MemoryPackOrder(1)] TimeSpan Max,
+    [property: DataMember, MemoryPackOrder(2)] double MaxDelta = 0.1)
     : IEnumerable<TimeSpan>
 {
     private static readonly TimeSpan DefaultMin = TimeSpan.FromSeconds(0.5);
     private static readonly TimeSpan DefaultMax = TimeSpan.FromMinutes(5);
 
-    [DataMember] public double Multiplier { get; init; } = Math.Sqrt(2);
+    [DataMember, MemoryPackOrder(3)]
+    public double Multiplier { get; init; } = Math.Sqrt(2);
 
     public TimeSpan this[int failedTryCount] {
         get {
@@ -26,8 +27,13 @@ public sealed record RetryDelaySeq(
     public RetryDelaySeq(TimeSpan min) : this(min, DefaultMax) { }
     public RetryDelaySeq(double minInSeconds)
         : this(TimeSpan.FromSeconds(minInSeconds), DefaultMax) { }
-    public RetryDelaySeq(double minInSeconds, double maxInSeconds, double maxDelta = 0.1) 
+    public RetryDelaySeq(double minInSeconds, double maxInSeconds, double maxDelta = 0.1)
         : this(TimeSpan.FromSeconds(minInSeconds), TimeSpan.FromSeconds(maxInSeconds), maxDelta) { }
+
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
+    public RetryDelaySeq(TimeSpan min, TimeSpan max, double maxDelta, double multiplier)
+        : this(min, max, maxDelta)
+        => Multiplier = multiplier;
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     public IEnumerator<TimeSpan> GetEnumerator()
@@ -45,5 +51,5 @@ public sealed record RetryDelaySeq(
     public static implicit operator RetryDelaySeq(TimeSpan min) => new(min);
     public static implicit operator RetryDelaySeq(double minInSeconds) => new(TimeSpan.FromSeconds(minInSeconds));
     public static implicit operator RetryDelaySeq((TimeSpan Min, TimeSpan Max) pair) => new(pair.Min, pair.Max);
-    public static implicit operator RetryDelaySeq((double MinInSeconds, double MaxInSeconds) pair) => new(pair.MinInSeconds, pair.MaxInSeconds); 
+    public static implicit operator RetryDelaySeq((double MinInSeconds, double MaxInSeconds) pair) => new(pair.MinInSeconds, pair.MaxInSeconds);
 }

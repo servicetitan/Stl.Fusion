@@ -5,7 +5,7 @@ using Stl.Fusion.EntityFramework.Redis.Operations;
 
 namespace Stl.Fusion.EntityFramework.Redis;
 
-public static class DbOperationsBuilderExt 
+public static class DbOperationsBuilderExt
 {
     public static DbOperationsBuilder<TDbContext> AddRedisOperationLogChangeTracking<TDbContext>(
         this DbOperationsBuilder<TDbContext> dbOperations,
@@ -13,20 +13,17 @@ public static class DbOperationsBuilderExt
         where TDbContext : DbContext
     {
         var services = dbOperations.Services;
-        var isConfigured = services.HasService<RedisOperationLogChangeTracker<TDbContext>>();
-
-        if (optionsFactory != null)
-            services.AddSingleton(optionsFactory);
-        if (isConfigured)
+        services.AddSingleton(optionsFactory, _ => RedisOperationLogChangeTrackingOptions<TDbContext>.Default);
+        if (services.HasService<RedisOperationLogChangeTracker<TDbContext>>())
             return dbOperations;
 
-        // RedisOperationLogChangeTracker<TDbContext>
-        services.TryAddSingleton<RedisOperationLogChangeTrackingOptions<TDbContext>>();
-        services.TryAddSingleton<RedisOperationLogChangeTracker<TDbContext>>();
+        services.AddSingleton(c => new RedisOperationLogChangeTracker<TDbContext>(
+            c.GetRequiredService<RedisOperationLogChangeTrackingOptions<TDbContext>>(), c));
         services.AddHostedService(c =>
             c.GetRequiredService<RedisOperationLogChangeTracker<TDbContext>>());
-        services.TryAddSingleton<IDbOperationLogChangeTracker<TDbContext>>(c =>
-            c.GetRequiredService<RedisOperationLogChangeTracker<TDbContext>>());
+        services.AddAlias<
+            IDbOperationLogChangeTracker<TDbContext>,
+            RedisOperationLogChangeTracker<TDbContext>>();
 
         // RedisOperationLogChangeNotifier<TDbContext>
         services.TryAddEnumerable(

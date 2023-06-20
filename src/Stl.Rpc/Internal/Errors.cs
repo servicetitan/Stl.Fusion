@@ -9,6 +9,9 @@ public static class Errors
     public static Exception RpcOptionsIsNotRegistered()
         => new InvalidOperationException("RpcOptions instance is not registered.");
 
+    public static Exception UnknownCallType(byte callTypeId)
+        => new KeyNotFoundException($"Unknown CallTypeId: {callTypeId}.");
+
     public static Exception ServiceAlreadyExists(Type type)
         => new InvalidOperationException($"Service of type '{type}' is already added.");
     public static Exception ServiceTypeCannotBeChanged(Type originalType, Type type)
@@ -23,29 +26,30 @@ public static class Errors
         => new InvalidOperationException($"Service '{methodDef.Service.Type.GetName()}' has 2 or more methods named '{methodDef.Name}'.");
 
     public static Exception NoService(Type serviceType)
-        => new InvalidOperationException($"Can't resolve service by type: '{serviceType.GetName()}'.");
+        => new KeyNotFoundException($"Can't resolve service by type: '{serviceType.GetName()}'.");
     public static Exception NoService(string serviceName)
-        => new InvalidOperationException($"Can't resolve service by name: '{serviceName}'.");
-    public static Exception ServiceIsNotWhiteListed(RpcServiceDef serviceDef)
-        => new InvalidOperationException($"Service '{serviceDef.Type.GetName()}' isn't white-listed.");
+        => new KeyNotFoundException($"Can't resolve service by name: '{serviceName}'.");
 
     public static Exception NoMethod(Type serviceType, MethodInfo method)
-        => new InvalidOperationException($"Can't resolve method '{method.Name}' (by MethodInfo) of '{serviceType.GetName()}'.");
+        => new KeyNotFoundException($"Can't resolve method '{method.Name}' (by MethodInfo) of '{serviceType.GetName()}'.");
     public static Exception NoMethod(Type serviceType, string methodName)
-        => new InvalidOperationException($"Can't resolve method '{methodName}' (by name) of '{serviceType.GetName()}'.");
+        => new KeyNotFoundException($"Can't resolve method '{methodName}' (by name) of '{serviceType.GetName()}'.");
+
+    public static Exception EndpointNotFound(string serviceName, string methodName)
+        => new RpcException($"Endpoint not found: '{serviceName}.{methodName}'.");
 
     public static Exception AlreadyConnected()
         => new InvalidOperationException($"This {nameof(RpcPeer)} is already connected.");
-    public static Exception ConnectionIsClosed()
-        => new InvalidOperationException("Connection is gracefully closed by peer.");
     public static Exception ConnectionTimeout()
         => new TimeoutException($"Connection time-out.");
     public static Exception ConnectionTimeout(TimeSpan timeout)
         => new TimeoutException($"Connection time-out ({timeout.ToShortString()}).");
     public static Exception ConnectionRetryLimitExceeded()
-        => new ImpossibleToConnectException("Can't reconnect: retry limit exceeded.");
-    public static Exception ImpossibleToReconnect()
-        => new ImpossibleToConnectException();
+        => new ConnectionUnrecoverableException("Can't reconnect: retry limit exceeded.");
+    public static Exception ConnectionReset(Exception? innerException = null)
+        => new OperationCanceledException("Connection reset.", innerException);
+    public static Exception ConnectionUnrecoverable(Exception? innerException = null)
+        => new ConnectionUnrecoverableException(innerException);
 
     public static Exception NoCurrentRpcInboundContext()
         => new InvalidOperationException($"{nameof(RpcInboundContext)}.{nameof(RpcInboundContext.Current)} is unavailable.");
@@ -69,4 +73,7 @@ public static class Errors
 
     public static Exception InvalidMessageSize()
         => new SerializationException("Invalid item size. The remainder of the message will be dropped.");
+
+    public static Exception CallTimeout()
+        => new TimeoutException("Remote call is timed out.");
 }
