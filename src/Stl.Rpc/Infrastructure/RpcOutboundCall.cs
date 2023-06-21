@@ -29,6 +29,19 @@ public abstract class RpcOutboundCall : RpcCall
         Peer = context.Peer!; // Calls
     }
 
+    public override string ToString()
+    {
+        var context = Context;
+        var headers = context.Headers.OrEmpty();
+        var arguments = context.Arguments;
+        var methodDef = context.MethodDef;
+        var ctIndex = methodDef?.CancellationTokenIndex ?? -1;
+        if (ctIndex >= 0)
+            arguments = arguments?.Remove(ctIndex);
+        return $"{GetType().GetName()} #{Id}: {methodDef?.Name ?? "n/a"}{arguments?.ToString() ?? "(n/a)"}"
+            + (headers.Count > 0 ? $", Headers: {headers.ToDelimitedString()}" : "");
+    }
+
     public ValueTask RegisterAndSend()
     {
         if (NoWait)
@@ -49,6 +62,7 @@ public abstract class RpcOutboundCall : RpcCall
     public ValueTask SendNoWait(bool allowPolymorphism)
     {
         var message = CreateMessage(Context.RelatedCallId, allowPolymorphism);
+        Peer.CallLog?.Log(Peer.CallLogLevel, "'{PeerRef}': -> {Call}", Peer.Ref, this);
         return Peer.Send(message);
     }
 
@@ -62,6 +76,7 @@ public abstract class RpcOutboundCall : RpcCall
             SetError(error, null, notifyCancelled);
             return default;
         }
+        Peer.CallLog?.Log(Peer.CallLogLevel, "'{PeerRef}': -> {Call}", Peer.Ref, this);
         return Peer.Send(message);
     }
 

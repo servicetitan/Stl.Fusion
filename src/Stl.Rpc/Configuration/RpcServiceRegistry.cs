@@ -69,10 +69,8 @@ public sealed class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<Rpc
             if (!dumpMethods)
                 continue;
 
-            foreach (var methodDef in serviceDef.Methods.OrderBy(m => m.Name)) {
-                var arguments = methodDef.RemoteParameterTypes.Select(t => t.GetName()).ToDelimitedString();
-                sb.AppendLine($"{indent}- '{methodDef.Name}': ({arguments}) -> {methodDef.UnwrappedReturnType.GetName()}");
-            }
+            foreach (var methodDef in serviceDef.Methods.OrderBy(m => m.Name))
+                sb.AppendLine($"{indent}- {methodDef}");
         }
 #pragma warning restore MA0011
     }

@@ -6,14 +6,16 @@ namespace Stl.Rpc;
 public abstract class RpcPeer : WorkerBase
 {
     private ILogger? _log;
+    private readonly Lazy<ILogger?> _callLogLazy;
     private IMomentClock? _clock;
     private AsyncEvent<RpcPeerConnectionState> _connectionState = new(RpcPeerConnectionState.Initial, true);
     private ChannelWriter<RpcMessage>? _sender;
 
     protected IServiceProvider Services => Hub.Services;
-    protected ILogger Log => _log ??= Services.LogFor(GetType());
-    protected IMomentClock Clock => _clock ??= Services.Clocks().CpuClock;
-    protected ChannelWriter<RpcMessage>? Sender => _sender;
+    protected internal ILogger Log => _log ??= Services.LogFor(GetType());
+    protected internal ILogger? CallLog => _callLogLazy.Value;
+    protected internal IMomentClock Clock => _clock ??= Services.Clocks().CpuClock;
+    protected internal ChannelWriter<RpcMessage>? Sender => _sender;
 
     public RpcHub Hub { get; }
     public RpcPeerRef Ref { get; }
@@ -23,18 +25,23 @@ public abstract class RpcPeer : WorkerBase
     public RpcInboundContextFactory InboundContextFactory { get; init; }
     public RpcInboundCallTracker InboundCalls { get; init; }
     public RpcOutboundCallTracker OutboundCalls { get; init; }
+    public LogLevel CallLogLevel { get; init; } = LogLevel.None;
     public AsyncEvent<RpcPeerConnectionState> ConnectionState => _connectionState;
+    public RpcPeerInternalServices InternalServices => new(this);
 
     protected RpcPeer(RpcHub hub, RpcPeerRef @ref)
     {
+        var services = hub.Services;
         Hub = hub;
         Ref = @ref;
+        _callLogLazy = new Lazy<ILogger?>(() => Log.IfEnabled(CallLogLevel), LazyThreadSafetyMode.PublicationOnly);
+
         ArgumentSerializer = Hub.ArgumentSerializer;
         LocalServiceFilter = null!; // To make sure any descendant has to set it
         InboundContextFactory = Hub.InboundContextFactory;
-        InboundCalls = Services.GetRequiredService<RpcInboundCallTracker>();
+        InboundCalls = services.GetRequiredService<RpcInboundCallTracker>();
         InboundCalls.Initialize(this);
-        OutboundCalls = Services.GetRequiredService<RpcOutboundCallTracker>();
+        OutboundCalls = services.GetRequiredService<RpcOutboundCallTracker>();
         OutboundCalls.Initialize(this);
     }
 
@@ -142,7 +149,7 @@ public abstract class RpcPeer : WorkerBase
                     // SetConnectionState to nullify ReaderAbortSource there & trigger
                     // at least one state change - see Reset method code to understand why.
                     SetConnectionState(channel, null);
-                    Log.LogInformation("'{PeerId}': Reset", Ref);
+                    Log.LogInformation("'{PeerRef}': Reset", Ref);
                 }
                 else {
                     // Resetting sender isn't necessary here - SetConnectionState
@@ -155,7 +162,7 @@ public abstract class RpcPeer : WorkerBase
 
     protected override Task OnStart(CancellationToken cancellationToken)
     {
-        Log.LogInformation("'{PeerId}': Started", Ref);
+        Log.LogInformation("'{PeerRef}': Started", Ref);
         foreach (var peerTracker in Hub.PeerTrackers)
             peerTracker.Invoke(this);
         return Task.CompletedTask;
@@ -165,7 +172,7 @@ public abstract class RpcPeer : WorkerBase
     {
         Hub.Peers.TryRemove(Ref, this);
         _ = DisposeAsync();
-        Log.LogInformation("'{PeerId}': Stopped", Ref);
+        Log.LogInformation("'{PeerRef}': Stopped", Ref);
         return Task.CompletedTask;
     }
 
@@ -252,18 +259,18 @@ public abstract class RpcPeer : WorkerBase
 
             // The code below is responsible solely for logging - all important stuff is already done
             if (terminalError != null)
-                Log.LogInformation("'{PeerId}': Can't (re)connect, will shut down", Ref);
+                Log.LogInformation("'{PeerRef}': Can't (re)connect, will shut down", Ref);
             else if (state.IsConnected() != oldState.IsConnected()) {
                 if (state.IsConnected())
-                    Log.LogInformation("'{PeerId}': Connected", Ref);
+                    Log.LogInformation("'{PeerRef}': Connected", Ref);
                 else {
                     var e = state.Error;
                     if (e != null)
                         Log.LogInformation(
-                            "'{PeerId}': Disconnected: {ErrorType}: {ErrorMessage}",
+                            "'{PeerRef}': Disconnected: {ErrorType}: {ErrorMessage}",
                             Ref, e.GetType().GetName(), e.Message);
                     else
-                        Log.LogInformation("'{PeerId}': Disconnected", Ref);
+                        Log.LogInformation("'{PeerRef}': Disconnected", Ref);
                 }
             }
         }

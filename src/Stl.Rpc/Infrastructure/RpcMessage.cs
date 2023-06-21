@@ -28,8 +28,8 @@ public partial class RpcMessage
     public override string ToString()
     {
         var headers = Headers.OrEmpty();
-        return $"{nameof(RpcMessage)}({CallTypeId}:{CallId} -> '{Service}.{Method}', " +
-            $"ArgumentData: {ArgumentData.ToString(16)}, " +
-            $"Headers({headers.Count}): {headers.ToDelimitedString()})";
+        return $"{nameof(RpcMessage)} #{CallId}/{CallTypeId}: {Service}.{Method}, "
+            + $"ArgumentData: {ArgumentData.ToString(16)}"
+            + (headers.Count > 0 ? $", Headers: {headers.ToDelimitedString()}" : "");
     }
 }

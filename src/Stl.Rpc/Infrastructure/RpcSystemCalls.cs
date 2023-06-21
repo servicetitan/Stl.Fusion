@@ -62,6 +62,10 @@ public class RpcSystemCalls : RpcServiceBase, IRpcSystemCalls, IRpcArgumentListT
             if (outboundCall == null)
                 return null;
 
+            if (!outboundCall.MethodDef.AllowResultPolymorphism
+                && call.Context.Message.Headers.TryGet(RpcSystemHeaders.ArgumentTypes[0].Name, out _))
+                throw Errors.CannotDeserializePolymorphicCallResult(context.Message);
+
             return OkMethodArgumentListTypeCache.GetOrAdd(
                 outboundCall.MethodDef.UnwrappedReturnType,
                 resultType => ArgumentList.Types[1].MakeGenericType(resultType));

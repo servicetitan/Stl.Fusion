@@ -51,6 +51,15 @@ public abstract class RpcInboundCall : RpcCall
         }
     }
 
+    public override string ToString()
+    {
+        var message = Context.Message;
+        var headers = message.Headers.OrEmpty();
+        var arguments = Arguments != null ? Arguments.ToString() : $"ArgumentData: {message.ArgumentData}";
+        return $"{GetType().GetName()} #{message.CallId}: {MethodDef.Name}{arguments}"
+            + (headers.Count > 0 ? $", Headers: {headers.ToDelimitedString()}" : "");
+    }
+
     public abstract ValueTask Run();
 
     public abstract ValueTask Complete(bool silentCancel = false);
@@ -106,6 +115,9 @@ public class RpcInboundCall<TResult> : RpcInboundCall
                     return default; // No way to resolve argument list type -> the related call is already gone
 
                 Arguments = arguments;
+                var peer = Context.Peer;
+                peer.CallLog?.Log(peer.CallLogLevel, "'{PeerRef}': <- {Call}", peer.Ref, this);
+
                 _ = InvokeTarget();
             }
             catch {
@@ -124,6 +136,9 @@ public class RpcInboundCall<TResult> : RpcInboundCall
                     return default; // No way to resolve argument list type -> the related call is already gone
 
                 Arguments = arguments;
+                var peer = Context.Peer;
+                peer.CallLog?.Log(peer.CallLogLevel, "'{PeerRef}': <- {Call}", peer.Ref, this);
+
                 ResultTask = InvokeTarget();
             }
             catch (Exception error) {
@@ -176,7 +191,7 @@ public class RpcInboundCall<TResult> : RpcInboundCall
             var argumentListTypeResolver = (IRpcArgumentListTypeResolver)ServiceDef.Server;
             argumentListType = argumentListTypeResolver.GetArgumentListType(Context);
             if (argumentListType == null)
-                return null;
+                return null; // Related call is already gone
         }
 
         if (argumentListType.IsGenericType) { // == Has 1+ arguments

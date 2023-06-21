@@ -25,10 +25,17 @@ public static class StartupHelper
 
         // Fusion services
         var fusion = services.AddFusion();
-        fusion.Rpc.AddWebSocketClient(builder.HostEnvironment.BaseAddress);
         fusion.AddAuthClient();
         fusion.AddRpcPeerConnectionMonitor();
         fusion.AddBlazor().AddAuthentication().AddPresenceReporter();
+
+        var rpc = fusion.Rpc;
+        rpc.AddWebSocketClient(builder.HostEnvironment.BaseAddress);
+        services.AddSingleton<RpcPeerFactory>(_ =>
+            static (hub, peerRef) => peerRef.IsServer
+                ? throw new NotSupportedException("No server peers on the client.")
+                : new RpcClientPeer(hub, peerRef) { CallLogLevel = LogLevel.Debug }
+            );
 
         // Option 1: Client-side SimpleTodoService (no RPC)
         // fusion.AddComputeService<ITodoService, SimpleTodoService>();

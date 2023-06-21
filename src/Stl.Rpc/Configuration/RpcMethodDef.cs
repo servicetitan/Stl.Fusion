@@ -5,6 +5,8 @@ namespace Stl.Rpc;
 
 public sealed class RpcMethodDef : MethodDef
 {
+    private string? _toStringCached;
+
     public RpcHub Hub { get; }
     public RpcServiceDef Service { get; }
     public Symbol Name { get; }
@@ -50,5 +52,15 @@ public sealed class RpcMethodDef : MethodDef
 
         if (!IsAsyncMethod)
             IsValid = false;
+    }
+
+    public override string ToString()
+    {
+        if (_toStringCached != null)
+            return _toStringCached;
+
+        var arguments = RemoteParameterTypes.Select(t => t.GetName()).ToDelimitedString();
+        var returnType = UnwrappedReturnType.GetName();
+        return _toStringCached = $"'{Name}': ({arguments}) -> {returnType}{(IsValid ? "" : " - invalid")}";
     }
 }

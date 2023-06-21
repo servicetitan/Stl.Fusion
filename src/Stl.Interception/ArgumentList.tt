@@ -75,7 +75,6 @@ public abstract record ArgumentList
         => new (<#=argumentUsage#>);
 <# } #>
 
-    public override string ToString() => "()";
     public virtual object?[] ToArray() => Array.Empty<object?>();
     public virtual object?[] ToArray(int skipIndex) => Array.Empty<object?>();
 
@@ -138,6 +137,8 @@ public sealed partial record ArgumentList0 : ArgumentList
 {
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 0;
+
+    public override string ToString() => "()";
 
     public override Func<object, ArgumentList, object?> GetInvoker(MethodInfo method)
         => InvokerCache.GetOrAdd((GetType(), method), static key => {

@@ -25,17 +25,17 @@ public class RpcClientPeer : RpcPeer
             return channel;
 
         if (ReconnectRetryLimit is { } limit && tryIndex >= limit) {
-            Log.LogWarning(error, "'{PeerId}': Reconnect retry limit exceeded", Ref);
+            Log.LogWarning(error, "'{PeerRef}': Reconnect retry limit exceeded", Ref);
             throw Errors.ConnectionUnrecoverable();
         }
 
         if (tryIndex == 0)
-            Log.LogInformation("'{PeerId}': Connecting...", Ref);
+            Log.LogInformation("'{PeerRef}': Connecting...", Ref);
         else  {
             var delay = ReconnectDelays[tryIndex];
             delay = TimeSpanExt.Max(TimeSpan.FromMilliseconds(1), delay);
             Log.LogInformation(
-                "'{PeerId}': Reconnecting (#{TryIndex}) after {Delay}...",
+                "'{PeerRef}': Reconnecting (#{TryIndex}) after {Delay}...",
                 Ref, tryIndex, delay.ToShortString());
             await Clock.Delay(delay, cancellationToken).ConfigureAwait(false);
         }

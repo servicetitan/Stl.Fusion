@@ -73,6 +73,10 @@ public static class Errors
 
     public static Exception InvalidMessageSize()
         => new SerializationException("Invalid item size. The remainder of the message will be dropped.");
+    public static Exception CannotDeserializePolymorphicCallResult(RpcMessage message)
+        => new SerializationException($"Cannot deserialize polymorphic call result: {message}.");
+    public static Exception CannotDeserializeObjectTypedArguments(RpcMessage message)
+        => new SerializationException($"Cannot deserialize object-typed argument(s) of inbound call: {message}.");
 
     public static Exception CallTimeout()
         => new TimeoutException("Remote call is timed out.");

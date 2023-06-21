@@ -1,4 +1,4 @@
-﻿// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable ArrangeConstructorOrDestructorBody
 using Cysharp.Text;
@@ -63,7 +63,6 @@ public abstract record ArgumentList
     public static ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9> New<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9>(T0 item0, T1 item1, T2 item2, T3 item3, T4 item4, T5 item5, T6 item6, T7 item7, T8 item8, T9 item9)
         => new (item0, item1, item2, item3, item4, item5, item6, item7, item8, item9);
 
-    public override string ToString() => "()";
     public virtual object?[] ToArray() => Array.Empty<object?>();
     public virtual object?[] ToArray(int skipIndex) => Array.Empty<object?>();
 
@@ -129,6 +128,8 @@ public sealed partial record ArgumentList0 : ArgumentList
 {
     [JsonIgnore, Newtonsoft.Json.JsonIgnore]
     public override int Length => 0;
+
+    public override string ToString() => "()";
 
     public override Func<object, ArgumentList, object?> GetInvoker(MethodInfo method)
         => InvokerCache.GetOrAdd((GetType(), method), static key => {
