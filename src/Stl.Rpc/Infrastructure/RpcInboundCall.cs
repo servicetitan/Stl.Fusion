@@ -181,7 +181,8 @@ public class RpcInboundCall<TResult> : RpcInboundCall
 
         if (argumentListType.IsGenericType) { // == Has 1+ arguments
             var headers = Context.Message.Headers.OrEmpty();
-            if (headers.Any(static h => h.Name.StartsWith(RpcSystemHeaders.ArgumentTypeHeaderPrefix, StringComparison.Ordinal))) {
+            if (MethodDef.AllowArgumentPolymorphism
+                && headers.Any(static h => h.Name.StartsWith(RpcSystemHeaders.ArgumentTypeHeaderPrefix, StringComparison.Ordinal))) {
                 var argumentTypes = argumentListType.GetGenericArguments();
                 foreach (var h in headers) {
                     if (!h.Name.StartsWith(RpcSystemHeaders.ArgumentTypeHeaderPrefix, StringComparison.Ordinal))
