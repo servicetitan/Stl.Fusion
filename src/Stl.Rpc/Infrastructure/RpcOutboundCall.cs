@@ -32,7 +32,7 @@ public abstract class RpcOutboundCall : RpcCall
     public ValueTask RegisterAndSend()
     {
         if (NoWait)
-            return SendNoWait();
+            return SendNoWait(MethodDef.AllowArgumentPolymorphism);
 
         Peer.OutboundCalls.Register(this);
         var sendTask = SendRegistered();
@@ -46,9 +46,9 @@ public abstract class RpcOutboundCall : RpcCall
         return sendTask;
     }
 
-    public ValueTask SendNoWait()
+    public ValueTask SendNoWait(bool allowPolymorphism)
     {
-        var message = CreateMessage(Context.RelatedCallId);
+        var message = CreateMessage(Context.RelatedCallId, allowPolymorphism);
         return Peer.Send(message);
     }
 
@@ -56,7 +56,7 @@ public abstract class RpcOutboundCall : RpcCall
     {
         RpcMessage message;
         try {
-            message = CreateMessage(Id);
+            message = CreateMessage(Id, MethodDef.AllowArgumentPolymorphism);
         }
         catch (Exception error) {
             SetError(error, null, notifyCancelled);
@@ -65,7 +65,7 @@ public abstract class RpcOutboundCall : RpcCall
         return Peer.Send(message);
     }
 
-    public virtual RpcMessage CreateMessage(long callId)
+    public virtual RpcMessage CreateMessage(long callId, bool allowPolymorphism)
     {
         var headers = Context.Headers;
         var arguments = Context.Arguments!;
@@ -73,29 +73,32 @@ public abstract class RpcOutboundCall : RpcCall
         if (methodDef.CancellationTokenIndex >= 0)
             arguments = arguments.Remove(methodDef.CancellationTokenIndex);
 
-        var argumentListType = arguments.GetType();
-        if (argumentListType.IsGenericType) {
-            var nonDefaultItemTypes = arguments.GetNonDefaultItemTypes();
-            if (nonDefaultItemTypes != null) {
-                var gParameters = argumentListType.GetGenericArguments();
-                for (var i = 0; i < nonDefaultItemTypes.Length; i++) {
-                    var itemType = nonDefaultItemTypes[i];
-                    if (itemType == null)
-                        continue;
+        if (allowPolymorphism) {
+            var argumentListType = arguments.GetType();
+            if (argumentListType.IsGenericType) {
+                var nonDefaultItemTypes = arguments.GetNonDefaultItemTypes();
+                if (nonDefaultItemTypes != null) {
+                    var gParameters = argumentListType.GetGenericArguments();
+                    for (var i = 0; i < nonDefaultItemTypes.Length; i++) {
+                        var itemType = nonDefaultItemTypes[i];
+                        if (itemType == null)
+                            continue;
 
-                    gParameters[i] = itemType;
-                    var typeRef = new TypeRef(itemType);
-                    var h = RpcSystemHeaders.ArgumentTypes[i].With(typeRef.AssemblyQualifiedName);
-                    headers = headers.TryAdd(h);
+                        gParameters[i] = itemType;
+                        var typeRef = new TypeRef(itemType);
+                        var h = RpcSystemHeaders.ArgumentTypes[i].With(typeRef.AssemblyQualifiedName);
+                        headers = headers.TryAdd(h);
+                    }
+                    argumentListType = argumentListType
+                        .GetGenericTypeDefinition()
+                        .MakeGenericType(gParameters);
+                    var oldArguments = arguments;
+                    arguments = (ArgumentList)argumentListType.CreateInstance();
+                    arguments.SetFrom(oldArguments);
                 }
-                argumentListType = argumentListType
-                    .GetGenericTypeDefinition()
-                    .MakeGenericType(gParameters);
-                var oldArguments = arguments;
-                arguments = (ArgumentList)argumentListType.CreateInstance();
-                arguments.SetFrom(oldArguments);
             }
         }
+
         var argumentData = Peer.ArgumentSerializer.Serialize(arguments);
         var message = new RpcMessage(Context.CallTypeId, callId, methodDef.Service.Name, methodDef.Name, argumentData, headers);
         return message;

@@ -27,20 +27,36 @@ public sealed class RpcSystemCallSender : RpcServiceBase
     public RpcSystemCallSender(IServiceProvider services) : base(services)
     { }
 
-    public ValueTask Complete<TResult>(RpcPeer peer, long callId, Result<TResult> result, List<RpcHeader>? headers = null)
+    public ValueTask Complete<TResult>(RpcPeer peer, long callId,
+        Result<TResult> result, bool allowPolymorphism,
+        List<RpcHeader>? headers = null)
         => result.IsValue(out var value)
-            ? Ok(peer, callId, value, headers)
+            ? Ok(peer, callId, value, allowPolymorphism, headers)
             : Error(peer, callId, result.Error!, headers);
 
-    public ValueTask Ok<TResult>(RpcPeer peer, long callId, TResult result, List<RpcHeader>? headers = null)
+    public ValueTask Ok<TResult>(RpcPeer peer, long callId,
+        TResult result, bool allowPolymorphism,
+        List<RpcHeader>? headers = null)
     {
-        var context = new RpcOutboundContext(headers) {
-            Peer = peer,
-            RelatedCallId = callId,
-        };
         // An optimized version of Client.Ok(result):
-        var call = context.PrepareCall(OkMethodDef, ArgumentList.New(result))!;
-        return call.SendNoWait();
+        var headerCount = headers?.Count ?? 0;
+        try {
+            var context = new RpcOutboundContext(headers) {
+                Peer = peer,
+                RelatedCallId = callId,
+            };
+            var call = context.PrepareCall(OkMethodDef, ArgumentList.New(result))!;
+            return call.SendNoWait(allowPolymorphism);
+        }
+        catch (Exception error) {
+            if (headers != null) {
+                while (headers.Count > headerCount)
+                    headers.RemoveAt(headers.Count - 1);
+                if (headers.Count == 0)
+                    headers = null;
+            }
+            return Error(peer, callId, error, headers);
+        }
     }
 
     public ValueTask Error(RpcPeer peer, long callId, Exception error, List<RpcHeader>? headers = null)
@@ -51,7 +67,7 @@ public sealed class RpcSystemCallSender : RpcServiceBase
         };
         // An optimized version of Client.Error(result):
         var call = context.PrepareCall(ErrorMethodDef, ArgumentList.New(error.ToExceptionInfo()))!;
-        return call.SendNoWait();
+        return call.SendNoWait(false);
     }
 
     public ValueTask Cancel(RpcPeer peer, long callId, List<RpcHeader>? headers = null)
@@ -62,6 +78,6 @@ public sealed class RpcSystemCallSender : RpcServiceBase
         };
         // An optimized version of Client.Error(result):
         var call = context.PrepareCall(CancelMethodDef, ArgumentList.Empty)!;
-        return call.SendNoWait();
+        return call.SendNoWait(false);
     }
 }

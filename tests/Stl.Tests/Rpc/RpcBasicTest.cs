@@ -15,10 +15,21 @@ public class RpcBasicTest : RpcLocalTestBase
         base.ConfigureServices(services);
         var commander = services.AddCommander();
         commander.AddCommandService<TestRpcService>();
+        commander.AddCommandService<TestRpcBackend>();
 
         var rpc = services.AddRpc();
         rpc.AddServer<ITestRpcService, TestRpcService>();
         rpc.AddClient<ITestRpcService, ITestRpcServiceClient>();
+        rpc.AddServer<ITestRpcBackend, TestRpcBackend>();
+        rpc.AddClient<ITestRpcBackend, ITestRpcBackendClient>();
+        services.AddSingleton<RpcPeerFactory>(c => static (hub, peerRef) => {
+            return peerRef.IsServer
+                ? new RpcServerPeer(hub, peerRef) {
+                    LocalServiceFilter = static serviceDef
+                        => !serviceDef.IsBackend || serviceDef.Type == typeof(ITestRpcBackend),
+                }
+                : new RpcClientPeer(hub, peerRef);
+        });
     }
 
     [Fact]
@@ -125,10 +136,16 @@ public class RpcBasicTest : RpcLocalTestBase
         await using var services = CreateServices();
         var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
         var client = services.GetRequiredService<ITestRpcServiceClient>();
-        var a1 = new Tuple<int>(1);
-        var r1 = await client.Polymorph(a1);
-        r1.Should().Be(a1);
-        r1.Should().NotBeSameAs(a1);
+        var backendClient = services.GetRequiredService<ITestRpcBackendClient>();
+
+        var t = new Tuple<int>(1);
+        (await backendClient.Polymorph(t)).Should().Be(t);
+
+        await Assert.ThrowsAnyAsync<Exception>(
+            async () => await client.PolymorphArg(new Tuple<int>(1)));
+        await Assert.ThrowsAnyAsync<Exception>(
+            async () => await client.PolymorphResult(2));
+
         await AssertNoCalls(clientPeer);
     }
 

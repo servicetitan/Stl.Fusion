@@ -13,6 +13,8 @@ public sealed class RpcMethodDef : MethodDef
     public Type[] RemoteParameterTypes { get; }
     public Type RemoteArgumentListType { get; }
     public bool HasObjectTypedArguments { get; }
+    public bool AllowArgumentPolymorphism { get; }
+    public bool AllowResultPolymorphism { get; }
     public bool NoWait { get; }
 
     public RpcMethodDef(RpcServiceDef service, MethodInfo method)
@@ -44,6 +46,7 @@ public sealed class RpcMethodDef : MethodDef
 
         Service = service;
         Name = Hub.MethodNameBuilder.Invoke(this);
+        AllowResultPolymorphism = AllowArgumentPolymorphism = service.IsSystem || service.IsBackend;
 
         if (!IsAsyncMethod)
             IsValid = false;

@@ -2,19 +2,21 @@ using System.Security;
 
 namespace Stl.Fusion.Authentication;
 
-public record SessionAuthInfo : IRequirementTarget
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public partial record SessionAuthInfo : IRequirementTarget
 {
     public static Requirement<SessionAuthInfo> MustBeAuthenticated { get; set; } = Requirement.New(
         new("Session is not authenticated.", m => new SecurityException(m)),
         (SessionAuthInfo? i) => i?.IsAuthenticated() ?? false);
 
-    public string SessionHash { get; init; } = "";
+    [DataMember(Order = 0), MemoryPackOrder(0)] public string SessionHash { get; init; } = "";
 
     // Authentication
-    public UserIdentity AuthenticatedIdentity { get; init; }
-    public Symbol UserId { get; init; } = Symbol.Empty;
-    public bool IsSignOutForced { get; init; }
+    [DataMember(Order = 1), MemoryPackOrder(1)] public UserIdentity AuthenticatedIdentity { get; init; }
+    [DataMember(Order = 2), MemoryPackOrder(2)] public Symbol UserId { get; init; } = Symbol.Empty;
+    [DataMember(Order = 3), MemoryPackOrder(3)] public bool IsSignOutForced { get; init; }
 
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
     public SessionAuthInfo() { }
     public SessionAuthInfo(Session? session)
         => SessionHash = session?.Hash ?? "";

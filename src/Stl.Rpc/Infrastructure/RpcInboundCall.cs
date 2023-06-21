@@ -252,7 +252,7 @@ public class RpcInboundCall<TResult> : RpcInboundCall
             result = resultTask.Result;
 
         var systemCallSender = Hub.SystemCallSender;
-        return systemCallSender.Complete(Context.Peer, Id, result, ResultHeaders);
+        return systemCallSender.Complete(Context.Peer, Id, result, MethodDef.AllowResultPolymorphism, ResultHeaders);
     }
 
     protected Task CompleteEventually()

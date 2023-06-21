@@ -1,6 +1,7 @@
 using Stl.Fusion.Authentication;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
+using Stl.Generators;
 using User = Stl.Fusion.Authentication.User;
 
 namespace Stl.Fusion.Tests;
@@ -68,5 +69,62 @@ public class SerializationTest : TestBase
     {
         var s = new Base64Encoded(new byte[] { 1, 2, 3 });
         s.AssertPassesThroughAllSerializers();
+    }
+
+    [Fact]
+    public void SessionAuthInfoSerialization()
+    {
+        var si = new SessionAuthInfo(new Session(RandomStringGenerator.Default.Next())) {
+            UserId = RandomStringGenerator.Default.Next(),
+            AuthenticatedIdentity = new UserIdentity("a", "b"),
+            IsSignOutForced = true,
+        };
+        Test(si);
+
+        void Test(SessionAuthInfo s) {
+            var t = s.PassThroughAllSerializers();
+            t.SessionHash.Should().Be(s.SessionHash);
+            t.UserId.Should().Be(s.UserId);
+            t.AuthenticatedIdentity.Should().Be(s.AuthenticatedIdentity);
+            t.IsSignOutForced.Should().Be(s.IsSignOutForced);
+        }
+    }
+
+    [Fact]
+    public void SessionInfoSerialization()
+    {
+        var si = new SessionInfo(new Session(RandomStringGenerator.Default.Next())) {
+            Version = 1,
+            CreatedAt = SystemClock.Now,
+            LastSeenAt = SystemClock.Now + TimeSpan.FromSeconds(1),
+            UserId = RandomStringGenerator.Default.Next(),
+            AuthenticatedIdentity = new UserIdentity("a", "b"),
+            IPAddress = "1.1.1.1",
+            UserAgent = "None",
+            IsSignOutForced = true,
+        };
+        si.Options.Set((Symbol)"test");
+        si.Options.Set(true);
+        Test(si);
+
+        void Test(SessionInfo s) {
+            var t = s.PassThroughAllSerializers();
+            t.SessionHash.Should().Be(s.SessionHash);
+            t.Version.Should().Be(s.Version);
+            t.CreatedAt.Should().Be(s.CreatedAt);
+            t.LastSeenAt.Should().Be(s.LastSeenAt);
+            t.IPAddress.Should().Be(s.IPAddress);
+            t.UserAgent.Should().Be(s.UserAgent);
+            t.AuthenticatedIdentity.Should().Be(s.AuthenticatedIdentity);
+            t.IsSignOutForced.Should().Be(s.IsSignOutForced);
+            AssertEqual(s.Options, t.Options);
+        }
+    }
+
+    private static void AssertEqual(ImmutableOptionSet a, ImmutableOptionSet b)
+    {
+        b.Items.Count.Should().Be(a.Items.Count);
+        foreach (var (key, item) in b.Items)
+            item.Should().Be(a[key]);
     }
 }

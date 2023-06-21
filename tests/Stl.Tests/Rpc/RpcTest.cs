@@ -9,6 +9,33 @@ public class RpcWebSocketTest : RpcTestBase
 {
     public RpcWebSocketTest(ITestOutputHelper @out) : base(@out) { }
 
+    protected override void ConfigureServices(IServiceCollection services, bool isClient)
+    {
+        base.ConfigureServices(services, isClient);
+        var rpc = services.AddRpc();
+        var commander = services.AddCommander();
+        if (isClient) {
+            rpc.AddClient<ITestRpcService, ITestRpcServiceClient>();
+            commander.AddCommandService<ITestRpcServiceClient>();
+            rpc.AddClient<ITestRpcBackend, ITestRpcBackendClient>();
+            commander.AddCommandService<ITestRpcBackendClient>();
+        }
+        else {
+            rpc.AddServer<ITestRpcService, TestRpcService>();
+            commander.AddCommandService<TestRpcService>();
+            rpc.AddServer<ITestRpcBackend, TestRpcBackend>();
+            commander.AddCommandService<TestRpcBackend>();
+            services.AddSingleton<RpcPeerFactory>(c => static (hub, peerRef) => {
+                return peerRef.IsServer
+                    ? new RpcServerPeer(hub, peerRef) {
+                        LocalServiceFilter = static serviceDef
+                            => !serviceDef.IsBackend || serviceDef.Type == typeof(ITestRpcBackend),
+                    }
+                    : new RpcClientPeer(hub, peerRef);
+            });
+        }
+    }
+
     [Fact]
     public async Task BasicTest()
     {
@@ -101,11 +128,22 @@ public class RpcWebSocketTest : RpcTestBase
     public async Task PolymorphTest()
     {
         await using var _ = await WebHost.Serve();
+        var services = ClientServices;
+        var peer = services.RpcHub().GetPeer(ClientPeerRef);
         var client = ClientServices.GetRequiredService<ITestRpcServiceClient>();
-        var a1 = new Tuple<int>(1);
-        var r1 = await client.Polymorph(a1);
-        r1.Should().Be(a1);
-        r1.Should().NotBeSameAs(a1);
+        var backendClient = ClientServices.GetRequiredService<ITestRpcBackendClient>();
+
+        var t = new Tuple<int>(1);
+        var t1 = await backendClient.Polymorph(t);
+        t1.Should().Be(t);
+        t1.Should().NotBeSameAs(t);
+
+        await Assert.ThrowsAnyAsync<Exception>(
+            async () => await client.PolymorphArg(new Tuple<int>(1)));
+        await Assert.ThrowsAnyAsync<Exception>(
+            async () => await client.PolymorphResult(2));
+
+        await AssertNoCalls(peer);
     }
 
     [Theory]
@@ -141,21 +179,6 @@ public class RpcWebSocketTest : RpcTestBase
 
             await Task.WhenAll(tasks);
             return elapsed = startedAt.Elapsed;
-        }
-    }
-
-    protected override void ConfigureServices(IServiceCollection services, bool isClient)
-    {
-        base.ConfigureServices(services, isClient);
-        var rpc = services.AddRpc();
-        var commander = services.AddCommander();
-        if (isClient) {
-            rpc.AddClient<ITestRpcService, ITestRpcServiceClient>();
-            commander.AddCommandService<ITestRpcServiceClient>();
-        }
-        else {
-            rpc.AddServer<ITestRpcService, TestRpcService>();
-            commander.AddCommandService<TestRpcService>();
         }
     }
 }

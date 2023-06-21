@@ -9,14 +9,15 @@ public partial record HelloCommand(
     [property: DataMember] TimeSpan Delay = default
 ) : ICommand<string>;
 
-public partial interface ITestRpcService : ICommandService
+public interface ITestRpcService : ICommandService
 {
     Task<int?> Div(int? a, int b);
     Task<int?> Add(int? a, int b);
     Task<TimeSpan> Delay(TimeSpan duration, CancellationToken cancellationToken = default);
     Task<int> GetCancellationCount();
 
-    Task<ITuple> Polymorph(ITuple argument, CancellationToken cancellationToken = default);
+    Task<int> PolymorphArg(ITuple argument, CancellationToken cancellationToken = default);
+    Task<ITuple> PolymorphResult(int argument, CancellationToken cancellationToken = default);
 
     ValueTask<RpcNoWait> MaybeSet(string key, string? value);
     ValueTask<string?> Get(string key);
@@ -54,8 +55,11 @@ public class TestRpcService : ITestRpcService
     public Task<int> GetCancellationCount()
         => Task.FromResult(_cancellationCount);
 
-    public Task<ITuple> Polymorph(ITuple argument, CancellationToken cancellationToken = default)
-        => Task.FromResult(argument);
+    public Task<int> PolymorphArg(ITuple argument, CancellationToken cancellationToken = default)
+        => Task.FromResult(argument.Length);
+
+    public Task<ITuple> PolymorphResult(int argument, CancellationToken cancellationToken = default)
+        => Task.FromResult((ITuple)Tuple.Create(argument));
 
     public ValueTask<RpcNoWait> MaybeSet(string key, string? value)
     {
