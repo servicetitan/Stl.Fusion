@@ -107,7 +107,7 @@ public class FusionRpcReconnectionTest : SimpleFusionTestBase
     [InlineData(10)]
     public async Task ReconnectionTest(double testDuration)
     {
-        var workerCount = HardwareInfo.ProcessorCount / 2;
+        var workerCount = HardwareInfo.ProcessorCount / 4;
         if (TestRunnerInfo.IsGitHubAction())
             workerCount = 1;
 

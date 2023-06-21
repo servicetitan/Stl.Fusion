@@ -44,7 +44,7 @@ public class RpcReconnectionTest : RpcLocalTestBase
     [InlineData(10)]
     public async Task ReconnectionTest(double testDuration)
     {
-        var workerCount = HardwareInfo.ProcessorCount / 2;
+        var c;
         if (TestRunnerInfo.IsGitHubAction())
             workerCount = 1;
 
