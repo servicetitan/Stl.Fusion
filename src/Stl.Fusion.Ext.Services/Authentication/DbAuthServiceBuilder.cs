@@ -28,7 +28,8 @@ public readonly struct DbAuthServiceBuilder<TDbContext, TDbSessionInfo, TDbUser,
             return;
         }
 
-        DbContext.AddOperations();
+        // Operations framework
+        DbContext.AddOperations(operations => operations.TryAddIsolationLevelSelector(_ => new DbAuthIsolationLevelSelector<TDbContext>()));
 
         // DbAuthService
         fusion.AddAuthService<DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId>>();
@@ -55,9 +56,6 @@ public readonly struct DbAuthServiceBuilder<TDbContext, TDbSessionInfo, TDbUser,
 
         // DbUserIdHandler
         services.TryAddSingleton<IDbUserIdHandler<TDbUserId>, DbUserIdHandler<TDbUserId>>();
-
-        // Default isolation level selector
-        DbContext.AddOperations().TryAddIsolationLevelSelector(_ => new DbAuthIsolationLevelSelector<TDbContext>());
 
         // DbSessionInfoTrimmer - hosted service!
         services.TryAddSingleton<DbSessionInfoTrimmer<TDbContext>.Options>();
