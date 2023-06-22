@@ -9,6 +9,8 @@ public sealed class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<Rpc
     private readonly Dictionary<Type, RpcServiceDef> _services = new();
     private readonly Dictionary<Symbol, RpcServiceDef> _serviceByName = new();
 
+    public static LogLevel ConstructionDumpLogLevel { get; set; } = LogLevel.Debug;
+
     public int Count => _serviceByName.Count;
     public RpcServiceDef this[Type serviceType] => Get(serviceType) ?? throw Errors.NoService(serviceType);
     public RpcServiceDef this[Symbol serviceName] => Get(serviceName) ?? throw Errors.NoService(serviceName);
@@ -35,7 +37,7 @@ public sealed class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<Rpc
             _services.Add(serviceDef.Type, serviceDef);
             _serviceByName.Add(serviceDef.Name, serviceDef);
         }
-        DumpTo(Log, LogLevel.Debug, "Registered services:");
+        DumpTo(Log, ConstructionDumpLogLevel, "Registered services:");
     }
 
     public override string ToString()
