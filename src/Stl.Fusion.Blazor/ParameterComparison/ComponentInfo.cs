@@ -20,10 +20,12 @@ public sealed class ComponentInfo
             throw new ArgumentOutOfRangeException(nameof(type));
 
         var parameterComparerProvider = ParameterComparerProvider.Instance;
-        var bindingFlags = BindingFlags.FlattenHierarchy | BindingFlags.Instance | BindingFlags.Public;
         var parameters = new Dictionary<string, ComponentParameterInfo>(StringComparer.Ordinal);
         var hasCustomParameterComparers = false;
-        foreach (var property in type.GetProperties(bindingFlags)) {
+        foreach (var property in type.GetProperties()) {
+            if (property.GetMethod is { IsStatic: true }|| property.SetMethod is { IsStatic: true })
+                continue;
+
             var pa = property.GetCustomAttribute<ParameterAttribute>(true);
             CascadingParameterAttribute? cpa = null;
             if (pa == null) {

@@ -93,20 +93,14 @@ public readonly struct CommanderBuilder
         }
 
         // Methods
-        var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic
-            | BindingFlags.Instance | BindingFlags.Static
-            | BindingFlags.FlattenHierarchy;
-        var methods = implementationType.GetMethods(bindingFlags);
-        if (implementationType.IsInterface) {
-            var tOtherInterfaces = tInterfaces
-                .Where(t => !typeof(ICommandHandler).IsAssignableFrom(t))
-                .ToList();
-            var lMethods = new List<MethodInfo>(methods);
-            foreach (var tOtherInterface in tOtherInterfaces)
-                lMethods.AddRange(tOtherInterface.GetMethods(bindingFlags));
-            methods = lMethods.ToArray();
-        }
+        var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+        var methods = (implementationType.IsInterface
+            ? implementationType.GetAllInterfaceMethods(bindingFlags, t => !typeof(ICommandHandler).IsAssignableFrom(t))
+            : implementationType.GetMethods(bindingFlags)
+            ).ToList();
         foreach (var method in methods) {
+            if (method.DeclaringType == typeof(object))
+                continue;
             if (interfaceMethods.Contains(method))
                 continue;
             if (!method.ReturnType.IsTaskOrValueTask())

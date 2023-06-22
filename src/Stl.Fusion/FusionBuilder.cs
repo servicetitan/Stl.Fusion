@@ -176,38 +176,45 @@ public readonly struct FusionBuilder
 
     // ComputeService
 
-    public FusionBuilder AddService<TService>(RpcServiceMode mode)
+    public FusionBuilder AddService<TService>(RpcServiceMode mode, bool addCommandHandlers = true)
         where TService : class, IComputeService
-        => AddService(typeof(TService), typeof(TService), ServiceLifetime.Singleton, mode);
-    public FusionBuilder AddService<TService, TImplementation>(RpcServiceMode mode)
+        => AddService(typeof(TService), typeof(TService), ServiceLifetime.Singleton, mode, addCommandHandlers);
+    public FusionBuilder AddService<TService, TImplementation>(RpcServiceMode mode, bool addCommandHandlers = true)
         where TService : class
         where TImplementation : class, TService, IComputeService
-        => AddService(typeof(TService), typeof(TImplementation), ServiceLifetime.Singleton, mode);
+        => AddService(typeof(TService), typeof(TImplementation), ServiceLifetime.Singleton, mode, addCommandHandlers);
     public FusionBuilder AddService<TService>(
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
-        RpcServiceMode mode = RpcServiceMode.Default)
+        RpcServiceMode mode = RpcServiceMode.Default,
+        bool addCommandHandlers = true)
         where TService : class, IComputeService
-        => AddService(typeof(TService), typeof(TService), lifetime, mode);
+        => AddService(typeof(TService), typeof(TService), lifetime, mode, addCommandHandlers);
     public FusionBuilder AddService<TService, TImplementation>(
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
-        RpcServiceMode mode = RpcServiceMode.Default)
+        RpcServiceMode mode = RpcServiceMode.Default,
+        bool addCommandHandlers = true)
         where TService : class
         where TImplementation : class, TService, IComputeService
-        => AddService(typeof(TService), typeof(TImplementation), lifetime, mode);
+        => AddService(typeof(TService), typeof(TImplementation), lifetime, mode, addCommandHandlers);
 
-    public FusionBuilder AddService(Type serviceType, RpcServiceMode mode)
-        => AddService(serviceType, serviceType, ServiceLifetime.Singleton, mode);
-    public FusionBuilder AddService(Type serviceType, Type implementationType, RpcServiceMode mode)
-        => AddService(serviceType, implementationType, ServiceLifetime.Singleton, mode);
+    public FusionBuilder AddService(Type serviceType, RpcServiceMode mode, bool addCommandHandlers = true)
+        => AddService(serviceType, serviceType, ServiceLifetime.Singleton, mode, addCommandHandlers);
+    public FusionBuilder AddService(
+        Type serviceType, Type implementationType,
+        RpcServiceMode mode,
+        bool addCommandHandlers = true)
+        => AddService(serviceType, implementationType, ServiceLifetime.Singleton, mode, addCommandHandlers);
     public FusionBuilder AddService(
         Type serviceType,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
-        RpcServiceMode mode = RpcServiceMode.Default)
-        => AddService(serviceType, serviceType, lifetime, mode);
+        RpcServiceMode mode = RpcServiceMode.Default,
+        bool addCommandHandlers = true)
+        => AddService(serviceType, serviceType, lifetime, mode, addCommandHandlers);
     public FusionBuilder AddService(
         Type serviceType, Type implementationType,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
-        RpcServiceMode mode = RpcServiceMode.Default)
+        RpcServiceMode mode = RpcServiceMode.Default,
+        bool addCommandHandlers = true)
     {
         if (!serviceType.IsAssignableFrom(implementationType))
             throw Stl.Internal.Errors.MustBeAssignableTo(implementationType, serviceType, nameof(implementationType));
@@ -219,31 +226,34 @@ public readonly struct FusionBuilder
 
         mode = mode.Or(ServiceMode);
         return mode switch {
-            RpcServiceMode.Server => AddServer(serviceType, implementationType),
-            RpcServiceMode.Router => AddRouter(serviceType, implementationType),
-            RpcServiceMode.RoutingServer => AddRoutingServer(serviceType, implementationType),
-            RpcServiceMode.ServingRouter => AddServingRouter(serviceType, implementationType),
-            _ => AddServiceImpl(serviceType, implementationType)
+            RpcServiceMode.Server => AddServer(serviceType, implementationType, default, addCommandHandlers),
+            RpcServiceMode.Router => AddRouter(serviceType, implementationType, default, addCommandHandlers),
+            RpcServiceMode.RoutingServer => AddRoutingServer(serviceType, implementationType, default, addCommandHandlers),
+            RpcServiceMode.ServingRouter => AddServingRouter(serviceType, implementationType, default, addCommandHandlers),
+            _ => AddServiceImpl(serviceType, implementationType, addCommandHandlers)
         };
     }
 
-    public FusionBuilder AddServer<TService, TImplementation>(Symbol name = default)
-        => AddServer(typeof(TService), typeof(TImplementation), name);
-    public FusionBuilder AddServer(Type serviceType, Type implementationType, Symbol name = default)
+    public FusionBuilder AddServer<TService, TImplementation>(Symbol name = default, bool addCommandHandlers = true)
+        => AddServer(typeof(TService), typeof(TImplementation), name, addCommandHandlers);
+    public FusionBuilder AddServer(
+        Type serviceType, Type implementationType,
+        Symbol name = default,
+        bool addCommandHandlers = true)
     {
         if (!serviceType.IsAssignableFrom(implementationType))
             throw Stl.Internal.Errors.MustBeAssignableTo(implementationType, serviceType, nameof(implementationType));
         if (!typeof(IComputeService).IsAssignableFrom(implementationType))
             throw Stl.Internal.Errors.MustImplement<IComputeService>(implementationType, nameof(implementationType));
 
-        AddServiceImpl(serviceType, implementationType);
+        AddServiceImpl(serviceType, implementationType, addCommandHandlers);
         Rpc.Service(serviceType).HasServer(serviceType).HasName(name);
         return this;
     }
 
-    public FusionBuilder AddClient<TService>(Symbol name = default)
-        => AddClient(typeof(TService), name);
-    public FusionBuilder AddClient(Type serviceType, Symbol name = default)
+    public FusionBuilder AddClient<TService>(Symbol name = default, bool addCommandHandlers = true)
+        => AddClient(typeof(TService), name, addCommandHandlers);
+    public FusionBuilder AddClient(Type serviceType, Symbol name = default, bool addCommandHandlers = true)
     {
         if (!serviceType.IsInterface)
             throw Stl.Internal.Errors.MustBeInterface(serviceType, nameof(serviceType));
@@ -251,14 +261,18 @@ public readonly struct FusionBuilder
             throw Stl.Internal.Errors.MustImplement<IComputeService>(serviceType, nameof(serviceType));
 
         Services.AddSingleton(serviceType, c => FusionProxies.NewClientProxy(c, serviceType));
-        Commander.AddHandlers(serviceType);
+        if (addCommandHandlers)
+            Commander.AddHandlers(serviceType);
         Rpc.Service(serviceType).HasName(name);
         return this;
     }
 
-    public FusionBuilder AddRouter<TService, TImplementation>(Symbol name = default)
-        => AddRouter(typeof(TService), typeof(TImplementation), name);
-    public FusionBuilder AddRouter(Type serviceType, Type implementationType, Symbol name = default)
+    public FusionBuilder AddRouter<TService, TImplementation>(Symbol name = default, bool addCommandHandlers = true)
+        => AddRouter(typeof(TService), typeof(TImplementation), name, addCommandHandlers);
+    public FusionBuilder AddRouter(
+        Type serviceType, Type implementationType,
+        Symbol name = default,
+        bool addCommandHandlers = true)
     {
         if (!serviceType.IsInterface)
             throw Stl.Internal.Errors.MustBeInterface(serviceType, nameof(serviceType));
@@ -269,23 +283,35 @@ public readonly struct FusionBuilder
 
         var serverResolver = ServiceResolver.New(c => FusionProxies.NewServiceProxy(c, implementationType));
         Services.AddSingleton(serviceType, c => FusionProxies.NewRoutingProxy(c, serviceType, serverResolver));
-        Commander.AddHandlers(serviceType);
+        if (addCommandHandlers)
+            Commander.AddHandlers(serviceType);
         Rpc.Service(serviceType).HasName(name);
         return this;
     }
 
-    public FusionBuilder AddServingRouter<TService, TImplementation>(Symbol name = default)
-        => AddServingRouter(typeof(TService), typeof(TImplementation), name);
-    public FusionBuilder AddServingRouter(Type serviceType, Type implementationType, Symbol name = default)
+    public FusionBuilder AddServingRouter<TService, TImplementation>(
+        Symbol name = default,
+        bool addCommandHandlers = true)
+        => AddServingRouter(typeof(TService), typeof(TImplementation), name, addCommandHandlers);
+    public FusionBuilder AddServingRouter(
+        Type serviceType,
+        Type implementationType,
+        Symbol name = default,
+        bool addCommandHandlers = true)
     {
-        AddRouter(serviceType, implementationType);
+        AddRouter(serviceType, implementationType, name, addCommandHandlers);
         Rpc.Service(serviceType).HasServer(serviceType).HasName(name);
         return this;
     }
 
-    public FusionBuilder AddRoutingServer<TService, TImplementation>(Symbol name = default)
-        => AddRoutingServer(typeof(TService), typeof(TImplementation), name);
-    public FusionBuilder AddRoutingServer(Type serviceType, Type implementationType, Symbol name = default)
+    public FusionBuilder AddRoutingServer<TService, TImplementation>(
+        Symbol name = default,
+        bool addCommandHandlers = true)
+        => AddRoutingServer(typeof(TService), typeof(TImplementation), name, addCommandHandlers);
+    public FusionBuilder AddRoutingServer(
+        Type serviceType, Type implementationType,
+        Symbol name = default,
+        bool addCommandHandlers = true)
     {
         if (!serviceType.IsInterface)
             throw Stl.Internal.Errors.MustBeInterface(serviceType, nameof(serviceType));
@@ -296,7 +322,8 @@ public readonly struct FusionBuilder
 
         Services.AddSingleton(implementationType, c => FusionProxies.NewServiceProxy(c, implementationType));
         Services.AddSingleton(serviceType, c => FusionProxies.NewRoutingProxy(c, serviceType, implementationType));
-        Commander.AddHandlers(serviceType, implementationType);
+        if (addCommandHandlers)
+            Commander.AddHandlers(serviceType, implementationType);
         Rpc.Service(serviceType).HasServer(implementationType).HasName(name);
         return this;
     }
@@ -343,7 +370,7 @@ public readonly struct FusionBuilder
 
     private FusionBuilder AddServiceImpl(
         Type serviceType, Type implementationType,
-        bool addCommandHandlers)
+        bool addCommandHandlers = true)
         => AddServiceImpl(serviceType, implementationType, ServiceLifetime.Singleton, addCommandHandlers);
     private FusionBuilder AddServiceImpl(
         Type serviceType, Type implementationType,
@@ -353,7 +380,7 @@ public readonly struct FusionBuilder
         var descriptor = new ServiceDescriptor(serviceType, c => FusionProxies.NewServiceProxy(c, implementationType), lifetime);
         Services.Add(descriptor);
         if (addCommandHandlers)
-            Commander.AddHandlers(serviceType);
+            Commander.AddHandlers(serviceType, implementationType);
         return this;
     }
 

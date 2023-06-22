@@ -76,10 +76,14 @@ public class CommandServiceInterceptor : InterceptorBase
     {
         if (typeof(ICommandHandler).IsAssignableFrom(type))
             throw Errors.OnlyInterceptedCommandHandlersAllowed(type);
-        var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic
-            | BindingFlags.Instance | BindingFlags.Static
-            | BindingFlags.FlattenHierarchy;
-        foreach (var method in type.GetMethods(bindingFlags)) {
+
+        var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
+        var methods = type.IsInterface
+            ? type.GetAllInterfaceMethods(bindingFlags)
+            : type.GetMethods(bindingFlags);
+        foreach (var method in methods) {
+            if (method.DeclaringType == typeof(object))
+                continue;
             var attr = MethodCommandHandler.GetAttribute(method);
             if (attr == null)
                 continue;

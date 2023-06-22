@@ -1,5 +1,4 @@
 using Stl.Fusion.Internal;
-using Stl.Versioning;
 
 namespace Stl.Fusion.Interception;
 
@@ -17,10 +16,14 @@ public class ComputeServiceInterceptor : ComputeServiceInterceptorBase
     protected override void ValidateTypeInternal(Type type)
     {
         base.ValidateTypeInternal(type);
-        var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic
-            | BindingFlags.Instance | BindingFlags.Static
-            | BindingFlags.FlattenHierarchy;
-        foreach (var method in type.GetMethods(bindingFlags)) {
+        var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
+        var methods = (type.IsInterface
+            ? type.GetAllInterfaceMethods(bindingFlags)
+            : type.GetMethods(bindingFlags)
+            ).ToList();
+        foreach (var method in methods) {
+            if (method.DeclaringType == typeof(object))
+                continue;
             var options = Hub.ComputedOptionsProvider.GetComputedOptions(type, method);
             if (options == null)
                 continue;

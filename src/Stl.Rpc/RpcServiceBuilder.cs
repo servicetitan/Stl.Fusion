@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Internal;
 
 namespace Stl.Rpc;
