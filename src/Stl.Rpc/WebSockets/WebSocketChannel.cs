@@ -35,6 +35,8 @@ public sealed class WebSocketChannel<T> : Channel<T>
         };
     }
 
+    private const int MinMessageSize = 32;
+
     private volatile CancellationTokenSource? _stopCts;
     private readonly Channel<T> _readChannel;
     private readonly Channel<T> _writeChannel;
@@ -206,6 +208,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
                     return;
                 }
                 var isEndOfMessage = end == memory.Length;
+
                 await WebSocket
                     .SendAsync(part, _defaultMessageType, isEndOfMessage, cancellationToken)
                     .ConfigureAwait(false);
@@ -313,11 +316,12 @@ public sealed class WebSocketChannel<T> : Channel<T>
             if (_defaultMessageType == WebSocketMessageType.Text)
                 _textSerializer.Write(buffer, value);
             else {
-                var sizeSpan = buffer.GetSpan(4).Cast<byte, int>();
+                buffer.GetSpan(MinMessageSize);
                 buffer.Advance(4);
                 _byteSerializer.Write(buffer, value);
-                var size = buffer.WrittenCount - startOffset;
-                sizeSpan[0] = size;
+                var sizeSpan = buffer.WrittenSpan[startOffset..(startOffset + 4)];
+                ref var sizeRef = ref Unsafe.As<byte, int>(ref MemoryMarshal.GetReference(sizeSpan));
+                sizeRef = buffer.WrittenCount - startOffset;
 
                 // Log?.LogInformation("Wrote: {Value}", value);
                 // Log?.LogInformation("Data({Size}): {Data}",

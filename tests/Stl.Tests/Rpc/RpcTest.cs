@@ -54,6 +54,24 @@ public class RpcWebSocketTest : RpcTestBase
     }
 
     [Fact]
+    public async Task MulticallTest()
+    {
+        await using var _ = await WebHost.Serve();
+        var services = ClientServices;
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
+
+        var tasks = new Task<int?>[100];
+        for (var i = 0; i < tasks.Length; i++)
+            tasks[i] = client.Add(0, i);
+        var results = await Task.WhenAll(tasks);
+        for (var i = 0; i < results.Length; i++)
+            results[i].Should().Be((int?)i);
+
+        var peer = services.RpcHub().GetPeer(ClientPeerRef);
+        await AssertNoCalls(peer);
+    }
+
+    [Fact]
     public async Task CommandTest()
     {
         await using var _ = await WebHost.Serve();
