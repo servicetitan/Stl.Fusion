@@ -44,7 +44,7 @@ public class RpcReconnectionTest : RpcLocalTestBase
     [InlineData(10)]
     public async Task ReconnectionTest(double testDuration)
     {
-        var workerCount = HardwareInfo.ProcessorCount / 4;
+        var workerCount = HardwareInfo.ProcessorCount / 2;
         if (TestRunnerInfo.IsGitHubAction())
             workerCount = 1;
 
@@ -64,21 +64,22 @@ public class RpcReconnectionTest : RpcLocalTestBase
         var client = services.GetRequiredService<ITestRpcServiceClient>();
         await client.Add(1, 1); // Warm-up
 
+        var timeout = TimeSpan.FromSeconds(5);
         var disruptorCts = new CancellationTokenSource();
         var disruptorTask = Task.Run(() => ConnectionDisruptor(disruptorCts.Token));
         try {
             var rnd = new Random();
             var callCount = 0L;
             while (CpuTimestamp.Now < endAt) {
-                var delay = TimeSpan.FromMilliseconds(rnd.Next(1, 20));
-                var delayTask = client.Delay(delay).WaitAsync(TimeSpan.FromSeconds(5));
+                var delay = TimeSpan.FromMilliseconds(rnd.Next(5, 120));
+                var delayTask = client.Delay(delay).WaitAsync(timeout);
                 (await delayTask).Should().Be(delay);
                 callCount++;
             }
 
             disruptorCts.CancelAndDisposeSilently();
-            await disruptorTask.SilentAwait();
-            await connection.Connect();
+            await disruptorTask.WaitAsync(timeout).SuppressCancellationAwait();
+            await connection.Connect().WaitAsync(timeout);
             await Delay(0.2); // Just in case
 
             await AssertNoCalls(connection.ClientPeer);
@@ -93,10 +94,10 @@ public class RpcReconnectionTest : RpcLocalTestBase
         {
             var rnd1 = new Random();
             while (CpuTimestamp.Now < endAt) {
-                await Task.Delay(rnd1.Next(1, 40), cancellationToken);
+                await Task.Delay(rnd1.Next(10, 40), cancellationToken);
                 connection.Disconnect();
-                await Task.Delay(rnd1.Next(1, 20), cancellationToken);
-                await connection.Connect(cancellationToken);
+                await Task.Delay(rnd1.Next(10, 20), cancellationToken);
+                await connection.Connect(cancellationToken).WaitAsync(timeout, cancellationToken);
             }
         }
     }
