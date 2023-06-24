@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 using Stl.Reflection.Internal;
 
 namespace Stl.Reflection;
@@ -9,6 +10,17 @@ namespace Stl.Reflection;
 [TypeConverter(typeof(TypeRefTypeConverter))]
 public readonly partial struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRef>, ISerializable
 {
+#if NET7_0_OR_GREATER
+    [GeneratedRegex(@",\s+Version=[^,]*,\s+Culture=[^,]*,\s+PublicKeyToken=[A-Za-z0-9]+")]
+    private static partial Regex TrimAssemblyVersionReFactory();
+    private static readonly Regex TrimAssemblyVersionRe = TrimAssemblyVersionReFactory();
+#else
+    private static readonly Regex TrimAssemblyVersionRe =
+        new(@",\s+Version=[^,]*,\s+Culture=[^,]*,\s+PublicKeyToken=[A-Za-z0-9]+", RegexOptions.Compiled);
+#endif
+    private static readonly ConcurrentDictionary<Symbol, TypeRef> TrimmedAqnCache = new();
+    private static readonly ConcurrentDictionary<Symbol, Type?> ResolveCache = new();
+
     public static readonly TypeRef None = default;
 
     [DataMember(Order = 0), MemoryPackOrder(0)]
@@ -33,14 +45,8 @@ public readonly partial struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRe
         => Resolve(AssemblyQualifiedName) ?? throw Errors.TypeNotFound(AssemblyQualifiedName);
 
     public TypeRef TrimAssemblyVersion()
-    {
-        var assemblyQualifiedName = AssemblyQualifiedName.Value;
-        var assemblyVersionIndex = assemblyQualifiedName.IndexOf(", Version=", StringComparison.Ordinal);
-        if (assemblyVersionIndex < 0)
-            return new(assemblyQualifiedName);
-        var shortAssemblyQualifiedName = assemblyQualifiedName[..assemblyVersionIndex];
-        return new(shortAssemblyQualifiedName);
-    }
+        => TrimmedAqnCache.GetOrAdd(AssemblyQualifiedName,
+            static aqn => new(TrimAssemblyVersionRe.Replace(aqn, "")));
 
     // Conversion
 
@@ -61,8 +67,13 @@ public readonly partial struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRe
 
     // Private methods
 
-    public static Type? Resolve(string assemblyQualifiedName)
-        => Type.GetType(assemblyQualifiedName, false, false);
+    public static Type? Resolve(Symbol assemblyQualifiedName)
+    {
+        var result = ResolveCache.GetOrAdd(assemblyQualifiedName, static aqn => Type.GetType(aqn, false, false));
+        if (result == null)
+            ResolveCache.TryRemove(assemblyQualifiedName, out _); // Potential memory lead / attack vector
+        return result;
+    }
 
     // Serialization
 

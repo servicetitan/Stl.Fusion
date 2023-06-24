@@ -29,7 +29,7 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
         var c1 = await GetScreenshotComputed(service1);
         Out.WriteLine($"Miss in: {sw.ElapsedMilliseconds}ms");
         c1.Call!.ResultTask.IsCompleted.Should().BeTrue(); // First cache miss should resolve via Rpc
-        c1.Options.ClientCacheBehavior.Should().Be(ClientCacheBehavior.Standard);
+        c1.Options.ClientCacheBehavior.Should().Be(ClientCacheBehavior.Cache);
 
         sw.Restart();
         var c2 = await GetScreenshotComputed(service2);
@@ -67,7 +67,7 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
         Out.WriteLine($"Miss in: {sw.ElapsedMilliseconds}ms");
         c1.Output.Value.Should().BeNull();
         c1.Call!.ResultTask.IsCompleted.Should().BeFalse(); // First cache miss should resolve w/o waiting for Rpc
-        c1.Options.ClientCacheBehavior.Should().Be(ClientCacheBehavior.DefaultValue);
+        c1.Options.ClientCacheBehavior.Should().Be(ClientCacheBehavior.NoCache);
 
         sw.Restart();
         var c2 = await GetScreenshotAltComputed(service2);

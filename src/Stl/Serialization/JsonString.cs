@@ -68,6 +68,8 @@ public partial class JsonString :
         => StringComparer.Ordinal.GetHashCode(Value);
     public int CompareTo(JsonString? other)
         => StringComparer.Ordinal.Compare(Value, other?.Value);
-    public static bool operator ==(JsonString left, JsonString right) => left.Equals(right);
-    public static bool operator !=(JsonString left, JsonString right) => !left.Equals(right);
+    public static bool operator ==(JsonString? left, JsonString? right)
+        => left?.Equals(right) ?? ReferenceEquals(right, null);
+    public static bool operator !=(JsonString? left, JsonString? right)
+        => !(left == right);
 }

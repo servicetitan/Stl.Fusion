@@ -29,7 +29,7 @@ public class RestEaseHttpMessageHandler : DelegatingHandler, IHasServices
             return new RemoteException(content);
 
         try {
-            var serializer = TypeDecoratingSerializer.Default;
+            var serializer = TypeDecoratingTextSerializer.Default;
             return serializer.Read<ExceptionInfo>(content).ToException()
                 ?? Errors.UnknownServerSideError();
         }

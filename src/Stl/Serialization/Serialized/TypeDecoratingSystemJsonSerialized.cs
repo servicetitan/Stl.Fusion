@@ -20,5 +20,5 @@ public partial class TypeDecoratingSystemJsonSerialized<T> : TextSerialized<T>
         : base(data) { }
 
     protected override ITextSerializer<T> GetSerializer()
-        => _serializer ??= new TypeDecoratingSerializer(SystemJsonSerializer.Default).ToTyped<T>();
+        => _serializer ??= new TypeDecoratingTextSerializer(SystemJsonSerializer.Default).ToTyped<T>();
 }

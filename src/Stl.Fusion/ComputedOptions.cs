@@ -7,7 +7,7 @@ public record ComputedOptions
     public static ComputedOptions Default { get; set; } = new();
     public static ComputedOptions ClientDefault { get; set; } = new() {
         MinCacheDuration = TimeSpan.FromMinutes(1),
-        ClientCacheBehavior = ClientCacheBehavior.Standard,
+        ClientCacheBehavior = ClientCacheBehavior.Cache,
     };
     public static ComputedOptions MutableStateDefault { get; set; } = new() {
         TransientErrorInvalidationDelay = TimeSpan.MaxValue,
@@ -17,7 +17,7 @@ public record ComputedOptions
     public TimeSpan TransientErrorInvalidationDelay { get; init; } = TimeSpan.FromSeconds(1);
     public TimeSpan AutoInvalidationDelay { get; init; } = TimeSpan.MaxValue; // No auto invalidation
     public TimeSpan InvalidationDelay { get; init; }
-    public ClientCacheBehavior ClientCacheBehavior { get; init; } = ClientCacheBehavior.None;
+    public ClientCacheBehavior ClientCacheBehavior { get; init; } = ClientCacheBehavior.NoCache;
 
     public static ComputedOptions? Get(Type type, MethodInfo method)
     {

@@ -1,5 +1,4 @@
 using Cysharp.Text;
-using Stl.Fusion.Client.Cache;
 using Stl.Fusion.Client.Internal;
 using Stl.Fusion.Interception;
 using Stl.Rpc.Infrastructure;
@@ -17,13 +16,13 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
 {
     private string? _toString;
 
-    public VersionGenerator<LTag> VersionGenerator { get; }
-    public ClientComputedCache Cache { get; }
+    protected readonly VersionGenerator<LTag> VersionGenerator;
+    protected readonly ClientComputedCache? Cache;
 
     public ClientComputeMethodFunction(
         ComputeMethodDef methodDef,
         VersionGenerator<LTag> versionGenerator,
-        ClientComputedCache cache,
+        ClientComputedCache? cache,
         IServiceProvider services)
         : base(methodDef, services)
     {
@@ -35,39 +34,35 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
         => _toString ??= ZString.Concat('*', base.ToString());
 
     public void OnInvalidated(IClientComputed computed)
-    {
-        // _ = Cache.Set<T>((ComputeMethodInput)computed.Input, null, CancellationToken.None);
-    }
+        => Cache?.Remove((ComputeMethodInput)computed.Input);
 
     protected override ValueTask<Computed<T>> Compute(
         ComputedInput input, Computed<T>? existing,
         CancellationToken cancellationToken)
     {
         var typedInput = (ComputeMethodInput)input;
-        return RemoteCompute(typedInput, cancellationToken).ToValueTask();
-        // return existing == null
-        //     ? CachedCompute(typedInput, cancellationToken)
-        //     : RpcCompute(typedInput, cancellationToken).ToValueTask();
+        return existing == null && Cache != null
+            ? CachedCompute(typedInput, cancellationToken)
+            : RemoteCompute(typedInput, cancellationToken).ToValueTask();
     }
 
-#if false
     private async ValueTask<Computed<T>> CachedCompute(
         ComputeMethodInput input,
         CancellationToken cancellationToken)
     {
-        var outputOpt = await RpcComputedCache.Get<T>(input, cancellationToken).ConfigureAwait(false);
+        var outputOpt = await Cache!.Get<T>(input, cancellationToken).ConfigureAwait(false);
         if (outputOpt is not { } output)
-            return await RpcCompute(input, cancellationToken).ConfigureAwait(false);
+            return await RemoteCompute(input, cancellationToken).ConfigureAwait(false);
 
-        var publicationState = CreateFakePublicationState(output);
-        var computed = new ReplicaMethodComputed<T>(input.MethodDef.ComputedOptions, input, null, publicationState);
+        var computed = new ClientComputed<T>(
+            input.MethodDef.ComputedOptions,
+            input, output, VersionGenerator.NextVersion(), true);
 
         // Start the task to retrieve the actual value
         using var suppressFlow = ExecutionContextExt.SuppressFlow();
-        _ = Task.Run(() => RpcCompute(input, cancellationToken), CancellationToken.None);
+        _ = Task.Run(() => RemoteCompute(input, cancellationToken), cancellationToken);
         return computed;
     }
-#endif
 
     private async Task<Computed<T>> RemoteCompute(ComputeMethodInput input, CancellationToken cancellationToken)
     {
@@ -101,10 +96,12 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
             await Task.Delay(50, cancellationToken).ConfigureAwait(false);
         }
 
-        return new ClientComputed<T>(
+        var computed = new ClientComputed<T>(
             input.MethodDef.ComputedOptions,
             input, result, VersionGenerator.NextVersion(), isConsistent,
             call);
+        Cache?.Set(computed);
+        return computed;
     }
 
     private RpcOutboundComputeCall<T> SendRpcCall(

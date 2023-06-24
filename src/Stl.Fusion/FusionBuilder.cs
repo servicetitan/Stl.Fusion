@@ -5,7 +5,6 @@ using Stl.Fusion.Internal;
 using Stl.Fusion.Multitenancy;
 using Stl.Fusion.Operations.Internal;
 using Stl.Fusion.Operations.Reprocessing;
-using Stl.Fusion.Client.Cache;
 using Stl.Fusion.Client.Interception;
 using Stl.Fusion.Client.Internal;
 using Stl.Fusion.UI;
@@ -146,9 +145,6 @@ public readonly struct FusionBuilder
         services.TryAddSingleton(_ => new ClientComputeServiceInterceptor.Options());
         services.TryAddTransient(c => new ClientComputeServiceInterceptor(
             c.GetRequiredService<ClientComputeServiceInterceptor.Options>(), c));
-
-        // Compute call cache
-        services.AddSingleton(c => (ClientComputedCache)new NoClientComputedCache(c));
 
         configure?.Invoke(this);
     }
@@ -347,6 +343,23 @@ public readonly struct FusionBuilder
         services.AddAlias<IOperationReprocessor, TOperationReprocessor>(ServiceLifetime.Transient);
         Commander.AddHandlers<TOperationReprocessor>();
         services.AddSingleton(TransientErrorDetector.DefaultPreferNonTransient.For<IOperationReprocessor>());
+        return this;
+    }
+
+    // AddClientComputeCache
+
+    public FusionBuilder AddClientComputedCache<TCache, TOptions>(
+        Func<IServiceProvider, TOptions>? optionsFactory = null)
+        where TCache : ClientComputedCache
+        where TOptions : class, new()
+    {
+        var services = Services;
+        services.AddSingleton(optionsFactory, _ => new TOptions());
+        if (services.HasService<ClientComputedCache>())
+            return this;
+
+        services.AddSingleton<TCache>();
+        services.AddAlias<ClientComputedCache, TCache>();
         return this;
     }
 

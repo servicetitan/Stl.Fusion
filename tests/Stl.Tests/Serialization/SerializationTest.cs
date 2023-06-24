@@ -32,7 +32,7 @@ public class SerializationTest : TestBase
     [Fact]
     public void TypeDecoratingSerializerTest()
     {
-        var serializer = TypeDecoratingSerializer.Default;
+        var serializer = TypeDecoratingTextSerializer.Default;
 
         var value = new Tuple<DateTime>(DateTime.Now);
         var json = serializer.Write(value);

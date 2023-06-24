@@ -3,9 +3,9 @@ using Stl.Serialization.Internal;
 
 namespace Stl.Serialization;
 
-public class TypeDecoratingSerializer : TextSerializerBase
+public class TypeDecoratingTextSerializer : TextSerializerBase
 {
-    public static TypeDecoratingSerializer Default { get; } =
+    public static TypeDecoratingTextSerializer Default { get; } =
         new(SystemJsonSerializer.Default);
 
     private readonly ISerializationBinder _serializationBinder;
@@ -13,7 +13,7 @@ public class TypeDecoratingSerializer : TextSerializerBase
     public ITextSerializer Serializer { get; }
     public Func<Type, bool> TypeFilter { get; }
 
-    public TypeDecoratingSerializer(ITextSerializer serializer, Func<Type, bool>? typeFilter = null)
+    public TypeDecoratingTextSerializer(ITextSerializer serializer, Func<Type, bool>? typeFilter = null)
     {
         Serializer = serializer;
         TypeFilter = typeFilter ?? (_ => true);
@@ -37,9 +37,9 @@ public class TypeDecoratingSerializer : TextSerializerBase
 
         TypeNameHelpers.SplitAssemblyQualifiedName(p.Item, out var assemblyName, out var typeName);
         var actualType = _serializationBinder.BindToType(assemblyName, typeName);
-        if (!TypeFilter(actualType))
-            throw Errors.UnsupportedSerializedType(actualType);
         if (!type.IsAssignableFrom(actualType))
+            throw Errors.UnsupportedSerializedType(actualType);
+        if (!TypeFilter(actualType))
             throw Errors.UnsupportedSerializedType(actualType);
 
         p.ParseNext();
@@ -60,6 +60,7 @@ public class TypeDecoratingSerializer : TextSerializerBase
                 throw Stl.Internal.Errors.MustBeAssignableTo(actualType, type, nameof(type));
             if (!TypeFilter(actualType))
                 throw Errors.UnsupportedSerializedType(actualType);
+
             var aqn = actualType.GetAssemblyQualifiedName(false, _serializationBinder);
             var json = Serializer.Write(value, actualType);
             f.Append(aqn);

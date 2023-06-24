@@ -40,7 +40,7 @@ public static class ByteSerializerExt
     public static ArrayPoolBufferWriter<byte> Write(this IByteSerializer serializer, object? value, Type type)
     {
         var bufferWriter = new ArrayPoolBufferWriter<byte>();
-        serializer.Write(bufferWriter, value);
+        serializer.Write(bufferWriter, value, type);
         return bufferWriter;
     }
 

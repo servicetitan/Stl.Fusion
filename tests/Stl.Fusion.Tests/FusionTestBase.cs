@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Stl.IO;
 using Stl.Fusion.Authentication;
-using Stl.Fusion.Client.Cache;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.EntityFramework.Npgsql;
 using Stl.Fusion.EntityFramework.Redis;
@@ -205,11 +204,6 @@ public abstract class FusionTestBase : RpcTestBase
         }
         else {
             fusion.AddAuthClient();
-            services.AddSingleton(_ => new InMemoryComputedCache.Options() {
-                IsEnabled = UseClientComputedCache,
-                Cache = ClientComputedCacheStore,
-            });
-            services.AddSingleton<ClientComputedCache, InMemoryComputedCache>();
 
             // Custom computed state
             services.AddSingleton(c => c.StateFactory().NewComputed<ServerTimeModel2>(

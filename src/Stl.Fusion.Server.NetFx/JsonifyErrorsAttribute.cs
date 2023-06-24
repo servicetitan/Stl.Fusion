@@ -17,7 +17,7 @@ public class JsonifyErrorsAttribute : ExceptionFilterAttribute
         var log = services.GetRequiredService<ILogger<JsonifyErrorsAttribute>>();
         log.LogError(exception, "Error message: {Message}", exception.Message);
 
-        var serializer = TypeDecoratingSerializer.Default;
+        var serializer = TypeDecoratingTextSerializer.Default;
         var content = serializer.Write(exception.ToExceptionInfo());
         actionExecutedContext.Exception = null; // mark exception as handled;
         var response = new HttpResponseMessage {

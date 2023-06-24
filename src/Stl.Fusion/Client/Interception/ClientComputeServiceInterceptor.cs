@@ -1,4 +1,3 @@
-using Stl.Fusion.Client.Cache;
 using Stl.Fusion.Interception;
 using Stl.Interception;
 using Stl.Rpc;
@@ -11,13 +10,13 @@ public class ClientComputeServiceInterceptor : ComputeServiceInterceptorBase
     public new record Options : ComputeServiceInterceptorBase.Options;
 
     protected readonly RpcClientInterceptor RpcClientInterceptor;
-    protected readonly ClientComputedCache Cache;
+    protected readonly ClientComputedCache? Cache;
 
     public ClientComputeServiceInterceptor(Options options, IServiceProvider services)
         : base(options, services)
     {
         RpcClientInterceptor = services.GetRequiredService<RpcClientInterceptor>();
-        Cache = services.GetRequiredService<ClientComputedCache>();
+        Cache = services.GetService<ClientComputedCache>();
     }
 
     public virtual void Setup(RpcServiceDef serviceDef)
