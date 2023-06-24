@@ -13,7 +13,7 @@ public abstract class RpcInboundCall : RpcCall
 {
     private static readonly ConcurrentDictionary<(byte, Type), Func<RpcInboundContext, RpcMethodDef, RpcInboundCall>> FactoryCache = new();
 
-    protected CancellationTokenSource? CancellationTokenSource { get; private set; }
+    protected readonly CancellationTokenSource? CancellationTokenSource;
 
     public readonly RpcInboundContext Context;
     public readonly CancellationToken CancellationToken;
@@ -24,7 +24,11 @@ public abstract class RpcInboundCall : RpcCall
     {
         if (methodDef == null) {
             var notFoundMethodDef = context.Peer.Hub.SystemCallSender.NotFoundMethodDef;
-            return new RpcInbound404Call<Unit>(context, notFoundMethodDef);
+            var message = context.Message;
+            return new RpcInbound404Call<Unit>(context, notFoundMethodDef) {
+                // This prevents argument deserialization
+                Arguments = ArgumentList.New(message.Service, message.Method)
+            };
         }
 
         return FactoryCache.GetOrAdd((callTypeId, methodDef.UnwrappedReturnType), static key => {
@@ -110,11 +114,10 @@ public class RpcInboundCall<TResult> : RpcInboundCall
         ArgumentList? arguments;
         if (NoWait) {
             try {
-                arguments = DeserializeArguments();
-                if (arguments == null)
+                Arguments ??= DeserializeArguments();
+                if (Arguments == null)
                     return default; // No way to resolve argument list type -> the related call is already gone
 
-                Arguments = arguments;
                 var peer = Context.Peer;
                 peer.CallLog?.Log(peer.CallLogLevel, "'{PeerRef}': <- {Call}", peer.Ref, this);
 
@@ -131,11 +134,10 @@ public class RpcInboundCall<TResult> : RpcInboundCall
                 return default;
 
             try {
-                arguments = DeserializeArguments();
-                if (arguments == null)
+                Arguments ??= DeserializeArguments();
+                if (Arguments == null)
                     return default; // No way to resolve argument list type -> the related call is already gone
 
-                Arguments = arguments;
                 var peer = Context.Peer;
                 peer.CallLog?.Log(peer.CallLogLevel, "'{PeerRef}': <- {Call}", peer.Ref, this);
 

@@ -27,7 +27,9 @@ public interface ITestRpcService : ICommandService
 }
 
 public interface ITestRpcServiceClient : ITestRpcService, IRpcService
-{ }
+{
+    Task<int> NoSuchMethod(int i1, int i2, int i3, int i4, CancellationToken cancellationToken = default);
+}
 
 public class TestRpcService : ITestRpcService
 {

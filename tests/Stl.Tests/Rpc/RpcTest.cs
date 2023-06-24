@@ -15,7 +15,8 @@ public class RpcWebSocketTest : RpcTestBase
         var rpc = services.AddRpc();
         var commander = services.AddCommander();
         if (isClient) {
-            rpc.AddClient<ITestRpcService, ITestRpcServiceClient>();
+            rpc.AddClient<ITestRpcServiceClient>();
+            rpc.Service<ITestRpcServiceClient>().HasName(nameof(ITestRpcService));
             commander.AddCommandService<ITestRpcServiceClient>();
             rpc.AddClient<ITestRpcBackend, ITestRpcBackendClient>();
             commander.AddCommandService<ITestRpcBackendClient>();
@@ -160,6 +161,28 @@ public class RpcWebSocketTest : RpcTestBase
             async () => await client.PolymorphArg(new Tuple<int>(1)));
         await Assert.ThrowsAnyAsync<Exception>(
             async () => await client.PolymorphResult(2));
+
+        await AssertNoCalls(peer);
+    }
+
+    [Fact]
+    public async Task EndpointNotFoundTest()
+    {
+        await using var _ = await WebHost.Serve();
+        var services = ClientServices;
+        var peer = services.RpcHub().GetPeer(ClientPeerRef);
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
+
+        try {
+            await client.NoSuchMethod(1, 2, 3, 4);
+            Assert.Fail("RpcException wasn't thrown.");
+        }
+        catch (RpcException e) {
+            Out.WriteLine(e.Message);
+            e.Message.Should().StartWith("Endpoint not found:");
+            e.Message.Should().Contain("NoSuchMethod");
+            e.Message.Should().Contain("ITestRpcService");
+        }
 
         await AssertNoCalls(peer);
     }
