@@ -37,15 +37,17 @@ while(true) {
     isFirstTry = false;
 }
 await using var appDisposable = app;
-await app.InitializeAsync();
+await app.InitializeAsync(app.ServerServices);
 
 // Starting watch tasks
 WriteLine("Initial state:");
 using var cts = new CancellationTokenSource();
-_ = app.Watch(cts.Token);
+_ = app.Watch(app.WatchedServices, cts.Token);
 await Task.Delay(700); // Just to make sure watch tasks print whatever they want before our prompt appears
 // await AutoRunner.Run(app);
 
+var productService = app.ClientServices.GetRequiredService<IProductService>();
+var commander = app.ClientServices.Commander();
 WriteLine();
 WriteLine("Change product price by typing [productId]=[price], e.g. \"apple=0\".");
 WriteLine("See the total of every affected cart changes.");
@@ -60,14 +62,15 @@ while (true) {
         var parts = input.Split("=");
         if (parts.Length != 2)
             throw new ApplicationException("Invalid price expression.");
+
         var productId = parts[0].Trim();
         var price = decimal.Parse(parts[1].Trim());
-        var product = await app.ClientProductService.Get(productId);
+        var product = await productService.Get(productId);
         if (product == null)
             throw new KeyNotFoundException("Specified product doesn't exist.");
 
         var command = new EditCommand<Product>(product with { Price = price });
-        await app.ClientCommander.Call(command);
+        await commander.Call(command);
         // You can run absolutely identical action with:
         // await app.ClientServices.Commander().Call(command);
     }

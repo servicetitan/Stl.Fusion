@@ -18,7 +18,7 @@ public class RpcWebSocketServer : RpcServiceBase
     {
         public static Options Default { get; set; } = new();
 
-        public string RequestPath { get; init; } = RpcWebSocketClient.Options.Default.RequestPath;
+        public string RoutePattern { get; init; } = RpcWebSocketClient.Options.Default.RequestPath;
         public string ClientIdParameterName { get; init; } = RpcWebSocketClient.Options.Default.ClientIdParameterName;
         public WebSocketChannel<RpcMessage>.Options WebSocketChannelOptions { get; init; } = WebSocketChannel<RpcMessage>.Options.Default;
     }
@@ -33,7 +33,7 @@ public class RpcWebSocketServer : RpcServiceBase
         PeerRefFactory = services.GetRequiredService<RpcWebSocketServerPeerRefFactory>();
     }
 
-    public HttpStatusCode HandleRequest(IOwinContext context)
+    public HttpStatusCode Invoke(IOwinContext context)
     {
         // Based on https://stackoverflow.com/questions/41848095/websockets-using-owin
 

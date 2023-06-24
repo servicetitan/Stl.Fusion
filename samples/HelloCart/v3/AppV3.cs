@@ -43,15 +43,6 @@ public class AppV3 : AppBase
                 QueryTransformer = carts => carts.Include(c => c.Items),
             });
         });
-        ClientServices = HostServices = services.BuildServiceProvider();
-    }
-
-    public override async Task InitializeAsync()
-    {
-        // Let's re-create the database first
-        await using var dbContext = HostServices.GetRequiredService<IDbContextFactory<AppDbContext>>().CreateDbContext();
-        await dbContext.Database.EnsureDeletedAsync();
-        await dbContext.Database.EnsureCreatedAsync();
-        await base.InitializeAsync();
+        ClientServices = ServerServices = services.BuildServiceProvider();
     }
 }

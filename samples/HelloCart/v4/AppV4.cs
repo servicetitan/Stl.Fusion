@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration.Memory;
 using Samples.HelloCart.V2;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.EntityFramework.Redis;
@@ -12,71 +11,65 @@ namespace Samples.HelloCart.V4;
 
 public class AppV4 : AppBase
 {
-    public IHost Host { get; protected set; }
+    public WebApplication App { get; protected set; }
 
     public AppV4()
     {
-        var baseUri = new Uri("http://localhost:7005");
-        Host = BuildHost(baseUri);
-        HostServices = Host.Services;
-        ClientServices = BuildClientServices(baseUri);
+        var uri = "http://localhost:7005";
+
+        // Create server
+        App = CreateWebApp(uri);
+        ServerServices = App.Services;
+
+        // Create client
+        ClientServices = BuildClientServices(uri);
     }
 
-    protected IHost BuildHost(Uri baseUri)
-        => new HostBuilder()
-            .ConfigureHostConfiguration(cfg => {
-                // Looks like there is no better way to set _default_ URL
-                cfg.Sources.Insert(0, new MemoryConfigurationSource() {
-                    InitialData = new Dictionary<string, string>() {
-                        { WebHostDefaults.ServerUrlsKey, baseUri.ToString() },
-                    }!
+    protected WebApplication CreateWebApp(string baseUri)
+    {
+        var builder = WebApplication.CreateBuilder();
+
+        // Configure services
+        var services = builder.Services;
+        services.AddFusion(RpcServiceMode.Server, fusion => {
+            fusion.AddService<IProductService, DbProductService>();
+            fusion.AddService<ICartService, DbCartService>();
+            fusion.AddWebServer();
+        });
+        // Add AppDbContext & related services
+        var appTempDir = FilePath.GetApplicationTempDirectory("", true);
+        var dbPath = appTempDir & "HelloCart_v01.db";
+        services.AddDbContextFactory<AppDbContext>(db => {
+            db.UseSqlite($"Data Source={dbPath}");
+            db.EnableSensitiveDataLogging();
+        });
+        services.AddDbContextServices<AppDbContext>(db => {
+            db.AddOperations(operations => {
+                operations.ConfigureOperationLogReader(_ => new() {
+                    UnconditionalCheckPeriod = TimeSpan.FromSeconds(5),
                 });
-            })
-            .ConfigureWebHostDefaults(webHost => webHost
-                .ConfigureServices(services => {
-                    ConfigureLogging(services);
-                    services.AddFusion(RpcServiceMode.Server, fusion => {
-                        fusion.AddService<IProductService, DbProductService>();
-                        fusion.AddService<ICartService, DbCartService>();
-                        fusion.AddWebServer();
-                    });
+                operations.AddRedisOperationLogChangeTracking();
+            });
+            db.AddRedisDb("localhost", "Fusion.Samples.HelloCart");
+            db.AddEntityResolver<string, DbProduct>();
+            db.AddEntityResolver<string, DbCart>(_ => new() {
+                // Cart is always loaded together with items
+                QueryTransformer = carts => carts.Include(c => c.Items),
+            });
+        });
 
-                    // Add AppDbContext & related services
-                    var appTempDir = FilePath.GetApplicationTempDirectory("", true);
-                    var dbPath = appTempDir & "HelloCart_v01.db";
-                    services.AddDbContextFactory<AppDbContext>(db => {
-                        db.UseSqlite($"Data Source={dbPath}");
-                        db.EnableSensitiveDataLogging();
-                    });
-                    services.AddDbContextServices<AppDbContext>(db => {
-                        db.AddOperations(operations => {
-                            operations.ConfigureOperationLogReader(_ => new() {
-                                UnconditionalCheckPeriod = TimeSpan.FromSeconds(5),
-                            });
-                            operations.AddRedisOperationLogChangeTracking();
-                        });
-                        db.AddRedisDb("localhost", "Fusion.Samples.HelloCart");
-                        db.AddEntityResolver<string, DbProduct>();
-                        db.AddEntityResolver<string, DbCart>(_ => new() {
-                            // Cart is always loaded together with items
-                            QueryTransformer = carts => carts.Include(c => c.Items),
-                        });
-                    });
-                })
-                .Configure(app => {
-                    app.UseWebSockets(new WebSocketOptions() {
-                        KeepAliveInterval = TimeSpan.FromSeconds(30),
-                    });
-                    app.UseRouting();
-                    app.UseEndpoints(endpoints => {
-                        endpoints.MapRpcServer();
-                        endpoints.MapControllers();
-                    });
-                })
-            )
-            .Build();
+        // Configure WebApplication
+        var app = builder.Build();
+        app.Urls.Add(baseUri);
+        app.UseFusionSession();
+        app.UseWebSockets(new WebSocketOptions() {
+            KeepAliveInterval = TimeSpan.FromSeconds(30),
+        });
+        app.MapRpcWebSocketServer();
+        return app;
+    }
 
-    protected IServiceProvider BuildClientServices(Uri baseUri)
+    protected IServiceProvider BuildClientServices(string baseUri)
     {
         var services = new ServiceCollection();
         ConfigureLogging(services);
@@ -99,14 +92,15 @@ public class AppV4 : AppBase
         });
     }
 
-    public override async Task InitializeAsync()
+    public override async Task InitializeAsync(IServiceProvider services)
     {
         // Let's re-create the database first
-        await using var dbContext = HostServices.GetRequiredService<IDbContextFactory<AppDbContext>>().CreateDbContext();
+        await using var dbContext = ServerServices.GetRequiredService<IDbContextFactory<AppDbContext>>().CreateDbContext();
         await dbContext.Database.EnsureDeletedAsync();
         await dbContext.Database.EnsureCreatedAsync();
-        await base.InitializeAsync();
-        await Host.StartAsync();
+        await base.InitializeAsync(services);
+
+        await App.StartAsync();
         await Task.Delay(100);
     }
 
@@ -115,7 +109,8 @@ public class AppV4 : AppBase
         // Let's stop the client first
         if (ClientServices is IAsyncDisposable csd)
             await csd.DisposeAsync();
-        await Host.StopAsync();
-        Host.Dispose();
+
+        await App.StopAsync();
+        await App.DisposeAsync();
     }
 }

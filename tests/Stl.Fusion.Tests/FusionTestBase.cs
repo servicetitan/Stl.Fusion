@@ -130,7 +130,7 @@ public abstract class FusionTestBase : RpcTestBase
             fusion = fusion.WithServiceMode(RpcServiceMode.Server, true);
             var fusionServer = fusion.AddWebServer();
 #if !NETFRAMEWORK
-            fusionServer.AddAuthentication();
+            fusionServer.AddMvc().AddControllers();
 #endif
             if (UseInMemoryAuthService)
                 fusion.AddInMemoryAuthService();

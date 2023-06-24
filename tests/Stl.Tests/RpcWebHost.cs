@@ -55,7 +55,7 @@ public class RpcWebHost : TestWebHostBase
             app.UseEndpoints(endpoints => {
                 endpoints.MapControllerRoute(name: "DefaultApi", pattern: "api/{controller}/{action}");
                 endpoints.MapControllers();
-                endpoints.MapRpcServer();
+                endpoints.MapRpcWebSocketServer();
             });
         });
     }

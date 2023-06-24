@@ -4,25 +4,28 @@ namespace Samples.HelloCart.V5;
 
 public class AppV5 : AppV4
 {
-    public IHost ExtraHost { get; protected set; }
-    // We'll modify the data on ExtraHost & watch on Host
-    public override IServiceProvider WatchServices => HostServices;
+    public WebApplication ExtraApp { get; }
+    // We'll modify the data on AppHost & watch it changes on App
+    public override IServiceProvider WatchedServices => ServerServices;
 
     public AppV5()
     {
-        var hostUri = new Uri("http://localhost:7005");
-        Host = BuildHost(hostUri);
-        HostServices = Host.Services;
+        // Server 1
+        App = CreateWebApp("http://localhost:7005");
+        ServerServices = App.Services;
 
-        var extraHostUri = new Uri("http://localhost:7006");
-        ExtraHost = BuildHost(extraHostUri);
-        ClientServices = BuildClientServices(extraHostUri);
+        // Server 2
+        var extraAppUri = "http://localhost:7006";
+        ExtraApp = CreateWebApp(extraAppUri);
+
+        // Client
+        ClientServices = BuildClientServices(extraAppUri);
     }
 
-    public override async Task InitializeAsync()
+    public override async Task InitializeAsync(IServiceProvider services)
     {
-        await base.InitializeAsync();
-        await ExtraHost.StartAsync();
+        await base.InitializeAsync(services);
+        await ExtraApp.StartAsync();
         await Task.Delay(100);
     }
 
@@ -30,9 +33,11 @@ public class AppV5 : AppV4
     {
         if (ClientServices is IAsyncDisposable csd)
             await csd.DisposeAsync();
-        await ExtraHost.StopAsync();
-        ExtraHost.Dispose();
-        await Host.StopAsync();
-        Host.Dispose();
+
+        await ExtraApp.StopAsync();
+        await ExtraApp.DisposeAsync();
+
+        await App.StopAsync();
+        await App.DisposeAsync();
     }
 }

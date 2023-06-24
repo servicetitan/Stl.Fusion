@@ -79,7 +79,7 @@ public static class Errors
         => new SerializationException($"Cannot deserialize object-typed argument(s) of inbound call: {message}.");
 
     public static Exception CallTimeout()
-        => new TimeoutException("Remote call is timed out.");
+        => new TimeoutException("The server didn't respond in time.");
     public static Exception PeerDisconnected()
         => new DisconnectedException();
 }

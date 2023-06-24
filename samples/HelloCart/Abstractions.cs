@@ -1,48 +1,62 @@
 using System.Runtime.Serialization;
 using MemoryPack;
+using Newtonsoft.Json;
 
 namespace Samples.HelloCart;
 
 [DataContract, MemoryPackable]
-public record Product : IHasId<string>
+public partial record Product : IHasId<string>
 {
     [DataMember] public string Id { get; init; } = "";
     [DataMember] public decimal Price { get; init; } = 0;
 }
 
 [DataContract, MemoryPackable]
-public record Cart : IHasId<string>
+public partial record Cart : IHasId<string>
 {
     [DataMember] public string Id { get; init; } = "";
     [DataMember] public ImmutableDictionary<string, decimal> Items { get; init; } = ImmutableDictionary<string, decimal>.Empty;
 }
 
 [DataContract, MemoryPackable]
-public record EditCommand<TValue>(
-    [property: DataMember] string Id,
-    [property: DataMember] TValue? Value = null
-    ) : ICommand<Unit>
-    where TValue : class, IHasId<string>
+public partial record EditCommand<TItem> : ICommand<Unit>
+    where TItem : class, IHasId<string>
 {
-    public EditCommand(TValue value) : this(value.Id, value) { }
-    // Newtonsoft.Json needs this constructor to deserialize this record
-    public EditCommand() : this("") { }
+    [DataMember] public string Id { get; init; }
+    [DataMember] public TItem? Item { get; init; }
+
+    public EditCommand(TItem value) : this(value.Id, value) { }
+
+    [JsonConstructor, MemoryPackConstructor]
+    public EditCommand(string id, TItem item)
+    {
+        Id = id;
+        Item = item;
+    }
+
+    public void Deconstruct(out string id, out TItem? item)
+    {
+        id = Id;
+        item = Item;
+    }
 }
 
 public interface IProductService: IComputeService
 {
-    [CommandHandler]
-    Task Edit(EditCommand<Product> command, CancellationToken cancellationToken = default);
     [ComputeMethod]
     Task<Product?> Get(string id, CancellationToken cancellationToken = default);
+
+    [CommandHandler]
+    Task Edit(EditCommand<Product> command, CancellationToken cancellationToken = default);
 }
 
 public interface ICartService: IComputeService
 {
-    [CommandHandler]
-    Task Edit(EditCommand<Cart> command, CancellationToken cancellationToken = default);
     [ComputeMethod]
     Task<Cart?> Get(string id, CancellationToken cancellationToken = default);
     [ComputeMethod]
     Task<decimal> GetTotal(string id, CancellationToken cancellationToken = default);
+
+    [CommandHandler]
+    Task Edit(EditCommand<Cart> command, CancellationToken cancellationToken = default);
 }

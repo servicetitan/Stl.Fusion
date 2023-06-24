@@ -13,9 +13,9 @@ public static class EndpointRouteBuilderExt
 
         var server = services.GetRequiredService<RpcWebSocketServer>();
 
-        return appBuilder.Map(pattern ?? server.Settings.RequestPath, app => {
+        return appBuilder.Map(pattern ?? server.Settings.RoutePattern, app => {
             app.Run(delegate(IOwinContext context) {
-                var statusCode = server.HandleRequest(context);
+                var statusCode = server.Invoke(context);
                 context.Response.StatusCode = (int)statusCode;
                 return Task.CompletedTask;
             });

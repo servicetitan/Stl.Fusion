@@ -9,6 +9,6 @@ public class AppV1 : AppBase
             fusion.AddService<IProductService, InMemoryProductService>();
             fusion.AddService<ICartService, InMemoryCartService>();
         });
-        ClientServices = HostServices = services.BuildServiceProvider();
+        ClientServices = ServerServices = services.BuildServiceProvider();
     }
 }

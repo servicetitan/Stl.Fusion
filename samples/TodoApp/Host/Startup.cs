@@ -4,7 +4,6 @@ using System.Reflection;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Hosting.StaticWebAssets;
 using Microsoft.Extensions.FileProviders;
-using Microsoft.OpenApi.Models;
 using Templates.TodoApp.Services;
 using Stl.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
@@ -112,20 +111,20 @@ public class Startup
         // Fusion services
         var fusion = services.AddFusion(RpcServiceMode.Server, true);
         var fusionServer = fusion.AddWebServer();
+        // fusionServer.AddMvc().AddControllers();
         if (HostSettings.UseInMemoryAuthService)
             fusion.AddInMemoryAuthService();
         else
             fusion.AddDbAuthService<AppDbContext, string>();
         fusion.AddDbKeyValueStore<AppDbContext>();
 
-        fusionServer.AddAuthentication();
         if (HostSettings.UseMultitenancy)
             fusionServer.ConfigureSessionMiddleware(_ => new() {
                 TenantIdExtractor = TenantIdExtractors.FromSubdomain(".localhost")
                     .Or(TenantIdExtractors.FromPort((5005, 5010)))
                     .WithValidator(tenantId => tenantId.Value.StartsWith("tenant")),
             });
-        fusionServer.ConfigureSignInController(_ => new() {
+        fusionServer.ConfigureAuthEndpoint(_ => new() {
             DefaultScheme = MicrosoftAccountDefaults.AuthenticationScheme,
             SignInPropertiesBuilder = (_, properties) => {
                 properties.IsPersistent = true;
@@ -179,13 +178,6 @@ public class Startup
         services.AddMvc().AddApplicationPart(Assembly.GetExecutingAssembly());
         services.AddServerSideBlazor(o => o.DetailedErrors = true);
         fusion.AddBlazor().AddAuthentication().AddPresenceReporter(); // Must follow services.AddServerSideBlazor()!
-
-        // Swagger & debug tools
-        services.AddSwaggerGen(c => {
-            c.SwaggerDoc("v1", new OpenApiInfo {
-                Title = "Templates.TodoApp API", Version = "v1"
-            });
-        });
     }
 
     private void ConfigureTenantDbContext(IServiceProvider services, Tenant tenant, DbContextOptionsBuilder db)
@@ -225,7 +217,6 @@ public class Startup
         Env.WebRootPath = wwwRootPath;
         Env.WebRootFileProvider = new PhysicalFileProvider(Env.WebRootPath);
         StaticWebAssetsLoader.UseStaticWebAssets(Env, Cfg);
-
         if (Env.IsDevelopment()) {
             app.UseDeveloperExceptionPage();
             app.UseWebAssemblyDebugging();
@@ -249,13 +240,9 @@ public class Startup
             await next().ConfigureAwait(false);
         });
 
-        // Static + Swagger
+        // Blazor + static files
         app.UseBlazorFrameworkFiles();
         app.UseStaticFiles();
-        app.UseSwagger();
-        app.UseSwaggerUI(c => {
-            c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1");
-        });
 
         // API controllers
         app.UseRouting();
@@ -263,8 +250,10 @@ public class Startup
         app.UseAuthorization();
         app.UseEndpoints(endpoints => {
             endpoints.MapBlazorHub();
-            endpoints.MapRpcServer();
-            endpoints.MapControllers();
+            endpoints.MapRpcWebSocketServer();
+            endpoints.MapFusionAuth();
+            endpoints.MapFusionBlazorSwitch();
+            // endpoints.MapControllers();
             endpoints.MapFallbackToPage("/_Host");
         });
     }

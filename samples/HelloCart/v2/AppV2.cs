@@ -37,15 +37,15 @@ public class AppV2 : AppBase
                 operations.AddFileBasedOperationLogChangeTracking();
             });
         });
-        ClientServices = HostServices = services.BuildServiceProvider();
+        ClientServices = ServerServices = services.BuildServiceProvider();
     }
 
-    public override async Task InitializeAsync()
+    public override async Task InitializeAsync(IServiceProvider services)
     {
         // Let's re-create the database first
-        await using var dbContext = HostServices.GetRequiredService<IDbContextFactory<AppDbContext>>().CreateDbContext();
+        await using var dbContext = services.GetRequiredService<IDbContextFactory<AppDbContext>>().CreateDbContext();
         await dbContext.Database.EnsureDeletedAsync();
         await dbContext.Database.EnsureCreatedAsync();
-        await base.InitializeAsync();
+        await base.InitializeAsync(services);
     }
 }
