@@ -78,8 +78,6 @@ public abstract class ClientComputedCache
         }
     }
 
-    protected abstract ValueTask<Result<T>?> Read<T>(ComputeMethodInput input, CancellationToken cancellationToken);
-
     protected async Task DelayedFlush()
     {
         await Clock.Delay(Settings.FlushDelay).ConfigureAwait(false);
@@ -101,5 +99,5 @@ public abstract class ClientComputedCache
         }
     }
 
-    protected abstract ValueTask SetInternal<T>(ComputeMethodInput input, Result<T>? output, CancellationToken cancellationToken);
+    protected abstract ValueTask<Result<T>?> Read<T>(ComputeMethodInput input, CancellationToken cancellationToken);
 }
