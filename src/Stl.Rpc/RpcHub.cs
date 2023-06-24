@@ -65,22 +65,19 @@ public sealed class RpcHub : ProcessorBase, IHasServices
 
     public RpcPeer GetPeer(RpcPeerRef peerRef)
     {
-        while (true) {
-            var peer = Peers.GetOrAdd(peerRef, CreatePeer);
-            if (peer.WhenRunning?.IsCompleted == false)
+        if (Peers.TryGetValue(peerRef, out var peer))
+            return peer;
+
+        lock (Lock) {
+            if (Peers.TryGetValue(peerRef, out peer))
                 return peer;
+            if (WhenDisposed != null)
+                throw Errors.AlreadyDisposed();
+
+            peer = PeerFactory.Invoke(this, peerRef);
+            Peers[peerRef] = peer;
+            peer.Start();
+            return peer;
         }
-    }
-
-    // Private methods
-
-    private RpcPeer CreatePeer(RpcPeerRef peerRef)
-    {
-        if (WhenDisposed != null)
-            throw Errors.AlreadyDisposed();
-
-        var peer = PeerFactory.Invoke(this, peerRef);
-        _ = peer.Run();
-        return peer;
     }
 }

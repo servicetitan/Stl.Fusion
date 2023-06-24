@@ -125,6 +125,16 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
         Version = version;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Deconstruct(out T value, out Exception? error)
+        => Output.Deconstruct(out value, out error);
+
+    public void Deconstruct(out T value, out Exception? error, out LTag version)
+    {
+        Output.Deconstruct(out value, out error);
+        version = Version;
+    }
+
     public override string ToString()
         => $"{GetType().GetName()}({Input} {Version}, State: {ConsistencyState})";
 
@@ -301,8 +311,6 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
 
     // IResult<T> methods
 
-    public void Deconstruct(out T value, out Exception? error)
-        => Output.Deconstruct(out value, out error);
     public bool IsValue([MaybeNullWhen(false)] out T value)
         => Output.IsValue(out value);
     public bool IsValue([MaybeNullWhen(false)] out T value, [MaybeNullWhen(true)] out Exception error)

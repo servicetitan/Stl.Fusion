@@ -88,6 +88,16 @@ public static class StateExt
         CancellationToken cancellationToken = default)
         => state.Computed.When(predicate, updateDelayer, cancellationToken);
 
+    public static Task<Computed<T>> When<T>(this IState<T> state,
+        Func<T, Exception?, bool> predicate,
+        CancellationToken cancellationToken = default)
+        => state.Computed.When(predicate, cancellationToken);
+    public static Task<Computed<T>> When<T>(this IState<T> state,
+        Func<T, Exception?, bool> predicate,
+        IUpdateDelayer updateDelayer,
+        CancellationToken cancellationToken = default)
+        => state.Computed.When(predicate, updateDelayer, cancellationToken);
+
     // Changes
 
     public static IAsyncEnumerable<Computed<T>> Changes<T>(

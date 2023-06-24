@@ -32,9 +32,9 @@ public class AppV4 : AppBase
         // Configure services
         var services = builder.Services;
         services.AddFusion(RpcServiceMode.Server, fusion => {
+            fusion.AddWebServer();
             fusion.AddService<IProductService, DbProductService>();
             fusion.AddService<ICartService, DbCartService>();
-            fusion.AddWebServer();
         });
         // Add AppDbContext & related services
         var appTempDir = FilePath.GetApplicationTempDirectory("", true);
