@@ -27,7 +27,12 @@ async Task RunServer()
 
     app.UseWebSockets();
     app.MapRpcWebSocketServer();
-    await app.RunAsync(baseUrl);
+    try {
+        await app.RunAsync(baseUrl);
+    }
+    catch (Exception error) {
+        Error.WriteLine($"Server failed: {error.Message}");
+    }
 }
 
 async Task RunClient()
@@ -42,14 +47,14 @@ async Task RunClient()
     var chat = services.GetRequiredService<IChat>();
     var commander = services.Commander();
     _ = Task.Run(ObserveMessages);
-    _ = Task.Run(ObserveMessageCount);
+    _ = Task.Run(ObserveWordCount);
     while (true) {
         var message = ReadLine() ?? "";
         try {
             await commander.Call(new Chat_Post(message));
         }
         catch (Exception error) {
-            WriteLine($"{error.GetType()}: {error.Message}");
+            Error.WriteLine($"Error: {error.Message}");
         }
     }
 
@@ -62,10 +67,10 @@ async Task RunClient()
         }
     };
 
-    async Task ObserveMessageCount() {
-        var cMessageCount = await Computed.Capture(() => chat.GetMessageCount());
-        await foreach (var (count, _) in cMessageCount.Changes())
-            WriteLine($"Message count changed: {count}");
+    async Task ObserveWordCount() {
+        var cMessageCount = await Computed.Capture(() => chat.GetWordCount());
+        await foreach (var (wordCount, _) in cMessageCount.Changes())
+            WriteLine($"Word count changed: {wordCount}");
     };
 }
 

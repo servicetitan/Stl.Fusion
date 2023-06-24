@@ -11,7 +11,7 @@ public interface IChat : IComputeService
     [ComputeMethod]
     Task<List<string>> GetRecentMessages(CancellationToken cancellationToken = default);
     [ComputeMethod]
-    Task<int> GetMessageCount(CancellationToken cancellationToken = default);
+    Task<int> GetWordCount(CancellationToken cancellationToken = default);
 
     [CommandHandler]
     Task Post(Chat_Post command, CancellationToken cancellationToken);
@@ -25,19 +25,24 @@ public class Chat : IChat
 {
     private readonly object _lock = new();
     private List<string> _posts = new();
-    private int _postCount;
 
     public virtual Task<List<string>> GetRecentMessages(CancellationToken cancellationToken = default)
         => Task.FromResult(_posts);
 
-    public virtual Task<int> GetMessageCount(CancellationToken cancellationToken = default)
-        => Task.FromResult(_postCount);
+    public virtual async Task<int> GetWordCount(CancellationToken cancellationToken = default)
+    {
+        // Note that GetRecentMessages call here becomes a dependency of WordCount call,
+        // and that's why it gets invalidated automatically.
+        var messages = await GetRecentMessages(cancellationToken).ConfigureAwait(false);
+        return messages
+            .Select(m => m.Split(" ", StringSplitOptions.RemoveEmptyEntries).Length)
+            .Sum();
+    }
 
     public virtual Task Post(Chat_Post command, CancellationToken cancellationToken)
     {
         if (Computed.IsInvalidating()) {
-            _ = GetRecentMessages(default);
-            _ = GetMessageCount(default);
+            _ = GetRecentMessages(default); // No need to invalidate GetWordCount
             return Task.CompletedTask;
         }
 
@@ -47,7 +52,6 @@ public class Chat : IChat
             if (posts.Count > 10)
                 posts.RemoveAt(0);
             _posts = posts;
-            _postCount++;
         }
         return Task.CompletedTask;
     }
