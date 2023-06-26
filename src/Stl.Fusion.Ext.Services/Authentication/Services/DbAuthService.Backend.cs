@@ -101,7 +101,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         var dbContext = await CreateCommandDbContext(tenant, cancellationToken).ConfigureAwait(false);
         await using var _1 = dbContext.ConfigureAwait(false);
 
-        var dbSessionInfo = await Sessions.Get(dbContext, session.Id, true, cancellationToken).ConfigureAwait(false);
+        var dbSessionInfo = await Sessions.Get(dbContext, session.Id, false, cancellationToken).ConfigureAwait(false);
         var isNew = dbSessionInfo == null;
         var now = Clocks.SystemClock.Now;
         var sessionInfo = SessionConverter.ToModel(dbSessionInfo)
@@ -152,7 +152,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         var dbContext = await CreateCommandDbContext(tenant, cancellationToken).ConfigureAwait(false);
         await using var _1 = dbContext.ConfigureAwait(false);
 
-        var dbSessionInfo = await Sessions.Get(dbContext, session.Id, true, cancellationToken).ConfigureAwait(false);
+        var dbSessionInfo = await Sessions.Get(dbContext, session.Id, false, cancellationToken).ConfigureAwait(false);
         var sessionInfo = SessionConverter.ToModel(dbSessionInfo);
         if (sessionInfo == null)
             throw new KeyNotFoundException();
