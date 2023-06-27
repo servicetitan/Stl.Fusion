@@ -77,7 +77,7 @@ public abstract class FlushingClientComputedCache : ClientComputedCache
     protected async Task DelayedFlush(TimeSpan? flushDelay, CancellationToken cancellationToken)
     {
         if (!WhenInitialized.IsCompleted)
-            await WhenInitialized.SilentAwait(false);
+            await WhenInitialized.WaitAsync(cancellationToken).SilentAwait(false);
 
         var delay = flushDelay ?? Settings.FlushDelay;
         if (delay > TimeSpan.Zero) {
