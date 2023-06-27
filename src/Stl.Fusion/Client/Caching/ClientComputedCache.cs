@@ -46,8 +46,6 @@ public abstract class ClientComputedCache : RpcServiceBase
 
         await Clear(cancellationToken).ConfigureAwait(false);
         Set(VersionKey, expectedValue);
-        if (this is FlushingClientComputedCache flushingCache)
-            await flushingCache.Flush().ConfigureAwait(false);
     }
 
     public async ValueTask<Option<T>> Get<T>(ComputeMethodInput input, RpcCacheKey key, CancellationToken cancellationToken)
