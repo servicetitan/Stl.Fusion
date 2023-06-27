@@ -66,7 +66,7 @@ public sealed class RpcByteArgumentSerializer : RpcArgumentSerializer
         public override void OnObject(Type type, object? item, int index)
         {
             var itemType = item?.GetType() ?? type;
-            var typeRef = itemType == type ? default : new TypeRef(itemType).TrimAssemblyVersion();
+            var typeRef = itemType == type ? default : new TypeRef(itemType).WithoutAssemblyVersions();
             Serializer.Write(Buffer, typeRef);
             Serializer.Write(Buffer, item, itemType);
         }

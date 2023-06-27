@@ -45,12 +45,12 @@ public class TypeRefTest : TestBase
     public void TrimAssemblyVersionTest()
     {
         var r = (TypeRef)typeof(TypeRefTest);
-        var r1 = r.TrimAssemblyVersion();
+        var r1 = r.WithoutAssemblyVersions();
         r1.AssemblyQualifiedName.Should().Be("Stl.Tests.Reflection.TypeRefTest, Stl.Tests");
         r1.Resolve().Should().Be(typeof(TypeRefTest));
 
         r = (TypeRef)typeof(Option<int>);
-        r1 = r.TrimAssemblyVersion();
+        r1 = r.WithoutAssemblyVersions();
         r1.AssemblyQualifiedName.Should().Be("Stl.Option`1[[System.Int32, System.Private.CoreLib]], Stl");
         r1.Resolve().Should().Be(typeof(Option<int>));
     }

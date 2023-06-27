@@ -45,7 +45,7 @@ public class TypeDecoratingByteSerializer : ByteSerializerBase
         }
 
         var actualType = value.GetType();
-        var actualTypeRef = new TypeRef(actualType).TrimAssemblyVersion();
+        var actualTypeRef = new TypeRef(actualType).WithoutAssemblyVersions();
         Serializer.Write(bufferWriter, actualTypeRef);
         Serializer.Write(bufferWriter, value, actualType);
     }

@@ -12,13 +12,13 @@ public readonly partial struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRe
 {
 #if NET7_0_OR_GREATER
     [GeneratedRegex(@",\s+Version=[^,]*,\s+Culture=[^,]*,\s+PublicKeyToken=[A-Za-z0-9]+")]
-    private static partial Regex TrimAssemblyVersionReFactory();
-    private static readonly Regex TrimAssemblyVersionRe = TrimAssemblyVersionReFactory();
+    private static partial Regex RemoveAssemblyVersionsReFactory();
+    private static readonly Regex RemoveAssemblyVersionsRe = RemoveAssemblyVersionsReFactory();
 #else
-    private static readonly Regex TrimAssemblyVersionRe =
+    private static readonly Regex RemoveAssemblyVersionsRe =
         new(@",\s+Version=[^,]*,\s+Culture=[^,]*,\s+PublicKeyToken=[A-Za-z0-9]+", RegexOptions.Compiled);
 #endif
-    private static readonly ConcurrentDictionary<Symbol, TypeRef> TrimmedAqnCache = new();
+    private static readonly ConcurrentDictionary<Symbol, TypeRef> UnversionedAssemblyNameCache = new();
     private static readonly ConcurrentDictionary<Symbol, Type?> ResolveCache = new();
 
     public static readonly TypeRef None = default;
@@ -44,9 +44,9 @@ public readonly partial struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRe
     public Type Resolve()
         => Resolve(AssemblyQualifiedName) ?? throw Errors.TypeNotFound(AssemblyQualifiedName);
 
-    public TypeRef TrimAssemblyVersion()
-        => TrimmedAqnCache.GetOrAdd(AssemblyQualifiedName,
-            static aqn => new(TrimAssemblyVersionRe.Replace(aqn, "")));
+    public TypeRef WithoutAssemblyVersions()
+        => UnversionedAssemblyNameCache.GetOrAdd(AssemblyQualifiedName,
+            static aqn => new(RemoveAssemblyVersionsRe.Replace(aqn, "")));
 
     // Conversion
 
