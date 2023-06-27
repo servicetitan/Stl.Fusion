@@ -42,7 +42,7 @@ public class TypeRefTest : TestBase
     }
 
     [Fact]
-    public void TrimAssemblyVersionTest()
+    public void WithoutAssemblyVersionsTest()
     {
         var r = (TypeRef)typeof(TypeRefTest);
         var r1 = r.WithoutAssemblyVersions();
