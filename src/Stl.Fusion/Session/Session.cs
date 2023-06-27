@@ -6,7 +6,7 @@ using Stl.Fusion.Internal;
 
 namespace Stl.Fusion;
 
-[DataContract, MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [JsonConverter(typeof(SessionJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(SessionNewtonsoftJsonConverter))]
 [TypeConverter(typeof(SessionTypeConverter))]
@@ -19,7 +19,7 @@ public sealed partial class Session : IHasId<Symbol>, IRequirementTarget,
 
     private string? _hash;
 
-    [DataMember(Order = 0)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     public Symbol Id { get; }
     [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public string Hash => _hash ??= ComputeHash();

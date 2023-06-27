@@ -1,6 +1,7 @@
 using Cysharp.Text;
 using Stl.Fusion.Client.Internal;
 using Stl.Fusion.Interception;
+using Stl.Rpc.Caching;
 using Stl.Rpc.Infrastructure;
 using Stl.Versioning;
 using Errors = Stl.Internal.Errors;
@@ -34,40 +35,56 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
         => _toString ??= ZString.Concat('*', base.ToString());
 
     public void OnInvalidated(IClientComputed computed)
-        => Cache?.Remove((ComputeMethodInput)computed.Input);
+    {
+        if (computed.Call?.Context.CacheInfoCapture?.Key is { } cacheKey)
+            Cache?.Remove(cacheKey);
+    }
 
     protected override ValueTask<Computed<T>> Compute(
         ComputedInput input, Computed<T>? existing,
         CancellationToken cancellationToken)
     {
         var typedInput = (ComputeMethodInput)input;
-        return existing == null && Cache != null
-            ? CachedCompute(typedInput, cancellationToken)
-            : RemoteCompute(typedInput, cancellationToken).ToValueTask();
+        var cache = Cache != null && typedInput.MethodDef.ComputedOptions.ClientCacheBehavior == ClientCacheBehavior.Cache
+            ? Cache
+            : null;
+        return existing == null && cache != null
+            ? CachedCompute(typedInput, cache, cancellationToken)
+            : RemoteCompute(typedInput, cache, cancellationToken).ToValueTask();
     }
 
     private async ValueTask<Computed<T>> CachedCompute(
         ComputeMethodInput input,
+        ClientComputedCache cache,
         CancellationToken cancellationToken)
     {
-        var outputOpt = await Cache!.Get<T>(input, cancellationToken).ConfigureAwait(false);
-        if (outputOpt is not { } output)
-            return await RemoteCompute(input, cancellationToken).ConfigureAwait(false);
+        var cacheInfoCapture = new RpcCacheInfoCapture(false);
+        SendRpcCall(input, cacheInfoCapture, cancellationToken);
+        if (cacheInfoCapture.Key is not { } cacheKey)
+            return await RemoteCompute(input, cache, cancellationToken).ConfigureAwait(false);
+
+        var cachedResultOpt = await Cache!.Get<T>(input, cacheKey, cancellationToken).ConfigureAwait(false);
+        if (!cachedResultOpt.IsSome(out var cachedResult))
+            return await RemoteCompute(input, cache, cancellationToken).ConfigureAwait(false);
 
         var computed = new ClientComputed<T>(
             input.MethodDef.ComputedOptions,
-            input, output, VersionGenerator.NextVersion(), true);
+            input, cachedResult, VersionGenerator.NextVersion(), true);
 
-        // Start the task to retrieve the actual value
         using var suppressFlow = ExecutionContextExt.SuppressFlow();
-        _ = Task.Run(() => RemoteCompute(input, cancellationToken), cancellationToken);
+        _ = Task.Run(() => RemoteCompute(input, cache, cancellationToken), cancellationToken);
         return computed;
     }
 
-    private async Task<Computed<T>> RemoteCompute(ComputeMethodInput input, CancellationToken cancellationToken)
+    private async Task<Computed<T>> RemoteCompute(
+        ComputeMethodInput input,
+        ClientComputedCache? cache,
+        CancellationToken cancellationToken)
     {
-        RpcOutboundComputeCall<T>? call = null;
+        RpcCacheInfoCapture? cacheInfoCapture;
+        RpcOutboundComputeCall<T>? call;
         Result<T> result;
+        Result<TextOrBytes> cacheResult;
         bool isConsistent;
 
         var retryIndex = 0;
@@ -77,10 +94,17 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
             // This is possible, if the call is re-sent on reconnect,
             // and the very first response that passes through is
             // invalidation.
+            cacheInfoCapture = cache != null ? new RpcCacheInfoCapture() : null;
+            call = null;
+            isConsistent = true;
+            cacheResult = default;
             try {
-                call = SendRpcCall(input, cancellationToken);
+                call = SendRpcCall(input, cacheInfoCapture, cancellationToken);
                 var resultTask = (Task<T>)call.ResultTask;
                 result = await resultTask.ConfigureAwait(false);
+                isConsistent = call.WhenInvalidated.IsCompletedSuccessfully();
+                if (cacheInfoCapture != null)
+                    cacheResult = await cacheInfoCapture.ResultSource!.Task.ResultAwait(false);
             }
             catch (OperationCanceledException) {
                 throw;
@@ -88,7 +112,6 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
             catch (Exception error) {
                 result = new Result<T>(default!, error);
             }
-            isConsistent = call?.WhenInvalidated.IsCompletedSuccessfully() != true;
             if (isConsistent || ++retryIndex >= 3)
                 break;
 
@@ -100,15 +123,24 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
             input.MethodDef.ComputedOptions,
             input, result, VersionGenerator.NextVersion(), isConsistent,
             call);
-        Cache?.Set(computed);
+
+        var cacheKey = cacheInfoCapture?.Key;
+        if (!ReferenceEquals(cacheKey, null)) {
+            if (isConsistent && !cacheResult.HasError)
+                cache!.Set(cacheKey, cacheResult.Value);
+            else
+                cache!.Remove(cacheKey);
+        }
         return computed;
     }
 
     private RpcOutboundComputeCall<T> SendRpcCall(
         ComputeMethodInput input,
+        RpcCacheInfoCapture? cacheInfoCapture,
         CancellationToken cancellationToken)
     {
         using var scope = RpcOutboundContext.Use(RpcComputeCallType.Id);
+        scope.Context.CacheInfoCapture = cacheInfoCapture;
         input.InvokeOriginalFunction(cancellationToken);
         var call = (RpcOutboundComputeCall<T>?)scope.Context.Call;
         if (call == null)

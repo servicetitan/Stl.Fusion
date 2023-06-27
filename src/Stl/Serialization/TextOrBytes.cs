@@ -1,5 +1,6 @@
 using Cysharp.Text;
 using Microsoft.Toolkit.HighPerformance;
+using MemoryExtensions = Microsoft.Toolkit.HighPerformance.MemoryExtensions;
 
 namespace Stl.Serialization;
 
@@ -20,8 +21,10 @@ public readonly partial record struct TextOrBytes(
     public static readonly TextOrBytes EmptyBytes = new(DataFormat.Bytes, default!);
     public static readonly TextOrBytes EmptyText = new(DataFormat.Text, default!);
 
+    private readonly byte[]? _data; // This field is used solely to avoid .ToArray() calls in Bytes property
+
     [DataMember(Order = 1), MemoryPackOrder(1)]
-    public byte[] Bytes => Data.ToArray();
+    public byte[] Bytes => _data ?? Data.ToArray();
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public bool IsEmpty => Data.Length == 0;
@@ -29,7 +32,8 @@ public readonly partial record struct TextOrBytes(
     public TextOrBytes(string text)
         : this(text.AsMemory()) { }
     public TextOrBytes(byte[] bytes)
-        : this(DataFormat.Bytes, bytes.AsMemory()) { }
+        : this(DataFormat.Bytes, bytes.AsMemory())
+        => _data = bytes;
     public TextOrBytes(ReadOnlyMemory<char> text)
         : this(DataFormat.Text, text.Cast<char, byte>()) { }
     public TextOrBytes(ReadOnlyMemory<byte> bytes)
@@ -83,4 +87,15 @@ public readonly partial record struct TextOrBytes(
         bytes = default;
         return false;
     }
+
+    public TextOrBytes CopyData()
+        => new(Format, Data.ToArray());
+
+    // Structural equality
+
+    public int GetDataHashCode()
+        => Data.Span.GetDjb2HashCode();
+
+    public bool DataEquals(TextOrBytes other)
+        => Data.Span.SequenceEqual(other.Data.Span);
 }

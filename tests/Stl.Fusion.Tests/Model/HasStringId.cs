@@ -1,6 +1,6 @@
 namespace Stl.Fusion.Tests.Model;
 
-[DataContract, MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 public partial record HasStringId(
-    [property: DataMember] string Id
+    [property: DataMember, MemoryPackOrder(0)] string Id
 ) : IHasId<string>;

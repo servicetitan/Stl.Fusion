@@ -1,4 +1,5 @@
 using Stl.Interception;
+using Stl.Rpc.Caching;
 using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
@@ -17,6 +18,7 @@ public sealed class RpcOutboundContext
     public RpcOutboundCall? Call { get; private set; }
     public RpcPeer? Peer;
     public long RelatedCallId;
+    public RpcCacheInfoCapture? CacheInfoCapture;
 
     public static Scope Use()
     {

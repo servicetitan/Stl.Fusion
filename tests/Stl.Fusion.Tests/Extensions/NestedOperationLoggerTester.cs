@@ -23,9 +23,9 @@ public class NestedOperationLoggerTester : IComputeService
     }
 }
 
-[DataContract, MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 // ReSharper disable once InconsistentNaming
 public partial record NestedOperationLoggerTester_SetMany(
-    [property: DataMember] string[] Keys,
-    [property: DataMember] string ValuePrefix
+    [property: DataMember, MemoryPackOrder(0)] string[] Keys,
+    [property: DataMember, MemoryPackOrder(1)] string ValuePrefix
 ) : ICommand<Unit>;

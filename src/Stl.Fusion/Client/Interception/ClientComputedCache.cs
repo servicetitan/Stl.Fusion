@@ -1,79 +1,82 @@
-using Microsoft.Toolkit.HighPerformance.Buffers;
 using Stl.Fusion.Interception;
+using Stl.Rpc;
+using Stl.Rpc.Caching;
+using Stl.Rpc.Infrastructure;
 
 namespace Stl.Fusion.Client.Interception;
 
-public abstract class ClientComputedCache
+public abstract class ClientComputedCache : RpcServiceBase
 {
     public record Options
     {
         public static Options Default { get; set; } = new();
 
-        public IByteSerializer Serializer { get; init; } = ByteSerializer.Default;
         public TimeSpan FlushDelay { get; init; } = TimeSpan.FromSeconds(0.1);
         public IMomentClock? Clock { get; init; }
     }
 
     protected readonly Options Settings;
-    protected readonly IServiceProvider Services;
+    protected readonly RpcArgumentSerializer ArgumentSerializer;
     protected readonly IMomentClock Clock;
-    protected readonly IByteSerializer Serializer;
-    protected ILogger Log;
 
     protected readonly object Lock = new();
-    protected Dictionary<ComputeMethodInput, IClientComputed?> FlushQueue = new();
+    protected Dictionary<RpcCacheKey, TextOrBytes?> FlushQueue = new();
     protected Task? FlushTask;
 
     protected ClientComputedCache(Options settings, IServiceProvider services)
+        : base(services)
     {
         Settings = settings;
-        Services = services;
-        Log = services.LogFor(GetType());
+        ArgumentSerializer = Hub.InternalServices.ArgumentSerializer;
         Clock = settings.Clock ?? services.Clocks().CpuClock;
-        Serializer = settings.Serializer;
     }
 
-    public async ValueTask<Result<T>?> Get<T>(ComputeMethodInput input, CancellationToken cancellationToken)
+    public async ValueTask<Option<T>> Get<T>(ComputeMethodInput input, RpcCacheKey key, CancellationToken cancellationToken)
     {
-        var cacheBehavior = input.MethodDef.ComputedOptions.ClientCacheBehavior;
-        if (cacheBehavior == ClientCacheBehavior.NoCache)
-            return null;
+        var serviceDef = Hub.ServiceRegistry.Get(key.Service);
+        if (serviceDef == null)
+            return Option<T>.None;
 
-        lock (Lock) {
-            if (FlushQueue.TryGetValue(input, out var computed))
-                return computed is ClientComputed<T> vComputed ? vComputed.Output : null;
-        }
+        var methodDef = serviceDef.Get(key.Service);
+        if (methodDef == null)
+            return Option<T>.None;
 
         try {
-            return await Read<T>(input, cancellationToken).ConfigureAwait(false);
+            var resultData = await Get(key, cancellationToken).ConfigureAwait(false);
+            if (resultData is not { } vResultData)
+                return Option<T>.None;
+
+            var result = methodDef.ResultListFactory.Invoke();
+            ArgumentSerializer.Deserialize(ref result, methodDef.AllowResultPolymorphism, vResultData);
+            return result.Get0<T>();
         }
         catch (Exception e) {
-            Log.LogError(e, "Get({Input}) failed", input);
-            return null;
+            Log.LogError(e, "Cached result read failed");
+            return Option<T>.None;
         }
     }
 
-    public void Set(IClientComputed computed)
+    public ValueTask<TextOrBytes?> Get(RpcCacheKey key, CancellationToken cancellationToken)
     {
-        var input = (ComputeMethodInput)computed.Input;
-        var cacheBehavior = input.MethodDef.ComputedOptions.ClientCacheBehavior;
-        if (cacheBehavior == ClientCacheBehavior.NoCache)
-            return;
-
         lock (Lock) {
-            FlushQueue[input] = computed;
+            if (FlushQueue.TryGetValue(key, out var value))
+                return new ValueTask<TextOrBytes?>(value);
+        }
+        return Fetch(key, cancellationToken);
+    }
+
+    public void Set(RpcCacheKey key, TextOrBytes value)
+    {
+        lock (Lock) {
+            FlushQueue[key] = value;
             FlushTask ??= DelayedFlush();
         }
     }
 
-    public void Remove(ComputeMethodInput input)
+    public void Remove(RpcCacheKey key)
     {
-        var cacheBehavior = input.MethodDef.ComputedOptions.ClientCacheBehavior;
-        if (cacheBehavior == ClientCacheBehavior.NoCache)
-            return;
-
         lock (Lock) {
-            FlushQueue[input] = null;
+            FlushQueue[key] = null;
             FlushTask ??= DelayedFlush();
         }
     }
@@ -81,7 +84,7 @@ public abstract class ClientComputedCache
     protected async Task DelayedFlush()
     {
         await Clock.Delay(Settings.FlushDelay).ConfigureAwait(false);
-        Dictionary<ComputeMethodInput, IClientComputed?> flushQueue;
+        Dictionary<RpcCacheKey, TextOrBytes?> flushQueue;
         lock (Lock) {
             flushQueue = FlushQueue;
             FlushQueue = new();
@@ -90,14 +93,6 @@ public abstract class ClientComputedCache
         await Flush(flushQueue).ConfigureAwait(false);
     }
 
-    protected async Task Flush(Dictionary<ComputeMethodInput, IClientComputed?> flushQueue)
-    {
-        var batch = new List<(byte[], byte[])>();
-        using var buffer = new ArrayPoolBufferWriter<byte>();
-        foreach (var (input, computed) in flushQueue) {
-            // TBD
-        }
-    }
-
-    protected abstract ValueTask<Result<T>?> Read<T>(ComputeMethodInput input, CancellationToken cancellationToken);
+    protected abstract ValueTask<TextOrBytes?> Fetch(RpcCacheKey key, CancellationToken cancellationToken);
+    protected abstract Task Flush(Dictionary<RpcCacheKey, TextOrBytes?> flushQueue);
 }

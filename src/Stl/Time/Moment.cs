@@ -4,7 +4,7 @@ using Stl.Time.Internal;
 
 namespace Stl.Time;
 
-[DataContract, MemoryPackable]
+[DataContract]
 [JsonConverter(typeof(MomentJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(MomentNewtonsoftJsonConverter))]
 [TypeConverter(typeof(MomentTypeConverter))]

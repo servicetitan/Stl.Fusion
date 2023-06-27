@@ -1,9 +1,9 @@
 namespace Stl.Fusion.Tests.Services;
 
-[DataContract, MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 public partial record SetValueCommand : ICommand<Unit>
 {
-    [DataMember]
+    [DataMember, MemoryPackOrder(0)]
     public string Value { get; init; } = "";
 }
 

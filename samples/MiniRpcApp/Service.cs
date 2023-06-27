@@ -1,4 +1,5 @@
 using System.Reactive;
+using System.Runtime.Serialization;
 using MemoryPack;
 using Stl.CommandR;
 using Stl.CommandR.Configuration;
@@ -17,9 +18,11 @@ public interface IChat : IComputeService
     Task Post(Chat_Post command, CancellationToken cancellationToken);
 }
 
-[MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 // ReSharper disable once InconsistentNaming
-public partial record Chat_Post(string Message) : ICommand<Unit>;
+public partial record Chat_Post(
+    [property: DataMember, MemoryPackOrder(0)] string Message
+    ) : ICommand<Unit>;
 
 public class Chat : IChat
 {

@@ -23,23 +23,23 @@ public interface IUserService : IComputeService
     Task Invalidate();
 }
 
-[DataContract, MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 // ReSharper disable once InconsistentNaming
 public partial record UserService_Add(
-    [property: DataMember] User User,
-    [property: DataMember] bool OrUpdate = false
+    [property: DataMember, MemoryPackOrder(0)] User User,
+    [property: DataMember, MemoryPackOrder(1)] bool OrUpdate = false
 ) : ICommand<Unit>;
 
-[DataContract, MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 // ReSharper disable once InconsistentNaming
 public partial record UserService_Update(
-    [property: DataMember] User User
+    [property: DataMember, MemoryPackOrder(0)] User User
 ) : ICommand<Unit>;
 
-[DataContract, MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 // ReSharper disable once InconsistentNaming
 public partial record UserService_Delete(
-    [property: DataMember] User User
+    [property: DataMember, MemoryPackOrder(0)] User User
 ) : ICommand<bool>;
 
 public class UserService : DbServiceBase<TestDbContext>, IUserService

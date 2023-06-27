@@ -18,7 +18,7 @@ public class RpcOutboundComputeCall<TResult> : RpcOutboundCall<TResult>, IRpcOut
     public RpcOutboundComputeCall(RpcOutboundContext context) : base(context)
     { }
 
-    public override void SetResult(object? result, RpcInboundContext context)
+    public override void SetResult(object? result, RpcInboundContext? context)
     {
         var resultVersion = GetResultVersion(context);
         // We always use Lock to update ResultSource in this type
@@ -28,8 +28,11 @@ public class RpcOutboundComputeCall<TResult> : RpcOutboundCall<TResult>, IRpcOut
                 if (WhenInvalidatedSource.TrySetResult(default))
                     Unregister(true);
             }
-            if (ResultSource.TrySetResult((TResult)result!))
+            if (ResultSource.TrySetResult((TResult)result!)) {
                 ResultVersion = resultVersion;
+                if (context != null && Context.CacheInfoCapture is { } cacheInfoCapture)
+                    cacheInfoCapture.ResultSource?.TrySetResult(context.Message.ArgumentData);
+            }
         }
     }
 
@@ -43,8 +46,11 @@ public class RpcOutboundComputeCall<TResult> : RpcOutboundCall<TResult>, IRpcOut
                 if (WhenInvalidatedSource.TrySetResult(default))
                     Unregister(true);
             }
-            if (ResultSource.TrySetException(error))
+            if (ResultSource.TrySetException(error)) {
                 ResultVersion = resultVersion;
+                if (Context.CacheInfoCapture is { } cacheInfoCapture)
+                    cacheInfoCapture.ResultSource?.TrySetException(error);
+            }
         }
     }
 

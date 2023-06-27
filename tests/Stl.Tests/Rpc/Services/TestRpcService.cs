@@ -3,10 +3,10 @@ using Stl.Rpc;
 
 namespace Stl.Tests.Rpc;
 
-[DataContract, MemoryPackable]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 public partial record HelloCommand(
-    [property: DataMember] string Name,
-    [property: DataMember] TimeSpan Delay = default
+    [property: DataMember, MemoryPackOrder(0)] string Name,
+    [property: DataMember, MemoryPackOrder(1)] TimeSpan Delay = default
 ) : ICommand<string>;
 
 public interface ITestRpcService : ICommandService

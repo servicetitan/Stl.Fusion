@@ -1,4 +1,5 @@
 using Stl.Interception;
+using Stl.Rpc.Caching;
 using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
@@ -9,6 +10,7 @@ public abstract class RpcOutboundCall : RpcCall
 
     public readonly RpcOutboundContext Context;
     public readonly RpcPeer Peer;
+    public RpcMessage? Message;
     public Task ResultTask { get; protected init; } = null!;
     public int ConnectTimeoutMs;
     public int TimeoutMs;
@@ -71,6 +73,13 @@ public abstract class RpcOutboundCall : RpcCall
         RpcMessage message;
         try {
             message = CreateMessage(Id, MethodDef.AllowArgumentPolymorphism);
+            if (Context.CacheInfoCapture is { Key: null } cacheInfoCapture) {
+                cacheInfoCapture.Key = new RpcCacheKey(MethodDef.Service.Name, MethodDef.Name, message.ArgumentData);
+                if (cacheInfoCapture.MustCaptureResult) {
+                    SetResult(default, null);
+                    return default;
+                }
+            }
         }
         catch (Exception error) {
             SetError(error, null, notifyCancelled);
@@ -90,7 +99,7 @@ public abstract class RpcOutboundCall : RpcCall
         return message;
     }
 
-    public abstract void SetResult(object? result, RpcInboundContext context);
+    public abstract void SetResult(object? result, RpcInboundContext? context);
     public abstract void SetError(Exception error, RpcInboundContext? context, bool notifyCancelled = false);
     public abstract bool SetCancelled(CancellationToken cancellationToken, RpcInboundContext? context);
 
@@ -105,6 +114,9 @@ public abstract class RpcOutboundCall : RpcCall
 
     public void NotifyCancelled()
     {
+        if (Context.CacheInfoCapture is { ResultSource: null })
+            return; // The call had never happened, so no need for cancellation notification
+
         try {
             var systemCallSender = Peer.Hub.InternalServices.SystemCallSender;
             _ = systemCallSender.Cancel(Peer, Id);
@@ -163,23 +175,32 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
         ResultTask = ResultSource.Task;
     }
 
-    public override void SetResult(object? result, RpcInboundContext context)
+    public override void SetResult(object? result, RpcInboundContext? context)
     {
-        if (ResultSource.TrySetResult((TResult)result!))
+        if (ResultSource.TrySetResult((TResult)result!)) {
             Unregister();
+            if (context != null && Context.CacheInfoCapture is { } cacheInfoCapture)
+                cacheInfoCapture.ResultSource?.TrySetResult(context.Message.ArgumentData);
+        }
     }
 
     public override void SetError(Exception error, RpcInboundContext? context, bool notifyCancelled = false)
     {
-        if (ResultSource.TrySetException(error))
+        if (ResultSource.TrySetException(error)) {
             Unregister(notifyCancelled);
+            if (Context.CacheInfoCapture is { } cacheInfoCapture)
+                cacheInfoCapture.ResultSource?.TrySetException(error);
+        }
     }
 
     public override bool SetCancelled(CancellationToken cancellationToken, RpcInboundContext? context)
     {
         var isCancelled = ResultSource.TrySetCanceled(cancellationToken);
-        if (isCancelled)
+        if (isCancelled) {
             Unregister(true);
+            if (Context.CacheInfoCapture is { } cacheInfoCapture)
+                cacheInfoCapture.ResultSource?.TrySetCanceled(cancellationToken);
+        }
         return isCancelled;
     }
 }
