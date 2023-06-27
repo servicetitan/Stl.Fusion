@@ -82,10 +82,10 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
         CancellationToken cancellationToken)
     {
         RpcCacheInfoCapture? cacheInfoCapture;
-        RpcOutboundComputeCall<T>? call;
+        RpcOutboundComputeCall<T>? call = null;
         Result<T> result;
-        Result<TextOrBytes> cacheResult;
         bool isConsistent;
+        Result<TextOrBytes>? cacheResult;
 
         var retryIndex = 0;
         while (true) {
@@ -95,16 +95,10 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
             // and the very first response that passes through is
             // invalidation.
             cacheInfoCapture = cache != null ? new RpcCacheInfoCapture() : null;
-            call = null;
-            isConsistent = true;
-            cacheResult = default;
             try {
                 call = SendRpcCall(input, cacheInfoCapture, cancellationToken);
                 var resultTask = (Task<T>)call.ResultTask;
                 result = await resultTask.ConfigureAwait(false);
-                isConsistent = call.WhenInvalidated.IsCompletedSuccessfully();
-                if (cacheInfoCapture != null)
-                    cacheResult = await cacheInfoCapture.ResultSource!.Task.ResultAwait(false);
             }
             catch (OperationCanceledException) {
                 throw;
@@ -112,6 +106,13 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
             catch (Exception error) {
                 result = new Result<T>(default!, error);
             }
+
+            isConsistent = call == null || !call.WhenInvalidated.IsCompletedSuccessfully();
+            if (isConsistent && cacheInfoCapture != null && !result.HasError)
+                cacheResult = await cacheInfoCapture.ResultSource!.Task.ResultAwait(false);
+            else
+                cacheResult = null;
+
             if (isConsistent || ++retryIndex >= 3)
                 break;
 
@@ -126,8 +127,8 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
 
         var cacheKey = cacheInfoCapture?.Key;
         if (!ReferenceEquals(cacheKey, null)) {
-            if (isConsistent && !cacheResult.HasError)
-                cache!.Set(cacheKey, cacheResult.Value);
+            if (cacheResult?.IsValue(out var vCacheResult) == true)
+                cache!.Set(cacheKey, vCacheResult);
             else
                 cache!.Remove(cacheKey);
         }
