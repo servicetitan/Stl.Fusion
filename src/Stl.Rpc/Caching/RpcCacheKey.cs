@@ -18,10 +18,10 @@ public sealed partial class RpcCacheKey : IEquatable<RpcCacheKey>
         Service = service;
         Method = method;
         ArgumentData = argumentData;
-        _hashCode = HashCode.Combine(
-            Service.Value.GetDjb2HashCode(),
-            Method.Value.GetDjb2HashCode(),
-            argumentData.GetDataHashCode());
+        _hashCode = unchecked(
+            Service.Value.GetDjb2HashCode()
+            ^ (353*Method.Value.GetDjb2HashCode())
+            ^ argumentData.GetDataHashCode());
     }
 
     public override string ToString()
