@@ -75,11 +75,11 @@ public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId> : DbServic
     public async Task<TDbSessionInfo> Upsert(
         TDbContext dbContext, string sessionId, SessionInfo sessionInfo, CancellationToken cancellationToken = default)
     {
-        var dbSessionInfo = await dbContext.Set<TDbSessionInfo>().ForUpdate()
-            .SingleOrDefaultAsync(s => s.Id == sessionId, cancellationToken)
+        var dbSessionInfo = await dbContext.Set<TDbSessionInfo>().ForNoKeyUpdate()
+            .FirstOrDefaultAsync(s => s.Id == sessionId, cancellationToken)
             .ConfigureAwait(false);
         var isDbSessionInfoFound = dbSessionInfo != null;
-        dbSessionInfo ??= new TDbSessionInfo() {
+        dbSessionInfo ??= new() {
             Id = sessionId,
             CreatedAt = sessionInfo.CreatedAt,
         };
@@ -121,10 +121,10 @@ public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId> : DbServic
         TDbContext dbContext, string sessionId, bool forUpdate, CancellationToken cancellationToken = default)
     {
         var dbSessionInfos = forUpdate
-            ? dbContext.Set<TDbSessionInfo>().ForUpdate()
-            : dbContext.Set<TDbSessionInfo>();
+            ? dbContext.Set<TDbSessionInfo>().ForNoKeyUpdate()
+            : dbContext.Set<TDbSessionInfo>().ForKeyShare();
         return await dbSessionInfos
-            .SingleOrDefaultAsync(s => s.Id == sessionId, cancellationToken)
+            .FirstOrDefaultAsync(s => s.Id == sessionId, cancellationToken)
             .ConfigureAwait(false);
     }
 
