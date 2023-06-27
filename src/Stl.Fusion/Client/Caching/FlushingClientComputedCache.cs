@@ -2,7 +2,7 @@ using Stl.Rpc.Caching;
 
 namespace Stl.Fusion.Client.Caching;
 
-public abstract class FlushingClientComputedCacheBase : ClientComputedCache
+public abstract class FlushingClientComputedCache : ClientComputedCache
 {
     public record Options
     {
@@ -21,7 +21,7 @@ public abstract class FlushingClientComputedCacheBase : ClientComputedCache
     protected Task FlushingTask = Task.CompletedTask;
     protected CancellationTokenSource FlushCts = new();
 
-    protected FlushingClientComputedCacheBase(Options settings, IServiceProvider services)
+    protected FlushingClientComputedCache(Options settings, IServiceProvider services)
         : base(services)
     {
         Settings = settings;

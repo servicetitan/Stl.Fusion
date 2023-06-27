@@ -27,7 +27,7 @@ public abstract class ClientComputedCache : RpcServiceBase
 
         await Clear(cancellationToken).ConfigureAwait(false);
         Set(VersionKey, expectedValue);
-        if (this is FlushingClientComputedCacheBase flushingCache)
+        if (this is FlushingClientComputedCache flushingCache)
             await flushingCache.Flush().ConfigureAwait(false);
     }
 
