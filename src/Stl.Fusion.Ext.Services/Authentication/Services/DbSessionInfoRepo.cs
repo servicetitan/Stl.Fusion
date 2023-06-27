@@ -17,7 +17,7 @@ public interface IDbSessionInfoRepo<in TDbContext, TDbSessionInfo, in TDbUserId>
     Task<TDbSessionInfo> Upsert(
         TDbContext dbContext, string sessionId, SessionInfo sessionInfo, CancellationToken cancellationToken = default);
     Task<int> Trim(
-        Tenant tenant, DateTime minLastSeenAt, int maxCount, CancellationToken cancellationToken = default);
+        Tenant tenant, DateTime maxLastSeenAt, int maxCount, CancellationToken cancellationToken = default);
 
     // Read methods
     Task<TDbSessionInfo?> Get(
@@ -93,19 +93,20 @@ public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId> : DbServic
     }
 
     public virtual async Task<int> Trim(
-        Tenant tenant, DateTime minLastSeenAt, int maxCount, CancellationToken cancellationToken = default)
+        Tenant tenant, DateTime maxLastSeenAt, int maxCount, CancellationToken cancellationToken = default)
     {
         var dbContext = CreateDbContext(tenant, true);
         await using var _ = dbContext.ConfigureAwait(false);
         dbContext.DisableChangeTracking();
 
         var entities = await dbContext.Set<TDbSessionInfo>().AsQueryable()
-            .Where(o => o.LastSeenAt < minLastSeenAt)
+            .Where(o => o.LastSeenAt < maxLastSeenAt)
             .OrderBy(o => o.LastSeenAt)
             .Take(maxCount)
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         if (entities.Count == 0)
             return 0;
+
         foreach (var e in entities)
             dbContext.Remove(e);
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

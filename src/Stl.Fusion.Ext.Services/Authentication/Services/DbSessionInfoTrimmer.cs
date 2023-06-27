@@ -9,11 +9,11 @@ public abstract class DbSessionInfoTrimmer<TDbContext> : DbTenantWorkerBase<TDbC
 {
     public record Options
     {
-        public RandomTimeSpan CheckPeriod { get; init; } = TimeSpan.FromHours(1).ToRandom(0.1);
-        public RandomTimeSpan NextBatchDelay { get; init; } = TimeSpan.FromSeconds(1).ToRandom(0.25);
+        public RandomTimeSpan CheckPeriod { get; init; } = TimeSpan.FromMinutes(10).ToRandom(0.1);
+        public RandomTimeSpan NextBatchDelay { get; init; } = TimeSpan.FromSeconds(0.1).ToRandom(0.25);
         public RetryDelaySeq RetryDelays { get; init; } = (TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(10));
         public TimeSpan MaxSessionAge { get; init; } = TimeSpan.FromDays(60);
-        public int BatchSize { get; init; } = 1000;
+        public int BatchSize { get; init; } = 256;
         public LogLevel LogLevel { get; init; } = LogLevel.Information;
     }
 
@@ -46,9 +46,9 @@ public class DbSessionInfoTrimmer<TDbContext, TDbSessionInfo, TDbUserId> : DbSes
 
         var activitySource = GetType().GetActivitySource();
         var runChain = new AsyncChain($"Trim({tenant.Id})", async cancellationToken1 => {
-            var minLastSeenAt = (Clocks.SystemClock.Now - Settings.MaxSessionAge).ToDateTime();
+            var maxLastSeenAt = (Clocks.SystemClock.Now - Settings.MaxSessionAge).ToDateTime();
             lastTrimCount = await Sessions
-                .Trim(tenant, minLastSeenAt, Settings.BatchSize, cancellationToken1)
+                .Trim(tenant, maxLastSeenAt, Settings.BatchSize, cancellationToken1)
                 .ConfigureAwait(false);
 
             if (lastTrimCount > 0 && IsLoggingEnabled)

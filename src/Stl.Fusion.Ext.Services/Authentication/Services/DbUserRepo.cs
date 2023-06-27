@@ -128,7 +128,7 @@ public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbConte
             ? dbContext.Set<TDbUser>().ForUpdate()
             : dbContext.Set<TDbUser>();
         var dbUser = await dbUsers
-            .SingleOrDefaultAsync(u => Equals(u.Id, userId), cancellationToken)
+            .FirstOrDefaultAsync(u => Equals(u.Id, userId), cancellationToken)
             .ConfigureAwait(false);
         if (dbUser != null)
             await dbContext.Entry(dbUser).Collection(nameof(DbUser<object>.Identities))
@@ -146,7 +146,7 @@ public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbConte
             : dbContext.Set<DbUserIdentity<TDbUserId>>();
         var id = userIdentity.Id.Value;
         var dbUserIdentity = await dbUserIdentities
-            .SingleOrDefaultAsync(x => x.Id == id, cancellationToken)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken)
             .ConfigureAwait(false);
         if (dbUserIdentity == null)
             return null;
