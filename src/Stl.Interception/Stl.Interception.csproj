@@ -17,15 +17,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="ArgumentList.tt">
+    <None Update="ArgumentList-Generated.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>ArgumentList.cs</LastGenOutput>
+      <LastGenOutput>ArgumentList-Generated.cs</LastGenOutput>
     </None>
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="ArgumentList.cs">
-      <DependentUpon>ArgumentList.tt</DependentUpon>
+    <Compile Update="ArgumentList-Generated.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ArgumentList-Generated.tt</DependentUpon>
     </Compile>
   </ItemGroup>
 

@@ -3,6 +3,7 @@ using System.Net.WebSockets;
 using Microsoft.Toolkit.HighPerformance;
 using Microsoft.Toolkit.HighPerformance.Buffers;
 using Stl.IO;
+using Stl.IO.Internal;
 using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.WebSockets;
@@ -319,9 +320,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
                 buffer.GetSpan(MinMessageSize);
                 buffer.Advance(4);
                 _byteSerializer.Write(buffer, value);
-                var sizeSpan = buffer.WrittenSpan[startOffset..(startOffset + 4)];
-                ref var sizeRef = ref Unsafe.As<byte, int>(ref MemoryMarshal.GetReference(sizeSpan));
-                sizeRef = buffer.WrittenCount - startOffset;
+                buffer.WrittenSpan.WriteUnchecked(startOffset, buffer.WrittenCount - startOffset);
 
                 // Log?.LogInformation("Wrote: {Value}", value);
                 // Log?.LogInformation("Data({Size}): {Data}",
@@ -341,12 +340,12 @@ public sealed class WebSocketChannel<T> : Channel<T>
         int size = 0;
         bool isSizeValid = false;
         try {
-            size = bytes.Span[..4].Cast<byte, int>()[0];
+            size = bytes.Span.ReadUnchecked<int>();
             isSizeValid = size > 0 && size <= bytes.Length;
             if (!isSizeValid)
                 throw Errors.InvalidMessageSize();
 
-            var data = bytes[4..size];
+            var data = bytes[sizeof(int)..size];
             value = _byteSerializer.Read(data, out int readSize);
             if (readSize != size - 4)
                 throw Errors.InvalidMessageSize();

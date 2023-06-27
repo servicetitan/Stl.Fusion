@@ -75,7 +75,7 @@ public readonly partial record struct TextOrBytes(
 
     public bool IsBytes(out ReadOnlyMemory<byte> bytes)
     {
-        if (Format == DataFormat.Text) {
+        if (Format == DataFormat.Bytes) {
             bytes = Data;
             return true;
         }

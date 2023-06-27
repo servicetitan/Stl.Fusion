@@ -82,40 +82,11 @@ public abstract class RpcOutboundCall : RpcCall
 
     public virtual RpcMessage CreateMessage(long callId, bool allowPolymorphism)
     {
-        var headers = Context.Headers;
-        var arguments = Context.Arguments!;
-        var methodDef = MethodDef;
-        if (methodDef.CancellationTokenIndex >= 0)
-            arguments = arguments.Remove(methodDef.CancellationTokenIndex);
-
-        if (allowPolymorphism) {
-            var argumentListType = arguments.GetType();
-            if (argumentListType.IsGenericType) {
-                var nonDefaultItemTypes = arguments.GetNonDefaultItemTypes();
-                if (nonDefaultItemTypes != null) {
-                    var gParameters = argumentListType.GetGenericArguments();
-                    for (var i = 0; i < nonDefaultItemTypes.Length; i++) {
-                        var itemType = nonDefaultItemTypes[i];
-                        if (itemType == null)
-                            continue;
-
-                        gParameters[i] = itemType;
-                        var typeRef = new TypeRef(itemType);
-                        var h = RpcSystemHeaders.ArgumentTypes[i].With(typeRef.AssemblyQualifiedName);
-                        headers = headers.TryAdd(h);
-                    }
-                    argumentListType = argumentListType
-                        .GetGenericTypeDefinition()
-                        .MakeGenericType(gParameters);
-                    var oldArguments = arguments;
-                    arguments = (ArgumentList)argumentListType.CreateInstance();
-                    arguments.SetFrom(oldArguments);
-                }
-            }
-        }
-
-        var argumentData = Peer.ArgumentSerializer.Serialize(arguments);
-        var message = new RpcMessage(Context.CallTypeId, callId, methodDef.Service.Name, methodDef.Name, argumentData, headers);
+        var argumentData = Peer.ArgumentSerializer.Serialize(Context.Arguments!, allowPolymorphism);
+        var message = new RpcMessage(
+            Context.CallTypeId, callId,
+            MethodDef.Service.Name, MethodDef.Name,
+            argumentData, Context.Headers);
         return message;
     }
 

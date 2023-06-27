@@ -16,11 +16,11 @@ public class RpcOutboundCommandCallMiddleware : RpcOutboundMiddleware
     public override void PrepareCall(RpcOutboundContext context)
     {
         var methodDef = context.MethodDef;
-        var remoteParameterTypes = methodDef!.RemoteParameterTypes;
-        if (remoteParameterTypes.Length != 1)
+        var parameterTypes = methodDef!.ParameterTypes;
+        if (parameterTypes.Length is < 1 or > 2)
             return;
 
-        if (!typeof(ICommand).IsAssignableFrom(remoteParameterTypes[0]))
+        if (!typeof(ICommand).IsAssignableFrom(parameterTypes[0]))
             return;
 
         var call = context.Call!;

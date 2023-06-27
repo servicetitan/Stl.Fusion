@@ -111,7 +111,6 @@ public class RpcInboundCall<TResult> : RpcInboundCall
 
     public override ValueTask Run()
     {
-        ArgumentList? arguments;
         if (NoWait) {
             try {
                 Arguments ??= DeserializeArguments();
@@ -187,64 +186,25 @@ public class RpcInboundCall<TResult> : RpcInboundCall
         if (!isSystemServiceCall && !peer.LocalServiceFilter.Invoke(ServiceDef))
             throw Errors.NoService(ServiceDef.Type);
 
-        var arguments = ArgumentList.Empty;
-        var argumentListType = MethodDef.RemoteArgumentListType;
-        if (MethodDef.HasObjectTypedArguments) {
-            var argumentListTypeResolver = (IRpcArgumentListTypeResolver)ServiceDef.Server;
-            argumentListType = argumentListTypeResolver.GetArgumentListType(Context);
-            if (argumentListType == null)
-                return null; // Related call is already gone
+        var arguments = MethodDef.ArgumentListFactory.Invoke();
+        var allowPolymorphism = MethodDef.AllowArgumentPolymorphism;
+        if (!MethodDef.HasObjectTypedArguments)
+            peer.ArgumentSerializer.Deserialize(ref arguments, allowPolymorphism, message.ArgumentData);
+        else {
+            var dynamicCallHandler = (IRpcDynamicCallHandler)ServiceDef.Server;
+            var expectedArguments = arguments;
+            if (!dynamicCallHandler.IsValidCall(Context, ref expectedArguments, ref allowPolymorphism))
+                return null;
+
+            peer.ArgumentSerializer.Deserialize(ref expectedArguments, allowPolymorphism, message.ArgumentData);
+            if (!ReferenceEquals(arguments, expectedArguments))
+                arguments.SetFrom(expectedArguments);
         }
 
-        if (argumentListType.IsGenericType) { // == Has 1+ arguments
-            var headers = Context.Message.Headers.OrEmpty();
-            if (MethodDef.AllowArgumentPolymorphism
-                && headers.Any(static h => h.Name.StartsWith(RpcSystemHeaders.ArgumentTypeHeaderPrefix, StringComparison.Ordinal))) {
-                var argumentTypes = argumentListType.GetGenericArguments();
-                foreach (var h in headers) {
-                    if (!h.Name.StartsWith(RpcSystemHeaders.ArgumentTypeHeaderPrefix, StringComparison.Ordinal))
-                        continue;
-#if NET7_0_OR_GREATER
-                    if (!int.TryParse(
-                        h.Name.AsSpan(RpcSystemHeaders.ArgumentTypeHeaderPrefix.Length),
-                        CultureInfo.InvariantCulture,
-                        out var argumentIndex))
-#else
-#pragma warning disable MA0011
-                    if (!int.TryParse(
-                        h.Name.Substring(RpcSystemHeaders.ArgumentTypeHeaderPrefix.Length),
-                        out var argumentIndex))
-#pragma warning restore MA0011
-#endif
-                        continue;
-
-                    var argumentType = new TypeRef(h.Value).Resolve();
-                    if (!argumentTypes[argumentIndex].IsAssignableFrom(argumentType))
-                        throw Errors.IncompatibleArgumentType(MethodDef, argumentIndex, argumentType);
-
-                    argumentTypes[argumentIndex] = argumentType;
-                }
-                argumentListType = argumentListType
-                    .GetGenericTypeDefinition()
-                    .MakeGenericType(argumentTypes);
-            }
-
-            var deserializedArguments = peer.ArgumentSerializer.Deserialize(message.ArgumentData, argumentListType);
-            if (argumentListType == MethodDef.ArgumentListType)
-                arguments = deserializedArguments;
-            else {
-                arguments = (ArgumentList)MethodDef.ArgumentListType.CreateInstance();
-                var ctIndex = MethodDef.CancellationTokenIndex;
-                if (ctIndex >= 0)
-                    deserializedArguments = deserializedArguments.InsertCancellationToken(ctIndex, CancellationToken);
-                arguments.SetFrom(deserializedArguments);
-            }
-        }
-        else if (argumentListType != MethodDef.ArgumentListType) {
-            var ctIndex = MethodDef.CancellationTokenIndex;
-            if (ctIndex >= 0)
-                arguments = arguments.InsertCancellationToken(ctIndex, CancellationToken);
-        }
+        // Set CancellationToken
+        var ctIndex = MethodDef.CancellationTokenIndex;
+        if (ctIndex >= 0)
+            arguments.SetCancellationToken(ctIndex, CancellationToken);
 
         return arguments;
     }

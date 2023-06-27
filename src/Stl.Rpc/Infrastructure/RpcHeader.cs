@@ -1,16 +1,4 @@
-using System.Globalization;
-using Stl.Interception;
-
 namespace Stl.Rpc.Infrastructure;
-
-public static class RpcSystemHeaders
-{
-    public static readonly string ArgumentTypeHeaderPrefix = "@t:";
-    public static readonly ImmutableArray<RpcHeader> ArgumentTypes =
-        Enumerable.Range(0, ArgumentList.Types.Length)
-            .Select(i => new RpcHeader(ArgumentTypeHeaderPrefix + i.ToString(CultureInfo.InvariantCulture)))
-            .ToImmutableArray();
-}
 
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 public readonly partial record struct RpcHeader

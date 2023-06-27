@@ -11,10 +11,9 @@ public interface IRpcSystemCalls : IRpcSystemService
     Task<Unit> NotFound(string serviceName, string methodName);
 }
 
-public class RpcSystemCalls : RpcServiceBase, IRpcSystemCalls, IRpcArgumentListTypeResolver
+public class RpcSystemCalls : RpcServiceBase, IRpcSystemCalls, IRpcDynamicCallHandler
 {
     private static readonly Symbol OkMethodName = nameof(Ok);
-    private static readonly ConcurrentDictionary<Type, Type> OkMethodArgumentListTypeCache = new();
 
     public static readonly Symbol Name = "$sys";
 
@@ -53,23 +52,20 @@ public class RpcSystemCalls : RpcServiceBase, IRpcSystemCalls, IRpcArgumentListT
     public Task<Unit> NotFound(string serviceName, string methodName)
         => throw Errors.EndpointNotFound(serviceName, methodName);
 
-    public Type? GetArgumentListType(RpcInboundContext context)
+    public bool IsValidCall(RpcInboundContext context, ref ArgumentList arguments, ref bool allowPolymorphism)
     {
         var call = context.Call;
         if (call.MethodDef.Method.Name == OkMethodName) {
             var outboundCallId = context.Message.CallId;
             var outboundCall = context.Peer.OutboundCalls.Get(outboundCallId);
             if (outboundCall == null)
-                return null;
+                return false;
 
-            if (!outboundCall.MethodDef.AllowResultPolymorphism
-                && call.Context.Message.Headers.TryGet(RpcSystemHeaders.ArgumentTypes[0].Name, out _))
-                throw Errors.CannotDeserializePolymorphicCallResult(context.Message);
-
-            return OkMethodArgumentListTypeCache.GetOrAdd(
-                outboundCall.MethodDef.UnwrappedReturnType,
-                resultType => ArgumentList.Types[1].MakeGenericType(resultType));
+            var outboundMethodDef = outboundCall.MethodDef;
+            arguments = outboundMethodDef.ResultListFactory.Invoke();
+            allowPolymorphism = outboundMethodDef.AllowResultPolymorphism;
+            return true;
         }
-        return null;
+        return false;
     }
 }

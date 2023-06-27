@@ -73,10 +73,12 @@ public static class Errors
 
     public static Exception InvalidMessageSize()
         => new SerializationException("Invalid item size. The remainder of the message will be dropped.");
-    public static Exception CannotDeserializePolymorphicCallResult(RpcMessage message)
-        => new SerializationException($"Cannot deserialize polymorphic call result: {message}.");
-    public static Exception CannotDeserializeObjectTypedArguments(RpcMessage message)
-        => new SerializationException($"Cannot deserialize object-typed argument(s) of inbound call: {message}.");
+    public static Exception CannotDeserializeUnexpectedArgumentType(Type expectedType, Type actualType)
+        => new SerializationException($"Cannot deserialize unexpected argument type: " +
+            $"expected '{expectedType.GetName()}' (exact match), got '{actualType.GetName()}'.");
+    public static Exception CannotDeserializeUnexpectedPolymorphicArgumentType(Type expectedType, Type actualType)
+        => new SerializationException($"Cannot deserialize polymorphic argument type: " +
+            $"expected '{expectedType.GetName()}' or its descendant, got '{actualType.GetName()}'.");
 
     public static Exception CallTimeout()
         => new TimeoutException("The server didn't respond in time.");

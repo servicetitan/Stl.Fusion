@@ -21,7 +21,7 @@ public static class RpcDefaultDelegates
         static serviceType => serviceType.GetName();
 
     public static RpcMethodNameBuilder MethodNameBuilder { get; set; } =
-        static methodDef => $"{methodDef.Method.Name}:{methodDef.RemoteParameterTypes.Length}";
+        static methodDef => $"{methodDef.Method.Name}:{methodDef.ParameterTypes.Length}";
 
     public static RpcCallRouter CallRouter { get; set; } =
         static (methodDef, arguments) => methodDef.Hub.GetPeer(RpcPeerRef.Default);
