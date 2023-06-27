@@ -75,7 +75,7 @@ public abstract class RpcOutboundCall : RpcCall
             message = CreateMessage(Id, MethodDef.AllowArgumentPolymorphism);
             if (Context.CacheInfoCapture is { Key: null } cacheInfoCapture) {
                 cacheInfoCapture.Key = new RpcCacheKey(MethodDef.Service.Name, MethodDef.Name, message.ArgumentData);
-                if (cacheInfoCapture.MustCaptureResult) {
+                if (!cacheInfoCapture.MustCaptureResult) {
                     SetResult(default, null);
                     return default;
                 }

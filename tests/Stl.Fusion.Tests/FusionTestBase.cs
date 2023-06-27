@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Stl.IO;
 using Stl.Fusion.Authentication;
+using Stl.Fusion.Client.Caching;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.EntityFramework.Npgsql;
 using Stl.Fusion.EntityFramework.Redis;
@@ -103,6 +104,8 @@ public abstract class FusionTestBase : RpcTestBase
             fusion.AddService<IEdgeCaseService, EdgeCaseService>();
             fusion.AddService<IKeyValueService<string>, KeyValueService<string>>();
         } else {
+            if (UseClientComputedCache)
+                fusion.AddSharedClientComputedCache<InMemoryClientComputedCache, FlushingClientComputedCache.Options>();
             fusion.AddClient<ITimeService>();
             fusion.AddClient<IUserService>();
             fusion.AddClient<IScreenshotService>();

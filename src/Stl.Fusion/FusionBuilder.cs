@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Conversion;
+using Stl.Fusion.Client.Caching;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
 using Stl.Fusion.Multitenancy;
@@ -360,6 +361,22 @@ public readonly struct FusionBuilder
 
         services.AddSingleton<TCache>();
         services.AddAlias<ClientComputedCache, TCache>();
+        return this;
+    }
+
+    public FusionBuilder AddSharedClientComputedCache<TCache, TOptions>(
+        Func<IServiceProvider, TOptions>? optionsFactory = null)
+        where TCache : ClientComputedCache
+        where TOptions : class, new()
+    {
+        var services = Services;
+        services.AddSingleton(optionsFactory, _ => new TOptions());
+        if (services.HasService<ClientComputedCache>())
+            return this;
+
+        services.AddSingleton<TCache>();
+        services.AddSingleton(c => new SharedClientComputedCache(c.GetRequiredService<TCache>()));
+        services.AddAlias<ClientComputedCache, SharedClientComputedCache>();
         return this;
     }
 

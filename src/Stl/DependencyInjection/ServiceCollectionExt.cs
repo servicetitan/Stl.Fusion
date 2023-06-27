@@ -55,7 +55,9 @@ public static class ServiceCollectionExt
         where TAlias : class
         where TService : class, TAlias
     {
-        var descriptor = new ServiceDescriptor(typeof(TAlias), c => c.GetRequiredService<TService>(), lifetime);
+        var descriptor = new ServiceDescriptor(typeof(TAlias),
+            c => c.GetRequiredService<TService>(),
+            lifetime);
         services.Add(descriptor);
         return services;
     }
@@ -66,7 +68,9 @@ public static class ServiceCollectionExt
         where TAlias : class
         where TService : class, TAlias
     {
-        var descriptor = new ServiceDescriptor(typeof(TAlias), c => c.GetRequiredService<TService>(), lifetime);
+        var descriptor = new ServiceDescriptor(typeof(TAlias),
+            c => c.GetRequiredService<TService>(),
+            lifetime);
         services.TryAdd(descriptor);
         return services;
     }

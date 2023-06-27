@@ -1,6 +1,6 @@
 namespace Stl.Fusion;
 
-public enum ClientCacheBehavior
+public enum ClientCacheMode
 {
     Default = 0,
     Cache,

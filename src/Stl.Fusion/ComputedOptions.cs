@@ -7,7 +7,7 @@ public record ComputedOptions
     public static ComputedOptions Default { get; set; } = new();
     public static ComputedOptions ClientDefault { get; set; } = new() {
         MinCacheDuration = TimeSpan.FromMinutes(1),
-        ClientCacheBehavior = ClientCacheBehavior.Cache,
+        ClientCacheMode = Fusion.ClientCacheMode.Cache,
     };
     public static ComputedOptions MutableStateDefault { get; set; } = new() {
         TransientErrorInvalidationDelay = TimeSpan.MaxValue,
@@ -17,7 +17,7 @@ public record ComputedOptions
     public TimeSpan TransientErrorInvalidationDelay { get; init; } = TimeSpan.FromSeconds(1);
     public TimeSpan AutoInvalidationDelay { get; init; } = TimeSpan.MaxValue; // No auto invalidation
     public TimeSpan InvalidationDelay { get; init; }
-    public ClientCacheBehavior ClientCacheBehavior { get; init; } = ClientCacheBehavior.NoCache;
+    public ClientCacheMode ClientCacheMode { get; init; } = ClientCacheMode.NoCache;
 
     public static ComputedOptions? Get(Type type, MethodInfo method)
     {
@@ -36,17 +36,17 @@ public record ComputedOptions
         var invalidationDelay = isClientServiceMethod
             ? rma?.InvalidationDelay ?? double.NaN
             : a.InvalidationDelay;
-        // Default cache behavior must be changed to null to let it "inherit" defaultOptions.ClientCacheBehavior
-        var rmaCacheBehavior = rma?.ClientCacheBehavior;
-        if (rmaCacheBehavior == ClientCacheBehavior.Default)
-            rmaCacheBehavior = null;
+        // Default cache behavior must be changed to null to let it "inherit" defaultOptions.ClientCacheMode
+        var rmaCacheMode = rma?.ClientCacheMode;
+        if (rmaCacheMode == ClientCacheMode.Default)
+            rmaCacheMode = null;
 
         var options = new ComputedOptions() {
             MinCacheDuration = ToTimeSpan(a.MinCacheDuration) ?? defaultOptions.MinCacheDuration,
             TransientErrorInvalidationDelay = ToTimeSpan(a.TransientErrorInvalidationDelay) ?? defaultOptions.TransientErrorInvalidationDelay,
             AutoInvalidationDelay = ToTimeSpan(autoInvalidationDelay) ?? defaultOptions.AutoInvalidationDelay,
             InvalidationDelay = ToTimeSpan(invalidationDelay) ?? defaultOptions.InvalidationDelay,
-            ClientCacheBehavior = rmaCacheBehavior ?? defaultOptions.ClientCacheBehavior,
+            ClientCacheMode = rmaCacheMode ?? defaultOptions.ClientCacheMode,
         };
         return options == defaultOptions ? defaultOptions : options;
     }

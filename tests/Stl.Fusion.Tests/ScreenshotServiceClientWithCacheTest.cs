@@ -1,3 +1,4 @@
+using Stl.Fusion.Client.Caching;
 using Stl.Fusion.Client.Interception;
 using Stl.Fusion.Tests.Services;
 using Stl.OS;
@@ -9,7 +10,7 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
     public ScreenshotServiceClientWithCacheTest(ITestOutputHelper @out) : base(@out)
         => UseClientComputedCache = true;
 
-    [Fact(Skip = "ClientComputedCache integration isn't there yet.")]
+    [Fact]
     public async Task GetScreenshotTest()
     {
         if (OSInfo.IsAnyUnix)
@@ -18,6 +19,8 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
 
         await using var serving = await WebHost.Serve();
         await Delay(0.25);
+        var cache = ClientServices.GetRequiredService<ClientComputedCache>();
+        await cache.CheckVersion(CpuTimestamp.Now.ToString());
 
         var clientServices2 = CreateServices(true);
         await using var _ = clientServices2 as IAsyncDisposable;
@@ -28,13 +31,14 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
         var sw = Stopwatch.StartNew();
         var c1 = await GetScreenshotComputed(service1);
         Out.WriteLine($"Miss in: {sw.ElapsedMilliseconds}ms");
+        c1.Call.Should().NotBeNull();
+        c1.Options.ClientCacheMode.Should().Be(ClientCacheMode.Cache);
         c1.Call!.ResultTask.IsCompleted.Should().BeTrue(); // First cache miss should resolve via Rpc
-        c1.Options.ClientCacheBehavior.Should().Be(ClientCacheBehavior.Cache);
 
         sw.Restart();
         var c2 = await GetScreenshotComputed(service2);
         Out.WriteLine($"Hit in: {sw.ElapsedMilliseconds}ms");
-        c2.Call!.ResultTask.IsCompleted.Should().BeFalse(); // First cache hit should resolve w/o waiting for Rpc
+        c2.Call.Should().BeNull(); // First cache hit should resolve w/o waiting for Rpc
 
         sw.Restart();
         await c2.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(5));
@@ -46,7 +50,7 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
         c2.Call!.ResultTask.IsCompleted.Should().BeTrue(); // Should resolve via Rpc at this point
     }
 
-    [Fact(Skip = "ClientComputedCache integration isn't there yet.")]
+    [Fact]
     public async Task GetScreenshotAltTest()
     {
         if (OSInfo.IsAnyUnix)
@@ -55,6 +59,8 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
 
         await using var serving = await WebHost.Serve();
         await Delay(0.25);
+        var cache = ClientServices.GetRequiredService<ClientComputedCache>();
+        await cache.CheckVersion(CpuTimestamp.Now.ToString());
 
         var clientServices2 = CreateServices(true);
         await using var _ = clientServices2 as IAsyncDisposable;
@@ -65,18 +71,22 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
         var sw = Stopwatch.StartNew();
         var c1 = await GetScreenshotAltComputed(service1);
         Out.WriteLine($"Miss in: {sw.ElapsedMilliseconds}ms");
-        c1.Output.Value.Should().BeNull();
-        c1.Call!.ResultTask.IsCompleted.Should().BeFalse(); // First cache miss should resolve w/o waiting for Rpc
-        c1.Options.ClientCacheBehavior.Should().Be(ClientCacheBehavior.NoCache);
+        c1.Options.ClientCacheMode.Should().Be(ClientCacheMode.NoCache);
+        c1.Call!.ResultTask.IsCompleted.Should().BeTrue(); // First cache miss should resolve via Rpc
+        c1.Output.Value.Should().NotBeNull();
+
+        sw.Restart();
+        await c1.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(1));
+        Out.WriteLine($"Invalidated in: {sw.ElapsedMilliseconds}ms");
 
         sw.Restart();
         var c2 = await GetScreenshotAltComputed(service2);
         Out.WriteLine($"2nd miss in: {sw.ElapsedMilliseconds}ms");
-        c2.Call!.ResultTask.IsCompleted.Should().BeFalse(); // First cache hit should resolve w/o waiting for Rpc
-        c1.Output.Value.Should().BeNull();
+        c2.Call!.ResultTask.IsCompleted.Should().BeTrue();
+        c1.Output.Value.Should().NotBeNull();
 
         sw.Restart();
-        await c2.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(5));
+        await c2.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(1));
         Out.WriteLine($"Invalidated in: {sw.ElapsedMilliseconds}ms");
 
         sw.Restart();

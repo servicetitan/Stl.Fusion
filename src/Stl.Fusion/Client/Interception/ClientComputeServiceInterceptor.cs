@@ -1,3 +1,4 @@
+using Stl.Fusion.Client.Caching;
 using Stl.Fusion.Interception;
 using Stl.Interception;
 using Stl.Rpc;

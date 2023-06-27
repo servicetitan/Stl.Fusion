@@ -1,4 +1,5 @@
 using Cysharp.Text;
+using Stl.Fusion.Client.Caching;
 using Stl.Fusion.Client.Internal;
 using Stl.Fusion.Interception;
 using Stl.Rpc.Caching;
@@ -37,7 +38,7 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
     public void OnInvalidated(IClientComputed computed)
     {
         if (computed.Call?.Context.CacheInfoCapture?.Key is { } cacheKey)
-            Cache?.Remove(cacheKey);
+            GetCache((ComputeMethodInput)computed.Input)?.Remove(cacheKey);
     }
 
     protected override ValueTask<Computed<T>> Compute(
@@ -45,9 +46,7 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
         CancellationToken cancellationToken)
     {
         var typedInput = (ComputeMethodInput)input;
-        var cache = Cache != null && typedInput.MethodDef.ComputedOptions.ClientCacheBehavior == ClientCacheBehavior.Cache
-            ? Cache
-            : null;
+        var cache = GetCache(typedInput);
         return existing == null && cache != null
             ? CachedCompute(typedInput, cache, cancellationToken)
             : RemoteCompute(typedInput, cache, cancellationToken).ToValueTask();
@@ -100,11 +99,8 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
                 var resultTask = (Task<T>)call.ResultTask;
                 result = await resultTask.ConfigureAwait(false);
             }
-            catch (OperationCanceledException) {
-                throw;
-            }
-            catch (Exception error) {
-                result = new Result<T>(default!, error);
+            catch (Exception e) when (e is not OperationCanceledException) {
+                result = new Result<T>(default!, e);
             }
 
             isConsistent = call == null || !call.WhenInvalidated.IsCompletedSuccessfully();
@@ -150,4 +146,11 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
                 "or RpcPeerResolver routes the call to a local service, which shouldn't happen at this point.");
         return call;
     }
+
+    private ClientComputedCache? GetCache(ComputeMethodInput input)
+        => Cache == null
+            ? null :
+            input.MethodDef.ComputedOptions.ClientCacheMode != ClientCacheMode.Cache
+                ? null
+                : Cache;
 }

@@ -7,5 +7,5 @@ public class ClientComputeMethodAttribute : ComputeMethodAttribute
     /// <see cref="RpcCom"/> behavior.
     /// <code>null</code> means "use default".
     /// </summary>
-    public ClientCacheBehavior ClientCacheBehavior { get; set; }
+    public ClientCacheMode ClientCacheMode { get; set; }
 }
