@@ -54,10 +54,7 @@ public abstract class ClientComputedCache : RpcServiceBase
             await WhenInitialized.SilentAwait(false);
 
         var serviceDef = Hub.ServiceRegistry.Get(key.Service);
-        if (serviceDef == null)
-            return Option<T>.None;
-
-        var methodDef = serviceDef.Get(key.Method);
+        var methodDef = serviceDef?.Get(key.Method);
         if (methodDef == null)
             return Option<T>.None;
 
