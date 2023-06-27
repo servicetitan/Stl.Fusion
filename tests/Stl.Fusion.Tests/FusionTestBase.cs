@@ -190,7 +190,6 @@ public abstract class FusionTestBase : RpcTestBase
                     db.AddRedisDb("localhost", "Fusion.Tests");
                 db.AddOperations(operations => {
                     operations.ConfigureOperationLogReader(_ => new() {
-                        UnconditionalCheckPeriod = TimeSpan.FromSeconds(5),
                         // Enable this if you debug multi-host invalidation
                         // MaxCommitDuration = TimeSpan.FromMinutes(5),
                     });

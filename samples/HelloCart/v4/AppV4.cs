@@ -45,9 +45,6 @@ public class AppV4 : AppBase
         });
         services.AddDbContextServices<AppDbContext>(db => {
             db.AddOperations(operations => {
-                operations.ConfigureOperationLogReader(_ => new() {
-                    UnconditionalCheckPeriod = TimeSpan.FromSeconds(5),
-                });
                 operations.AddRedisOperationLogChangeTracking();
             });
             db.AddRedisDb("localhost", "Fusion.Samples.HelloCart");

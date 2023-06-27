@@ -32,9 +32,6 @@ public class AppV3 : AppBase
         });
         services.AddDbContextServices<AppDbContext>(db => {
             db.AddOperations(operations => {
-                operations.ConfigureOperationLogReader(_ => new() {
-                    UnconditionalCheckPeriod = TimeSpan.FromSeconds(5),
-                });
                 operations.AddFileBasedOperationLogChangeTracking();
             });
             db.AddEntityResolver<string, DbProduct>();
