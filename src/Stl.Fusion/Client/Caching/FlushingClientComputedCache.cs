@@ -2,7 +2,7 @@ using Stl.Rpc.Caching;
 
 namespace Stl.Fusion.Client.Caching;
 
-public abstract class FlushingClientComputedCache : ClientComputedCache
+public abstract class FlushingClientComputedCacheBase : ClientComputedCache
 {
     public record Options
     {
@@ -11,8 +11,6 @@ public abstract class FlushingClientComputedCache : ClientComputedCache
         public TimeSpan FlushDelay { get; init; } = TimeSpan.FromSeconds(0.1);
         public IMomentClock? Clock { get; init; }
     }
-
-    protected static readonly RpcCacheKey ClearKey = new("", "Clear", TextOrBytes.EmptyBytes);
 
     protected readonly Options Settings;
     protected readonly object Lock = new();
@@ -23,7 +21,7 @@ public abstract class FlushingClientComputedCache : ClientComputedCache
     protected Task FlushingTask = Task.CompletedTask;
     protected CancellationTokenSource FlushCts = new();
 
-    protected FlushingClientComputedCache(Options settings, IServiceProvider services)
+    protected FlushingClientComputedCacheBase(Options settings, IServiceProvider services)
         : base(services)
     {
         Settings = settings;

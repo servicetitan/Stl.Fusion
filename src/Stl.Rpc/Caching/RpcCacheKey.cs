@@ -1,3 +1,5 @@
+using System.Buffers.Text;
+
 namespace Stl.Rpc.Caching;
 
 [StructLayout(LayoutKind.Auto)]
@@ -20,7 +22,7 @@ public sealed partial class RpcCacheKey : IEquatable<RpcCacheKey>
     }
 
     public override string ToString()
-        => $"Key #{GetHashCode()}: {Service}.{Method}({ArgumentData})";
+        => $"#{GetHashCode()}: {Service}.{Method}({Convert.ToBase64String(ArgumentData.Bytes)})";
 
     // Equality
 
