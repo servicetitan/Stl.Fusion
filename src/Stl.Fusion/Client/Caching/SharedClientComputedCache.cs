@@ -7,8 +7,11 @@ public class SharedClientComputedCache : ClientComputedCache
     public static ClientComputedCache Instance { get; private set; } = null!;
 
     public SharedClientComputedCache(ClientComputedCache instance)
-        : base(instance.Services)
-        => Instance = instance;
+        : base(instance.Settings, instance.Services)
+    {
+        Instance = instance;
+        WhenInitialized = instance.WhenInitialized;
+    }
 
     public override ValueTask<TextOrBytes?> Get(RpcCacheKey key, CancellationToken cancellationToken = default)
         => Instance.Get(key, cancellationToken);

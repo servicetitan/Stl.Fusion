@@ -20,7 +20,7 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
         await using var serving = await WebHost.Serve();
         await Delay(0.25);
         var cache = ClientServices.GetRequiredService<ClientComputedCache>();
-        await cache.CheckVersion(CpuTimestamp.Now.ToString());
+        await cache.WhenInitialized;
 
         var clientServices2 = CreateServices(true);
         await using var _ = clientServices2 as IAsyncDisposable;
@@ -60,7 +60,7 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
         await using var serving = await WebHost.Serve();
         await Delay(0.25);
         var cache = ClientServices.GetRequiredService<ClientComputedCache>();
-        await cache.CheckVersion(CpuTimestamp.Now.ToString());
+        await cache.WhenInitialized;
 
         var clientServices2 = CreateServices(true);
         await using var _ = clientServices2 as IAsyncDisposable;

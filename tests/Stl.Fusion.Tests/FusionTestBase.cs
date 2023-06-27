@@ -105,7 +105,11 @@ public abstract class FusionTestBase : RpcTestBase
             fusion.AddService<IKeyValueService<string>, KeyValueService<string>>();
         } else {
             if (UseClientComputedCache)
-                fusion.AddSharedClientComputedCache<InMemoryClientComputedCache, FlushingClientComputedCache.Options>();
+                fusion.AddSharedClientComputedCache<
+                    InMemoryClientComputedCache,
+                    FlushingClientComputedCache.Options>(_ => new() {
+                    Version = CpuTimestamp.Now.ToString(),
+                });
             fusion.AddClient<ITimeService>();
             fusion.AddClient<IUserService>();
             fusion.AddClient<IScreenshotService>();

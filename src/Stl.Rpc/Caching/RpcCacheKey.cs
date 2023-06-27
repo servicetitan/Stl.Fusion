@@ -1,4 +1,4 @@
-using System.Buffers.Text;
+using Microsoft.Toolkit.HighPerformance;
 
 namespace Stl.Rpc.Caching;
 
@@ -6,7 +6,7 @@ namespace Stl.Rpc.Caching;
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 public sealed partial class RpcCacheKey : IEquatable<RpcCacheKey>
 {
-    private readonly int _argumentDataHashCode;
+    private readonly int _hashCode;
 
     [DataMember(Order = 0), MemoryPackOrder(0)] public readonly Symbol Service;
     [DataMember(Order = 1), MemoryPackOrder(1)] public readonly Symbol Method;
@@ -18,23 +18,26 @@ public sealed partial class RpcCacheKey : IEquatable<RpcCacheKey>
         Service = service;
         Method = method;
         ArgumentData = argumentData;
-        _argumentDataHashCode = argumentData.GetDataHashCode();
+        _hashCode = HashCode.Combine(
+            Service.Value.GetDjb2HashCode(),
+            Method.Value.GetDjb2HashCode(),
+            argumentData.GetDataHashCode());
     }
 
     public override string ToString()
-        => $"#{GetHashCode()}: {Service}.{Method}({Convert.ToBase64String(ArgumentData.Bytes)})";
+        => $"#{_hashCode}: {Service}.{Method}({Convert.ToBase64String(ArgumentData.Bytes)})";
 
     // Equality
 
     public bool Equals(RpcCacheKey? other)
         =>  !ReferenceEquals(other, null)
-            && _argumentDataHashCode == other._argumentDataHashCode
-            && Method.Equals(other.Method)
-            && Service.Equals(other.Service)
+            && _hashCode == other._hashCode
+            && StringComparer.Ordinal.Equals(Method.Value, other.Method.Value)
+            && StringComparer.Ordinal.Equals(Service.Value, other.Service.Value)
             && ArgumentData.DataEquals(other.ArgumentData);
 
     public override bool Equals(object? obj) => obj is RpcCacheKey other && Equals(other);
-    public override int GetHashCode() => HashCode.Combine(Service, Method, _argumentDataHashCode);
+    public override int GetHashCode() => _hashCode;
     public static bool operator ==(RpcCacheKey left, RpcCacheKey right) => left.Equals(right);
     public static bool operator !=(RpcCacheKey left, RpcCacheKey right) => !left.Equals(right);
 }

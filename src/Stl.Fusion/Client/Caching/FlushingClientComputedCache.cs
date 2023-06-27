@@ -4,15 +4,14 @@ namespace Stl.Fusion.Client.Caching;
 
 public abstract class FlushingClientComputedCache : ClientComputedCache
 {
-    public record Options
+    public new record Options : ClientComputedCache.Options
     {
-        public static Options Default { get; set; } = new();
+        public static new Options Default { get; set; } = new();
 
-        public TimeSpan FlushDelay { get; init; } = TimeSpan.FromSeconds(0.1);
+        public TimeSpan FlushDelay { get; init; } = TimeSpan.FromSeconds(0.25);
         public IMomentClock? Clock { get; init; }
     }
 
-    protected readonly Options Settings;
     protected readonly object Lock = new();
     protected readonly IMomentClock Clock;
     protected Dictionary<RpcCacheKey, TextOrBytes?> FlushQueue = new();
@@ -21,11 +20,16 @@ public abstract class FlushingClientComputedCache : ClientComputedCache
     protected Task FlushingTask = Task.CompletedTask;
     protected CancellationTokenSource FlushCts = new();
 
-    protected FlushingClientComputedCache(Options settings, IServiceProvider services)
-        : base(services)
+    public new Options Settings { get; }
+
+    protected FlushingClientComputedCache(Options settings, IServiceProvider services, bool initialize = true)
+        : base(settings, services, false)
     {
         Settings = settings;
         Clock = settings.Clock ?? services.Clocks().CpuClock;
+        if (initialize)
+            // ReSharper disable once VirtualMemberCallInConstructor
+            WhenInitialized = Initialize(settings.Version);
     }
 
     public override ValueTask<TextOrBytes?> Get(RpcCacheKey key, CancellationToken cancellationToken = default)
@@ -72,6 +76,9 @@ public abstract class FlushingClientComputedCache : ClientComputedCache
 
     protected async Task DelayedFlush(TimeSpan? flushDelay, CancellationToken cancellationToken)
     {
+        if (!WhenInitialized.IsCompleted)
+            await WhenInitialized.SilentAwait(false);
+
         var delay = flushDelay ?? Settings.FlushDelay;
         if (delay > TimeSpan.Zero) {
             try {
