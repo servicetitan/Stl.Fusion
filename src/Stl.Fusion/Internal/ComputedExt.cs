@@ -29,8 +29,8 @@ public static class ComputedExt
         var mustInvalidate = (callOptions & CallOptions.Invalidate) == CallOptions.Invalidate;
         if (mustInvalidate) {
             // CallOptions.Invalidate is:
-            // - always paired with CallOptions.GetExisting 
-            // - never paired with CallOptions.Capture 
+            // - always paired with CallOptions.GetExisting
+            // - never paired with CallOptions.Capture
             existing.Invalidate();
             return true;
         }
@@ -44,7 +44,7 @@ public static class ComputedExt
 
         // Only CallOptions.Capture can be intact from here
 
-        // The remaining part of this method matches exactly to TryUseExistingFromLock 
+        // The remaining part of this method matches exactly to TryUseExistingFromLock
         if (!existing.IsConsistent())
             return false;
 
@@ -59,7 +59,7 @@ public static class ComputedExt
         // - CallOptions.GetExisting is unused here - it always leads to true in TryUseExisting,
         //   so we simply won't get to this method if it was used
         // - Since CallOptions.Invalidate implies GetExisting, it also can't be used here
-        // So the only possible option is CallOptions.Capture 
+        // So the only possible option is CallOptions.Capture
         if (existing == null || !existing.IsConsistent())
             return false;
 
@@ -67,11 +67,11 @@ public static class ComputedExt
         return true;
     }
 
-    internal static void UseNew<T>(this Computed<T> computed, ComputeContext context, IComputed? usedBy)
+    internal static void UseNew<T>(this Computed<T> computed, ComputeContext context, IComputed? usedBy, IComputed? existing = null)
     {
         if (usedBy != null)
             ((IComputedImpl)usedBy).AddUsed(computed);
-        ((IComputedImpl)computed).RenewTimeouts(true);
+        ((IComputedImpl)computed).RenewTimeouts(!ReferenceEquals(computed, existing));
         context.Capture(computed);
     }
 

@@ -36,8 +36,9 @@ public class FusionRpcBasicTest : SimpleFusionTestBase
         await TestExt.WhenMet(
             () => c.IsConsistent().Should().BeFalse(),
             TimeSpan.FromSeconds(1));
+
         c1 = Computed.GetExisting(() => counters.Get("a"));
-        c1.Should().NotBeNull();
+        c1.Should().BeNull();
     }
 
     [Fact]

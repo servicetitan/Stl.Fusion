@@ -48,28 +48,28 @@ public abstract class ClientComputedCache : RpcServiceBase
         Set(VersionKey, expectedValue);
     }
 
-    public async ValueTask<Option<T>> Get<T>(ComputeMethodInput input, RpcCacheKey key, CancellationToken cancellationToken)
+    public async ValueTask<(T Value, TextOrBytes Data)?> Get<T>(ComputeMethodInput input, RpcCacheKey key, CancellationToken cancellationToken)
     {
         var serviceDef = Hub.ServiceRegistry.Get(key.Service);
         var methodDef = serviceDef?.Get(key.Method);
         if (methodDef == null)
-            return Option<T>.None;
+            return null;
 
         try {
             if (!WhenInitialized.IsCompleted)
                 await WhenInitializedUnlessVersionKey(key).WaitAsync(cancellationToken).SilentAwait(false);
 
-            var value = await Get(key, cancellationToken).ConfigureAwait(false);
-            if (value is not { } vValue)
-                return Option<T>.None;
+            var resultDataOpt = await Get(key, cancellationToken).ConfigureAwait(false);
+            if (resultDataOpt is not { } resultData)
+                return null;
 
             var resultList = methodDef.ResultListFactory.Invoke();
-            ArgumentSerializer.Deserialize(ref resultList, methodDef.AllowResultPolymorphism, vValue);
-            return resultList.Get0<T>();
+            ArgumentSerializer.Deserialize(ref resultList, methodDef.AllowResultPolymorphism, resultData);
+            return (resultList.Get0<T>(), resultData);
         }
         catch (Exception e) when (e is not OperationCanceledException) {
             Log.LogError(e, "Cached result read failed");
-            return Option<T>.None;
+            return null;
         }
     }
 

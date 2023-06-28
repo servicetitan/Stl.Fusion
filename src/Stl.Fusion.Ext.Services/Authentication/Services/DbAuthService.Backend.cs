@@ -15,6 +15,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         AuthBackend_SignIn command, CancellationToken cancellationToken = default)
     {
         var (session, user, authenticatedIdentity) = (command.Session, command.User, command.AuthenticatedIdentity);
+        session.RequireValid();
         var context = CommandContext.GetCurrent();
         var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
 
@@ -80,6 +81,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         AuthBackend_SetupSession command, CancellationToken cancellationToken = default)
     {
         var (session, ipAddress, userAgent, options) = command;
+        session.RequireValid();
         var context = CommandContext.GetCurrent();
         var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
 
@@ -141,6 +143,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         Auth_SetSessionOptions command, CancellationToken cancellationToken = default)
     {
         var (session, options, expectedVersion) = command;
+        session.RequireValid();
         var context = CommandContext.GetCurrent();
         if (Computed.IsInvalidating()) {
             _ = GetSessionInfo(session, default); // Must go first!

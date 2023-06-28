@@ -9,23 +9,29 @@ public sealed class ComponentInfo
 
     public Type Type { get; }
     public bool HasCustomParameterComparers { get; }
+    public ParameterComparisonMode ParameterComparisonMode { get; }
     public IReadOnlyDictionary<string, ComponentParameterInfo> Parameters { get; }
 
     public static ComponentInfo Get(Type componentType)
-        => ComponentInfoCache.GetOrAdd(componentType, static componentType1 => new ComponentInfo(componentType1));
+        => ComponentInfoCache.GetOrAdd(componentType, static t => new ComponentInfo(t));
 
     private ComponentInfo(Type type)
     {
         if (!typeof(IComponent).IsAssignableFrom(type))
             throw new ArgumentOutOfRangeException(nameof(type));
 
+        ComponentInfo? parentComponentInfo = null;
+        if (typeof(IComponent).IsAssignableFrom(type.BaseType))
+            parentComponentInfo = Get(type.BaseType!);
+
         var parameterComparerProvider = ParameterComparerProvider.Instance;
         var parameters = new Dictionary<string, ComponentParameterInfo>(StringComparer.Ordinal);
-        var hasCustomParameterComparers = false;
-        foreach (var property in type.GetProperties()) {
-            if (property.GetMethod is { IsStatic: true }|| property.SetMethod is { IsStatic: true })
-                continue;
+        if (parentComponentInfo != null)
+            parameters.AddRange(parentComponentInfo.Parameters);
 
+        var hasCustomParameterComparers = parentComponentInfo?.HasCustomParameterComparers ?? false;
+        var bindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly;
+        foreach (var property in type.GetProperties(bindingFlags)) {
             var pa = property.GetCustomAttribute<ParameterAttribute>(true);
             CascadingParameterAttribute? cpa = null;
             if (pa == null) {
@@ -41,8 +47,6 @@ public sealed class ComponentInfo
                 IsCascading = cpa != null,
                 IsCapturingUnmatchedValues = pa?.CaptureUnmatchedValues ?? false,
                 CascadingParameterName = cpa?.Name,
-                Getter = property.GetGetter<IComponent, object>(true),
-                Setter = property.GetSetter<IComponent, object>(true),
                 Comparer = comparer,
             };
             parameters.Add(parameter.Property.Name, parameter);
@@ -50,12 +54,17 @@ public sealed class ComponentInfo
         Type = type;
         Parameters = new ReadOnlyDictionary<string, ComponentParameterInfo>(parameters);
         HasCustomParameterComparers = hasCustomParameterComparers;
+
+        var fca = type.GetCustomAttribute<FusionComponentAttribute>(false);
+        ParameterComparisonMode = fca?.ParameterComparisonMode.NullIfInherited()
+            ?? parentComponentInfo?.ParameterComparisonMode
+            ?? FusionComponentBase.DefaultParameterComparisonMode;
     }
 
     public bool ShouldSetParameters(ComponentBase component, ParameterView parameterView)
     {
-        if (!HasCustomParameterComparers)
-            return true; // No custom comparers -> trigger default flow
+        if (!HasCustomParameterComparers || ParameterComparisonMode == ParameterComparisonMode.Standard)
+            return true; // No custom comparers -> trigger the default flow
 
         var parameters = Parameters;
         foreach (var parameterValue in parameterView) {

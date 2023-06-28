@@ -95,6 +95,8 @@ public static class Errors
         => new InvalidOperationException(propertyName == null
             ? "Not initialized."
             : $"Property {propertyName} is not initialized.");
+    public static Exception NotSupported(string message)
+        => new NotSupportedException(message);
 
     public static Exception InternalError(string message)
         => new SystemException(message);

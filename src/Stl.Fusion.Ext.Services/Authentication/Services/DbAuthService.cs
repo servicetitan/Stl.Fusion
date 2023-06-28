@@ -37,7 +37,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     public override async Task SignOut(
         Auth_SignOut command, CancellationToken cancellationToken = default)
     {
-        var session = command.Session;
+        var session = command.Session.RequireValid();
         var kickUserSessionHash = command.KickUserSessionHash;
         var kickAllUserSessions = command.KickAllUserSessions;
         var isKickCommand = kickAllUserSessions || !kickUserSessionHash.IsNullOrEmpty();
@@ -102,7 +102,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     // [CommandHandler] inherited
     public override async Task EditUser(Auth_EditUser command, CancellationToken cancellationToken = default)
     {
-        var session = command.Session;
+        var session = command.Session.RequireValid();
         var context = CommandContext.GetCurrent();
         var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
 
@@ -158,6 +158,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     public override async Task<SessionAuthInfo?> GetAuthInfo(
         Session session, CancellationToken cancellationToken = default)
     {
+        session.RequireValid();
         using var _ = Computed.SuspendDependencyCapture();
         var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
         return sessionInfo?.ToAuthInfo();
@@ -166,6 +167,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     // [ComputeMethod] inherited
     public override async Task<SessionInfo?> GetSessionInfo(Session session, CancellationToken cancellationToken = default)
     {
+        session.RequireValid();
         var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);
         var dbSessionInfo = await Sessions.Get(tenant, session.Id, cancellationToken).ConfigureAwait(false);
         return dbSessionInfo == null ? null : SessionConverter.ToModel(dbSessionInfo);
@@ -174,6 +176,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     // [ComputeMethod] inherited
     public override async Task<ImmutableOptionSet> GetOptions(Session session, CancellationToken cancellationToken = default)
     {
+        session.RequireValid();
         using var _ = Computed.SuspendDependencyCapture();
         var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
         return sessionInfo?.Options ?? ImmutableOptionSet.Empty;

@@ -1,6 +1,5 @@
 using Cysharp.Text;
 using Microsoft.Toolkit.HighPerformance;
-using MemoryExtensions = Microsoft.Toolkit.HighPerformance.MemoryExtensions;
 
 namespace Stl.Serialization;
 

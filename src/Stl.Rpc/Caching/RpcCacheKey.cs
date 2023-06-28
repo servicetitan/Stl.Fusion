@@ -4,7 +4,7 @@ namespace Stl.Rpc.Caching;
 
 [StructLayout(LayoutKind.Auto)]
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
-public sealed partial class RpcCacheKey : IEquatable<RpcCacheKey>
+public partial class RpcCacheKey : IEquatable<RpcCacheKey>
 {
     private readonly int _hashCode;
 
@@ -12,7 +12,7 @@ public sealed partial class RpcCacheKey : IEquatable<RpcCacheKey>
     [DataMember(Order = 1), MemoryPackOrder(1)] public readonly Symbol Method;
     [DataMember(Order = 2), MemoryPackOrder(2)] public readonly TextOrBytes ArgumentData;
 
-    [MemoryPackConstructor]
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
     public RpcCacheKey(Symbol service, Symbol method, TextOrBytes argumentData)
     {
         Service = service;

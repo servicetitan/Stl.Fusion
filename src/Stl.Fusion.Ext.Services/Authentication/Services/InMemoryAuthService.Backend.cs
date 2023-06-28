@@ -12,6 +12,7 @@ public partial class InMemoryAuthService
     public virtual async Task SignIn(AuthBackend_SignIn command, CancellationToken cancellationToken = default)
     {
         var (session, user, authenticatedIdentity) = (command.Session, command.User, command.AuthenticatedIdentity);
+        session.RequireValid();
         var context = CommandContext.GetCurrent();
         var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
 
@@ -82,6 +83,7 @@ public partial class InMemoryAuthService
         AuthBackend_SetupSession command, CancellationToken cancellationToken = default)
     {
         var (session, ipAddress, userAgent, options) = command;
+        session.RequireValid();
         var context = CommandContext.GetCurrent();
         var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
 
@@ -115,6 +117,7 @@ public partial class InMemoryAuthService
     public virtual async Task SetOptions(Auth_SetSessionOptions command, CancellationToken cancellationToken = default)
     {
         var (session, options, baseVersion) = command;
+        session.RequireValid();
         var context = CommandContext.GetCurrent();
         var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
 

@@ -22,7 +22,7 @@ public class RpcBasicTest : RpcLocalTestBase
         rpc.AddClient<ITestRpcService, ITestRpcServiceClient>();
         rpc.AddServer<ITestRpcBackend, TestRpcBackend>();
         rpc.AddClient<ITestRpcBackend, ITestRpcBackendClient>();
-        services.AddSingleton<RpcPeerFactory>(c => static (hub, peerRef) => {
+        services.AddSingleton<RpcPeerFactory>(_ => static (hub, peerRef) => {
             return peerRef.IsServer
                 ? new RpcServerPeer(hub, peerRef) {
                     LocalServiceFilter = static serviceDef

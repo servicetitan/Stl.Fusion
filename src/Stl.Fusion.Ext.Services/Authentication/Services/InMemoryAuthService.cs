@@ -31,7 +31,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
     // [CommandHandler] inherited
     public virtual async Task SignOut(Auth_SignOut command, CancellationToken cancellationToken = default)
     {
-        var session = command.Session;
+        var session = command.Session.RequireValid();
         var kickUserSessionHash = command.KickUserSessionHash;
         var kickAllUserSessions = command.KickAllUserSessions;
         var isKickCommand = kickAllUserSessions || !kickUserSessionHash.IsNullOrEmpty();
@@ -43,6 +43,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
         if (Computed.IsInvalidating()) {
             if (isKickCommand)
                 return;
+
             _ = GetSessionInfo(session, default); // Must go first!
             _ = GetAuthInfo(session, default);
             if (force) {
@@ -91,7 +92,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
     // [CommandHandler] inherited
     public virtual async Task EditUser(Auth_EditUser command, CancellationToken cancellationToken = default)
     {
-        var session = command.Session;
+        var session = command.Session.RequireValid();
         var context = CommandContext.GetCurrent();
         var tenant = await TenantResolver.Resolve(session, context, cancellationToken).ConfigureAwait(false);
 
@@ -127,9 +128,11 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
         var sessionInfo = await GetSessionInfo(session, cancellationToken).ConfigureAwait(false);
         if (sessionInfo == null)
             return;
+
         var delta = Clocks.SystemClock.Now - sessionInfo.LastSeenAt;
         if (delta < TimeSpan.FromSeconds(10))
             return; // We don't want to update this too frequently
+
         var command = new AuthBackend_SetupSession(session);
         await Commander.Call(command, cancellationToken).ConfigureAwait(false);
     }
@@ -147,6 +150,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
     public virtual async Task<SessionAuthInfo?> GetAuthInfo(
         Session session, CancellationToken cancellationToken = default)
     {
+        session.RequireValid();
         var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);
         var sessionInfo = SessionInfos.GetValueOrDefault((tenant, session.Id));
         return sessionInfo?.ToAuthInfo();
@@ -156,6 +160,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
     public virtual async Task<SessionInfo?> GetSessionInfo(
         Session session, CancellationToken cancellationToken = default)
     {
+        session.RequireValid();
         var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);
         var sessionInfo = SessionInfos.GetValueOrDefault((tenant, session.Id));
         return sessionInfo;
@@ -165,6 +170,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
     public virtual async Task<ImmutableOptionSet> GetOptions(
         Session session, CancellationToken cancellationToken = default)
     {
+        session.RequireValid();
         var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);
         var sessionInfo = SessionInfos.GetValueOrDefault((tenant, session.Id));
         return sessionInfo?.Options ?? ImmutableOptionSet.Empty;
@@ -173,6 +179,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
     // [ComputeMethod] inherited
     public virtual async Task<User?> GetUser(Session session, CancellationToken cancellationToken = default)
     {
+        session.RequireValid();
         var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);
         var authInfo = await GetAuthInfo(session, cancellationToken).ConfigureAwait(false);
         if (!(authInfo?.IsAuthenticated() ?? false))
@@ -186,6 +193,7 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
     public virtual async Task<ImmutableArray<SessionInfo>> GetUserSessions(
         Session session, CancellationToken cancellationToken = default)
     {
+        session.RequireValid();
         var tenant = await TenantResolver.Resolve(session, this, cancellationToken).ConfigureAwait(false);
         var user = await GetUser(session, cancellationToken).ConfigureAwait(false);
         if (user == null)

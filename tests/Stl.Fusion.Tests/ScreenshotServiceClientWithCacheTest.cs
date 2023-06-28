@@ -27,6 +27,7 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
 
         var service1 = ClientServices.GetRequiredService<IScreenshotService>();
         var service2 = clientServices2.GetRequiredService<IScreenshotService>();
+        var timeout = TimeSpan.FromSeconds(1);
 
         var sw = Stopwatch.StartNew();
         var c1 = await GetScreenshotComputed(service1);
@@ -41,7 +42,7 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
         c2.Call.Should().BeNull(); // First cache hit should resolve w/o waiting for Rpc
 
         sw.Restart();
-        await c2.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(5));
+        await c2.WhenInvalidated().WaitAsync(timeout);
         Out.WriteLine($"Invalidated in: {sw.ElapsedMilliseconds}ms");
 
         sw.Restart();
@@ -67,6 +68,7 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
 
         var service1 = ClientServices.GetRequiredService<IScreenshotService>();
         var service2 = clientServices2.GetRequiredService<IScreenshotService>();
+        var timeout = TimeSpan.FromSeconds(1);
 
         var sw = Stopwatch.StartNew();
         var c1 = await GetScreenshotAltComputed(service1);
@@ -76,7 +78,7 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
         c1.Output.Value.Should().NotBeNull();
 
         sw.Restart();
-        await c1.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(1));
+        await c1.WhenInvalidated().WaitAsync(timeout);
         Out.WriteLine($"Invalidated in: {sw.ElapsedMilliseconds}ms");
 
         sw.Restart();
@@ -86,7 +88,7 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
         c1.Output.Value.Should().NotBeNull();
 
         sw.Restart();
-        await c2.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(1));
+        await c2.WhenInvalidated().WaitAsync(timeout);
         Out.WriteLine($"Invalidated in: {sw.ElapsedMilliseconds}ms");
 
         sw.Restart();

@@ -16,4 +16,12 @@ public static class SessionExt
         var sessionResolver = services.GetRequiredService<ISessionResolver>();
         return sessionResolver.Session;
     }
+
+    public static Session RequireValid(this Session? session)
+    {
+        if (session == null || session.IsDefault())
+            throw new ArgumentOutOfRangeException(nameof(session));
+
+        return session;
+    }
 }

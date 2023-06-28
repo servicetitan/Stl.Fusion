@@ -41,6 +41,7 @@ public abstract class FusionTestBase : RpcTestBase
     public bool UseInMemoryKeyValueStore { get; init; }
     public bool UseInMemoryAuthService { get; init; }
     public bool UseClientComputedCache { get; init; }
+    public LogLevel RpcCallLogLevel { get; init; } = LogLevel.None;
 
     public FilePath SqliteDbPath { get; protected set; }
     public string PostgreSqlConnectionString { get; protected set; } =
@@ -104,6 +105,10 @@ public abstract class FusionTestBase : RpcTestBase
             fusion.AddService<IEdgeCaseService, EdgeCaseService>();
             fusion.AddService<IKeyValueService<string>, KeyValueService<string>>();
         } else {
+            services.AddSingleton<RpcPeerFactory>(_ => (hub, peerRef)
+                => peerRef.IsServer
+                    ? new RpcServerPeer(hub, peerRef) { CallLogLevel = RpcCallLogLevel }
+                    : new RpcClientPeer(hub, peerRef) { CallLogLevel = RpcCallLogLevel });
             if (UseClientComputedCache)
                 fusion.AddSharedClientComputedCache<
                     InMemoryClientComputedCache,

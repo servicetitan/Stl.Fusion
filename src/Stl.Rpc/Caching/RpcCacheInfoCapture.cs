@@ -18,4 +18,24 @@ public class RpcCacheInfoCapture
         if (captureMode == RpcCacheInfoCaptureMode.KeyAndResult)
             ResultSource = new();
     }
+
+    public async ValueTask<RpcCacheEntry?> GetEntry(CancellationToken cancellationToken = default)
+    {
+        if (ReferenceEquals(Key, null) ||  ResultSource == null)
+            return null;
+
+        try {
+            var result = await ResultSource.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+            return new RpcCacheEntry(Key, result);
+        }
+        catch (OperationCanceledException) {
+            if (cancellationToken.IsCancellationRequested)
+                throw;
+
+            return null;
+        }
+        catch (Exception) {
+            return null;
+        }
+    }
 }
