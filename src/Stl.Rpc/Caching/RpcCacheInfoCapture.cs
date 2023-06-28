@@ -1,14 +1,21 @@
 namespace Stl.Rpc.Caching;
 
+public enum RpcCacheInfoCaptureMode
+{
+    KeyAndResult = 0,
+    KeyOnly,
+}
+
 public class RpcCacheInfoCapture
 {
-    public RpcCacheKey? Key { get; set; }
-    public TaskCompletionSource<TextOrBytes>? ResultSource { get; set; }
-    public bool MustCaptureResult => ResultSource != null;
+    public readonly RpcCacheInfoCaptureMode CaptureMode;
+    public RpcCacheKey? Key;
+    public TaskCompletionSource<TextOrBytes>? ResultSource;
 
-    public RpcCacheInfoCapture(bool mustCaptureResult = true)
+    public RpcCacheInfoCapture(RpcCacheInfoCaptureMode captureMode = default)
     {
-        if (mustCaptureResult)
+        CaptureMode = captureMode;
+        if (captureMode == RpcCacheInfoCaptureMode.KeyAndResult)
             ResultSource = new();
     }
 }

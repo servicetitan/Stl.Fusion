@@ -75,7 +75,7 @@ public abstract class RpcOutboundCall : RpcCall
             message = CreateMessage(Id, MethodDef.AllowArgumentPolymorphism);
             if (Context.CacheInfoCapture is { Key: null } cacheInfoCapture) {
                 cacheInfoCapture.Key = new RpcCacheKey(MethodDef.Service.Name, MethodDef.Name, message.ArgumentData);
-                if (!cacheInfoCapture.MustCaptureResult) {
+                if (cacheInfoCapture.CaptureMode == RpcCacheInfoCaptureMode.KeyOnly) {
                     SetResult(default, null);
                     return default;
                 }
@@ -114,7 +114,7 @@ public abstract class RpcOutboundCall : RpcCall
 
     public void NotifyCancelled()
     {
-        if (Context.CacheInfoCapture is { ResultSource: null })
+        if (Context.CacheInfoCapture is { CaptureMode: RpcCacheInfoCaptureMode.KeyOnly })
             return; // The call had never happened, so no need for cancellation notification
 
         try {

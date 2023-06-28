@@ -23,11 +23,9 @@ public class RpcOutboundComputeCall<TResult> : RpcOutboundCall<TResult>, IRpcOut
         var resultVersion = GetResultVersion(context);
         // We always use Lock to update ResultSource in this type
         lock (Lock) {
-            if (resultVersion == default || (ResultTask.IsCompleted && ResultVersion != resultVersion)) {
-                // Not a compute call or a result w/ different version
-                if (WhenInvalidatedSource.TrySetResult(default))
-                    Unregister(true);
-            }
+            if (IsResultVersionChanged(resultVersion))
+                SetInvalidated(true);
+
             if (ResultSource.TrySetResult((TResult)result!)) {
                 ResultVersion = resultVersion;
                 if (context != null && Context.CacheInfoCapture is { } cacheInfoCapture)
@@ -41,11 +39,9 @@ public class RpcOutboundComputeCall<TResult> : RpcOutboundCall<TResult>, IRpcOut
         var resultVersion = GetResultVersion(context);
         // We always use Lock to update ResultSource in this type
         lock (Lock) {
-            if (notifyCancelled || resultVersion == default || (ResultTask.IsCompleted && ResultVersion != resultVersion)) {
-                // Early failure, not a compute call or a result w/ different version
-                if (WhenInvalidatedSource.TrySetResult(default))
-                    Unregister(true);
-            }
+            if (notifyCancelled || IsResultVersionChanged(resultVersion))
+                SetInvalidated(true);
+
             if (ResultSource.TrySetException(error)) {
                 ResultVersion = resultVersion;
                 if (Context.CacheInfoCapture is { } cacheInfoCapture)
@@ -68,16 +64,33 @@ public class RpcOutboundComputeCall<TResult> : RpcOutboundCall<TResult>, IRpcOut
     public void SetInvalidated(RpcInboundContext context)
     {
         var resultVersion = GetResultVersion(context);
-        lock (Lock) {
-            if (!ResultTask.IsCompleted || (resultVersion != default && ResultVersion != resultVersion))
-                return; // Invalidation of some earlier call
+        if (resultVersion == default)
+            return; // Should never happen
 
-            if (WhenInvalidatedSource.TrySetResult(default))
-                Unregister();
+        lock (Lock) {
+            if (!ResultTask.IsCompleted || ResultVersion != resultVersion)
+                return; // No result yet or version mismatch -> nothing to invalidate
+
+            SetInvalidated();
         }
     }
 
     // Private methods
+
+    private void SetInvalidated(bool notifyCancelled = false)
+    {
+        if (WhenInvalidatedSource.TrySetResult(default))
+            Unregister(notifyCancelled);
+    }
+
+    private bool IsResultVersionChanged(LTag resultVersion)
+    {
+        if (resultVersion == default)
+            return true; // Not a compute method call
+
+        // We already have a result w/ mismatching version
+        return ResultTask.IsCompleted && ResultVersion != resultVersion;
+    }
 
     private LTag GetResultVersion(RpcInboundContext? context)
     {

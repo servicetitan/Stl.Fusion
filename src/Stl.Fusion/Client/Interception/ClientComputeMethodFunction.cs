@@ -57,7 +57,7 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
         ClientComputedCache cache,
         CancellationToken cancellationToken)
     {
-        var cacheInfoCapture = new RpcCacheInfoCapture(false);
+        var cacheInfoCapture = new RpcCacheInfoCapture(RpcCacheInfoCaptureMode.KeyOnly);
         SendRpcCall(input, cacheInfoCapture, cancellationToken);
         if (cacheInfoCapture.Key is not { } cacheKey)
             return await RemoteCompute(input, cache, cancellationToken).ConfigureAwait(false);
