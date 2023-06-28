@@ -6,7 +6,8 @@ public class ParameterComparerProvider
 
     public static ParameterComparerProvider Instance { get; set; } = new();
 
-    protected Dictionary<Type, Type> KnownComparerTypes { get; init; } = new() {
+    public bool UseByValueParameterComparerForEnumProperties { get; init; } = true;
+    public Dictionary<Type, Type> KnownComparerTypes { get; init; } = new() {
         { typeof(Symbol), typeof(ByValueParameterComparer) },
         { typeof(TimeSpan), typeof(ByValueParameterComparer) },
         { typeof(Moment), typeof(ByValueParameterComparer) },
@@ -59,8 +60,9 @@ public class ParameterComparerProvider
     protected virtual Type? GetKnownComparerType(PropertyInfo property)
     {
         var propertyType = property.PropertyType;
-        if (propertyType.IsEnum)
+        if (UseByValueParameterComparerForEnumProperties && propertyType.IsEnum)
             return typeof(ByValueParameterComparer);
+
         return KnownComparerTypes.GetValueOrDefault(propertyType);
     }
 }
