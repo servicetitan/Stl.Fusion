@@ -22,12 +22,12 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
     private string? _toString;
 
     protected readonly VersionGenerator<LTag> VersionGenerator;
-    protected readonly ClientComputedCache? Cache;
+    protected readonly IClientComputedCache? Cache;
 
     public ClientComputeMethodFunction(
         ComputeMethodDef methodDef,
         VersionGenerator<LTag> versionGenerator,
-        ClientComputedCache? cache,
+        IClientComputedCache? cache,
         IServiceProvider services)
         : base(methodDef, services)
     {
@@ -58,7 +58,7 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
 
     private async ValueTask<Computed<T>> CachedCompute(
         ComputeMethodInput input,
-        ClientComputedCache cache,
+        IClientComputedCache cache,
         CancellationToken cancellationToken)
     {
         var cacheInfoCapture = new RpcCacheInfoCapture(RpcCacheInfoCaptureMode.KeyOnly);
@@ -83,7 +83,7 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
 
     private async Task<Computed<T>> RemoteCompute(
         ComputeMethodInput input,
-        ClientComputedCache? cache,
+        IClientComputedCache? cache,
         ClientComputed<T>? existing,
         CancellationToken cancellationToken)
     {
@@ -231,7 +231,7 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
         return call;
     }
 
-    private ClientComputedCache? GetCache(ComputeMethodInput input)
+    private IClientComputedCache? GetCache(ComputeMethodInput input)
         => Cache == null
             ? null :
             input.MethodDef.ComputedOptions.ClientCacheMode != ClientCacheMode.Cache

@@ -11,13 +11,13 @@ public class ClientComputeServiceInterceptor : ComputeServiceInterceptorBase
     public new record Options : ComputeServiceInterceptorBase.Options;
 
     protected readonly RpcClientInterceptor RpcClientInterceptor;
-    protected readonly ClientComputedCache? Cache;
+    protected readonly IClientComputedCache? Cache;
 
     public ClientComputeServiceInterceptor(Options options, IServiceProvider services)
         : base(options, services)
     {
         RpcClientInterceptor = services.GetRequiredService<RpcClientInterceptor>();
-        Cache = services.GetService<ClientComputedCache>();
+        Cache = services.GetService<IClientComputedCache>();
     }
 
     public virtual void Setup(RpcServiceDef serviceDef)

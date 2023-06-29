@@ -351,16 +351,16 @@ public readonly struct FusionBuilder
 
     public FusionBuilder AddClientComputedCache<TCache, TOptions>(
         Func<IServiceProvider, TOptions>? optionsFactory = null)
-        where TCache : ClientComputedCache
+        where TCache : class, IClientComputedCache
         where TOptions : class, new()
     {
         var services = Services;
         services.AddSingleton(optionsFactory, _ => new TOptions());
-        if (services.HasService<ClientComputedCache>())
+        if (services.HasService<TCache>())
             return this;
 
         services.AddSingleton<TCache>();
-        services.AddAlias<ClientComputedCache, TCache>();
+        services.AddAlias<IClientComputedCache, TCache>();
         return this;
     }
 
@@ -371,12 +371,12 @@ public readonly struct FusionBuilder
     {
         var services = Services;
         services.AddSingleton(optionsFactory, _ => new TOptions());
-        if (services.HasService<ClientComputedCache>())
+        if (services.HasService<TCache>())
             return this;
 
         services.AddSingleton<TCache>();
         services.AddSingleton(c => new SharedClientComputedCache(c.GetRequiredService<TCache>()));
-        services.AddAlias<ClientComputedCache, SharedClientComputedCache>();
+        services.AddAlias<IClientComputedCache, SharedClientComputedCache>();
         return this;
     }
 

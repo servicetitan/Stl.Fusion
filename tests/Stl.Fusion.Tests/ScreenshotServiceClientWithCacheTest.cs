@@ -19,7 +19,7 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
 
         await using var serving = await WebHost.Serve();
         await Delay(0.25);
-        var cache = ClientServices.GetRequiredService<ClientComputedCache>();
+        var cache = ClientServices.GetRequiredService<IClientComputedCache>();
         await cache.WhenInitialized;
 
         var clientServices2 = CreateServices(true);
@@ -60,7 +60,7 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
 
         await using var serving = await WebHost.Serve();
         await Delay(0.25);
-        var cache = ClientServices.GetRequiredService<ClientComputedCache>();
+        var cache = ClientServices.GetRequiredService<IClientComputedCache>();
         await cache.WhenInitialized;
 
         var clientServices2 = CreateServices(true);

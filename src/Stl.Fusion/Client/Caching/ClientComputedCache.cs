@@ -6,7 +6,7 @@ using Stl.Rpc.Infrastructure;
 
 namespace Stl.Fusion.Client.Caching;
 
-public abstract class ClientComputedCache : RpcServiceBase
+public abstract class ClientComputedCache : RpcServiceBase, IClientComputedCache
 {
     public static RpcCacheKey VersionKey { get; set; } = new("", "Version", TextOrBytes.EmptyBytes);
 
