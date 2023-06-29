@@ -1,4 +1,7 @@
+using System.Text;
+using Cysharp.Text;
 using FluentAssertions;
+using Microsoft.Toolkit.HighPerformance.Buffers;
 using Newtonsoft.Json;
 using Xunit.Abstractions;
 
@@ -78,6 +81,15 @@ public static class SerializationTestExt
         output?.WriteLine($"SystemJsonSerializer: {json}");
         value = s.Read(json);
 
+        using var buffer = new ArrayPoolBufferWriter<byte>();
+        s.Write(buffer, value);
+        var bytes = buffer.WrittenMemory;
+        var json2 = Encoding.UTF8.GetDecoder().Convert(bytes.Span);
+        json2.Should().Be(json);
+        var v0 = s.Read(bytes);
+        var json3 = s.Write(v0);
+        json3.Should().Be(json);
+
         var v1 = SystemJsonSerialized.New(value);
         output?.WriteLine($"SystemJsonSerialized: {v1.Data}");
         value = SystemJsonSerialized.New<T>(v1.Data).Value;
@@ -97,6 +109,15 @@ public static class SerializationTestExt
         var json = s.Write(value);
         output?.WriteLine($"NewtonsoftJsonSerializer: {json}");
         value = s.Read(json);
+
+        using var buffer = new ArrayPoolBufferWriter<byte>();
+        s.Write(buffer, value);
+        var bytes = buffer.WrittenMemory;
+        var json2 = Encoding.UTF8.GetDecoder().Convert(bytes.Span);
+        json2.Should().Be(json);
+        var v0 = s.Read(bytes);
+        var json3 = s.Write(v0);
+        json3.Should().Be(json);
 
         var v1 = NewtonsoftJsonSerialized.New(value);
         output?.WriteLine($"NewtonsoftJsonSerialized: {v1.Data}");

@@ -28,11 +28,12 @@ public class SystemJsonSerializer : TextSerializerBase
     public override object? Read(ReadOnlyMemory<byte> data, Type type, out int readLength)
     {
         readLength = data.Length;
-        return JsonSerializer.Deserialize(data.Span, type);
+        var utf8JsonReader = new Utf8JsonReader(data.Span);
+        return JsonSerializer.Deserialize(ref utf8JsonReader, type, Options);
     }
 
     public override object? Read(ReadOnlyMemory<char> data, Type type)
-        => JsonSerializer.Deserialize(data.Span, type);
+        => JsonSerializer.Deserialize(data.Span, type, Options);
 
     // Write
 
@@ -40,7 +41,10 @@ public class SystemJsonSerializer : TextSerializerBase
         => JsonSerializer.Serialize(value, type, Options);
 
     public override void Write(IBufferWriter<byte> bufferWriter, object? value, Type type)
-        => JsonSerializer.Serialize(new Utf8JsonWriter(bufferWriter), type, Options);
+    {
+        var utf8JsonWriter = new Utf8JsonWriter(bufferWriter);
+        JsonSerializer.Serialize(utf8JsonWriter, value, type, Options);
+    }
 
     public override void Write(TextWriter textWriter, object? value, Type type)
     {

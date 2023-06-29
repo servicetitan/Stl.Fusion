@@ -10,31 +10,17 @@ public static unsafe class DecoderExt
 public static class DecoderExt
 #endif
 {
-#if false
-    public static void Convert(this Decoder decoder, ReadOnlySequence<byte> source, IBufferWriter<char> target)
+    public static string Convert(this Decoder decoder, ReadOnlySpan<byte> source)
     {
-        var position = source.Start;
-        var lastBuffer = ReadOnlyMemory<byte>.Empty;
-        while (source.TryGet(ref position, out var buffer)) {
-            if (lastBuffer.Length != 0)
-                decoder.Convert(lastBuffer.Span, target, flush: false);
-            lastBuffer = buffer;
+        var sb = ZString.CreateStringBuilder();
+        try {
+            decoder.Convert(source, ref sb);
+            return sb.ToString();
         }
-        decoder.Convert(lastBuffer.Span, target);
-    }
-
-    public static void Convert(this Decoder decoder, ReadOnlySequence<byte> source, ref Utf16ValueStringBuilder target)
-    {
-        var position = source.Start;
-        var lastBuffer = ReadOnlyMemory<byte>.Empty;
-        while (source.TryGet(ref position, out var buffer)) {
-            if (lastBuffer.Length != 0)
-                decoder.Convert(lastBuffer.Span, target, flush: false);
-            lastBuffer = buffer;
+        finally {
+            sb.Dispose();
         }
-        decoder.Convert(lastBuffer.Span, target);
     }
-#endif
 
     public static void Convert(this Decoder decoder, ReadOnlySpan<byte> source, IBufferWriter<char> target, bool flush = true)
     {
