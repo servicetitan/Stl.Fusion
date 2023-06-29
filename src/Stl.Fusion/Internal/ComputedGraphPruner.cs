@@ -12,7 +12,7 @@ public sealed class ComputedGraphPruner : WorkerBase
         public RandomTimeSpan CheckPeriod { get; init; } = TimeSpan.FromMinutes(10).ToRandom(0.1);
         public RandomTimeSpan NextBatchDelay { get; init; } = TimeSpan.FromSeconds(0.1).ToRandom(0.25);
         public RetryDelaySeq RetryDelays { get; init; } = new(60, 600);
-        public int BatchSize { get; init; } = 1024 * HardwareInfo.GetProcessorCountPo2Factor();
+        public int BatchSize { get; init; } = FusionSettings.ComputedGraphPrunerBatchSize;
     }
 
     private readonly TaskCompletionSource<Unit> _whenActivatedSource;
