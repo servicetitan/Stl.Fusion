@@ -97,6 +97,8 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
         }
         finally {
             IsClosed = true;
+            if (IsConfirmed == false)
+                MasterDbContext?.StopPooling();
             SilentDispose(Transaction);
             SilentDispose(MasterDbContext);
         }
@@ -123,6 +125,7 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
         Tenant = tenant;
         if (IsClosed)
             throw Stl.Fusion.Operations.Internal.Errors.OperationScopeIsAlreadyClosed();
+
         if (MasterDbContext == null) {
             // Creating MasterDbContext
             CommandContext.Items.Replace<IOperationScope?>(null, this);
@@ -226,11 +229,13 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
         if (IsClosed) {
             if (IsConfirmed == false)
                 return;
+
             throw Stl.Fusion.Operations.Internal.Errors.OperationScopeIsAlreadyClosed();
         }
         try {
             if (!IsUsed)
                 return;
+
             await Transaction!.RollbackAsync().ConfigureAwait(false);
         }
         finally {
