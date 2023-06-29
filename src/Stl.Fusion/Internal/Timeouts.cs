@@ -1,5 +1,3 @@
-using Stl.OS;
-
 namespace Stl.Fusion.Internal;
 
 public static class Timeouts
