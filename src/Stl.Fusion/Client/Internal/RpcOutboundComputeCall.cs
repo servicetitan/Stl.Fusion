@@ -26,7 +26,15 @@ public class RpcOutboundComputeCall<TResult> : RpcOutboundCall<TResult>, IRpcOut
             if (IsResultVersionChanged(resultVersion))
                 SetInvalidated(true);
 
-            if (ResultSource.TrySetResult((TResult)result!)) {
+            var typedResult = default(TResult)!;
+            try {
+                if (result != null)
+                    typedResult = (TResult)result;
+            }
+            catch (InvalidCastException) {
+                // Intended
+            }
+            if (ResultSource.TrySetResult(typedResult)) {
                 ResultVersion = resultVersion;
                 if (context != null && Context.CacheInfoCapture is { } cacheInfoCapture)
                     cacheInfoCapture.ResultSource?.TrySetResult(context.Message.ArgumentData);

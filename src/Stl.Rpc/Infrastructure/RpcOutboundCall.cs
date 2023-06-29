@@ -76,7 +76,7 @@ public abstract class RpcOutboundCall : RpcCall
             if (Context.CacheInfoCapture is { Key: null } cacheInfoCapture) {
                 cacheInfoCapture.Key = new RpcCacheKey(MethodDef.Service.Name, MethodDef.Name, message.ArgumentData);
                 if (cacheInfoCapture.CaptureMode == RpcCacheInfoCaptureMode.KeyOnly) {
-                    SetResult(default, null);
+                    SetResult(null, null);
                     return default;
                 }
             }
@@ -177,7 +177,15 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
 
     public override void SetResult(object? result, RpcInboundContext? context)
     {
-        if (ResultSource.TrySetResult((TResult)result!)) {
+        var typedResult = default(TResult)!;
+        try {
+            if (result != null)
+                typedResult = (TResult)result;
+        }
+        catch (InvalidCastException) {
+            // Intended
+        }
+        if (ResultSource.TrySetResult(typedResult)) {
             Unregister();
             if (context != null && Context.CacheInfoCapture is { } cacheInfoCapture)
                 cacheInfoCapture.ResultSource?.TrySetResult(context.Message.ArgumentData);
