@@ -3,9 +3,11 @@ namespace Stl.OS;
 public enum OSKind
 {
     OtherUnix = 0,
-    Windows = 1,
-    MacOS = 2,
-    WebAssembly = 4,
+    Windows,
+    MacOS,
+    Android,
+    IOS,
+    WebAssembly,
 }
 
 public static class OSInfo
@@ -15,9 +17,12 @@ public static class OSInfo
 
     public static bool IsWebAssembly => Kind == OSKind.WebAssembly;
     public static bool IsWindows => Kind == OSKind.Windows;
+    public static bool IsAndroid => Kind == OSKind.Android;
+    public static bool IsIOS => Kind == OSKind.IOS;
     public static bool IsMacOS => Kind == OSKind.MacOS;
     public static bool IsOtherUnix => Kind == OSKind.OtherUnix;
     public static bool IsAnyUnix => Kind == OSKind.OtherUnix || IsMacOS;
+    public static bool IsAnyClient => IsWebAssembly || IsAndroid || IsIOS;
 
     static OSInfo()
     {
@@ -37,9 +42,14 @@ public static class OSInfo
         }
 
         // MacOS or Unix
-        Kind = OperatingSystem.IsMacOS()
-            ? OSKind.MacOS
-            : OSKind.OtherUnix;
+        if (OperatingSystem.IsAndroid())
+            Kind = OSKind.Android;
+        else if (OperatingSystem.IsIOS())
+            Kind = OSKind.IOS;
+        else if (OperatingSystem.IsMacOS())
+            Kind = OSKind.MacOS;
+        else
+            Kind = OSKind.OtherUnix;
         UserHomePath = Environment.GetEnvironmentVariable("HOME") ?? "";
 #else
         // WebAssembly w/ .NET 5.0+

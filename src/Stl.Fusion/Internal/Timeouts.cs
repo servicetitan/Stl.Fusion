@@ -18,13 +18,13 @@ public static class Timeouts
         KeepAlive = new ConcurrentTimerSet<object>(
             new() {
                 Quanta = KeepAliveQuanta,
-                ConcurrencyLevel = HardwareInfo.GetProcessorCountPo2Factor(),
+                ConcurrencyLevel = FusionSettings.TimeoutsConcurrencyLevel,
                 Clock = Clock,
             }, null, StartedAt);
         Invalidate = new ConcurrentTimerSet<IComputed>(
             new() {
                 Quanta = KeepAliveQuanta,
-                ConcurrencyLevel = HardwareInfo.GetProcessorCountPo2Factor(),
+                ConcurrencyLevel = FusionSettings.TimeoutsConcurrencyLevel,
                 Clock = Clock,
             },
             t => t.Invalidate(true), StartedAt);
