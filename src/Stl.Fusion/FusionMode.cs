@@ -1,4 +1,4 @@
-namespace Stl.Fusion.Internal;
+namespace Stl.Fusion;
 
 public enum FusionMode
 {
