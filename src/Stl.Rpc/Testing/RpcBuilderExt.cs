@@ -13,14 +13,16 @@ public static class RpcBuilderExt
         services.AddSingleton(c => new RpcTestClient(
             c.GetRequiredService<RpcTestClient.Options>(), c));
         services.AddAlias<RpcClient, RpcTestClient>();
+        services.AddSingleton(c => new RpcClientPeerReconnectDelayer(c) {
+            ReconnectDelays = new(TimeSpan.Zero, TimeSpan.Zero),
+        });
         services.AddSingleton<RpcPeerFactory>(_ => (hub, peerRef)
             => peerRef.IsServer
                 ? new RpcServerPeer(hub, peerRef) {
                     CloseTimeout = TimeSpan.FromSeconds(10),
                 }
-                : new RpcClientPeer(hub, peerRef) {
-                    ReconnectDelays = new(TimeSpan.Zero, TimeSpan.Zero, 0),
-                });
+                : new RpcClientPeer(hub, peerRef)
+        );
         return rpc;
     }
 }

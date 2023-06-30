@@ -21,6 +21,7 @@ public sealed class RpcHub : ProcessorBase, IHasServices
     internal RpcPeerFactory PeerFactory { get; }
     internal RpcClientChannelFactory ClientChannelFactory { get; }
     internal RpcClientIdGenerator ClientIdGenerator { get; }
+    internal RpcClientPeerReconnectDelayer ClientPeerReconnectDelayer { get; }
     internal RpcBackendServiceDetector BackendServiceDetector { get; }
     internal RpcUnrecoverableErrorDetector UnrecoverableErrorDetector { get; }
     internal IEnumerable<RpcPeerTracker> PeerTrackers => _peerTrackers ??= Services.GetRequiredService<IEnumerable<RpcPeerTracker>>();
@@ -51,6 +52,7 @@ public sealed class RpcHub : ProcessorBase, IHasServices
         PeerFactory = services.GetRequiredService<RpcPeerFactory>();
         ClientChannelFactory = services.GetRequiredService<RpcClientChannelFactory>();
         ClientIdGenerator = services.GetRequiredService<RpcClientIdGenerator>();
+        ClientPeerReconnectDelayer = services.GetRequiredService<RpcClientPeerReconnectDelayer>();
         BackendServiceDetector = services.GetRequiredService<RpcBackendServiceDetector>();
         UnrecoverableErrorDetector = services.GetRequiredService<RpcUnrecoverableErrorDetector>();
     }

@@ -49,6 +49,18 @@ public sealed class AsyncEvent<T>
         // ReSharper disable once IteratorNeverReturns
     }
 
+    public async IAsyncEnumerable<AsyncEvent<T>> Events([EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var current = this;
+        while (true) {
+            yield return current;
+            current = await current.WhenNext(cancellationToken).ConfigureAwait(false);
+            if (current == null)
+                break;
+        }
+        // ReSharper disable once IteratorNeverReturns
+    }
+
     public AsyncEvent<T> Latest()
     {
         var current = this;

@@ -14,6 +14,7 @@ public readonly record struct RpcInternalServices(RpcHub Hub)
     public RpcPeerFactory PeerFactory => Hub.PeerFactory;
     public RpcClientChannelFactory ClientChannelFactory => Hub.ClientChannelFactory;
     public RpcClientIdGenerator ClientIdGenerator => Hub.ClientIdGenerator;
+    public RpcClientPeerReconnectDelayer ClientPeerReconnectDelayer => Hub.ClientPeerReconnectDelayer;
     public RpcUnrecoverableErrorDetector UnrecoverableErrorDetector => Hub.UnrecoverableErrorDetector;
     public IEnumerable<RpcPeerTracker> PeerTrackers => Hub.PeerTrackers;
     public RpcSystemCallSender SystemCallSender => Hub.SystemCallSender;

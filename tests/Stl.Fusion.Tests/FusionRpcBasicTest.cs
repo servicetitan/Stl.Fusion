@@ -42,32 +42,33 @@ public class FusionRpcBasicTest : SimpleFusionTestBase
     }
 
     [Fact]
-    public async Task ConnectionMonitorTest()
+    public async Task PeerMonitorTest()
     {
         var services = CreateServices();
         var testClient = services.GetRequiredService<RpcTestClient>();
         var clientPeer = testClient.Single().ClientPeer;
-        var connectionMonitor = new RpcPeerConnectionMonitor(services) {
+        var connectionMonitor = new RpcPeerStateMonitor(services) {
             StartDelay = TimeSpan.Zero,
         };
         connectionMonitor.Start();
 
-        await connectionMonitor.IsConnected.When(x => x == true)
+        await connectionMonitor.State.When(x => x?.IsConnected == true)
             .WaitAsync(TimeSpan.FromSeconds(1));
 
         clientPeer.Disconnect(new InvalidOperationException("Disconnected!"));
         try {
-            await connectionMonitor.IsConnected.When(x => x == false)
+            var c = await connectionMonitor.State.When(x => x?.IsConnected == false)
                 .WaitAsync(TimeSpan.FromSeconds(1));
+            c.Value!.ReconnectsAt.Should().NotBe(default);
         }
         catch (InvalidOperationException) {
             // It's our own one
         }
 
         await testClient[clientPeer].Connect();
-        await connectionMonitor.IsConnected
+        await connectionMonitor.State
             .Changes()
-            .FirstAsync(c => c.ValueOrDefault == true)
+            .FirstAsync(c => c.Value?.IsConnected == true)
             .AsTask()
             .WaitAsync(TimeSpan.FromSeconds(1));
     }

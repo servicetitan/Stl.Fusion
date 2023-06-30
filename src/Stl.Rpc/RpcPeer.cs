@@ -7,14 +7,12 @@ public abstract class RpcPeer : WorkerBase
 {
     private ILogger? _log;
     private readonly Lazy<ILogger?> _callLogLazy;
-    private IMomentClock? _clock;
     private AsyncEvent<RpcPeerConnectionState> _connectionState = new(RpcPeerConnectionState.Initial, true);
     private ChannelWriter<RpcMessage>? _sender;
 
     protected IServiceProvider Services => Hub.Services;
     protected internal ILogger Log => _log ??= Services.LogFor(GetType());
     protected internal ILogger? CallLog => _callLogLazy.Value;
-    protected internal IMomentClock Clock => _clock ??= Services.Clocks().CpuClock;
     protected internal ChannelWriter<RpcMessage>? Sender => _sender;
 
     public RpcHub Hub { get; }

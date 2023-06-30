@@ -10,8 +10,9 @@ public static class FusionBuilderExt
         Func<IServiceProvider, FusionTime.Options>? optionsFactory = null)
     {
         var services = fusion.Services;
-        services.TryAddSingleton(c => optionsFactory?.Invoke(c) ?? new());
-        fusion.AddService<IFusionTime, FusionTime>();
+        services.AddSingleton(optionsFactory, _ => FusionTime.Options.Default);
+        if (!services.HasService<IFusionTime>())
+            fusion.AddService<IFusionTime, FusionTime>();
         return fusion;
     }
 
@@ -20,7 +21,7 @@ public static class FusionBuilderExt
     {
         var services = fusion.Services;
         services.AddSingleton(c => {
-            var monitor = new RpcPeerConnectionMonitor(c);
+            var monitor = new RpcPeerStateMonitor(c);
             if (peerRefResolver != null)
                 monitor.PeerRef = peerRefResolver.Invoke(c);
             return monitor;

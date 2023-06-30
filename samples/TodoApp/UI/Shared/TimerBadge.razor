@@ -1,0 +1,18 @@
+@inherits ComputedStateComponent<string>
+@inject IFusionTime FusionTime
+
+<span class="@CssClass">@State.Value</span>
+
+@code {
+    [Parameter]
+    public string CssClass { get; set; } = "";
+    [Parameter]
+    public Moment ExpiresAt { get; set; }
+
+    protected override async Task<string> ComputeState(CancellationToken cancellationToken)
+    {
+        var now = await FusionTime.Now().ConfigureAwait(false);
+        var delta = ExpiresAt - now;
+        return delta <= TimeSpan.Zero ? "right now" : $"in {delta.TotalSeconds:N1}s";
+    }
+}

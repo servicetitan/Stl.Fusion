@@ -44,6 +44,7 @@ public readonly struct RpcBuilder
         services.TryAddSingleton(c => new RpcOutboundMiddlewares(c));
         services.TryAddTransient(_ => new RpcInboundCallTracker());
         services.TryAddTransient(_ => new RpcOutboundCallTracker());
+        services.TryAddSingleton(c => new RpcClientPeerReconnectDelayer(c));
 
         // Interceptors
         services.TryAddSingleton(_ => RpcClientInterceptor.Options.Default);

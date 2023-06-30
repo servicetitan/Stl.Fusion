@@ -1,15 +1,16 @@
 @using Stl
 @using Stl.DependencyInjection
 @using Stl.Fusion.Internal
-@inherits ComputedStateComponent<bool?>
+@using Stl.Rpc
+@inherits ComputedStateComponent<RpcPeerState?>
 @inject Session Session
 
 @{
-    var error = State.Error;
-    var isConnected = error == null && (State.Value ?? true); // null = "Unknown state", we view it as "connected" here
+    var state = State.ValueOrDefault;
+    var isConnected = state?.IsConnected ?? true;
     var message = isConnected
         ? "Connected."
-        : error?.Message ?? "Unknown error";
+        : state?.Error?.Message ?? "Unknown error.";
     var iconName = isConnected
         ? FontAwesomeIcons.Cloud
         : FontAwesomeIcons.ExclamationTriangle;
@@ -19,37 +20,43 @@
 }
 
 <BarItem>
-    <BarDropdown Class="@CssClass">
+    <BarDropdown Class="@CssClass" RightAligned="true">
         <BarDropdownToggle>
             <BarIcon IconName="@iconName" TextColor="@textColor"></BarIcon>
         </BarDropdownToggle>
-        <BarDropdownMenu RightAligned="true">
+        <BarDropdownMenu>
             <BarDropdownItem TextColor="@textColor">
-                @message
+                <span>@message</span>
+                @if (state?.ReconnectsAt is { } reconnectsAt) {
+                    <span> Will reconnect <TimerBadge ExpiresAt="reconnectsAt"/>. </span>
+                    <Button Color="Color.Success" Clicked="@TryReconnect">Reconnect</Button>
+                }
             </BarDropdownItem>
         </BarDropdownMenu>
     </BarDropdown>
 </BarItem>
 
 @code {
-    private RpcPeerConnectionMonitor? _connectionMonitor;
+    private RpcPeerStateMonitor? _monitor;
 
     [Parameter]
     public string CssClass { get; set; } = "";
 
     protected override void OnInitialized()
     {
-        _connectionMonitor = Services.GetService<RpcPeerConnectionMonitor>();
-        _connectionMonitor?.Start();
+        _monitor = Services.GetService<RpcPeerStateMonitor>();
+        _monitor?.Start();
         base.OnInitialized();
     }
 
-    protected override async Task<bool?> ComputeState(CancellationToken cancellationToken)
+    protected override async Task<RpcPeerState?> ComputeState(CancellationToken cancellationToken)
     {
-        if (_connectionMonitor == null)
+        if (_monitor == null)
             return null;
 
-        var isConnected = await _connectionMonitor.IsConnected.Use(cancellationToken).ConfigureAwait(false);
-        return isConnected ?? true; // null is "unknown", we want to show it as "connected"
+        return await _monitor.State.Use(cancellationToken).ConfigureAwait(false);
     }
+
+    private void TryReconnect()
+        => Services.RpcHub().InternalServices.ClientPeerReconnectDelayer.CancelActiveDelays();
 }

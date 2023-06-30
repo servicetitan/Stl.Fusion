@@ -17,6 +17,7 @@ public sealed partial record RetryDelaySeq(
         get {
             if (failedTryCount <= 0)
                 return TimeSpan.Zero;
+
             var multiplier = Math.Pow(Multiplier, failedTryCount - 1);
             var result = (Min.TotalSeconds * multiplier).Clamp(Min.TotalSeconds, Max.TotalSeconds);
             return TimeSpan.FromSeconds(result).ToRandom(MaxDelta).Next();

@@ -36,8 +36,14 @@ public class MutableState<T> : State<T>, IMutableState<T>
     }
 
     public MutableState(Options options, IServiceProvider services, bool initialize = true)
-        : base(options, services, initialize)
-        => NextOutput = options.InitialOutput;
+        : base(options, services, false)
+    {
+        NextOutput = options.InitialOutput;
+
+        // ReSharper disable once VirtualMemberCallInConstructor
+        if (initialize)
+            Initialize(options);
+    }
 
     // Set overloads
 

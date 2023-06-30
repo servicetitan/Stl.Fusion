@@ -177,12 +177,12 @@ public abstract class State<T> : ComputedInput,
         untypedOptions.EventConfigurator?.Invoke(this);
 
         var computed = CreateComputed();
-        if (!computed.TrySetOutput(options.InitialOutput))
-            return; // We assume Computed is already assigned in this case
+        if (_snapshot != null)
+            return; // CreateComputed sets Computed, if overriden (e.g. in MutableState)
 
+        computed.TrySetOutput(options.InitialOutput);
         Computed = computed;
-        if (this is not IMutableState)
-            computed.Invalidate();
+        computed.Invalidate();
     }
 
     protected internal virtual void OnInvalidated(Computed<T> computed)
