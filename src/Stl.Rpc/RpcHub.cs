@@ -19,7 +19,7 @@ public sealed class RpcHub : ProcessorBase, IHasServices
     internal RpcInboundMiddlewares InboundMiddlewares { get; }
     internal RpcOutboundMiddlewares OutboundMiddlewares { get; }
     internal RpcPeerFactory PeerFactory { get; }
-    internal RpcClientChannelFactory ClientChannelFactory { get; }
+    internal RpcClientConnectionFactory ClientConnectionFactory { get; }
     internal RpcClientIdGenerator ClientIdGenerator { get; }
     internal RpcClientPeerReconnectDelayer ClientPeerReconnectDelayer { get; }
     internal RpcBackendServiceDetector BackendServiceDetector { get; }
@@ -50,7 +50,7 @@ public sealed class RpcHub : ProcessorBase, IHasServices
         InboundMiddlewares = services.GetRequiredService<RpcInboundMiddlewares>();
         OutboundMiddlewares = services.GetRequiredService<RpcOutboundMiddlewares>();
         PeerFactory = services.GetRequiredService<RpcPeerFactory>();
-        ClientChannelFactory = services.GetRequiredService<RpcClientChannelFactory>();
+        ClientConnectionFactory = services.GetRequiredService<RpcClientConnectionFactory>();
         ClientIdGenerator = services.GetRequiredService<RpcClientIdGenerator>();
         ClientPeerReconnectDelayer = services.GetRequiredService<RpcClientPeerReconnectDelayer>();
         BackendServiceDetector = services.GetRequiredService<RpcBackendServiceDetector>();

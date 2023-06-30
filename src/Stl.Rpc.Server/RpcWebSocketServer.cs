@@ -53,9 +53,10 @@ public class RpcWebSocketServer : RpcServiceBase
         var webSocket = await acceptWebSocketTask.ConfigureAwait(false);
         var channel = new WebSocketChannel<RpcMessage>(
             Settings.WebSocketChannelOptions, webSocket, Services, cancellationToken);
-
+        var options = ImmutableOptionSet.Empty.Set(context).Set(webSocket);
+        var connection = new RpcConnection(channel, options);
         try {
-            await peer.Connect(channel, cancellationToken).ConfigureAwait(false);
+            await peer.Connect(connection, cancellationToken).ConfigureAwait(false);
             await channel.WhenClosed.ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {

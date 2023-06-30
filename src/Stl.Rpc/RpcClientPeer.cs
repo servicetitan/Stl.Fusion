@@ -1,12 +1,10 @@
-using Stl.Rpc.Infrastructure;
-
 namespace Stl.Rpc;
 
 public class RpcClientPeer : RpcPeer
 {
     private long _reconnectsAt;
 
-    public RpcClientChannelFactory ChannelFactory { get; init; }
+    public RpcClientConnectionFactory ConnectionFactory { get; init; }
     public RpcClientPeerReconnectDelayer ReconnectDelayer { get; init; }
 
     public Moment? ReconnectsAt {
@@ -20,17 +18,17 @@ public class RpcClientPeer : RpcPeer
         : base(hub, @ref)
     {
         LocalServiceFilter = static _ => false;
-        ChannelFactory = Hub.ClientChannelFactory;
+        ConnectionFactory = Hub.ClientConnectionFactory;
         ReconnectDelayer = Hub.ClientPeerReconnectDelayer;
     }
 
     // Protected methods
 
-    protected override async Task<Channel<RpcMessage>> GetChannel(CancellationToken cancellationToken)
+    protected override async Task<RpcConnection> GetConnection(CancellationToken cancellationToken)
     {
-        var (channel, error, _, tryIndex) = ConnectionState.LatestOrThrow().Value;
-        if (channel != null)
-            return channel;
+        var (connection, error, _, tryIndex) = ConnectionState.LatestOrThrow().Value;
+        if (connection != null)
+            return connection;
 
         var (delayTask, endsAt) = ReconnectDelayer.Delay(this, tryIndex, error, cancellationToken);
         if (!delayTask.IsCompleted) {
@@ -44,6 +42,6 @@ public class RpcClientPeer : RpcPeer
         }
 
         Log.LogInformation("'{PeerRef}': Connecting...", Ref);
-        return await ChannelFactory.Invoke(this, cancellationToken).ConfigureAwait(false);
+        return await ConnectionFactory.Invoke(this, cancellationToken).ConfigureAwait(false);
     }
 }

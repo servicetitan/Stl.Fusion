@@ -10,7 +10,7 @@ public delegate void RpcPeerTracker(RpcPeer peer);
 public delegate RpcPeer RpcPeerFactory(RpcHub hub, RpcPeerRef peerRef);
 public delegate RpcInboundContext RpcInboundContextFactory(RpcPeer peer, RpcMessage message, CancellationToken cancellationToken);
 public delegate RpcPeer? RpcCallRouter(RpcMethodDef methodDef, ArgumentList arguments);
-public delegate Task<Channel<RpcMessage>> RpcClientChannelFactory(RpcClientPeer peer, CancellationToken cancellationToken);
+public delegate Task<RpcConnection> RpcClientConnectionFactory(RpcClientPeer peer, CancellationToken cancellationToken);
 public delegate string RpcClientIdGenerator();
 public delegate bool RpcBackendServiceDetector(Type serviceType, Symbol serviceName);
 public delegate bool RpcUnrecoverableErrorDetector(Exception error, CancellationToken cancellationToken);
@@ -34,8 +34,8 @@ public static class RpcDefaultDelegates
             ? new RpcServerPeer(hub, peerRef)
             : new RpcClientPeer(hub, peerRef);
 
-    public static RpcClientChannelFactory ClientChannelFactory { get; set; } =
-        static (peer, cancellationToken) => peer.Hub.Client.CreateChannel(peer, cancellationToken);
+    public static RpcClientConnectionFactory ClientConnectionFactory { get; set; } =
+        static (peer, cancellationToken) => peer.Hub.Client.CreateConnection(peer, cancellationToken);
 
     public static RpcClientIdGenerator ClientIdGenerator { get; set; } =
         static () => RandomStringGenerator.Default.Next(32);

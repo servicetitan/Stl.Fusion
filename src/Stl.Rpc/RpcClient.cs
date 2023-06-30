@@ -10,5 +10,5 @@ public abstract class RpcClient : RpcServiceBase
         : base(services)
         => ClientId = Hub.ClientIdGenerator.Invoke();
 
-    public abstract Task<Channel<RpcMessage>> CreateChannel(RpcClientPeer peer, CancellationToken cancellationToken);
+    public abstract Task<RpcConnection> CreateConnection(RpcClientPeer peer, CancellationToken cancellationToken);
 }

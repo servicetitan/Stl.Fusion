@@ -66,6 +66,9 @@ public class RpcTestClient : RpcClient, IEnumerable<RpcTestConnection>
         return peerState;
     }
 
-    public override Task<Channel<RpcMessage>> CreateChannel(RpcClientPeer peer, CancellationToken cancellationToken)
-        => this[peer].PullClientChannel(cancellationToken);
+    public override async Task<RpcConnection> CreateConnection(RpcClientPeer peer, CancellationToken cancellationToken)
+    {
+        var channel = await this[peer].PullClientChannel(cancellationToken).ConfigureAwait(false);
+        return new RpcConnection(channel);
+    }
 }

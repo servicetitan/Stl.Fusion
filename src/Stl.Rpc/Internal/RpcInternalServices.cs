@@ -12,7 +12,7 @@ public readonly record struct RpcInternalServices(RpcHub Hub)
     public RpcInboundMiddlewares InboundMiddlewares => Hub.InboundMiddlewares;
     public RpcOutboundMiddlewares OutboundMiddlewares => Hub.OutboundMiddlewares;
     public RpcPeerFactory PeerFactory => Hub.PeerFactory;
-    public RpcClientChannelFactory ClientChannelFactory => Hub.ClientChannelFactory;
+    public RpcClientConnectionFactory ClientConnectionFactory => Hub.ClientConnectionFactory;
     public RpcClientIdGenerator ClientIdGenerator => Hub.ClientIdGenerator;
     public RpcClientPeerReconnectDelayer ClientPeerReconnectDelayer => Hub.ClientPeerReconnectDelayer;
     public RpcUnrecoverableErrorDetector UnrecoverableErrorDetector => Hub.UnrecoverableErrorDetector;

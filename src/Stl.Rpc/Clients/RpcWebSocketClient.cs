@@ -53,7 +53,7 @@ public class RpcWebSocketClient : RpcClient
         : base(services)
         => Settings = settings;
 
-    public override async Task<Channel<RpcMessage>> CreateChannel(RpcClientPeer peer, CancellationToken cancellationToken)
+    public override async Task<RpcConnection> CreateConnection(RpcClientPeer peer, CancellationToken cancellationToken)
     {
         var uri = Settings.ConnectionUriResolver(this, peer);
         var webSocket = Services.GetRequiredService<ClientWebSocket>();
@@ -61,6 +61,7 @@ public class RpcWebSocketClient : RpcClient
             .WaitAsync(Settings.ConnectTimeout, cancellationToken)
             .ConfigureAwait(false);
         var channel = new WebSocketChannel<RpcMessage>(Settings.WebSocketChannelOptions, webSocket, Services);
-        return channel;
+        var options = ImmutableOptionSet.Empty.Set(uri).Set(webSocket);
+        return new RpcConnection(channel, options);
     }
 }

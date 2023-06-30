@@ -100,7 +100,8 @@ public class RpcTestConnection
         }
 
         var connection = connectionSource.Value;
-        await ServerPeer.Connect(connection.Channel2, cancellationToken).ConfigureAwait(false);
+        var serverConnection = new RpcConnection(connection.Channel2);
+        await ServerPeer.Connect(serverConnection, cancellationToken).ConfigureAwait(false);
         return connection.Channel1;
     }
 

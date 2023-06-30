@@ -93,7 +93,7 @@ public abstract class RpcPeer : WorkerBase
 
     // Protected methods
 
-    protected abstract Task<Channel<RpcMessage>> GetChannel(CancellationToken cancellationToken);
+    protected abstract Task<RpcConnection> GetConnection(CancellationToken cancellationToken);
 
     protected override async Task OnRun(CancellationToken cancellationToken)
     {
@@ -102,14 +102,14 @@ public abstract class RpcPeer : WorkerBase
             : null;
         while (true) {
             var readerAbortToken = CancellationToken.None;
-            Channel<RpcMessage>? channel = null;
+            RpcConnection? connection = null;
             try {
-                channel = await GetChannel(cancellationToken).ConfigureAwait(false);
+                connection = await GetConnection(cancellationToken).ConfigureAwait(false);
                 // ReSharper disable once SuspiciousTypeConversion.Global
-                if (channel is null)
+                if (connection is null)
                     throw Errors.ConnectionUnrecoverable();
 
-                var connectionState = SetConnectionState(channel, null, true);
+                var connectionState = SetConnectionState(connection, null, true);
                 readerAbortToken = connectionState.ReaderAbortSource!.Token;
 
                 // Recovery: let's re-send all outbound calls
@@ -118,7 +118,7 @@ public abstract class RpcPeer : WorkerBase
                     await call.SendRegistered(true).ConfigureAwait(false);
                 }
 
-                var channelReader = channel.Reader;
+                var channelReader = connection.Channel.Reader;
                 if (semaphore == null)
                     while (await channelReader.WaitToReadAsync(readerAbortToken).ConfigureAwait(false))
                     while (channelReader.TryRead(out var message)) {
@@ -146,7 +146,7 @@ public abstract class RpcPeer : WorkerBase
                     // We can continue using the same channel, but we need to call
                     // SetConnectionState to nullify ReaderAbortSource there & trigger
                     // at least one state change - see Reset method code to understand why.
-                    SetConnectionState(channel, null);
+                    SetConnectionState(connection, null);
                     Log.LogInformation("'{PeerRef}': Reset", Ref);
                 }
                 else {
@@ -208,10 +208,10 @@ public abstract class RpcPeer : WorkerBase
 
     // Private methods
 
-    protected RpcPeerConnectionState SetConnectionState(Channel<RpcMessage>? channel, Exception? error, bool renewReaderAbortSource = false)
+    protected RpcPeerConnectionState SetConnectionState(RpcConnection? connection, Exception? error, bool renewReaderAbortSource = false)
     {
         if (error != null)
-            channel = null;
+            connection = null;
 
         Monitor.Enter(Lock);
         var connectionState = _connectionState.LatestOrThrow();
@@ -220,20 +220,20 @@ public abstract class RpcPeer : WorkerBase
         Exception? terminalError = null;
         try {
             var readerAbortSource = state.ReaderAbortSource;
-            if (channel == null || readerAbortSource?.IsCancellationRequested == true)
+            if (connection == null || readerAbortSource?.IsCancellationRequested == true)
                 readerAbortSource = null;
             else if (renewReaderAbortSource)
                 readerAbortSource = StopToken.CreateLinkedTokenSource();
             var tryIndex = error == null ? 0 : state.TryIndex + 1;
 
             // Let's check if any changes are made at all
-            if (oldState.Channel == channel
+            if (oldState.Connection == connection
                 && oldState.Error == error
                 && oldState.ReaderAbortSource == readerAbortSource
                 && oldState.TryIndex == tryIndex)
                 return connectionState.Value; // Nothing is changed
 
-            state = new RpcPeerConnectionState(channel, error, readerAbortSource, tryIndex);
+            state = new RpcPeerConnectionState(connection, error, readerAbortSource, tryIndex);
             _connectionState = connectionState = connectionState.AppendNext(state);
 
             if (error != null && Hub.UnrecoverableErrorDetector.Invoke(error, StopToken)) {
@@ -251,7 +251,7 @@ public abstract class RpcPeer : WorkerBase
                 oldState.ReaderAbortSource.CancelAndDisposeSilently();
                 _sender = state.Channel?.Writer;
             }
-            if (state.Channel != oldState.Channel)
+            if (state.Connection != oldState.Connection)
                 oldState.Channel?.Writer.TryComplete(error); // Reliably shut down the old channel
             Monitor.Exit(Lock);
 

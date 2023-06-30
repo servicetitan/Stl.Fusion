@@ -10,7 +10,7 @@ public class RpcServerPeer : RpcPeer
         : base(hub, @ref)
         => LocalServiceFilter = static serviceDef => !serviceDef.IsBackend;
 
-    public async Task Connect(Channel<RpcMessage> channel, CancellationToken cancellationToken = default)
+    public async Task Connect(RpcConnection connection, CancellationToken cancellationToken = default)
     {
         var connectionState = ConnectionState.LatestOrThrow();
         if (connectionState.Value.IsConnected()) {
@@ -18,12 +18,12 @@ public class RpcServerPeer : RpcPeer
             using var cts = cancellationToken.LinkWith(StopToken);
             await connectionState.WhenDisconnected(cts.Token).ConfigureAwait(false);
         }
-        SetConnectionState(channel, null);
+        SetConnectionState(connection, null);
     }
 
     // Protected methods
 
-    protected override async Task<Channel<RpcMessage>> GetChannel(CancellationToken cancellationToken)
+    protected override async Task<RpcConnection> GetConnection(CancellationToken cancellationToken)
     {
         while (true) {
             var cts = cancellationToken.CreateLinkedTokenSource();
@@ -34,8 +34,8 @@ public class RpcServerPeer : RpcPeer
                     .ConfigureAwait(false);
 
                 var connectionState = ConnectionState.LatestOrThrow().Value;
-                if (connectionState.Channel != null)
-                    return connectionState.Channel;
+                if (connectionState.Connection != null)
+                    return connectionState.Connection;
             }
             finally {
                 cts.CancelAndDisposeSilently();
