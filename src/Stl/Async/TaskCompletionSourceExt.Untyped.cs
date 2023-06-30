@@ -1,46 +1,48 @@
 namespace Stl.Async;
 
+#if NET5_0_OR_GREATER
+
 public static partial class TaskCompletionSourceExt
 {
     // NewXxx
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static TaskCompletionSource<T> New<T>()
+    public static TaskCompletionSource New()
         => new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static TaskCompletionSource<T> NewSynchronous<T>()
+    public static TaskCompletionSource NewSynchronous()
         => new();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static TaskCompletionSource<T> New<T>(bool runContinuationsAsynchronously)
+    public static TaskCompletionSource New(bool runContinuationsAsynchronously)
         => runContinuationsAsynchronously
             ? new(TaskCreationOptions.RunContinuationsAsynchronously)
             : new();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static TaskCompletionSource<T> New<T>(TaskCreationOptions taskCreationOptions)
+    public static TaskCompletionSource New(TaskCreationOptions taskCreationOptions)
         => new(taskCreationOptions);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static TaskCompletionSource<T> New<T>(object? state, TaskCreationOptions taskCreationOptions)
+    public static TaskCompletionSource New(object? state, TaskCreationOptions taskCreationOptions)
         => new(state, taskCreationOptions);
 
     // WithXxx
 
-    public static TaskCompletionSource<T> WithResult<T>(this TaskCompletionSource<T> value, T result)
+    public static TaskCompletionSource WithResult(this TaskCompletionSource value)
     {
-        value.TrySetResult(result);
+        value.TrySetResult();
         return value;
     }
 
-    public static TaskCompletionSource<T> WithException<T>(this TaskCompletionSource<T> value, Exception error)
+    public static TaskCompletionSource WithException(this TaskCompletionSource value, Exception error)
     {
         value.TrySetException(error);
         return value;
     }
 
-    public static TaskCompletionSource<T> WithCancellation<T>(this TaskCompletionSource<T> value, CancellationToken cancellationToken = default)
+    public static TaskCompletionSource WithCancellation(this TaskCompletionSource value, CancellationToken cancellationToken = default)
     {
         if (cancellationToken.IsCancellationRequested)
             value.TrySetCanceled(cancellationToken);
@@ -51,7 +53,7 @@ public static partial class TaskCompletionSourceExt
 
     // (Try)SetFromTask
 
-    public static void SetFromTask<T>(this TaskCompletionSource<T> target, Task<T> task, CancellationToken cancellationToken = default)
+    public static void SetFromTask(this TaskCompletionSource target, Task task, CancellationToken cancellationToken = default)
     {
         if (task.IsCanceled) {
 #if NET5_0_OR_GREATER
@@ -67,21 +69,21 @@ public static partial class TaskCompletionSourceExt
         else if (task.Exception != null)
             target.SetException(task.Exception.GetBaseException());
         else
-            target.SetResult(task.Result);
+            target.SetResult();
     }
 
-    public static bool TrySetFromTask<T>(this TaskCompletionSource<T> target, Task<T> task, CancellationToken cancellationToken = default)
+    public static bool TrySetFromTask(this TaskCompletionSource target, Task task, CancellationToken cancellationToken = default)
         => task.IsCanceled
             ? cancellationToken.IsCancellationRequested
                 ? target.TrySetCanceled(cancellationToken)
                 : target.TrySetCanceled()
             : task.Exception != null
                 ? target.TrySetException(task.Exception.GetBaseException())
-                : target.TrySetResult(task.Result);
+                : target.TrySetResult();
 
     // (Try)SetFromTaskAsync
 
-    public static Task SetFromTaskAsync<T>(this TaskCompletionSource<T> target, Task<T> task, CancellationToken cancellationToken = default)
+    public static Task SetFromTaskAsync(this TaskCompletionSource target, Task task, CancellationToken cancellationToken = default)
     {
         _ = task.ContinueWith(
             t => target.SetFromTask(t, cancellationToken),
@@ -89,7 +91,7 @@ public static partial class TaskCompletionSourceExt
         return target.Task;
     }
 
-    public static Task TrySetFromTaskAsync<T>(this TaskCompletionSource<T> target, Task<T> task, CancellationToken cancellationToken = default)
+    public static Task TrySetFromTaskAsync(this TaskCompletionSource target, Task task, CancellationToken cancellationToken = default)
     {
         _ = task.ContinueWith(
             t => target.TrySetFromTask(t, cancellationToken),
@@ -99,10 +101,10 @@ public static partial class TaskCompletionSourceExt
 
     // (Try)SetFromResult
 
-    public static void SetFromResult<T>(this TaskCompletionSource<T> target, Result<T> result, CancellationToken cancellationToken = default)
+    public static void SetFromResult(this TaskCompletionSource target, Result<Unit> result, CancellationToken cancellationToken = default)
     {
         if (result.IsValue(out var v, out var e))
-            target.SetResult(v);
+            target.SetResult();
         else if (e is OperationCanceledException) {
 #if NET5_0_OR_GREATER
             if (cancellationToken.IsCancellationRequested)
@@ -118,12 +120,14 @@ public static partial class TaskCompletionSourceExt
             target.SetException(e);
     }
 
-    public static bool TrySetFromResult<T>(this TaskCompletionSource<T> target, Result<T> result, CancellationToken cancellationToken = default)
+    public static bool TrySetFromResult(this TaskCompletionSource target, Result<Unit> result, CancellationToken cancellationToken = default)
         => result.IsValue(out var v, out var e)
-            ? target.TrySetResult(v)
+            ? target.TrySetResult()
             : e is OperationCanceledException
                 ? cancellationToken.IsCancellationRequested
                     ? target.TrySetCanceled(cancellationToken)
                     : target.TrySetCanceled()
                 : target.TrySetException(e);
 }
+
+#endif
