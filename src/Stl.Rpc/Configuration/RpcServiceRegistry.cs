@@ -1,4 +1,5 @@
 using System.Text;
+using Stl.OS;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Internal;
 
@@ -9,7 +10,7 @@ public sealed class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<Rpc
     private readonly Dictionary<Type, RpcServiceDef> _services = new();
     private readonly Dictionary<Symbol, RpcServiceDef> _serviceByName = new();
 
-    public static LogLevel ConstructionDumpLogLevel { get; set; } = LogLevel.None;
+    public static LogLevel ConstructionDumpLogLevel { get; set; } = OSInfo.IsAnyClient ? LogLevel.None : LogLevel.Information;
 
     public int Count => _serviceByName.Count;
     public RpcServiceDef this[Type serviceType] => Get(serviceType) ?? throw Errors.NoService(serviceType);

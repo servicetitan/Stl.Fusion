@@ -42,7 +42,8 @@ public static class RpcDefaultDelegates
 
     public static RpcBackendServiceDetector BackendServiceDetector { get; set; }=
         static (serviceType, serviceName) =>
-            serviceType.Name.EndsWith("Backend", StringComparison.Ordinal)
+            typeof(IBackendService).IsAssignableFrom(serviceType)
+            || serviceType.Name.EndsWith("Backend", StringComparison.Ordinal)
             || serviceName.Value.StartsWith("backend.", StringComparison.Ordinal);
 
     public static RpcUnrecoverableErrorDetector UnrecoverableErrorDetector { get; set; } =
