@@ -177,7 +177,9 @@ public abstract class State<T> : ComputedInput,
         untypedOptions.EventConfigurator?.Invoke(this);
 
         var computed = CreateComputed();
-        computed.TrySetOutput(options.InitialOutput);
+        if (!computed.TrySetOutput(options.InitialOutput))
+            return; // We assume Computed is already assigned in this case
+
         Computed = computed;
         if (this is not IMutableState)
             computed.Invalidate();
