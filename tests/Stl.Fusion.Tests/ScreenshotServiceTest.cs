@@ -39,7 +39,7 @@ public class ScreenshotServiceTest : SimpleFusionTestBase
         }
     }
 
-    [Fact]
+    [Fact(Timeout = 30_000)]
     public async Task ReconnectTest()
     {
         if (OSInfo.IsAnyUnix)

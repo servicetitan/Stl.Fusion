@@ -103,7 +103,7 @@ public class FusionRpcReconnectionTest : SimpleFusionTestBase
         await AssertNoCalls(clientPeer);
     }
 
-    [Theory]
+    [Theory(Timeout = 30_000)]
     [InlineData(10)]
     public async Task ReconnectionTest(double testDuration)
     {
