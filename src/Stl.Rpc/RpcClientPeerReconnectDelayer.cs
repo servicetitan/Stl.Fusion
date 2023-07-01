@@ -18,6 +18,7 @@ public class RpcClientPeerReconnectDelayer : RetryDelayer, IHasServices
     {
         Services = services;
         Clock = Services.Clocks().CpuClock;
+        Delays = RetryDelaySeq.Exp(1, 60);
     }
 
     public virtual RetryDelay GetDelay(
