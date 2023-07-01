@@ -1,27 +1,30 @@
-namespace Stl.Fusion.Extensions;
+namespace Stl.Net;
 
 public sealed class Connector<TConnection> : WorkerBase
     where TConnection : class
 {
     private readonly Func<CancellationToken, Task<TConnection>> _connectionFactory;
     private volatile AsyncEvent<State> _state = new(State.New(), true);
+    private long _reconnectsAt;
 
-    public IMutableState<bool> IsConnected { get; }
+    public AsyncEvent<Result<bool>> IsConnected { get; private set; } = new(false, true);
+    public Moment? ReconnectsAt {
+        get {
+            var reconnectsAt = Interlocked.Read(ref _reconnectsAt);
+            return reconnectsAt == default ? null : new Moment(reconnectsAt);
+        }
+    }
 
     public Func<TConnection, CancellationToken, Task>? Connected { get; init; }
-    public Func<TConnection?, Exception?, CancellationToken, Task>? Disconnected { get; init; }
-    public RetryDelaySeq ReconnectDelays { get; init; } = new();
-    public IMomentClock Clock { get; init; } = MomentClockSet.Default.CpuClock;
+    public IRetryDelayer ReconnectDelayer { get; init; } = new RetryDelayer();
     public ILogger? Log { get; init; }
     public LogLevel LogLevel { get; init; } = LogLevel.Debug;
-    public string LogTag { get; init; } = "(Unknown)";
+    public string LogTag { get; init; }
 
-    public Connector(
-        Func<CancellationToken, Task<TConnection>> connectionFactory,
-        IStateFactory stateFactory)
+    public Connector(Func<CancellationToken, Task<TConnection>> connectionFactory)
     {
         _connectionFactory = connectionFactory;
-        IsConnected = stateFactory.NewMutable<bool>();
+        LogTag = GetType().GetName();
     }
 
     public Task<TConnection> GetConnection(CancellationToken cancellationToken)
@@ -63,7 +66,7 @@ public sealed class Connector<TConnection> : WorkerBase
 
             _state = prevState.AppendNext(State.New() with {
                 LastError = error,
-                RetryIndex = prevState.Value.RetryIndex + 1,
+                TryIndex = prevState.Value.TryIndex + 1,
             });
         }
         prevState.Value.Dispose();
@@ -82,7 +85,7 @@ public sealed class Connector<TConnection> : WorkerBase
             TConnection? connection = null;
             Exception? error = null;
             try {
-                Log?.Log(LogLevel, "{LogTag}: Connecting...", LogTag);
+                Log.IfEnabled(LogLevel)?.Log(LogLevel, "{LogTag}: Connecting...", LogTag);
                 if (!connectionTask.IsCompleted)
                     connection = await _connectionFactory.Invoke(cancellationToken).ConfigureAwait(false);
                 else // Something
@@ -95,8 +98,10 @@ public sealed class Connector<TConnection> : WorkerBase
             }
 
             if (connection != null) {
-                IsConnected.Value = true;
-                Log?.Log(LogLevel, "{LogTag}: Connected", LogTag);
+                lock (Lock)
+                    IsConnected = IsConnected.AppendNext(true);
+
+                Log.IfEnabled(LogLevel)?.Log(LogLevel, "{LogTag}: Connected", LogTag);
                 try {
                     if (Connected != null)
                         await Connected.Invoke(connection, cancellationToken).ConfigureAwait(false);
@@ -111,7 +116,7 @@ public sealed class Connector<TConnection> : WorkerBase
                 if (state == _state) {
                     _state = state.AppendNext(State.New() with {
                         LastError = error,
-                        RetryIndex = state.Value.RetryIndex + 1,
+                        TryIndex = state.Value.TryIndex + 1,
                     });
                     state.Value.Dispose();
                 }
@@ -120,23 +125,29 @@ public sealed class Connector<TConnection> : WorkerBase
                     state = _state;
                     error = state.Value.LastError;
                 }
+
+                if (error != null) {
+                    IsConnected = IsConnected.AppendNext(Result.Error<bool>(error));
+                    Log?.LogError(error, "{LogTag}: Disconnected", LogTag);
+                }
+                else {
+                    IsConnected = IsConnected.AppendNext(false);
+                    Log?.LogError("{LogTag}: Disconnected", LogTag);
+                }
             }
 
-            if (error != null) {
-                IsConnected.Error = error;
-                Log?.LogError(error, "{LogTag}: Disconnected", LogTag);
-            }
-            else {
-                IsConnected.Value = false;
-                Log?.LogError("{LogTag}: Disconnected", LogTag);
-            }
-            if (Disconnected != null)
-                await Disconnected.Invoke(connection, error, cancellationToken).ConfigureAwait(false);
-
-            if (state.Value.RetryIndex > 0) {
-                var retryDelay = ReconnectDelays[state.Value.RetryIndex];
-                Log?.Log(LogLevel, "{LogTag}: Will reconnect in {RetryDelay}", LogTag, retryDelay.ToShortString());
-                await Clock.Delay(retryDelay, cancellationToken).ConfigureAwait(false);
+            if (state.Value.TryIndex is var tryIndex and > 0) {
+                var delayLogger = new RetryDelayLogger("reconnect", LogTag, Log, LogLevel);
+                var (delayTask, endsAt) = ReconnectDelayer.GetDelay(tryIndex, delayLogger, cancellationToken);
+                if (!delayTask.IsCompleted) {
+                    Interlocked.Exchange(ref _reconnectsAt, endsAt.EpochOffsetTicks);
+                    try {
+                        await delayTask.ConfigureAwait(false);
+                    }
+                    finally {
+                        Interlocked.Exchange(ref _reconnectsAt, 0);
+                    }
+                }
             }
         }
     }
@@ -151,8 +162,9 @@ public sealed class Connector<TConnection> : WorkerBase
             _state = prevState.AppendNext(State.NewCancelled(StopToken));
             _state.Complete(StopToken);
             prevState.Value.Dispose();
+            IsConnected = IsConnected.AppendNext(true);
+            IsConnected.Complete();
         }
-        IsConnected.Value = false;
         return Task.CompletedTask;
     }
 
@@ -161,7 +173,7 @@ public sealed class Connector<TConnection> : WorkerBase
     private readonly record struct State(
         TaskCompletionSource<TConnection> ConnectionSource,
         Exception? LastError = null,
-        int RetryIndex = 0) : IDisposable
+        int TryIndex = 0) : IDisposable
     {
         public Task<TConnection> ConnectionTask => ConnectionSource.Task;
 

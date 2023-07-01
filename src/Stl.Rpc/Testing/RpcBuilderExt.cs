@@ -14,7 +14,7 @@ public static class RpcBuilderExt
             c.GetRequiredService<RpcTestClient.Options>(), c));
         services.AddAlias<RpcClient, RpcTestClient>();
         services.AddSingleton(c => new RpcClientPeerReconnectDelayer(c) {
-            ReconnectDelays = new(TimeSpan.Zero, TimeSpan.Zero),
+            Delays = new(TimeSpan.Zero, TimeSpan.Zero),
         });
         services.AddSingleton<RpcPeerFactory>(_ => (hub, peerRef)
             => peerRef.IsServer

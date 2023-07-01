@@ -1,7 +1,7 @@
 namespace Stl.Time;
 
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
-public sealed partial record RetryDelaySeq(
+public partial record RetryDelaySeq(
     [property: DataMember, MemoryPackOrder(0)] TimeSpan Min,
     [property: DataMember, MemoryPackOrder(1)] TimeSpan Max,
     [property: DataMember, MemoryPackOrder(2)] double MaxDelta = 0.1)
@@ -10,10 +10,15 @@ public sealed partial record RetryDelaySeq(
     private static readonly TimeSpan DefaultMin = TimeSpan.FromSeconds(0.5);
     private static readonly TimeSpan DefaultMax = TimeSpan.FromMinutes(5);
 
+    public static RetryDelaySeq Linear(double delayInSeconds, double maxDelta = 0.1)
+        => Linear(TimeSpan.FromSeconds(delayInSeconds), maxDelta);
+    public static RetryDelaySeq Linear(TimeSpan delay, double maxDelta = 0.1)
+        => new(delay, delay, maxDelta, 1);
+
     [DataMember, MemoryPackOrder(3)]
     public double Multiplier { get; init; } = Math.Sqrt(2);
 
-    public TimeSpan this[int failedTryCount] {
+    public virtual TimeSpan this[int failedTryCount] {
         get {
             if (failedTryCount <= 0)
                 return TimeSpan.Zero;

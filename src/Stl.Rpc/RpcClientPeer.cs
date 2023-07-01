@@ -30,7 +30,7 @@ public class RpcClientPeer : RpcPeer
         if (connection != null)
             return connection;
 
-        var (delayTask, endsAt) = ReconnectDelayer.Delay(this, tryIndex, error, cancellationToken);
+        var (delayTask, endsAt) = ReconnectDelayer.GetDelay(this, tryIndex, error, cancellationToken);
         if (!delayTask.IsCompleted) {
             Interlocked.Exchange(ref _reconnectsAt, endsAt.EpochOffsetTicks);
             try {

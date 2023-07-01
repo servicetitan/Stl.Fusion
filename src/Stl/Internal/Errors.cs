@@ -1,3 +1,5 @@
+using Stl.IO;
+
 namespace Stl.Internal;
 
 public static class Errors

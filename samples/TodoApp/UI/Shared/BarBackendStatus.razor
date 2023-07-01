@@ -58,5 +58,5 @@
     }
 
     private void TryReconnect()
-        => Services.RpcHub().InternalServices.ClientPeerReconnectDelayer.CancelActiveDelays();
+        => Services.RpcHub().InternalServices.ClientPeerReconnectDelayer.CancelDelays();
 }
