@@ -26,7 +26,7 @@ public static class StartupHelper
         // Fusion services
         var fusion = services.AddFusion();
         fusion.AddAuthClient();
-        fusion.AddRpcPeerConnectionMonitor();
+        fusion.AddRpcPeerStateMonitor();
         fusion.AddBlazor().AddAuthentication().AddPresenceReporter();
 
         var rpc = fusion.Rpc;

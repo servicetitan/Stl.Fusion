@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Fusion.Extensions.Internal;
 using Stl.Rpc;
 
@@ -16,7 +15,7 @@ public static class FusionBuilderExt
         return fusion;
     }
 
-    public static FusionBuilder AddRpcPeerConnectionMonitor(this FusionBuilder fusion,
+    public static FusionBuilder AddRpcPeerStateMonitor(this FusionBuilder fusion,
         Func<IServiceProvider, RpcPeerRef>? peerRefResolver = null)
     {
         var services = fusion.Services;
