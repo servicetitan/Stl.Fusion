@@ -19,7 +19,7 @@ public class RetryDelayer : IRetryDelayer
 
         var delay = Delays[tryIndex];
         if (tryIndex == 0 || delay <= TimeSpan.Zero)
-            return (Task.CompletedTask, default);
+            return RetryDelay.None;
 
         delay = TimeSpanExt.Max(TimeSpan.FromMilliseconds(1), delay);
         return (DelayImpl(), Clock.Now + delay);
