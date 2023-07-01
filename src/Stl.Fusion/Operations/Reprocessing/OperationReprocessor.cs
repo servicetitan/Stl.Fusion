@@ -25,7 +25,7 @@ public record OperationReprocessorOptions
     public static OperationReprocessorOptions Default { get; set; } = new();
 
     public int MaxRetryCount { get; init; } = 3;
-    public RetryDelaySeq RetryDelays { get; init; } = new(0.50, 3, 0.33) { Multiplier = Math.Sqrt(2) };
+    public RetryDelaySeq RetryDelays { get; init; } = RetryDelaySeq.Exp(0.50, 3, 0.33);
     public IMomentClock? DelayClock { get; init; }
 }
 

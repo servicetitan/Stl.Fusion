@@ -15,7 +15,7 @@ public class DbOperationLogReader<TDbContext> : DbTenantWorkerBase<TDbContext>
         public int MaxBatchSize { get; init; } = 8192;
         public TimeSpan MinDelay { get; init; } = TimeSpan.FromMilliseconds(20);
         public RandomTimeSpan UnconditionalCheckPeriod { get; init; } = TimeSpan.FromSeconds(5).ToRandom(0.1);
-        public RetryDelaySeq RetryDelays { get; init; } = (TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(5));
+        public RetryDelaySeq RetryDelays { get; init; } = RetryDelaySeq.Exp(1, 5);
     }
 
     protected Options Settings { get; }

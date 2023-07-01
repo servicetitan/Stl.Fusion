@@ -4,19 +4,28 @@ namespace Stl.Time;
 public partial record RetryDelaySeq(
     [property: DataMember, MemoryPackOrder(0)] TimeSpan Min,
     [property: DataMember, MemoryPackOrder(1)] TimeSpan Max,
-    [property: DataMember, MemoryPackOrder(2)] double MaxDelta = 0.1)
+    [property: DataMember, MemoryPackOrder(2)] double Spread)
     : IEnumerable<TimeSpan>
 {
-    private static readonly TimeSpan DefaultMin = TimeSpan.FromSeconds(0.5);
-    private static readonly TimeSpan DefaultMax = TimeSpan.FromMinutes(5);
+    private const double DefaultMinInSeconds = 0.5;
+    private const double DefaultMaxInSeconds = 5;
+    private const double DefaultSpread = 0.1;
+    private const double DefaultMultiplier = 1.41421356237; // Math.Sqrt(2)
+    private static readonly TimeSpan DefaultMin = TimeSpan.FromSeconds(DefaultMinInSeconds);
+    private static readonly TimeSpan DefaultMax = TimeSpan.FromMinutes(DefaultMaxInSeconds);
 
-    public static RetryDelaySeq Linear(double delayInSeconds, double maxDelta = 0.1)
+    public static RetryDelaySeq Linear(double delayInSeconds, double maxDelta = DefaultSpread)
         => Linear(TimeSpan.FromSeconds(delayInSeconds), maxDelta);
-    public static RetryDelaySeq Linear(TimeSpan delay, double maxDelta = 0.1)
+    public static RetryDelaySeq Linear(TimeSpan delay, double maxDelta = DefaultSpread)
         => new(delay, delay, maxDelta, 1);
 
+    public static RetryDelaySeq Exp(double minInSeconds, double maxInSeconds, double spread = DefaultSpread, double multiplier = DefaultMultiplier)
+        => new (TimeSpan.FromSeconds(minInSeconds), TimeSpan.FromSeconds(maxInSeconds), spread, multiplier);
+    public static RetryDelaySeq Exp(TimeSpan min, TimeSpan max, double spread = DefaultSpread, double multiplier = DefaultMultiplier)
+        => new (min, max, spread, multiplier);
+
     [DataMember, MemoryPackOrder(3)]
-    public double Multiplier { get; init; } = Math.Sqrt(2);
+    public double Multiplier { get; init; } = DefaultMultiplier;
 
     public virtual TimeSpan this[int failedTryCount] {
         get {
@@ -25,20 +34,20 @@ public partial record RetryDelaySeq(
 
             var multiplier = Math.Pow(Multiplier, failedTryCount - 1);
             var result = (Min.TotalSeconds * multiplier).Clamp(Min.TotalSeconds, Max.TotalSeconds);
-            return TimeSpan.FromSeconds(result).ToRandom(MaxDelta).Next();
+            return TimeSpan.FromSeconds(result).ToRandom(Spread).Next();
         }
     }
 
-    public RetryDelaySeq() : this(DefaultMin, DefaultMax) { }
-    public RetryDelaySeq(TimeSpan min) : this(min, DefaultMax) { }
-    public RetryDelaySeq(double minInSeconds)
-        : this(TimeSpan.FromSeconds(minInSeconds), DefaultMax) { }
-    public RetryDelaySeq(double minInSeconds, double maxInSeconds, double maxDelta = 0.1)
-        : this(TimeSpan.FromSeconds(minInSeconds), TimeSpan.FromSeconds(maxInSeconds), maxDelta) { }
+    public RetryDelaySeq()
+        : this(DefaultMin, DefaultMax, DefaultSpread)
+    { }
 
     [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
-    public RetryDelaySeq(TimeSpan min, TimeSpan max, double maxDelta, double multiplier)
-        : this(min, max, maxDelta)
+    public RetryDelaySeq(
+        TimeSpan min, TimeSpan max,
+        double spread = DefaultSpread,
+        double multiplier = DefaultMultiplier)
+        : this(min, max, spread)
         => Multiplier = multiplier;
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -52,10 +61,5 @@ public partial record RetryDelaySeq(
     // Conversion
 
     public override string ToString()
-        => $"[{Min.ToShortString()} ± {MaxDelta:P0} .. {Max.ToShortString()}]";
-
-    public static implicit operator RetryDelaySeq(TimeSpan min) => new(min);
-    public static implicit operator RetryDelaySeq(double minInSeconds) => new(TimeSpan.FromSeconds(minInSeconds));
-    public static implicit operator RetryDelaySeq((TimeSpan Min, TimeSpan Max) pair) => new(pair.Min, pair.Max);
-    public static implicit operator RetryDelaySeq((double MinInSeconds, double MaxInSeconds) pair) => new(pair.MinInSeconds, pair.MaxInSeconds);
+        => $"[{Min.ToShortString()} ± {Spread:P0} .. {Max.ToShortString()}]";
 }
