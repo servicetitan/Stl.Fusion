@@ -7,12 +7,12 @@ public partial record RetryDelaySeq(
     [property: DataMember, MemoryPackOrder(2)] double Spread)
     : IEnumerable<TimeSpan>
 {
-    private const double DefaultMinInSeconds = 0.5;
-    private const double DefaultMaxInSeconds = 5;
-    private const double DefaultSpread = 0.1;
-    private const double DefaultMultiplier = 1.41421356237; // Math.Sqrt(2)
-    private static readonly TimeSpan DefaultMin = TimeSpan.FromSeconds(DefaultMinInSeconds);
-    private static readonly TimeSpan DefaultMax = TimeSpan.FromMinutes(DefaultMaxInSeconds);
+    public const double DefaultMinInSeconds = 0.5;
+    public const double DefaultMaxInSeconds = 5;
+    public const double DefaultSpread = 0.1;
+    public const double DefaultMultiplier = 1.41421356237; // Math.Sqrt(2)
+    public static readonly TimeSpan DefaultMin = TimeSpan.FromSeconds(DefaultMinInSeconds);
+    public static readonly TimeSpan DefaultMax = TimeSpan.FromMinutes(DefaultMaxInSeconds);
 
     public static RetryDelaySeq Linear(double delayInSeconds, double maxDelta = DefaultSpread)
         => Linear(TimeSpan.FromSeconds(delayInSeconds), maxDelta);
