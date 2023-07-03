@@ -1,4 +1,6 @@
+using System;
 using Stl.Rpc.Infrastructure;
+using Stl.Rpc.Internal;
 
 namespace Stl.Rpc;
 
@@ -28,10 +30,15 @@ public class RpcServerPeer : RpcPeer
         while (true) {
             var cts = cancellationToken.CreateLinkedTokenSource();
             try {
-                await ConnectionState
-                    .WhenConnected(cts.Token)
-                    .WaitAsync(CloseTimeout, cancellationToken)
-                    .ConfigureAwait(false);
+                try {
+                    await ConnectionState
+                        .WhenConnected(cts.Token)
+                        .WaitAsync(CloseTimeout, cancellationToken)
+                        .ConfigureAwait(false);
+                }
+                catch (TimeoutException e) {
+                    throw Errors.ConnectionUnrecoverable(e);
+                }
 
                 var connectionState = ConnectionState.LatestOrThrowIfCompleted().Value;
                 if (connectionState.Connection != null)
