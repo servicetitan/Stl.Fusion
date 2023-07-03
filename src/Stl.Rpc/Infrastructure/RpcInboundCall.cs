@@ -101,8 +101,6 @@ public abstract class RpcInboundCall : RpcCall
 
 public class RpcInboundCall<TResult> : RpcInboundCall
 {
-    private static readonly Result<TResult> CancelledResult = new(default!, new TaskCanceledException());
-
     public Task<TResult> ResultTask { get; private set; } = null!;
 
     public RpcInboundCall(RpcInboundContext context, RpcMethodDef methodDef)

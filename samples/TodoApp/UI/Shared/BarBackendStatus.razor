@@ -7,16 +7,18 @@
 
 @{
     var state = State.ValueOrDefault;
-    var isConnected = state?.IsConnected ?? true;
-    var message = isConnected
-        ? "Connected."
-        : state?.Error?.Message ?? "Unknown error.";
-    var iconName = isConnected
-        ? FontAwesomeIcons.Cloud
-        : FontAwesomeIcons.ExclamationTriangle;
-    var textColor = isConnected
-        ? TextColor.Default
-        : TextColor.Warning;
+    var isDisconnected = !(state?.IsConnected ?? true);
+    var message = state == null
+        ? "Connecting..."
+        : isDisconnected
+            ? state.Error?.Message ?? "Unknown error."
+            : "Connected.";
+    var iconName = isDisconnected
+        ? FontAwesomeIcons.ExclamationTriangle
+        : FontAwesomeIcons.Cloud;
+    var textColor = isDisconnected
+        ? TextColor.Warning
+        : TextColor.Default;
 }
 
 <BarItem>

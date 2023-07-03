@@ -54,7 +54,7 @@ public class RpcClientInterceptor : RpcInterceptorBase
                 .ConfigureAwait(false);
         }
         catch (TimeoutException) {
-            throw Errors.PeerDisconnected();
+            throw Errors.Disconnected(call.Peer);
         }
 
         _ = call.RegisterAndSend();

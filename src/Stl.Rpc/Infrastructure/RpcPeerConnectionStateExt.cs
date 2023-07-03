@@ -15,10 +15,10 @@ public static class RpcPeerConnectionStateExt
                 .ConfigureAwait(false);
         }
         catch (AsyncEventSequenceCompletedException) {
-            return connectionState.Latest().Value;
+            return connectionState.LatestOrLastIfCompleted().Value;
         }
         catch (ConnectionUnrecoverableException) {
-            return connectionState.Latest().Value;
+            return connectionState.LatestOrLastIfCompleted().Value;
         }
     }
 

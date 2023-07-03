@@ -52,6 +52,8 @@ public class RpcInboundCallTracker : RpcCallTracker<RpcInboundCall>
 
 public class RpcOutboundCallTracker : RpcCallTracker<RpcOutboundCall>
 {
+    public static readonly TimeSpan AbortCheckPeriod = TimeSpan.FromSeconds(1);
+
     private long _lastId;
 
     public void Register(RpcOutboundCall call)
@@ -64,5 +66,22 @@ public class RpcOutboundCallTracker : RpcCallTracker<RpcOutboundCall>
             if (Calls.TryAdd(call.Id, call))
                 return;
         }
+    }
+
+    public async Task<int> Abort(Exception error)
+    {
+        var abortedCallIds = new HashSet<long>();
+        for (int i = 0;; i++) {
+            var abortedCallCountBefore = abortedCallIds.Count;
+            foreach (var call in this) {
+                if (abortedCallIds.Add(call.Id))
+                    call.SetError(error, null);
+            }
+            if (i >= 2 && abortedCallCountBefore == abortedCallIds.Count)
+                break;
+
+            await Task.Delay(AbortCheckPeriod).ConfigureAwait(false);
+        }
+        return abortedCallIds.Count;
     }
 }

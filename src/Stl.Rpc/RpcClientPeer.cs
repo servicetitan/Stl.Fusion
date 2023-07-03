@@ -26,7 +26,7 @@ public class RpcClientPeer : RpcPeer
 
     protected override async Task<RpcConnection> GetConnection(CancellationToken cancellationToken)
     {
-        var (connection, error, _, tryIndex) = ConnectionState.LatestOrThrow().Value;
+        var (connection, error, _, tryIndex) = ConnectionState.LatestOrThrowIfCompleted().Value;
         if (connection != null)
             return connection;
 

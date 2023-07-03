@@ -37,7 +37,8 @@ public sealed class AsyncEvent<T>
         return current.Value;
     }
 
-    public async IAsyncEnumerable<T> Changes([EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<T> Changes(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var current = this;
         while (true) {
@@ -49,7 +50,8 @@ public sealed class AsyncEvent<T>
         // ReSharper disable once IteratorNeverReturns
     }
 
-    public async IAsyncEnumerable<AsyncEvent<T>> Events([EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<AsyncEvent<T>> Events(
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var current = this;
         while (true) {
@@ -61,7 +63,7 @@ public sealed class AsyncEvent<T>
         // ReSharper disable once IteratorNeverReturns
     }
 
-    public AsyncEvent<T> Latest()
+    public AsyncEvent<T> LatestOrLastIfCompleted()
     {
         var current = this;
         while (true) {
@@ -77,7 +79,7 @@ public sealed class AsyncEvent<T>
         }
     }
 
-    public AsyncEvent<T> LatestOrThrow()
+    public AsyncEvent<T>? LatestOrNullIfCompleted()
     {
         var current = this;
         while (true) {
@@ -87,9 +89,12 @@ public sealed class AsyncEvent<T>
 
             current = whenNext.GetAwaiter().GetResult();
             if (current == null)
-                throw new AsyncEventSequenceCompletedException();
+                return current;
         }
     }
+
+    public AsyncEvent<T> LatestOrThrowIfCompleted()
+        => LatestOrNullIfCompleted() ?? throw new AsyncEventSequenceCompletedException();
 
     public AsyncEvent<T>? TryGetNext()
     {

@@ -1,6 +1,7 @@
 using System.Net.WebSockets;
 using System.Text.Encodings.Web;
 using Stl.Rpc.Infrastructure;
+using Stl.Rpc.Internal;
 using Stl.Rpc.WebSockets;
 
 namespace Stl.Rpc.Clients;
@@ -60,8 +61,21 @@ public class RpcWebSocketClient : RpcClient
         await webSocket.ConnectAsync(uri, cancellationToken)
             .WaitAsync(Settings.ConnectTimeout, cancellationToken)
             .ConfigureAwait(false);
+
         var channel = new WebSocketChannel<RpcMessage>(Settings.WebSocketChannelOptions, webSocket, Services);
         var options = ImmutableOptionSet.Empty.Set(uri).Set(webSocket);
         return new RpcConnection(channel, options);
+
+        // TBD: Make sure RpcPeerStateMonitor works with this code
+#if false
+        try {
+            // Block above
+        }
+        catch (Exception e) {
+            if (new Random().Next(3) == 0)
+                throw Errors.ConnectionUnrecoverable(e);
+            throw;
+        }
+#endif
     }
 }

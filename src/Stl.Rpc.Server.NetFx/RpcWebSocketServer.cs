@@ -43,7 +43,7 @@ public class RpcWebSocketServer : RpcServiceBase
 
         var peerRef = PeerRefFactory.Invoke(this, context);
         if (Hub.GetPeer(peerRef) is not RpcServerPeer)
-            return HttpStatusCode.Unauthorized;
+            return HttpStatusCode.NotFound;
 
         var requestHeaders =
             GetValue<IDictionary<string, string[]>>(context.Environment, "owin.RequestHeaders")

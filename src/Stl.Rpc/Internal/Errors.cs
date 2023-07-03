@@ -41,13 +41,11 @@ public static class Errors
     public static Exception AlreadyConnected()
         => new InvalidOperationException($"This {nameof(RpcPeer)} is already connected.");
     public static Exception ConnectionTimeout()
-        => new TimeoutException($"Connection time-out.");
+        => new TimeoutException("Connection time-out.");
     public static Exception ConnectionTimeout(TimeSpan timeout)
         => new TimeoutException($"Connection time-out ({timeout.ToShortString()}).");
     public static Exception ConnectionRetryLimitExceeded()
         => new ConnectionUnrecoverableException("Can't reconnect: retry limit exceeded.");
-    public static Exception ConnectionReset(Exception? innerException = null)
-        => new OperationCanceledException("Connection reset.", innerException);
     public static Exception ConnectionUnrecoverable(Exception? innerException = null)
         => new ConnectionUnrecoverableException(innerException);
 
@@ -80,8 +78,13 @@ public static class Errors
         => new SerializationException($"Cannot deserialize polymorphic argument type: " +
             $"expected '{expectedType.GetName()}' or its descendant, got '{actualType.GetName()}'.");
 
-    public static Exception CallTimeout()
-        => new TimeoutException("The server didn't respond in time.");
-    public static Exception PeerDisconnected()
-        => new DisconnectedException();
+    public static Exception CallTimeout(RpcPeer peer)
+        => CallTimeout(peer.Ref.IsServer ? "client" : "server");
+    public static Exception CallTimeout(string partyName = "server")
+        => new TimeoutException($"The {partyName} didn't respond in time.");
+
+    public static Exception Disconnected(RpcPeer peer)
+        => Disconnected(peer.Ref.IsServer ? "client" : "server");
+    public static Exception Disconnected(string partyName = "server")
+        => new DisconnectedException($"The remote {partyName} is disconnected.");
 }

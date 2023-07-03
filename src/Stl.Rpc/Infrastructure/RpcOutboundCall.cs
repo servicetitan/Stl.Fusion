@@ -149,7 +149,7 @@ public abstract class RpcOutboundCall : RpcCall
                 call.SetCancelled(call.Context.CancellationToken, null);
             else {
                 // timeoutCts is timed out
-                var error = Errors.CallTimeout();
+                var error = Errors.CallTimeout(call.Peer);
                 call.SetError(error, null, true);
             }
         }, this, useSynchronizationContext: false);

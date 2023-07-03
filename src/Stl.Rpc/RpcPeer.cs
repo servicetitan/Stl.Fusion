@@ -168,9 +168,38 @@ public abstract class RpcPeer : WorkerBase
 
     protected override Task OnStop()
     {
-        Hub.Peers.TryRemove(Ref, this);
         _ = DisposeAsync();
-        Log.LogInformation("'{PeerRef}': Stopped", Ref);
+        Hub.Peers.TryRemove(Ref, this);
+
+        // 1. We want to make sure the sequence of ConnectionStates terminates for sure
+        Exception error;
+        lock (Lock) {
+            try {
+                var connectionState = _connectionState.LatestOrNullIfCompleted();
+                if (connectionState != null) {
+                    // Complete ConnectionState sequence
+                    error = Errors.ConnectionUnrecoverable(_connectionState.Value.Error);
+                    SetConnectionState(null, error);
+                }
+                else
+                    error = _connectionState.Value.Error ?? Errors.ConnectionUnrecoverable();
+            }
+            catch (Exception) {
+                // Not sure what might be wrong here,
+                // but we still need to report an error, so...
+                error = Errors.ConnectionUnrecoverable();
+            }
+        }
+        if (error is not ConnectionUnrecoverableException)
+            error = Errors.ConnectionUnrecoverable(error);
+
+        // 2. And we must abort all outbound calls.
+        // Inbound calls are auto-aborted via StopToken,
+        // which becomes RpcInboundCallContext.CancellationToken.
+        var outboundCallCount = OutboundCalls.Abort(error);
+        Log.LogInformation(
+            "'{PeerRef}': Stopped, aborted {OutboundCallCount} outbound inbound call(s)",
+            Ref, outboundCallCount);
         return Task.CompletedTask;
     }
 
@@ -214,7 +243,7 @@ public abstract class RpcPeer : WorkerBase
             connection = null;
 
         Monitor.Enter(Lock);
-        var connectionState = _connectionState.LatestOrThrow();
+        var connectionState = _connectionState.LatestOrThrowIfCompleted();
         var oldState = connectionState.Value;
         var state = oldState;
         Exception? terminalError = null;

@@ -8,8 +8,9 @@ public sealed class RpcHub : ProcessorBase, IHasServices
 {
     private RpcServiceRegistry? _serviceRegistry;
     private IEnumerable<RpcPeerTracker>? _peerTrackers;
-    private RpcClient? _client;
     private RpcSystemCallSender? _systemCallSender;
+    private RpcClient? _client;
+    private IMomentClock? _clock;
 
     internal RpcServiceNameBuilder ServiceNameBuilder { get; }
     internal RpcMethodNameBuilder MethodNameBuilder { get; }
@@ -27,6 +28,7 @@ public sealed class RpcHub : ProcessorBase, IHasServices
     internal IEnumerable<RpcPeerTracker> PeerTrackers => _peerTrackers ??= Services.GetRequiredService<IEnumerable<RpcPeerTracker>>();
     internal RpcSystemCallSender SystemCallSender => _systemCallSender ??= Services.GetRequiredService<RpcSystemCallSender>();
     internal RpcClient Client => _client ??= Services.GetRequiredService<RpcClient>();
+    internal IMomentClock Clock => _clock ??= Services.Clocks().CpuClock;
 
     public IServiceProvider Services { get; }
     public RpcConfiguration Configuration { get; }

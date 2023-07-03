@@ -12,7 +12,7 @@ public class RpcServerPeer : RpcPeer
 
     public async Task Connect(RpcConnection connection, CancellationToken cancellationToken = default)
     {
-        var connectionState = ConnectionState.LatestOrThrow();
+        var connectionState = ConnectionState.LatestOrThrowIfCompleted();
         if (connectionState.Value.IsConnected()) {
             Disconnect();
             using var cts = cancellationToken.LinkWith(StopToken);
@@ -33,7 +33,7 @@ public class RpcServerPeer : RpcPeer
                     .WaitAsync(CloseTimeout, cancellationToken)
                     .ConfigureAwait(false);
 
-                var connectionState = ConnectionState.LatestOrThrow().Value;
+                var connectionState = ConnectionState.LatestOrThrowIfCompleted().Value;
                 if (connectionState.Connection != null)
                     return connectionState.Connection;
             }

@@ -20,21 +20,18 @@ public sealed class RpcPeerStateMonitor : WorkerBase
 
     protected override async Task OnRun(CancellationToken cancellationToken)
     {
+        await Task.Delay(StartDelay, cancellationToken).ConfigureAwait(false);
         try {
             var peer = Services.RpcHub().GetPeer(PeerRef);
             var clientPeer = peer as RpcClientPeer;
-            var clock = clientPeer?.ReconnectDelayer.Clock
-                ?? Services.RpcHub().InternalServices.ClientPeerReconnectDelayer.Clock;
             // This delay gives some time for peer to connect
-            await Task.Delay(StartDelay, cancellationToken).ConfigureAwait(false);
-            await foreach (var e in peer.ConnectionState.Events(cancellationToken).ConfigureAwait(false)) {
+            using var cts = cancellationToken.LinkWith(peer.StopToken);
+            await foreach (var e in peer.ConnectionState.Events(cts.Token).ConfigureAwait(false)) {
                 var connectionState = e.Value;
                 var isConnected = connectionState.IsConnected();
-                var nextState = new RpcPeerState(
-                    isConnected,
-                    connectionState.Error,
-                    isConnected ? null : clock.Now);
+                var nextState = new RpcPeerState(isConnected, connectionState.Error);
 
+                _state.Value = nextState;
                 if (clientPeer != null && !isConnected) {
                     // Client peer disconnected, we need to watch for ReconnectAt value change now
                     for (var i = 0; i < 10; i++) {
@@ -43,17 +40,20 @@ public sealed class RpcPeerStateMonitor : WorkerBase
                             break;
                         if (clientPeer.ReconnectsAt is { } vReconnectsAt) {
                             nextState = nextState with { ReconnectsAt = vReconnectsAt };
+                            _state.Value = nextState;
                             break;
                         }
 
                         await Task.Delay(50, cancellationToken).ConfigureAwait(false);
                     }
                 }
-                _state.Set(nextState);
             }
+            _state.Value = null;
         }
-        catch (Exception e) when (e is not OperationCanceledException) {
-            _state.Error = e;
+        catch (Exception) {
+            _state.Value = null;
+            if (cancellationToken.IsCancellationRequested)
+                throw;
         }
     }
 }

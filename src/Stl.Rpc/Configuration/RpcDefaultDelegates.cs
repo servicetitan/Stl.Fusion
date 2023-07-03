@@ -49,5 +49,5 @@ public static class RpcDefaultDelegates
     public static RpcUnrecoverableErrorDetector UnrecoverableErrorDetector { get; set; } =
         static (error, cancellationToken)
             => cancellationToken.IsCancellationRequested
-            || error is ConnectionUnrecoverableException or TimeoutException;
+            || error is ConnectionUnrecoverableException;
 }
