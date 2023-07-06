@@ -5,17 +5,23 @@ public class RetryDelayer : IRetryDelayer
     private CancellationTokenSource _cancelDelaysCts = new();
 
     protected object Lock = new();
+    private CancellationToken _cancelDelaysToken;
 
     public IMomentClock Clock { get; init; } = CpuClock.Instance;
     public RetryDelaySeq Delays { get; set; } = new();
     public int? Limit { get; set; }
 
-    public CancellationToken CancelDelaysToken { get; private set; }
+    public CancellationToken CancelDelaysToken {
+        get {
+            lock (Lock)
+                return _cancelDelaysToken;
+        }
+    }
 
     public virtual RetryDelay GetDelay(int tryIndex, CancellationToken cancellationToken = default)
     {
         if (Limit is { } limit && tryIndex >= limit)
-            throw RetryLimitExceededError(limit);
+            return RetryDelay.LimitExceeded;
 
         var delay = Delays[tryIndex];
         if (tryIndex == 0 || delay <= TimeSpan.Zero)
@@ -27,15 +33,12 @@ public class RetryDelayer : IRetryDelayer
         async Task DelayImpl()
         {
             var cancelDelaysToken = CancelDelaysToken;
-            var cts = cancellationToken.LinkWith(cancelDelaysToken);
+            using var cts = cancellationToken.LinkWith(cancelDelaysToken);
             try {
                 await Clock.Delay(delay, cts.Token).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (cancelDelaysToken.IsCancellationRequested) {
                 // We complete normally in this case
-            }
-            finally {
-                cts.Dispose();
             }
         }
     }
@@ -46,13 +49,8 @@ public class RetryDelayer : IRetryDelayer
         lock (Lock) {
             cts = _cancelDelaysCts;
             _cancelDelaysCts = new();
-            CancelDelaysToken = _cancelDelaysCts.Token;
+            _cancelDelaysToken = _cancelDelaysCts.Token;
         }
         cts.CancelAndDisposeSilently();
     }
-
-    // Protected methods
-
-    protected virtual Exception RetryLimitExceededError(int limit)
-        => new RetryLimitExceededException();
 }

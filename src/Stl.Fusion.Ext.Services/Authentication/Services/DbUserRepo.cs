@@ -125,7 +125,7 @@ public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbConte
         TDbContext dbContext, TDbUserId userId, bool forUpdate, CancellationToken cancellationToken = default)
     {
         var dbUsers = forUpdate
-            ? dbContext.Set<TDbUser>().ForUpdate()
+            ? dbContext.Set<TDbUser>().ForNoKeyUpdate()
             : dbContext.Set<TDbUser>();
         var dbUser = await dbUsers
             .FirstOrDefaultAsync(u => Equals(u.Id, userId), cancellationToken)
@@ -141,8 +141,9 @@ public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbConte
     {
         if (!userIdentity.IsValid)
             return null;
+
         var dbUserIdentities = forUpdate
-            ? dbContext.Set<DbUserIdentity<TDbUserId>>().ForUpdate()
+            ? dbContext.Set<DbUserIdentity<TDbUserId>>().ForNoKeyUpdate()
             : dbContext.Set<DbUserIdentity<TDbUserId>>();
         var id = userIdentity.Id.Value;
         var dbUserIdentity = await dbUserIdentities
@@ -150,6 +151,7 @@ public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbConte
             .ConfigureAwait(false);
         if (dbUserIdentity == null)
             return null;
+
         var user = await Get(dbContext, dbUserIdentity.DbUserId, forUpdate, cancellationToken).ConfigureAwait(false);
         return user;
     }

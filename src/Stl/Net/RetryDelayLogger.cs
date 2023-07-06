@@ -30,4 +30,12 @@ public readonly record struct RetryDelayLogger(
             Log.IfEnabled(LogLevel)?.Log(LogLevel, "{Tag}: will {Action} in {DelayDuration} (#{TryIndex})",
                 Tag, Action, duration.ToShortString(), tryIndex);
     }
+
+    public void LogLimitExceeded()
+    {
+        if (Tag == null)
+            Log?.LogWarning("Can't {Action}: retry limit exceeded", Action);
+        else
+            Log?.LogWarning("{Tag}: can't {Action}: retry limit exceeded", Tag, Action);
+    }
 }

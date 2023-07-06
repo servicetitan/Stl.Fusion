@@ -14,7 +14,7 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
 
     protected IOperationCompletionNotifier OperationCompletionNotifier { get; }
 
-    public DbOperationScopeProvider(IServiceProvider services) : base(services) 
+    public DbOperationScopeProvider(IServiceProvider services) : base(services)
         => OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
 
     [CommandFilter(Priority = FusionEntityFrameworkCommandHandlerPriority.DbOperationScopeProvider)]
@@ -46,6 +46,8 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
                 await scope.Commit(cancellationToken).ConfigureAwait(false);
         }
         catch (Exception error) when (error is not OperationCanceledException) {
+            if (error is RetryLimitExceededException { InnerException: { } innerError })
+                throw innerError; // Strip RetryLimitExceededException, coz it masks the real one after 0 retries
             try {
                 var operationReprocessor = context.Items.Get<IOperationReprocessor>();
                 if (operationReprocessor == null)
@@ -56,16 +58,15 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
                 if (transientError == null)
                     throw;
 
-                // It's a transient failure - let's tag it so that IOperationReprocessor retries on it 
+                // It's a transient failure - let's tag it so that IOperationReprocessor retries on it
                 operationReprocessor.AddTransientFailure(transientError);
 
                 // But if retry still won't happen (too many retries?) - let's log error here
                 if (!operationReprocessor.WillRetry(allErrors))
                     Log.LogError(error, "Operation failed: {Command}", command);
-                else 
-                    Log.LogInformation("Transient failure on {Command}: {TransientError}", 
+                else
+                    Log.LogInformation("Transient failure on {Command}: {TransientError}",
                         command, transientError.ToExceptionInfo());
-
                 throw;
             }
             finally {

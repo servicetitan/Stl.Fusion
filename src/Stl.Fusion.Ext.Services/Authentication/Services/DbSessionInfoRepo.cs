@@ -123,7 +123,7 @@ public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId> : DbServic
     {
         var dbSessionInfos = forUpdate
             ? dbContext.Set<TDbSessionInfo>().ForNoKeyUpdate()
-            : dbContext.Set<TDbSessionInfo>().ForKeyShare();
+            : dbContext.Set<TDbSessionInfo>();
         return await dbSessionInfos
             .FirstOrDefaultAsync(s => s.Id == sessionId, cancellationToken)
             .ConfigureAwait(false);

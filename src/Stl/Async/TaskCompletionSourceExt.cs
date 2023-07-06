@@ -99,7 +99,17 @@ public static partial class TaskCompletionSourceExt
 
     // (Try)SetFromResult
 
-    public static void SetFromResult<T>(this TaskCompletionSource<T> target, Result<T> result, CancellationToken cancellationToken = default)
+    public static void SetFromResult<T>(this TaskCompletionSource<T> target, Result<T> result)
+    {
+        if (result.IsValue(out var v, out var e))
+            target.SetResult(v);
+        else if (e is OperationCanceledException)
+            target.SetCanceled();
+        else
+            target.SetException(e);
+    }
+
+    public static void SetFromResult<T>(this TaskCompletionSource<T> target, Result<T> result, CancellationToken cancellationToken)
     {
         if (result.IsValue(out var v, out var e))
             target.SetResult(v);
@@ -118,7 +128,14 @@ public static partial class TaskCompletionSourceExt
             target.SetException(e);
     }
 
-    public static bool TrySetFromResult<T>(this TaskCompletionSource<T> target, Result<T> result, CancellationToken cancellationToken = default)
+    public static bool TrySetFromResult<T>(this TaskCompletionSource<T> target, Result<T> result)
+        => result.IsValue(out var v, out var e)
+            ? target.TrySetResult(v)
+            : e is OperationCanceledException
+                ? target.TrySetCanceled()
+                : target.TrySetException(e);
+
+    public static bool TrySetFromResult<T>(this TaskCompletionSource<T> target, Result<T> result, CancellationToken cancellationToken)
         => result.IsValue(out var v, out var e)
             ? target.TrySetResult(v)
             : e is OperationCanceledException

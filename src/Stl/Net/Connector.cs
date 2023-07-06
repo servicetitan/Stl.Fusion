@@ -138,11 +138,14 @@ public sealed class Connector<TConnection> : WorkerBase
 
             if (state.Value.TryIndex is var tryIndex and > 0) {
                 var delayLogger = new RetryDelayLogger("reconnect", LogTag, Log, LogLevel);
-                var (delayTask, endsAt) = ReconnectDelayer.GetDelay(tryIndex, delayLogger, cancellationToken);
-                if (!delayTask.IsCompleted) {
-                    Interlocked.Exchange(ref _reconnectsAt, endsAt.EpochOffsetTicks);
+                var delay = ReconnectDelayer.GetDelay(tryIndex, delayLogger, cancellationToken);
+                if (delay.IsLimitExceeded)
+                    throw new RetryLimitExceededException();
+
+                if (!delay.Task.IsCompleted) {
+                    Interlocked.Exchange(ref _reconnectsAt, delay.EndsAt.EpochOffsetTicks);
                     try {
-                        await delayTask.ConfigureAwait(false);
+                        await delay.Task.ConfigureAwait(false);
                     }
                     finally {
                         Interlocked.Exchange(ref _reconnectsAt, 0);

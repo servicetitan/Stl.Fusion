@@ -7,7 +7,11 @@ public static class RetryDelayerExt
     {
         try {
             var delay = retryDelayer.GetDelay(tryIndex, cancellationToken);
-            if (delay.DelayTask.IsCompleted)
+            if (delay.IsLimitExceeded) {
+                logger.LogLimitExceeded();
+                return delay;
+            }
+            if (delay.Task.IsCompleted)
                 return delay;
 
             var duration = delay.EndsAt - retryDelayer.Clock.Now;

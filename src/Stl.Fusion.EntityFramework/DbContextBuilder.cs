@@ -20,6 +20,7 @@ public readonly struct DbContextBuilder<TDbContext>
 
         services.TryAddSingleton<DbHub<TDbContext>>();
         AddMultitenancy(); // Core multitenancy services
+        TryAddTransientErrorDetector(_ => TransientErrorDetector.DefaultPreferTransient);
 
         configure?.Invoke(this);
     }
@@ -31,6 +32,20 @@ public readonly struct DbContextBuilder<TDbContext>
 
     public DbContextBuilder<TDbContext> AddMultitenancy(Action<DbMultitenancyBuilder<TDbContext>> configure)
         => new DbMultitenancyBuilder<TDbContext>(this, configure).DbContext;
+
+    // Transient error detector
+
+    public DbContextBuilder<TDbContext> AddTransientErrorDetector(Func<IServiceProvider, ITransientErrorDetector> detectorFactory)
+    {
+        Services.AddSingleton(c => detectorFactory.Invoke(c).For<TDbContext>());
+        return this;
+    }
+
+    public DbContextBuilder<TDbContext> TryAddTransientErrorDetector(Func<IServiceProvider, ITransientErrorDetector> detectorFactory)
+    {
+        Services.TryAddSingleton(c => detectorFactory.Invoke(c).For<TDbContext>());
+        return this;
+    }
 
     // Entity converters
 

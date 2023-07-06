@@ -88,6 +88,7 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
         var expiresAt = dbKeyValue.ExpiresAt;
         if (expiresAt.HasValue && expiresAt.GetValueOrDefault() < Clocks.SystemClock.Now.ToDateTime())
             return null;
+
         return dbKeyValue?.Value;
     }
 
