@@ -6,7 +6,7 @@ namespace Stl.Rpc;
 
 public class RpcServerPeer : RpcPeer
 {
-    public TimeSpan CloseTimeout { get; init; } = TimeSpan.FromMinutes(1);
+    public TimeSpan CloseTimeout { get; init; } = TimeSpan.FromMinutes(10);
 
     public RpcServerPeer(RpcHub hub, RpcPeerRef @ref)
         : base(hub, @ref)

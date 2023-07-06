@@ -1,4 +1,7 @@
+using System.Diagnostics;
+using System.Globalization;
 using Stl.Interception;
+using Stl.Multitenancy;
 using Stl.Rpc.Internal;
 
 #if NET7_0_OR_GREATER
@@ -18,6 +21,7 @@ public abstract class RpcInboundCall : RpcCall
     public readonly RpcInboundContext Context;
     public readonly CancellationToken CancellationToken;
     public ArgumentList? Arguments;
+    public abstract Task UntypedResultTask { get; }
     public List<RpcHeader>? ResultHeaders;
 
     public static RpcInboundCall New(byte callTypeId, RpcInboundContext context, RpcMethodDef? methodDef)
@@ -102,6 +106,7 @@ public abstract class RpcInboundCall : RpcCall
 public class RpcInboundCall<TResult> : RpcInboundCall
 {
     public Task<TResult> ResultTask { get; private set; } = null!;
+    public override Task UntypedResultTask => ResultTask;
 
     public RpcInboundCall(RpcInboundContext context, RpcMethodDef methodDef)
         : base(context, methodDef)
@@ -138,6 +143,7 @@ public class RpcInboundCall<TResult> : RpcInboundCall
                 var peer = Context.Peer;
                 peer.CallLog?.Log(peer.CallLogLevel, "'{PeerRef}': <- {Call}", peer.Ref, this);
 
+                Hub.InboundMiddlewares.BeforeCall(this);
                 ResultTask = InvokeTarget();
             }
             catch (Exception error) {

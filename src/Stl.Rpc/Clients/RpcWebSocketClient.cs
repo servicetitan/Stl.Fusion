@@ -65,17 +65,5 @@ public class RpcWebSocketClient : RpcClient
         var channel = new WebSocketChannel<RpcMessage>(Settings.WebSocketChannelOptions, webSocket, Services);
         var options = ImmutableOptionSet.Empty.Set(uri).Set(webSocket);
         return new RpcConnection(channel, options);
-
-        // TBD: Make sure RpcPeerStateMonitor works with this code
-#if false
-        try {
-            // Block above
-        }
-        catch (Exception e) {
-            if (new Random().Next(3) == 0)
-                throw Errors.ConnectionUnrecoverable(e);
-            throw;
-        }
-#endif
     }
 }

@@ -59,16 +59,6 @@ public static class Errors
             $"this scope should be used only in synchronous part of your code that happens " +
             $"right before the async method triggering the outgoing RPC call is invoked.");
 
-    public static Exception IncompatibleArgumentType(RpcMethodDef methodDef, int argumentIndex, Type argumentType)
-        => new InvalidOperationException(
-            $"Argument #{argumentIndex} for '{methodDef.FullName}' has incompatible type: '{argumentType.GetName()}.'");
-    public static Exception NonDeserializableArguments(RpcMethodDef methodDef)
-        => new InvalidOperationException($"Couldn't deserialize arguments for '{methodDef.FullName}'.");
-    public static Exception IncompatibleResultType(RpcMethodDef methodDef, Type actualResultType)
-        => new InvalidOperationException($"Couldn't deserialize result for '{methodDef.FullName}' call: " +
-            $"expected '{methodDef.UnwrappedReturnType.GetName()}', " +
-            $"but got '{actualResultType.GetName()}'.");
-
     public static Exception InvalidMessageSize()
         => new SerializationException("Invalid item size. The remainder of the message will be dropped.");
     public static Exception CannotDeserializeUnexpectedArgumentType(Type expectedType, Type actualType)

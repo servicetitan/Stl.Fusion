@@ -1,3 +1,6 @@
+using Stl.Net;
+using Stl.Rpc.Internal;
+
 namespace Stl.Rpc;
 
 public class RpcClientPeer : RpcPeer
@@ -10,7 +13,7 @@ public class RpcClientPeer : RpcPeer
     public Moment? ReconnectsAt {
         get {
             var reconnectsAt = Interlocked.Read(ref _reconnectsAt);
-            return reconnectsAt == default ? null : new Moment(reconnectsAt);
+            return reconnectsAt == 0 ? null : new Moment(reconnectsAt);
         }
     }
 
@@ -30,11 +33,14 @@ public class RpcClientPeer : RpcPeer
         if (connection != null)
             return connection;
 
-        var (delayTask, endsAt) = ReconnectDelayer.GetDelay(this, tryIndex, error, cancellationToken);
-        if (!delayTask.IsCompleted) {
-            Interlocked.Exchange(ref _reconnectsAt, endsAt.EpochOffsetTicks);
+        var delay = ReconnectDelayer.GetDelay(this, tryIndex, error, cancellationToken);
+        if (delay.IsLimitExceeded)
+            throw Errors.ConnectionUnrecoverable();
+
+        if (!delay.Task.IsCompleted) {
+            Interlocked.Exchange(ref _reconnectsAt, delay.EndsAt.EpochOffsetTicks);
             try {
-                await delayTask.ConfigureAwait(false);
+                await delay.Task.ConfigureAwait(false);
             }
             finally {
                 Interlocked.Exchange(ref _reconnectsAt, 0);

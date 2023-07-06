@@ -7,14 +7,14 @@ public class RpcConfiguration
 {
     private readonly object _lock = new();
     private IDictionary<Type, RpcServiceBuilder> _services = new Dictionary<Type, RpcServiceBuilder>();
+    private Sampler? _inboundCallActivitySampler;
 
     public bool IsFrozen { get; private set; }
 
     public IDictionary<Type, RpcServiceBuilder> Services {
         get => _services;
         set {
-            if (IsFrozen)
-                throw Errors.AlreadyReadOnly<RpcConfiguration>();
+            AssertNotFrozen();
             _services = value;
         }
     }
@@ -31,5 +31,13 @@ public class RpcConfiguration
             IsFrozen = true;
             _services = new ReadOnlyDictionary<Type, RpcServiceBuilder>(Services);
         }
+    }
+
+    // Protected methods
+
+    protected void AssertNotFrozen()
+    {
+        if (IsFrozen)
+            throw Errors.AlreadyReadOnly<RpcConfiguration>();
     }
 }

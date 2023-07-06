@@ -28,7 +28,4 @@ public class RpcClientPeerReconnectDelayer : RetryDelayer, IHasServices
         var delayLogger = new RetryDelayLogger("reconnect", ZString.Concat('\'', peer.Ref, '\''), Log);
         return this.GetDelay(tryIndex, delayLogger, cancellationToken);
     }
-
-    protected override Exception RetryLimitExceededError(int limit)
-        => Errors.ConnectionRetryLimitExceeded();
 }

@@ -1,5 +1,6 @@
 using System.Net.WebSockets;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Stl.OS;
 using Stl.Rpc.Clients;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Internal;
@@ -45,6 +46,8 @@ public readonly struct RpcBuilder
         services.TryAddTransient(_ => new RpcInboundCallTracker());
         services.TryAddTransient(_ => new RpcOutboundCallTracker());
         services.TryAddSingleton(c => new RpcClientPeerReconnectDelayer(c));
+        if (!OSInfo.IsAnyClient)
+            AddInboundMiddleware<RpcInboundCallActivityMiddleware>();
 
         // Interceptors
         services.TryAddSingleton(_ => RpcClientInterceptor.Options.Default);

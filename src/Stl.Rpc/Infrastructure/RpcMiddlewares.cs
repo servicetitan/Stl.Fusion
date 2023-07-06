@@ -11,19 +11,3 @@ public abstract class RpcMiddlewares<TMiddleware>
         Instances = instances.OrderByDescending(x => x.Priority).ToArray();
     }
 }
-
-public sealed class RpcInboundMiddlewares : RpcMiddlewares<RpcInboundMiddleware>
-{
-    public RpcInboundMiddlewares(IServiceProvider services) : base(services) { }
-}
-
-public sealed class RpcOutboundMiddlewares : RpcMiddlewares<RpcOutboundMiddleware>
-{
-    public RpcOutboundMiddlewares(IServiceProvider services) : base(services) { }
-
-    public void PrepareCall(RpcOutboundContext context)
-    {
-        foreach (var m in Instances)
-            m.PrepareCall(context);
-    }
-}

@@ -10,6 +10,7 @@ public sealed class RpcMethodDef : MethodDef
     public RpcHub Hub { get; }
     public RpcServiceDef Service { get; }
     public Symbol Name { get; }
+    public new Symbol FullName { get; }
 
     public Type ArgumentListType { get; }
     public bool HasObjectTypedArguments { get; }
@@ -31,6 +32,7 @@ public sealed class RpcMethodDef : MethodDef
 
         Service = service;
         Name = Hub.MethodNameBuilder.Invoke(this);
+        FullName = $"{service.Name.Value}.{Name.Value}";
         AllowResultPolymorphism = AllowArgumentPolymorphism = service.IsSystem || service.IsBackend;
 
         ArgumentListFactory = (Func<ArgumentList>)ArgumentListType
