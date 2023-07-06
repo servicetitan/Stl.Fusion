@@ -18,7 +18,7 @@ public class DefaultSessionReplacerRpcMiddleware : RpcInboundMiddleware
         if (tItem0 == typeof(Session)) {
             var session = arguments.Get<Session>(0);
             if (session.IsDefault()) {
-                session = connection.Session.RequireValid();
+                session = connection.Session;
                 arguments.Set(0, session);
             }
             else
@@ -27,10 +27,8 @@ public class DefaultSessionReplacerRpcMiddleware : RpcInboundMiddleware
         else if (typeof(ISessionCommand).IsAssignableFrom(tItem0)) {
             var command = arguments.Get<ISessionCommand>(0);
             var session = command.Session;
-            if (session.IsDefault()) {
-                command.SetSession(connection.Session.RequireValid());
-                arguments.Set(0, command);
-            }
+            if (session.IsDefault())
+                command.SetSession(connection.Session);
             else
                 session.RequireValid();
         }
