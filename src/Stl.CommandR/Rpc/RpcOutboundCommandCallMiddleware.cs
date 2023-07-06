@@ -5,9 +5,11 @@ namespace Stl.CommandR.Rpc;
 public class RpcOutboundCommandCallMiddleware : RpcOutboundMiddleware
 {
     public const int DefaultPriority = 10;
+    public static readonly TimeSpan DefaultConnectTimeout = TimeSpan.FromSeconds(1.5);
+    public static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(10);
 
-    public int ConnectTimeoutMs { get; set; } = 1500;
-    public int TimeoutMs { get; set; } = 10_000;
+    public TimeSpan ConnectTimeout { get; set; } = DefaultConnectTimeout;
+    public TimeSpan Timeout { get; set; } = DefaultTimeout;
 
     public RpcOutboundCommandCallMiddleware(IServiceProvider services)
         : base(services)
@@ -24,7 +26,7 @@ public class RpcOutboundCommandCallMiddleware : RpcOutboundMiddleware
             return;
 
         var call = context.Call!;
-        call.ConnectTimeoutMs = ConnectTimeoutMs;
-        call.TimeoutMs = TimeoutMs;
+        call.ConnectTimeout = ConnectTimeout;
+        call.Timeout = Timeout;
     }
 }

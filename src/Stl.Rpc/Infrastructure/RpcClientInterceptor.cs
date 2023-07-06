@@ -29,7 +29,7 @@ public class RpcClientInterceptor : RpcInterceptorBase
             }
 
             Task resultTask;
-            if (call.ConnectTimeoutMs > 0 && !call.Peer.ConnectionState.Value.IsConnected())
+            if (call.ConnectTimeout > TimeSpan.Zero && !call.Peer.ConnectionState.Value.IsConnected())
                 resultTask = GetResultTaskWithConnectTimeout<T>(call);
             else {
                 _ = call.RegisterAndSend();
@@ -47,13 +47,14 @@ public class RpcClientInterceptor : RpcInterceptorBase
     private static async Task<T> GetResultTaskWithConnectTimeout<T>(RpcOutboundCall call)
     {
         var cancellationToken = call.Context.CancellationToken;
+        using var cts = new CancellationTokenSource(call.ConnectTimeout);
+        using var linkedCts = cancellationToken.LinkWith(cts.Token);
         try {
             await call.Peer.ConnectionState
-                .WhenConnected(cancellationToken)
-                .WaitAsync(TimeSpan.FromMilliseconds(call.ConnectTimeoutMs), cancellationToken)
+                .WhenConnected(linkedCts.Token)
                 .ConfigureAwait(false);
         }
-        catch (TimeoutException) {
+        catch (OperationCanceledException) when (cts.IsCancellationRequested) {
             throw Errors.Disconnected(call.Peer);
         }
 

@@ -12,8 +12,8 @@ public abstract class RpcOutboundCall : RpcCall
     public readonly RpcPeer Peer;
     public RpcMessage? Message;
     public Task ResultTask { get; protected init; } = null!;
-    public int ConnectTimeoutMs;
-    public int TimeoutMs;
+    public TimeSpan ConnectTimeout;
+    public TimeSpan Timeout;
 
     public static RpcOutboundCall New(RpcOutboundContext context)
         => FactoryCache.GetOrAdd((context.CallTypeId, context.MethodDef!.UnwrappedReturnType), static key => {
@@ -138,8 +138,8 @@ public abstract class RpcOutboundCall : RpcCall
         var cancellationToken = Context.CancellationToken;
         CancellationTokenSource? timeoutCts = null;
         CancellationTokenSource? linkedCts = null;
-        if (TimeoutMs > 0) {
-            timeoutCts = new CancellationTokenSource(TimeoutMs);
+        if (Timeout > TimeSpan.Zero) {
+            timeoutCts = new CancellationTokenSource(Timeout);
             linkedCts = timeoutCts.Token.LinkWith(cancellationToken);
             cancellationToken = linkedCts.Token;
         }
