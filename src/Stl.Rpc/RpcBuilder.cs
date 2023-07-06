@@ -207,6 +207,19 @@ public readonly struct RpcBuilder
         return this;
     }
 
+    public RpcBuilder RemoveInboundMiddleware<TMiddleware>()
+        where TMiddleware : RpcInboundMiddleware
+        => RemoveInboundMiddleware(typeof(TMiddleware));
+
+    public RpcBuilder RemoveInboundMiddleware(Type middlewareType)
+    {
+        if (!typeof(RpcInboundMiddleware).IsAssignableFrom(middlewareType))
+            throw Stl.Internal.Errors.MustBeAssignableTo<RpcInboundMiddleware>(middlewareType, nameof(middlewareType));
+
+        var descriptor = ServiceDescriptor.Singleton(typeof(RpcInboundMiddleware), middlewareType);
+        Services.Remove(descriptor);
+        return this;
+    }
 
     public RpcBuilder AddOutboundMiddleware<TMiddleware>()
         where TMiddleware : RpcOutboundMiddleware
@@ -219,6 +232,20 @@ public readonly struct RpcBuilder
 
         var descriptor = ServiceDescriptor.Singleton(typeof(RpcOutboundMiddleware), middlewareType);
         Services.TryAddEnumerable(descriptor);
+        return this;
+    }
+
+    public RpcBuilder RemoveOutboundMiddleware<TMiddleware>()
+        where TMiddleware : RpcOutboundMiddleware
+        => RemoveOutboundMiddleware(typeof(TMiddleware));
+
+    public RpcBuilder RemoveOutboundMiddleware(Type middlewareType)
+    {
+        if (!typeof(RpcOutboundMiddleware).IsAssignableFrom(middlewareType))
+            throw Stl.Internal.Errors.MustBeAssignableTo<RpcOutboundMiddleware>(middlewareType, nameof(middlewareType));
+
+        var descriptor = ServiceDescriptor.Singleton(typeof(RpcOutboundMiddleware), middlewareType);
+        Services.Remove(descriptor);
         return this;
     }
 

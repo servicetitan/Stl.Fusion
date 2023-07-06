@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Builder;
-using Stl.Fusion.Server.Authentication;
+using Stl.Fusion.Server.Middlewares;
 
 namespace Stl.Fusion.Server;
 

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Stl.Fusion.Authentication;
 
-namespace Stl.Fusion.Server.Authentication;
+namespace Stl.Fusion.Server.Middlewares;
 
 public class SessionMiddleware : IMiddleware, IHasServices
 {

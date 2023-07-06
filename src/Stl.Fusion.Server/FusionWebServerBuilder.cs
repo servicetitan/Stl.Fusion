@@ -1,7 +1,9 @@
 using Stl.Fusion.Server.Authentication;
 using Stl.Fusion.Server.Endpoints;
 using Stl.Fusion.Server.Internal;
+using Stl.Fusion.Server.Middlewares;
 using Stl.Fusion.Server.Rpc;
+using Stl.Rpc;
 using Stl.Rpc.Server;
 
 namespace Stl.Fusion.Server;
@@ -34,8 +36,10 @@ public readonly struct FusionWebServerBuilder
         // Add Rpc-related services
         var rpc = fusion.Rpc;
         rpc.AddWebSocketServer();
-        rpc.AddInboundMiddleware<FusionSessionRpcMiddleware>();
-        services.AddSingleton(_ => FusionRpcConnection.ServerConnectionFactory);
+        rpc.AddInboundMiddleware<DefaultSessionReplacerRpcMiddleware>();
+        services.AddSingleton(_ => new SessionBoundRpcConnectionFactory());
+        services.AddSingleton<RpcServerConnectionFactory>(
+            c => c.GetRequiredService<SessionBoundRpcConnectionFactory>().Invoke);
 
         // Add other services
         services.AddSingleton(_ => SessionMiddleware.Options.Default);

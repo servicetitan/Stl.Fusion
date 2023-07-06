@@ -2,7 +2,7 @@ using System.Globalization;
 using Microsoft.AspNetCore.Http;
 using Stl.Internal;
 
-namespace Stl.Fusion.Server.Authentication;
+namespace Stl.Fusion.Server.Middlewares;
 
 public static class TenantIdExtractors
 {
