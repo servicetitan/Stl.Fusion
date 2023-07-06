@@ -16,25 +16,22 @@ public static class SessionExt
 #else
     public static bool IsValid([NotNullWhen(true)] this Session? session)
 #endif
-        => session != null && session != Session.Default;
+        => session != null && Session.Validator.Invoke(session);
+
+    public static Session RequireValid(this Session? session)
+        => session.IsValid()
+            ? session!
+            : throw new ArgumentOutOfRangeException(nameof(session));
 
     public static Session ResolveDefault(this Session? session, ISessionResolver sessionResolver)
-        => session.IsDefault() ? sessionResolver.Session : session!;
+        => session.IsDefault() ? sessionResolver.Session : session.RequireValid();
 
     public static Session ResolveDefault(this Session? session, IServiceProvider services)
     {
         if (!session.IsDefault())
-            return session!;
+            return session.RequireValid();
 
         var sessionResolver = services.GetRequiredService<ISessionResolver>();
         return sessionResolver.Session;
-    }
-
-    public static Session RequireValid(this Session? session)
-    {
-        if (!session.IsValid())
-            throw new ArgumentOutOfRangeException(nameof(session));
-
-        return session;
     }
 }

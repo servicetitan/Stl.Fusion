@@ -216,8 +216,9 @@ public readonly struct RpcBuilder
         if (!typeof(RpcInboundMiddleware).IsAssignableFrom(middlewareType))
             throw Stl.Internal.Errors.MustBeAssignableTo<RpcInboundMiddleware>(middlewareType, nameof(middlewareType));
 
-        var descriptor = ServiceDescriptor.Singleton(typeof(RpcInboundMiddleware), middlewareType);
-        Services.Remove(descriptor);
+        Services.RemoveAll(d =>
+            d.ImplementationType == middlewareType
+            && d.ServiceType == typeof(RpcInboundMiddleware));
         return this;
     }
 
@@ -244,8 +245,9 @@ public readonly struct RpcBuilder
         if (!typeof(RpcOutboundMiddleware).IsAssignableFrom(middlewareType))
             throw Stl.Internal.Errors.MustBeAssignableTo<RpcOutboundMiddleware>(middlewareType, nameof(middlewareType));
 
-        var descriptor = ServiceDescriptor.Singleton(typeof(RpcOutboundMiddleware), middlewareType);
-        Services.Remove(descriptor);
+        Services.RemoveAll(d =>
+            d.ImplementationType == middlewareType
+            && d.ServiceType == typeof(RpcOutboundMiddleware));
         return this;
     }
 

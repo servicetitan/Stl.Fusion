@@ -16,6 +16,8 @@ public sealed partial class Session : IHasId<Symbol>, IRequirementTarget,
 {
     public static Session Null { get; } = null!; // To gracefully bypass some nullability checks
     public static Session Default { get; } = new("~");
+    public static SessionFactory Factory { get; set; } = DefaultSessionFactory.New();
+    public static SessionValidator Validator { get; set; } = session => !session.IsDefault();
 
     private string? _hash;
 
@@ -23,6 +25,9 @@ public sealed partial class Session : IHasId<Symbol>, IRequirementTarget,
     public Symbol Id { get; }
     [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public string Hash => _hash ??= ComputeHash();
+
+    public static Session New()
+        => Factory.Invoke();
 
     [MemoryPackConstructor]
     public Session(Symbol id)

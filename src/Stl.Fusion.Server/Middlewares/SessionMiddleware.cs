@@ -40,7 +40,6 @@ public class SessionMiddleware : IMiddleware, IHasServices
 
     public IAuth? Auth { get; }
     public ISessionResolver SessionResolver { get; }
-    public ISessionFactory SessionFactory { get; }
 
     public SessionMiddleware(Options settings, IServiceProvider services)
     {
@@ -50,7 +49,6 @@ public class SessionMiddleware : IMiddleware, IHasServices
 
         Auth = services.GetService<IAuth>();
         SessionResolver = services.GetRequiredService<ISessionResolver>();
-        SessionFactory = services.GetRequiredService<ISessionFactory>();
     }
 
     public async Task InvokeAsync(HttpContext httpContext, RequestDelegate next)
@@ -82,7 +80,7 @@ public class SessionMiddleware : IMiddleware, IHasServices
                 session = null;
             }
         }
-        session ??= SessionFactory.CreateSession().WithTenantId(tenantId);
+        session ??= Session.New().WithTenantId(tenantId);
 
         if (session != originalSession) {
             var cookieName = Settings.Cookie.Name ?? "";

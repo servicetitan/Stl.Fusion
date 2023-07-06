@@ -121,7 +121,6 @@ public readonly struct FusionBuilder
         // Core authentication services
         services.TryAddScoped<ISessionResolver>(c => new SessionResolver(c));
         services.TryAddScoped(c => c.GetRequiredService<ISessionResolver>().Session);
-        services.TryAddSingleton<ISessionFactory>(_ => new SessionFactory());
 
         // Core multitenancy services
         services.TryAddSingleton<ITenantRegistry<Unit>>(_ => new SingleTenantRegistry<Unit>());

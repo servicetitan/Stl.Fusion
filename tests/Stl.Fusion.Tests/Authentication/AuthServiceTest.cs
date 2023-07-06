@@ -81,7 +81,6 @@ public abstract class AuthServiceTestBase : FusionTestBase
         var auth = Services.GetRequiredService<IAuth>();
         var authBackend = Services.GetRequiredService<IAuthBackend>();
         var authClient = ClientServices.GetRequiredService<IAuth>();
-        var sessionFactory = ClientServices.GetRequiredService<ISessionFactory>();
 
         for (var i = -100; i < 100; i++) {
             var user = await authBackend.GetUser(default, i.ToString());
@@ -100,7 +99,7 @@ public abstract class AuthServiceTestBase : FusionTestBase
 
         async Task<Session> CreateUser(User source)
         {
-            var session = sessionFactory.CreateSession();
+            var session = Session.New();
             await WebServices.Commander().Call(new AuthBackend_SignIn(session, source));
 
             var user = await authClient.GetUser(session);
@@ -123,9 +122,8 @@ public abstract class AuthServiceTestBase : FusionTestBase
         var webCommander = WebServices.Commander();
         var webAuth = WebServices.GetRequiredService<IAuth>();
         var authClient = ClientServices.GetRequiredService<IAuth>();
-        var sessionFactory = ClientServices.GetRequiredService<ISessionFactory>();
-        var sessionA = sessionFactory.CreateSession();
-        var sessionB = sessionFactory.CreateSession();
+        var sessionA = Session.New();
+        var sessionB = Session.New();
         var bob = new User("Bob").WithIdentity("g:1");
 
         var session = sessionA;
@@ -196,9 +194,8 @@ public abstract class AuthServiceTestBase : FusionTestBase
         var webAuth = WebServices.GetRequiredService<IAuth>();
         var webAuthBackend = WebServices.GetRequiredService<IAuthBackend>();
         var authClient = ClientServices.GetRequiredService<IAuth>();
-        var sessionFactory = ClientServices.GetRequiredService<ISessionFactory>();
-        var sessionA = sessionFactory.CreateSession();
-        var sessionB = sessionFactory.CreateSession();
+        var sessionA = Session.New();
+        var sessionB = Session.New();
         var bob = new User("Bob")
             .WithClaim("id", "bob")
             .WithClaim("id2", "bob")
@@ -269,9 +266,8 @@ public abstract class AuthServiceTestBase : FusionTestBase
         if (MustSkip()) return;
 
         var auth = Services.GetRequiredService<IAuth>();
-        var sessionFactory = ClientServices.GetRequiredService<ISessionFactory>();
 
-        var session = sessionFactory.CreateSession();
+        var session = Session.New();
         var user = await auth.GetUser(session);
         user.Should().BeNull();
 
@@ -287,9 +283,8 @@ public abstract class AuthServiceTestBase : FusionTestBase
         if (MustSkip()) return;
 
         var commander = Services.Commander();
-        var sessionFactory = ClientServices.GetRequiredService<ISessionFactory>();
 
-        var session = sessionFactory.CreateSession();
+        var session = Session.New();
         await Assert.ThrowsAsync<InvalidOperationException>(async() => {
             try {
                 var guest = new User("notANumber", "Guest").WithIdentity("n:1");
@@ -309,9 +304,8 @@ public abstract class AuthServiceTestBase : FusionTestBase
 
         var commander = Services.Commander();
         var auth = Services.GetRequiredService<IAuth>();
-        var sessionFactory = ClientServices.GetRequiredService<ISessionFactory>();
 
-        var session = sessionFactory.CreateSession();
+        var session = Session.New();
         var bob = new User("Bob").WithIdentity("b:1");
         await commander.Call(new AuthBackend_SignIn(session, bob));
         var user = await auth.GetUser(session);
@@ -343,9 +337,8 @@ public abstract class AuthServiceTestBase : FusionTestBase
         var commander = Services.Commander();
         var auth = Services.GetRequiredService<IAuth>();
         var authBackend = Services.GetRequiredService<IAuthBackend>();
-        var sessionFactory = ClientServices.GetRequiredService<ISessionFactory>();
-        var sessionA = sessionFactory.CreateSession();
-        var sessionB = sessionFactory.CreateSession();
+        var sessionA = Session.New();
+        var sessionB = Session.New();
 
         var sessions = await auth.GetUserSessions(sessionA);
         sessions.Length.Should().Be(0);

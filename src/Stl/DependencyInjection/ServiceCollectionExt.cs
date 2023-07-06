@@ -15,6 +15,27 @@ public static class ServiceCollectionExt
     public static bool HasService(this IServiceCollection services, Type serviceType)
         => services.Any(d => d.ServiceType == serviceType);
 
+    // RemoveAll
+
+    public static IServiceCollection RemoveAll(this IServiceCollection services, Func<ServiceDescriptor, bool> predicate)
+    {
+        var buffer = ArrayBuffer<int>.Lease(false);
+        try {
+            var index = 0;
+            foreach (var service in services) {
+                if (predicate.Invoke(service))
+                    buffer.Add(index);
+                index++;
+            }
+            for (var i = buffer.Count - 1; i >= 0; i--)
+                services.RemoveAt(i);
+            return services;
+        }
+        finally {
+            buffer.Release();
+        }
+    }
+
     // Options
 
     public static IServiceCollection Configure<TOptions>(

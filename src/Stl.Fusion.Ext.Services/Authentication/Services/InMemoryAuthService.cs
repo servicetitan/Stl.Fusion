@@ -9,7 +9,6 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
 
     protected ConcurrentDictionary<(Symbol TenantId, Symbol UserId), User> Users { get; } = new();
     protected ConcurrentDictionary<(Symbol TenantId, Symbol SessionId), SessionInfo> SessionInfos { get; } = new();
-    protected ISessionFactory SessionFactory { get; }
     protected VersionGenerator<long> VersionGenerator { get; }
     protected ITenantResolver TenantResolver { get; }
     protected ITenantRegistry TenantRegistry { get; }
@@ -18,7 +17,6 @@ public partial class InMemoryAuthService : IAuth, IAuthBackend
 
     public InMemoryAuthService(IServiceProvider services)
     {
-        SessionFactory = services.GetRequiredService<ISessionFactory>();
         VersionGenerator = services.VersionGenerator<long>();
         TenantResolver = services.GetRequiredService<ITenantResolver>();
         TenantRegistry = services.GetRequiredService<ITenantRegistry>();

@@ -16,7 +16,6 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     protected IDbEntityConverter<TDbUser, User> UserConverter { get; init; }
     protected IDbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId> Sessions { get; init; }
     protected IDbEntityConverter<TDbSessionInfo, SessionInfo> SessionConverter { get; init; }
-    protected ISessionFactory SessionFactory { get; init; }
     protected ITenantResolver<TDbContext> TenantResolver { get; init; }
 
     public DbAuthService(Options settings, IServiceProvider services) : base(services)
@@ -27,7 +26,6 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         UserConverter = services.DbEntityConverter<TDbUser, User>();
         Sessions = services.GetRequiredService<IDbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>>();
         SessionConverter = services.DbEntityConverter<TDbSessionInfo, SessionInfo>();
-        SessionFactory = services.GetRequiredService<ISessionFactory>();
         TenantResolver = services.GetRequiredService<ITenantResolver<TDbContext>>();
     }
 

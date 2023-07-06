@@ -25,9 +25,8 @@ public class SessionParameterTest : SimpleFusionTestBase
 
         var services = CreateServicesWithComputeService<PerUserCounterService>();
         var counters = services.GetRequiredService<PerUserCounterService>();
-        var sessionFactory = services.GetRequiredService<ISessionFactory>();
-        var sessionA = sessionFactory.CreateSession();
-        var sessionB = sessionFactory.CreateSession();
+        var sessionA = Session.New();
+        var sessionB = Session.New();
 
         var x1 = await counters.Get("x", sessionA);
         await counters.Increment("x", sessionA);
