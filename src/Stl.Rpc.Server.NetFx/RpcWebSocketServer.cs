@@ -25,12 +25,14 @@ public class RpcWebSocketServer : RpcServiceBase
 
     public Options Settings { get; }
     public RpcWebSocketServerPeerRefFactory PeerRefFactory { get; }
+    public RpcServerConnectionFactory ServerConnectionFactory { get; }
 
     public RpcWebSocketServer(Options settings, IServiceProvider services)
         : base(services)
     {
         Settings = settings;
         PeerRefFactory = services.GetRequiredService<RpcWebSocketServerPeerRefFactory>();
+        ServerConnectionFactory = services.GetRequiredService<RpcServerConnectionFactory>();
     }
 
     public HttpStatusCode Invoke(IOwinContext context)
@@ -67,16 +69,19 @@ public class RpcWebSocketServer : RpcServiceBase
     {
         var cancellationToken = context.Request.CallCancelled;
         var webSocket = wsContext.WebSocket;
-        var channel = new WebSocketChannel<RpcMessage>(
-            Settings.WebSocketChannelOptions, webSocket, Services, cancellationToken);
 
         var peerRef = PeerRefFactory.Invoke(this, context);
         if (Hub.GetPeer(peerRef) is not RpcServerPeer peer)
             return;
 
-        var options = ImmutableOptionSet.Empty.Set(context).Set(webSocket);
-        var connection = new RpcConnection(channel, options);
         try {
+            var channel = new WebSocketChannel<RpcMessage>(
+                Settings.WebSocketChannelOptions, webSocket, Services, cancellationToken);
+            var options = ImmutableOptionSet.Empty.Set(context).Set(webSocket);
+            var connection = await ServerConnectionFactory
+                .Invoke(peer, channel, options, cancellationToken)
+                .ConfigureAwait(false);
+
             await peer.Connect(connection, cancellationToken).ConfigureAwait(false);
             await channel.WhenClosed.ConfigureAwait(false);
         }

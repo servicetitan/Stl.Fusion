@@ -179,6 +179,16 @@ public sealed partial record ArgumentList<<#=argumentTypes#>> : ArgumentList<#=i
         return itemTypes;
     }
 
+    // GetType
+
+    public override Type? GetType(int index)
+        => index switch {
+<# for (var t = 0; t < itemCount; t++) { #>
+            <#=t#> => typeof(T<#=t#>),
+<# } #>
+            _ => null,
+        };
+
     // Get
 
 <#
@@ -362,7 +372,6 @@ public sealed partial record ArgumentList<<#=argumentTypes#>> : ArgumentList<#=i
             reader.OnObject(typeof(T<#=t#>), _item<#=t#>, <#=t#>);
 <# } #>
     }
-
 
     public override void Write(ArgumentListWriter writer)
     {

@@ -40,6 +40,7 @@ public readonly struct RpcBuilder
         services.TryAddSingleton(_ => RpcDefaultDelegates.BackendServiceDetector);
         services.TryAddSingleton(_ => RpcDefaultDelegates.UnrecoverableErrorDetector);
         services.TryAddSingleton(_ => RpcDefaultDelegates.ClientConnectionFactory);
+        services.TryAddSingleton(_ => RpcDefaultDelegates.ServerConnectionFactory);
         services.TryAddSingleton(_ => RpcArgumentSerializer.Default);
         services.TryAddSingleton(c => new RpcInboundMiddlewares(c));
         services.TryAddSingleton(c => new RpcOutboundMiddlewares(c));

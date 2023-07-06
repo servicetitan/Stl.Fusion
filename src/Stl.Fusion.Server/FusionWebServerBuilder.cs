@@ -1,6 +1,7 @@
 using Stl.Fusion.Server.Authentication;
 using Stl.Fusion.Server.Endpoints;
 using Stl.Fusion.Server.Internal;
+using Stl.Fusion.Server.Rpc;
 using Stl.Rpc.Server;
 
 namespace Stl.Fusion.Server;
@@ -29,7 +30,14 @@ public readonly struct FusionWebServerBuilder
 
         // We want above Contains call to run in O(1), so...
         services.Insert(0, AddedTagDescriptor);
-        fusion.Rpc.AddWebSocketServer();
+
+        // Add Rpc-related services
+        var rpc = fusion.Rpc;
+        rpc.AddWebSocketServer();
+        rpc.AddInboundMiddleware<FusionSessionRpcMiddleware>();
+        services.AddSingleton(_ => FusionRpcConnection.ServerConnectionFactory);
+
+        // Add other services
         services.AddSingleton(_ => SessionMiddleware.Options.Default);
         services.AddScoped(c => new SessionMiddleware(c.GetRequiredService<SessionMiddleware.Options>(), c));
         services.AddSingleton(_ => ServerAuthHelper.Options.Default);
@@ -43,7 +51,7 @@ public readonly struct FusionWebServerBuilder
     }
 
     public FusionMvcWebServerBuilder AddMvc()
-        => new FusionMvcWebServerBuilder(this, null);
+        => new(this, null);
 
     public FusionWebServerBuilder AddMvc(Action<FusionMvcWebServerBuilder> configure)
         => new FusionMvcWebServerBuilder(this, configure).FusionWebServer;

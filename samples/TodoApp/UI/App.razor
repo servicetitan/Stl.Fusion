@@ -28,7 +28,9 @@
 
     protected override void OnInitialized()
     {
-        SessionResolver.Session = new Session(SessionId);
+        SessionResolver.Session = OSInfo.IsWebAssembly
+            ? Session.Default
+            : new Session(SessionId);
         if (!BlazorCircuitContext.IsPrerendering)
             BlazorCircuitContext.RootComponent = this;
         if (OSInfo.IsWebAssembly) {

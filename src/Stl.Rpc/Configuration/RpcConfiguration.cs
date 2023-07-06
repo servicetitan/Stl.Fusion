@@ -7,7 +7,6 @@ public class RpcConfiguration
 {
     private readonly object _lock = new();
     private IDictionary<Type, RpcServiceBuilder> _services = new Dictionary<Type, RpcServiceBuilder>();
-    private Sampler? _inboundCallActivitySampler;
 
     public bool IsFrozen { get; private set; }
 

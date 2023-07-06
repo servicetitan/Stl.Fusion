@@ -21,6 +21,8 @@ public abstract partial record ArgumentList
     public virtual Type?[]? GetNonDefaultItemTypes()
         => null;
 
+    public virtual Type? GetType(int index)
+        => null;
     public virtual T Get<T>(int index)
         => throw new ArgumentOutOfRangeException(nameof(index));
     public virtual object? GetUntyped(int index)

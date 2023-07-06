@@ -131,6 +131,14 @@ public sealed partial record ArgumentList<T0> : ArgumentList1
         return itemTypes;
     }
 
+    // GetType
+
+    public override Type? GetType(int index)
+        => index switch {
+            0 => typeof(T0),
+            _ => null,
+        };
+
     // Get
 
     public override T Get0<T>() => Item0 is T value ? value : default!;
@@ -271,7 +279,6 @@ public sealed partial record ArgumentList<T0> : ArgumentList1
             reader.OnObject(typeof(T0), _item0, 0);
     }
 
-
     public override void Write(ArgumentListWriter writer)
     {
         if (typeof(T0).IsValueType)
@@ -398,6 +405,15 @@ public sealed partial record ArgumentList<T0, T1> : ArgumentList2
         }
         return itemTypes;
     }
+
+    // GetType
+
+    public override Type? GetType(int index)
+        => index switch {
+            0 => typeof(T0),
+            1 => typeof(T1),
+            _ => null,
+        };
 
     // Get
 
@@ -565,7 +581,6 @@ public sealed partial record ArgumentList<T0, T1> : ArgumentList2
             reader.OnObject(typeof(T1), _item1, 1);
     }
 
-
     public override void Write(ArgumentListWriter writer)
     {
         if (typeof(T0).IsValueType)
@@ -717,6 +732,16 @@ public sealed partial record ArgumentList<T0, T1, T2> : ArgumentList3
         }
         return itemTypes;
     }
+
+    // GetType
+
+    public override Type? GetType(int index)
+        => index switch {
+            0 => typeof(T0),
+            1 => typeof(T1),
+            2 => typeof(T2),
+            _ => null,
+        };
 
     // Get
 
@@ -910,7 +935,6 @@ public sealed partial record ArgumentList<T0, T1, T2> : ArgumentList3
             reader.OnObject(typeof(T2), _item2, 2);
     }
 
-
     public override void Write(ArgumentListWriter writer)
     {
         if (typeof(T0).IsValueType)
@@ -1087,6 +1111,17 @@ public sealed partial record ArgumentList<T0, T1, T2, T3> : ArgumentList4
         }
         return itemTypes;
     }
+
+    // GetType
+
+    public override Type? GetType(int index)
+        => index switch {
+            0 => typeof(T0),
+            1 => typeof(T1),
+            2 => typeof(T2),
+            3 => typeof(T3),
+            _ => null,
+        };
 
     // Get
 
@@ -1306,7 +1341,6 @@ public sealed partial record ArgumentList<T0, T1, T2, T3> : ArgumentList4
             reader.OnObject(typeof(T3), _item3, 3);
     }
 
-
     public override void Write(ArgumentListWriter writer)
     {
         if (typeof(T0).IsValueType)
@@ -1508,6 +1542,18 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4> : ArgumentList5
         }
         return itemTypes;
     }
+
+    // GetType
+
+    public override Type? GetType(int index)
+        => index switch {
+            0 => typeof(T0),
+            1 => typeof(T1),
+            2 => typeof(T2),
+            3 => typeof(T3),
+            4 => typeof(T4),
+            _ => null,
+        };
 
     // Get
 
@@ -1753,7 +1799,6 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4> : ArgumentList5
             reader.OnObject(typeof(T4), _item4, 4);
     }
 
-
     public override void Write(ArgumentListWriter writer)
     {
         if (typeof(T0).IsValueType)
@@ -1980,6 +2025,19 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5> : ArgumentList
         }
         return itemTypes;
     }
+
+    // GetType
+
+    public override Type? GetType(int index)
+        => index switch {
+            0 => typeof(T0),
+            1 => typeof(T1),
+            2 => typeof(T2),
+            3 => typeof(T3),
+            4 => typeof(T4),
+            5 => typeof(T5),
+            _ => null,
+        };
 
     // Get
 
@@ -2251,7 +2309,6 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5> : ArgumentList
             reader.OnObject(typeof(T5), _item5, 5);
     }
 
-
     public override void Write(ArgumentListWriter writer)
     {
         if (typeof(T0).IsValueType)
@@ -2503,6 +2560,20 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5, T6> : Argument
         }
         return itemTypes;
     }
+
+    // GetType
+
+    public override Type? GetType(int index)
+        => index switch {
+            0 => typeof(T0),
+            1 => typeof(T1),
+            2 => typeof(T2),
+            3 => typeof(T3),
+            4 => typeof(T4),
+            5 => typeof(T5),
+            6 => typeof(T6),
+            _ => null,
+        };
 
     // Get
 
@@ -2800,7 +2871,6 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5, T6> : Argument
             reader.OnObject(typeof(T6), _item6, 6);
     }
 
-
     public override void Write(ArgumentListWriter writer)
     {
         if (typeof(T0).IsValueType)
@@ -3077,6 +3147,21 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7> : Argu
         }
         return itemTypes;
     }
+
+    // GetType
+
+    public override Type? GetType(int index)
+        => index switch {
+            0 => typeof(T0),
+            1 => typeof(T1),
+            2 => typeof(T2),
+            3 => typeof(T3),
+            4 => typeof(T4),
+            5 => typeof(T5),
+            6 => typeof(T6),
+            7 => typeof(T7),
+            _ => null,
+        };
 
     // Get
 
@@ -3400,7 +3485,6 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7> : Argu
             reader.OnObject(typeof(T7), _item7, 7);
     }
 
-
     public override void Write(ArgumentListWriter writer)
     {
         if (typeof(T0).IsValueType)
@@ -3702,6 +3786,22 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8> : 
         }
         return itemTypes;
     }
+
+    // GetType
+
+    public override Type? GetType(int index)
+        => index switch {
+            0 => typeof(T0),
+            1 => typeof(T1),
+            2 => typeof(T2),
+            3 => typeof(T3),
+            4 => typeof(T4),
+            5 => typeof(T5),
+            6 => typeof(T6),
+            7 => typeof(T7),
+            8 => typeof(T8),
+            _ => null,
+        };
 
     // Get
 
@@ -4051,7 +4151,6 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8> : 
             reader.OnObject(typeof(T8), _item8, 8);
     }
 
-
     public override void Write(ArgumentListWriter writer)
     {
         if (typeof(T0).IsValueType)
@@ -4378,6 +4477,23 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9
         }
         return itemTypes;
     }
+
+    // GetType
+
+    public override Type? GetType(int index)
+        => index switch {
+            0 => typeof(T0),
+            1 => typeof(T1),
+            2 => typeof(T2),
+            3 => typeof(T3),
+            4 => typeof(T4),
+            5 => typeof(T5),
+            6 => typeof(T6),
+            7 => typeof(T7),
+            8 => typeof(T8),
+            9 => typeof(T9),
+            _ => null,
+        };
 
     // Get
 
@@ -4726,7 +4842,6 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9
         else
             reader.OnObject(typeof(T9), _item9, 9);
     }
-
 
     public override void Write(ArgumentListWriter writer)
     {

@@ -22,12 +22,14 @@ public class RpcWebSocketServer : RpcServiceBase
 
     public Options Settings { get; }
     public RpcWebSocketServerPeerRefFactory PeerRefFactory { get; }
+    public RpcServerConnectionFactory ServerConnectionFactory { get; }
 
     public RpcWebSocketServer(Options settings, IServiceProvider services)
         : base(services)
     {
         Settings = settings;
         PeerRefFactory = services.GetRequiredService<RpcWebSocketServerPeerRefFactory>();
+        ServerConnectionFactory = services.GetRequiredService<RpcServerConnectionFactory>();
     }
 
     public async Task Invoke(HttpContext context)
@@ -51,11 +53,14 @@ public class RpcWebSocketServer : RpcServiceBase
         var acceptWebSocketTask = context.WebSockets.AcceptWebSocketAsync();
 #endif
         var webSocket = await acceptWebSocketTask.ConfigureAwait(false);
-        var channel = new WebSocketChannel<RpcMessage>(
-            Settings.WebSocketChannelOptions, webSocket, Services, cancellationToken);
-        var options = ImmutableOptionSet.Empty.Set(context).Set(webSocket);
-        var connection = new RpcConnection(channel, options);
         try {
+            var channel = new WebSocketChannel<RpcMessage>(
+                Settings.WebSocketChannelOptions, webSocket, Services, cancellationToken);
+            var options = ImmutableOptionSet.Empty.Set(context).Set(webSocket);
+            var connection = await ServerConnectionFactory
+                .Invoke(peer, channel, options, cancellationToken)
+                .ConfigureAwait(false);
+
             await peer.Connect(connection, cancellationToken).ConfigureAwait(false);
             await channel.WhenClosed.ConfigureAwait(false);
         }
