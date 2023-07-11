@@ -71,7 +71,7 @@ public static class Errors
         => new DisconnectedException($"The remote {partyName} is disconnected.");
 
     public static Exception ClientRpcPeerRefExpected(string argumentName)
-        => new ArgumentOutOfRangeException(argumentName, "Client RpcPeerRef (with IsServer == false) is expected here.");
+        => new ArgumentOutOfRangeException(argumentName, "Client RpcPeerRef is expected.");
     public static Exception ServerRpcPeerRefExpected(string argumentName)
-        => new ArgumentOutOfRangeException(argumentName, "Server RpcPeerRef (with IsServer == true) is expected here.");
+        => new ArgumentOutOfRangeException(argumentName, "Server RpcPeerRef is expected.");
 }
