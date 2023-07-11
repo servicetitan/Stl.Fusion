@@ -43,9 +43,8 @@ public class RpcWebSocketServer : RpcServiceBase
         if (acceptToken == null)
             return HttpStatusCode.BadRequest;
 
-        var peerRef = PeerRefFactory.Invoke(this, context);
-        if (Hub.GetPeer(peerRef) is not RpcServerPeer)
-            return HttpStatusCode.NotFound;
+        var peerRef = PeerRefFactory.Invoke(this, context).RequireServer();
+        _ = Hub.GetServerPeer(peerRef);
 
         var requestHeaders =
             GetValue<IDictionary<string, string[]>>(context.Environment, "owin.RequestHeaders")
@@ -71,9 +70,7 @@ public class RpcWebSocketServer : RpcServiceBase
         var webSocket = wsContext.WebSocket;
 
         var peerRef = PeerRefFactory.Invoke(this, context);
-        if (Hub.GetPeer(peerRef) is not RpcServerPeer peer)
-            return;
-
+        var peer = Hub.GetServerPeer(peerRef);
         try {
             var channel = new WebSocketChannel<RpcMessage>(
                 Settings.WebSocketChannelOptions, webSocket, Services, cancellationToken);

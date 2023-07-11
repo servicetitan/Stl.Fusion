@@ -30,12 +30,12 @@ public sealed class RpcHub : ProcessorBase, IHasServices
     internal RpcClient Client => _client ??= Services.GetRequiredService<RpcClient>();
     internal IMomentClock Clock => _clock ??= Services.Clocks().CpuClock;
 
+    internal ConcurrentDictionary<RpcPeerRef, RpcPeer> Peers { get; } = new();
+
     public IServiceProvider Services { get; }
     public RpcConfiguration Configuration { get; }
     public RpcServiceRegistry ServiceRegistry => _serviceRegistry ??= Services.GetRequiredService<RpcServiceRegistry>();
     public RpcInternalServices InternalServices => new(this);
-
-    public ConcurrentDictionary<RpcPeerRef, RpcPeer> Peers { get; } = new();
 
     public RpcHub(IServiceProvider services)
     {
@@ -84,4 +84,10 @@ public sealed class RpcHub : ProcessorBase, IHasServices
             return peer;
         }
     }
+
+    public RpcClientPeer GetClientPeer(RpcPeerRef peerRef)
+        => (RpcClientPeer)GetPeer(peerRef.RequireClient());
+
+    public RpcServerPeer GetServerPeer(RpcPeerRef peerRef)
+        => (RpcServerPeer)GetPeer(peerRef.RequireServer());
 }

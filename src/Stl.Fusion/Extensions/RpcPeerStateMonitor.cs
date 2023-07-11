@@ -22,11 +22,11 @@ public sealed class RpcPeerStateMonitor : WorkerBase
 
     protected override async Task OnRun(CancellationToken cancellationToken)
     {
+        var hub = Services.RpcHub();
         while (true) {
             await Task.Delay(StartDelay, cancellationToken).ConfigureAwait(false);
-            var peer = Services.RpcHub().GetPeer(PeerRef);
-            var clientPeer = peer as RpcClientPeer;
-            Log.LogInformation("`{PeerRef}`: monitor started", PeerRef);
+            Log.LogInformation("`{PeerRef}`: monitor (re)started", PeerRef);
+            var peer = hub.GetClientPeer(PeerRef);
             try {
                 // This delay gives some time for peer to connect
                 using var cts = cancellationToken.LinkWith(peer.StopToken);
@@ -36,13 +36,13 @@ public sealed class RpcPeerStateMonitor : WorkerBase
                     var nextState = new RpcPeerState(isConnected, connectionState.Error);
 
                     _state.Value = nextState;
-                    if (clientPeer != null && !isConnected) {
+                    if (!isConnected) {
                         // Client peer disconnected, we need to watch for ReconnectAt value change now
                         for (var i = 0; i < 10; i++) {
                             // ReSharper disable once MethodSupportsCancellation
                             if (e.WhenNext().IsCompleted)
                                 break;
-                            if (clientPeer.ReconnectsAt is { } vReconnectsAt) {
+                            if (peer.ReconnectsAt is { } vReconnectsAt) {
                                 nextState = nextState with { ReconnectsAt = vReconnectsAt };
                                 _state.Value = nextState;
                                 break;

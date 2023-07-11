@@ -20,4 +20,6 @@ public readonly record struct RpcInternalServices(RpcHub Hub)
     public RpcSystemCallSender SystemCallSender => Hub.SystemCallSender;
     public RpcClient Client => Hub.Client;
     public IMomentClock Clock => Hub.Clock;
+
+    public ConcurrentDictionary<RpcPeerRef, RpcPeer> Peers => Hub.Peers;
 }

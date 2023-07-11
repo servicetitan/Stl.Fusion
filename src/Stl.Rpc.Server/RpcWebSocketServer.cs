@@ -40,11 +40,8 @@ public class RpcWebSocketServer : RpcServiceBase
             return;
         }
 
-        var peerRef = PeerRefFactory.Invoke(this, context);
-        if (Hub.GetPeer(peerRef) is not RpcServerPeer peer) {
-            context.Response.StatusCode = (int)HttpStatusCode.NotFound;
-            return;
-        }
+        var peerRef = PeerRefFactory.Invoke(this, context).RequireServer();
+        var peer = Hub.GetServerPeer(peerRef);
 
 #if NET6_0_OR_GREATER
         var webSocketAcceptContext = Settings.ConfigureWebSocket.Invoke();

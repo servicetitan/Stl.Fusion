@@ -15,8 +15,8 @@ public class RpcTestConnection
     public RpcHub Hub => TestClient.Hub;
     public RpcPeerRef ClientPeerRef { get; }
     public RpcPeerRef ServerPeerRef { get; }
-    public RpcClientPeer ClientPeer => _clientPeer ??= (RpcClientPeer)Hub.GetPeer(ClientPeerRef);
-    public RpcServerPeer ServerPeer => _serverPeer ??= (RpcServerPeer)Hub.GetPeer(ServerPeerRef);
+    public RpcClientPeer ClientPeer => _clientPeer ??= Hub.GetClientPeer(ClientPeerRef);
+    public RpcServerPeer ServerPeer => _serverPeer ??= Hub.GetServerPeer(ServerPeerRef);
 
     public RpcTestConnection(RpcTestClient testClient, RpcPeerRef clientPeerRef, RpcPeerRef serverPeerRef)
     {
