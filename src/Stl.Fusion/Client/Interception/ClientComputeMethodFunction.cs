@@ -76,6 +76,9 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
             input, cacheResult.Value, VersionGenerator.NextVersion(), true,
             null, cacheEntry);
 
+        // SuppressFlow here ensures that "true" computed won't be registered as a dependency -
+        // which is correct, coz its cached version already became a dependency, and once
+        // the true computed is created, its cached (prev.) version will be invalidated.
         using var suppressFlow = ExecutionContextExt.SuppressFlow();
         _ = Task.Run(() => RemoteCompute(input, cache, computed, cancellationToken), cancellationToken);
         return computed;
