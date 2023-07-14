@@ -13,7 +13,7 @@ using static System.Console;
 
 const int serverCount = 2;
 var serverUrls = Enumerable.Range(0, serverCount).Select(i => $"http://localhost:{22222 + i}/").ToArray();
-var clientPeerRefs = Enumerable.Range(0, serverCount).Select(i => new RpcPeerRef(i.ToString())).ToArray();
+var clientPeerRefs = Enumerable.Range(0, serverCount).Select(i => new RpcPeerRef(serverUrls[i])).ToArray();
 
 await (args switch {
     [ "server" ] => RunServers(),
@@ -51,7 +51,7 @@ async Task RunClient()
     var services = new ServiceCollection()
         .AddFusion(fusion => {
             fusion.Rpc.AddWebSocketClient(_ => new RpcWebSocketClient.Options() {
-                HostUrlResolver = (_, peer) => serverUrls[int.Parse(peer.Ref.Id.Value)],
+                HostUrlResolver = (_, peer) => peer.Ref.Id.Value // peer.Ref.Id is the host URL in this sample
             });
             fusion.AddClient<IChat>();
         })
