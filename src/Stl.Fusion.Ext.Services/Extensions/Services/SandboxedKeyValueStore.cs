@@ -99,7 +99,7 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
     protected virtual async Task<KeyChecker> GetKeyChecker(
         Session session, CancellationToken cancellationToken = default)
     {
-        if (session == Session.Null)
+        if (session == null!)
             throw Errors.KeyViolatesSandboxedKeyValueStoreConstraints();
 
         var user = await Auth.GetUser(session, cancellationToken).ConfigureAwait(false);

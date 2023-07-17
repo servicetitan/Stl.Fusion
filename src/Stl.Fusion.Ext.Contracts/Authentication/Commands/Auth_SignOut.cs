@@ -5,7 +5,7 @@ namespace Stl.Fusion.Authentication;
 public partial record Auth_SignOut: ISessionCommand<Unit>
 {
     [DataMember, MemoryPackOrder(0)]
-    public Session Session { get; init; } = Session.Null;
+    public Session Session { get; init; } = null!;
     [DataMember, MemoryPackOrder(1)]
     public string? KickUserSessionHash { get; init; }
     [DataMember, MemoryPackOrder(2)]

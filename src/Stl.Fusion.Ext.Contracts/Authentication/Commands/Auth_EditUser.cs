@@ -5,7 +5,7 @@ namespace Stl.Fusion.Authentication;
 public partial record Auth_EditUser : ISessionCommand<Unit>
 {
     [DataMember, MemoryPackOrder(0)]
-    public Session Session { get; init; } = Session.Null;
+    public Session Session { get; init; } = null!;
     [DataMember, MemoryPackOrder(1)]
     public string? Name { get; init; }
 
