@@ -21,15 +21,6 @@ using User = Stl.Fusion.Tests.Model.User;
 
 namespace Stl.Fusion.Tests;
 
-public enum FusionTestDbType
-{
-    Sqlite = 0,
-    PostgreSql = 1,
-    MariaDb = 2,
-    SqlServer = 3,
-    InMemory = 4,
-}
-
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public abstract class FusionTestBase : RpcTestBase
 {
@@ -54,6 +45,8 @@ public abstract class FusionTestBase : RpcTestBase
     protected FusionTestBase(ITestOutputHelper @out) : base(@out)
     {
         var appTempDir = FilePath.GetApplicationTempDirectory("", true);
+        if (TestRunnerInfo.IsGitHubAction())
+            appTempDir = Environment.GetEnvironmentVariable("RUNNER_TEMP");
         SqliteDbPath = appTempDir & FilePath.GetHashedName($"{GetType().Name}_{GetType().Namespace}.db");
     }
 
@@ -86,11 +79,7 @@ public abstract class FusionTestBase : RpcTestBase
     }
 
     protected virtual bool MustSkip()
-        => TestRunnerInfo.IsBuildAgent()
-            && DbType
-                is FusionTestDbType.PostgreSql
-                or FusionTestDbType.MariaDb
-                or FusionTestDbType.SqlServer;
+        => !DbType.IsUsed();
 
     protected override void ConfigureTestServices(IServiceCollection services, bool isClient)
     {
