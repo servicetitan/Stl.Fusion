@@ -86,7 +86,7 @@ public abstract class FusionTestBase : RpcTestBase
     }
 
     protected virtual bool MustSkip()
-        => TestRunnerInfo.IsGitHubAction()
+        => TestRunnerInfo.IsBuildAgent()
             && DbType
                 is FusionTestDbType.PostgreSql
                 or FusionTestDbType.MariaDb

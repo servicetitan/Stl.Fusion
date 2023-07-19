@@ -45,7 +45,7 @@ public class RpcReconnectionTest : RpcLocalTestBase
     {
         var workerCount = HardwareInfo.ProcessorCount / 2;
         var testDuration = TimeSpan.FromSeconds(10);
-        if (TestRunnerInfo.IsGitHubAction()) {
+        if (TestRunnerInfo.IsBuildAgent()) {
             workerCount = 1;
             testDuration = TimeSpan.FromSeconds(1);
         }

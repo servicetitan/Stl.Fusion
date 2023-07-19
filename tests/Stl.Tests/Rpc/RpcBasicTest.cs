@@ -172,7 +172,7 @@ public class RpcBasicTest : RpcLocalTestBase
     [InlineData(200_000)]
     public async Task PerformanceTest(int iterationCount)
     {
-        if (TestRunnerInfo.IsGitHubAction())
+        if (TestRunnerInfo.IsBuildAgent())
             iterationCount = 100;
 
         await using var services = CreateServices();

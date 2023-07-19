@@ -193,7 +193,7 @@ public class RpcWebSocketTest : RpcTestBase
     [InlineData(50_000)]
     public async Task PerformanceTest(int iterationCount)
     {
-        if (TestRunnerInfo.IsGitHubAction())
+        if (TestRunnerInfo.IsBuildAgent())
             iterationCount = 100;
 
         await using var _ = await WebHost.Serve();
