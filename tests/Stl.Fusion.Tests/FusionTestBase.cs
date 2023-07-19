@@ -46,12 +46,17 @@ public abstract class FusionTestBase : RpcTestBase
 
     protected FusionTestBase(ITestOutputHelper @out) : base(@out)
     {
-        var appTempDir = FilePath.GetApplicationTempDirectory("", true);
+        var appTempDir = TestRunnerInfo.IsGitHubAction()
+            ? new FilePath(Environment.GetEnvironmentVariable("RUNNER_TEMP"))
+            : FilePath.GetApplicationTempDirectory("", true);
         SqliteDbPath = appTempDir & FilePath.GetHashedName($"{GetType().Name}_{GetType().Namespace}.db");
     }
 
     public override async Task InitializeAsync()
     {
+        if (!DbType.IsAvailable())
+            return;
+
         using var __ = await InitializeLock.Lock().ConfigureAwait(false);
 
         for (var i = 0; i < 10 && File.Exists(SqliteDbPath); i++) {
@@ -79,7 +84,7 @@ public abstract class FusionTestBase : RpcTestBase
     }
 
     protected virtual bool MustSkip()
-        => !DbType.IsUsed();
+        => !DbType.IsAvailable();
 
     protected override void ConfigureTestServices(IServiceCollection services, bool isClient)
     {

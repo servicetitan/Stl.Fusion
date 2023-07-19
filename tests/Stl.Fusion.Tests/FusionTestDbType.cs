@@ -11,14 +11,14 @@ public enum FusionTestDbType
 
 public static class FusionTestDbTypeExt
 {
-    public static bool IsUsed(this FusionTestDbType dbType)
+    public static bool IsAvailable(this FusionTestDbType dbType)
         => TestRunnerInfo.IsBuildAgent()
-            ? dbType.IsUsedOnBuildAgent()
-            : dbType.IsUsedLocally();
+            ? dbType.IsAvailableOnBuildAgent()
+            : dbType.IsAvailableLocally();
 
-    public static bool IsUsedLocally(this FusionTestDbType dbType)
+    public static bool IsAvailableLocally(this FusionTestDbType dbType)
         => dbType is FusionTestDbType.InMemory or FusionTestDbType.Sqlite or FusionTestDbType.PostgreSql;
 
-    public static bool IsUsedOnBuildAgent(this FusionTestDbType dbType)
+    public static bool IsAvailableOnBuildAgent(this FusionTestDbType dbType)
         => dbType is FusionTestDbType.InMemory;
 }

@@ -36,8 +36,7 @@ public static class TestRunnerInfo
             Workflow = Environment.GetEnvironmentVariable("GITHUB_WORKFLOW") ?? "";
             Action = Environment.GetEnvironmentVariable("GITHUB_ACTION") ?? "";
             RunId = Environment.GetEnvironmentVariable("GITHUB_RUN_ID") ?? "";
-            var githubActions = Environment.GetEnvironmentVariable("GITHUB_ACTIONS") ?? "";
-            IsActionRunning = Equals(githubActions.ToLowerInvariant(), "true");
+            IsActionRunning = !RunId.IsNullOrEmpty();
         }
     }
 
