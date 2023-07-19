@@ -34,7 +34,9 @@ public class ConnectorTest : TestBase
 
         var c1 = await c.GetConnection(CancellationToken.None);
         c1.Should().NotBeNull();
-        c.IsConnected.Value.Value.Should().BeTrue();
+        await c.IsConnected
+            .When(x => x.ValueOrDefault, CancellationToken.None)
+            .WaitAsync(TimeSpan.FromSeconds(0.2), CancellationToken.None);
 
         c.DropConnection(c1, new DisconnectedException());
         await c.IsConnected
