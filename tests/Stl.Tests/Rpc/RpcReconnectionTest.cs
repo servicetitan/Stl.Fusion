@@ -40,15 +40,17 @@ public class RpcReconnectionTest : RpcLocalTestBase
         await AssertNoCalls(clientPeer);
     }
 
-    [Theory(Timeout = 30_000)]
-    [InlineData(10)]
-    public async Task ReconnectionTest(double testDuration)
+    [Fact(Timeout = 30_000)]
+    public async Task ReconnectionTest()
     {
         var workerCount = HardwareInfo.ProcessorCount / 2;
-        if (TestRunnerInfo.IsGitHubAction())
+        var testDuration = TimeSpan.FromSeconds(10);
+        if (TestRunnerInfo.IsGitHubAction()) {
             workerCount = 1;
+            testDuration = TimeSpan.FromSeconds(1);
+        }
 
-        var endAt = CpuTimestamp.Now + TimeSpan.FromSeconds(testDuration);
+        var endAt = CpuTimestamp.Now + testDuration;
         var tasks = Enumerable.Range(0, workerCount)
             .Select(i => Task.Run(() => Worker(i, endAt)))
             .ToArray();
