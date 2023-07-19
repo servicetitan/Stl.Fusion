@@ -287,18 +287,16 @@ public abstract class RpcPeer : WorkerBase
             // The code below is responsible solely for logging - all important stuff is already done
             if (terminalError != null)
                 Log.LogInformation("'{PeerRef}': Can't (re)connect, will shut down", Ref);
-            else if (state.IsConnected() != oldState.IsConnected()) {
-                if (state.IsConnected())
-                    Log.LogInformation("'{PeerRef}': Connected", Ref);
-                else {
-                    var e = state.Error;
-                    if (e != null)
-                        Log.LogInformation(
-                            "'{PeerRef}': Disconnected: {ErrorType}: {ErrorMessage}",
-                            Ref, e.GetType().GetName(), e.Message);
-                    else
-                        Log.LogInformation("'{PeerRef}': Disconnected", Ref);
-                }
+            else if (state.IsConnected())
+                Log.LogInformation("'{PeerRef}': Connected", Ref);
+            else {
+                var e = state.Error;
+                if (e != null)
+                    Log.LogWarning(
+                        "'{PeerRef}': Disconnected: {ErrorType}: {ErrorMessage}",
+                        Ref, e.GetType().GetName(), e.Message);
+                else
+                    Log.LogWarning("'{PeerRef}': Disconnected", Ref);
             }
         }
     }
