@@ -7,8 +7,8 @@ ignore:
   - "src/Stl.DependencyInjection.Extras"
 coverage:
   precision: 2
-  round: down
-  range: "65...100"
+  round: nearest
+  range: "60...100"
   status:
     project:
       default:
