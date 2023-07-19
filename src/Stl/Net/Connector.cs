@@ -27,7 +27,7 @@ public sealed class Connector<TConnection> : WorkerBase
         LogTag = GetType().GetName();
     }
 
-    public Task<TConnection> GetConnection(CancellationToken cancellationToken)
+    public Task<TConnection> GetConnection(CancellationToken cancellationToken = default)
     {
         // ReSharper disable once InconsistentlySynchronizedField
         var state = _state;
@@ -65,8 +65,7 @@ public sealed class Connector<TConnection> : WorkerBase
 #pragma warning restore VSTHRD104
 
             _state = prevState.AppendNext(State.New() with {
-                LastError = error,
-                TryIndex = prevState.Value.TryIndex + 1,
+                LastError = error
             });
         }
         prevState.Value.Dispose();
@@ -98,8 +97,10 @@ public sealed class Connector<TConnection> : WorkerBase
             }
 
             if (connection != null) {
-                lock (Lock)
+                lock (Lock) {
+                    state = _state = _state.AppendNext(new State(connectionSource));
                     IsConnected = IsConnected.AppendNext(true);
+                }
 
                 Log.IfEnabled(LogLevel)?.Log(LogLevel, "{LogTag}: Connected", LogTag);
                 try {
@@ -114,11 +115,12 @@ public sealed class Connector<TConnection> : WorkerBase
 
             lock (Lock) {
                 if (state == _state) {
-                    _state = state.AppendNext(State.New() with {
+                    var oldState = state;
+                    state = _state = oldState.AppendNext(State.New() with {
                         LastError = error,
                         TryIndex = state.Value.TryIndex + 1,
                     });
-                    state.Value.Dispose();
+                    oldState.Value.Dispose();
                 }
                 else {
                     // It was updated by Reconnect, so we just switch to the new state
