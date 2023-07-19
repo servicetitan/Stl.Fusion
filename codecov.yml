@@ -2,7 +2,9 @@ ignore:
   - "tests"
   - "samples"
   - "src/**/Compatibility"
-  - "src/Stl.Interception/ArgumentList-Generated.cs"
+  - "src/Stl.Interception/ArgumentList-Generated.cs" # It's enough to cover just one generic variant, so we assume it's fully covered
+  - "src/Stl.Fusion.Blazor" # No tests yet - let's assume this is tested via apps
+  - "src/Stl.Redis" # Redis tests are there, but they don't run on GitHub
   - "src/Stl.Testing"
   - "src/Stl.DependencyInjection.Extras"
 coverage:
