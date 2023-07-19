@@ -2,7 +2,7 @@ ignore:
   - "tests"
   - "samples"
   - "src/**/Compatibility"
-  - "src/Stl.Interception/ArgumentList.cs"
+  - "src/Stl.Interception/ArgumentList-Generated.cs"
   - "src/Stl.Testing"
   - "src/Stl.DependencyInjection.Extras"
 coverage:
