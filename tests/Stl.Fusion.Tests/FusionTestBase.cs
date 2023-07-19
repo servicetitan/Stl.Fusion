@@ -27,7 +27,9 @@ public abstract class FusionTestBase : RpcTestBase
     private static readonly ReentrantAsyncLock InitializeLock = new(LockReentryMode.CheckedFail);
     protected static readonly ConcurrentDictionary<Symbol, string> ClientComputedCacheStore = new();
 
-    public FusionTestDbType DbType { get; init; } = FusionTestDbType.Sqlite;
+    public FusionTestDbType DbType { get; init; } = TestRunnerInfo.IsBuildAgent()
+        ? FusionTestDbType.InMemory
+        : FusionTestDbType.Sqlite;
     public bool UseRedisOperationLogChangeTracking { get; init; } = !TestRunnerInfo.IsBuildAgent();
     public bool UseInMemoryKeyValueStore { get; init; }
     public bool UseInMemoryAuthService { get; init; }
