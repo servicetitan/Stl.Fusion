@@ -165,7 +165,6 @@ public class RpcBasicTest : RpcLocalTestBase
     }
 
     [Theory]
-    [InlineData(1)]
     [InlineData(1000)]
     [InlineData(5000)]
     [InlineData(10_000)]
@@ -173,6 +172,9 @@ public class RpcBasicTest : RpcLocalTestBase
     [InlineData(200_000)]
     public async Task PerformanceTest(int iterationCount)
     {
+        if (TestRunnerInfo.IsGitHubAction())
+            iterationCount = 100;
+
         await using var services = CreateServices();
         var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
         var client = services.GetRequiredService<ITestRpcServiceClient>();

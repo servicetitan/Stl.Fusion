@@ -178,6 +178,7 @@ internal static class Program
                     .Add("--results-directory").Add(testOutputPath)
                     .AddOption("-c", configuration)
                     .AddOption("-f", framework)
+                    .AddOption("-p", "ParallelizeTestCollections=false")
                     .Add("--")
                     .Add("DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=json,cobertura")
                 ).ToConsole()
