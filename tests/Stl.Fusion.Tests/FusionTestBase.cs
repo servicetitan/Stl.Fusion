@@ -45,8 +45,6 @@ public abstract class FusionTestBase : RpcTestBase
     protected FusionTestBase(ITestOutputHelper @out) : base(@out)
     {
         var appTempDir = FilePath.GetApplicationTempDirectory("", true);
-        if (TestRunnerInfo.IsGitHubAction())
-            appTempDir = Environment.GetEnvironmentVariable("RUNNER_TEMP");
         SqliteDbPath = appTempDir & FilePath.GetHashedName($"{GetType().Name}_{GetType().Namespace}.db");
     }
 

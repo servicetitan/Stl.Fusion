@@ -20,5 +20,5 @@ public static class FusionTestDbTypeExt
         => dbType is FusionTestDbType.InMemory or FusionTestDbType.Sqlite or FusionTestDbType.PostgreSql;
 
     public static bool IsUsedOnBuildAgent(this FusionTestDbType dbType)
-        => dbType is FusionTestDbType.InMemory or FusionTestDbType.Sqlite;
+        => dbType is FusionTestDbType.InMemory;
 }
