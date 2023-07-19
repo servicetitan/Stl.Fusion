@@ -52,6 +52,7 @@ public class FusionRpcReconnectionTest : SimpleFusionTestBase
     [Fact]
     public async Task Case2Test()
     {
+        var waitMultiplier = TestRunnerInfo.IsBuildAgent() ? 10 : 1;
         await using var services = CreateServices();
         var connection = services.GetRequiredService<RpcTestClient>().Single();
         var clientPeer = connection.ClientPeer;
@@ -59,7 +60,7 @@ public class FusionRpcReconnectionTest : SimpleFusionTestBase
 
         var (delay, invDelay) = (300, 300);
         var task = client.Delay(delay, invDelay);
-        (await task.WaitAsync(TimeSpan.FromSeconds(1))).Should().Be((delay, invDelay));
+        (await task.WaitAsync(TimeSpan.FromSeconds(1 * waitMultiplier))).Should().Be((delay, invDelay));
         var computed = await Computed
             .Capture(() => client.Delay(delay, invDelay))
             .AsTask().WaitAsync(TimeSpan.FromSeconds(0.1)); // Should be instant
@@ -69,7 +70,7 @@ public class FusionRpcReconnectionTest : SimpleFusionTestBase
         // Recovery is expected to trigger result update and/or invalidation
 
         var startedAt = CpuTimestamp.Now;
-        await computed.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(1));
+        await computed.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(1 * waitMultiplier));
         var elapsed = CpuTimestamp.Now - startedAt;
         if (!TestRunnerInfo.IsBuildAgent())
             elapsed.TotalSeconds.Should().BeGreaterThan(0.1);
@@ -99,7 +100,7 @@ public class FusionRpcReconnectionTest : SimpleFusionTestBase
             .AsTask().WaitAsync(TimeSpan.FromSeconds(0.1)); // Should be instant
 
         var startedAt = CpuTimestamp.Now;
-        await computed.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(1));
+        await computed.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(1 * waitMultiplier));
         var elapsed = CpuTimestamp.Now - startedAt;
         if (!TestRunnerInfo.IsBuildAgent())
             elapsed.TotalSeconds.Should().BeGreaterThan(0.1);
