@@ -39,8 +39,8 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
         sw.Restart();
         var c2 = await GetScreenshotComputed(service2);
         Out.WriteLine($"Hit in: {sw.ElapsedMilliseconds}ms");
-        c2.Call.Should().BeNull(); // First cache hit should resolve w/o waiting for Rpc
-        await c2.WhenCallCompleted();
+        c2.IsCached(out var whenCallCompleted).Should().BeTrue();
+        await whenCallCompleted!;
         c2.Call.Should().NotBeNull();
 
         sw.Restart();
