@@ -41,8 +41,8 @@ public class KeyValueServiceWithCacheTest : FusionTestBase
         c2.Value.Should().Be("a");
         c2.Call.Should().BeNull(); // From cache
         c2.CacheEntry.Should().NotBeNull(); // From cache
-
-        await Delay(0.5); // Let the "Get" calls complete
+        await c2.WhenCallCompleted();
+        c2.Call.Should().NotBeNull();
 
         await kv.Set("1", "a");
         await c1.WhenInvalidated().WaitAsync(timeout);

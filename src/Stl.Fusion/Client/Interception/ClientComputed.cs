@@ -9,11 +9,15 @@ public interface IClientComputed : IComputed, IDisposable
 {
     RpcOutboundCall? Call { get; }
     RpcCacheEntry? CacheEntry { get; }
+
+    Task WhenCallCompleted();
 }
 
 public class ClientComputed<T> : ComputeMethodComputed<T>, IClientComputed
 {
     private RpcOutboundComputeCall<T>? _call;
+    private readonly SemaphoreSlim? _callIsBound;
+    private Task? _whenCallCompleted;
 
     RpcOutboundCall? IClientComputed.Call => _call;
     public RpcOutboundComputeCall<T>? Call => _call;
@@ -31,7 +35,9 @@ public class ClientComputed<T> : ComputeMethodComputed<T>, IClientComputed
     {
         CacheEntry = cacheEntry;
         if (call != null)
-            BindToCallFromLock(call);
+            TryBindToCallFromLock(call);
+        else
+            _callIsBound = new SemaphoreSlim(0);
         StartAutoInvalidation();
     }
 
@@ -49,28 +55,60 @@ public class ClientComputed<T> : ComputeMethodComputed<T>, IClientComputed
 
     public void BindToCall(RpcOutboundComputeCall<T> call)
     {
+        bool isBound;
         lock (Lock)
-            BindToCallFromLock(call);
+            isBound = TryBindToCallFromLock(call);
+        if (isBound)
+            _callIsBound!.Release(); // Should go after exit from lock!
+    }
+
+    public Task WhenCallCompleted()
+    {
+        if (_whenCallCompleted != null)
+            return _whenCallCompleted;
+
+        lock (Lock)
+            return _whenCallCompleted ??= _call != null
+                ? WaitForCallCompletion(_call)
+                : WaitForCallAndItsCompletion();
+
+        static Task WaitForCallCompletion(RpcOutboundComputeCall<T> call)
+            => call.ResultTask.IsCompleted || call.WhenInvalidated.IsCompleted
+                ? Task.CompletedTask
+                : Task.WhenAny(call.ResultTask, call.WhenInvalidated);
+
+        Task WaitForCallAndItsCompletion() {
+            var whenCallIsBound = _callIsBound!.WaitAsync();
+            if (whenCallIsBound.IsCompleted)
+                return WaitForCallCompletion(_call!);
+
+            return whenCallIsBound.ContinueWith(static (_, state) => {
+                var self = (ClientComputed<T>)state;
+                return WaitForCallCompletion(self._call!);
+            },
+            this, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+        }
     }
 
     // Protected methods
 
-    protected void BindToCallFromLock(RpcOutboundComputeCall<T> call)
+    protected bool TryBindToCallFromLock(RpcOutboundComputeCall<T> call)
     {
         if (_call != null)
-            return; // Should never happen, but just in case
+            return false; // Should never happen, but just in case
 
         var whenInvalidated = call.WhenInvalidated;
         if (whenInvalidated.IsCompleted) {
             Invalidate(true);
             _call = call;
-            return;
+            return true;
         }
 
         _call = call;
         _ = whenInvalidated.ContinueWith(
             _ => Invalidate(true),
             CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+        return true;
     }
 
     protected override void OnInvalidated()
