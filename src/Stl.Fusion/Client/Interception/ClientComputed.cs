@@ -60,13 +60,14 @@ public class ClientComputed<T> : ComputeMethodComputed<T>, IClientComputed
         if (_call != null)
             return; // Should never happen, but just in case
 
-        _call = call;
         var whenInvalidated = call.WhenInvalidated;
         if (whenInvalidated.IsCompleted) {
             Invalidate(true);
+            _call = call;
             return;
         }
 
+        _call = call;
         _ = whenInvalidated.ContinueWith(
             _ => Invalidate(true),
             CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
