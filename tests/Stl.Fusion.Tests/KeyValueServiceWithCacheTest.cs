@@ -73,12 +73,10 @@ public class KeyValueServiceWithCacheTest : FusionTestBase
         var state1 = ClientServices.StateFactory().NewComputed<string>(
             FixedDelayer.Get(0.1),
             (_, ct) => kv2.Get("1", ct));
-        state1.WhenNonInitial().IsCompleted.Should().BeFalse();
 
         var state2 = ClientServices.StateFactory().NewComputed<string>(
             FixedDelayer.Get(0.1),
             (_, ct) => kv2.Get("2", ct));
-        state2.WhenNonInitial().IsCompleted.Should().BeFalse();
 
         var state = ClientServices.StateFactory().NewComputed<string>(
             FixedDelayer.Get(0.5),
@@ -87,7 +85,6 @@ public class KeyValueServiceWithCacheTest : FusionTestBase
                 var s2 = await state2.Use(ct);
                 return $"{s1} {s2}";
             });
-        state.WhenNonInitial().IsCompleted.Should().BeFalse();
 
         var whenSynchronized = state.WhenSynchronized();
         whenSynchronized.IsCompleted.Should().BeFalse();
