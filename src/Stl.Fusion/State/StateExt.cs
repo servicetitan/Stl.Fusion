@@ -109,4 +109,26 @@ public static class StateExt
         IUpdateDelayer updateDelayer,
         CancellationToken cancellationToken = default)
         => state.Computed.Changes(updateDelayer, cancellationToken);
+
+    // WhenNonInitial
+
+    public static Task WhenNonInitial<T>(this IState<T> state)
+    {
+        if (state is IMutableState)
+            return Task.CompletedTask;
+
+        var snapshot = state.Snapshot;
+        return snapshot.IsInitial
+            ? snapshot.WhenUpdated()
+            : Task.CompletedTask;
+    }
+
+    // WhenSynchronized & Synchronize
+
+    public static Task WhenSynchronized(this IState state)
+        => state.Computed.WhenSynchronized();
+
+    public static ValueTask<Computed<T>> Synchronize<T>(this IState<T> state,
+        CancellationToken cancellationToken = default)
+        => state.Computed.Synchronize(cancellationToken);
 }

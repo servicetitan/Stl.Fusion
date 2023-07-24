@@ -1,7 +1,5 @@
-using System.Diagnostics.CodeAnalysis;
 using Stl.Fusion.Client.Interception;
 using Stl.Fusion.Internal;
-using Stl.Rpc.Infrastructure;
 
 namespace Stl.Fusion;
 
@@ -163,35 +161,6 @@ public static partial class ComputedExt
         }
     }
 
-    // IsCached
-
-    public static bool IsCached<T>(this Computed<T> computed)
-    {
-        var clientComputed = computed as IClientComputed;
-        if (clientComputed?.CacheEntry == null)
-            return false; // No cache entry -> definitely not cached
-
-        return clientComputed.Call == null; // Call != null -> not cached, otherwise cached
-    }
-
-    // WhenSynchronized & Synchronize
-
-    public static Task WhenSynchronized<T>(this Computed<T> computed)
-    {
-        var clientComputed = computed as IClientComputed;
-        return clientComputed?.WhenSynchronized() ?? Task.CompletedTask;
-    }
-
-    public static async ValueTask<Computed<T>> Synchronize<T>(this Computed<T> computed,
-        CancellationToken cancellationToken = default)
-    {
-        var whenSynchronized = computed.WhenSynchronized();
-        if (!whenSynchronized.IsCompleted)
-            await whenSynchronized.WaitAsync(cancellationToken).ConfigureAwait(false);
-        computed = await computed.Update(cancellationToken).ConfigureAwait(false);
-        return computed;
-    }
-
     // When
 
     public static Task<Computed<T>> When<T>(this Computed<T> computed,
@@ -259,5 +228,66 @@ public static partial class ComputedExt
             await updateDelayer.Delay(retryCount, cancellationToken).ConfigureAwait(false);
         }
         // ReSharper disable once IteratorNeverReturns
+    }
+
+    // WhenSynchronized & Synchronize
+
+    public static Task WhenSynchronized(this IComputed computed)
+    {
+        if (computed is IClientComputed clientComputed)
+            return clientComputed.WhenSynchronized();
+
+        if (computed is IStateBoundComputed stateBoundComputed) {
+            var state = stateBoundComputed.State;
+            if (state is IMutableState)
+                return Task.CompletedTask;
+
+            var snapshot = state.Snapshot;
+            if (snapshot.IsInitial)
+                return WhenUpdatedAndSynchronized(snapshot);
+
+            static async Task WhenUpdatedAndSynchronized(IStateSnapshot snapshot1) {
+                await snapshot1.WhenUpdated().ConfigureAwait(false);
+                await snapshot1.State.Computed.WhenSynchronized().ConfigureAwait(false);
+            }
+        }
+
+        // Computed is a regular computed instance
+        var computedImpl = (IComputedImpl) computed;
+        var usedBuffer = ArrayBuffer<IComputedImpl>.Lease(false);
+        var taskBuffer = ArrayBuffer<Task>.Lease(false);
+        try {
+            computedImpl.CopyUsedTo(ref usedBuffer);
+            var usedArray = usedBuffer.Buffer;
+            for (var i = 0; i < usedBuffer.Count; i++) {
+                var used = usedArray[i];
+                var whenSynchronized = used.WhenSynchronized();
+                if (!whenSynchronized.IsCompleted)
+                    taskBuffer.Add(whenSynchronized);
+            }
+            return taskBuffer.Count switch {
+                0 => Task.CompletedTask,
+                1 => taskBuffer[0],
+                _ => Task.WhenAll(taskBuffer.ToArray()),
+            };
+        }
+        finally {
+            taskBuffer.Release();
+            usedBuffer.Release();
+        }
+    }
+
+    public static async ValueTask<Computed<T>> Synchronize<T>(this Computed<T> computed,
+        CancellationToken cancellationToken = default)
+    {
+        while (true) {
+            var whenSynchronized = computed.WhenSynchronized();
+            if (!whenSynchronized.IsCompleted)
+                await whenSynchronized.WaitAsync(cancellationToken).ConfigureAwait(false);
+            if (computed.IsConsistent())
+                return computed;
+
+            computed = await computed.Update(cancellationToken).ConfigureAwait(false);
+        }
     }
 }
