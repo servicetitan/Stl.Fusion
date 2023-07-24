@@ -165,52 +165,29 @@ public static partial class ComputedExt
 
     // IsCached
 
-    public static bool? IsCached<T>(this Computed<T> computed)
+    public static bool IsCached<T>(this Computed<T> computed)
     {
         var clientComputed = computed as IClientComputed;
         if (clientComputed?.CacheEntry == null)
             return false; // No cache entry -> definitely not cached
 
-        return clientComputed.Call != null ? false : null;
+        return clientComputed.Call == null; // Call != null -> not cached, otherwise cached
     }
 
-#if NETSTANDARD2_0
-    public static bool IsCached<T>(this Computed<T> computed, out Task? whenCallCompleted)
-#else
-    public static bool IsCached<T>(this Computed<T> computed, [NotNullWhen(true)] out Task? whenCallCompleted)
-#endif
+    // WhenSynchronized & Synchronize
+
+    public static Task WhenSynchronized<T>(this Computed<T> computed)
     {
         var clientComputed = computed as IClientComputed;
-        if (clientComputed?.CacheEntry == null) {
-            whenCallCompleted = null;
-            return false; // No cache entry -> definitely not cached
-        }
-        whenCallCompleted = clientComputed.WhenCallCompleted();
-        return true;
+        return clientComputed?.WhenSynchronized() ?? Task.CompletedTask;
     }
 
-    // UpdateIfCached
-
-    public static async ValueTask<Computed<T>> UpdateIfCached<T>(this Computed<T> computed,
-        TimeSpan waitDuration,
+    public static async ValueTask<Computed<T>> Synchronize<T>(this Computed<T> computed,
         CancellationToken cancellationToken = default)
     {
-        using var waitCts = new CancellationTokenSource(waitDuration);
-        using var cts = waitCts.Token.LinkWith(cancellationToken);
-        try {
-            return await computed.UpdateIfCached(cts.Token).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) when (waitCts.Token.IsCancellationRequested) {
-            // Timeout - we just update the computed in this case
-            return await computed.Update(cancellationToken).ConfigureAwait(false);
-        }
-    }
-
-    public static async ValueTask<Computed<T>> UpdateIfCached<T>(this Computed<T> computed,
-        CancellationToken cancellationToken = default)
-    {
-        if (computed.IsCached(out var whenCallCompleted))
-            await whenCallCompleted!.WaitAsync(cancellationToken).ConfigureAwait(false);
+        var whenSynchronized = computed.WhenSynchronized();
+        if (!whenSynchronized.IsCompleted)
+            await whenSynchronized.WaitAsync(cancellationToken).ConfigureAwait(false);
         computed = await computed.Update(cancellationToken).ConfigureAwait(false);
         return computed;
     }

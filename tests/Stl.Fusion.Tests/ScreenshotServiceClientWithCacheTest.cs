@@ -39,8 +39,9 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
         sw.Restart();
         var c2 = await GetScreenshotComputed(service2);
         Out.WriteLine($"Hit in: {sw.ElapsedMilliseconds}ms");
-        c2.IsCached(out var whenCallCompleted).Should().BeTrue();
-        await whenCallCompleted!;
+        var whenSynchronized = c2.WhenSynchronized();
+        whenSynchronized.IsCompleted.Should().BeFalse();
+        await whenSynchronized;
         c2.Call.Should().NotBeNull();
 
         sw.Restart();

@@ -1,7 +1,6 @@
 using Stl.Fusion.Client.Caching;
 using Stl.Fusion.Client.Interception;
 using Stl.Fusion.Tests.Services;
-using Stl.Fusion.Tests.UIModels;
 
 namespace Stl.Fusion.Tests;
 
@@ -39,8 +38,9 @@ public class KeyValueServiceWithCacheTest : FusionTestBase
 
         var c2 = await GetComputed(kv2, "1");
         c2.Value.Should().Be("a");
-        c2.IsCached(out var whenCallCompleted).Should().BeTrue();
-        await whenCallCompleted!;
+        var whenSynchronized = c2.WhenSynchronized();
+        whenSynchronized.IsCompleted.Should().BeFalse();
+        await whenSynchronized;
         c2.Call.Should().NotBeNull();
 
         await kv.Set("1", "a");
