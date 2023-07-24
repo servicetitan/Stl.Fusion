@@ -16,6 +16,7 @@ public sealed class Connector<TConnection> : WorkerBase
     }
 
     public Func<TConnection, CancellationToken, Task>? Connected { get; init; }
+    public Func<Exception, bool> TerminalErrorDetector { get; init; } = static _ => false;
     public IRetryDelayer ReconnectDelayer { get; init; } = new RetryDelayer();
     public ILogger? Log { get; init; }
     public LogLevel LogLevel { get; init; } = LogLevel.Debug;
@@ -138,6 +139,10 @@ public sealed class Connector<TConnection> : WorkerBase
                 }
             }
 
+            cancellationToken.ThrowIfCancellationRequested();
+            if (error != null && TerminalErrorDetector.Invoke(error))
+                throw error;
+
             if (state.Value.TryIndex is var tryIndex and > 0) {
                 var delayLogger = new RetryDelayLogger("reconnect", LogTag, Log, LogLevel);
                 var delay = ReconnectDelayer.GetDelay(tryIndex, delayLogger, cancellationToken);
@@ -167,7 +172,9 @@ public sealed class Connector<TConnection> : WorkerBase
             _state = prevState.AppendNext(State.NewCancelled(StopToken));
             _state.Complete(StopToken);
             prevState.Value.Dispose();
-            IsConnected = IsConnected.AppendNext(true);
+
+            if (IsConnected.Value.IsValue(out var isConnected) && isConnected)
+                IsConnected = IsConnected.AppendNext(false);
             IsConnected.Complete();
         }
         return Task.CompletedTask;
