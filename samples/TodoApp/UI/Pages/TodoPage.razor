@@ -76,7 +76,7 @@
     // Check your explanation on our Discord: https://discord.gg/EKEwv6d
     [CascadingParameter] protected Task<AuthState> AuthState { get; set; } = null!;
 
-    protected override Task OnInitializedAsync() 
+    protected override Task OnInitializedAsync()
         => State.Update().AsTask();
 
     protected override async Task<Todo[]> ComputeState(CancellationToken cancellationToken)

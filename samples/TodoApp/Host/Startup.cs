@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Hosting.StaticWebAssets;
 using Microsoft.Extensions.FileProviders;
 using Templates.TodoApp.Services;
-using Stl.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using Microsoft.EntityFrameworkCore;
+using Stl.DependencyInjection;
 using Stl.Fusion.Blazor;
 using Stl.Fusion.Blazor.Authentication;
 using Stl.Fusion.EntityFramework;
@@ -61,7 +61,7 @@ public class Startup
 
         // IComputeService validation should be off in release
 #if !DEBUG
-        InterceptorBase.Options.Defaults.IsValidationEnabled = true;
+        InterceptorBase.Options.Defaults.IsValidationEnabled = false;
 #endif
 
         services.AddSettings<HostSettings>();
