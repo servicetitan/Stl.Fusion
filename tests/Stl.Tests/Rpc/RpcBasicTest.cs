@@ -14,8 +14,8 @@ public class RpcBasicTest : RpcLocalTestBase
     {
         base.ConfigureServices(services);
         var commander = services.AddCommander();
-        commander.AddCommandService<TestRpcService>();
-        commander.AddCommandService<TestRpcBackend>();
+        commander.AddService<TestRpcService>();
+        commander.AddService<TestRpcBackend>();
 
         var rpc = services.AddRpc();
         rpc.AddServer<ITestRpcService, TestRpcService>();

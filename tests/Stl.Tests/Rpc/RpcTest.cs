@@ -17,15 +17,15 @@ public class RpcWebSocketTest : RpcTestBase
         if (isClient) {
             rpc.AddClient<ITestRpcServiceClient>();
             rpc.Service<ITestRpcServiceClient>().HasName(nameof(ITestRpcService));
-            commander.AddCommandService<ITestRpcServiceClient>();
+            commander.AddService<ITestRpcServiceClient>();
             rpc.AddClient<ITestRpcBackend, ITestRpcBackendClient>();
-            commander.AddCommandService<ITestRpcBackendClient>();
+            commander.AddService<ITestRpcBackendClient>();
         }
         else {
             rpc.AddServer<ITestRpcService, TestRpcService>();
-            commander.AddCommandService<TestRpcService>();
+            commander.AddService<TestRpcService>();
             rpc.AddServer<ITestRpcBackend, TestRpcBackend>();
-            commander.AddCommandService<TestRpcBackend>();
+            commander.AddService<TestRpcBackend>();
             services.AddSingleton<RpcPeerFactory>(c => static (hub, peerRef) => {
                 return peerRef.IsServer
                     ? new RpcServerPeer(hub, peerRef) {

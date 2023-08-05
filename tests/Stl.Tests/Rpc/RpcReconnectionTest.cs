@@ -14,7 +14,7 @@ public class RpcReconnectionTest : RpcLocalTestBase
     {
         base.ConfigureServices(services);
         var commander = services.AddCommander();
-        commander.AddCommandService<TestRpcService>();
+        commander.AddService<TestRpcService>();
 
         var rpc = services.AddRpc();
         rpc.AddServer<ITestRpcService, TestRpcService>();
