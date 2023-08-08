@@ -43,7 +43,6 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
 
         var context = CommandContext.GetCurrent();
         var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
-
         if (Computed.IsInvalidating()) {
             if (isKickCommand)
                 return;
@@ -101,9 +100,9 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     public override async Task EditUser(Auth_EditUser command, CancellationToken cancellationToken = default)
     {
         var session = command.Session.RequireValid();
+
         var context = CommandContext.GetCurrent();
         var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
-
         if (Computed.IsInvalidating()) {
             var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
             if (invSessionInfo != null)
