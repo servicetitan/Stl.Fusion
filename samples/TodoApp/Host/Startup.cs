@@ -209,7 +209,7 @@ public class Startup
         // and set it as this server's content root.
         var baseDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "";
         var wwwRootPath = Path.Combine(baseDir, "wwwroot");
-        var dotNetDir = $"net{RuntimeInfo.DotNetCore.Version?.Major ?? 7}.0";
+        var dotNetDir = $"net{RuntimeInfo.DotNetCore.Version?.Major ?? 8}.0";
         if (!Directory.Exists(Path.Combine(wwwRootPath, "_framework")))
             // This is a regular build, not a build produced w/ "publish",
             // so we remap wwwroot to the client's wwwroot folder
