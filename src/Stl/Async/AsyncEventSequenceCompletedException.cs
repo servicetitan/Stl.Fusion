@@ -1,5 +1,7 @@
 namespace Stl.Async;
 
+#pragma warning disable SYSLIB0051
+
 [Serializable]
 public class AsyncEventSequenceCompletedException : Exception
 {

@@ -25,7 +25,7 @@
     <MicrosoftExtensionsVersion6>$(AspNetCoreVersion6)</MicrosoftExtensionsVersion6>
     <CSharpVersion>4.4.*</CSharpVersion>
     <!-- EF Core -->
-    <EntityFrameworkCoreVersion>$(AspNetCoreVersion)</EntityFrameworkCoreVersion>
+    <EntityFrameworkCoreVersion>$(AspNetCoreVersion7)</EntityFrameworkCoreVersion>
     <EntityFrameworkCoreVersion7>$(AspNetCoreVersion7)</EntityFrameworkCoreVersion7>
     <EntityFrameworkCoreVersion6>$(AspNetCoreVersion6)</EntityFrameworkCoreVersion6>
     <EntityFrameworkCoreVersion5>$(AspNetCoreVersion5)</EntityFrameworkCoreVersion5>
@@ -39,7 +39,7 @@
     <MySqlConnectorVersion6>2.1.*</MySqlConnectorVersion6>
     <MySqlConnectorVersion5>$(MySqlConnectorVersion6)</MySqlConnectorVersion5>
     <MySqlConnectorVersion3>0.*</MySqlConnectorVersion3>
-    <EntityFrameworkCoreMySqlVersion>$(EntityFrameworkCoreVersion7)</EntityFrameworkCoreMySqlVersion>
+    <EntityFrameworkCoreMySqlVersion>$(EntityFrameworkCoreVersion)</EntityFrameworkCoreMySqlVersion>
     <EntityFrameworkCoreMySqlVersion7>$(EntityFrameworkCoreVersion7)</EntityFrameworkCoreMySqlVersion7>
     <EntityFrameworkCoreMySqlVersion6>$(EntityFrameworkCoreVersion6)</EntityFrameworkCoreMySqlVersion6>
     <EntityFrameworkCoreMySqlVersion5>$(EntityFrameworkCoreVersion5)</EntityFrameworkCoreMySqlVersion5>
