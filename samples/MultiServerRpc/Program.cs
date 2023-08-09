@@ -1,5 +1,5 @@
 ﻿using Microsoft.Toolkit.HighPerformance;
-using Samples.MultiServerRpcApp;
+using Samples.MultiServerRpc;
 using Stl.CommandR;
 using Stl.Fusion;
 using Stl.Fusion.Server;

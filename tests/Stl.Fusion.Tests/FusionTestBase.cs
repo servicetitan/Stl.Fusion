@@ -182,10 +182,6 @@ public abstract class FusionTestBase : RpcTestBase
                 default:
                     throw new NotSupportedException();
                 }
-#if NET5_0_OR_GREATER
-                if (DbType != FusionTestDbType.InMemory)
-                    builder.UseValidationCheckConstraints(c => c.UseRegex(false));
-#endif
                 builder.EnableSensitiveDataLogging();
             }, 256);
             services.AddDbContextServices<TestDbContext>(db => {

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <PropertyGroup>
-    <TargetFrameworks>net7.0;net6.0;net5.0;netcoreapp3.1;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net8.0;net7.0;net6.0;net5.0;netcoreapp3.1;netstandard2.1</TargetFrameworks>
     <RazorLangVersion>3.0</RazorLangVersion>
     <PackageTags>servicetitan stl stl_fusion blazor</PackageTags>
     <Description>Blazor components of Stl.Fusion - <!--
@@ -26,6 +26,12 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
     <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+  </ItemGroup>
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net7'))">
+    <PackageReference Include="Microsoft.AspNetCore.Components" VersionOverride="$(BlazorVersion7)" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" VersionOverride="$(BlazorVersion7)" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" VersionOverride="$(BlazorVersion7)" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" VersionOverride="$(BlazorVersion7)" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('net6'))">
     <PackageReference Include="Microsoft.AspNetCore.Components" VersionOverride="$(BlazorVersion6)" />

@@ -1,4 +1,4 @@
-﻿using Samples.MiniRpcApp;
+﻿using Samples.MiniRpc;
 using Stl.CommandR;
 using Stl.Fusion;
 using Stl.Fusion.Server;

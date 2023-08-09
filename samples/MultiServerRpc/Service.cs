@@ -7,7 +7,7 @@ using Stl.Fusion;
 using Stl.Text;
 using static System.Console;
 
-namespace Samples.MultiServerRpcApp;
+namespace Samples.MultiServerRpc;
 
 public record ServerId(Symbol Id); // Used just to display the message with Server ID
 

@@ -110,9 +110,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{91471F20-7
 		docs\TaskList-AY.md = docs\TaskList-AY.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniRpcApp", "samples\MiniRpcApp\MiniRpcApp.csproj", "{99131CAD-DDC3-4B1A-ABB8-63E0FF32B03E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniRpc", "samples\MiniRpc\MiniRpc.csproj", "{99131CAD-DDC3-4B1A-ABB8-63E0FF32B03E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiServerRpcApp", "samples\MultiServerRpcApp\MultiServerRpcApp.csproj", "{DDD38FE8-3105-44E6-9128-921B0713FF64}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiServerRpc", "samples\MultiServerRpc\MultiServerRpc.csproj", "{DDD38FE8-3105-44E6-9128-921B0713FF64}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

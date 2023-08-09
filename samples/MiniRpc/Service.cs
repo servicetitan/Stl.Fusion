@@ -5,7 +5,7 @@ using Stl.CommandR;
 using Stl.CommandR.Configuration;
 using Stl.Fusion;
 
-namespace Samples.MiniRpcApp;
+namespace Samples.MiniRpc;
 
 public interface IChat : IComputeService
 {
