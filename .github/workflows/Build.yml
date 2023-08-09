@@ -22,7 +22,8 @@ jobs:
           setCommonVars: true
 
       - run: "echo 'SemVer2: ${{ steps.nbgv.outputs.SemVer2 }}'"
-      - name: Setup .NET Core
+
+      - name: Setup .NET 8.0 Preview
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '8.0.x'
