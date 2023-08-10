@@ -128,9 +128,15 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
         var database = dbContext.Database;
         database.DisableAutoTransactionsAndSavepoints();
         if (Connection != null) {
+            var oldConnection = database.GetDbConnection();
             dbContext.SuppressDispose();
             database.SetDbConnection(Connection);
             await database.UseTransactionAsync(Transaction!.GetDbTransaction(), cancellationToken).ConfigureAwait(false);
+#if !NETSTANDARD2_0
+            await oldConnection.DisposeAsync().ConfigureAwait(false);
+#else
+            oldConnection.Dispose();
+#endif
         }
         CommandContext.SetOperation(Operation);
         return dbContext;

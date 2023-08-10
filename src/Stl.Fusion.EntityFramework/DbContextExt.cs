@@ -67,11 +67,11 @@ public static class DbContextExt
     {
         var dbContextPoolable = (IDbContextPoolable)dbContext;
         dbContextPoolable.SnapshotConfiguration();
-        var fakePool = new FakeDbContextPool(dbContextPoolable);
+        var pool = new SuppressDisposeDbContextPool(dbContextPoolable);
 #if !NETSTANDARD2_0
-        dbContextPoolable.SetLease(new DbContextLease(fakePool, true));
+        dbContextPoolable.SetLease(new DbContextLease(pool, true));
 #else
-        dbContextPoolable.SetPool(fakePool);
+        dbContextPoolable.SetPool(pool);
 #endif
         return dbContext;
     }
