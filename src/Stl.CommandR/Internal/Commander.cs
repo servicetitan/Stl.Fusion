@@ -1,6 +1,6 @@
 namespace Stl.CommandR.Internal;
 
-public class Commander : ICommander
+public class Commander(IServiceProvider services) : ICommander
 {
     private static readonly PropertyInfo ChainIdSetterProperty =
         typeof(IEventCommand).GetProperty(nameof(IEventCommand.ChainId))!;
@@ -9,14 +9,11 @@ public class Commander : ICommander
     private CommandHandlerResolver? _handlerResolver;
     private Action<IEventCommand, Symbol>? _chainIdSetter;
 
-    public IServiceProvider Services { get; }
+    public IServiceProvider Services { get; } = services;
 
     protected CommandHandlerResolver HandlerResolver => _handlerResolver ??= Services.GetRequiredService<CommandHandlerResolver>();
     protected Action<IEventCommand, Symbol> ChainIdSetter => _chainIdSetter ??= ChainIdSetterProperty.GetSetter<Symbol>();
     protected ILogger Log => _log ??= Services.LogFor(GetType());
-
-    public Commander(IServiceProvider services)
-        => Services = services;
 
     public Task Run(CommandContext context, CancellationToken cancellationToken = default)
     {

@@ -35,14 +35,14 @@ public class MutableState<T> : State<T>, IMutableState<T>
         set => Set(Result.Value((T) value!));
     }
 
-    public MutableState(Options options, IServiceProvider services, bool initialize = true)
-        : base(options, services, false)
+    public MutableState(Options settings, IServiceProvider services, bool initialize = true)
+        : base(settings, services, false)
     {
-        NextOutput = options.InitialOutput;
+        NextOutput = settings.InitialOutput;
 
         // ReSharper disable once VirtualMemberCallInConstructor
         if (initialize)
-            Initialize(options);
+            Initialize(settings);
     }
 
     // Set overloads

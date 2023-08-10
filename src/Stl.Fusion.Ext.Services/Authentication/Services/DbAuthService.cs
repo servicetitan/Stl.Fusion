@@ -4,30 +4,28 @@ using Stl.Multitenancy;
 
 namespace Stl.Fusion.Authentication.Services;
 
-public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> : DbAuthService<TDbContext>
+public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId>(
+        DbAuthService<TDbContext>.Options settings,
+        IServiceProvider services
+        ) : DbAuthService<TDbContext>(services)
     where TDbContext : DbContext
     where TDbSessionInfo : DbSessionInfo<TDbUserId>, new()
     where TDbUser : DbUser<TDbUserId>, new()
     where TDbUserId : notnull
 {
-    protected Options Settings { get; }
+    protected Options Settings { get; } = settings;
     protected IDbUserIdHandler<TDbUserId> DbUserIdHandler { get; init; }
+        = services.GetRequiredService<IDbUserIdHandler<TDbUserId>>();
     protected IDbUserRepo<TDbContext, TDbUser, TDbUserId> Users { get; init; }
+        = services.GetRequiredService<IDbUserRepo<TDbContext, TDbUser, TDbUserId>>();
     protected IDbEntityConverter<TDbUser, User> UserConverter { get; init; }
+        = services.DbEntityConverter<TDbUser, User>();
     protected IDbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId> Sessions { get; init; }
+        = services.GetRequiredService<IDbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>>();
     protected IDbEntityConverter<TDbSessionInfo, SessionInfo> SessionConverter { get; init; }
+        = services.DbEntityConverter<TDbSessionInfo, SessionInfo>();
     protected ITenantResolver<TDbContext> TenantResolver { get; init; }
-
-    public DbAuthService(Options settings, IServiceProvider services) : base(services)
-    {
-        Settings = settings;
-        DbUserIdHandler = services.GetRequiredService<IDbUserIdHandler<TDbUserId>>();
-        Users = services.GetRequiredService<IDbUserRepo<TDbContext, TDbUser, TDbUserId>>();
-        UserConverter = services.DbEntityConverter<TDbUser, User>();
-        Sessions = services.GetRequiredService<IDbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>>();
-        SessionConverter = services.DbEntityConverter<TDbSessionInfo, SessionInfo>();
-        TenantResolver = services.GetRequiredService<ITenantResolver<TDbContext>>();
-    }
+        = services.GetRequiredService<ITenantResolver<TDbContext>>();
 
     // Commands
 

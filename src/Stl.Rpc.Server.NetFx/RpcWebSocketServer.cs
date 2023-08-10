@@ -12,7 +12,10 @@ using WebSocketAccept = System.Action<
 
 namespace Stl.Rpc.Server;
 
-public class RpcWebSocketServer : RpcServiceBase
+public class RpcWebSocketServer(
+        RpcWebSocketServer.Options settings,
+        IServiceProvider services
+        ) : RpcServiceBase(services)
 {
     public record Options
     {
@@ -23,17 +26,11 @@ public class RpcWebSocketServer : RpcServiceBase
         public WebSocketChannel<RpcMessage>.Options WebSocketChannelOptions { get; init; } = WebSocketChannel<RpcMessage>.Options.Default;
     }
 
-    public Options Settings { get; }
+    public Options Settings { get; } = settings;
     public RpcWebSocketServerPeerRefFactory PeerRefFactory { get; }
+        = services.GetRequiredService<RpcWebSocketServerPeerRefFactory>();
     public RpcServerConnectionFactory ServerConnectionFactory { get; }
-
-    public RpcWebSocketServer(Options settings, IServiceProvider services)
-        : base(services)
-    {
-        Settings = settings;
-        PeerRefFactory = services.GetRequiredService<RpcWebSocketServerPeerRefFactory>();
-        ServerConnectionFactory = services.GetRequiredService<RpcServerConnectionFactory>();
-    }
+        = services.GetRequiredService<RpcServerConnectionFactory>();
 
     public HttpStatusCode Invoke(IOwinContext context)
     {

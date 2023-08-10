@@ -4,15 +4,14 @@ using Stl.Interception.Interceptors;
 
 namespace Stl.Fusion.Interception;
 
-public abstract class ComputeServiceInterceptorBase : InterceptorBase
+public abstract class ComputeServiceInterceptorBase(
+        ComputeServiceInterceptorBase.Options settings,
+        IServiceProvider services
+        ) : InterceptorBase(settings, services)
 {
     public new record Options : InterceptorBase.Options;
 
-    public readonly FusionInternalHub Hub;
-
-    protected ComputeServiceInterceptorBase(Options options, IServiceProvider services)
-        : base(options, services)
-        => Hub = services.GetRequiredService<FusionInternalHub>();
+    public readonly FusionInternalHub Hub = services.GetRequiredService<FusionInternalHub>();
 
     public override void Intercept(Invocation invocation)
     {

@@ -14,21 +14,16 @@ public interface IDbOperationLog<in TDbContext>
     Task<int> Trim(Tenant tenant, DateTime minCommitTime, int maxCount, CancellationToken cancellationToken);
 }
 
-public class DbOperationLog<TDbContext, TDbOperation> : DbServiceBase<TDbContext>, IDbOperationLog<TDbContext>
+public class DbOperationLog<TDbContext, TDbOperation>(IServiceProvider services) : DbServiceBase<TDbContext>(services),
+    IDbOperationLog<TDbContext>
     where TDbContext : DbContext
     where TDbOperation : DbOperation, new()
 {
-    protected AgentInfo AgentInfo { get; }
-
-    public DbOperationLog(IServiceProvider services)
-        : base(services)
-    {
-        AgentInfo = services.GetRequiredService<AgentInfo>();
-    }
+    protected AgentInfo AgentInfo { get; } = services.GetRequiredService<AgentInfo>();
 
     public DbOperation New(string? id = null, string? agentId = null, object? command = null)
         => new TDbOperation() {
-            Id = id ?? Ulid.NewUlid().ToString(),
+            Id = id ?? Ulid.NewUlid().ToString()!,
             AgentId = agentId ?? AgentInfo.Id,
             StartTime = Clocks.SystemClock.Now,
             Command = command,

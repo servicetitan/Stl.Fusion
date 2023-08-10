@@ -5,15 +5,13 @@ using Stl.Fusion.Internal;
 namespace Stl.Fusion.Authentication.Services;
 
 public class DbSessionInfoConverter<TDbContext, TDbSessionInfo, TDbUserId>
-    : DbEntityConverter<TDbContext, TDbSessionInfo, SessionInfo>
+    (IServiceProvider services) : DbEntityConverter<TDbContext, TDbSessionInfo, SessionInfo>(services)
     where TDbContext : DbContext
     where TDbSessionInfo : DbSessionInfo<TDbUserId>, new()
     where TDbUserId : notnull
 {
-    protected IDbUserIdHandler<TDbUserId> DbUserIdHandler { get; init; }
-
-    public DbSessionInfoConverter(IServiceProvider services) : base(services)
-        => DbUserIdHandler = services.GetRequiredService<IDbUserIdHandler<TDbUserId>>();
+    protected IDbUserIdHandler<TDbUserId> DbUserIdHandler { get; init; } =
+        services.GetRequiredService<IDbUserIdHandler<TDbUserId>>();
 
     public override TDbSessionInfo NewEntity() => new();
     public override SessionInfo NewModel() => new(Clocks.SystemClock.Now);

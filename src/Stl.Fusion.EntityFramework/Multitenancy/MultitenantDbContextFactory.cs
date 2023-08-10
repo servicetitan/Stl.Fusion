@@ -4,7 +4,10 @@ using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework;
 
-public class MultitenantDbContextFactory<TDbContext> : IMultitenantDbContextFactory<TDbContext>
+public class MultitenantDbContextFactory<TDbContext>(
+        MultitenantDbContextFactory<TDbContext>.Options settings,
+        IServiceProvider services
+        ) : IMultitenantDbContextFactory<TDbContext>
     where TDbContext : DbContext
 {
     public record Options
@@ -12,21 +15,13 @@ public class MultitenantDbContextFactory<TDbContext> : IMultitenantDbContextFact
         public Action<IServiceProvider, Tenant, ServiceCollection> DbServiceCollectionBuilder { get; init; } = null!;
     }
 
-    private readonly ConcurrentDictionary<Symbol, IDbContextFactory<TDbContext>> _factories;
+    private readonly ConcurrentDictionary<Symbol, IDbContextFactory<TDbContext>> _factories = new();
     private ITenantRegistry<TDbContext>? _tenantRegistry;
 
-    protected Options Settings { get; }
-    protected IServiceProvider Services { get; }
-    protected ITenantRegistry<TDbContext> TenantRegistry // Let's avoid possible cycle 
+    protected Options Settings { get; } = settings;
+    protected IServiceProvider Services { get; } = services;
+    protected ITenantRegistry<TDbContext> TenantRegistry // Let's avoid possible cycle
         => _tenantRegistry ??= Services.GetRequiredService<ITenantRegistry<TDbContext>>();
-
-    public MultitenantDbContextFactory(Options settings, IServiceProvider services)
-    {
-        Settings = settings;
-        Services = services;
-        _factories = new();
-    }
-
 
     public TDbContext CreateDbContext(Symbol tenantId)
     {

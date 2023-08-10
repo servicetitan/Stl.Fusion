@@ -3,12 +3,9 @@ using Newtonsoft.Json.Linq;
 
 namespace Stl.RestEase.Internal;
 
-public class RestEaseHttpMessageHandler : DelegatingHandler, IHasServices
+public class RestEaseHttpMessageHandler(IServiceProvider services) : DelegatingHandler, IHasServices
 {
-    public IServiceProvider Services { get; }
-
-    public RestEaseHttpMessageHandler(IServiceProvider services)
-        => Services = services;
+    public IServiceProvider Services { get; } = services;
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {

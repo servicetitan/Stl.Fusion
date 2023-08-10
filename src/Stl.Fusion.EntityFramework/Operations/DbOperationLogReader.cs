@@ -4,7 +4,10 @@ using Stl.OS;
 
 namespace Stl.Fusion.EntityFramework.Operations;
 
-public class DbOperationLogReader<TDbContext> : DbTenantWorkerBase<TDbContext>
+public class DbOperationLogReader<TDbContext>(
+        DbOperationLogReader<TDbContext>.Options settings,
+        IServiceProvider services
+        ) : DbTenantWorkerBase<TDbContext>(services)
     where TDbContext : DbContext
 {
     public record Options
@@ -18,22 +21,15 @@ public class DbOperationLogReader<TDbContext> : DbTenantWorkerBase<TDbContext>
         public RetryDelaySeq RetryDelays { get; init; } = RetryDelaySeq.Exp(1, 5);
     }
 
-    protected Options Settings { get; }
-    protected AgentInfo AgentInfo { get; }
+    protected Options Settings { get; } = settings;
+    protected AgentInfo AgentInfo { get; } = services.GetRequiredService<AgentInfo>();
     protected IOperationCompletionNotifier OperationCompletionNotifier { get; }
+        = services.GetRequiredService<IOperationCompletionNotifier>();
     protected IDbOperationLogChangeTracker<TDbContext>? OperationLogChangeTracker { get;  }
+        = services.GetService<IDbOperationLogChangeTracker<TDbContext>>();
     protected IDbOperationLog<TDbContext> DbOperationLog { get; }
+        = services.GetRequiredService<IDbOperationLog<TDbContext>>();
     protected override IReadOnlyMutableDictionary<Symbol, Tenant> TenantSet => TenantRegistry.AccessedTenants;
-
-    public DbOperationLogReader(Options settings, IServiceProvider services)
-        : base(services)
-    {
-        Settings = settings;
-        AgentInfo = services.GetRequiredService<AgentInfo>();
-        OperationLogChangeTracker = services.GetService<IDbOperationLogChangeTracker<TDbContext>>();
-        OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
-        DbOperationLog = services.GetRequiredService<IDbOperationLog<TDbContext>>();
-    }
 
     protected override Task RunInternal(Tenant tenant, CancellationToken cancellationToken)
     {

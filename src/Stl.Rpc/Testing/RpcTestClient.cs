@@ -4,7 +4,10 @@ using Stl.Rpc.WebSockets;
 
 namespace Stl.Rpc.Testing;
 
-public class RpcTestClient : RpcClient, IEnumerable<RpcTestConnection>
+public class RpcTestClient(
+    RpcTestClient.Options settings,
+    IServiceProvider services
+    ) : RpcClient(services), IEnumerable<RpcTestConnection>
 {
     public record Options
     {
@@ -26,15 +29,11 @@ public class RpcTestClient : RpcClient, IEnumerable<RpcTestConnection>
     private readonly ConcurrentDictionary<RpcPeerRef, RpcTestConnection> _connections = new();
     private long _lastPairId;
 
-    public Options Settings { get; init; }
+    public Options Settings { get; init; } = settings;
     public new RpcHub Hub => base.Hub;
 
     public RpcTestConnection this[RpcPeerRef peerRef]
         => _connections.GetValueOrDefault(peerRef) ?? throw new KeyNotFoundException();
-
-    public RpcTestClient(Options settings, IServiceProvider services)
-        : base(services)
-        => Settings = settings;
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     public IEnumerator<RpcTestConnection> GetEnumerator() => _connections.Values.Distinct().GetEnumerator();

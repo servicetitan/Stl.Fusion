@@ -15,8 +15,8 @@ public class RpcRoutingInterceptor : RpcInterceptorBase
     public object LocalService { get; private set; } = null!;
     public object RemoteService { get; private set; } = null!;
 
-    public RpcRoutingInterceptor(Options options, IServiceProvider services)
-        : base(options, services)
+    public RpcRoutingInterceptor(Options settings, IServiceProvider services)
+        : base(settings, services)
         => RpcCallRouter = Hub.CallRouter;
 
     public void Setup(RpcServiceDef serviceDef, object localService, object remoteService)

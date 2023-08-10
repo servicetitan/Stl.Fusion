@@ -6,19 +6,17 @@ using Stl.Rpc.Infrastructure;
 
 namespace Stl.Fusion.Client.Interception;
 
-public class ClientComputeServiceInterceptor : ComputeServiceInterceptorBase
+public class ClientComputeServiceInterceptor(
+        ClientComputeServiceInterceptor.Options settings,
+        IServiceProvider services
+        ) : ComputeServiceInterceptorBase(settings, services)
 {
     public new record Options : ComputeServiceInterceptorBase.Options;
 
-    protected readonly RpcClientInterceptor RpcClientInterceptor;
-    protected readonly IClientComputedCache? Cache;
-
-    public ClientComputeServiceInterceptor(Options options, IServiceProvider services)
-        : base(options, services)
-    {
-        RpcClientInterceptor = services.GetRequiredService<RpcClientInterceptor>();
-        Cache = services.GetService<IClientComputedCache>();
-    }
+    protected readonly RpcClientInterceptor RpcClientInterceptor
+        = services.GetRequiredService<RpcClientInterceptor>();
+    protected readonly IClientComputedCache? Cache
+        = services.GetService<IClientComputedCache>();
 
     public virtual void Setup(RpcServiceDef serviceDef)
         => RpcClientInterceptor.Setup(serviceDef);

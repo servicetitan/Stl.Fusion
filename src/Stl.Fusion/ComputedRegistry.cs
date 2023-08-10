@@ -36,17 +36,17 @@ public sealed class ComputedRegistry : IDisposable
     public event Action<IComputed, bool>? OnAccess;
 
     public ComputedRegistry() : this(new()) { }
-    public ComputedRegistry(Options options)
+    public ComputedRegistry(Options settings)
     {
-        _storage = new ConcurrentDictionary<ComputedInput, GCHandle>(options.ConcurrencyLevel, options.InitialCapacity);
-        _gcHandlePool = options.GCHandlePool ?? new GCHandlePool(GCHandleType.Weak);
+        _storage = new ConcurrentDictionary<ComputedInput, GCHandle>(settings.ConcurrencyLevel, settings.InitialCapacity);
+        _gcHandlePool = settings.GCHandlePool ?? new GCHandlePool(GCHandleType.Weak);
         if (_gcHandlePool.HandleType != GCHandleType.Weak)
             throw new ArgumentOutOfRangeException(
-                $"{nameof(options)}.{nameof(options.GCHandlePool)}.{nameof(_gcHandlePool.HandleType)}");
+                $"{nameof(settings)}.{nameof(settings.GCHandlePool)}.{nameof(_gcHandlePool.HandleType)}");
         _opCounter = new StochasticCounter();
-        InputLocks = options.LocksFactory?.Invoke() ?? new AsyncLockSet<ComputedInput>(
+        InputLocks = settings.LocksFactory?.Invoke() ?? new AsyncLockSet<ComputedInput>(
             LockReentryMode.CheckedFail,
-            options.ConcurrencyLevel, options.InitialCapacity);
+            settings.ConcurrencyLevel, settings.InitialCapacity);
         ChangeGraphPruner(new ComputedGraphPruner(new()), null!);
         UpdatePruneCounterThreshold();
     }

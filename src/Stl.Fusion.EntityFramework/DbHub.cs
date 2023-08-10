@@ -6,7 +6,7 @@ using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework;
 
-public class DbHub<TDbContext>
+public class DbHub<TDbContext>(IServiceProvider services)
     where TDbContext : DbContext
 {
     private ITenantRegistry<TDbContext>? _tenantRegistry;
@@ -17,7 +17,7 @@ public class DbHub<TDbContext>
     private ILogger? _log;
 
     protected ILogger Log => _log ??= Services.LogFor(GetType());
-    protected IServiceProvider Services { get; }
+    protected IServiceProvider Services { get; } = services;
 
     public ITenantRegistry<TDbContext> TenantRegistry
         => _tenantRegistry ??= Services.GetRequiredService<ITenantRegistry<TDbContext>>();
@@ -43,9 +43,6 @@ public class DbHub<TDbContext>
         => _clocks ??= Services.Clocks();
     public ICommander Commander
         => _commander ??= Services.Commander();
-
-    public DbHub(IServiceProvider services)
-        => Services = services;
 
     public TDbContext CreateDbContext(bool readWrite = false)
         => DbContextFactory.CreateDbContext(Tenant.Default).SuppressExecutionStrategy().ReadWrite(readWrite);

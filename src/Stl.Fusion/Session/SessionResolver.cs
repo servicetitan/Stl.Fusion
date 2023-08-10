@@ -13,11 +13,11 @@ public interface ISessionResolver : IHasServices
     public Task<Session> GetSession(CancellationToken cancellationToken = default);
 }
 
-public class SessionResolver : ISessionResolver
+public class SessionResolver(IServiceProvider services) : ISessionResolver
 {
     protected readonly TaskCompletionSource<Session> SessionSource = TaskCompletionSourceExt.New<Session>();
 
-    public IServiceProvider Services { get; }
+    public IServiceProvider Services { get; } = services;
     public Task<Session> SessionTask => SessionSource.Task;
     public bool HasSession => SessionTask.IsCompleted;
 
@@ -30,9 +30,6 @@ public class SessionResolver : ISessionResolver
             SessionSource.TrySetResult(value.Require());
         }
     }
-
-    public SessionResolver(IServiceProvider services)
-        => Services = services;
 
     public virtual Task<Session> GetSession(CancellationToken cancellationToken = default)
         => SessionTask.WaitAsync(cancellationToken);

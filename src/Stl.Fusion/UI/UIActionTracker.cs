@@ -1,8 +1,9 @@
-using Stl.Internal;
-
 namespace Stl.Fusion.UI;
 
-public sealed class UIActionTracker : ProcessorBase, IHasServices
+public sealed class UIActionTracker(
+    UIActionTracker.Options settings,
+    IServiceProvider services
+    ) : ProcessorBase, IHasServices
 {
     public sealed record Options {
         public TimeSpan InstantUpdatePeriod { get; init; } = TimeSpan.FromMilliseconds(300);
@@ -15,20 +16,14 @@ public sealed class UIActionTracker : ProcessorBase, IHasServices
     private volatile AsyncEvent<UIAction?> _lastActionEvent = new(null, true);
     private volatile AsyncEvent<IUIActionResult?> _lastResultEvent = new(null, true);
 
-    public Options Settings { get; }
-    public IServiceProvider Services { get; }
+    public Options Settings { get; } = settings;
+    public IServiceProvider Services { get; } = services;
     public IMomentClock Clock => _clock ??= Settings.Clock ?? Services.Clocks().CpuClock;
     public ILogger Log => _log ??= Services.LogFor(GetType());
 
     public long RunningActionCount => Interlocked.Read(ref _runningActionCount);
     public AsyncEvent<UIAction?> LastActionEvent => _lastActionEvent;
     public AsyncEvent<IUIActionResult?> LastResultEvent => _lastResultEvent;
-
-    public UIActionTracker(Options options, IServiceProvider services)
-    {
-        Settings = options;
-        Services = services;
-    }
 
     protected override Task DisposeAsyncCore()
     {

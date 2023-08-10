@@ -43,21 +43,21 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
     public Task UpdateCycleTask { get; private set; } = null!;
     public Task? WhenDisposed => _whenDisposed;
 
-    protected ComputedState(Options options, IServiceProvider services, bool initialize = true)
-        : base(options, services, false)
+    protected ComputedState(Options settings, IServiceProvider services, bool initialize = true)
+        : base(settings, services, false)
     {
         _disposeTokenSource = new CancellationTokenSource();
         DisposeToken = _disposeTokenSource.Token;
 
         // ReSharper disable once VirtualMemberCallInConstructor
         if (initialize)
-            Initialize(options);
+            Initialize(settings);
     }
 
-    protected override void Initialize(State<T>.Options options)
+    protected override void Initialize(State<T>.Options settings)
     {
-        base.Initialize(options);
-        var computedStateOptions = (Options)options;
+        base.Initialize(settings);
+        var computedStateOptions = (Options)settings;
         _updateDelayer = computedStateOptions.UpdateDelayer ?? Services.GetRequiredService<IUpdateDelayer>();
 
         // Ideally we want to suppress execution context flow here,
