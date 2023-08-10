@@ -26,7 +26,7 @@ public class TestDbContext : DbContextBase
     public DbSet<DbKeyValue> KeyValues { get; protected set; } = null!;
 
     public TestDbContext(DbContextOptions options) : base(options)
-        => this.DisableChangeTracking();
+        => this.EnableChangeTracking(false);
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

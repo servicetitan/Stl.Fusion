@@ -27,7 +27,7 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
 
         var dbContext = await CreateCommandDbContext(tenantId, cancellationToken).ConfigureAwait(false);
         await using var _ = dbContext.ConfigureAwait(false);
-        dbContext.DisableChangeTracking(); // Just to speed up things a bit
+        dbContext.EnableChangeTracking(false); // Just to speed up things a bit
 
         var keys = items.Select(i => i.Key).ToList();
         var dbKeyValues = await dbContext.Set<TDbKeyValue>().AsQueryable()
@@ -64,7 +64,7 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
 
         var dbContext = await CreateCommandDbContext(tenantId, cancellationToken).ConfigureAwait(false);
         await using var _ = dbContext.ConfigureAwait(false);
-        dbContext.DisableChangeTracking(); // Just to speed up things a bit
+        dbContext.EnableChangeTracking(false); // Just to speed up things a bit
 
         var dbKeyValues = await dbContext.Set<TDbKeyValue>().AsQueryable()
 #pragma warning disable MA0002

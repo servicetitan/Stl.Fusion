@@ -97,7 +97,7 @@ public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId> : DbServic
     {
         var dbContext = CreateDbContext(tenant, true);
         await using var _ = dbContext.ConfigureAwait(false);
-        dbContext.DisableChangeTracking();
+        dbContext.EnableChangeTracking(false);
 
         var entities = await dbContext.Set<TDbSessionInfo>().AsQueryable()
             .Where(o => o.LastSeenAt < maxLastSeenAt)

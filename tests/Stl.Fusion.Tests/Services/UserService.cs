@@ -67,7 +67,7 @@ public class UserService : DbServiceBase<TestDbContext>, IUserService
 
         var dbContext = await CreateCommandDbContext(cancellationToken).ConfigureAwait(false);
         await using var _1 = dbContext.ConfigureAwait(false);
-        dbContext.DisableChangeTracking();
+        dbContext.EnableChangeTracking(false);
 
         var userId = user.Id;
         if (orUpdate) {

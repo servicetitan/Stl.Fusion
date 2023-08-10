@@ -73,7 +73,7 @@ public class DbOperationLog<TDbContext, TDbOperation> : DbServiceBase<TDbContext
     {
         var dbContext = CreateDbContext(tenant, true);
         await using var _ = dbContext.ConfigureAwait(false);
-        dbContext.DisableChangeTracking();
+        dbContext.EnableChangeTracking(false);
 
         var operations = await dbContext.Set<TDbOperation>().AsQueryable()
             .Where(o => o.CommitTime < minCommitTime)

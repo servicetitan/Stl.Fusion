@@ -182,7 +182,6 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
                 return;
             }
             catch (Exception e) when (!cancellationToken.IsCancellationRequested) {
-                dbContext.StopPooling();
                 var isTransient = e is TimeoutException || TransientErrorDetector.IsTransient(e);
                 if (!isTransient)
                     throw;
