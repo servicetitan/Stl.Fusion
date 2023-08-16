@@ -4,28 +4,24 @@ using Stl.OS;
 
 namespace Stl.Fusion.Blazor;
 
-public class BlazorModeHelper
+public class BlazorModeHelper(NavigationManager navigator)
 {
-    public static bool IsServerSideBlazor { get; } = OSInfo.Kind != OSKind.WebAssembly;
+    public static bool IsBlazorServer { get; } = OSInfo.Kind != OSKind.WebAssembly;
 
-    protected NavigationManager Navigator { get; }
+    protected NavigationManager Navigator { get; } = navigator;
 
-    public BlazorModeHelper(NavigationManager navigator)
-        => Navigator = navigator;
-
-    public virtual bool ChangeMode(bool isServerSideBlazor)
+    public virtual void ChangeMode(bool isBlazorServer)
     {
-        if (IsServerSideBlazor == isServerSideBlazor)
-            return false;
-        var switchUrl = GetModeChangeUrl(isServerSideBlazor, Navigator.Uri);
+        if (IsBlazorServer == isBlazorServer)
+            return;
+
+        var switchUrl = GetModeChangeUrl(isBlazorServer, Navigator.Uri);
         Navigator.NavigateTo(switchUrl, true);
-        return true;
     }
 
-    public virtual string GetModeChangeUrl(bool isServerSideBlazor, string? redirectTo = null)
+    public virtual string GetModeChangeUrl(bool isBlazorServer, string? redirectTo = null)
     {
         redirectTo ??= "/";
-        var isSsbString = isServerSideBlazor.ToString().ToLowerInvariant();
-        return $"/fusion/blazorMode/{isSsbString}?redirectTo={HttpUtility.UrlEncode(redirectTo)}";
+        return $"/fusion/blazorMode/{(isBlazorServer ? "1" : "0")}?redirectTo={HttpUtility.UrlEncode(redirectTo)}";
     }
 }

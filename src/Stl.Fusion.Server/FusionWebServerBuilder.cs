@@ -49,7 +49,7 @@ public readonly struct FusionWebServerBuilder
         services.AddSingleton(_ => new AuthSchemasCache());
         services.AddSingleton(_ => AuthEndpoints.Options.Default);
         services.AddSingleton(c => new AuthEndpoints(c.GetRequiredService<AuthEndpoints.Options>()));
-        services.AddSingleton(_ => new BlazorSwitchEndpoint());
+        services.AddSingleton(_ => new BlazorModeEndpoint());
 
         configure?.Invoke(this);
     }

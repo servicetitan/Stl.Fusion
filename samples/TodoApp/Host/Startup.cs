@@ -174,9 +174,10 @@ public class Startup
         });
 
         // Web
-        services.AddRouting();
-        services.AddMvc().AddApplicationPart(Assembly.GetExecutingAssembly());
+        // services.AddMvc().AddApplicationPart(Assembly.GetExecutingAssembly());
         services.AddServerSideBlazor(o => o.DetailedErrors = true);
+        services.AddRazorPages();
+        services.AddRazorComponents();
         fusion.AddBlazor().AddAuthentication().AddPresenceReporter(); // Must follow services.AddServerSideBlazor()!
     }
 
@@ -226,7 +227,6 @@ public class Startup
             app.UseHsts();
         }
         app.UseHttpsRedirection();
-
         app.UseWebSockets(new WebSocketOptions() {
             KeepAliveInterval = TimeSpan.FromSeconds(30),
         });
@@ -247,12 +247,11 @@ public class Startup
         // API controllers
         app.UseRouting();
         app.UseAuthentication();
-        app.UseAuthorization();
         app.UseEndpoints(endpoints => {
             endpoints.MapBlazorHub();
             endpoints.MapRpcWebSocketServer();
             endpoints.MapFusionAuth();
-            endpoints.MapFusionBlazorSwitch();
+            endpoints.MapFusionBlazorMode();
             // endpoints.MapControllers();
             endpoints.MapFallbackToPage("/_Host");
         });
