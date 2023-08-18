@@ -3,9 +3,9 @@ namespace Stl.Net;
 public class RetryDelayer : IRetryDelayer
 {
     private CancellationTokenSource _cancelDelaysCts = new();
+    private CancellationToken _cancelDelaysToken;
 
     protected object Lock = new();
-    private CancellationToken _cancelDelaysToken;
 
     public IMomentClock Clock { get; init; } = CpuClock.Instance;
     public RetryDelaySeq Delays { get; set; } = new();
@@ -45,12 +45,12 @@ public class RetryDelayer : IRetryDelayer
 
     public virtual void CancelDelays()
     {
-        CancellationTokenSource cts;
+        CancellationTokenSource oldCancelDelaysCts;
         lock (Lock) {
-            cts = _cancelDelaysCts;
+            oldCancelDelaysCts = _cancelDelaysCts;
             _cancelDelaysCts = new();
             _cancelDelaysToken = _cancelDelaysCts.Token;
         }
-        cts.CancelAndDisposeSilently();
+        oldCancelDelaysCts.CancelAndDisposeSilently();
     }
 }

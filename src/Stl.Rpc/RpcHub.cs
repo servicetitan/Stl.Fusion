@@ -76,7 +76,7 @@ public sealed class RpcHub : ProcessorBase, IHasServices
             if (Peers.TryGetValue(peerRef, out peer))
                 return peer;
             if (WhenDisposed != null)
-                throw Errors.AlreadyDisposed();
+                throw Errors.AlreadyDisposed(GetType());
 
             peer = PeerFactory.Invoke(this, peerRef);
             Peers[peerRef] = peer;

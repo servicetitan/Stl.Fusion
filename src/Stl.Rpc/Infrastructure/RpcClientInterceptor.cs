@@ -49,9 +49,7 @@ public class RpcClientInterceptor(
         using var cts = new CancellationTokenSource(call.ConnectTimeout);
         using var linkedCts = cancellationToken.LinkWith(cts.Token);
         try {
-            await call.Peer.ConnectionState
-                .WhenConnected(linkedCts.Token)
-                .ConfigureAwait(false);
+            await call.Peer.ConnectionState.WhenConnected(linkedCts.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cts.IsCancellationRequested) {
             throw Errors.Disconnected(call.Peer);

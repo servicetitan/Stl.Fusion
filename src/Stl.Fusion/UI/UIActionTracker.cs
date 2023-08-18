@@ -13,8 +13,8 @@ public sealed class UIActionTracker(
     private IMomentClock? _clock;
     private ILogger? _log;
     private long _runningActionCount;
-    private volatile AsyncEvent<UIAction?> _lastActionEvent = new(null, true);
-    private volatile AsyncEvent<IUIActionResult?> _lastResultEvent = new(null, true);
+    private volatile AsyncState<UIAction?> _lastAction = new(null, true);
+    private volatile AsyncState<IUIActionResult?> _lastResult = new(null, true);
 
     public Options Settings { get; } = settings;
     public IServiceProvider Services { get; } = services;
@@ -22,15 +22,15 @@ public sealed class UIActionTracker(
     public ILogger Log => _log ??= Services.LogFor(GetType());
 
     public long RunningActionCount => Interlocked.Read(ref _runningActionCount);
-    public AsyncEvent<UIAction?> LastActionEvent => _lastActionEvent;
-    public AsyncEvent<IUIActionResult?> LastResultEvent => _lastResultEvent;
+    public AsyncState<UIAction?> LastAction => _lastAction;
+    public AsyncState<IUIActionResult?> LastResult => _lastResult;
 
     protected override Task DisposeAsyncCore()
     {
         Interlocked.Exchange(ref _runningActionCount, 0);
         var error = new ObjectDisposedException(GetType().Name);
-        _lastActionEvent.Complete(error);
-        _lastResultEvent.Complete(error);
+        _lastAction.SetFinal(error);
+        _lastResult.SetFinal(error);
         return Task.CompletedTask;
     }
 
@@ -42,7 +42,7 @@ public sealed class UIActionTracker(
 
             Interlocked.Increment(ref _runningActionCount);
             try {
-                _lastActionEvent = _lastActionEvent.AppendNext(action);
+                _lastAction = _lastAction.SetNext(action);
             }
             catch (Exception e) {
                 // We need to keep this count consistent if above block somehow fails
@@ -67,7 +67,7 @@ public sealed class UIActionTracker(
                     Log.LogError("UI action has completed w/o a result: {Action}", action);
                     return;
                 }
-                _lastResultEvent = _lastResultEvent.TryAppendNext(result);
+                _lastResult = _lastResult.TrySetNext(result);
             }
         }, default, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
     }
@@ -77,12 +77,12 @@ public sealed class UIActionTracker(
         if (RunningActionCount > 0)
             return true;
 
-        if (LastResultEvent.Value is not { } lastResult)
+        if (LastResult.Value is not { } lastResult)
             return false;
 
         return lastResult.CompletedAt + Settings.InstantUpdatePeriod >= Clock.Now;
     }
 
     public Task WhenInstantUpdatesEnabled()
-        => AreInstantUpdatesEnabled() ? Task.CompletedTask : LastActionEvent.WhenNext();
+        => AreInstantUpdatesEnabled() ? Task.CompletedTask : LastAction.WhenNext();
 }

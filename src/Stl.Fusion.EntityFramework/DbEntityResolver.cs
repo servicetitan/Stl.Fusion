@@ -106,7 +106,7 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
     {
         var batchProcessors = _batchProcessors;
         if (batchProcessors == null)
-            throw Stl.Internal.Errors.AlreadyDisposed();
+            throw Stl.Internal.Errors.AlreadyDisposed(GetType());
         return batchProcessors.GetOrAdd(tenantId,
             static (tenantId1, self) => self.CreateBatchProcessor(tenantId1), this);
     }

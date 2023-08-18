@@ -59,7 +59,7 @@ public class FusionRpcBasicTest : SimpleFusionTestBase
         try {
             var c = await connectionMonitor.State.When(x => x?.IsConnected == false)
                 .WaitAsync(TimeSpan.FromSeconds(1));
-            c.Value!.ReconnectsAt.Should().Be(null);
+            c.Value!.ReconnectsAt.Should().Be(default);
 
             // TBD: Add more checks here
         }

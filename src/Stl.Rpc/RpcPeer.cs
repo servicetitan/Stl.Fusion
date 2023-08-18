@@ -7,7 +7,7 @@ public abstract class RpcPeer : WorkerBase
 {
     private ILogger? _log;
     private readonly Lazy<ILogger?> _callLogLazy;
-    private AsyncEvent<RpcPeerConnectionState> _connectionState = new(RpcPeerConnectionState.Initial, true);
+    private AsyncState<RpcPeerConnectionState> _connectionState = new(RpcPeerConnectionState.Initial, true);
     private ChannelWriter<RpcMessage>? _sender;
 
     protected IServiceProvider Services => Hub.Services;
@@ -24,7 +24,7 @@ public abstract class RpcPeer : WorkerBase
     public RpcInboundCallTracker InboundCalls { get; init; }
     public RpcOutboundCallTracker OutboundCalls { get; init; }
     public LogLevel CallLogLevel { get; init; } = LogLevel.None;
-    public AsyncEvent<RpcPeerConnectionState> ConnectionState => _connectionState;
+    public AsyncState<RpcPeerConnectionState> ConnectionState => _connectionState;
     public RpcPeerInternalServices InternalServices => new(this);
 
     protected RpcPeer(RpcHub hub, RpcPeerRef @ref)
@@ -54,7 +54,7 @@ public abstract class RpcPeer : WorkerBase
             if (sendChannel == null || sendChannel.TryWrite(message))
                 return default;
 
-            return CompleteTrySend(sendChannel, message);
+            return CompleteSend(sendChannel, message);
         }
         catch (Exception e) {
             Log.LogError(e, "Send failed");
@@ -74,7 +74,7 @@ public abstract class RpcPeer : WorkerBase
 
     public async Task Reset(CancellationToken cancellationToken = default)
     {
-        AsyncEvent<RpcPeerConnectionState> connectionState;
+        AsyncState<RpcPeerConnectionState> connectionState;
         lock (Lock) {
             // We want to make sure ConnectionState doesn't change while this method runs
             // and no one else cancels ReaderAbortSource
@@ -87,7 +87,7 @@ public abstract class RpcPeer : WorkerBase
         }
 
         // There going to be at least one ConnectionState change when the abort is processed,
-        // see the last "catch" block in Run method to understand why.
+        // see the last "catch" block in the Run method to understand why.
         await connectionState.WhenNext(cancellationToken).ConfigureAwait(false);
     }
 
@@ -166,41 +166,39 @@ public abstract class RpcPeer : WorkerBase
         return Task.CompletedTask;
     }
 
-    protected override Task OnStop()
+    protected override async Task OnStop()
     {
         _ = DisposeAsync();
         Hub.Peers.TryRemove(Ref, this);
 
         // 1. We want to make sure the sequence of ConnectionStates terminates for sure
         Exception error;
-        lock (Lock) {
-            try {
-                var connectionState = _connectionState.LatestOrNullIfCompleted();
-                if (connectionState != null) {
-                    // Complete ConnectionState sequence
-                    error = Errors.ConnectionUnrecoverable(_connectionState.Value.Error);
-                    SetConnectionState(null, error);
-                }
-                else
-                    error = _connectionState.Value.Error ?? Errors.ConnectionUnrecoverable();
-            }
-            catch (Exception) {
-                // Not sure what might be wrong here,
-                // but we still need to report an error, so...
-                error = Errors.ConnectionUnrecoverable();
+        Monitor.Enter(Lock);
+        try {
+            if (_connectionState.IsFinal)
+                error = _connectionState.Value.Error
+                    ?? Stl.Internal.Errors.InternalError(
+                        "ConnectionState.IsFinal == true, but ConnectionState.Value.Error == null.");
+            else {
+                error = Errors.ConnectionUnrecoverable(_connectionState.Value.Error);
+                SetConnectionState(null, error);
             }
         }
-        if (error is not ConnectionUnrecoverableException)
-            error = Errors.ConnectionUnrecoverable(error);
+        catch (Exception e) {
+            // Not sure how we might land here, but we still need to report an error, so...
+            error = e;
+        }
+        finally {
+            Monitor.Exit(Lock);
+        }
 
         // 2. And we must abort all outbound calls.
         // Inbound calls are auto-aborted via StopToken,
         // which becomes RpcInboundCallContext.CancellationToken.
-        var outboundCallCount = OutboundCalls.Abort(error);
+        var outboundCallCount = await OutboundCalls.Abort(error).ConfigureAwait(false);
         Log.LogInformation(
-            "'{PeerRef}': Stopped, aborted {OutboundCallCount} outbound inbound call(s)",
+            "'{PeerRef}': Stopped, aborted {OutboundCallCount} outbound call(s)",
             Ref, outboundCallCount);
-        return Task.CompletedTask;
     }
 
     protected async Task ProcessMessage(
@@ -243,7 +241,7 @@ public abstract class RpcPeer : WorkerBase
             connection = null;
 
         Monitor.Enter(Lock);
-        var connectionState = _connectionState.LatestOrThrowIfCompleted();
+        var connectionState = _connectionState.Last;
         var oldState = connectionState.Value;
         var state = oldState;
         Exception? terminalError = null;
@@ -263,13 +261,13 @@ public abstract class RpcPeer : WorkerBase
                 return connectionState.Value; // Nothing is changed
 
             state = new RpcPeerConnectionState(connection, error, readerAbortSource, tryIndex);
-            _connectionState = connectionState = connectionState.AppendNext(state);
+            _connectionState = connectionState = connectionState.SetNext(state);
 
             if (error != null && Hub.UnrecoverableErrorDetector.Invoke(error, StopToken)) {
                 terminalError = error is ConnectionUnrecoverableException
                     ? error
                     : Errors.ConnectionUnrecoverable(error);
-                connectionState.Complete(terminalError);
+                connectionState.TrySetFinal(terminalError);
                 throw terminalError;
             }
 
@@ -301,7 +299,7 @@ public abstract class RpcPeer : WorkerBase
         }
     }
 
-    private async ValueTask CompleteTrySend(ChannelWriter<RpcMessage> sendChannel, RpcMessage message)
+    private async ValueTask CompleteSend(ChannelWriter<RpcMessage> sendChannel, RpcMessage message)
     {
         // !!! This method should never fail
         try {

@@ -1,13 +1,15 @@
+using Stl.Internal;
+
 namespace Stl.Net;
 
 public sealed class Connector<TConnection> : WorkerBase
     where TConnection : class
 {
     private readonly Func<CancellationToken, Task<TConnection>> _connectionFactory;
-    private volatile AsyncEvent<State> _state = new(State.New(), true);
+    private volatile AsyncState<State> _state = new(State.New(), true);
     private long _reconnectsAt;
 
-    public AsyncEvent<Result<bool>> IsConnected { get; private set; } = new(false, true);
+    public AsyncState<Result<bool>> IsConnected { get; private set; } = new(false, true);
     public Moment? ReconnectsAt {
         get {
             var reconnectsAt = Interlocked.Read(ref _reconnectsAt);
@@ -55,7 +57,7 @@ public sealed class Connector<TConnection> : WorkerBase
 
     public void DropConnection(TConnection connection, Exception? error)
     {
-        AsyncEvent<State> prevState;
+        AsyncState<State> prevState;
         lock (Lock) {
             prevState = _state;
             if (!prevState.Value.ConnectionTask.IsCompleted)
@@ -65,7 +67,7 @@ public sealed class Connector<TConnection> : WorkerBase
                 return; // The connection is already renewed
 #pragma warning restore VSTHRD104
 
-            _state = prevState.AppendNext(State.New() with {
+            _state = prevState.SetNext(State.New() with {
                 LastError = error
             });
         }
@@ -76,7 +78,7 @@ public sealed class Connector<TConnection> : WorkerBase
 
     protected override async Task OnRun(CancellationToken cancellationToken)
     {
-        AsyncEvent<State>? state;
+        AsyncState<State>? state;
         lock (Lock)
             state = _state;
         while (true) {
@@ -99,8 +101,8 @@ public sealed class Connector<TConnection> : WorkerBase
 
             if (connection != null) {
                 lock (Lock) {
-                    state = _state = _state.AppendNext(new State(connectionSource));
-                    IsConnected = IsConnected.AppendNext(true);
+                    state = _state = _state.SetNext(new State(connectionSource));
+                    IsConnected = IsConnected.SetNext(true);
                 }
 
                 Log.IfEnabled(LogLevel)?.Log(LogLevel, "{LogTag}: Connected", LogTag);
@@ -117,7 +119,7 @@ public sealed class Connector<TConnection> : WorkerBase
             lock (Lock) {
                 if (state == _state) {
                     var oldState = state;
-                    state = _state = oldState.AppendNext(State.New() with {
+                    state = _state = oldState.SetNext(State.New() with {
                         LastError = error,
                         TryIndex = state.Value.TryIndex + 1,
                     });
@@ -130,11 +132,11 @@ public sealed class Connector<TConnection> : WorkerBase
                 }
 
                 if (error != null) {
-                    IsConnected = IsConnected.AppendNext(Result.Error<bool>(error));
+                    IsConnected = IsConnected.SetNext(Result.Error<bool>(error));
                     Log?.LogError(error, "{LogTag}: Disconnected", LogTag);
                 }
                 else {
-                    IsConnected = IsConnected.AppendNext(false);
+                    IsConnected = IsConnected.SetNext(false);
                     Log?.LogError("{LogTag}: Disconnected", LogTag);
                 }
             }
@@ -169,13 +171,13 @@ public sealed class Connector<TConnection> : WorkerBase
             if (!prevState.Value.ConnectionTask.IsCompleted)
                 prevState.Value.ConnectionSource.TrySetCanceled();
 
-            _state = prevState.AppendNext(State.NewCancelled(StopToken));
-            _state.Complete(StopToken);
+            _state = prevState.SetNext(State.NewCancelled(StopToken));
+            _state.SetFinal(StopToken);
             prevState.Value.Dispose();
 
             if (IsConnected.Value.IsValue(out var isConnected) && isConnected)
-                IsConnected = IsConnected.AppendNext(false);
-            IsConnected.Complete();
+                IsConnected = IsConnected.SetNext(false);
+            IsConnected.SetFinal(Errors.AlreadyDisposed(GetType()));
         }
         return Task.CompletedTask;
     }

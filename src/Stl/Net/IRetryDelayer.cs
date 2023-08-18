@@ -8,6 +8,3 @@ public interface IRetryDelayer
     RetryDelay GetDelay(int tryIndex, CancellationToken cancellationToken = default);
     void CancelDelays();
 }
-
-public interface IRetryDelayer<TConsumer> : IRetryDelayer
-{ }
