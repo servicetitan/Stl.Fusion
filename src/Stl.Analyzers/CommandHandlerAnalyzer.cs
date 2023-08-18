@@ -11,7 +11,7 @@ public class CommandHandlerAnalyzer : DiagnosticAnalyzer
 {
     private static readonly DiagnosticDescriptor DirectCallDiagnostic =
         new(
-            "STL0001",
+            "STLC0001",
             "Invalid command handler call",
             "Direct command handler calls on command service proxies are not allowed",
             "Test",
