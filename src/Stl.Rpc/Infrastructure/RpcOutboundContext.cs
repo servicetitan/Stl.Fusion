@@ -1,4 +1,5 @@
 using Stl.Interception;
+using Stl.Rpc.Caching;
 using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
@@ -9,14 +10,15 @@ public sealed class RpcOutboundContext
 
     public static RpcOutboundContext? Current => _current;
 
-    public List<RpcHeader> Headers { get; set; }
-    public RpcMethodDef? MethodDef { get; private set; }
-    public ArgumentList? Arguments { get; private set; }
-    public CancellationToken CancellationToken { get; private set; } = default;
-    public Type CallType { get; set; } = typeof(RpcOutboundCall<>);
-    public RpcOutboundCall? Call { get; internal set; }
-    public RpcPeer? Peer { get; set; }
-    public long RelatedCallId { get; set; }
+    public List<RpcHeader>? Headers;
+    public RpcMethodDef? MethodDef;
+    public ArgumentList? Arguments;
+    public CancellationToken CancellationToken;
+    public byte CallTypeId;
+    public RpcOutboundCall? Call { get; private set; }
+    public RpcPeer? Peer;
+    public long RelatedCallId;
+    public RpcCacheInfoCapture? CacheInfoCapture;
 
     public static Scope Use()
     {
@@ -25,13 +27,21 @@ public sealed class RpcOutboundContext
         return new Scope(context, oldContext);
     }
 
-    public RpcOutboundContext(List<RpcHeader>? headers = null)
-        => Headers = headers ?? new();
+    public static Scope Use(byte callTypeId)
+    {
+        var oldContext = _current;
+        var context = oldContext ?? new RpcOutboundContext();
+        context.CallTypeId = callTypeId;
+        return new Scope(context, oldContext);
+    }
 
-    public RpcOutboundCall? Bind(RpcMethodDef methodDef, ArgumentList arguments)
+    public RpcOutboundContext(List<RpcHeader>? headers = null)
+        => Headers = headers;
+
+    public RpcOutboundCall? PrepareCall(RpcMethodDef methodDef, ArgumentList arguments)
     {
         if (MethodDef != null)
-            throw Stl.Internal.Errors.AlreadyInvoked(nameof(Bind));
+            throw Stl.Internal.Errors.AlreadyInvoked(nameof(PrepareCall));
 
         // MethodDef, Arguments, CancellationToken
         MethodDef = methodDef;
@@ -40,12 +50,16 @@ public sealed class RpcOutboundContext
         CancellationToken = ctIndex >= 0 ? arguments.GetCancellationToken(ctIndex) : default;
 
         // Peer
-        Peer ??= MethodDef.Hub.PeerResolver.Invoke(methodDef, arguments);
+        var hub = MethodDef.Hub;
+        Peer ??= hub.CallRouter.Invoke(methodDef, arguments);
         if (Peer == null)
             return null;
 
         // Call
-        return Call = RpcOutboundCall.New(this);
+        Call = RpcOutboundCall.New(this);
+        if (!Call.NoWait)
+            hub.OutboundMiddlewares.PrepareCall(this);
+        return Call;
     }
 
     // Nested types

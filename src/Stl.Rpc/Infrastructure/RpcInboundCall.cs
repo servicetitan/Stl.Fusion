@@ -1,40 +1,49 @@
 using Stl.Interception;
 using Stl.Rpc.Internal;
 
-#if NET7_0_OR_GREATER
-using System.Globalization;
-#endif
-
 namespace Stl.Rpc.Infrastructure;
+
+#pragma warning disable VSTHRD103
 
 public abstract class RpcInboundCall : RpcCall
 {
-    private static readonly ConcurrentDictionary<(Type, Type), Func<RpcInboundContext, RpcMethodDef, RpcInboundCall>> FactoryCache = new();
+    private static readonly ConcurrentDictionary<(byte, Type), Func<RpcInboundContext, RpcMethodDef, RpcInboundCall>> FactoryCache = new();
 
-    protected CancellationTokenSource? CancellationTokenSource { get; set; }
+    protected readonly CancellationTokenSource? CancellationTokenSource;
 
-    public RpcInboundContext Context { get; }
-    public long Id { get; }
-    public CancellationToken CancellationToken { get; }
-    public ArgumentList? Arguments { get; protected set; } = null;
-    public bool NoWait => Id == 0;
-    public List<RpcHeader> ResultHeaders { get; } = new();
+    public readonly RpcInboundContext Context;
+    public readonly CancellationToken CancellationToken;
+    public ArgumentList? Arguments;
+    public abstract Task UntypedResultTask { get; }
+    public List<RpcHeader>? ResultHeaders;
 
-    public static RpcInboundCall New(Type type, RpcInboundContext context, RpcMethodDef methodDef)
-        => FactoryCache.GetOrAdd((type, methodDef.UnwrappedReturnType), static key => {
-            var (tGeneric, tResult) = key;
-            var tInbound = tGeneric.MakeGenericType(tResult);
-            return (Func<RpcInboundContext, RpcMethodDef, RpcInboundCall>)tInbound
+    public static RpcInboundCall New(byte callTypeId, RpcInboundContext context, RpcMethodDef? methodDef)
+    {
+        if (methodDef == null) {
+            var notFoundMethodDef = context.Peer.Hub.SystemCallSender.NotFoundMethodDef;
+            var message = context.Message;
+            return new RpcInbound404Call<Unit>(context, notFoundMethodDef) {
+                // This prevents argument deserialization
+                Arguments = ArgumentList.New(message.Service, message.Method)
+            };
+        }
+
+        return FactoryCache.GetOrAdd((callTypeId, methodDef.UnwrappedReturnType), static key => {
+            var (callTypeId, tResult) = key;
+            var type = RpcCallTypeRegistry.Resolve(callTypeId)
+                .InboundCallType
+                .MakeGenericType(tResult);
+            return (Func<RpcInboundContext, RpcMethodDef, RpcInboundCall>)type
                 .GetConstructorDelegate(typeof(RpcInboundContext), typeof(RpcMethodDef))!;
         }).Invoke(context, methodDef);
+    }
 
     protected RpcInboundCall(RpcInboundContext context, RpcMethodDef methodDef)
         : base(methodDef)
     {
         Context = context;
-        Id =  methodDef.NoWait ? 0 : context.Message.CallId;
-        var cancellationToken = context.CancellationToken;
-
+        Id = NoWait ? 0 : context.Message.CallId;
+        var cancellationToken = Context.CancellationToken;
         if (NoWait)
             CancellationToken = cancellationToken;
         else {
@@ -43,156 +52,192 @@ public abstract class RpcInboundCall : RpcCall
         }
     }
 
-    public abstract Task Invoke();
+    public override string ToString()
+    {
+        var message = Context.Message;
+        var headers = message.Headers.OrEmpty();
+        var arguments = Arguments != null ? Arguments.ToString() : $"ArgumentData: {message.ArgumentData}";
+        return $"{GetType().GetName()} #{message.CallId}: {MethodDef.Name}{arguments}"
+            + (headers.Count > 0 ? $", Headers: {headers.ToDelimitedString()}" : "");
+    }
 
-    public abstract ValueTask Complete();
+    public abstract ValueTask Run();
 
-    public void Cancel()
-        => TryComplete(true);
+    public abstract ValueTask Complete(bool silentCancel = false);
+
+    public abstract bool Restart();
 
     // Protected methods
 
-    protected bool TryComplete(bool mustCancel)
+    protected bool PrepareToStart()
     {
-        var cts = CancellationTokenSource;
-        if (cts == null) // NoWait, already completed, or cancelled
-            return false;
+        var inboundCalls = Context.Peer.InboundCalls;
+        while (true) {
+            var existingCall = inboundCalls.GetOrRegister(this);
+            if (existingCall == this)
+                break;
 
-        CancellationTokenSource = null;
-        if (mustCancel)
-            cts.CancelAndDisposeSilently();
-        else
-            cts.Dispose();
-        Unregister();
+            if (existingCall.Restart())
+                return false;
+        }
         return true;
     }
 
-    protected bool TryRegister()
+    protected bool PrepareToComplete(bool cancel = false)
     {
-        // NoWait should always return true here!
-        if (NoWait || Context.Peer.Calls.Inbound.TryAdd(Id, this))
-            return true;
+        if (!Context.Peer.InboundCalls.Unregister(this))
+            return false; // Already completed or NoWait
 
-        var log = Hub.Services.LogFor(GetType());
-        log.LogWarning("Inbound {MethodDef} call with duplicate Id = {Id}", MethodDef, Id);
-        CancellationTokenSource.CancelAndDisposeSilently();
-        CancellationTokenSource = null;
-        return false;
-    }
-
-    protected void Unregister()
-    {
-        if (!NoWait)
-            Context.Peer.Calls.Inbound.TryRemove(Id, this);
+        if (cancel)
+            CancellationTokenSource.CancelAndDisposeSilently();
+        else
+            CancellationTokenSource?.Dispose();
+        return true;
     }
 }
 
 public class RpcInboundCall<TResult> : RpcInboundCall
 {
-    public Result<TResult> Result { get; protected set; }
+    public Task<TResult> ResultTask { get; private set; } = null!;
+    public override Task UntypedResultTask => ResultTask;
 
     public RpcInboundCall(RpcInboundContext context, RpcMethodDef methodDef)
         : base(context, methodDef)
     { }
 
-    public override async Task Invoke()
+    public override ValueTask Run()
     {
-        if (!TryRegister())
-            return;
+        if (NoWait) {
+            try {
+                Arguments ??= DeserializeArguments();
+                if (Arguments == null)
+                    return default; // No way to resolve argument list type -> the related call is already gone
 
-        try {
-            Arguments = DeserializeArguments();
-            Result = await InvokeService().ConfigureAwait(false);
+                var peer = Context.Peer;
+                peer.CallLog?.Log(peer.CallLogLevel, "'{PeerRef}': <- {Call}", peer.Ref, this);
+
+                _ = InvokeTarget();
+            }
+            catch {
+                // Intended
+            }
+            return default;
         }
-        catch (Exception error) {
-            Result = new Result<TResult>(default!, error);
+
+        lock (Lock) {
+            if (!PrepareToStart())
+                return default;
+
+            try {
+                Arguments ??= DeserializeArguments();
+                if (Arguments == null)
+                    return default; // No way to resolve argument list type -> the related call is already gone
+
+                var peer = Context.Peer;
+                peer.CallLog?.Log(peer.CallLogLevel, "'{PeerRef}': <- {Call}", peer.Ref, this);
+
+                Hub.InboundMiddlewares.BeforeCall(this);
+                ResultTask = InvokeTarget();
+            }
+            catch (Exception error) {
+                ResultTask = Task.FromException<TResult>(error);
+            }
         }
-        await Complete().ConfigureAwait(false);
+
+        return ResultTask.IsCompleted
+            ? Complete()
+            : new ValueTask(CompleteEventually());
     }
 
-    public override ValueTask Complete()
+    public override ValueTask Complete(bool silentCancel = false)
     {
-        if (!TryComplete(false))
-            return ValueTaskExt.CompletedTask;
+        silentCancel |= CancellationToken.IsCancellationRequested;
+        return PrepareToComplete(silentCancel) && !silentCancel
+            ? SendResult()
+            : default;
+    }
 
-        if (CancellationToken.IsCancellationRequested) {
-            // Call is cancelled @ the outbound end or Peer is disposed
-            return ValueTaskExt.CompletedTask;
-        }
+    public override bool Restart()
+    {
+        if (!ResultTask.IsCompleted)
+            return true; // Result isn't produced yet
 
-        var systemCallSender = Hub.SystemCallSender;
-        return systemCallSender.Complete(Context.Peer, Id, Result, ResultHeaders);
+        // Result is produced
+        var inboundCalls = Context.Peer.InboundCalls;
+        if (inboundCalls.Get(Id) == this)
+            return true; // CompleteEventually haven't started yet -> let it do the job
+
+        // Result might be sent, but likely isn't delivered - let's re-send it
+        _ = SendResult();
+        return true;
     }
 
     // Protected methods
 
-    protected Task<TResult> InvokeService()
-    {
-        var methodDef = MethodDef;
-        var server = methodDef.Service.Server;
-        return (Task<TResult>)methodDef.Invoker.Invoke(server, Arguments!);
-    }
-
-    protected ArgumentList DeserializeArguments()
+    protected ArgumentList? DeserializeArguments()
     {
         var peer = Context.Peer;
         var message = Context.Message;
         var isSystemServiceCall = ServiceDef.IsSystem;
 
         if (!isSystemServiceCall && !peer.LocalServiceFilter.Invoke(ServiceDef))
-            throw Errors.ServiceIsNotWhiteListed(ServiceDef);
+            throw Errors.NoService(ServiceDef.Type);
 
-        var arguments = ArgumentList.Empty;
-        var argumentListType = MethodDef.RemoteArgumentListType;
-        if (MethodDef.HasObjectTypedArguments) {
-            var argumentListTypeResolver = (IRpcArgumentListTypeResolver)ServiceDef.Server;
-            argumentListType = argumentListTypeResolver.GetArgumentListType(Context) ?? argumentListType;
+        var arguments = MethodDef.ArgumentListFactory.Invoke();
+        var allowPolymorphism = MethodDef.AllowArgumentPolymorphism;
+        if (!MethodDef.HasObjectTypedArguments)
+            peer.ArgumentSerializer.Deserialize(ref arguments, allowPolymorphism, message.ArgumentData);
+        else {
+            var dynamicCallHandler = (IRpcDynamicCallHandler)ServiceDef.Server;
+            var expectedArguments = arguments;
+            if (!dynamicCallHandler.IsValidCall(Context, ref expectedArguments, ref allowPolymorphism))
+                return null;
+
+            peer.ArgumentSerializer.Deserialize(ref expectedArguments, allowPolymorphism, message.ArgumentData);
+            if (!ReferenceEquals(arguments, expectedArguments))
+                arguments.SetFrom(expectedArguments);
         }
 
-        if (argumentListType.IsGenericType) { // == Has 1+ arguments
-            var headers = Context.Headers;
-            if (headers.Any(static h => h.Name.StartsWith(RpcSystemHeaders.ArgumentTypeHeaderPrefix, StringComparison.Ordinal))) {
-                var argumentTypes = argumentListType.GetGenericArguments();
-                foreach (var h in headers) {
-                    if (!h.Name.StartsWith(RpcSystemHeaders.ArgumentTypeHeaderPrefix, StringComparison.Ordinal))
-                        continue;
-#if NET7_0_OR_GREATER
-                    if (!int.TryParse(
-                        h.Name.AsSpan(RpcSystemHeaders.ArgumentTypeHeaderPrefix.Length),
-                        CultureInfo.InvariantCulture,
-                        out var argumentIndex))
-#else
-#pragma warning disable MA0011
-                    if (!int.TryParse(
-                        h.Name.Substring(RpcSystemHeaders.ArgumentTypeHeaderPrefix.Length),
-                        out var argumentIndex))
-#pragma warning restore MA0011
-#endif
-                        continue;
-
-                    var argumentType = new TypeRef(h.Value).Resolve();
-                    if (!argumentTypes[argumentIndex].IsAssignableFrom(argumentType))
-                        throw Errors.IncompatibleArgumentType(MethodDef, argumentIndex, argumentType);
-
-                    argumentTypes[argumentIndex] = argumentType;
-                }
-                argumentListType = argumentListType
-                    .GetGenericTypeDefinition()
-                    .MakeGenericType(argumentTypes);
-            }
-
-            var deserializedArguments = peer.ArgumentSerializer.Deserialize(message.ArgumentData, argumentListType);
-            if (argumentListType == MethodDef.ArgumentListType)
-                arguments = deserializedArguments;
-            else {
-                arguments = (ArgumentList)MethodDef.ArgumentListType.CreateInstance();
-                var ctIndex = MethodDef.CancellationTokenIndex;
-                if (ctIndex >= 0)
-                    deserializedArguments = deserializedArguments.InsertCancellationToken(ctIndex, CancellationToken);
-                arguments.SetFrom(deserializedArguments);
-            }
-        }
+        // Set CancellationToken
+        var ctIndex = MethodDef.CancellationTokenIndex;
+        if (ctIndex >= 0)
+            arguments.SetCancellationToken(ctIndex, CancellationToken);
 
         return arguments;
     }
+
+    protected virtual Task<TResult> InvokeTarget()
+    {
+        var methodDef = MethodDef;
+        var server = methodDef.Service.Server;
+        return (Task<TResult>)methodDef.Invoker.Invoke(server, Arguments!);
+    }
+
+    protected ValueTask SendResult()
+    {
+        var resultTask = ResultTask;
+        Result<TResult> result;
+        if (!resultTask.IsCompleted)
+            result = InvocationIsStillInProgressErrorResult();
+        else if (resultTask.Exception is { } error)
+            result = new Result<TResult>(default!, error.GetBaseException());
+        else if (resultTask.IsCanceled)
+            result = new Result<TResult>(default!, new TaskCanceledException());
+        else
+            result = resultTask.Result;
+
+        var systemCallSender = Hub.SystemCallSender;
+        return systemCallSender.Complete(Context.Peer, Id, result, MethodDef.AllowResultPolymorphism, ResultHeaders);
+    }
+
+    protected Task CompleteEventually()
+        => ResultTask.ContinueWith(
+            _ => Complete(),
+            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+
+    // Private methods
+
+    private static Result<TResult> InvocationIsStillInProgressErrorResult() =>
+        new(default!, Stl.Internal.Errors.InternalError(
+            "Something is off: remote method isn't completed yet, but the result is requested to be sent."));
 }

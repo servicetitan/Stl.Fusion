@@ -4,7 +4,7 @@ using Stl.IO.Internal;
 
 namespace Stl.IO;
 
-[DataContract]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [JsonConverter(typeof(FilePathJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(FilePathNewtonsoftJsonConverter))]
 [TypeConverter(typeof(FilePathTypeConverter))]
@@ -14,12 +14,28 @@ public readonly partial struct FilePath : IEquatable<FilePath>, IComparable<File
 
     private readonly string? _value;
 
-    [DataMember(Order = 0)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     public string Value => _value ?? "";
-    public int Length => Value.Length;
 
-    public FilePath(string? value) => _value = value;
+    [MemoryPackIgnore] public int Length => Value.Length;
+    [MemoryPackIgnore] public bool IsEmpty => _value.IsNullOrEmpty();
+#if !NETSTANDARD2_0
+    [MemoryPackIgnore] public bool IsFullyQualified => Path.IsPathFullyQualified(Value);
+#else
+    [MemoryPackIgnore] public bool IsFullyQualified => PathCompatExt.IsPathFullyQualified(Value);
+#endif
+    [MemoryPackIgnore] public bool IsRooted => Path.IsPathRooted(Value);
+    [MemoryPackIgnore] public bool HasExtension => Path.HasExtension(Value);
+    [MemoryPackIgnore] public string Extension => Path.GetExtension(Value);
+    [MemoryPackIgnore] public FilePath DirectoryPath => Path.GetDirectoryName(Value);
+    [MemoryPackIgnore] public FilePath FileName => Path.GetFileName(Value);
+    [MemoryPackIgnore] public FilePath FileNameWithoutExtension => Path.GetFileNameWithoutExtension(Value);
+    [MemoryPackIgnore] public FilePath FullPath => Path.GetFullPath(Value);
+
     public static FilePath New(string? value) => new(value ?? "");
+
+    [MemoryPackConstructor]
+    public FilePath(string? value) => _value = value;
 
     // Conversion
     public override string ToString() => Value;
@@ -44,21 +60,6 @@ public readonly partial struct FilePath : IEquatable<FilePath>, IComparable<File
     // Comparison
     public int CompareTo(FilePath other)
         => string.Compare(Value, other.Value, StringComparison.Ordinal);
-
-    // Useful helpers
-    public bool IsEmpty => _value.IsNullOrEmpty();
-#if !NETSTANDARD2_0
-    public bool IsFullyQualified => Path.IsPathFullyQualified(Value);
-#else
-    public bool IsFullyQualified => PathCompatExt.IsPathFullyQualified(Value);
-#endif
-    public bool IsRooted => Path.IsPathRooted(Value);
-    public bool HasExtension => Path.HasExtension(Value);
-    public string Extension => Path.GetExtension(Value);
-    public FilePath DirectoryPath => Path.GetDirectoryName(Value);
-    public FilePath FileName => Path.GetFileName(Value);
-    public FilePath FileNameWithoutExtension => Path.GetFileNameWithoutExtension(Value);
-    public FilePath FullPath => Path.GetFullPath(Value);
 
     public FilePath ChangeExtension(string newExtension) => Path.ChangeExtension(Value, newExtension);
 #if !NETSTANDARD2_0

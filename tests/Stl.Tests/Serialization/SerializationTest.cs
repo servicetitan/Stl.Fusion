@@ -3,6 +3,7 @@ using Stl.Interception;
 using Stl.Internal;
 using Stl.IO;
 using Stl.Reflection;
+using Stl.Rpc.Infrastructure;
 using TextOrBytes = Stl.Serialization.TextOrBytes;
 
 namespace Stl.Tests.Serialization;
@@ -31,7 +32,7 @@ public class SerializationTest : TestBase
     [Fact]
     public void TypeDecoratingSerializerTest()
     {
-        var serializer = TypeDecoratingSerializer.Default;
+        var serializer = TypeDecoratingTextSerializer.Default;
 
         var value = new Tuple<DateTime>(DateTime.Now);
         var json = serializer.Write(value);
@@ -83,6 +84,62 @@ public class SerializationTest : TestBase
         new Symbol(null!).AssertPassesThroughAllSerializers(Out);
         new Symbol("").AssertPassesThroughAllSerializers(Out);
         new Symbol("1234").AssertPassesThroughAllSerializers(Out);
+    }
+
+    [Fact]
+    public void RpcHeaderSerialization()
+    {
+        Test(default);
+        Test(new RpcHeader("a"));
+        Test(new RpcHeader("a", "b"));
+        Test(new RpcHeader("", "b"));
+        Test(new RpcHeader("xxx", "yyy"));
+
+        void Test(RpcHeader h)
+        {
+            var hs = h.PassThroughAllSerializers();
+            hs.Name.Should().Be(h.Name);
+            hs.Value.Should().Be(h.Value);
+        }
+    }
+
+    [Fact]
+    public void RpcMessageSerialization()
+    {
+        Test(new RpcMessage(0, 3, "s", "m",
+            new TextOrBytes(new byte[] { 1, 2, 3 }),
+            null));
+
+        Test(new RpcMessage(1, 3, "s", "m",
+            new TextOrBytes(new byte[] { 1, 2, 3 }),
+            new()));
+
+        Test(new RpcMessage(2, 3, "s", "m",
+            new TextOrBytes(new byte[] { 1, 2, 3 }),
+            new List<RpcHeader>() {
+                new("v", "@OVhtp0TRc"),
+            }));
+
+        Test(new RpcMessage(0, 3, "s", "m",
+            new TextOrBytes(new byte[] { 1, 2, 3 }),
+            new List<RpcHeader>() {
+                new("a", "b"),
+                new("v", "@OVhtp0TRc"),
+            }));
+
+        void Test(RpcMessage m)
+        {
+            var ms = m.PassThroughAllSerializers();
+            ms.CallId.Should().Be(m.CallId);
+            ms.Service.Should().Be(m.Service);
+            ms.Method.Should().Be(m.Method);
+            ms.ArgumentData.Data.ToArray().Should().Equal(m.ArgumentData.Data.ToArray());
+            ms.Headers?.Count.Should().Be(m.Headers?.Count);
+            foreach (var (hs, h) in ms.Headers.OrEmpty().Zip(m.Headers.OrEmpty(), (hs, h) => (hs, h))) {
+                hs.Name.Should().Be(h.Name);
+                hs.Value.Should().Be(h.Value);
+            }
+        }
     }
 
     [Fact]

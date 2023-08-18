@@ -1,59 +1,27 @@
 using Microsoft.AspNetCore.Mvc;
-using Stl.Fusion.Authentication;
-using Stl.Fusion.Authentication.Commands;
+using Stl.Fusion.Server.Endpoints;
 
 namespace Stl.Fusion.Server.Controllers;
 
-[Route("fusion/auth/[action]")]
-[ApiController, JsonifyErrors, UseDefaultSession]
-public sealed class AuthController : ControllerBase, IAuth
+public sealed class AuthController : Controller
 {
-    private IAuth Auth { get; }
-    private ICommander Commander { get; }
+    private readonly AuthEndpoints _handler;
 
-    public AuthController(IAuth auth, ICommander commander)
+    public AuthController(AuthEndpoints handler)
+        => _handler = handler;
+
+    [HttpGet("~/signIn")]
+    [HttpGet("~/signIn/{scheme}")]
+    public async Task<IActionResult> SignIn(string? scheme = null, string? returnUrl = null)
     {
-        Auth = auth;
-        Commander = commander;
+        var result = await _handler.SignIn(HttpContext, scheme, returnUrl);
+        return Challenge(result.AuthenticationProperties, result.AuthenticationSchemes);
     }
 
-    // Commands
-
-    [HttpPost]
-    public Task SignOut([FromBody] SignOutCommand command, CancellationToken cancellationToken = default)
-        => Commander.Call(command, cancellationToken);
-
-    [HttpPost]
-    public Task EditUser(EditUserCommand command, CancellationToken cancellationToken = default)
-        => Commander.Call(command, cancellationToken);
-
-    [HttpPost]
-    public Task UpdatePresence([FromBody] Session session, CancellationToken cancellationToken = default)
-        => Auth.UpdatePresence(session, cancellationToken);
-
-    // Queries
-
-    [HttpGet, Publish]
-    public Task<bool> IsSignOutForced(Session session, CancellationToken cancellationToken = default)
-        => Auth.IsSignOutForced(session, cancellationToken);
-
-    [HttpGet, Publish]
-    public Task<SessionAuthInfo?> GetAuthInfo(Session session, CancellationToken cancellationToken = default)
-        => Auth.GetAuthInfo(session, cancellationToken);
-
-    [HttpGet, Publish]
-    public Task<SessionInfo?> GetSessionInfo(Session session, CancellationToken cancellationToken = default)
-        => Auth.GetSessionInfo(session, cancellationToken);
-
-    [HttpGet, Publish]
-    public Task<ImmutableOptionSet> GetOptions(Session session, CancellationToken cancellationToken = default)
-        => Auth.GetOptions(session, cancellationToken);
-
-    [HttpGet, Publish]
-    public Task<User?> GetUser(Session session, CancellationToken cancellationToken = default)
-        => Auth.GetUser(session, cancellationToken);
-
-    [HttpGet, Publish]
-    public Task<ImmutableArray<SessionInfo>> GetUserSessions(Session session, CancellationToken cancellationToken = default)
-        => Auth.GetUserSessions(session, cancellationToken);
+    [HttpGet("~/signOut")]
+    public async Task<IActionResult> SignOut(string? returnUrl = null)
+    {
+        var result = await _handler.SignOut(HttpContext, returnUrl);
+        return SignOut(result.AuthenticationProperties, result.AuthenticationSchemes);
+    }
 }

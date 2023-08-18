@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Stl.Fusion.Authentication.Services;
 using Stl.Fusion.EntityFramework;
-using Stl.Fusion.EntityFramework.Authentication;
-using Stl.Fusion.EntityFramework.Extensions;
 using Stl.Fusion.EntityFramework.Operations;
+using Stl.Fusion.Extensions.Services;
 
 namespace Stl.Fusion.Tests.Model;
 
@@ -26,7 +26,7 @@ public class TestDbContext : DbContextBase
     public DbSet<DbKeyValue> KeyValues { get; protected set; } = null!;
 
     public TestDbContext(DbContextOptions options) : base(options)
-        => this.DisableChangeTracking();
+        => this.EnableChangeTracking(false);
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

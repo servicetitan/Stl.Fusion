@@ -2,15 +2,15 @@ using Blazorise;
 using Blazorise.Bootstrap;
 using Blazorise.Icons.FontAwesome;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Stl.Fusion.Client;
 using Stl.Fusion.Blazor;
-using Stl.Fusion.Bridge.Interception;
+using Stl.Fusion.Blazor.Authentication;
 using Stl.Fusion.Diagnostics;
 using Stl.Fusion.Extensions;
+using Stl.Fusion.Client.Interception;
 using Stl.Fusion.UI;
 using Stl.OS;
+using Stl.Rpc;
 using Templates.TodoApp.Abstractions;
-using Templates.TodoApp.Abstractions.Clients;
 
 namespace Templates.TodoApp.UI;
 
@@ -20,40 +20,38 @@ public static class StartupHelper
     {
         builder.Logging.SetMinimumLevel(LogLevel.Warning);
         builder.Logging.AddFilter(typeof(App).Namespace, LogLevel.Information);
-        builder.Logging.AddFilter(typeof(FusionMonitor).Namespace, LogLevel.Information);
-
-        var baseUri = new Uri(builder.HostEnvironment.BaseAddress);
-        var apiBaseUri = new Uri($"{baseUri}api/");
+        builder.Logging.AddFilter(typeof(Computed).Namespace, LogLevel.Information);
+        builder.Logging.AddFilter(typeof(RpcHub).Namespace, LogLevel.Debug);
 
         // Fusion services
         var fusion = services.AddFusion();
-        var fusionClient = fusion.AddRestEaseClient();
-        fusionClient.ConfigureHttpClient((c, name, o) => {
-            var isFusionClient = (name ?? "").StartsWith("Stl.Fusion");
-            var clientBaseUri = isFusionClient ? baseUri : apiBaseUri;
-            o.HttpClientActions.Add(httpClient => httpClient.BaseAddress = clientBaseUri);
-        });
-        fusionClient.ConfigureWebSocketChannel(_ => new() {
-            BaseUri = baseUri,
-            LogLevel = LogLevel.Information,
-            MessageLogLevel = LogLevel.None,
-        });
-        fusion.AddAuthentication().AddRestEaseClient().AddBlazor();
+        fusion.AddAuthClient();
+        fusion.AddRpcPeerStateMonitor();
+        fusion.AddBlazor().AddAuthentication().AddPresenceReporter();
+
+        var rpc = fusion.Rpc;
+        rpc.AddWebSocketClient(builder.HostEnvironment.BaseAddress);
+        // You may comment this out - the call below just enables RPC call logging
+        services.AddSingleton<RpcPeerFactory>(_ =>
+            static (hub, peerRef) => peerRef.IsServer
+                ? throw new NotSupportedException("No server peers on the client.")
+                : new RpcClientPeer(hub, peerRef) { CallLogLevel = LogLevel.Debug }
+            );
 
         // Option 1: Client-side SimpleTodoService (no RPC)
-        // fusion.AddComputeService<ITodoService, SimpleTodoService>();
+        // fusion.AddService<ITodoService, SimpleTodoService>();
 
         // Option 2: Client-side TodoService and SandboxedKeyValueStore using InMemoryKeyValueStore (no RPC)
         // fusion.AddInMemoryKeyValueStore();
         // fusion.AddSandboxedKeyValueStore();
-        // fusion.AddComputeService<ITodoService, TodoService>();
+        // fusion.AddService<ITodoService, TodoService>();
 
         // Option 3: Client-side TodoService + remote SandboxedKeyValueStore -> DbKeyValueStore
-        // fusionClient.AddReplicaService<ISandboxedKeyValueStore, ISandboxedKeyValueStoreClientDef>();
-        // fusion.AddComputeService<ITodoService, TodoService>();
+        // fusion.AddClient<ISandboxedKeyValueStore>();
+        // fusion.AddService<ITodos, TodoService>();
 
         // Option 4: Remote TodoService, SandboxedKeyValueStore, and DbKeyValueStore
-        fusionClient.AddReplicaService<ITodoService, ITodoClientDef>();
+        fusion.AddClient<ITodos>();
 
         ConfigureSharedServices(services);
     }
@@ -69,7 +67,6 @@ public static class StartupHelper
         var fusion = services.AddFusion();
         fusion.AddComputedGraphPruner(_ => new() { CheckPeriod = TimeSpan.FromSeconds(30) });
         fusion.AddFusionTime();
-        fusion.AddBackendStatus();
 
         // Default update delay is 0.5s
         services.AddScoped<IUpdateDelayer>(c => new UpdateDelayer(c.UIActionTracker(), 0.5));
@@ -78,12 +75,12 @@ public static class StartupHelper
         services.AddHostedService(c => {
             var isWasm = OSInfo.IsWebAssembly;
             return new FusionMonitor(c) {
-                SleepPeriod = isWasm 
-                    ? TimeSpan.Zero 
+                SleepPeriod = isWasm
+                    ? TimeSpan.Zero
                     : TimeSpan.FromMinutes(1).ToRandom(0.25),
                 CollectPeriod = TimeSpan.FromSeconds(isWasm ? 3 : 60),
                 AccessFilter = isWasm
-                    ? static computed => computed.Input.Function is IReplicaMethodFunction
+                    ? static computed => computed.Input.Function is IClientComputeMethodFunction
                     : static computed => true,
                 AccessStatisticsPreprocessor = StatisticsPreprocessor,
                 RegistrationStatisticsPreprocessor = StatisticsPreprocessor,

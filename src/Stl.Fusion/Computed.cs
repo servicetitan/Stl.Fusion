@@ -30,7 +30,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
     private readonly ComputedOptions _options;
     private volatile int _state;
     private volatile ComputedFlags _flags;
-    private long _lastKeepAliveUntil;
+    private long _lastKeepAliveSlot;
     private Result<T> _output;
     private Task<T>? _outputAsTask;
     private RefHashSetSlim3<IComputedImpl> _used;
@@ -123,6 +123,16 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
         _state = (int) (isConsistent ? ConsistencyState.Consistent : ConsistencyState.Invalidated);
         _output = output;
         Version = version;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void Deconstruct(out T value, out Exception? error)
+        => Output.Deconstruct(out value, out error);
+
+    public void Deconstruct(out T value, out Exception? error, out LTag version)
+    {
+        Output.Deconstruct(out value, out error);
+        version = Version;
     }
 
     public override string ToString()
@@ -242,11 +252,10 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
 
         var minCacheDuration = Options.MinCacheDuration;
         if (minCacheDuration != default) {
-            // We quantize keepAliveUntil here to prevent too frequent AddOrUpdateToLater calls
-            var keepAliveUntil = (Timeouts.Clock.Now + minCacheDuration).EpochOffsetTicks & Computed.KeepAliveTicksMask;
-            var lastKeepAliveUntil = Interlocked.Exchange(ref _lastKeepAliveUntil, keepAliveUntil);
-            if (lastKeepAliveUntil != keepAliveUntil)
-                Timeouts.KeepAlive.AddOrUpdateToLater(this, new Moment(keepAliveUntil));
+            var keepAliveSlot = Timeouts.GetKeepAliveSlot(Timeouts.Clock.Now + minCacheDuration);
+            var lastKeepAliveSlot = Interlocked.Exchange(ref _lastKeepAliveSlot, keepAliveSlot);
+            if (lastKeepAliveSlot != keepAliveSlot)
+                Timeouts.KeepAlive.AddOrUpdateToLater(this, keepAliveSlot);
         }
 
         ComputedRegistry.Instance.ReportAccess(this, isNew);
@@ -256,7 +265,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
     {
         var options = Options;
         if (options.MinCacheDuration != default) {
-            Interlocked.Exchange(ref _lastKeepAliveUntil, 0);
+            Interlocked.Exchange(ref _lastKeepAliveSlot, 0);
             Timeouts.KeepAlive.Remove(this);
         }
     }
@@ -302,8 +311,6 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
 
     // IResult<T> methods
 
-    public void Deconstruct(out T value, out Exception? error)
-        => Output.Deconstruct(out value, out error);
     public bool IsValue([MaybeNullWhen(false)] out T value)
         => Output.IsValue(out value);
     public bool IsValue([MaybeNullWhen(false)] out T value, [MaybeNullWhen(true)] out Exception error)
@@ -398,6 +405,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
                 // moreover, only Invalidated code can modify
                 // _used/_usedBy once invalidation flag is set
                 return (0, 0);
+
             var replacement = new HashSetSlim3<(ComputedInput Input, LTag Version)>();
             var oldCount = _usedBy.Count;
             foreach (var entry in _usedBy.Items) {
@@ -407,6 +415,15 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
             }
             _usedBy = replacement;
             return (oldCount, _usedBy.Count);
+        }
+    }
+
+    void IComputedImpl.CopyUsedTo(ref ArrayBuffer<IComputedImpl> buffer)
+    {
+        lock (Lock) {
+            var count = buffer.Count;
+            buffer.EnsureCapacity(count + _used.Count);
+            _used.CopyTo(buffer.Buffer.AsSpan(count));
         }
     }
 

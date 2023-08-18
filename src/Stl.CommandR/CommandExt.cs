@@ -7,6 +7,7 @@ public static class CommandExt
     private static readonly ConcurrentDictionary<Type, Type> ResultTypeCache = new();
     private static readonly Type CommandWithResultType = typeof(ICommand<>);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Type GetResultType(this ICommand command)
         => GetResultType(command.GetType());
 

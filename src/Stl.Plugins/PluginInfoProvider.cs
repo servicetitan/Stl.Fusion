@@ -47,4 +47,3 @@ public class PluginInfoProvider : IPluginInfoProvider
             return ctor?.Invoke(Array.Empty<object>());
         }, this);
 }
-

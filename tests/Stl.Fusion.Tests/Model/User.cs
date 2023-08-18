@@ -6,10 +6,14 @@ namespace Stl.Fusion.Tests.Model;
 
 [Table("TestUsers")]
 [Index(nameof(Name))]
-public record User : LongKeyedEntity
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public partial record User : LongKeyedEntity
 {
     [Required, MaxLength(120)]
+    [DataMember, MemoryPackOrder(1)]
     public string Name { get; init; } = "";
+
     [Required, MaxLength(250)]
+    [DataMember, MemoryPackOrder(2)]
     public string Email { get; init; } = "";
 }

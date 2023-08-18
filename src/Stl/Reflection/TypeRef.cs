@@ -1,40 +1,52 @@
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 using Stl.Reflection.Internal;
 
 namespace Stl.Reflection;
 
-[DataContract]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [JsonConverter(typeof(TypeRefJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(TypeRefNewtonsoftJsonConverter))]
 [TypeConverter(typeof(TypeRefTypeConverter))]
-public readonly struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRef>, ISerializable
+public readonly partial struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRef>, ISerializable
 {
+#if NET7_0_OR_GREATER
+    [GeneratedRegex(@",\s+Version=[^,]*,\s+Culture=[^,]*,\s+PublicKeyToken=[A-Za-z0-9]+")]
+    private static partial Regex RemoveAssemblyVersionsReFactory();
+    private static readonly Regex RemoveAssemblyVersionsRe = RemoveAssemblyVersionsReFactory();
+#else
+    private static readonly Regex RemoveAssemblyVersionsRe =
+        new(@",\s+Version=[^,]*,\s+Culture=[^,]*,\s+PublicKeyToken=[A-Za-z0-9]+", RegexOptions.Compiled);
+#endif
+    private static readonly ConcurrentDictionary<Symbol, TypeRef> UnversionedAssemblyNameCache = new();
+    private static readonly ConcurrentDictionary<Symbol, Type?> ResolveCache = new();
+
     public static readonly TypeRef None = default;
 
-    [DataMember(Order = 0)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     public Symbol AssemblyQualifiedName { get; }
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public string TypeName => AssemblyQualifiedName.Value[..AssemblyQualifiedName.Value.IndexOf(',')];
 
-    public TypeRef(Type type) : this(type.AssemblyQualifiedName!) { }
-    [JsonConstructor, Newtonsoft.Json.JsonConstructor]
-    public TypeRef(Symbol assemblyQualifiedName) => AssemblyQualifiedName = assemblyQualifiedName;
-    public TypeRef(string assemblyQualifiedName) => AssemblyQualifiedName = assemblyQualifiedName;
+    public TypeRef(Type type)
+        : this(type.AssemblyQualifiedName!) { }
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
+    public TypeRef(Symbol assemblyQualifiedName)
+        => AssemblyQualifiedName = assemblyQualifiedName;
+    public TypeRef(string assemblyQualifiedName)
+        => AssemblyQualifiedName = assemblyQualifiedName;
 
-    public override string ToString() => AssemblyQualifiedName.Value;
+    public override string ToString()
+        => AssemblyQualifiedName.Value;
 
-    public Type? TryResolve() => Resolve(AssemblyQualifiedName);
-    public Type Resolve() => Resolve(AssemblyQualifiedName)
-        ?? throw Errors.TypeNotFound(AssemblyQualifiedName);
+    public Type? TryResolve()
+        => Resolve(AssemblyQualifiedName);
+    public Type Resolve()
+        => Resolve(AssemblyQualifiedName) ?? throw Errors.TypeNotFound(AssemblyQualifiedName);
 
-    public TypeRef TrimAssemblyVersion()
-    {
-        var assemblyQualifiedName = AssemblyQualifiedName.Value;
-        var assemblyVersionIndex = assemblyQualifiedName.IndexOf(", Version=", StringComparison.Ordinal);
-        if (assemblyVersionIndex < 0)
-            return new(assemblyQualifiedName);
-        var shortAssemblyQualifiedName = assemblyQualifiedName[..assemblyVersionIndex];
-        return new(shortAssemblyQualifiedName);
-    }
+    public TypeRef WithoutAssemblyVersions()
+        => UnversionedAssemblyNameCache.GetOrAdd(AssemblyQualifiedName,
+            static aqn => new(RemoveAssemblyVersionsRe.Replace(aqn, "")));
 
     // Conversion
 
@@ -55,8 +67,13 @@ public readonly struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRef>, ISer
 
     // Private methods
 
-    public static Type? Resolve(string assemblyQualifiedName)
-        => Type.GetType(assemblyQualifiedName, false, false);
+    public static Type? Resolve(Symbol assemblyQualifiedName)
+    {
+        var result = ResolveCache.GetOrAdd(assemblyQualifiedName, static aqn => Type.GetType(aqn, false, false));
+        if (result == null)
+            ResolveCache.TryRemove(assemblyQualifiedName, out _); // Potential memory lead / attack vector
+        return result;
+    }
 
     // Serialization
 

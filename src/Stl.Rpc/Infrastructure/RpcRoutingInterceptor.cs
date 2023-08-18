@@ -5,16 +5,19 @@ namespace Stl.Rpc.Infrastructure;
 
 public class RpcRoutingInterceptor : RpcInterceptorBase
 {
-    public new record Options : RpcInterceptorBase.Options;
+    public new record Options : RpcInterceptorBase.Options
+    {
+        public static Options Default { get; set; } = new();
+    }
 
-    protected readonly RpcPeerResolver RpcPeerResolver;
+    protected readonly RpcCallRouter RpcCallRouter;
 
     public object LocalService { get; private set; } = null!;
     public object RemoteService { get; private set; } = null!;
 
-    public RpcRoutingInterceptor(Options options, IServiceProvider services)
-        : base(options, services)
-        => RpcPeerResolver = services.GetRequiredService<RpcPeerResolver>();
+    public RpcRoutingInterceptor(Options settings, IServiceProvider services)
+        : base(settings, services)
+        => RpcCallRouter = Hub.CallRouter;
 
     public void Setup(RpcServiceDef serviceDef, object localService, object remoteService)
     {
@@ -23,12 +26,11 @@ public class RpcRoutingInterceptor : RpcInterceptorBase
         RemoteService = remoteService;
     }
 
-
     protected override Func<Invocation, object?> CreateHandler<T>(Invocation initialInvocation, MethodDef methodDef)
         => invocation => {
-            var peer = RpcPeerResolver.Invoke(methodDef, invocation.Arguments);
-            var service = peer == null ? LocalService : RemoteService;
             var rpcMethodDef = (RpcMethodDef)methodDef;
+            var peer = RpcCallRouter.Invoke(rpcMethodDef, invocation.Arguments);
+            var service = peer == null ? LocalService : RemoteService;
             return rpcMethodDef.Invoker.Invoke(service, invocation.Arguments);
         };
 

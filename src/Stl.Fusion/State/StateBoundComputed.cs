@@ -1,7 +1,13 @@
 namespace Stl.Fusion;
 
-public class StateBoundComputed<T> : Computed<T>
+public interface IStateBoundComputed : IComputed
 {
+    public IState State { get; }
+}
+
+public class StateBoundComputed<T> : Computed<T>, IStateBoundComputed
+{
+    IState IStateBoundComputed.State => State;
     public State<T> State { get; }
 
     public StateBoundComputed(

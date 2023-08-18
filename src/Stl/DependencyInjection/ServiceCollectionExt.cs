@@ -15,6 +15,18 @@ public static class ServiceCollectionExt
     public static bool HasService(this IServiceCollection services, Type serviceType)
         => services.Any(d => d.ServiceType == serviceType);
 
+    // RemoveAll
+
+    public static IServiceCollection RemoveAll(this IServiceCollection services, Func<ServiceDescriptor, bool> predicate)
+    {
+        for (var i = services.Count - 1; i >= 0; i--) {
+            var service = services[i];
+            if (predicate.Invoke(service))
+                services.RemoveAt(i);
+        }
+        return services;
+    }
+
     // Options
 
     public static IServiceCollection Configure<TOptions>(
@@ -32,12 +44,56 @@ public static class ServiceCollectionExt
         return services;
     }
 
-    // Settings
+    // AddSingleton
+
+    public static IServiceCollection AddSingleton<TService>(
+        this IServiceCollection services,
+        Func<IServiceProvider, TService>? factory,
+        Func<IServiceProvider, TService> defaultFactory)
+        where TService : class
+    {
+        if (factory != null)
+            services.AddSingleton(factory);
+        else
+            services.TryAddSingleton(defaultFactory);
+        return services;
+    }
+
+    // AddAlias
+
+    public static IServiceCollection AddAlias<TAlias, TService>(
+        this IServiceCollection services,
+        ServiceLifetime lifetime = ServiceLifetime.Singleton)
+        where TAlias : class
+        where TService : class, TAlias
+    {
+        var descriptor = new ServiceDescriptor(typeof(TAlias),
+            c => c.GetRequiredService<TService>(),
+            lifetime);
+        services.Add(descriptor);
+        return services;
+    }
+
+    public static IServiceCollection TryAddAlias<TAlias, TService>(
+        this IServiceCollection services,
+        ServiceLifetime lifetime = ServiceLifetime.Singleton)
+        where TAlias : class
+        where TService : class, TAlias
+    {
+        var descriptor = new ServiceDescriptor(typeof(TAlias),
+            c => c.GetRequiredService<TService>(),
+            lifetime);
+        services.TryAdd(descriptor);
+        return services;
+    }
+
+    // AddSettings
 
     public static IServiceCollection AddSettings<TSettings>(
         this IServiceCollection services,
         string? sectionName = null)
         => services.AddSettings(typeof(TSettings), sectionName);
+
     public static IServiceCollection AddSettings(
         this IServiceCollection services,
         Type settingsType,

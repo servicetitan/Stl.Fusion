@@ -1,8 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Stl.Fusion.EntityFramework.Authentication;
-using Stl.Fusion.EntityFramework.Extensions;
-using Stl.Fusion.Extensions;
 
 namespace Stl.Fusion.EntityFramework;
 
@@ -23,6 +20,7 @@ public readonly struct DbContextBuilder<TDbContext>
 
         services.TryAddSingleton<DbHub<TDbContext>>();
         AddMultitenancy(); // Core multitenancy services
+        TryAddTransientErrorDetector(_ => TransientErrorDetector.DefaultPreferTransient);
 
         configure?.Invoke(this);
     }
@@ -32,8 +30,22 @@ public readonly struct DbContextBuilder<TDbContext>
     public DbMultitenancyBuilder<TDbContext> AddMultitenancy()
         => new(this, null);
 
-    public DbContextBuilder<TDbContext> AddMultitenancy(Action<DbMultitenancyBuilder<TDbContext>> configure) 
+    public DbContextBuilder<TDbContext> AddMultitenancy(Action<DbMultitenancyBuilder<TDbContext>> configure)
         => new DbMultitenancyBuilder<TDbContext>(this, configure).DbContext;
+
+    // Transient error detector
+
+    public DbContextBuilder<TDbContext> AddTransientErrorDetector(Func<IServiceProvider, ITransientErrorDetector> detectorFactory)
+    {
+        Services.AddSingleton(c => detectorFactory.Invoke(c).For<TDbContext>());
+        return this;
+    }
+
+    public DbContextBuilder<TDbContext> TryAddTransientErrorDetector(Func<IServiceProvider, ITransientErrorDetector> detectorFactory)
+    {
+        Services.TryAddSingleton(c => detectorFactory.Invoke(c).For<TDbContext>());
+        return this;
+    }
 
     // Entity converters
 
@@ -62,13 +74,10 @@ public readonly struct DbContextBuilder<TDbContext>
         where TKey : notnull
         where TDbEntity : class
     {
-        if (optionsFactory != null)
-            Services.AddSingleton(optionsFactory);
-        else
-            Services.TryAddSingleton<DbEntityResolver<TDbContext, TKey, TDbEntity>.Options>();
-        Services.AddSingleton<
-            IDbEntityResolver<TKey, TDbEntity>,
-            DbEntityResolver<TDbContext, TKey, TDbEntity>>();
+        var services = Services;
+        services.AddSingleton(optionsFactory, _ => DbEntityResolver<TDbContext, TKey, TDbEntity>.Options.Default);
+        Services.AddSingleton<IDbEntityResolver<TKey, TDbEntity>>(c => new DbEntityResolver<TDbContext, TKey, TDbEntity>(
+            c.GetRequiredService<DbEntityResolver<TDbContext, TKey, TDbEntity>.Options>(), c));
         return this;
     }
 
@@ -87,13 +96,10 @@ public readonly struct DbContextBuilder<TDbContext>
         where TKey : notnull
         where TDbEntity : class
     {
-        if (optionsFactory != null)
-            Services.AddSingleton(optionsFactory);
-        else
-            Services.TryAddSingleton<DbEntityResolver<TDbContext, TKey, TDbEntity>.Options>();
-        Services.TryAddSingleton<
-            IDbEntityResolver<TKey, TDbEntity>,
-            DbEntityResolver<TDbContext, TKey, TDbEntity>>();
+        var services = Services;
+        services.AddSingleton(optionsFactory, _ => DbEntityResolver<TDbContext, TKey, TDbEntity>.Options.Default);
+        Services.TryAddSingleton<IDbEntityResolver<TKey, TDbEntity>>(c => new DbEntityResolver<TDbContext, TKey, TDbEntity>(
+            c.GetRequiredService<DbEntityResolver<TDbContext, TKey, TDbEntity>.Options>(), c));
         return this;
     }
 
@@ -112,62 +118,6 @@ public readonly struct DbContextBuilder<TDbContext>
     public DbOperationsBuilder<TDbContext> AddOperations()
         => new(this, null);
 
-    public DbContextBuilder<TDbContext> AddOperations(Action<DbOperationsBuilder<TDbContext>> configure) 
+    public DbContextBuilder<TDbContext> AddOperations(Action<DbOperationsBuilder<TDbContext>> configure)
         => new DbOperationsBuilder<TDbContext>(this, configure).DbContext;
-
-    // Authentication
-
-    public DbAuthenticationBuilder<TDbContext, DbSessionInfo<TDbUserId>, DbUser<TDbUserId>, TDbUserId> 
-        AddAuthentication<TDbUserId>()
-        where TDbUserId : notnull
-        => AddAuthentication<DbSessionInfo<TDbUserId>, DbUser<TDbUserId>, TDbUserId>();
-
-    public DbAuthenticationBuilder<TDbContext, TDbSessionInfo, TDbUser, TDbUserId> 
-        AddAuthentication<TDbSessionInfo, TDbUser, TDbUserId>()
-        where TDbSessionInfo : DbSessionInfo<TDbUserId>, new()
-        where TDbUser : DbUser<TDbUserId>, new()
-        where TDbUserId : notnull
-        => new(this, null);
-
-    public DbContextBuilder<TDbContext> AddAuthentication<TDbUserId>(
-        Action<DbAuthenticationBuilder<TDbContext, DbSessionInfo<TDbUserId>, DbUser<TDbUserId>, TDbUserId>> configure)
-        where TDbUserId : notnull
-        => AddAuthentication<DbSessionInfo<TDbUserId>, DbUser<TDbUserId>, TDbUserId>(configure);
-
-    public DbContextBuilder<TDbContext> AddAuthentication<TDbSessionInfo, TDbUser, TDbUserId>(
-        Action<DbAuthenticationBuilder<TDbContext, TDbSessionInfo, TDbUser, TDbUserId>> configure)
-        where TDbSessionInfo : DbSessionInfo<TDbUserId>, new()
-        where TDbUser : DbUser<TDbUserId>, new()
-        where TDbUserId : notnull
-        => new DbAuthenticationBuilder<TDbContext, TDbSessionInfo, TDbUser, TDbUserId>(this, configure).DbContext;
-
-    // KeyValueStore
-
-    public DbContextBuilder<TDbContext> AddKeyValueStore(
-        Func<IServiceProvider, DbKeyValueTrimmer<TDbContext, DbKeyValue>.Options>? keyValueTrimmerOptionsFactory = null)
-        => AddKeyValueStore<DbKeyValue>(keyValueTrimmerOptionsFactory);
-
-    public DbContextBuilder<TDbContext> AddKeyValueStore<TDbKeyValue>(
-        Func<IServiceProvider, DbKeyValueTrimmer<TDbContext, TDbKeyValue>.Options>? keyValueTrimmerOptionsFactory = null)
-        where TDbKeyValue : DbKeyValue, new()
-    {
-        var services = Services;
-        var isConfigured = services.HasService<DbKeyValueTrimmer<TDbContext, TDbKeyValue>>();
-
-        if (keyValueTrimmerOptionsFactory != null)
-            services.AddSingleton(keyValueTrimmerOptionsFactory);
-        if (isConfigured)
-            return this;
-
-        TryAddEntityResolver<string, TDbKeyValue>();
-        var fusion = services.AddFusion();
-        fusion.AddComputeService<DbKeyValueStore<TDbContext, TDbKeyValue>>();
-        services.TryAddSingleton<IKeyValueStore>(c => c.GetRequiredService<DbKeyValueStore<TDbContext, TDbKeyValue>>());
-
-        // DbKeyValueTrimmer - hosted service!
-        services.TryAddSingleton<DbKeyValueTrimmer<TDbContext, TDbKeyValue>.Options>();
-        services.TryAddSingleton<DbKeyValueTrimmer<TDbContext, TDbKeyValue>>();
-        services.AddHostedService(c => c.GetRequiredService<DbKeyValueTrimmer<TDbContext, TDbKeyValue>>());
-        return this;
-    }
 }

@@ -2,34 +2,27 @@ using System.Web.Http.Dependencies;
 
 namespace Stl.Fusion.Server;
 
-public class DefaultDependencyResolver : IDependencyResolver
+public class DefaultDependencyResolver(IServiceProvider services) : IDependencyResolver
 {
-    private readonly IServiceProvider _services;
     private readonly IServiceScope? _scope;
 
-    public DefaultDependencyResolver(IServiceProvider services)
-        => _services = services;
-
-    private DefaultDependencyResolver(IServiceScope scope)
-    {
-        _services = scope.ServiceProvider;
-        _scope = scope;
-    }
+    private DefaultDependencyResolver(IServiceScope scope) : this(scope.ServiceProvider)
+        => _scope = scope;
 
     public object GetService(Type serviceType)
-        => _services.GetService(serviceType)!;
+        => services.GetService(serviceType)!;
 
     public IEnumerable<object> GetServices(Type serviceType)
-        => _services.GetServices(serviceType)!;
+        => services.GetServices(serviceType)!;
 
     public void Dispose()
     {
         if (_scope is { } dScope)
             dScope.Dispose();
-        else if (_services is IDisposable dServices)
+        else if (services is IDisposable dServices)
             dServices.Dispose();
     }
 
     public IDependencyScope BeginScope()
-        => new DefaultDependencyResolver(_services.CreateScope());
+        => new DefaultDependencyResolver(services.CreateScope());
 }

@@ -225,6 +225,6 @@ public class ConcurrencyTest : SimpleFusionTestBase
     protected override void ConfigureServices(ServiceCollection services)
     {
         base.ConfigureServices(services);
-        services.AddFusion().AddComputeService<CounterSumService>();
+        services.AddFusion().AddService<CounterSumService>();
     }
 }

@@ -1,9 +1,7 @@
 namespace Stl.CommandR.Configuration;
 
-public sealed class CommandHandlerRegistry
+public sealed class CommandHandlerRegistry(IServiceProvider services)
 {
-    public IReadOnlyList<CommandHandler> Handlers { get; }
-
-    public CommandHandlerRegistry(IServiceProvider services)
-        => Handlers = services.GetRequiredService<HashSet<CommandHandler>>().ToArray();
+    public IReadOnlyList<CommandHandler> Handlers { get; } =
+        services.GetRequiredService<HashSet<CommandHandler>>().ToArray();
 }

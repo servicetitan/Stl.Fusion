@@ -3,13 +3,17 @@ using Stl.Generators;
 namespace Stl.Time;
 
 [StructLayout(LayoutKind.Auto)]
-[DataContract]
-public readonly record struct RandomTimeSpan
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public readonly partial record struct RandomTimeSpan
 {
-    [DataMember(Order = 0)] public TimeSpan Origin { get; init; }
-    [DataMember(Order = 1)] public TimeSpan MaxDelta { get; init; }
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore] TimeSpan Min => (Origin - MaxDelta).Positive(); 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore] TimeSpan Max => (Origin + MaxDelta).Positive(); 
+    [DataMember(Order = 0), MemoryPackOrder(0)]
+    public TimeSpan Origin { get; init; }
+    [DataMember(Order = 1), MemoryPackOrder(1)]
+    public TimeSpan MaxDelta { get; init; }
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
+    public TimeSpan Min => (Origin - MaxDelta).Positive();
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
+    public TimeSpan Max => (Origin + MaxDelta).Positive();
 
     [JsonConstructor, Newtonsoft.Json.JsonConstructor]
     public RandomTimeSpan(TimeSpan origin, TimeSpan maxDelta = default)

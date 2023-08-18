@@ -5,9 +5,8 @@ namespace Stl.Fusion.Tests.Extensions;
 
 public class NestedOperationLoggerTest : FusionTestBase
 {
-    public NestedOperationLoggerTest(ITestOutputHelper @out)
-        : base(@out, new FusionTestOptions() { UseTestClock = true })
-    { }
+    public NestedOperationLoggerTest(ITestOutputHelper @out) : base(@out)
+        => UseTestClock = true;
 
     [Fact]
     public async Task BasicTest()
@@ -23,7 +22,7 @@ public class NestedOperationLoggerTest : FusionTestBase
         c3.Value.Should().BeNull();
 
         var commander = Services.Commander();
-        var command = new NestedOperationLoggerTester.SetManyCommand(
+        var command = new NestedOperationLoggerTester_SetMany(
             new[] {"1", "2", "3"}, "v");
         await commander.Call(command);
 

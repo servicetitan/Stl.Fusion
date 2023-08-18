@@ -5,13 +5,14 @@ namespace Stl.Rpc.Server;
 
 public static class EndpointRouteBuilderExt
 {
-    public static IEndpointConventionBuilder MapRpcServer(
+    public static IEndpointRouteBuilder MapRpcWebSocketServer(
         this IEndpointRouteBuilder endpoints, string? pattern = null)
     {
         var services = endpoints.ServiceProvider;
-        var server = services.GetRequiredService<RpcServer>();
-        return endpoints
-            .MapGet(pattern ?? server.Settings.RequestPath, ctx => server.HandleRequest(ctx))
+        var server = services.GetRequiredService<RpcWebSocketServer>();
+        endpoints
+            .MapGet(pattern ?? server.Settings.RoutePattern, server.Invoke)
             .WithDisplayName(server.GetType().FullName!);
+        return endpoints;
     }
 }

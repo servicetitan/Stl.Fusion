@@ -6,7 +6,7 @@
     <OutputPath>$(SolutionDir)artifacts\tests</OutputPath>
     <IsPackable>false</IsPackable>
     <IsPublishable>false</IsPublishable>
-    <TargetFrameworks>net7.0;net6.0;net5.0;netcoreapp3.1;net48;net471</TargetFrameworks>
+    <TargetFrameworks>net8.0;net7.0;net6.0;net5.0;netcoreapp3.1;net48;net471</TargetFrameworks>
     <!-- Copy all references to output folder (important for coverage tools) -->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
@@ -24,9 +24,10 @@
     <NoWarn>$(NoWarn);MA0048;MA0018;MA0026;MA0046;MA0016;MA0097;MA0009;MA0056</NoWarn>
     <!-- [VSTHRD200] Use "Async" suffix in names of methods that return an awaitable type. -->
     <!-- [VSTHRD110] Observe the awaitable result of this method call by awaiting it, assigning to a variable, or passing it to another method. -->
+    <!-- [VSTHRD103] Cancel synchronously blocks. Await CancelAsync instead. -->
     <!-- [VSTHRD003] Avoid awaiting or returning a Task representing work that was not started within your context as that can lead to deadlocks. -->
     <!-- [VSTHRD002] Synchronously waiting on tasks or awaiters may cause deadlocks. Use await or JoinableTaskFactory.Run instead. -->
-    <NoWarn>$(NoWarn);VSTHRD200;VSTHRD110;VSTHRD003;VSTHRD002</NoWarn>
+    <NoWarn>$(NoWarn);VSTHRD200;VSTHRD110;VSTHRD103;VSTHRD003;VSTHRD002</NoWarn>
 
     <!-- Testing-specific -->
     <!-- [MA0002] Use an overload that has a IEqualityComparer<string> or IComparer<string> parameter -->
@@ -84,6 +85,7 @@
     <Using Include="Stl.CommandR" />
     <Using Include="Stl.CommandR.Configuration" />
     <Using Include="Stl.CommandR.Commands" />
+    <Using Include="MemoryPack" />
     <Using Include="Microsoft.Extensions.DependencyInjection" />
     <Using Include="Microsoft.Extensions.Logging" />
     <Using Include="Microsoft.Extensions.Logging.Abstractions" />

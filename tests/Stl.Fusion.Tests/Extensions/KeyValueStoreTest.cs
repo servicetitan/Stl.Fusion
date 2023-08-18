@@ -16,19 +16,18 @@ public class DbKeyValueStoreTest : KeyValueStoreTestBase
 
 public abstract class KeyValueStoreTestBase : FusionTestBase
 {
-    protected KeyValueStoreTestBase(ITestOutputHelper @out, bool useInMemoryKeyValueStore)
-        : base(@out, new FusionTestOptions() {
-            UseTestClock = true,
-            UseInMemoryKeyValueStore = useInMemoryKeyValueStore,
-        })
-    { }
+    protected KeyValueStoreTestBase(ITestOutputHelper @out, bool useInMemoryKeyValueStore) : base(@out)
+    {
+        UseTestClock = true;
+        UseInMemoryKeyValueStore = useInMemoryKeyValueStore;
+    }
 
     [Fact]
     public async Task BasicTest()
     {
         var kvs = Services.GetRequiredService<IKeyValueStore>();
         var tenantId = Tenant.Default.Id;
-        
+
         await kvs.Set(tenantId, "1", "1v");
         (await kvs.Get(tenantId, "1")).Should().Be("1v");
         await kvs.Remove(tenantId, "1");

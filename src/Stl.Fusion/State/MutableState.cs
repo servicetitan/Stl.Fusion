@@ -19,7 +19,7 @@ public class MutableState<T> : State<T>, IMutableState<T>
             => ComputedOptions = ComputedOptions.MutableStateDefault;
     }
 
-    private Result<T> _output;
+    protected Result<T> NextOutput;
 
     public new T Value {
         get => base.Value;
@@ -35,14 +35,14 @@ public class MutableState<T> : State<T>, IMutableState<T>
         set => Set(Result.Value((T) value!));
     }
 
-    public MutableState(Options options, IServiceProvider services, bool initialize = true)
-        : base(options, services, initialize)
-    { }
-
-    protected override void Initialize(State<T>.Options options)
+    public MutableState(Options settings, IServiceProvider services, bool initialize = true)
+        : base(settings, services, false)
     {
-        _output = options.InitialOutput;
-        base.Initialize(options);
+        NextOutput = settings.InitialOutput;
+
+        // ReSharper disable once VirtualMemberCallInConstructor
+        if (initialize)
+            Initialize(settings);
     }
 
     // Set overloads
@@ -52,11 +52,11 @@ public class MutableState<T> : State<T>, IMutableState<T>
     public void Set(Result<T> result)
     {
         lock (Lock) {
-            if (_output == result)
+            if (NextOutput == result)
                 return;
 
             var snapshot = Snapshot;
-            _output = result;
+            NextOutput = result;
             // We do this inside the lock by a few reasons:
             // 1. Otherwise the lock will be acquired twice -
             //    see OnInvalidated & Invoke overloads below.
@@ -81,7 +81,7 @@ public class MutableState<T> : State<T>, IMutableState<T>
             catch (Exception e) {
                 result = Result.Error<T>(e);
             }
-            _output = result;
+            NextOutput = result;
             snapshot.Computed.Invalidate();
         }
     }
@@ -97,7 +97,7 @@ public class MutableState<T> : State<T>, IMutableState<T>
             catch (Exception e) {
                 result = Result.Error<T>(e);
             }
-            _output = result;
+            NextOutput = result;
             snapshot.Computed.Invalidate();
         }
     }
@@ -165,7 +165,7 @@ public class MutableState<T> : State<T>, IMutableState<T>
     protected override StateBoundComputed<T> CreateComputed()
     {
         var computed = base.CreateComputed();
-        computed.TrySetOutput(_output);
+        computed.TrySetOutput(NextOutput);
         Computed = computed;
         return computed;
     }

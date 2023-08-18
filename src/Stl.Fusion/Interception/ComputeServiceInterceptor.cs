@@ -1,28 +1,27 @@
 using Stl.Fusion.Internal;
-using Stl.Versioning;
 
 namespace Stl.Fusion.Interception;
 
-public class ComputeServiceInterceptor : ComputeServiceInterceptorBase
+public class ComputeServiceInterceptor(ComputeServiceInterceptor.Options settings, IServiceProvider services)
+    : ComputeServiceInterceptorBase(settings, services)
 {
     public new record Options : ComputeServiceInterceptorBase.Options;
 
-    protected readonly VersionGenerator<LTag> VersionGenerator;
-
-    public ComputeServiceInterceptor(Options options, IServiceProvider services)
-        : base(options, services)
-        => VersionGenerator = services.VersionGenerator<LTag>();
-
     protected override ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method)
-        => new ComputeMethodFunction<T>(method, Services, VersionGenerator);
+        => new ComputeMethodFunction<T>(method, Services, Hub.LTagVersionGenerator);
 
     protected override void ValidateTypeInternal(Type type)
     {
-        var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic
-            | BindingFlags.Instance | BindingFlags.Static
-            | BindingFlags.FlattenHierarchy;
-        foreach (var method in type.GetMethods(bindingFlags)) {
-            var options = ComputedOptionsProvider.GetComputedOptions(type, method);
+        base.ValidateTypeInternal(type);
+        var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
+        var methods = (type.IsInterface
+            ? type.GetAllInterfaceMethods(bindingFlags)
+            : type.GetMethods(bindingFlags)
+            ).ToList();
+        foreach (var method in methods) {
+            if (method.DeclaringType == typeof(object))
+                continue;
+            var options = Hub.ComputedOptionsProvider.GetComputedOptions(type, method);
             if (options == null)
                 continue;
 

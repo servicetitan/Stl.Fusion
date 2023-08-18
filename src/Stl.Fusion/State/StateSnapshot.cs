@@ -10,6 +10,7 @@ public interface IStateSnapshot
     int UpdateCount { get; }
     int ErrorCount { get; }
     int RetryCount { get; }
+    bool IsInitial { get; }
 
     Task WhenInvalidated(CancellationToken cancellationToken = default);
     Task WhenUpdating();
@@ -34,6 +35,7 @@ public class StateSnapshot<T> : IStateSnapshot<T>
     public int UpdateCount { get; }
     public int ErrorCount { get; }
     public int RetryCount { get; }
+    public bool IsInitial => UpdateCount == 0;
 
     IState IStateSnapshot.State => State;
     IComputed IStateSnapshot.Computed => Computed;

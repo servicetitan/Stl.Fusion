@@ -3,8 +3,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Stl.Fusion.Tests.Model;
 
-public record LongKeyedEntity : IHasId<long>
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public partial record LongKeyedEntity : IHasId<long>
 {
     [Key, DatabaseGenerated(DatabaseGeneratedOption.None)]
+    [DataMember, MemoryPackOrder(0)]
     public long Id { get; init; }
 }

@@ -7,8 +7,6 @@ public class SessionParameterTest : SimpleFusionTestBase
 {
     public SessionParameterTest(ITestOutputHelper @out) : base(@out) { }
 
-    private static object _lock = new();
-
     [Fact]
     public async Task BasicTest()
     {
@@ -27,9 +25,8 @@ public class SessionParameterTest : SimpleFusionTestBase
 
         var services = CreateServicesWithComputeService<PerUserCounterService>();
         var counters = services.GetRequiredService<PerUserCounterService>();
-        var sessionFactory = services.GetRequiredService<ISessionFactory>();
-        var sessionA = sessionFactory.CreateSession();
-        var sessionB = sessionFactory.CreateSession();
+        var sessionA = Session.New();
+        var sessionB = Session.New();
 
         var x1 = await counters.Get("x", sessionA);
         await counters.Increment("x", sessionA);
@@ -72,6 +69,6 @@ public class SessionParameterTest : SimpleFusionTestBase
     protected override void ConfigureServices(ServiceCollection services)
     {
         base.ConfigureServices(services);
-        services.AddFusion().AddAuthentication();
+        services.AddFusion().AddInMemoryAuthService();
     }
 }

@@ -4,6 +4,8 @@ public class FusionTime : IFusionTime
 {
     public record Options
     {
+        public static Options Default { get; set; } = new();
+
         public TimeSpan DefaultUpdatePeriod { get; init; } = TimeSpan.FromSeconds(1);
         public TimeSpan MaxInvalidationDelay { get; init; } = TimeSpan.FromMinutes(10);
         public IMomentClock? Clock { get; init; }
@@ -18,22 +20,22 @@ public class FusionTime : IFusionTime
         Clock = Settings.Clock ?? services.Clocks().SystemClock;
     }
 
-    public virtual Task<DateTime> GetUtcNow()
+    public virtual Task<Moment> Now()
     {
         Computed.GetCurrent()!.Invalidate(TrimInvalidationDelay(Settings.DefaultUpdatePeriod));
-        return Task.FromResult(Clock.Now.ToDateTime());
+        return Task.FromResult(Clock.Now);
     }
 
-    public virtual Task<DateTime> GetUtcNow(TimeSpan updatePeriod)
+    public virtual Task<Moment> Now(TimeSpan updatePeriod)
     {
         Computed.GetCurrent()!.Invalidate(TrimInvalidationDelay(updatePeriod));
-        return Task.FromResult(Clock.Now.ToDateTime());
+        return Task.FromResult(Clock.Now);
     }
 
-    public virtual Task<string> GetMomentsAgo(DateTime time)
+    public virtual Task<string> GetMomentsAgo(Moment moment)
     {
         // TODO: Make this method stop leaking some memory due to timers that don't die unless timeout
-        var delta = DateTime.UtcNow - time.DefaultKind(DateTimeKind.Utc).ToUniversalTime();
+        var delta = Clock.Now - moment;
         if (delta < TimeSpan.Zero)
             delta = TimeSpan.Zero;
         var (unit, unitName) = GetMomentsAgoUnit(delta);

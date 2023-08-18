@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http;
 using System.Web.Http.Filters;
 
 namespace Stl.Fusion.Server;
@@ -17,17 +18,13 @@ public class JsonifyErrorsAttribute : ExceptionFilterAttribute
         var log = services.GetRequiredService<ILogger<JsonifyErrorsAttribute>>();
         log.LogError(exception, "Error message: {Message}", exception.Message);
 
-        var serializer = TypeDecoratingSerializer.Default;
+        var serializer = TypeDecoratingTextSerializer.Default;
         var content = serializer.Write(exception.ToExceptionInfo());
         actionExecutedContext.Exception = null; // mark exception as handled;
         var response = new HttpResponseMessage {
             Content = new StringContent(content, null, "application/json"),
             StatusCode = HttpStatusCode.InternalServerError
         };
-        var psi = actionContext.GetPublicationStateInfo();
-        if (psi != null)
-            response.Headers.AddPublicationStateInfoHeader(psi);
-
         actionExecutedContext.Response = response;
     }
 }

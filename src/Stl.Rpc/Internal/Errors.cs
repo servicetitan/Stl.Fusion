@@ -9,6 +9,9 @@ public static class Errors
     public static Exception RpcOptionsIsNotRegistered()
         => new InvalidOperationException("RpcOptions instance is not registered.");
 
+    public static Exception UnknownCallType(byte callTypeId)
+        => new KeyNotFoundException($"Unknown CallTypeId: {callTypeId}.");
+
     public static Exception ServiceAlreadyExists(Type type)
         => new InvalidOperationException($"Service of type '{type}' is already added.");
     public static Exception ServiceTypeCannotBeChanged(Type originalType, Type type)
@@ -23,29 +26,20 @@ public static class Errors
         => new InvalidOperationException($"Service '{methodDef.Service.Type.GetName()}' has 2 or more methods named '{methodDef.Name}'.");
 
     public static Exception NoService(Type serviceType)
-        => new InvalidOperationException($"Can't resolve service by type: '{serviceType.GetName()}'.");
+        => new KeyNotFoundException($"Can't resolve service by type: '{serviceType.GetName()}'.");
     public static Exception NoService(string serviceName)
-        => new InvalidOperationException($"Can't resolve service by name: '{serviceName}'.");
-    public static Exception ServiceIsNotWhiteListed(RpcServiceDef serviceDef)
-        => new InvalidOperationException($"Service '{serviceDef.Type.GetName()}' isn't white-listed.");
+        => new KeyNotFoundException($"Can't resolve service by name: '{serviceName}'.");
 
     public static Exception NoMethod(Type serviceType, MethodInfo method)
-        => new InvalidOperationException($"Can't resolve method '{method.Name}' (by MethodInfo) of '{serviceType.GetName()}'.");
+        => new KeyNotFoundException($"Can't resolve method '{method.Name}' (by MethodInfo) of '{serviceType.GetName()}'.");
     public static Exception NoMethod(Type serviceType, string methodName)
-        => new InvalidOperationException($"Can't resolve method '{methodName}' (by name) of '{serviceType.GetName()}'.");
+        => new KeyNotFoundException($"Can't resolve method '{methodName}' (by name) of '{serviceType.GetName()}'.");
 
-    public static Exception AlreadyConnected()
-        => new InvalidOperationException($"This {nameof(RpcPeer)} is already connected.");
-    public static Exception ConnectionIsClosed()
-        => new InvalidOperationException("Connection is gracefully closed by peer.");
-    public static Exception ConnectionTimeout()
-        => new TimeoutException($"Connection time-out.");
-    public static Exception ConnectionTimeout(TimeSpan timeout)
-        => new TimeoutException($"Connection time-out ({timeout.ToShortString()}).");
-    public static Exception ConnectionRetryLimitExceeded()
-        => new ImpossibleToConnectException("Can't reconnect: retry limit exceeded.");
-    public static Exception ImpossibleToReconnect()
-        => new ImpossibleToConnectException();
+    public static Exception EndpointNotFound(string serviceName, string methodName)
+        => new RpcException($"Endpoint not found: '{serviceName}.{methodName}'.");
+
+    public static Exception ConnectionUnrecoverable(Exception? innerException = null)
+        => new ConnectionUnrecoverableException(innerException);
 
     public static Exception NoCurrentRpcInboundContext()
         => new InvalidOperationException($"{nameof(RpcInboundContext)}.{nameof(RpcInboundContext.Current)} is unavailable.");
@@ -57,16 +51,27 @@ public static class Errors
             $"this scope should be used only in synchronous part of your code that happens " +
             $"right before the async method triggering the outgoing RPC call is invoked.");
 
-    public static Exception IncompatibleArgumentType(RpcMethodDef methodDef, int argumentIndex, Type argumentType)
-        => new InvalidOperationException(
-            $"Argument #{argumentIndex} for '{methodDef.FullName}' has incompatible type: '{argumentType.GetName()}.'");
-    public static Exception NonDeserializableArguments(RpcMethodDef methodDef)
-        => new InvalidOperationException($"Couldn't deserialize arguments for '{methodDef.FullName}'.");
-    public static Exception IncompatibleResultType(RpcMethodDef methodDef, Type actualResultType)
-        => new InvalidOperationException($"Couldn't deserialize result for '{methodDef.FullName}' call: " +
-            $"expected '{methodDef.UnwrappedReturnType.GetName()}', " +
-            $"but got '{actualResultType.GetName()}'.");
-
     public static Exception InvalidMessageSize()
         => new SerializationException("Invalid item size. The remainder of the message will be dropped.");
+    public static Exception CannotDeserializeUnexpectedArgumentType(Type expectedType, Type actualType)
+        => new SerializationException($"Cannot deserialize unexpected argument type: " +
+            $"expected '{expectedType.GetName()}' (exact match), got '{actualType.GetName()}'.");
+    public static Exception CannotDeserializeUnexpectedPolymorphicArgumentType(Type expectedType, Type actualType)
+        => new SerializationException($"Cannot deserialize polymorphic argument type: " +
+            $"expected '{expectedType.GetName()}' or its descendant, got '{actualType.GetName()}'.");
+
+    public static Exception CallTimeout(RpcPeer peer)
+        => CallTimeout(peer.Ref.IsServer ? "client" : "server");
+    public static Exception CallTimeout(string partyName = "server")
+        => new TimeoutException($"The {partyName} didn't respond in time.");
+
+    public static Exception Disconnected(RpcPeer peer)
+        => Disconnected(peer.Ref.IsServer ? "client" : "server");
+    public static Exception Disconnected(string partyName = "server")
+        => new DisconnectedException($"The remote {partyName} is disconnected.");
+
+    public static Exception ClientRpcPeerRefExpected(string argumentName)
+        => new ArgumentOutOfRangeException(argumentName, "Client RpcPeerRef is expected.");
+    public static Exception ServerRpcPeerRefExpected(string argumentName)
+        => new ArgumentOutOfRangeException(argumentName, "Server RpcPeerRef is expected.");
 }

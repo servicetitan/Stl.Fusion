@@ -1,4 +1,7 @@
+using System.Text;
+using Cysharp.Text;
 using FluentAssertions;
+using Microsoft.Toolkit.HighPerformance.Buffers;
 using Newtonsoft.Json;
 using Xunit.Abstractions;
 
@@ -23,15 +26,13 @@ public static class SerializationTestExt
         v.Should().Be(value);
         v = v.PassThroughNewtonsoftJsonSerializer(output);
         v.Should().Be(value);
-        v = v.PassThroughTypeWritingSerializer(output);
-        v.Should().Be(value);
-        v = v.PassThroughSystemJsonSerialized(output);
-        v.Should().Be(value);
-        v = v.PassThroughNewtonsoftJsonSerialized(output);
-        v.Should().Be(value);
         v = v.PassThroughMessagePackByteSerializer(output);
         v.Should().Be(value);
-        v = v.PassThroughMessagePackSerialized(output);
+        v = v.PassThroughMemoryPackByteSerializer(output);
+        v.Should().Be(value);
+        v = v.PassThroughTypeDecoratingTextSerializer(output);
+        v.Should().Be(value);
+        v = v.PassThroughTypeDecoratingByteSerializer(output);
         v.Should().Be(value);
         return v;
     }
@@ -41,23 +42,34 @@ public static class SerializationTestExt
         var v = value;
         v = v.PassThroughSystemJsonSerializer(output);
         v = v.PassThroughNewtonsoftJsonSerializer(output);
-        v = v.PassThroughTypeWritingSerializer(output);
-        v = v.PassThroughSystemJsonSerialized(output);
-        v = v.PassThroughNewtonsoftJsonSerialized(output);
         v = v.PassThroughMessagePackByteSerializer(output);
-        v = v.PassThroughMessagePackSerialized(output);
+        v = v.PassThroughMemoryPackByteSerializer(output);
+        v = v.PassThroughTypeDecoratingTextSerializer(output);
+        v = v.PassThroughTypeDecoratingByteSerializer(output);
         return v;
     }
 
-    // TypeWritingSerializer
+    // TypeDecoratingTextSerializer
 
-    public static T PassThroughTypeWritingSerializer<T>(this T value, ITestOutputHelper? output = null)
+    public static T PassThroughTypeDecoratingTextSerializer<T>(this T value, ITestOutputHelper? output = null)
     {
         var sInner = new SystemJsonSerializer(SystemJsonOptions);
-        var s = new TypeDecoratingSerializer(sInner);
+        var s = new TypeDecoratingTextSerializer(sInner);
         var json = s.Write(value, typeof(object));
-        output?.WriteLine($"TypeWritingUtf16Serializer: {json}");
+        output?.WriteLine($"TypeDecoratingTextSerializer: {json}");
         return (T) s.Read<object>(json);
+    }
+
+    // TypeDecoratingByteSerializer
+
+    public static T PassThroughTypeDecoratingByteSerializer<T>(this T value, ITestOutputHelper? output = null)
+    {
+        var sInner = new MemoryPackByteSerializer();
+        var s = new TypeDecoratingByteSerializer(sInner);
+        using var buffer = s.Write(value, typeof(object));
+        var v0 = buffer.WrittenMemory.ToArray();
+        output?.WriteLine($"TypeDecoratingByteSerializer: {JsonFormatter.Format(v0)}");
+        return (T) s.Read<object>(v0);
     }
 
     // System.Text.Json serializer
@@ -67,15 +79,26 @@ public static class SerializationTestExt
         var s = new SystemJsonSerializer(SystemJsonOptions).ToTyped<T>();
         var json = s.Write(value);
         output?.WriteLine($"SystemJsonSerializer: {json}");
-        return s.Read(json);
-    }
+        value = s.Read(json);
 
-    public static T PassThroughSystemJsonSerialized<T>(this T value, ITestOutputHelper? output = null)
-    {
+        using var buffer = new ArrayPoolBufferWriter<byte>();
+        s.Write(buffer, value);
+        var bytes = buffer.WrittenMemory;
+        var json2 = Encoding.UTF8.GetDecoder().Convert(bytes.Span);
+        json2.Should().Be(json);
+        var v0 = s.Read(bytes);
+        var json3 = s.Write(v0);
+        json3.Should().Be(json);
+
         var v1 = SystemJsonSerialized.New(value);
         output?.WriteLine($"SystemJsonSerialized: {v1.Data}");
-        var v2 = SystemJsonSerialized.New<T>(v1.Data);
-        return v2.Value;
+        value = SystemJsonSerialized.New<T>(v1.Data).Value;
+
+        var v2 = TypeDecoratingSystemJsonSerialized.New(value);
+        output?.WriteLine($"TypeDecoratingSystemJsonSerialized: {v2.Data}");
+        value = TypeDecoratingSystemJsonSerialized.New<T>(v2.Data).Value;
+
+        return value;
     }
 
     // Newtonsoft.Json serializer
@@ -85,15 +108,22 @@ public static class SerializationTestExt
         var s = new NewtonsoftJsonSerializer(NewtonsoftJsonSettings).ToTyped<T>();
         var json = s.Write(value);
         output?.WriteLine($"NewtonsoftJsonSerializer: {json}");
-        return s.Read(json);
-    }
+        value = s.Read(json);
 
-    public static T PassThroughNewtonsoftJsonSerialized<T>(this T value, ITestOutputHelper? output = null)
-    {
+        using var buffer = new ArrayPoolBufferWriter<byte>();
+        s.Write(buffer, value);
+        var bytes = buffer.WrittenMemory;
+        var json2 = Encoding.UTF8.GetDecoder().Convert(bytes.Span);
+        json2.Should().Be(json);
+        var v0 = s.Read(bytes);
+        var json3 = s.Write(v0);
+        json3.Should().Be(json);
+
         var v1 = NewtonsoftJsonSerialized.New(value);
         output?.WriteLine($"NewtonsoftJsonSerialized: {v1.Data}");
-        var v2 = NewtonsoftJsonSerialized.New<T>(v1.Data);
-        return v2.Value;
+        value = NewtonsoftJsonSerialized.New<T>(v1.Data).Value;
+
+        return value;
     }
 
     // MessagePack serializer
@@ -101,18 +131,40 @@ public static class SerializationTestExt
     public static T PassThroughMessagePackByteSerializer<T>(this T value, ITestOutputHelper? output = null)
     {
         var s = new MessagePackByteSerializer().ToTyped<T>();
-        using var bufferWriter = s.Write(value);
-        var data = bufferWriter.WrittenMemory.ToArray();
-        output?.WriteLine($"MessagePackByteSerializer: {JsonFormatter.Format(data)}");
-        var v1 = s.Read(data);
-        return v1;
-    }
+        using var buffer = s.Write(value);
+        var v0 = buffer.WrittenMemory.ToArray();
+        output?.WriteLine($"MessagePackByteSerializer: {JsonFormatter.Format(v0)}");
+        value = s.Read(v0);
 
-    public static T PassThroughMessagePackSerialized<T>(this T value, ITestOutputHelper? output = null)
-    {
         var v1 = MessagePackSerialized.New(value);
         output?.WriteLine($"MessagePackSerialized: {v1.Data}");
-        var v2 = MessagePackSerialized.New<T>(v1.Data);
-        return v2.Value;
+        value = MessagePackSerialized.New<T>(v1.Data).Value;
+
+        var v2 = TypeDecoratingMessagePackSerialized.New(value);
+        output?.WriteLine($"TypeDecoratingMessagePackSerialized: {v2.Data}");
+        value = TypeDecoratingMessagePackSerialized.New<T>(v2.Data).Value;
+
+        return value;
+    }
+
+    // MemoryPack serializer
+
+    public static T PassThroughMemoryPackByteSerializer<T>(this T value, ITestOutputHelper? output = null)
+    {
+        var s = new MemoryPackByteSerializer().ToTyped<T>();
+        using var buffer = s.Write(value);
+        var v0 = buffer.WrittenMemory.ToArray();
+        output?.WriteLine($"MemoryPackByteSerializer: {JsonFormatter.Format(v0)}");
+        value = s.Read(v0);
+
+        var v1 = MemoryPackSerialized.New(value);
+        output?.WriteLine($"MemoryPackSerialized: {v1.Data}");
+        value = MemoryPackSerialized.New<T>(v1.Data).Value;
+
+        var v2 = TypeDecoratingMemoryPackSerialized.New(value);
+        output?.WriteLine($"TypeDecoratingMemoryPackSerialized: {v2.Data}");
+        value = TypeDecoratingMemoryPackSerialized.New<T>(v2.Data).Value;
+
+        return value;
     }
 }

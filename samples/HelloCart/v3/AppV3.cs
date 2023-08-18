@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Samples.HelloCart.V2;
 using Stl.Fusion.EntityFramework;
-using Stl.Fusion.EntityFramework.Operations;
 using Stl.IO;
 
 namespace Samples.HelloCart.V3;
@@ -20,8 +19,8 @@ public class AppV3 : AppBase
         });
 
         services.AddFusion(fusion => {
-            fusion.AddComputeService<IProductService, DbProductService2>();
-            fusion.AddComputeService<ICartService, DbCartService2>();
+            fusion.AddService<IProductService, DbProductService2>();
+            fusion.AddService<ICartService, DbCartService2>();
         });
 
         // Add AppDbContext & related services
@@ -33,9 +32,6 @@ public class AppV3 : AppBase
         });
         services.AddDbContextServices<AppDbContext>(db => {
             db.AddOperations(operations => {
-                operations.ConfigureOperationLogReader(_ => new() {
-                    UnconditionalCheckPeriod = TimeSpan.FromSeconds(5),
-                });
                 operations.AddFileBasedOperationLogChangeTracking();
             });
             db.AddEntityResolver<string, DbProduct>();
@@ -44,15 +40,6 @@ public class AppV3 : AppBase
                 QueryTransformer = carts => carts.Include(c => c.Items),
             });
         });
-        ClientServices = HostServices = services.BuildServiceProvider();
-    }
-
-    public override async Task InitializeAsync()
-    {
-        // Let's re-create the database first
-        await using var dbContext = HostServices.GetRequiredService<IDbContextFactory<AppDbContext>>().CreateDbContext();
-        await dbContext.Database.EnsureDeletedAsync();
-        await dbContext.Database.EnsureCreatedAsync();
-        await base.InitializeAsync();
+        ClientServices = ServerServices = services.BuildServiceProvider();
     }
 }

@@ -5,9 +5,9 @@ namespace Stl.Fusion;
 public record ComputedOptions
 {
     public static ComputedOptions Default { get; set; } = new();
-    public static ComputedOptions ReplicaDefault { get; set; } = new() {
+    public static ComputedOptions ClientDefault { get; set; } = new() {
         MinCacheDuration = TimeSpan.FromMinutes(1),
-        ReplicaCacheBehavior = ReplicaCacheBehavior.Standard,
+        ClientCacheMode = Fusion.ClientCacheMode.Cache,
     };
     public static ComputedOptions MutableStateDefault { get; set; } = new() {
         TransientErrorInvalidationDelay = TimeSpan.MaxValue,
@@ -17,36 +17,36 @@ public record ComputedOptions
     public TimeSpan TransientErrorInvalidationDelay { get; init; } = TimeSpan.FromSeconds(1);
     public TimeSpan AutoInvalidationDelay { get; init; } = TimeSpan.MaxValue; // No auto invalidation
     public TimeSpan InvalidationDelay { get; init; }
-    public ReplicaCacheBehavior ReplicaCacheBehavior { get; init; } = ReplicaCacheBehavior.None;
+    public ClientCacheMode ClientCacheMode { get; init; } = ClientCacheMode.NoCache;
 
     public static ComputedOptions? Get(Type type, MethodInfo method)
     {
-        var isReplicaServiceMethod = type.IsInterface || typeof(InterfaceProxy).IsAssignableFrom(type);
+        var isClientServiceMethod = type.IsInterface || typeof(InterfaceProxy).IsAssignableFrom(type);
         var cma = method.GetAttribute<ComputeMethodAttribute>(true, true);
-        var rma = isReplicaServiceMethod ? method.GetAttribute<ReplicaMethodAttribute>(true, true) : null;
+        var rma = isClientServiceMethod ? method.GetAttribute<ClientComputeMethodAttribute>(true, true) : null;
         var a = rma ?? cma;
         if (a == null)
             return null;
 
-        var defaultOptions = isReplicaServiceMethod ? ReplicaDefault : Default;
-        // (Auto)InvalidationDelay for replicas should be taken from ReplicaMethodAttribute only 
-        var autoInvalidationDelay = isReplicaServiceMethod
+        var defaultOptions = isClientServiceMethod ? ClientDefault : Default;
+        // (Auto)InvalidationDelay for replicas should be taken from ReplicaMethodAttribute only
+        var autoInvalidationDelay = isClientServiceMethod
             ? rma?.AutoInvalidationDelay ?? double.NaN
             : a.AutoInvalidationDelay;
-        var invalidationDelay = isReplicaServiceMethod
+        var invalidationDelay = isClientServiceMethod
             ? rma?.InvalidationDelay ?? double.NaN
             : a.InvalidationDelay;
-        // Default cache behavior must be changed to null to let it "inherit" defaultOptions.ReplicaCacheBehavior  
-        var rmaCacheBehavior = rma?.CacheBehavior;
-        if (rmaCacheBehavior == ReplicaCacheBehavior.Default)
-            rmaCacheBehavior = null;
+        // Default cache behavior must be changed to null to let it "inherit" defaultOptions.ClientCacheMode
+        var rmaCacheMode = rma?.ClientCacheMode;
+        if (rmaCacheMode == ClientCacheMode.Default)
+            rmaCacheMode = null;
 
         var options = new ComputedOptions() {
             MinCacheDuration = ToTimeSpan(a.MinCacheDuration) ?? defaultOptions.MinCacheDuration,
             TransientErrorInvalidationDelay = ToTimeSpan(a.TransientErrorInvalidationDelay) ?? defaultOptions.TransientErrorInvalidationDelay,
             AutoInvalidationDelay = ToTimeSpan(autoInvalidationDelay) ?? defaultOptions.AutoInvalidationDelay,
             InvalidationDelay = ToTimeSpan(invalidationDelay) ?? defaultOptions.InvalidationDelay,
-            ReplicaCacheBehavior = rmaCacheBehavior ?? defaultOptions.ReplicaCacheBehavior,
+            ClientCacheMode = rmaCacheMode ?? defaultOptions.ClientCacheMode,
         };
         return options == defaultOptions ? defaultOptions : options;
     }

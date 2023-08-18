@@ -10,31 +10,17 @@ public static unsafe class EncoderExt
 public static class EncoderExt
 #endif
 {
-#if false
-    public static void Convert(this Encoder encoder, ReadOnlySequence<char> source, IBufferWriter<byte> target)
+    public static byte[] Convert(this Encoder encoder, ReadOnlySpan<char> source)
     {
-        var position = source.Start;
-        var lastBuffer = ReadOnlyMemory<char>.Empty;
-        while (source.TryGet(ref position, out var buffer)) {
-            if (lastBuffer.Length != 0)
-                encoder.Convert(lastBuffer.Span, target, flush: false);
-            lastBuffer = buffer;
+        var sb = ZString.CreateUtf8StringBuilder();
+        try {
+            encoder.Convert(source, ref sb);
+            return sb.AsSpan().ToArray();
         }
-        encoder.Convert(lastBuffer.Span, target);
-    }
-
-    public static void Convert(this Encoder encoder, ReadOnlySequence<char> source, ref Utf8ValueStringBuilder target)
-    {
-        var position = source.Start;
-        var lastBuffer = ReadOnlyMemory<char>.Empty;
-        while (source.TryGet(ref position, out var buffer)) {
-            if (lastBuffer.Length != 0)
-                encoder.Convert(lastBuffer.Span, target, flush: false);
-            lastBuffer = buffer;
+        finally {
+            sb.Dispose();
         }
-        encoder.Convert(lastBuffer.Span, target);
     }
-#endif
 
     public static void Convert(this Encoder encoder, ReadOnlySpan<char> source, IBufferWriter<byte> target, bool flush = true)
     {

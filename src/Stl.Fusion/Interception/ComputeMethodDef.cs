@@ -18,7 +18,7 @@ public sealed class ComputeMethodDef : MethodDef
             return;
         }
 
-        var computedOptions = interceptor.ComputedOptionsProvider.GetComputedOptions(type, method);
+        var computedOptions = interceptor.Hub.ComputedOptionsProvider.GetComputedOptions(type, method);
         if (computedOptions == null) {
             IsValid = false;
             return;

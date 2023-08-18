@@ -27,6 +27,7 @@ public static class StringBuilderExt
     {
         if (sb.Capacity > MaxCapacity)
             return;
+
         sb.Clear();
         _cached = sb;
     }

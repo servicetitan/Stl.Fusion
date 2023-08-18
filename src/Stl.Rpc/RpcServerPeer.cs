@@ -1,3 +1,4 @@
+using System;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Internal;
 
@@ -5,53 +6,47 @@ namespace Stl.Rpc;
 
 public class RpcServerPeer : RpcPeer
 {
-    public static string NamePrefix { get; set; } = "@inbound-";
+    public TimeSpan CloseTimeout { get; init; } = TimeSpan.FromMinutes(10);
 
-    public static Symbol FormatName(string clientId)
+    public RpcServerPeer(RpcHub hub, RpcPeerRef @ref)
+        : base(hub, @ref)
+        => LocalServiceFilter = static serviceDef => !serviceDef.IsBackend;
+
+    public async Task Connect(RpcConnection connection, CancellationToken cancellationToken = default)
     {
-        if (clientId.IsNullOrEmpty())
-            throw new ArgumentOutOfRangeException(nameof(clientId));
-
-        return NamePrefix + clientId;
-    }
-
-    public Symbol ClientId { get; init; }
-    public TimeSpan CloseTimeout { get; init; } = TimeSpan.FromMinutes(1);
-
-    public RpcServerPeer(RpcHub hub, Symbol name) : base(hub, name)
-    {
-        if (!name.Value.StartsWith(NamePrefix, StringComparison.Ordinal))
-            throw new ArgumentOutOfRangeException(nameof(name));
-
-        ClientId = name.Value[NamePrefix.Length..];
-        LocalServiceFilter = static _ => true;
+        var connectionState = ConnectionState.LatestOrThrowIfCompleted();
+        if (connectionState.Value.IsConnected()) {
+            Disconnect();
+            using var cts = cancellationToken.LinkWith(StopToken);
+            await connectionState.WhenDisconnected(cts.Token).ConfigureAwait(false);
+        }
+        SetConnectionState(connection, null);
     }
 
     // Protected methods
 
-    protected override async Task<Channel<RpcMessage>> GetChannelOrReconnect(CancellationToken cancellationToken)
+    protected override async Task<RpcConnection> GetConnection(CancellationToken cancellationToken)
     {
-        // ReSharper disable once InconsistentlySynchronizedField
-        var connectionState = GetConnectionState();
         while (true) {
-            // ReSharper disable once MethodSupportsCancellation
-            var whenNextConnectionState = connectionState.WhenNext();
-            if (!whenNextConnectionState.IsCompleted) {
-                var (channel, error, _) = connectionState.Value;
-                if (error is OperationCanceledException) {
-                    Log.LogInformation("'{Name}': Connection cancelled, shutting down", Name);
-                    throw error;
+            var cts = cancellationToken.CreateLinkedTokenSource();
+            try {
+                try {
+                    await ConnectionState
+                        .WhenConnected(cts.Token)
+                        .WaitAsync(CloseTimeout, cancellationToken)
+                        .ConfigureAwait(false);
                 }
-                if (error is ImpossibleToConnectException or TimeoutException) {
-                    Log.LogWarning(error, "'{Name}': Can't (re)connect, shutting down", Name);
-                    throw error;
+                catch (TimeoutException e) {
+                    throw Errors.ConnectionUnrecoverable(e);
                 }
 
-                if (channel != null)
-                    return channel;
+                var connectionState = ConnectionState.LatestOrThrowIfCompleted().Value;
+                if (connectionState.Connection != null)
+                    return connectionState.Connection;
             }
-
-            connectionState = await whenNextConnectionState.WaitAsync(CloseTimeout, cancellationToken).ConfigureAwait(false);
+            finally {
+                cts.CancelAndDisposeSilently();
+            }
         }
     }
 }

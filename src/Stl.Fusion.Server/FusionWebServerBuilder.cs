@@ -1,14 +1,21 @@
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Stl.Fusion.Authentication;
 using Stl.Fusion.Server.Authentication;
-using Stl.Fusion.Server.Controllers;
+using Stl.Fusion.Server.Endpoints;
 using Stl.Fusion.Server.Internal;
+using Stl.Fusion.Server.Middlewares;
+using Stl.Fusion.Server.Rpc;
+using Stl.Rpc;
+using Stl.Rpc.Server;
 
 namespace Stl.Fusion.Server;
 
+[StructLayout(LayoutKind.Auto)]
 public readonly struct FusionWebServerBuilder
 {
+    private class AddedTag { }
+    private class ControllersAddedTag { }
+    private static readonly ServiceDescriptor AddedTagDescriptor = new(typeof(AddedTag), new AddedTag());
+    private static readonly ServiceDescriptor ControllersAddedTagDescriptor = new(typeof(ControllersAddedTag), new ControllersAddedTag());
+
     public FusionBuilder Fusion { get; }
     public IServiceCollection Services => Fusion.Services;
 
@@ -18,74 +25,59 @@ public readonly struct FusionWebServerBuilder
     {
         Fusion = fusion;
         var services = Services;
-        if (services.HasService<WebSocketServer>()) {
+        if (services.Contains(AddedTagDescriptor)) {
             configure?.Invoke(this);
             return;
         }
 
-        Fusion.AddPublisher();
-        services.TryAddSingleton<WebSocketServer.Options>();
-        services.TryAddSingleton<WebSocketServer>();
-        services.TryAddSingleton<SessionMiddleware.Options>();
-        services.TryAddScoped<SessionMiddleware>();
+        // We want above Contains call to run in O(1), so...
+        services.Insert(0, AddedTagDescriptor);
 
-        var mvcBuilder = services.AddMvcCore(options => {
-            var oldModelBinderProviders = options.ModelBinderProviders.ToList();
-            var newModelBinderProviders = new IModelBinderProvider[] {
-                new SimpleModelBinderProvider<Moment, MomentModelBinder>(),
-                new SimpleModelBinderProvider<Symbol, SymbolModelBinder>(),
-                new SimpleModelBinderProvider<Session, SessionModelBinder>(),
-                new SimpleModelBinderProvider<TypeRef, TypeRefModelBinder>(),
-                new PageRefModelBinderProvider(),
-                new RangeModelBinderProvider(),
-            };
-            options.ModelBinderProviders.Clear();
-            options.ModelBinderProviders.AddRange(newModelBinderProviders);
-            options.ModelBinderProviders.AddRange(oldModelBinderProviders);
-        });
+        // Add Rpc-related services
+        var rpc = fusion.Rpc;
+        rpc.AddWebSocketServer();
+        rpc.AddInboundMiddleware<DefaultSessionReplacerRpcMiddleware>();
+        services.AddSingleton(_ => new SessionBoundRpcConnectionFactory());
+        services.AddSingleton<RpcServerConnectionFactory>(
+            c => c.GetRequiredService<SessionBoundRpcConnectionFactory>().Invoke);
 
-        // Newtonsoft.Json serializer is optional starting from v1.4+
-        /*
-        mvcBuilder.AddNewtonsoftJson(options => {
-            MemberwiseCopier.Invoke(
-                NewtonsoftJsonSerializer.DefaultSettings,
-                options.SerializerSettings,
-                copier => copier with {
-                    Filter = member => member.Name != "Binder",
-                });
-        });
-        */
+        // Add other services
+        services.AddSingleton(_ => SessionMiddleware.Options.Default);
+        services.AddScoped(c => new SessionMiddleware(c.GetRequiredService<SessionMiddleware.Options>(), c));
+        services.AddSingleton(_ => ServerAuthHelper.Options.Default);
+        services.AddScoped(c => new ServerAuthHelper(c.GetRequiredService<ServerAuthHelper.Options>(), c));
+        services.AddSingleton(_ => new AuthSchemasCache());
+        services.AddSingleton(_ => AuthEndpoints.Options.Default);
+        services.AddSingleton(c => new AuthEndpoints(c.GetRequiredService<AuthEndpoints.Options>()));
+        services.AddSingleton(_ => new BlazorModeEndpoint());
 
         configure?.Invoke(this);
     }
 
-    public FusionWebServerBuilder ConfigureWebSocketServer(Func<IServiceProvider, WebSocketServer.Options> webSocketServerOptionsFactory)
-    {
-        Services.AddSingleton(webSocketServerOptionsFactory);
-        return this;
-    }
+    public FusionMvcWebServerBuilder AddMvc()
+        => new(this, null);
+
+    public FusionWebServerBuilder AddMvc(Action<FusionMvcWebServerBuilder> configure)
+        => new FusionMvcWebServerBuilder(this, configure).FusionWebServer;
 
     public FusionWebServerBuilder ConfigureSessionMiddleware(
-        Func<IServiceProvider, SessionMiddleware.Options> sessionMiddlewareOptionsFactory)
+        Func<IServiceProvider, SessionMiddleware.Options> optionsFactory)
     {
-        Services.AddSingleton(sessionMiddlewareOptionsFactory);
+        Services.AddSingleton(optionsFactory);
         return this;
     }
 
-    public FusionWebServerBuilder AddControllers(
-        Func<IServiceProvider, SignInController.Options>? signInControllerOptionsFactory = null)
+    public FusionWebServerBuilder ConfigureAuthEndpoint(
+        Func<IServiceProvider, AuthEndpoints.Options> optionsFactory)
     {
-        Services.TryAddSingleton(c => signInControllerOptionsFactory?.Invoke(c) ?? new());
-        Services.AddControllers()
-            .AddApplicationPart(typeof(AuthController).Assembly);
+        Services.AddSingleton(optionsFactory);
         return this;
     }
 
-    public FusionWebServerBuilder AddControllerFilter(Func<TypeInfo, bool> controllerFilter)
+    public FusionWebServerBuilder ConfigureServerAuthHelper(
+        Func<IServiceProvider, ServerAuthHelper.Options> optionsFactory)
     {
-        Services.AddControllers()
-            .ConfigureApplicationPartManager(m => m.FeatureProviders.Add(
-                new ControllerFilter(controllerFilter)));
+        Services.AddSingleton(optionsFactory);
         return this;
     }
 }

@@ -5,17 +5,16 @@ using Stl.Fusion.Operations.Reprocessing;
 
 namespace Stl.Fusion.EntityFramework.Operations;
 
-public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, ICommandHandler<ICommand>
+public class DbOperationScopeProvider<TDbContext>(IServiceProvider services) : DbServiceBase<TDbContext>(services),
+    ICommandHandler<ICommand>
     where TDbContext : DbContext
 {
     // ReSharper disable once StaticMemberInGenericType
     protected static MemberInfo ExecutionStrategyShouldRetryOnMethod { get; } = typeof(ExecutionStrategy)
         .GetMethod("ShouldRetryOn", BindingFlags.Instance | BindingFlags.NonPublic)!;
 
-    protected IOperationCompletionNotifier OperationCompletionNotifier { get; }
-
-    public DbOperationScopeProvider(IServiceProvider services) : base(services) 
-        => OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
+    protected IOperationCompletionNotifier OperationCompletionNotifier { get; } =
+        services.GetRequiredService<IOperationCompletionNotifier>();
 
     [CommandFilter(Priority = FusionEntityFrameworkCommandHandlerPriority.DbOperationScopeProvider)]
     public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
@@ -46,6 +45,8 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
                 await scope.Commit(cancellationToken).ConfigureAwait(false);
         }
         catch (Exception error) when (error is not OperationCanceledException) {
+            if (error is RetryLimitExceededException { InnerException: { } innerError })
+                throw innerError; // Strip RetryLimitExceededException, coz it masks the real one after 0 retries
             try {
                 var operationReprocessor = context.Items.Get<IOperationReprocessor>();
                 if (operationReprocessor == null)
@@ -56,16 +57,15 @@ public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, I
                 if (transientError == null)
                     throw;
 
-                // It's a transient failure - let's tag it so that IOperationReprocessor retries on it 
+                // It's a transient failure - let's tag it so that IOperationReprocessor retries on it
                 operationReprocessor.AddTransientFailure(transientError);
 
                 // But if retry still won't happen (too many retries?) - let's log error here
                 if (!operationReprocessor.WillRetry(allErrors))
                     Log.LogError(error, "Operation failed: {Command}", command);
-                else 
-                    Log.LogInformation("Transient failure on {Command}: {TransientError}", 
+                else
+                    Log.LogInformation("Transient failure on {Command}: {TransientError}",
                         command, transientError.ToExceptionInfo());
-
                 throw;
             }
             finally {

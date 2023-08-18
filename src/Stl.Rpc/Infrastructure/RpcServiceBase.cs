@@ -1,14 +1,12 @@
 namespace Stl.Rpc.Infrastructure;
 
-public abstract class RpcServiceBase
+public abstract class RpcServiceBase(IServiceProvider services) : IHasServices
 {
     private RpcHub? _hub;
     private ILogger? _log;
 
-    protected IServiceProvider Services { get; }
-    protected RpcHub Hub => _hub ??= Services.RpcHub();
     protected ILogger Log => _log ??= Services.LogFor(GetType());
 
-    protected RpcServiceBase(IServiceProvider services)
-        => Services = services;
+    public IServiceProvider Services { get; } = services;
+    public RpcHub Hub => _hub ??= Services.RpcHub();
 }

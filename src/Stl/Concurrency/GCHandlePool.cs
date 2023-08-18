@@ -24,12 +24,12 @@ public sealed class GCHandlePool : IDisposable
 
     public GCHandlePool() : this(Options.Default) { }
     public GCHandlePool(GCHandleType handleType) : this(Options.Default with { HandleType = handleType }) { }
-    public GCHandlePool(Options options)
+    public GCHandlePool(Options settings)
     {
         _queue = new ConcurrentQueue<GCHandle>();
-        _opCounter = options.OperationCounter;
-        HandleType = options.HandleType;
-        Capacity = options.Capacity;
+        _opCounter = settings.OperationCounter;
+        HandleType = settings.HandleType;
+        Capacity = settings.Capacity;
     }
 
 #pragma warning disable MA0055

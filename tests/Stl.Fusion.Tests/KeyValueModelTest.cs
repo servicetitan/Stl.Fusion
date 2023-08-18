@@ -5,7 +5,7 @@ namespace Stl.Fusion.Tests;
 
 public class KeyValueModelTest : FusionTestBase
 {
-    public KeyValueModelTest(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out, options) { }
+    public KeyValueModelTest(ITestOutputHelper @out) : base(@out) { }
 
     [Fact]
     public async Task BasicTest()
@@ -20,7 +20,7 @@ public class KeyValueModelTest : FusionTestBase
         (await kv.Get("")).Should().Be("1");
 
         using var kvm = ClientServices.GetRequiredService<IComputedState<KeyValueModel<string>>>();
-        var kvc = ClientServices.GetRequiredService<IKeyValueServiceClient<string>>();
+        var kvc = ClientServices.GetRequiredService<IKeyValueService<string>>();
 
         // First read
         var c = kvm.Computed;
@@ -62,22 +62,22 @@ public class KeyValueModelTest : FusionTestBase
         var commander = WebServices.Commander();
         (await kv.Get("")).Should().BeNull();
 
-        await commander.Call(new IKeyValueService<string>.SetCommand("", "1"));
+        await commander.Call(new KeyValueService_Set<string>("", "1"));
         (await kv.Get("")).Should().Be("1");
 
-        await commander.Call(new IKeyValueService<string>.SetCommand("", "2"));
+        await commander.Call(new KeyValueService_Set<string>("", "2"));
         (await kv.Get("")).Should().Be("2");
 
         // Client commands
         var clientCommander = ClientServices.Commander();
-        var kvc = ClientServices.GetRequiredService<IKeyValueServiceClient<string>>();
+        var kvc = ClientServices.GetRequiredService<IKeyValueService<string>>();
         (await kv.Get("")).Should().Be("2");
 
-        await clientCommander.Call(new IKeyValueService<string>.SetCommand("", "1"));
+        await clientCommander.Call(new KeyValueService_Set<string>("", "1"));
         await Task.Delay(100); // Remote invalidation takes some time
         (await kvc.Get("")).Should().Be("1");
 
-        await clientCommander.Call(new IKeyValueService<string>.SetCommand("", "2"));
+        await clientCommander.Call(new KeyValueService_Set<string>("", "2"));
 #if NETCOREAPP
         await Task.Delay(100); // Remote invalidation takes some time
 #else
@@ -99,7 +99,7 @@ public class KeyValueModelTest : FusionTestBase
             ae.Message.Should().StartWith("Error!");
         }
 
-        var kvc = ClientServices.GetRequiredService<IKeyValueServiceClient<string>>();
+        var kvc = ClientServices.GetRequiredService<IKeyValueService<string>>();
         try {
             await kvc.Get("error");
         }
@@ -112,7 +112,7 @@ public class KeyValueModelTest : FusionTestBase
     public async Task ClientExceptionTest()
     {
         await using var _ = await WebHost.Serve();
-        var kv = ClientServices.GetRequiredService<IKeyValueServiceClient<string>>();
+        var kv = ClientServices.GetRequiredService<IKeyValueService<string>>();
 
         try {
             await kv.Get("error");
@@ -121,7 +121,7 @@ public class KeyValueModelTest : FusionTestBase
             ae.Message.Should().StartWith("Error!");
         }
 
-        var kvc = ClientServices.GetRequiredService<IKeyValueServiceClient<string>>();
+        var kvc = ClientServices.GetRequiredService<IKeyValueService<string>>();
         try {
             await kvc.Get("error");
         }

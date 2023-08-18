@@ -4,18 +4,17 @@ using Stl.Internal;
 
 namespace Stl.Rpc.Infrastructure;
 
-public abstract class RpcInterceptorBase : InterceptorBase
+public abstract class RpcInterceptorBase(
+        RpcInterceptorBase.Options settings,
+        IServiceProvider services
+        ) : InterceptorBase(settings, services)
 {
     public new record Options : InterceptorBase.Options;
 
     private RpcHub? _rpcHub;
 
-    public RpcHub RpcHub => _rpcHub ??= Services.RpcHub();
+    public RpcHub Hub => _rpcHub ??= Services.RpcHub();
     public RpcServiceDef ServiceDef { get; private set; } = null!;
-
-    protected RpcInterceptorBase(Options options, IServiceProvider services)
-        : base(options, services)
-    { }
 
     public void Setup(RpcServiceDef serviceDef)
     {

@@ -1,27 +1,21 @@
-using Stl.CommandR.Interception;
+using Stl.Fusion.Internal;
 using Stl.Interception;
 using Stl.Interception.Interceptors;
 
 namespace Stl.Fusion.Interception;
 
-public abstract class ComputeServiceInterceptorBase : InterceptorBase
+public abstract class ComputeServiceInterceptorBase(
+        ComputeServiceInterceptorBase.Options settings,
+        IServiceProvider services
+        ) : InterceptorBase(settings, services)
 {
     public new record Options : InterceptorBase.Options;
 
-    protected CommandServiceInterceptor CommandServiceInterceptor;
-
-    public ComputedOptionsProvider ComputedOptionsProvider { get; }
-
-    protected ComputeServiceInterceptorBase(Options options, IServiceProvider services)
-        : base(options, services)
-    {
-        ComputedOptionsProvider = services.GetRequiredService<ComputedOptionsProvider>();
-        CommandServiceInterceptor = services.GetRequiredService<CommandServiceInterceptor>();
-    }
+    public readonly FusionInternalHub Hub = services.GetRequiredService<FusionInternalHub>();
 
     public override void Intercept(Invocation invocation)
     {
-        var handler = GetHandler(invocation) ?? CommandServiceInterceptor.GetHandler(invocation);
+        var handler = GetHandler(invocation) ?? Hub.CommandServiceInterceptor.GetHandler(invocation);
         if (handler == null)
             invocation.Intercepted();
         else
@@ -30,7 +24,7 @@ public abstract class ComputeServiceInterceptorBase : InterceptorBase
 
     public override TResult Intercept<TResult>(Invocation invocation)
     {
-        var handler = GetHandler(invocation) ?? CommandServiceInterceptor.GetHandler(invocation);
+        var handler = GetHandler(invocation) ?? Hub.CommandServiceInterceptor.GetHandler(invocation);
         return handler == null
             ? invocation.Intercepted<TResult>()
             : (TResult)handler.Invoke(invocation)!;
@@ -66,11 +60,16 @@ public abstract class ComputeServiceInterceptorBase : InterceptorBase
     protected override MethodDef? CreateMethodDef(MethodInfo method, Invocation initialInvocation)
     {
         var type = initialInvocation.Proxy.GetType().NonProxyType();
-        var options = ComputedOptionsProvider.GetComputedOptions(type, method);
+        var options = Hub.ComputedOptionsProvider.GetComputedOptions(type, method);
         if (options == null)
             return null;
 
         var methodDef = new ComputeMethodDef(type, method, this);
         return methodDef.IsValid ? methodDef : null;
+    }
+
+    protected override void ValidateTypeInternal(Type type)
+    {
+        Hub.CommandServiceInterceptor.ValidateType(type);
     }
 }

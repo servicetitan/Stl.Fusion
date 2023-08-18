@@ -9,11 +9,27 @@ public static class ByteSerializerExt
     public static object? Read(this IByteSerializer serializer, ReadOnlyMemory<byte> data, Type type)
         => serializer.Read(data, type, out _);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static object? Read(this IByteSerializer serializer, ref ReadOnlyMemory<byte> data, Type type)
+    {
+        var result = serializer.Read(data, type, out var readLength);
+        data = data[readLength..];
+        return result;
+    }
+
     // Read w/o Type & readLength arguments
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T Read<T>(this IByteSerializer serializer, ReadOnlyMemory<byte> data)
         => (T)serializer.Read(data, typeof(T), out _)!;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T Read<T>(this IByteSerializer serializer, ref ReadOnlyMemory<byte> data)
+    {
+        var result = (T)serializer.Read(data, typeof(T), out var readLength)!;
+        data = data[readLength..];
+        return result;
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T Read<T>(this IByteSerializer<T> serializer, ReadOnlyMemory<byte> data)
@@ -40,7 +56,7 @@ public static class ByteSerializerExt
     public static ArrayPoolBufferWriter<byte> Write(this IByteSerializer serializer, object? value, Type type)
     {
         var bufferWriter = new ArrayPoolBufferWriter<byte>();
-        serializer.Write(bufferWriter, value);
+        serializer.Write(bufferWriter, value, type);
         return bufferWriter;
     }
 

@@ -88,7 +88,7 @@ public sealed class RedisStreamer<T>
         => Write(source,
             self => {
                 newStreamAnnouncer(self);
-                return ValueTaskExt.CompletedTask;
+                return default;
             },
             cancellationToken);
 

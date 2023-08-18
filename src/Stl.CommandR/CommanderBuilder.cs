@@ -2,7 +2,8 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.CommandR.Diagnostics;
 using Stl.CommandR.Interception;
 using Stl.CommandR.Internal;
-using Stl.Interception;
+using Stl.CommandR.Rpc;
+using Stl.Rpc;
 
 namespace Stl.CommandR;
 
@@ -49,6 +50,10 @@ public readonly struct CommanderBuilder
         services.AddSingleton(_ => new LocalCommandRunner());
         AddHandlers<LocalCommandRunner>();
 
+        // Rpc
+        var rpc = services.AddRpc();
+        rpc.AddOutboundMiddleware<RpcOutboundCommandCallMiddleware>();
+
         configure?.Invoke(this);
     }
 
@@ -63,7 +68,7 @@ public readonly struct CommanderBuilder
     public CommanderBuilder AddHandlers(Type serviceType, Type implementationType, double? priorityOverride = null)
     {
         if (!serviceType.IsAssignableFrom(implementationType))
-            throw new ArgumentOutOfRangeException(nameof(implementationType));
+            throw Stl.Internal.Errors.MustBeAssignableTo(implementationType, serviceType, nameof(implementationType));
 
         var interfaceMethods = new HashSet<MethodInfo>();
 
@@ -88,20 +93,14 @@ public readonly struct CommanderBuilder
         }
 
         // Methods
-        var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic
-            | BindingFlags.Instance | BindingFlags.Static
-            | BindingFlags.FlattenHierarchy;
-        var methods = implementationType.GetMethods(bindingFlags);
-        if (implementationType.IsInterface) {
-            var tOtherInterfaces = tInterfaces
-                .Where(t => !typeof(ICommandHandler).IsAssignableFrom(t))
-                .ToList();
-            var lMethods = new List<MethodInfo>(methods);
-            foreach (var tOtherInterface in tOtherInterfaces)
-                lMethods.AddRange(tOtherInterface.GetMethods(bindingFlags));
-            methods = lMethods.ToArray();
-        }
+        var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+        var methods = (implementationType.IsInterface
+            ? implementationType.GetAllInterfaceMethods(bindingFlags, t => !typeof(ICommandHandler).IsAssignableFrom(t))
+            : implementationType.GetMethods(bindingFlags)
+            ).ToList();
         foreach (var method in methods) {
+            if (method.DeclaringType == typeof(object))
+                continue;
             if (interfaceMethods.Contains(method))
                 continue;
             if (!method.ReturnType.IsTaskOrValueTask())
@@ -122,46 +121,36 @@ public readonly struct CommanderBuilder
         return this;
     }
 
-    // AddCommandService
+    // AddService
 
-    public CommanderBuilder AddCommandService<TService>(
+    public CommanderBuilder AddService<TService>(
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         double? priorityOverride = null)
         where TService : class, ICommandService
-        => AddCommandService(typeof(TService), lifetime, priorityOverride);
-    public CommanderBuilder AddCommandService<TService, TImplementation>(
+        => AddService(typeof(TService), lifetime, priorityOverride);
+    public CommanderBuilder AddService<TService, TImplementation>(
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         double? priorityOverride = null)
         where TService : class
         where TImplementation : class, TService, ICommandService
-        => AddCommandService(typeof(TService), typeof(TImplementation), lifetime, priorityOverride);
+        => AddService(typeof(TService), typeof(TImplementation), lifetime, priorityOverride);
 
-    public CommanderBuilder AddCommandService(
+    public CommanderBuilder AddService(
         Type serviceType,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         double? priorityOverride = null)
-        => AddCommandService(serviceType, serviceType, lifetime, priorityOverride);
-    public CommanderBuilder AddCommandService(
+        => AddService(serviceType, serviceType, lifetime, priorityOverride);
+    public CommanderBuilder AddService(
         Type serviceType, Type implementationType,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         double? priorityOverride = null)
     {
         if (!serviceType.IsAssignableFrom(implementationType))
-            throw new ArgumentOutOfRangeException(nameof(implementationType));
+            throw Stl.Internal.Errors.MustBeAssignableTo(implementationType, serviceType, nameof(implementationType));
         if (!typeof(ICommandService).IsAssignableFrom(implementationType))
             throw Stl.Internal.Errors.MustImplement<ICommandService>(implementationType, nameof(implementationType));
 
-        object Factory(IServiceProvider c)
-        {
-            // We should try to validate it here because if the type doesn't
-            // have any virtual methods (which might be a mistake), no calls
-            // will be intercepted, so no error will be thrown later.
-            var interceptor = c.GetRequiredService<CommandServiceInterceptor>();
-            interceptor.ValidateType(implementationType);
-            return c.ActivateProxy(implementationType, interceptor);
-        }
-
-        var descriptor = new ServiceDescriptor(serviceType, Factory, lifetime);
+        var descriptor = new ServiceDescriptor(serviceType, c => CommanderProxies.NewServiceProxy(c, implementationType), lifetime);
         Services.TryAdd(descriptor);
         AddHandlers(serviceType, implementationType, priorityOverride);
         return this;

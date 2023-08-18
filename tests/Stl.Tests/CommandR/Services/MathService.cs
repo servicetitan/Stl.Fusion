@@ -1,20 +1,24 @@
+using Stl.Interception;
+using ServiceProviderExt = Stl.CommandR.ServiceProviderExt;
+
 namespace Stl.Tests.CommandR.Services;
 
-[RegisterCommandService]
-public class MathService : ServiceBase, ICommandService
+public interface IMathService : ICommandService, IRequiresFullProxy
+{
+    [CommandHandler(Priority = 1)]
+    Task<double> RecSum(RecSumCommand command, CancellationToken cancellationToken = default);
+}
+
+public class MathService(IServiceProvider services) : ServiceBase(services), IMathService
 {
     private readonly object _lock = new();
 
-    private ICommander Commander { get; } 
+    private ICommander Commander { get; } = services.Commander();
 
     public long Value { get; set; }
 
-    public MathService(IServiceProvider services)
-        : base(services)
-        => Commander = services.Commander();
-
     [CommandHandler(Priority = 2)]
-    protected virtual Task<double> Divide(DivCommand command, CancellationToken cancellationToken = default)
+    protected virtual Task<double> Divide(DivCommand command, CancellationToken cancellationToken)
     {
         var context = CommandContext.GetCurrent<double>();
         var handler = context.ExecutionState.Handlers[^1];
@@ -29,7 +33,6 @@ public class MathService : ServiceBase, ICommandService
         return Task.FromResult(result);
     }
 
-    [CommandHandler(Priority = 1)]
     public virtual async Task<double> RecSum(RecSumCommand command, CancellationToken cancellationToken = default)
     {
         var context = CommandContext.GetCurrent<double>();
@@ -52,7 +55,6 @@ public class MathService : ServiceBase, ICommandService
         var tailCommand = new RecSumCommand() {
             Arguments = command.Arguments[1..],
         };
-
 
         var tailSum = await Commander.Call(tailCommand, cancellationToken).ConfigureAwait(false);
         return command.Arguments[0] + tailSum;

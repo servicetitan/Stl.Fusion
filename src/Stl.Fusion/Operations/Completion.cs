@@ -1,4 +1,3 @@
-using Stl.Fusion.Authentication.Commands;
 using Stl.Fusion.Operations.Internal;
 
 namespace Stl.Fusion.Operations;
@@ -21,7 +20,7 @@ public record Completion<TCommand>(TCommand Command, IOperation Operation)
 #endif
 
     public Completion(IOperation operation)
-        : this((TCommand?) operation.Command ?? throw Errors.OperationHasNoCommand(nameof(operation)), operation)
+        : this((TCommand)(operation.Command ?? throw Errors.OperationHasNoCommand(nameof(operation))), operation)
     { }
 }
 
@@ -30,14 +29,18 @@ public static class Completion
     // This is just to ensure the constructor accepting ICommand is "used",
     // because it is really used inside New, but via reflection.
     private static readonly Completion<ICommand> DummyCompletion =
-        new(new TransientOperation() { Command = new SignOutCommand() });
+        new(new TransientOperation() { Command = new DummyCommand() });
 
     public static ICompletion New(IOperation operation)
     {
-        var command = (ICommand?) operation.Command
+        var command = (ICommand?)operation.Command
             ?? throw Errors.OperationHasNoCommand(nameof(operation));
         var tCompletion = typeof(Completion<>).MakeGenericType(command.GetType());
-        var completion = (ICompletion) tCompletion.CreateInstance(operation)!;
+        var completion = (ICompletion)tCompletion.CreateInstance(operation)!;
         return completion;
     }
+
+    // Nested types
+
+    private sealed record DummyCommand : ICommand;
 }

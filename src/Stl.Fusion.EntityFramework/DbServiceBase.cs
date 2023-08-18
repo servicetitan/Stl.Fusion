@@ -5,13 +5,13 @@ using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework;
 
-public abstract class DbServiceBase<TDbContext>
+public abstract class DbServiceBase<TDbContext>(IServiceProvider services)
     where TDbContext : DbContext
 {
     private ILogger? _log;
     private DbHub<TDbContext>? _dbHub;
 
-    protected IServiceProvider Services { get; init; }
+    protected IServiceProvider Services { get; init; } = services;
     protected DbHub<TDbContext> DbHub => _dbHub ??= Services.DbHub<TDbContext>();
     protected ITenantRegistry<TDbContext> TenantRegistry => DbHub.TenantRegistry;
     protected VersionGenerator<long> VersionGenerator => DbHub.VersionGenerator;
@@ -22,9 +22,6 @@ public abstract class DbServiceBase<TDbContext>
     protected MomentClockSet Clocks => DbHub.Clocks;
     protected ICommander Commander => DbHub.Commander;
     protected ILogger Log => _log ??= Services.LogFor(GetType());
-
-    protected DbServiceBase(IServiceProvider services)
-        => Services = services;
 
     protected TDbContext CreateDbContext(bool readWrite = false)
         => DbHub.CreateDbContext(readWrite);

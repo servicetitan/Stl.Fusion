@@ -5,7 +5,7 @@ namespace Stl.Fusion.Tests;
 
 public class ScreenshotServiceClientTest : FusionTestBase
 {
-    public ScreenshotServiceClientTest(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out, options) { }
+    public ScreenshotServiceClientTest(ITestOutputHelper @out) : base(@out) { }
 
     [Fact]
     public async Task BasicTest()
@@ -18,16 +18,25 @@ public class ScreenshotServiceClientTest : FusionTestBase
 
         await using var serving = await WebHost.Serve();
         await Delay(0.25);
-        var service = ClientServices.GetRequiredService<IScreenshotServiceClient>();
+        var service = (ScreenshotService)Services.GetRequiredService<IScreenshotService>();
+        var clientService = ClientServices.GetRequiredService<IScreenshotService>();
 
-        ScreenshotController.CallCount = 0;
+        var initialScreenshotCount = service.ScreenshotCount;
         for (var i = 0; i < 50; i++) {
-            var c = await Computed.Capture(() => service.GetScreenshot(100));
+            var startedAt = SystemClock.Now;
+            var c = await Computed.Capture(() => clientService.GetScreenshot(100));
             var screenshot = c.Value;
             screenshot.Should().NotBeNull();
-            (SystemClock.Now - screenshot.CapturedAt).Should().BeLessThan(epsilon);
-            await Task.Delay(TimeSpan.FromSeconds(0.02));
+            var endedAt = SystemClock.Now;
+
+            var callDuration = endedAt - startedAt;
+            var delay = endedAt - screenshot.CapturedAt;
+            Log?.LogInformation("Call duration: {Duration}, delay: {Delay}", callDuration, delay);
+
+            delay.Should().BeLessThan(epsilon);
+            await Task.Delay(TimeSpan.FromSeconds(0.05));
         }
-        ScreenshotController.CallCount.Should().BeLessThan(15);
+        var screenshotCount = service.ScreenshotCount - initialScreenshotCount;
+        screenshotCount.Should().BeLessThan(15);
     }
 }

@@ -5,23 +5,6 @@ namespace Stl.Fusion.Tests.Services;
 
 public interface IKeyValueService<TValue> : IComputeService
 {
-    [DataContract]
-    public record SetCommand(
-        [property: DataMember] string Key,
-        [property: DataMember] TValue Value
-        ) : ICommand<Unit>
-    {
-        public SetCommand() : this(null!, default!) { }
-    }
-
-    [DataContract]
-    public record RemoveCommand(
-        [property: DataMember] string Key
-        ) : ICommand<Unit>
-    {
-        public RemoveCommand() : this(default(string)!) { }
-    }
-
     [ComputeMethod]
     Task<Option<TValue>> TryGet(string key, CancellationToken cancellationToken = default);
     [ComputeMethod]
@@ -29,10 +12,23 @@ public interface IKeyValueService<TValue> : IComputeService
     Task Set(string key, TValue value, CancellationToken cancellationToken = default);
     Task Remove(string key, CancellationToken cancellationToken = default);
     [CommandHandler]
-    Task SetCmd(SetCommand cmd, CancellationToken cancellationToken = default);
+    Task SetCmd(KeyValueService_Set<TValue> cmd, CancellationToken cancellationToken = default);
     [CommandHandler]
-    Task RemoveCmd(RemoveCommand cmd, CancellationToken cancellationToken = default);
+    Task RemoveCmd(KeyValueService_Remove cmd, CancellationToken cancellationToken = default);
 }
+
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+// ReSharper disable once InconsistentNaming
+public partial record KeyValueService_Remove(
+    [property: DataMember, MemoryPackOrder(0)] string Key
+) : ICommand<Unit>;
+
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+// ReSharper disable once InconsistentNaming
+public partial record KeyValueService_Set<TValue>(
+    [property: DataMember, MemoryPackOrder(0)] string Key,
+    [property: DataMember, MemoryPackOrder(1)] TValue Value
+) : ICommand<Unit>;
 
 public class KeyValueService<TValue> : IKeyValueService<TValue>
 {
@@ -55,16 +51,16 @@ public class KeyValueService<TValue> : IKeyValueService<TValue>
     {
         if (key.EndsWith("error"))
             throw new ArgumentException("Error!", nameof(key));
-        return _values.GetValueOrDefault(key)!;
+        return _values.TryGetValue(key, out var value) ? value : default!;
     }
 
     public Task Set(string key, TValue value, CancellationToken cancellationToken = default)
-        => Commander.Call(new IKeyValueService<TValue>.SetCommand(key, value), cancellationToken);
+        => Commander.Call(new KeyValueService_Set<TValue>(key, value), cancellationToken);
 
     public Task Remove(string key, CancellationToken cancellationToken = default)
-        => Commander.Call(new IKeyValueService<TValue>.RemoveCommand(key), cancellationToken);
+        => Commander.Call(new KeyValueService_Remove(key), cancellationToken);
 
-    public Task SetCmd(IKeyValueService<TValue>.SetCommand cmd, CancellationToken cancellationToken = default)
+    public virtual Task SetCmd(KeyValueService_Set<TValue> cmd, CancellationToken cancellationToken = default)
     {
         _values[cmd.Key] = cmd.Value;
 
@@ -75,7 +71,7 @@ public class KeyValueService<TValue> : IKeyValueService<TValue>
         return Task.CompletedTask;
     }
 
-    public Task RemoveCmd(IKeyValueService<TValue>.RemoveCommand cmd, CancellationToken cancellationToken = default)
+    public virtual Task RemoveCmd(KeyValueService_Remove cmd, CancellationToken cancellationToken = default)
     {
         _values.TryRemove(cmd.Key, out _);
 
@@ -85,10 +81,4 @@ public class KeyValueService<TValue> : IKeyValueService<TValue>
         }
         return Task.CompletedTask;
     }
-}
-
-[RegisterComputeService(typeof(IKeyValueService<string>), Scope = ServiceScope.Services)]
-public class StringKeyValueService : KeyValueService<string>
-{
-    public StringKeyValueService(IServiceProvider services) : base(services) { }
 }

@@ -5,7 +5,7 @@ namespace Stl.Fusion.EntityFramework.Npgsql.Internal;
 
 public class NpgsqlDbHintFormatter : DbHintFormatter
 {
-    public NpgsqlDbHintFormatter() 
+    public NpgsqlDbHintFormatter()
         => DbHintToSql = new Dictionary<DbHint, string>() {
             {DbLockingHint.KeyShare, "KEY SHARE"},
             {DbLockingHint.Share, "SHARE"},

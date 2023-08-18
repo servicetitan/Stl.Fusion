@@ -1,4 +1,4 @@
-using System.Security;
+using Stl.IO;
 
 namespace Stl.Internal;
 
@@ -7,6 +7,14 @@ public static class Errors
     public static Exception MustBeClass(Type type, string? argumentName = null)
     {
         var message = $"'{type}' must be reference type (class).";
+        return argumentName.IsNullOrEmpty()
+            ? new InvalidOperationException(message)
+            : new ArgumentOutOfRangeException(argumentName, message);
+    }
+
+    public static Exception MustBeInterface(Type type, string? argumentName = null)
+    {
+        var message = $"'{type}' must be interface type.";
         return argumentName.IsNullOrEmpty()
             ? new InvalidOperationException(message)
             : new ArgumentOutOfRangeException(argumentName, message);
@@ -89,6 +97,8 @@ public static class Errors
         => new InvalidOperationException(propertyName == null
             ? "Not initialized."
             : $"Property {propertyName} is not initialized.");
+    public static Exception NotSupported(string message)
+        => new NotSupportedException(message);
 
     public static Exception InternalError(string message)
         => new SystemException(message);

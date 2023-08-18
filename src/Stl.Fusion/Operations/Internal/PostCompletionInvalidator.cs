@@ -2,7 +2,10 @@ using System.Diagnostics;
 
 namespace Stl.Fusion.Operations.Internal;
 
-public class PostCompletionInvalidator : ICommandHandler<ICompletion>
+public class PostCompletionInvalidator(
+        PostCompletionInvalidator.Options settings,
+        IServiceProvider services
+        ) : ICommandHandler<ICompletion>
 {
     public record Options
     {
@@ -13,18 +16,14 @@ public class PostCompletionInvalidator : ICommandHandler<ICompletion>
     private InvalidationInfoProvider? _invalidationInfoProvider;
     private ILogger? _log;
 
-    protected IServiceProvider Services { get; }
-    protected Options Settings { get; }
-    protected ActivitySource ActivitySource => _activitySource ??= GetType().GetActivitySource();
-    protected InvalidationInfoProvider InvalidationInfoProvider =>
-        _invalidationInfoProvider ??= Services.GetRequiredService<InvalidationInfoProvider>();
-    protected ILogger Log => _log ??= Services.LogFor(GetType());
-
-    public PostCompletionInvalidator(Options settings, IServiceProvider services)
-    {
-        Settings = settings;
-        Services = services;
-    }
+    protected IServiceProvider Services { get; } = services;
+    protected Options Settings { get; } = settings;
+    protected ActivitySource ActivitySource
+        => _activitySource ??= GetType().GetActivitySource();
+    protected InvalidationInfoProvider InvalidationInfoProvider
+        => _invalidationInfoProvider ??= Services.GetRequiredService<InvalidationInfoProvider>();
+    protected ILogger Log
+        => _log ??= Services.LogFor(GetType());
 
     [CommandFilter(Priority = FusionOperationsCommandHandlerPriority.PostCompletionInvalidator)]
     public async Task OnCommand(ICompletion command, CommandContext context, CancellationToken cancellationToken)
@@ -49,9 +48,9 @@ public class PostCompletionInvalidator : ICommandHandler<ICompletion>
             var useOriginalCommandHandler = finalHandler == null
                 || finalHandler.GetHandlerService(command, context) is CompletionTerminator;
             if (useOriginalCommandHandler) {
-                if (InvalidationInfoProvider.IsReplicaServiceCommand(originalCommand)) {
+                if (InvalidationInfoProvider.IsClientComputeServiceCommand(originalCommand)) {
                     log?.Log(Settings.LogLevel,
-                        "No invalidation for replica service command '{CommandType}'",
+                        "No invalidation for client compute service command '{CommandType}'",
                         originalCommand.GetType());
                     return;
                 }

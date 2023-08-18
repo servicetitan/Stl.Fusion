@@ -1,9 +1,12 @@
-using Microsoft.Extensions.DependencyInjection.Extensions;
+using Stl.Rpc.Server;
 
 namespace Stl.Fusion.Server;
 
 public readonly struct FusionWebServerBuilder
 {
+    private class AddedTag { }
+    private static readonly ServiceDescriptor AddedTagDescriptor = new(typeof(AddedTag), new AddedTag());
+
     public FusionBuilder Fusion { get; }
     public IServiceCollection Services => Fusion.Services;
 
@@ -13,24 +16,16 @@ public readonly struct FusionWebServerBuilder
     {
         Fusion = fusion;
         var services = Services;
-        if (services.HasService<WebSocketServer>()) {
+        if (services.Contains(AddedTagDescriptor)) {
             configure?.Invoke(this);
             return;
         }
 
-        Fusion.AddPublisher();
-        services.TryAddSingleton<WebSocketServer.Options>();
-        services.TryAddSingleton<WebSocketServer>();
-
-        // TODO: configure model binder providers
+        // We want above Contains call to run in O(1), so...
+        services.Insert(0, AddedTagDescriptor);
+        fusion.Rpc.AddWebSocketServer();
 
         configure?.Invoke(this);
-    }
-
-    public FusionWebServerBuilder ConfigureWebSocketServer(Func<IServiceProvider, WebSocketServer.Options> webSocketServerOptionsFactory)
-    {
-        Services.AddSingleton(webSocketServerOptionsFactory);
-        return this;
     }
 
     // TODO: add AddControllers and AddControllerFilter

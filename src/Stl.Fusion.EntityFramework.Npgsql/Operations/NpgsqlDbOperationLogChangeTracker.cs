@@ -5,21 +5,21 @@ using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework.Npgsql.Operations;
 
-public class NpgsqlDbOperationLogChangeTracker<TDbContext> 
+public class NpgsqlDbOperationLogChangeTracker<TDbContext>
     : DbOperationCompletionTrackerBase<TDbContext, NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>>
     where TDbContext : DbContext
 {
     public NpgsqlDbOperationLogChangeTracker(
-        NpgsqlDbOperationLogChangeTrackingOptions<TDbContext> options, 
-        IServiceProvider services) 
+        NpgsqlDbOperationLogChangeTrackingOptions<TDbContext> options,
+        IServiceProvider services)
         : base(options, services) { }
 
-    protected override DbOperationCompletionTrackerBase.TenantWatcher CreateTenantWatcher(Symbol tenantId) 
+    protected override DbOperationCompletionTrackerBase.TenantWatcher CreateTenantWatcher(Symbol tenantId)
         => new TenantWatcher(this, tenantId);
 
     protected new class TenantWatcher : DbOperationCompletionTrackerBase.TenantWatcher
     {
-        public TenantWatcher(NpgsqlDbOperationLogChangeTracker<TDbContext> owner, Symbol tenantId) 
+        public TenantWatcher(NpgsqlDbOperationLogChangeTracker<TDbContext> owner, Symbol tenantId)
             : base(owner.TenantRegistry.Get(tenantId))
         {
             var dbHub = owner.Services.DbHub<TDbContext>();

@@ -1,9 +1,9 @@
 namespace Stl.Fusion.Tests.Services;
 
-[DataContract]
-public record SetValueCommand : ICommand<Unit>
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public partial record SetValueCommand : ICommand<Unit>
 {
-    [DataMember]
+    [DataMember, MemoryPackOrder(0)]
     public string Value { get; init; } = "";
 }
 
@@ -25,7 +25,6 @@ public interface ISimplestProvider
     Task SetValue(SetValueCommand command, CancellationToken cancellationToken = default);
 }
 
-[RegisterComputeService(typeof(ISimplestProvider), Lifetime = ServiceLifetime.Scoped, Scope = ServiceScope.Services)]
 public class SimplestProvider : ISimplestProvider, IHasId<Type>, IComputeService
 {
     private static volatile string _value = "";

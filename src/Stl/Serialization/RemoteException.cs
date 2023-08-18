@@ -1,5 +1,7 @@
 namespace Stl.Serialization;
 
+#pragma warning disable SYSLIB0051
+
 [Serializable]
 public class RemoteException : Exception, ITransientException
 {

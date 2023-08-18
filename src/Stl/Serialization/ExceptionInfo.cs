@@ -2,8 +2,8 @@ using Stl.Serialization.Internal;
 
 namespace Stl.Serialization;
 
-[DataContract]
-public readonly struct ExceptionInfo : IEquatable<ExceptionInfo>
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public readonly partial struct ExceptionInfo : IEquatable<ExceptionInfo>
 {
     private static readonly Type[] ExceptionCtorArgumentTypes1 = { typeof(string), typeof(Exception) };
     private static readonly Type[] ExceptionCtorArgumentTypes2 = { typeof(string) };
@@ -13,18 +13,18 @@ public readonly struct ExceptionInfo : IEquatable<ExceptionInfo>
 
     private readonly string _message;
 
-    [DataMember(Order = 0)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     public TypeRef TypeRef { get; }
-    [DataMember(Order = 1)]
+    [DataMember(Order = 1), MemoryPackOrder(1)]
     public string Message => _message ?? "";
-    [DataMember(Order = 2)]
+    [DataMember(Order = 2), MemoryPackOrder(2)]
     public TypeRef WrappedTypeRef { get; }
-    [IgnoreDataMember]
+    [IgnoreDataMember, MemoryPackIgnore]
     public bool IsNone => TypeRef.AssemblyQualifiedName.IsEmpty;
-    [IgnoreDataMember]
+    [IgnoreDataMember, MemoryPackIgnore]
     public bool HasWrappedTypeRef => !WrappedTypeRef.AssemblyQualifiedName.IsEmpty;
 
-    [JsonConstructor, Newtonsoft.Json.JsonConstructor]
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
     public ExceptionInfo(TypeRef typeRef, string? message, TypeRef wrappedTypeRef = default)
     {
         TypeRef = typeRef;

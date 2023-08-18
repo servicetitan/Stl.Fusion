@@ -6,7 +6,7 @@ public class InvalidationInfoProvider
 {
     protected ICommander Commander { get; }
     protected CommandHandlerResolver CommandHandlerResolver { get; }
-    protected ConcurrentDictionary<Type, bool> IsReplicaServiceCommandCache { get; } = new();
+    protected ConcurrentDictionary<Type, bool> IsClientComputeServiceCommandCache { get; } = new();
     protected ConcurrentDictionary<Type, bool> IsComputeServiceCommandCache { get; } = new();
     protected ConcurrentDictionary<Type, Type?> FinalHandlerServiceTypeCache { get; } = new();
 
@@ -17,7 +17,7 @@ public class InvalidationInfoProvider
     }
 
     public virtual bool RequiresInvalidation(ICommand? command)
-        => IsComputeServiceCommand(command) && !IsReplicaServiceCommand(command);
+        => IsComputeServiceCommand(command) && !IsClientComputeServiceCommand(command);
 
     public virtual bool IsComputeServiceCommand(ICommand? command)
     {
@@ -31,12 +31,12 @@ public class InvalidationInfoProvider
         }, (this, command));
     }
 
-    public virtual bool IsReplicaServiceCommand(ICommand? command)
+    public virtual bool IsClientComputeServiceCommand(ICommand? command)
     {
         if (command == null)
             return false;
 
-        return IsReplicaServiceCommandCache.GetOrAdd(command.GetType(), static (_, arg) => {
+        return IsClientComputeServiceCommandCache.GetOrAdd(command.GetType(), static (_, arg) => {
             var (self, command1) = arg;
             var finalHandlerServiceType = self.GetFinalHandlerServiceType(command1);
             return typeof(IComputeService).IsAssignableFrom(finalHandlerServiceType)

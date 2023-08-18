@@ -3,22 +3,18 @@ using Stl.Versioning;
 namespace Stl.Fusion.Interception;
 
 public interface IComputeMethodFunction : IComputeFunction
-{
-    VersionGenerator<LTag> VersionGenerator { get; }
-}
+{ }
 
 public abstract class ComputeMethodFunctionBase<T> : ComputeFunctionBase<T>, IComputeMethodFunction
 {
-    public VersionGenerator<LTag> VersionGenerator { get; }
+    protected VersionGenerator<LTag> VersionGenerator;
 
     protected ComputeMethodFunctionBase(
         ComputeMethodDef methodDef,
         IServiceProvider services,
         VersionGenerator<LTag> versionGenerator)
         : base(methodDef, services)
-    {
-        VersionGenerator = versionGenerator;
-    }
+        => VersionGenerator = versionGenerator;
 
     protected override async ValueTask<Computed<T>> Compute(
         ComputedInput input, Computed<T>? existing,

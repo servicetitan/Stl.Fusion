@@ -1,5 +1,7 @@
 namespace Stl;
 
+#pragma warning disable SYSLIB0051
+
 public class ServiceException : Exception, IWrappedException
 {
     public ServiceException() { }

@@ -1,7 +1,7 @@
 namespace Stl.Rpc;
 
-[DataContract]
-public readonly struct RpcNoWait
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public readonly partial struct RpcNoWait
 {
     public static class Tasks
     {

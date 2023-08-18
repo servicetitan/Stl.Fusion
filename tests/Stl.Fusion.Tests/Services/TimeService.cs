@@ -1,13 +1,11 @@
+using FluentAssertions.Extensions;
+
 namespace Stl.Fusion.Tests.Services;
 
-public interface ITimeService : IComputeService
+public interface ITimeServer : IComputeService
 {
     [ComputeMethod]
     Task<DateTime> GetTime(CancellationToken cancellationToken = default);
-    [ComputeMethod]
-    Task<DateTime> GetTimeNoControllerMethod(CancellationToken cancellationToken = default);
-    [ComputeMethod]
-    Task<DateTime> GetTimeNoPublication(CancellationToken cancellationToken = default);
     [ComputeMethod]
     Task<DateTime> GetTimeWithDelay(CancellationToken cancellationToken = default);
     [ComputeMethod]
@@ -16,7 +14,12 @@ public interface ITimeService : IComputeService
     Task<DateTime> GetTimeWithOffset(TimeSpan offset);
 }
 
-[RegisterComputeService(typeof(ITimeService), Scope = ServiceScope.Services)]
+public interface ITimeService : ITimeServer
+{
+    [ComputeMethod]
+    Task<DateTime> GetTimeNoMethod(CancellationToken cancellationToken = default);
+}
+
 public class TimeService : ITimeService
 {
     private readonly ILogger _log;
@@ -30,7 +33,9 @@ public class TimeService : ITimeService
 
     public DateTime Time {
         get {
-            var now = DateTime.Now;
+            // MessagePack always deserializes DateTime as UTC,
+            // so if it's local, it won't deserialize properly
+            var now = DateTime.UtcNow;
             _log.LogDebug($"GetTime() -> {now}");
             return now;
         }
@@ -41,11 +46,7 @@ public class TimeService : ITimeService
         => Task.FromResult(Time);
 
     [ComputeMethod(AutoInvalidationDelay = 0.25)]
-    public virtual Task<DateTime> GetTimeNoControllerMethod(CancellationToken cancellationToken = default) 
-        => Task.FromResult(Time);
-
-    [ComputeMethod(AutoInvalidationDelay = 0.25)]
-    public virtual Task<DateTime> GetTimeNoPublication(CancellationToken cancellationToken = default)
+    public virtual Task<DateTime> GetTimeNoMethod(CancellationToken cancellationToken = default)
         => Task.FromResult(Time);
 
     [ComputeMethod(AutoInvalidationDelay = 0.25)]

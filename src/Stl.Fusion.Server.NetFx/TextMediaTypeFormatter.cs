@@ -1,10 +1,11 @@
+using System.Net.Http;
 using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
 
 namespace Stl.Fusion.Server;
 
-// purpose and implementation is taken from https://stackoverflow.com/questions/25631970/how-to-post-plain-text-to-asp-net-web-api-endpoint
-// without it RestEase client wraps result of type Task<string> in quotes.
+// Taken from https://stackoverflow.com/questions/25631970/how-to-post-plain-text-to-asp-net-web-api-endpoint
+// Without it, RestEase client quotes every result of type Task<string>.
 public class TextMediaTypeFormatter : MediaTypeFormatter
 {
     public TextMediaTypeFormatter()

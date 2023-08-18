@@ -1,8 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Memory;
-using Stl.RegisterAttributes;
 
 namespace Stl.Tests.DependencyInjection;
 
@@ -13,32 +11,26 @@ public class SettingsTest
         string Value { get; set; }
     }
 
-    [RegisterSettings("XSettings_Manual", Scope = nameof(SettingsTest))]
-    [RegisterAlias(typeof(ITestSettings), Scope = nameof(SettingsTest))]
     public class XSettings : ITestSettings
     {
         public string Value { get; set; } = "";
     }
 
-    [RegisterSettings(Scope = nameof(SettingsTest))]
     public class YSettings : ITestSettings
     {
         public string Value { get; set; } = "";
     }
 
-    [RegisterSettings(Scope = nameof(SettingsTest))]
     public class ZCfg : ITestSettings
     {
         public string Value { get; set; } = "";
     }
 
-    [RegisterSettings(Scope = nameof(SettingsTest))]
     public class FSettings : ITestSettings
     {
         [Required] public string Value { get; set; } = "Hello!";
     }
 
-    [RegisterSettings(Scope = nameof(SettingsTest))]
     public class NoSettings : ITestSettings
     {
         [Required] public string Value { get; set; } = "";
@@ -47,28 +39,7 @@ public class SettingsTest
     [Fact]
     public void BasicTest()
     {
-        var cfg = new ConfigurationBuilder()
-            .Add(new MemoryConfigurationSource {
-                InitialData = new[] {
-                    KeyValuePair.Create("XSettings_Manual:Value", "1"),
-                    KeyValuePair.Create("YSettings:Value", "2"),
-                    KeyValuePair.Create("Z:Value", "3"),
-                    KeyValuePair.Create("F:Value", ""),
-                }!
-            })
-            .Build();
-
-        var services = new ServiceCollection()
-            .AddSingleton(cfg)
-            .AddSingleton<IConfiguration>(cfg)
-            .UseRegisterAttributeScanner()
-                .WithScope(nameof(SettingsTest))
-                .WithTypeFilter(new Regex(".*"))
-                .RegisterFrom(typeof(bool).Assembly)
-                .Register<XSettings>()
-                .Register(typeof(YSettings), typeof(ZCfg), typeof(FSettings), typeof(NoSettings))
-                .Services
-            .BuildServiceProvider();
+        var services = CreateServices();
 
         var x = services.GetRequiredService<XSettings>();
         x.Value.Should().Be("1");
@@ -83,5 +54,35 @@ public class SettingsTest
         Assert.Throws<ValidationException>(() => services.GetRequiredService<FSettings>());
 
         Assert.Throws<ValidationException>(() => services.GetRequiredService<NoSettings>());
+    }
+
+    private static IServiceProvider CreateServices()
+    {
+        static KeyValuePair<string, string> NewPair(string key, string value)
+            => new(key, value);
+
+        var cfg = new ConfigurationBuilder()
+            .Add(new MemoryConfigurationSource {
+                InitialData = new[] {
+                    NewPair("XSettings_Manual:Value", "1"),
+                    NewPair("YSettings:Value", "2"),
+                    NewPair("Z:Value", "3"),
+                    NewPair("F:Value", ""),
+                }!
+            })
+            .Build();
+
+        var services = new ServiceCollection()
+            .AddSingleton(cfg)
+            .AddSingleton<IConfiguration>(cfg);
+
+        services.AddSettings<XSettings>("XSettings_Manual");
+        services.AddAlias<ITestSettings, XSettings>();
+        services.AddSettings<YSettings>();
+        services.AddSettings<ZCfg>();
+        services.AddSettings<FSettings>();
+        services.AddSettings<NoSettings>();
+
+        return services.BuildServiceProvider();
     }
 }

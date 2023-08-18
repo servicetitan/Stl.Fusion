@@ -4,6 +4,8 @@ namespace Stl.Fusion.Blazor;
 
 public class FusionComponentBase : ComponentBase
 {
+    public static ParameterComparisonMode DefaultParameterComparisonMode { get; set; } = ParameterComparisonMode.Custom;
+
     private ComponentInfo? _componentInfo;
     private Action? _stateHasChangedInvoker;
     private bool _isInitialized;

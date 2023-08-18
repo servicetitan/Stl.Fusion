@@ -1,82 +1,165 @@
 using Stl.Interception;
+using Stl.Rpc.Caching;
+using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
 
 public abstract class RpcOutboundCall : RpcCall
 {
-    private static readonly ConcurrentDictionary<(Type, Type), Func<RpcOutboundContext, RpcOutboundCall>> FactoryCache = new();
+    private static readonly ConcurrentDictionary<(byte, Type), Func<RpcOutboundContext, RpcOutboundCall>> FactoryCache = new();
 
-    public RpcOutboundContext Context { get; }
-    public long Id { get; protected set; }
+    public readonly RpcOutboundContext Context;
+    public readonly RpcPeer Peer;
+    public RpcMessage? Message;
     public Task ResultTask { get; protected init; } = null!;
+    public TimeSpan ConnectTimeout;
+    public TimeSpan Timeout;
 
     public static RpcOutboundCall New(RpcOutboundContext context)
-        => FactoryCache.GetOrAdd((context.CallType, context.MethodDef!.UnwrappedReturnType), static key => {
-            var (tGeneric, tResult) = key;
-            var tInbound = tGeneric.MakeGenericType(tResult);
-            return (Func<RpcOutboundContext, RpcOutboundCall>)tInbound.GetConstructorDelegate(typeof(RpcOutboundContext))!;
+        => FactoryCache.GetOrAdd((context.CallTypeId, context.MethodDef!.UnwrappedReturnType), static key => {
+            var (callTypeId, tResult) = key;
+            var type = RpcCallTypeRegistry.Resolve(callTypeId)
+                .OutboundCallType
+                .MakeGenericType(tResult);
+            return (Func<RpcOutboundContext, RpcOutboundCall>)type.GetConstructorDelegate(typeof(RpcOutboundContext))!;
         }).Invoke(context);
 
     protected RpcOutboundCall(RpcOutboundContext context)
         : base(context.MethodDef!)
-        => Context = context;
-
-    public ValueTask Send(bool isRetry = false)
     {
-        var peer = Context.Peer!;
-        RpcMessage message;
-        if (Context.MethodDef!.NoWait)
-            message = CreateMessage(Context.RelatedCallId);
-        else if (Id == 0) {
-            Id = peer.Calls.NextId;
-            message = CreateMessage(Id);
-            peer.Calls.Outbound.TryAdd(Id, this);
-        }
-        else
-            message = CreateMessage(Id);
-        return peer.Send(message, Context.CancellationToken);
+        Context = context;
+        Peer = context.Peer!; // Calls
     }
 
-    public virtual RpcMessage CreateMessage(long callId)
+    public override string ToString()
     {
-        var headers = Context.Headers;
-        var peer = Context.Peer!;
-        var arguments = Context.Arguments!;
-        var methodDef = MethodDef;
-        if (methodDef.CancellationTokenIndex >= 0)
-            arguments = arguments.Remove(methodDef.CancellationTokenIndex);
+        var context = Context;
+        var headers = context.Headers.OrEmpty();
+        var arguments = context.Arguments;
+        var methodDef = context.MethodDef;
+        var ctIndex = methodDef?.CancellationTokenIndex ?? -1;
+        if (ctIndex >= 0)
+            arguments = arguments?.Remove(ctIndex);
+        return $"{GetType().GetName()} #{Id}: {methodDef?.Name ?? "n/a"}{arguments?.ToString() ?? "(n/a)"}"
+            + (headers.Count > 0 ? $", Headers: {headers.ToDelimitedString()}" : "");
+    }
 
-        var argumentListType = arguments.GetType();
-        if (argumentListType.IsGenericType) {
-            var nonDefaultItemTypes = arguments.GetNonDefaultItemTypes();
-            if (nonDefaultItemTypes != null) {
-                var gParameters = argumentListType.GetGenericArguments();
-                for (var i = 0; i < nonDefaultItemTypes.Length; i++) {
-                    var itemType = nonDefaultItemTypes[i];
-                    if (itemType == null)
-                        continue;
+    public ValueTask RegisterAndSend()
+    {
+        if (NoWait)
+            return SendNoWait(MethodDef.AllowArgumentPolymorphism);
 
-                    gParameters[i] = itemType;
-                    var typeRef = new TypeRef(itemType);
-                    var h = RpcSystemHeaders.ArgumentTypes[i].With(typeRef.AssemblyQualifiedName);
-                    headers.Add(h);
+        Peer.OutboundCalls.Register(this);
+        var sendTask = SendRegistered();
+
+        // RegisterCancellationHandler must follow SendRegistered,
+        // coz it's possible that ResultTask is already completed
+        // at this point (e.g. due to an error), and thus
+        // cancellation handler isn't necessary.
+        if (!ResultTask.IsCompleted)
+            RegisterCancellationHandler();
+        return sendTask;
+    }
+
+    public ValueTask SendNoWait(bool allowPolymorphism)
+    {
+        var message = CreateMessage(Context.RelatedCallId, allowPolymorphism);
+        Peer.CallLog?.Log(Peer.CallLogLevel, "'{PeerRef}': -> {Call}", Peer.Ref, this);
+        return Peer.Send(message);
+    }
+
+    public ValueTask SendRegistered(bool notifyCancelled = false)
+    {
+        RpcMessage message;
+        try {
+            message = CreateMessage(Id, MethodDef.AllowArgumentPolymorphism);
+            if (Context.CacheInfoCapture is { Key: null } cacheInfoCapture) {
+                cacheInfoCapture.Key = new RpcCacheKey(MethodDef.Service.Name, MethodDef.Name, message.ArgumentData);
+                if (cacheInfoCapture.CaptureMode == RpcCacheInfoCaptureMode.KeyOnly) {
+                    SetResult(null, null);
+                    return default;
                 }
-                argumentListType = argumentListType
-                    .GetGenericTypeDefinition()
-                    .MakeGenericType(gParameters);
-                var oldArguments = arguments;
-                arguments = (ArgumentList)argumentListType.CreateInstance();
-                arguments.SetFrom(oldArguments);
             }
         }
-        var argumentData = peer.ArgumentSerializer.Serialize(arguments);
-        var message = new RpcMessage(callId, methodDef.Service.Name, methodDef.Name, argumentData, headers);
+        catch (Exception error) {
+            SetError(error, null, notifyCancelled);
+            return default;
+        }
+        Peer.CallLog?.Log(Peer.CallLogLevel, "'{PeerRef}': -> {Call}", Peer.Ref, this);
+        return Peer.Send(message);
+    }
+
+    public virtual RpcMessage CreateMessage(long callId, bool allowPolymorphism)
+    {
+        var argumentData = Peer.ArgumentSerializer.Serialize(Context.Arguments!, allowPolymorphism);
+        var message = new RpcMessage(
+            Context.CallTypeId, callId,
+            MethodDef.Service.Name, MethodDef.Name,
+            argumentData, Context.Headers);
         return message;
     }
 
-    public abstract bool TryCompleteWithOk(object? result, RpcInboundContext context);
-    public abstract bool TryCompleteWithError(Exception error, RpcInboundContext? context);
-    public abstract bool TryCompleteWithCancel(CancellationToken cancellationToken, RpcInboundContext? context);
+    public abstract void SetResult(object? result, RpcInboundContext? context);
+    public abstract void SetError(Exception error, RpcInboundContext? context, bool notifyCancelled = false);
+    public abstract bool SetCancelled(CancellationToken cancellationToken, RpcInboundContext? context);
+
+    public void Unregister(bool notifyCancelled = false)
+    {
+        if (!Peer.OutboundCalls.Unregister(this))
+            return; // Already unregistered
+
+        if (notifyCancelled)
+            NotifyCancelled();
+    }
+
+    public void NotifyCancelled()
+    {
+        if (Context.CacheInfoCapture is { CaptureMode: RpcCacheInfoCaptureMode.KeyOnly })
+            return; // The call had never happened, so no need for cancellation notification
+
+        try {
+            var systemCallSender = Peer.Hub.InternalServices.SystemCallSender;
+            _ = systemCallSender.Cancel(Peer, Id);
+        }
+        catch {
+            // It's totally fine to ignore any error here:
+            // peer.Hub might be already disposed at this point,
+            // so SystemCallSender might not be available.
+            // In any case, peer on the other side is going to
+            // be gone as well after that, so every call there
+            // will be cancelled anyway.
+        }
+    }
+
+    // Protected methods
+
+    protected void RegisterCancellationHandler()
+    {
+        var cancellationToken = Context.CancellationToken;
+        CancellationTokenSource? timeoutCts = null;
+        CancellationTokenSource? linkedCts = null;
+        if (Timeout > TimeSpan.Zero) {
+            timeoutCts = new CancellationTokenSource(Timeout);
+            linkedCts = timeoutCts.Token.LinkWith(cancellationToken);
+            cancellationToken = linkedCts.Token;
+        }
+        var ctr = cancellationToken.Register(static state => {
+            var call = (RpcOutboundCall)state!;
+            if (call.Context.CancellationToken.IsCancellationRequested)
+                call.SetCancelled(call.Context.CancellationToken, null);
+            else {
+                // timeoutCts is timed out
+                var error = Errors.CallTimeout(call.Peer);
+                call.SetError(error, null, true);
+            }
+        }, this, useSynchronizationContext: false);
+        _ = ResultTask.ContinueWith(_ => {
+                ctr.Dispose();
+                linkedCts?.Dispose();
+                timeoutCts?.Dispose();
+            },
+            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+    }
 }
 
 public class RpcOutboundCall<TResult> : RpcOutboundCall
@@ -86,41 +169,46 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
     public RpcOutboundCall(RpcOutboundContext context)
         : base(context)
     {
-        ResultSource = context.MethodDef!.NoWait
+        ResultSource = NoWait
             ? (TaskCompletionSource<TResult>)(object)RpcNoWait.TaskSources.Completed
-            : TaskCompletionSourceExt.New<TResult>();
+            : new TaskCompletionSource<TResult>();
         ResultTask = ResultSource.Task;
     }
 
-    public override bool TryCompleteWithOk(object? result, RpcInboundContext context)
+    public override void SetResult(object? result, RpcInboundContext? context)
     {
+        var typedResult = default(TResult)!;
         try {
-            if (!ResultSource.TrySetResult((TResult)result!))
-                return false;
-
-            Context.Peer!.Calls.Outbound.TryRemove(Id, this);
-            return true;
+            if (result != null)
+                typedResult = (TResult)result;
         }
-        catch (Exception e) {
-            return TryCompleteWithError(e, context);
+        catch (InvalidCastException) {
+            // Intended
+        }
+        if (ResultSource.TrySetResult(typedResult)) {
+            Unregister();
+            if (context != null && Context.CacheInfoCapture is { } cacheInfoCapture)
+                cacheInfoCapture.ResultSource?.TrySetResult(context.Message.ArgumentData);
         }
     }
 
-    public override bool TryCompleteWithError(Exception error, RpcInboundContext? context)
+    public override void SetError(Exception error, RpcInboundContext? context, bool notifyCancelled = false)
     {
-        if (!ResultSource.TrySetException(error))
-            return false;
-
-        Context.Peer!.Calls.Outbound.TryRemove(Id, this);
-        return true;
+        if (ResultSource.TrySetException(error)) {
+            Unregister(notifyCancelled);
+            if (Context.CacheInfoCapture is { } cacheInfoCapture)
+                cacheInfoCapture.ResultSource?.TrySetException(error);
+        }
     }
 
-    public override bool TryCompleteWithCancel(CancellationToken cancellationToken, RpcInboundContext? context)
+    public override bool SetCancelled(CancellationToken cancellationToken, RpcInboundContext? context)
     {
-        if (!ResultSource.TrySetCanceled(cancellationToken))
-            return false;
-
-        Context.Peer!.Calls.Outbound.TryRemove(Id, this);
-        return true;
+        var isCancelled = ResultSource.TrySetCanceled(cancellationToken);
+        if (isCancelled) {
+            Unregister(true);
+            if (Context.CacheInfoCapture is { } cacheInfoCapture)
+                cacheInfoCapture.ResultSource?.TrySetCanceled(cancellationToken);
+        }
+        return isCancelled;
     }
 }

@@ -46,9 +46,6 @@ public class RadixHeapSet<T> : IEnumerable<(long Priority, T Value)>
                 break;
         }
     }
-#if !NETSTANDARD
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-#endif
     public bool Add(long priority, T value)
     {
         var index = GetBucketIndex(priority);
@@ -58,9 +55,6 @@ public class RadixHeapSet<T> : IEnumerable<(long Priority, T Value)>
         return true;
     }
 
-#if !NETSTANDARD
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-#endif
     public void AddOrUpdate(long priority, T value)
     {
         var index = GetBucketIndex(priority);
@@ -76,9 +70,6 @@ public class RadixHeapSet<T> : IEnumerable<(long Priority, T Value)>
         bucket.Add(value, priority);
     }
 
-#if !NETSTANDARD
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-#endif
     public bool AddOrUpdateToLower(long priority, T value)
     {
         var index = GetBucketIndex(priority);
@@ -104,9 +95,6 @@ public class RadixHeapSet<T> : IEnumerable<(long Priority, T Value)>
         return true;
     }
 
-#if !NETSTANDARD
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-#endif
     public bool AddOrUpdateToHigher(long priority, T value)
     {
         var index = GetBucketIndex(priority);
@@ -132,9 +120,6 @@ public class RadixHeapSet<T> : IEnumerable<(long Priority, T Value)>
         return true;
     }
 
-#if !NETSTANDARD
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-#endif
     public bool Remove(T value, out long priority)
     {
         if (!_bucketIndexes.Remove(value, out var index)) {
@@ -145,9 +130,6 @@ public class RadixHeapSet<T> : IEnumerable<(long Priority, T Value)>
         return true;
     }
 
-#if !NETSTANDARD
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-#endif
     public Option<(long Priority, T Value)> PeekMin()
     {
         UpdateMinPriority();
@@ -164,9 +146,6 @@ public class RadixHeapSet<T> : IEnumerable<(long Priority, T Value)>
         return _buckets[0];
     }
 
-#if !NETSTANDARD
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-#endif
     public Option<(long Priority, T Value)> ExtractMin()
     {
         UpdateMinPriority();

@@ -119,7 +119,7 @@ public class BatchProcessor<TIn, TOut> : BatchProcessorBase<TIn, TOut>
             if (!cancellationToken.IsCancellationRequested)
                 cancellationToken = new CancellationToken(canceled: true);
             foreach (var item in batch)
-                item.TryCancel(cancellationToken);
+                item.Cancel(cancellationToken);
             throw;
         }
         catch (Exception e) {

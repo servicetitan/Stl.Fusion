@@ -1,9 +1,11 @@
-using Stl.Fusion.Authentication;
 using Stl.Multitenancy;
 
 namespace Stl.Fusion.Multitenancy;
 
-public class DefaultTenantResolver<TContext> : ITenantResolver<TContext>
+public class DefaultTenantResolver<TContext>(
+        DefaultTenantResolver<TContext>.Options settings,
+        IServiceProvider services
+        ) : ITenantResolver<TContext>
 {
     public record Options
     {
@@ -11,16 +13,10 @@ public class DefaultTenantResolver<TContext> : ITenantResolver<TContext>
         public string TenantIdOptionName { get; init; } = "TenantId";
     }
 
-    protected Options Settings { get; }
-    protected IServiceProvider Services { get; }
+    protected Options Settings { get; } = settings;
+    protected IServiceProvider Services { get; } = services;
     protected ITenantRegistry<TContext> TenantRegistry { get; }
-
-    public DefaultTenantResolver(Options settings, IServiceProvider services)
-    {
-        Settings = settings;
-        Services = services;
-        TenantRegistry = services.GetRequiredService<ITenantRegistry<TContext>>();
-    }
+        = services.GetRequiredService<ITenantRegistry<TContext>>();
 
     public virtual async Task<Tenant> Resolve(object source, object context, CancellationToken cancellationToken)
     {

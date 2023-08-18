@@ -1,3 +1,4 @@
+using Stl.Fusion.Client.Interception;
 using Stl.Fusion.Internal;
 
 namespace Stl.Fusion;
@@ -174,7 +175,28 @@ public static partial class ComputedExt
         while (true) {
             if (!computed.IsConsistent())
                 computed = await computed.Update(cancellationToken).ConfigureAwait(false);
-            if (predicate(computed.Value))
+            if (predicate.Invoke(computed.Value))
+                return computed;
+
+            await computed.WhenInvalidated(cancellationToken).ConfigureAwait(false);
+            await updateDelayer.Delay(0, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    public static Task<Computed<T>> When<T>(this Computed<T> computed,
+        Func<T, Exception?, bool> predicate,
+        CancellationToken cancellationToken = default)
+        => computed.When(predicate, FixedDelayer.Instant, cancellationToken);
+    public static async Task<Computed<T>> When<T>(this Computed<T> computed,
+        Func<T, Exception?, bool> predicate,
+        IUpdateDelayer updateDelayer,
+        CancellationToken cancellationToken = default)
+    {
+        while (true) {
+            if (!computed.IsConsistent())
+                computed = await computed.Update(cancellationToken).ConfigureAwait(false);
+            var (value, error) = computed;
+            if (predicate.Invoke(value, error))
                 return computed;
 
             await computed.WhenInvalidated(cancellationToken).ConfigureAwait(false);
@@ -206,5 +228,66 @@ public static partial class ComputedExt
             await updateDelayer.Delay(retryCount, cancellationToken).ConfigureAwait(false);
         }
         // ReSharper disable once IteratorNeverReturns
+    }
+
+    // WhenSynchronized & Synchronize
+
+    public static Task WhenSynchronized(this IComputed computed)
+    {
+        if (computed is IClientComputed clientComputed)
+            return clientComputed.WhenSynchronized();
+
+        if (computed is IStateBoundComputed stateBoundComputed) {
+            var state = stateBoundComputed.State;
+            if (state is IMutableState)
+                return Task.CompletedTask;
+
+            var snapshot = state.Snapshot;
+            if (snapshot.IsInitial)
+                return WhenUpdatedAndSynchronized(snapshot);
+
+            static async Task WhenUpdatedAndSynchronized(IStateSnapshot snapshot1) {
+                await snapshot1.WhenUpdated().ConfigureAwait(false);
+                await snapshot1.State.Computed.WhenSynchronized().ConfigureAwait(false);
+            }
+        }
+
+        // Computed is a regular computed instance
+        var computedImpl = (IComputedImpl) computed;
+        var usedBuffer = ArrayBuffer<IComputedImpl>.Lease(false);
+        var taskBuffer = ArrayBuffer<Task>.Lease(false);
+        try {
+            computedImpl.CopyUsedTo(ref usedBuffer);
+            var usedArray = usedBuffer.Buffer;
+            for (var i = 0; i < usedBuffer.Count; i++) {
+                var used = usedArray[i];
+                var whenSynchronized = used.WhenSynchronized();
+                if (!whenSynchronized.IsCompleted)
+                    taskBuffer.Add(whenSynchronized);
+            }
+            return taskBuffer.Count switch {
+                0 => Task.CompletedTask,
+                1 => taskBuffer[0],
+                _ => Task.WhenAll(taskBuffer.ToArray()),
+            };
+        }
+        finally {
+            taskBuffer.Release();
+            usedBuffer.Release();
+        }
+    }
+
+    public static async ValueTask<Computed<T>> Synchronize<T>(this Computed<T> computed,
+        CancellationToken cancellationToken = default)
+    {
+        while (true) {
+            var whenSynchronized = computed.WhenSynchronized();
+            if (!whenSynchronized.IsCompleted)
+                await whenSynchronized.WaitAsync(cancellationToken).ConfigureAwait(false);
+            if (computed.IsConsistent())
+                return computed;
+
+            computed = await computed.Update(cancellationToken).ConfigureAwait(false);
+        }
     }
 }

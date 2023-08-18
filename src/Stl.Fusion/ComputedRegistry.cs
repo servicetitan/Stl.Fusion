@@ -2,7 +2,6 @@ using Stl.Concurrency;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
 using Stl.Locking;
-using Stl.OS;
 using Stl.Time.Internal;
 using Errors = Stl.Fusion.Internal.Errors;
 
@@ -14,27 +13,10 @@ public sealed class ComputedRegistry : IDisposable
 
     public sealed record Options
     {
-        internal static readonly PrimeSieve CapacityPrimeSieve;
-
-        public static int DefaultInitialCapacity { get; }
-        public static int DefaultInitialConcurrency { get; }
-        public static Options Default { get; }
-
-        public int InitialCapacity { get; init; } = DefaultInitialCapacity;
-        public int ConcurrencyLevel { get; init; } = DefaultInitialConcurrency;
+        public int InitialCapacity { get; init; } = FusionSettings.ComputedRegistryCapacity;
+        public int ConcurrencyLevel { get; init; } = FusionSettings.ComputedRegistryConcurrencyLevel;
         public Func<AsyncLockSet<ComputedInput>>? LocksFactory { get; init; } = null;
         public GCHandlePool? GCHandlePool { get; init; } = null;
-
-        static Options()
-        {
-            DefaultInitialConcurrency = HardwareInfo.GetProcessorCountPo2Factor(4);
-            var capacity = HardwareInfo.GetProcessorCountPo2Factor(128, 128);
-            CapacityPrimeSieve = new PrimeSieve(capacity + 1024);
-            while (!CapacityPrimeSieve.IsPrime(capacity))
-                capacity--;
-            DefaultInitialCapacity = capacity;
-            Default = new();
-        }
     }
 
     private readonly ConcurrentDictionary<ComputedInput, GCHandle> _storage;
@@ -53,18 +35,18 @@ public sealed class ComputedRegistry : IDisposable
     public event Action<IComputed>? OnUnregister;
     public event Action<IComputed, bool>? OnAccess;
 
-    public ComputedRegistry() : this(Options.Default) { }
-    public ComputedRegistry(Options options)
+    public ComputedRegistry() : this(new()) { }
+    public ComputedRegistry(Options settings)
     {
-        _storage = new ConcurrentDictionary<ComputedInput, GCHandle>(options.ConcurrencyLevel, options.InitialCapacity);
-        _gcHandlePool = options.GCHandlePool ?? new GCHandlePool(GCHandleType.Weak);
+        _storage = new ConcurrentDictionary<ComputedInput, GCHandle>(settings.ConcurrencyLevel, settings.InitialCapacity);
+        _gcHandlePool = settings.GCHandlePool ?? new GCHandlePool(GCHandleType.Weak);
         if (_gcHandlePool.HandleType != GCHandleType.Weak)
             throw new ArgumentOutOfRangeException(
-                $"{nameof(options)}.{nameof(options.GCHandlePool)}.{nameof(_gcHandlePool.HandleType)}");
+                $"{nameof(settings)}.{nameof(settings.GCHandlePool)}.{nameof(_gcHandlePool.HandleType)}");
         _opCounter = new StochasticCounter();
-        InputLocks = options.LocksFactory?.Invoke() ?? new AsyncLockSet<ComputedInput>(
+        InputLocks = settings.LocksFactory?.Invoke() ?? new AsyncLockSet<ComputedInput>(
             LockReentryMode.CheckedFail,
-            options.ConcurrencyLevel, options.InitialCapacity);
+            settings.ConcurrencyLevel, settings.InitialCapacity);
         ChangeGraphPruner(new ComputedGraphPruner(new()), null!);
         UpdatePruneCounterThreshold();
     }
@@ -107,7 +89,7 @@ public sealed class ComputedRegistry : IDisposable
                     return;
                 }
                 if (target is { ConsistencyState: not ConsistencyState.Invalidated }) {
-                    // This typically triggers Unregister - except for ReplicaMethodComputed
+                    // This typically triggers Unregister - except for ClientComputed
                     target.Invalidate();
                 }
                 if (_storage.TryRemove(key, handle))

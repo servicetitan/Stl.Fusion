@@ -8,7 +8,7 @@ namespace Stl.Time;
 [JsonConverter(typeof(MomentJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(MomentNewtonsoftJsonConverter))]
 [TypeConverter(typeof(MomentTypeConverter))]
-public readonly struct Moment : IEquatable<Moment>, IComparable<Moment>
+public readonly partial struct Moment : IEquatable<Moment>, IComparable<Moment>
 {
     public static readonly Moment MinValue = new(long.MinValue);
     public static readonly Moment MaxValue = new(long.MaxValue);

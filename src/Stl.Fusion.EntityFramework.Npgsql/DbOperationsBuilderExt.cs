@@ -13,20 +13,17 @@ public static class DbOperationsBuilderExt
         where TDbContext : DbContext
     {
         var services = dbOperations.Services;
-        var isConfigured = services.HasService<NpgsqlDbOperationLogChangeTracker<TDbContext>>();
-
-        if (optionsFactory != null)
-            services.AddSingleton(optionsFactory);
-        if (isConfigured)
+        services.AddSingleton(optionsFactory, _ => NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>.Default);
+        if (services.HasService<NpgsqlDbOperationLogChangeTracker<TDbContext>>())
             return dbOperations;
 
-        // NpgsqlDbOperationLogChangeTracker<TDbContext>
-        services.TryAddSingleton<NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>>();
-        services.TryAddSingleton<NpgsqlDbOperationLogChangeTracker<TDbContext>>();
+        services.AddSingleton(c => new NpgsqlDbOperationLogChangeTracker<TDbContext>(
+            c.GetRequiredService<NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>>(), c));
         services.AddHostedService(c =>
             c.GetRequiredService<NpgsqlDbOperationLogChangeTracker<TDbContext>>());
-        services.TryAddSingleton<IDbOperationLogChangeTracker<TDbContext>>(c =>
-            c.GetRequiredService<NpgsqlDbOperationLogChangeTracker<TDbContext>>());
+        services.AddAlias<
+            IDbOperationLogChangeTracker<TDbContext>,
+            NpgsqlDbOperationLogChangeTracker<TDbContext>>();
 
         // NpgsqlDbOperationLogChangeNotifier<TDbContext>
         services.TryAddEnumerable(

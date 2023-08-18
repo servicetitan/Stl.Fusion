@@ -11,7 +11,7 @@ public static class DispatcherInfo
 
     public static bool FlowsExecutionContext(ComponentBase anyComponent)
     {
-        var flowState = (ExecutionContextFlowState) _executionContextFlowState;
+        var flowState = (ExecutionContextFlowState)_executionContextFlowState;
         switch (flowState) {
         case ExecutionContextFlowState.Enabled:
             return true;
@@ -21,9 +21,9 @@ public static class DispatcherInfo
 
         var dispatcher = anyComponent.GetDispatcher();
         var dispatcherTypeName = dispatcher.GetType().Name;
-        
+
         // NullRendered is used in WASM,
-        // RendererSynchronizationContextDispatcher is used in Blazor Server  
+        // RendererSynchronizationContextDispatcher is used in Blazor Server
         var doesFlow = dispatcherTypeName is "NullDispatcher" or "RendererSynchronizationContextDispatcher";
         flowState = doesFlow ? ExecutionContextFlowState.Enabled : ExecutionContextFlowState.Disabled;
         Interlocked.Exchange(ref _executionContextFlowState, (int) flowState);
@@ -37,6 +37,5 @@ public static class DispatcherInfo
         Unknown = 0,
         Enabled,
         Disabled,
-    } 
+    }
 }
-

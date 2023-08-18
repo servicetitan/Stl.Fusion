@@ -1,4 +1,4 @@
 namespace Stl.Rpc.Infrastructure;
 
-public interface IRpcSystemService
+public interface IRpcSystemService : IRpcService
 { }

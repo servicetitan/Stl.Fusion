@@ -4,14 +4,14 @@
 @using Stl.Fusion.Blazor
 @using Templates.TodoApp.UI
 @using Stl.Fusion.Server.Authentication
-@using Stl.Fusion.Server.Controllers
+@using Stl.Fusion.Server.Endpoints
 @inject ServerAuthHelper ServerAuthHelper
 @inject BlazorCircuitContext BlazorCircuitContext
 @{
     await ServerAuthHelper.UpdateAuthState(HttpContext);
     var authSchemas = await ServerAuthHelper.GetSchemas(HttpContext);
     var sessionId = ServerAuthHelper.Session.Id.Value;
-    var isServerSideBlazor = BlazorModeController.IsServerSideBlazor(HttpContext);
+    var isServerSideBlazor = BlazorModeEndpoint.IsBlazorServer(HttpContext);
     var isCloseWindowRequest = ServerAuthHelper.IsCloseWindowRequest(HttpContext, out var closeWindowFlowName);
     Layout = null;
 }
@@ -25,7 +25,7 @@
     <base href="~/" />
     <link href="css/app.css" rel="stylesheet" />
     <partial name="Blazorise.Head" />
-    <script src="_content/Stl.Fusion.Blazor/scripts/fusionAuth.js"></script>
+    <script src="_content/Stl.Fusion.Blazor.Authentication/scripts/fusionAuth.js"></script>
     <script>
         window.FusionAuth.schemas = "@authSchemas";
     </script>

@@ -5,30 +5,30 @@ namespace Stl.Mathematics;
 /// of type <typeparamref name="T"/>.
 /// </summary>
 /// <typeparam name="T">Type of the elements inside the range.</typeparam>
-[DataContract]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
 [StructLayout(LayoutKind.Sequential)]
-public readonly struct Range<T> : IEquatable<Range<T>>
+public readonly partial struct Range<T> : IEquatable<Range<T>>
     where T : notnull
 {
     /// <summary>
     /// Lower range boundary, always inclusive.
     /// </summary>
-    [DataMember(Order = 0)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     public T Start { get; }
 
     /// <summary>
     /// Upper range boundary, typically exclusive.
     /// </summary>
-    [DataMember(Order = 1)]
+    [DataMember(Order = 1), MemoryPackOrder(1)]
     public T End { get; }
 
     /// <summary>
     /// Indicates whether the range is empty (has no items).
     /// </summary>
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public bool IsEmpty => EqualityComparer<T>.Default.Equals(Start, End);
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public bool IsNegative => Comparer<T>.Default.Compare(Start, End) > 0;
 
     /// <summary>
@@ -36,7 +36,7 @@ public readonly struct Range<T> : IEquatable<Range<T>>
     /// </summary>
     /// <param name="start"><see cref="Start"/> property value.</param>
     /// <param name="end"><see cref="End"/> property value.</param>
-    [JsonConstructor, Newtonsoft.Json.JsonConstructor]
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
     public Range(T start, T end)
     {
         Start = start;

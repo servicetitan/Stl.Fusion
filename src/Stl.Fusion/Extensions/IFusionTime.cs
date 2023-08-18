@@ -3,9 +3,9 @@ namespace Stl.Fusion.Extensions;
 public interface IFusionTime : IComputeService
 {
     [ComputeMethod]
-    Task<DateTime> GetUtcNow();
+    Task<Moment> Now();
     [ComputeMethod]
-    Task<DateTime> GetUtcNow(TimeSpan updatePeriod);
+    Task<Moment> Now(TimeSpan updatePeriod);
     [ComputeMethod]
-    Task<string> GetMomentsAgo(DateTime time);
+    Task<string> GetMomentsAgo(Moment moment);
 }

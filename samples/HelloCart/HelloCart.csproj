@@ -1,19 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
+
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>preview</LangVersion>
     <AssemblyName>Samples.HelloCart</AssemblyName>
     <RootNamespace>Samples.HelloCart</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="MemoryPack.Generator" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Stl.Fusion.Client\Stl.Fusion.Client.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework\Stl.Fusion.EntityFramework.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework.Redis\Stl.Fusion.EntityFramework.Redis.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.Server\Stl.Fusion.Server.csproj" />
@@ -21,4 +22,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Stl.Generators\Stl.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="obj\project.packagespec.json" />
+  </ItemGroup>
+
 </Project>

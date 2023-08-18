@@ -1,6 +1,6 @@
 namespace Stl.Async;
 
-public static class TaskCompletionSourceExt
+public static partial class TaskCompletionSourceExt
 {
     // NewXxx
 
@@ -83,19 +83,33 @@ public static class TaskCompletionSourceExt
 
     public static Task SetFromTaskAsync<T>(this TaskCompletionSource<T> target, Task<T> task, CancellationToken cancellationToken = default)
     {
-        task.GetAwaiter().OnCompleted(() => target.SetFromTask(task, cancellationToken));
+        _ = task.ContinueWith(
+            t => target.SetFromTask(t, cancellationToken),
+            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
         return target.Task;
     }
 
     public static Task TrySetFromTaskAsync<T>(this TaskCompletionSource<T> target, Task<T> task, CancellationToken cancellationToken = default)
     {
-        task.GetAwaiter().OnCompleted(() => target.TrySetFromTask(task, cancellationToken));
+        _ = task.ContinueWith(
+            t => target.TrySetFromTask(t, cancellationToken),
+            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
         return target.Task;
     }
 
     // (Try)SetFromResult
 
-    public static void SetFromResult<T>(this TaskCompletionSource<T> target, Result<T> result, CancellationToken cancellationToken = default)
+    public static void SetFromResult<T>(this TaskCompletionSource<T> target, Result<T> result)
+    {
+        if (result.IsValue(out var v, out var e))
+            target.SetResult(v);
+        else if (e is OperationCanceledException)
+            target.SetCanceled();
+        else
+            target.SetException(e);
+    }
+
+    public static void SetFromResult<T>(this TaskCompletionSource<T> target, Result<T> result, CancellationToken cancellationToken)
     {
         if (result.IsValue(out var v, out var e))
             target.SetResult(v);
@@ -114,7 +128,14 @@ public static class TaskCompletionSourceExt
             target.SetException(e);
     }
 
-    public static bool TrySetFromResult<T>(this TaskCompletionSource<T> target, Result<T> result, CancellationToken cancellationToken = default)
+    public static bool TrySetFromResult<T>(this TaskCompletionSource<T> target, Result<T> result)
+        => result.IsValue(out var v, out var e)
+            ? target.TrySetResult(v)
+            : e is OperationCanceledException
+                ? target.TrySetCanceled()
+                : target.TrySetException(e);
+
+    public static bool TrySetFromResult<T>(this TaskCompletionSource<T> target, Result<T> result, CancellationToken cancellationToken)
         => result.IsValue(out var v, out var e)
             ? target.TrySetResult(v)
             : e is OperationCanceledException

@@ -11,11 +11,11 @@ public static class EndpointRouteBuilderExt
         if (appBuilder == null) throw new ArgumentNullException(nameof(appBuilder));
         if (services == null) throw new ArgumentNullException(nameof(services));
 
-        var server = services.GetRequiredService<RpcServer>();
+        var server = services.GetRequiredService<RpcWebSocketServer>();
 
-        return appBuilder.Map(pattern ?? server.Settings.RequestPath, app => {
+        return appBuilder.Map(pattern ?? server.Settings.RoutePattern, app => {
             app.Run(delegate(IOwinContext context) {
-                var statusCode = server.HandleRequest(context);
+                var statusCode = server.Invoke(context);
                 context.Response.StatusCode = (int)statusCode;
                 return Task.CompletedTask;
             });

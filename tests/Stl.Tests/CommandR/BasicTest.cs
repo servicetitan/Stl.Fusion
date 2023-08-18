@@ -47,7 +47,7 @@ public class BasicTest : CommandRTestBase
     public async Task MultiChainCommandTest()
     {
         var services = CreateServices();
-        var mathService = services.GetRequiredService<MathService>();
+        var mathService = (MathService)services.GetRequiredService<IMathService>();
 
         mathService.Value = 0;
         var command = new IncSetFailCommand() {

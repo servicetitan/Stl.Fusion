@@ -12,19 +12,30 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Net.WebSockets.Client" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="EFCore.CheckConstraints" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
     <PackageReference Include="MySqlConnector" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" />
     <PackageReference Include="System.Drawing.Common" />
+    <PackageReference Include="System.Net.WebSockets.Client" />
+  </ItemGroup>
+
+  <ItemGroup Condition="!$(TargetFramework.StartsWith('net4'))">
+    <PackageReference Include="MemoryPack.Generator" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net7'))">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" VersionOverride="$(EntityFrameworkCoreVersion7)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" VersionOverride="$(EntityFrameworkCoreVersion7)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" VersionOverride="$(EntityFrameworkCoreVersion7)" />
+    <!--
+    <PackageReference Include="MySqlConnector" VersionOverride="$(MySqlConnectorVersion7)" />
+    -->
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" VersionOverride="$(EntityFrameworkCoreMySqlVersion7)" />
+    <PackageReference Include="System.Drawing.Common" VersionOverride="$(SystemXxxVersion7)" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('net6'))">
-    <PackageReference Include="EFCore.CheckConstraints" VersionOverride="$(EntityFrameworkCoreVersion6)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" VersionOverride="$(EntityFrameworkCoreVersion6)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" VersionOverride="$(EntityFrameworkCoreVersion6)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" VersionOverride="$(EntityFrameworkCoreVersion6)" />
@@ -33,7 +44,6 @@
     <PackageReference Include="System.Drawing.Common" VersionOverride="$(SystemXxxVersion6)" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('net5')) or $(TargetFramework.StartsWith('netcore'))">
-    <PackageReference Include="EFCore.CheckConstraints" VersionOverride="$(EntityFrameworkCoreVersion5)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" VersionOverride="$(EntityFrameworkCoreVersion5)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" VersionOverride="$(EntityFrameworkCoreVersion5)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" VersionOverride="$(EntityFrameworkCoreVersion5)" />
@@ -42,7 +52,6 @@
     <PackageReference Include="System.Drawing.Common" VersionOverride="$(SystemXxxVersion5)" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
-    <PackageReference Remove="EFCore.CheckConstraints" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" VersionOverride="$(EntityFrameworkCoreVersion3)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" VersionOverride="$(EntityFrameworkCoreVersion3)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" VersionOverride="$(EntityFrameworkCoreVersion3)" />
@@ -52,10 +61,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Stl\Stl.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion\Stl.Fusion.csproj" />
-    <ProjectReference Include="..\..\src\Stl.Fusion.RegisterAttributes\Stl.Fusion.RegisterAttributes.csproj" />
-    <ProjectReference Include="..\..\src\Stl.Fusion.Client\Stl.Fusion.Client.csproj" />
-    <ProjectReference Include="..\..\src\Stl.Fusion.Client.RegisterAttributes\Stl.Fusion.Client.RegisterAttributes.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Fusion.Ext.Services\Stl.Fusion.Ext.Services.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework\Stl.Fusion.EntityFramework.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework.Npgsql\Stl.Fusion.EntityFramework.Npgsql.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.EntityFramework.Redis\Stl.Fusion.EntityFramework.Redis.csproj" />
@@ -67,6 +75,7 @@
   </ItemGroup>
   <ItemGroup Condition="!$(TargetFramework.StartsWith('net4'))">
     <ProjectReference Include="..\..\src\Stl.Fusion.Blazor\Stl.Fusion.Blazor.csproj" />
+    <ProjectReference Include="..\..\src\Stl.Fusion.Blazor.Authentication\Stl.Fusion.Blazor.Authentication.csproj" />
     <ProjectReference Include="..\..\src\Stl.Fusion.Server\Stl.Fusion.Server.csproj" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">

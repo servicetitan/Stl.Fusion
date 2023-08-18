@@ -18,7 +18,7 @@ public class BatchProcessorTest
                 foreach (var item in batch) {
                     if (item.Input == -1000)
                         throw new InvalidOperationException();
-                    if (!item.TryCancel(cancellationToken))
+                    if (!item.TryCancel())
                         item.SetResult((bi, item.Input), cancellationToken);
                 }
             }

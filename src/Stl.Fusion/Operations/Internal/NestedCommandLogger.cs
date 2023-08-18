@@ -5,18 +5,16 @@ namespace Stl.Fusion.Operations.Internal;
 /// operations and logs them into context.Operation().Items
 /// so that invalidation for them could be auto-replayed too.
 /// </summary>
-public class NestedCommandLogger : ICommandHandler<ICommand>
+public class NestedCommandLogger(IServiceProvider services) : ICommandHandler<ICommand>
 {
     private InvalidationInfoProvider? _invalidationInfoProvider;
     private ILogger? _log;
 
-    protected IServiceProvider Services { get; }
-    protected InvalidationInfoProvider InvalidationInfoProvider =>
-        _invalidationInfoProvider ??= Services.GetRequiredService<InvalidationInfoProvider>();
-    protected ILogger Log => _log ??= Services.LogFor(GetType());
+    protected IServiceProvider Services { get; } = services;
 
-    public NestedCommandLogger(IServiceProvider services)
-        => Services = services;
+    protected InvalidationInfoProvider InvalidationInfoProvider
+        => _invalidationInfoProvider ??= Services.GetRequiredService<InvalidationInfoProvider>();
+    protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     [CommandFilter(Priority = FusionOperationsCommandHandlerPriority.NestedCommandLogger)]
     public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)

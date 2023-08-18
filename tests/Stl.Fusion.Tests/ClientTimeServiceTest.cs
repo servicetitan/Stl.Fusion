@@ -1,11 +1,11 @@
-using Stl.Fusion.Bridge;
 using Stl.Fusion.Tests.Services;
+using Stl.Rpc;
 
 namespace Stl.Fusion.Tests;
 
 public class ClientTimeServiceTest : FusionTestBase
 {
-    public ClientTimeServiceTest(ITestOutputHelper @out, FusionTestOptions? options = null) : base(@out, options) { }
+    public ClientTimeServiceTest(ITestOutputHelper @out) : base(@out) { }
 
     private TimeSpan GetEpsilon()
     {
@@ -23,7 +23,7 @@ public class ClientTimeServiceTest : FusionTestBase
         var epsilon = GetEpsilon();
 
         await using var serving = await WebHost.Serve();
-        var client = ClientServices.GetRequiredService<IClientTimeService>();
+        var client = ClientServices.GetRequiredService<ITimeService>();
         var cTime = await Computed.Capture(() => client.GetTime());
 
         cTime.Options.AutoInvalidationDelay.Should().Be(ComputedOptions.Default.AutoInvalidationDelay);
@@ -48,7 +48,7 @@ public class ClientTimeServiceTest : FusionTestBase
             epsilon = epsilon.Multiply(2);
 
         await using var serving = await WebHost.Serve();
-        var service = ClientServices.GetRequiredService<IClientTimeService>();
+        var service = ClientServices.GetRequiredService<ITimeService>();
 
         for (int i = 0; i < 20; i++) {
             var time = await service.GetTime();
@@ -61,12 +61,12 @@ public class ClientTimeServiceTest : FusionTestBase
     public async Task TestFormattedTime()
     {
         await using var serving = await WebHost.Serve();
-        var service = ClientServices.GetRequiredService<IClientTimeService>();
+        var service = ClientServices.GetRequiredService<ITimeService>();
 
         (await service.GetFormattedTime("")).Should().Be("");
-        (await service.GetFormattedTime("null")).Should().Be("");
+        (await service.GetFormattedTime("null")).Should().Be(null);
 
-        var format = "{0}";
+        var format = "{0:s}";
         var matchCount = 0;
         for (int i = 0; i < 20; i++) {
             var time = await service.GetTime();
@@ -81,24 +81,13 @@ public class ClientTimeServiceTest : FusionTestBase
     }
 
     [Fact]
-    public async Task TestNoControllerMethod()
+    public async Task TestNoMethod()
     {
         await using var serving = await WebHost.Serve();
-        var service = ClientServices.GetRequiredService<IClientTimeService>();
+        var service = ClientServices.GetRequiredService<ITimeService>();
 
-        await Assert.ThrowsAsync<ReplicaException>(async () => {
-            await service.GetTimeNoControllerMethod();
-        });
-    }
-
-    [Fact]
-    public async Task TestNoPublication()
-    {
-        await using var serving = await WebHost.Serve();
-        var service = ClientServices.GetRequiredService<IClientTimeService>();
-
-        await Assert.ThrowsAsync<ReplicaException>(async () => {
-            await service.GetTimeNoPublication();
+        await Assert.ThrowsAsync<RpcException>(async () => {
+            await service.GetTimeNoMethod();
         });
     }
 }

@@ -5,6 +5,8 @@ namespace Stl.CommandR;
 
 public abstract class CommandContext : ICommandContext, IHasServices, IAsyncDisposable
 {
+    private static readonly ConcurrentDictionary<Type, Type> CommandContextTypeCache = new();
+
     protected static readonly AsyncLocal<CommandContext?> CurrentLocal = new();
     public static CommandContext? Current => CurrentLocal.Value;
 
@@ -28,8 +30,10 @@ public abstract class CommandContext : ICommandContext, IHasServices, IAsyncDisp
         ICommander commander, ICommand command, bool isOutermost)
     {
         var tCommandResult = command.GetResultType();
-        var tContext = typeof(CommandContext<>).MakeGenericType(tCommandResult);
-        return (CommandContext) tContext.CreateInstance(commander, command, isOutermost);
+        var tContext = CommandContextTypeCache.GetOrAdd(
+            tCommandResult,
+            static t => typeof(CommandContext<>).MakeGenericType(t));
+        return (CommandContext)tContext.CreateInstance(commander, command, isOutermost);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -116,6 +120,7 @@ public sealed class CommandContext<TResult> : CommandContext
         var tCommandResult = command.GetResultType();
         if (tCommandResult != tResult)
             throw Errors.CommandResultTypeMismatch(tResult, tCommandResult);
+
         Command = (ICommand<TResult>) command;
         ResultSource = new TaskCompletionSource<TResult>();
 
@@ -142,15 +147,14 @@ public sealed class CommandContext<TResult> : CommandContext
         try {
             if (ExecutionState.IsFinal)
                 throw Errors.NoFinalHandlerFound(UntypedCommand.GetType());
+
             var handler = ExecutionState.NextHandler;
             ExecutionState = ExecutionState.NextState;
             var handlerTask = handler.Invoke(UntypedCommand, this, cancellationToken);
-            if (handlerTask is Task<TResult> typedHandlerTask) {
+            if (handlerTask is Task<TResult> typedHandlerTask)
                 Result = await typedHandlerTask.ConfigureAwait(false);
-            }
-            else {
+            else
                 await handlerTask.ConfigureAwait(false);
-            }
         }
         catch (Exception ex) {
             SetResult(ex);
@@ -158,8 +162,8 @@ public sealed class CommandContext<TResult> : CommandContext
         }
         // We want to ensure we re-throw any exception even if
         // it wasn't explicitly thrown (i.e. set via SetResult)
-        if (!Result.IsValue(out var v, out var e))
-            ExceptionDispatchInfo.Capture(e).Throw();
+        if (!Result.IsValue(out var value, out var error))
+            ExceptionDispatchInfo.Capture(error).Throw();
     }
 
     public override void ResetResult()

@@ -22,8 +22,10 @@ public interface IOperationReprocessor : ICommandHandler<ICommand>
 
 public record OperationReprocessorOptions
 {
+    public static OperationReprocessorOptions Default { get; set; } = new();
+
     public int MaxRetryCount { get; init; } = 3;
-    public RetryDelaySeq RetryDelays { get; init; } = new(0.50, 3, 0.33) { Multiplier = Math.Sqrt(2) };
+    public RetryDelaySeq RetryDelays { get; init; } = RetryDelaySeq.Exp(0.50, 3, 0.33);
     public IMomentClock? DelayClock { get; init; }
 }
 
@@ -31,30 +33,27 @@ public record OperationReprocessorOptions
 /// Tries to reprocess commands that failed with a reprocessable (transient) error.
 /// Must be a transient service.
 /// </summary>
-public class OperationReprocessor : IOperationReprocessor
+public class OperationReprocessor(
+        OperationReprocessorOptions options,
+        IServiceProvider services
+        ) : IOperationReprocessor
 {
     private ITransientErrorDetector<IOperationReprocessor>? _transientErrorDetector;
     private IMomentClock? _delayClock;
     private ILogger? _log;
 
-    protected IServiceProvider Services { get; }
-    protected ITransientErrorDetector<IOperationReprocessor> TransientErrorDetector => 
-        _transientErrorDetector ??= Services.GetRequiredService<ITransientErrorDetector<IOperationReprocessor>>();
+    protected IServiceProvider Services { get; } = services;
+    protected ITransientErrorDetector<IOperationReprocessor> TransientErrorDetector
+        => _transientErrorDetector ??= Services.GetRequiredService<ITransientErrorDetector<IOperationReprocessor>>();
     protected HashSet<Exception> KnownTransientFailures { get; } = new();
     protected ILogger Log => _log ??= Services.LogFor(GetType());
 
-    public OperationReprocessorOptions Options { get; }
+    public OperationReprocessorOptions Options { get; } = options;
     public IMomentClock DelayClock => _delayClock ??= Options.DelayClock ?? Services.Clocks().CpuClock;
 
     public int FailedTryCount { get; protected set; }
     public Exception? LastError { get; protected set; }
     public CommandContext CommandContext { get; protected set; } = null!;
-
-    public OperationReprocessor(OperationReprocessorOptions options, IServiceProvider services)
-    {
-        Options = options;
-        Services = services;
-    }
 
     public void AddTransientFailure(Exception error)
     {
@@ -84,9 +83,11 @@ public class OperationReprocessor : IOperationReprocessor
     {
         if (FailedTryCount > Options.MaxRetryCount)
             return false;
+
         var operationScope = CommandContext.Items.Get<IOperationScope>();
         if (operationScope is TransientOperationScope)
             return false;
+
         return IsTransientFailure(allErrors);
     }
 
@@ -116,11 +117,11 @@ public class OperationReprocessor : IOperationReprocessor
                 break;
             }
             catch (Exception error) when (error is not OperationCanceledException) {
+                LastError = error;
+                FailedTryCount++;
                 if (!this.WillRetry(error))
                     throw;
 
-                LastError = error;
-                FailedTryCount++;
                 context.Items.Items = itemsBackup;
                 context.ExecutionState = executionStateBackup;
                 var delay = Options.RetryDelays[FailedTryCount];

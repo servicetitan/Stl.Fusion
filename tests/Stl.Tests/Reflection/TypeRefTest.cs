@@ -42,12 +42,21 @@ public class TypeRefTest : TestBase
     }
 
     [Fact]
-    public void TrimAssemblyVersionTest()
+    public void WithoutAssemblyVersionsTest()
     {
-        var r = (TypeRef) typeof(TypeRefTest);
-        var r1 = r.TrimAssemblyVersion();
+        var r = (TypeRef)typeof(TypeRefTest);
+        var r1 = r.WithoutAssemblyVersions();
         r1.AssemblyQualifiedName.Should().Be("Stl.Tests.Reflection.TypeRefTest, Stl.Tests");
         r1.Resolve().Should().Be(typeof(TypeRefTest));
+
+        r = (TypeRef)typeof(Option<int>);
+        r1 = r.WithoutAssemblyVersions();
+#if !NETFRAMEWORK
+        r1.AssemblyQualifiedName.Should().Be("Stl.Option`1[[System.Int32, System.Private.CoreLib]], Stl");
+#else
+        r1.AssemblyQualifiedName.Should().Be("Stl.Option`1[[System.Int32, mscorlib]], Stl");
+#endif
+        r1.Resolve().Should().Be(typeof(Option<int>));
     }
 
 #pragma warning disable RCS1102

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net7.0;net6.0;net5.0;netcoreapp3.1;netstandard2.1;netstandard2.0</TargetFrameworks>
+    <PackageTags>servicetitan stl stl_fusion client</PackageTags>
+    <Description>Client-side components of Stl.Fusion - <!--
+    -->a new implementation of "computed observables" <!--
+    -->designed to power distributed apps. Thread-safe, asynchronous, immutable,  <!--
+    -->and ready to serve replicas of computed instances to remote clients.<!--
+    --></Description>
+    <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
+    <RootNamespace>Stl.Fusion</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Stl.Fusion.EntityFramework\Stl.Fusion.EntityFramework.csproj" />
+    <ProjectReference Include="..\Stl.Fusion.Ext.Contracts\Stl.Fusion.Ext.Contracts.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Stl.Generators\Stl.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup Condition="!$(TargetFramework.StartsWith('netstandard2.0'))">
+    <PackageReference Include="MemoryPack.Generator" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,435 @@
+<#@ template debug="false" hostspecific="true" language="C#" #>
+<#@ output extension=".cs" encoding="utf-8" #>
+<#@ assembly Name="System.Core.dll" #>
+<#@ assembly Name="System.Xml.dll" #>
+<#@ assembly Name="System.Xml.Linq.dll" #>
+<#@ import namespace="System" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Xml.Linq" #>
+<#@ import namespace="System.Linq" #>
+<#
+    const int maxItemCount = 10;
+
+    IEnumerable<int> AllBut(int count, int exceptIndex)
+    {
+        for (var i = 0; i < count; i++)
+            if (i != exceptIndex)
+                yield return i;
+    }
+
+    IEnumerable<int?> AllAnd(int count, int insertIndex)
+    {
+        for (var i = 0; i < count; i++) {
+            if (i == insertIndex)
+                yield return null;
+            yield return i;
+
+        }
+    }
+
+    string ItemList(string format, int count)
+        => RemoveList(format, count, -1);
+
+    string RemoveList(string format, int count, int index)
+        => string.Join(", ", AllBut(count, index).Select(i => string.Format(format, i)));
+
+    string InsertList(string format, int count, int index, string replacement)
+        => string.Join(", ", AllAnd(count, index).Select(i => i.HasValue ? string.Format(format, i) : replacement));
+#>
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable ArrangeConstructorOrDestructorBody
+using Cysharp.Text;
+using System.Reflection.Emit;
+
+namespace Stl.Interception;
+
+#pragma warning disable MA0012
+
+public abstract partial record ArgumentList
+{
+    public static ImmutableArray<Type> Types { get; } = ImmutableArray.Create(new [] {
+        typeof(ArgumentList0),
+<# for (var itemCount = 1; itemCount <= maxItemCount; itemCount++) {
+#>
+        typeof(ArgumentList<<#=ItemList("", itemCount)#>>),
+<# } #>
+    });
+
+<# for (var itemCount = 1; itemCount <= maxItemCount; itemCount++) {
+    var argumentTypes = ItemList("T{0}", itemCount);
+    var argumentDeclaration = ItemList("T{0} item{0}", itemCount);
+    var argumentUsage = ItemList("item{0}", itemCount);
+#>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ArgumentList<<#=argumentTypes#>> New<<#=argumentTypes#>>(<#=argumentDeclaration#>)
+        => new (<#=argumentUsage#>);
+<# } #>
+
+<#
+    for (var t = 0; t < maxItemCount; t++) {
+#>
+    public virtual T Get<#=t#><T>() => throw new IndexOutOfRangeException();
+<#
+    }
+#>
+}
+
+<# for (var itemCount = 1; itemCount <= maxItemCount; itemCount++) {
+       var argumentTypes = ItemList("T{0}", itemCount);
+       var arguments = ItemList("T{0} item{0}", itemCount);
+#>
+public abstract record ArgumentList<#=itemCount#> : ArgumentList
+{
+    protected static Type?[] CreateNonDefaultItemTypes()
+        => new Type?[<#=itemCount#>];
+
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
+    public override int Length => <#=itemCount#>;
+}
+
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public sealed partial record ArgumentList<<#=argumentTypes#>> : ArgumentList<#=itemCount#>
+{
+<# for (var t = 0; t < itemCount; t++) { #>
+    private T<#=t#> _item<#=t#>;
+<# } #>
+
+<# for (var t = 0; t < itemCount; t++) { #>
+    [DataMember(Order = <#=t#>), MemoryPackOrder(<#=t#>)]
+    public T<#=t#> Item<#=t#> { get => _item<#=t#>; init => _item<#=t#> = value; }
+<# } #>
+
+    // Constructors
+
+    public ArgumentList()
+    {
+<#
+    for (var t = 0; t < itemCount; t++) {
+#>
+        _item<#=t#> = default!;
+<#
+    }
+#>
+    }
+
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
+    public ArgumentList(<#=arguments#>)
+    {
+<#
+    for (var t = 0; t < itemCount; t++) {
+#>
+        _item<#=t#> = item<#=t#>;
+<#
+    }
+#>
+    }
+
+    // ToString & ToArray
+
+    public override string ToString()
+    {
+        using var sb = ZString.CreateStringBuilder();
+        sb.Append('(');
+        sb.Append(Item<#=0#>);
+<# for (var t = 1; t < itemCount; t++) { #>
+        sb.Append(", ");
+        sb.Append(Item<#=t#>);
+<# } #>
+        sb.Append(')');
+        return sb.ToString();
+    }
+
+    public override object?[] ToArray()
+        => new object?[] { <# Write(ItemList("Item{0}", itemCount)); #> };
+
+    public override object?[] ToArray(int skipIndex)
+<# if (itemCount == 1) { #>
+        => skipIndex == 0
+            ? Array.Empty<object?>()
+            : throw new ArgumentOutOfRangeException(nameof(skipIndex));
+<# } else { #>
+        => skipIndex switch {
+<# for (var t = 0; t < itemCount; t++) { #>
+            <#=t#> => new object?[] { <# Write(RemoveList("Item{0}", itemCount, t)); #> },
+<# } #>
+            _ => throw new ArgumentOutOfRangeException(nameof(skipIndex))
+        };
+<# } #>
+
+    // GetNonDefaultItemTypes
+
+    public override Type?[]? GetNonDefaultItemTypes() {
+        var itemTypes = (Type?[]?)null;
+        Type? itemType;
+<#
+    for (var t = 0; t < itemCount; t++) {
+#>
+        if (!typeof(T<#=t#>).IsValueType) {
+            itemType = _item<#=t#>?.GetType();
+            if (itemType != null && itemType != typeof(T<#=t#>)) {
+                itemTypes ??= CreateNonDefaultItemTypes();
+                itemTypes[<#=t#>] = itemType;
+            }
+        }
+<#
+    }
+#>
+        return itemTypes;
+    }
+
+    // GetType
+
+    public override Type? GetType(int index)
+        => index switch {
+<# for (var t = 0; t < itemCount; t++) { #>
+            <#=t#> => typeof(T<#=t#>),
+<# } #>
+            _ => null,
+        };
+
+    // Get
+
+<#
+    for (var t = 0; t < itemCount; t++) {
+#>
+    public override T Get<#=t#><T>() => Item<#=t#> is T value ? value : default!;
+<#
+    }
+#>
+
+    public override T Get<T>(int index)
+        => index switch {
+<# for (var t = 0; t < itemCount; t++) { #>
+            <#=t#> => Item<#=t#> is T value ? value : default!,
+<# } #>
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override object? GetUntyped(int index)
+        => index switch {
+<# for (var t = 0; t < itemCount; t++) { #>
+            // ReSharper disable once HeapView.PossibleBoxingAllocation
+            <#=t#> => Item<#=t#>,
+<# } #>
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    public override CancellationToken GetCancellationToken(int index)
+        => index switch {
+<# for (var t = 0; t < itemCount; t++) { #>
+            <#=t#> => Item<#=t#> is CancellationToken value ? value : default!,
+<# } #>
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    // Set
+
+    public override void Set<T>(int index, T value)
+    {
+        switch (index) {
+<# for (var t = 0; t < itemCount; t++) { #>
+        case <#=t#>:
+            _item<#=t#> = value is T<#=t#> item<#=t#> ? item<#=t#> : default!;
+            break;
+<# } #>
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    public override void SetUntyped(int index, object? value)
+    {
+        switch (index) {
+<# for (var t = 0; t < itemCount; t++) { #>
+        case <#=t#>:
+            _item<#=t#> = value is T<#=t#> item<#=t#> ? item<#=t#> : default!;
+            break;
+<# } #>
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    public override void SetCancellationToken(int index, CancellationToken item)
+    {
+        switch (index) {
+<# for (var t = 0; t < itemCount; t++) { #>
+        case <#=t#>:
+            _item<#=t#> = item is T<#=t#> item<#=t#> ? item<#=t#> : default!;
+            break;
+<# } #>
+        default:
+            throw new ArgumentOutOfRangeException(nameof(index));
+        }
+    }
+
+    // SetFrom
+
+    public override void SetFrom(ArgumentList other)
+    {
+<#
+    for (var t = 0; t < itemCount; t++) {
+#>
+        _item<#=t#> = other.Get<#=t#><T<#=t#>>();
+<#
+    }
+#>
+    }
+
+    // Insert
+
+    public override ArgumentList Insert<T>(int index, T item)
+<# if (itemCount == maxItemCount) { #>
+        => throw new ArgumentOutOfRangeException(nameof(index));
+<# } else { #>
+        => index switch {
+<# for (var t = 0; t < itemCount; t++) { #>
+            <#=t#> => New(<# Write(InsertList("Item{0}", itemCount, t, "item")); #>),
+<# }#>
+            <#=itemCount#> => New(<# Write(ItemList("Item{0}", itemCount)); #>, item),
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+<# }#>
+
+    public override ArgumentList InsertCancellationToken(int index, CancellationToken item)
+<# if (itemCount == maxItemCount) { #>
+        => throw new ArgumentOutOfRangeException(nameof(index));
+<# } else { #>
+        => index switch {
+<# for (var t = 0; t < itemCount; t++) { #>
+            <#=t#> => New(<# Write(InsertList("Item{0}", itemCount, t, "item")); #>),
+<# }#>
+            <#=itemCount#> => New(<# Write(ItemList("Item{0}", itemCount)); #>, item),
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+<# }#>
+
+    // Remove
+
+    public override ArgumentList Remove(int index)
+        => index switch {
+<# for (var t = 0; t < itemCount; t++) { #>
+            <#=t#> => New(<# Write(RemoveList("Item{0}", itemCount, t)); #>),
+<# } #>
+            _ => throw new ArgumentOutOfRangeException(nameof(index))
+        };
+
+    // GetInvoker
+
+    public override Func<object, ArgumentList, object?> GetInvoker(MethodInfo method)
+        => InvokerCache.GetOrAdd((GetType(), method), static key => {
+            var (listType, method1) = key;
+            var parameters = method1.GetParameters();
+            if (parameters.Length != <#=itemCount#>)
+                throw new ArgumentOutOfRangeException(nameof(method));
+<# for (var t = 0; t < itemCount; t++) { #>
+            if (parameters[<#=t#>].ParameterType != typeof(T<#=t#>))
+                throw new ArgumentOutOfRangeException(nameof(method));
+<# } #>
+
+            var declaringType = method1.DeclaringType!;
+            var m = new DynamicMethod("_Invoke",
+                typeof(object),
+                new [] { typeof(object), typeof(ArgumentList) },
+                true);
+            var il = m.GetILGenerator();
+
+            // Cast ArgumentList to its actual type
+            il.DeclareLocal(listType);
+            il.Emit(OpCodes.Ldarg_1);
+            il.Emit(OpCodes.Castclass, listType);
+            il.Emit(OpCodes.Stloc_0);
+
+            // Unbox target
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(declaringType.IsValueType ? OpCodes.Unbox_Any : OpCodes.Castclass, declaringType);
+
+<# for (var t = 0; t < itemCount; t++) { #>
+            il.Emit(OpCodes.Ldloc_0);
+            il.Emit(OpCodes.Call, listType.GetProperty("Item<#=t#>")!.GetGetMethod()!);
+<# } #>
+
+            // Call method
+            il.Emit(OpCodes.Callvirt, method1);
+
+            // Box return type
+            if (method1.ReturnType == typeof(void))
+                il.Emit(OpCodes.Ldnull);
+            else if (method1.ReturnType.IsValueType)
+                il.Emit(OpCodes.Box, method1.ReturnType);
+            il.Emit(OpCodes.Ret);
+            return (Func<object, ArgumentList, object?>)m.CreateDelegate(typeof(Func<object, ArgumentList, object?>));
+        });
+
+    public override void Read(ArgumentListReader reader)
+    {
+<# for (var t = 0; t < itemCount; t++) { #>
+        if (typeof(T<#=t#>).IsValueType)
+            reader.OnStruct(_item<#=t#>, <#=t#>);
+        else
+            reader.OnObject(typeof(T<#=t#>), _item<#=t#>, <#=t#>);
+<# } #>
+    }
+
+    public override void Write(ArgumentListWriter writer)
+    {
+<# for (var t = 0; t < itemCount; t++) { #>
+        if (typeof(T<#=t#>).IsValueType)
+            _item<#=t#> = writer.OnStruct<T<#=t#>>(<#=t#>);
+        else
+            _item<#=t#> = (T<#=t#>)writer.OnObject(typeof(T<#=t#>), <#=t#>)!;
+<# } #>
+    }
+
+    // Equality
+
+    public bool Equals(ArgumentList<<#=argumentTypes#>>? other)
+    {
+        if (other == null)
+            return false;
+
+<# for (var t = itemCount - 1; t >= 0; t--) { #>
+        if (!EqualityComparer<T<#=t#>>.Default.Equals(Item<#=t#>, other.Item<#=t#>))
+            return false;
+<# } #>
+        return true;
+    }
+
+    public override bool Equals(ArgumentList? other, int skipIndex)
+    {
+        if (other is not ArgumentList<<#=argumentTypes#>> vOther)
+            return false;
+
+<# for (var t = itemCount - 1; t >= 0; t--) { #>
+        if (skipIndex != <#=t#> && !EqualityComparer<T<#=t#>>.Default.Equals(Item<#=t#>, vOther.Item<#=t#>))
+            return false;
+<# } #>
+        return true;
+    }
+
+    public override int GetHashCode()
+    {
+        unchecked {
+            var hashCode = EqualityComparer<T0>.Default.GetHashCode(Item0!);
+<# for (var t = 1; t < itemCount; t++) { #>
+            hashCode = 397*hashCode + EqualityComparer<T<#=t#>>.Default.GetHashCode(Item<#=t#>!);
+<# } #>
+            return hashCode;
+        }
+    }
+
+    public override int GetHashCode(int skipIndex)
+    {
+        unchecked {
+            var hashCode = skipIndex == 0 ? 0 : EqualityComparer<T0>.Default.GetHashCode(Item0!);
+<# for (var t = 1; t < itemCount; t++) { #>
+            hashCode = 397*hashCode + (skipIndex == <#=t#> ? 0 : EqualityComparer<T<#=t#>>.Default.GetHashCode(Item<#=t#>!));
+<# } #>
+            return hashCode;
+        }
+    }
+}
+
+<# } #>

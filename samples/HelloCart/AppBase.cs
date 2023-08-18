@@ -4,26 +4,23 @@ namespace Samples.HelloCart;
 
 public abstract class AppBase
 {
-    public IServiceProvider HostServices { get; protected set; } = null!;
-    public IProductService HostProductService => HostServices.GetRequiredService<IProductService>();
-    public ICartService HostCartService => HostServices.GetRequiredService<ICartService>();
-
+    public IServiceProvider ServerServices { get; protected set; } = null!;
     public IServiceProvider ClientServices { get; protected set; } = null!;
-    public IProductService ClientProductService => ClientServices.GetRequiredService<IProductService>();
-    public ICartService ClientCartService => ClientServices.GetRequiredService<ICartService>();
+    public virtual IServiceProvider WatchedServices => ClientServices;
 
     public Product[] ExistingProducts { get; set; } = Array.Empty<Product>();
     public Cart[] ExistingCarts { get; set; } = Array.Empty<Cart>();
-    public virtual IServiceProvider WatchServices => ClientServices;
 
-    public virtual async Task InitializeAsync()
+    public virtual async Task InitializeAsync(IServiceProvider services)
     {
+        var commander = services.Commander();
+
         var pApple = new Product { Id = "apple", Price = 2M };
         var pBanana = new Product { Id = "banana", Price = 0.5M };
         var pCarrot = new Product { Id = "carrot", Price = 1M };
         ExistingProducts = new [] { pApple, pBanana, pCarrot };
         foreach (var product in ExistingProducts)
-            await HostProductService.Edit(new EditCommand<Product>(product));
+            await commander.Call(new EditCommand<Product>(product));
 
         var cart1 = new Cart() { Id = "cart:apple=1,banana=2",
             Items = ImmutableDictionary<string, decimal>.Empty
@@ -37,30 +34,31 @@ public abstract class AppBase
         };
         ExistingCarts = new [] { cart1, cart2 };
         foreach (var cart in ExistingCarts)
-            await HostCartService.Edit(new EditCommand<Cart>(cart));
+            await commander.Call(new EditCommand<Cart>(cart));
     }
 
     public virtual async ValueTask DisposeAsync()
     {
         if (ClientServices is IAsyncDisposable csd)
             await csd.DisposeAsync();
-        if (HostServices is IAsyncDisposable sd)
+        if (ServerServices is IAsyncDisposable sd)
             await sd.DisposeAsync();
     }
 
-    public Task Watch(CancellationToken cancellationToken = default)
+    public Task Watch(IServiceProvider services, CancellationToken cancellationToken = default)
     {
         var tasks = new List<Task>();
         foreach (var product in ExistingProducts)
-            tasks.Add(WatchProduct(product.Id, cancellationToken));
+            tasks.Add(WatchProduct(services, product.Id, cancellationToken));
         foreach (var cart in ExistingCarts)
-            tasks.Add(WatchCartTotal(cart.Id, cancellationToken));
+            tasks.Add(WatchCartTotal(services, cart.Id, cancellationToken));
         return Task.WhenAll(tasks);
     }
 
-    public async Task WatchProduct(string productId, CancellationToken cancellationToken = default)
+    public async Task WatchProduct(
+        IServiceProvider services, string productId, CancellationToken cancellationToken = default)
     {
-        var productService = WatchServices.GetRequiredService<IProductService>();
+        var productService = services.GetRequiredService<IProductService>();
         var computed = await Computed.Capture(() => productService.Get(productId, cancellationToken));
         while (true) {
             WriteLine($"  {computed.Value}");
@@ -69,9 +67,10 @@ public abstract class AppBase
         }
     }
 
-    public async Task WatchCartTotal(string cartId, CancellationToken cancellationToken = default)
+    public async Task WatchCartTotal(
+        IServiceProvider services, string cartId, CancellationToken cancellationToken = default)
     {
-        var cartService = WatchServices.GetRequiredService<ICartService>();
+        var cartService = services.GetRequiredService<ICartService>();
         var computed = await Computed.Capture(() => cartService.GetTotal(cartId, cancellationToken));
         while (true) {
             WriteLine($"  {cartId}: total = {computed.Value}");

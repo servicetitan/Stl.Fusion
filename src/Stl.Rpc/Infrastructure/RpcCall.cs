@@ -1,25 +1,22 @@
-using Stl.Interception;
-using Stl.Rpc.Internal;
-
 #if NET7_0_OR_GREATER
 using System.Globalization;
 #endif
 
 namespace Stl.Rpc.Infrastructure;
 
-public interface IRpcCall
+public abstract class RpcCall
 {
-    RpcMethodDef MethodDef { get; }
-    RpcServiceDef ServiceDef { get; }
-    RpcHub Hub { get; }
-}
+    protected object Lock => this;
 
-public abstract class RpcCall : IRpcCall
-{
-    public RpcMethodDef MethodDef { get; }
-    public RpcServiceDef ServiceDef => MethodDef.Service;
+    public readonly RpcMethodDef MethodDef;
     public RpcHub Hub => MethodDef.Hub;
+    public RpcServiceDef ServiceDef => MethodDef.Service;
+    public long Id;
+    public readonly bool NoWait; // Copying it here just b/c it's frequently accessed
 
     protected RpcCall(RpcMethodDef methodDef)
-        => MethodDef = methodDef;
+    {
+        MethodDef = methodDef;
+        NoWait = methodDef.NoWait;
+    }
 }

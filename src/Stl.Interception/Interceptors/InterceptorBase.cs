@@ -35,16 +35,16 @@ public abstract class InterceptorBase : Interceptor, IHasServices
     public bool IsValidationEnabled { get; }
     public IServiceProvider Services { get; }
 
-    protected InterceptorBase(Options options, IServiceProvider services)
+    protected InterceptorBase(Options settings, IServiceProvider services)
     {
         Services = services;
-        LogLevel = options.LogLevel;
-        ValidationLogLevel = options.ValidationLogLevel;
-        IsValidationEnabled = options.IsValidationEnabled;
+        LogLevel = settings.LogLevel;
+        ValidationLogLevel = settings.ValidationLogLevel;
+        IsValidationEnabled = settings.IsValidationEnabled;
 
         Log = Services.LogFor(GetType());
-        DefaultLog = Log.IfEnabled(options.LogLevel);
-        ValidationLog = Log.IfEnabled(options.ValidationLogLevel);
+        DefaultLog = Log.IfEnabled(settings.LogLevel);
+        ValidationLog = Log.IfEnabled(settings.ValidationLogLevel);
 
         _createHandlerUntyped = CreateHandlerUntyped;
         _createMethodDef = CreateMethodDef;
@@ -95,7 +95,7 @@ public abstract class InterceptorBase : Interceptor, IHasServices
         if (methodDef == null)
             return null;
 
-        return (Func<Invocation, object?>) CreateTypedHandlerMethod
+        return (Func<Invocation, object?>)CreateTypedHandlerMethod
             .MakeGenericMethod(methodDef.UnwrappedReturnType)
             .Invoke(this, new object[] { initialInvocation, methodDef })!;
     }

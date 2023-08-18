@@ -1,33 +1,64 @@
 @using Stl
-@inherits ComputedStateComponent<ImmutableList<(string Backend, Exception Error)>>
+@using Stl.DependencyInjection
+@using Stl.Fusion.Internal
+@using Stl.Rpc
+@inherits ComputedStateComponent<RpcPeerState?>
 @inject Session Session
-@inject BackendStatus BackendStatus
 
 @{
-    var errors = State.ValueOrDefault ?? ImmutableList<(string Backend, Exception Error)>.Empty;
+    var state = State.ValueOrDefault;
+    var isDisconnected = !(state?.IsConnected ?? true);
+    var message = state == null
+        ? "Connecting..."
+        : isDisconnected
+            ? state.Error?.Message ?? "Unknown error."
+            : "Connected.";
+    var iconName = isDisconnected
+        ? FontAwesomeIcons.ExclamationTriangle
+        : FontAwesomeIcons.Cloud;
+    var textColor = isDisconnected
+        ? TextColor.Warning
+        : TextColor.Default;
 }
 
-@if (errors.Any()) {
-    <BarItem>
-        <BarDropdown Class="@CssClass">
-            <BarDropdownToggle>
-                <BarIcon IconName="@FontAwesomeIcons.ExclamationTriangle" TextColor="TextColor.Danger"></BarIcon>
-            </BarDropdownToggle>
-            <BarDropdownMenu RightAligned="true">
-                @foreach (var (backend, error) in errors) {
-                    <BarDropdownItem TextColor="TextColor.Danger">
-                        <b>@backend:</b> @(error.Message.NullIfEmpty() ?? "Unknown error")
-                    </BarDropdownItem>
+<BarItem>
+    <BarDropdown Class="@CssClass" RightAligned="true">
+        <BarDropdownToggle>
+            <BarIcon IconName="@iconName" TextColor="@textColor"></BarIcon>
+        </BarDropdownToggle>
+        <BarDropdownMenu>
+            <BarDropdownItem TextColor="@textColor">
+                <span>@message</span>
+                @if (state?.ReconnectsAt is { } reconnectsAt) {
+                    <span> Will reconnect <TimerBadge ExpiresAt="reconnectsAt"/>. </span>
+                    <Button Color="Color.Success" Clicked="@TryReconnect">Reconnect</Button>
                 }
-            </BarDropdownMenu>
-        </BarDropdown>
-    </BarItem>
-}
+            </BarDropdownItem>
+        </BarDropdownMenu>
+    </BarDropdown>
+</BarItem>
 
 @code {
+    private RpcPeerStateMonitor? _monitor;
+
     [Parameter]
     public string CssClass { get; set; } = "";
 
-    protected override Task<ImmutableList<(string Backend, Exception Error)>> ComputeState(CancellationToken cancellationToken)
-        => BackendStatus.GetAllErrors(Session, cancellationToken);
+    protected override void OnInitialized()
+    {
+        _monitor = Services.GetService<RpcPeerStateMonitor>();
+        _monitor?.Start();
+        base.OnInitialized();
+    }
+
+    protected override async Task<RpcPeerState?> ComputeState(CancellationToken cancellationToken)
+    {
+        if (_monitor == null)
+            return null;
+
+        return await _monitor.State.Use(cancellationToken).ConfigureAwait(false);
+    }
+
+    private void TryReconnect()
+        => Services.RpcHub().InternalServices.ClientPeerReconnectDelayer.CancelDelays();
 }

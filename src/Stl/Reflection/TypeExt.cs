@@ -74,6 +74,21 @@ public static partial class TypeExt
         yield return typeof(object);
     }
 
+    public static IEnumerable<MethodInfo> GetAllInterfaceMethods(this Type type,
+        BindingFlags bindingFlags,
+        Func<Type, bool>? interfaceFilter = null)
+    {
+        if (!type.IsInterface)
+            yield break;
+
+        var baseTypes = type.GetAllBaseTypes(true, true);
+        if (interfaceFilter != null)
+            baseTypes = baseTypes.Where(interfaceFilter);
+        foreach (var baseType in baseTypes)
+            foreach (var method in baseType.GetMethods(bindingFlags))
+                yield return method;
+    }
+
     public static bool MayCastSucceed(this Type castFrom, Type castTo)
     {
         if (castTo.IsSealed || castTo.IsValueType)

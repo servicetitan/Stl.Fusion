@@ -9,16 +9,10 @@ public interface IPluginHost : IServiceProvider, IAsyncDisposable, IDisposable
     IServiceProvider Services { get; }
 }
 
-public class PluginHost : IPluginHost
+public class PluginHost(IServiceProvider services) : IPluginHost
 {
-    public PluginSetInfo FoundPlugins { get; }
-    public IServiceProvider Services { get; }
-
-    public PluginHost(IServiceProvider services)
-    {
-        Services = services;
-        FoundPlugins = services.GetRequiredService<PluginSetInfo>();
-    }
+    public IServiceProvider Services { get; } = services;
+    public PluginSetInfo FoundPlugins { get; } = services.GetRequiredService<PluginSetInfo>();
 
     public virtual ValueTask DisposeAsync()
         => Services is IAsyncDisposable ad

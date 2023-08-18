@@ -6,7 +6,6 @@ using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.EntityFramework.Operations;
 using Stl.Multitenancy;
 using Stl.Locking;
-using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework;
 
@@ -31,7 +30,6 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
         public IsolationLevel DefaultIsolationLevel { get; init; } = IsolationLevel.Unspecified;
     }
 
-    private bool _isInMemoryProvider;
     private Tenant _tenant = Tenant.Default;
 
     public Options Settings { get; protected init; }
@@ -54,7 +52,8 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
         protected set {
             if (_tenant == value)
                 return;
-            _tenant = !IsUsed ? value : throw Errors.TenantPropertyIsReadOnly();
+
+            _tenant = !IsUsed ? value : throw Errors.TenantCannotBeChanged();
         }
     }
 
@@ -97,7 +96,6 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
         }
         finally {
             IsClosed = true;
-            SilentDispose(Transaction);
             SilentDispose(MasterDbContext);
         }
 
@@ -123,41 +121,22 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
         Tenant = tenant;
         if (IsClosed)
             throw Stl.Fusion.Operations.Internal.Errors.OperationScopeIsAlreadyClosed();
-        if (MasterDbContext == null) {
-            // Creating MasterDbContext
-            CommandContext.Items.Replace<IOperationScope?>(null, this);
-            var masterDbContext = DbContextFactory.CreateDbContext(Tenant).ReadWrite();
-#if NET7_0_OR_GREATER
-            masterDbContext.Database.AutoTransactionBehavior = AutoTransactionBehavior.Never;
+
+        if (MasterDbContext == null)
+            await CreateMasterDbContext(cancellationToken).ConfigureAwait(false);
+
+        var database = dbContext.Database;
+        database.DisableAutoTransactionsAndSavepoints();
+        if (Connection != null) {
+            var oldConnection = database.GetDbConnection();
+            dbContext.SuppressDispose();
+            database.SetDbConnection(Connection);
+            await database.UseTransactionAsync(Transaction!.GetDbTransaction(), cancellationToken).ConfigureAwait(false);
+#if !NETSTANDARD2_0
+            await oldConnection.DisposeAsync().ConfigureAwait(false);
 #else
-            masterDbContext.Database.AutoTransactionsEnabled = false;
+            oldConnection.Dispose();
 #endif
-#if NET6_0_OR_GREATER
-            masterDbContext.Database.AutoSavepointsEnabled = false;
-#endif
-            await BeginTransaction(masterDbContext, cancellationToken).ConfigureAwait(false);
-            _isInMemoryProvider = (masterDbContext.Database.ProviderName ?? "")
-                .EndsWith(".InMemory", StringComparison.Ordinal);
-            if (!_isInMemoryProvider) {
-                Connection = masterDbContext.Database.GetDbConnection();
-                if (Connection == null)
-                    throw Stl.Internal.Errors.InternalError("No DbConnection.");
-            }
-            MasterDbContext = masterDbContext;
-        }
-        // Initializing DbContext, which is going to share MasterDbContext's transaction
-#if NET7_0_OR_GREATER
-        dbContext.Database.AutoTransactionBehavior = AutoTransactionBehavior.Never;
-#else
-        dbContext.Database.AutoTransactionsEnabled = false;
-#endif
-#if NET6_0_OR_GREATER
-        dbContext.Database.AutoSavepointsEnabled = false;
-#endif
-        if (!_isInMemoryProvider) {
-            dbContext.StopPooling();
-            dbContext.Database.SetDbConnection(Connection);
-            await dbContext.Database.UseTransactionAsync(Transaction!.GetDbTransaction(), cancellationToken).ConfigureAwait(false);
         }
         CommandContext.SetOperation(Operation);
         return dbContext;
@@ -180,15 +159,16 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
             Operation.CommitTime = Clocks.SystemClock.Now;
             if (Operation.Command == null)
                 throw Stl.Fusion.Operations.Internal.Errors.OperationHasNoCommand();
-            var masterDbContext = MasterDbContext!;
-            masterDbContext.DisableChangeTracking(); // Just to speed up things a bit
+
+            var dbContext = MasterDbContext!;
+            dbContext.EnableChangeTracking(false); // Just to speed up things a bit
             var operation = await DbOperationLog
-                .Add(masterDbContext, Operation, cancellationToken)
+                .Add(dbContext, Operation, cancellationToken)
                 .ConfigureAwait(false);
             try {
                 await Transaction!.CommitAsync(cancellationToken).ConfigureAwait(false);
                 IsConfirmed = true;
-                Log.LogDebug("Transaction #{TransactionId}: committed", TransactionId);
+                Log.IfEnabled(LogLevel.Debug)?.LogDebug("Transaction #{TransactionId}: committed", TransactionId);
             }
             catch (Exception) {
                 // See https://docs.microsoft.com/en-us/ef/ef6/fundamentals/connection-resiliency/commit-failures
@@ -226,15 +206,17 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
         if (IsClosed) {
             if (IsConfirmed == false)
                 return;
+
             throw Stl.Fusion.Operations.Internal.Errors.OperationScopeIsAlreadyClosed();
         }
         try {
             if (!IsUsed)
                 return;
+
             await Transaction!.RollbackAsync().ConfigureAwait(false);
         }
         finally {
-            Log.LogDebug("Transaction #{TransactionId}: rolled back", TransactionId);
+            Log.IfEnabled(LogLevel.Debug)?.LogDebug("Transaction #{TransactionId}: rolled back", TransactionId);
             IsConfirmed ??= false;
             IsClosed = true;
         }
@@ -275,8 +257,12 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
 
     // Protected methods
 
-    protected virtual async Task BeginTransaction(TDbContext dbContext, CancellationToken cancellationToken)
+    protected virtual async Task CreateMasterDbContext(CancellationToken cancellationToken)
     {
+        var dbContext = DbContextFactory.CreateDbContext(Tenant).ReadWrite();
+        var database = dbContext.Database;
+        database.DisableAutoTransactionsAndSavepoints();
+
         var commandContext = CommandContext;
         // 1. If IsolationLevel is set explicitly, we honor it
         var isolationLevel = IsolationLevel;
@@ -304,11 +290,20 @@ public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperatio
 
         ready:
         IsolationLevel = isolationLevel;
-        Transaction = await dbContext.Database
+        Transaction = await database
             .BeginTransactionAsync(isolationLevel, cancellationToken)
             .ConfigureAwait(false);
         TransactionId = TransactionIdGenerator.Next();
-        Log.LogDebug("Transaction #{TransactionId}: started @ IsolationLevel = {IsolationLevel}",
+        if (!database.IsInMemory()) {
+            Connection = database.GetDbConnection();
+            if (Connection == null)
+                throw Stl.Internal.Errors.InternalError("No DbConnection.");
+        }
+        MasterDbContext = dbContext;
+        CommandContext.Items.Replace<IOperationScope?>(null, this);
+
+        Log.IfEnabled(LogLevel.Debug)?.LogDebug(
+            "Transaction #{TransactionId}: started @ IsolationLevel = {IsolationLevel}",
             TransactionId, isolationLevel);
     }
 }
