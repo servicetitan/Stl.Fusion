@@ -37,12 +37,12 @@ So what DREAM means?
   marks the cached result for some specific call (e.g. `GetUser(3)`) as
   *inconsistent with the ground truth*, which guarantees it will be 
   recomputed on the next *actual* (non-invalidating) call.
-  Suprisingly, invalidation is *cascading*: 
+  The invalidation is *cascading*: 
   if `GetUserPic("user@gmail.com")` calls `GetUser(3)`, its result will be invalidated 
   as well in this case, and the same will happen with every other computed
   result that depends on `GetUser(3)` directly or indirectly.
-  This means Fusion tracks dependencies between cached computation results;
-  the dependency graph is built and updated in the runtime, and this process
+  This means Fusion tracks data dependencies between cached results;
+  the dependency graph is built and updated in real-time, and this process
   is completely transparent for the developers.
 - The dependency graph can be 
   **[Distributed](https://en.wikipedia.org/wiki/Distributed_computing)**:
