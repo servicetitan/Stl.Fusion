@@ -2,7 +2,7 @@ namespace Stl.Net;
 
 public class RetryDelayer : IRetryDelayer
 {
-    private CancellationTokenSource _cancelDelaysCts = new();
+    private CancellationTokenSource _cancelDelaysCts;
     private CancellationToken _cancelDelaysToken;
 
     protected object Lock = new();
@@ -16,6 +16,12 @@ public class RetryDelayer : IRetryDelayer
             lock (Lock)
                 return _cancelDelaysToken;
         }
+    }
+
+    public RetryDelayer()
+    {
+        _cancelDelaysCts = new();
+        _cancelDelaysToken = _cancelDelaysCts.Token;
     }
 
     public virtual RetryDelay GetDelay(int tryIndex, CancellationToken cancellationToken = default)
