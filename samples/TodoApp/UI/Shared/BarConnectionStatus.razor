@@ -1,22 +1,20 @@
-@using Stl
-@using Stl.DependencyInjection
-@using Stl.Fusion.Internal
 @using Stl.Rpc
 @inherits ComputedStateComponent<RpcPeerState?>
-@inject Session Session
+@inject RpcClientPeerReconnectDelayer RpcClientPeerReconnectDelayer
 
 @{
-    var state = State.ValueOrDefault;
-    var isDisconnected = !(state?.IsConnected ?? true);
-    var message = state == null
-        ? "Connecting..."
-        : isDisconnected
-            ? state.Error?.Message ?? "Unknown error."
-            : "Connected.";
-    var iconName = isDisconnected
+    var m = State.ValueOrDefault ?? new RpcPeerState(true);
+    var isReconnecting = !m.IsConnected
+        && m.ReconnectsAt <= RpcClientPeerReconnectDelayer.Clock.Now;
+    var message = m.IsConnected
+        ? "Connected."
+        : m.Error?.Message.Trim() ?? "Unknown error.";
+    if (!message.EndsWith(".") && !message.EndsWith("!") && !message.EndsWith("?"))
+        message += ".";
+    var iconName = m.IsConnected == false
         ? FontAwesomeIcons.ExclamationTriangle
         : FontAwesomeIcons.Cloud;
-    var textColor = isDisconnected
+    var textColor = m.IsConnected == false
         ? TextColor.Warning
         : TextColor.Default;
 }
@@ -29,9 +27,14 @@
         <BarDropdownMenu>
             <BarDropdownItem TextColor="@textColor">
                 <span>@message</span>
-                @if (state?.ReconnectsAt is { } reconnectsAt) {
-                    <span> Will reconnect <TimerBadge ExpiresAt="reconnectsAt"/>. </span>
-                    <Button Color="Color.Success" Clicked="@TryReconnect">Reconnect</Button>
+                @if (!m.IsConnected) {
+                    if (isReconnecting) {
+                        <span> Reconnecting... </span>
+                    }
+                    else {
+                        <span> Will reconnect <TimerBadge ExpiresAt="m.ReconnectsAt"/>. </span>
+                        <Button Color="Color.Success" Clicked="@TryReconnect">Reconnect</Button>
+                    }
                 }
             </BarDropdownItem>
         </BarDropdownMenu>
