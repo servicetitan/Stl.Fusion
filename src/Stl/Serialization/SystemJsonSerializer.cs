@@ -5,12 +5,12 @@ namespace Stl.Serialization;
 
 public class SystemJsonSerializer : TextSerializerBase
 {
-    public static readonly JsonSerializerOptions PrettyOptions = new() { WriteIndented = true };
-    public static readonly JsonSerializerOptions DefaultOptions = new() {
+    public static JsonSerializerOptions PrettyOptions { get; set; } = new() { WriteIndented = true };
+    public static JsonSerializerOptions DefaultOptions { get; set; } = new() {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
-    public static readonly SystemJsonSerializer Pretty = new(PrettyOptions);
-    public static readonly SystemJsonSerializer Default = new(DefaultOptions);
+    public static SystemJsonSerializer Pretty { get; set; } = new(PrettyOptions);
+    public static SystemJsonSerializer Default { get; set; } = new(DefaultOptions);
 
     public JsonSerializerOptions Options { get; }
 

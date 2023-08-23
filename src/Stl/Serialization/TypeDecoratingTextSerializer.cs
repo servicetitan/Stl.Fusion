@@ -5,8 +5,7 @@ namespace Stl.Serialization;
 
 public class TypeDecoratingTextSerializer : TextSerializerBase
 {
-    public static TypeDecoratingTextSerializer Default { get; } =
-        new(SystemJsonSerializer.Default);
+    public static TypeDecoratingTextSerializer Default { get; set; } = new(SystemJsonSerializer.Default);
 
     private readonly ISerializationBinder _serializationBinder;
 

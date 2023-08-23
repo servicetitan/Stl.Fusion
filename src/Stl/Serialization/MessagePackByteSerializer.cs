@@ -8,9 +8,9 @@ public class MessagePackByteSerializer(MessagePackSerializerOptions options) : I
 {
     private readonly ConcurrentDictionary<Type, MessagePackByteSerializer> _typedSerializers = new();
 
-    public static readonly IFormatterResolver DefaultResolver = DefaultMessagePackResolver.Instance;
-    public static readonly MessagePackSerializerOptions DefaultOptions = new(DefaultResolver);
-    public static readonly MessagePackByteSerializer Default = new(DefaultOptions);
+    public static IFormatterResolver DefaultResolver { get; set; } = DefaultMessagePackResolver.Instance;
+    public static MessagePackSerializerOptions DefaultOptions { get; set; } = new(DefaultResolver);
+    public static MessagePackByteSerializer Default { get; set; } = new(DefaultOptions);
 
     public MessagePackSerializerOptions Options { get; } = options;
 
@@ -49,13 +49,10 @@ public class MessagePackByteSerializer(MessagePackSerializerOptions options) : I
             this);
 }
 
-public class MessagePackByteSerializer<T> : MessagePackByteSerializer, IByteSerializer<T>
+public class MessagePackByteSerializer<T>(MessagePackSerializerOptions options, Type serializedType)
+    : MessagePackByteSerializer(options), IByteSerializer<T>
 {
-    public Type SerializedType { get; }
-
-    public MessagePackByteSerializer(MessagePackSerializerOptions options, Type serializedType)
-        : base(options)
-        => SerializedType = serializedType;
+    public Type SerializedType { get; } = serializedType;
 
     public override object? Read(ReadOnlyMemory<byte> data, Type type, out int readLength)
     {

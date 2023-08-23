@@ -3,19 +3,13 @@ using Stl.Serialization.Internal;
 
 namespace Stl.Serialization;
 
-public class TypeDecoratingByteSerializer : ByteSerializerBase
+public class TypeDecoratingByteSerializer(IByteSerializer serializer, Func<Type, bool>? typeFilter = null)
+    : ByteSerializerBase
 {
-    public static TypeDecoratingByteSerializer Default { get; } =
-        new(ByteSerializer.Default);
+    public static TypeDecoratingByteSerializer Default { get; set; } = new(ByteSerializer.Default);
 
-    public IByteSerializer Serializer { get; }
-    public Func<Type, bool> TypeFilter { get; }
-
-    public TypeDecoratingByteSerializer(IByteSerializer serializer, Func<Type, bool>? typeFilter = null)
-    {
-        Serializer = serializer;
-        TypeFilter = typeFilter ?? (_ => true);
-    }
+    public IByteSerializer Serializer { get; } = serializer;
+    public Func<Type, bool> TypeFilter { get; } = typeFilter ?? (_ => true);
 
     public override object? Read(ReadOnlyMemory<byte> data, Type type, out int readLength)
     {

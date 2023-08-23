@@ -2,16 +2,10 @@ using System.Buffers;
 
 namespace Stl.Serialization.Internal;
 
-public sealed class AsymmetricByteSerializer : IByteSerializer
+public sealed class AsymmetricByteSerializer(IByteSerializer reader, IByteSerializer writer) : IByteSerializer
 {
-    public IByteSerializer Reader { get; }
-    public IByteSerializer Writer { get; }
-
-    public AsymmetricByteSerializer(IByteSerializer reader, IByteSerializer writer)
-    {
-        Reader = reader;
-        Writer = writer;
-    }
+    public IByteSerializer Reader { get; } = reader;
+    public IByteSerializer Writer { get; } = writer;
 
     public IByteSerializer<T> ToTyped<T>(Type? serializedType = null)
         => new AsymmetricByteSerializer<T>(

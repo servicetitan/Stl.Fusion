@@ -11,8 +11,8 @@ public class MemoryPackByteSerializer(MemoryPackSerializerOptions options) : IBy
 {
     private readonly ConcurrentDictionary<Type, MemoryPackByteSerializer> _typedSerializers = new();
 
-    public static readonly MemoryPackSerializerOptions DefaultOptions = MemoryPackSerializerOptions.Default;
-    public static readonly MemoryPackByteSerializer Default = new(DefaultOptions);
+    public static MemoryPackSerializerOptions DefaultOptions { get; set; } = MemoryPackSerializerOptions.Default;
+    public static MemoryPackByteSerializer Default { get; set; } = new(DefaultOptions);
 
     public MemoryPackSerializerOptions Options { get; } = options;
 
@@ -51,13 +51,10 @@ public class MemoryPackByteSerializer(MemoryPackSerializerOptions options) : IBy
             this);
 }
 
-public class MemoryPackByteSerializer<T> : MemoryPackByteSerializer, IByteSerializer<T>
+public class MemoryPackByteSerializer<T>(MemoryPackSerializerOptions options, Type serializedType)
+    : MemoryPackByteSerializer(options), IByteSerializer<T>
 {
-    public Type SerializedType { get; }
-
-    public MemoryPackByteSerializer(MemoryPackSerializerOptions options, Type serializedType)
-        : base(options)
-        => SerializedType = serializedType;
+    public Type SerializedType { get; } = serializedType;
 
     public override object? Read(ReadOnlyMemory<byte> data, Type type, out int readLength)
     {
