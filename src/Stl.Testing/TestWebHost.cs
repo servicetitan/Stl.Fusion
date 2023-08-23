@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 #else
 using Owin;
+using System.Net.Http;
 using System.Web.Http;
 #endif
 

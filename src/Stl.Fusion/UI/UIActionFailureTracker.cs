@@ -32,7 +32,7 @@ public class UIActionFailureTracker : MutableList<IUIActionResult>, IHasServices
         var uiActionTracker = Services.GetRequiredService<UIActionTracker>();
         var cancellationToken = uiActionTracker.StopToken;
 
-        var lastResultEvent = uiActionTracker.LastResultEvent;
+        var lastResultEvent = uiActionTracker.LastResult;
         while (true) {
             lastResultEvent = await lastResultEvent.WhenNext(cancellationToken).ConfigureAwait(false);
             if (lastResultEvent == null)

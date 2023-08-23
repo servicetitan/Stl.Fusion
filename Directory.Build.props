@@ -33,7 +33,7 @@
 
     <!-- Defaults for .csproj -->
     <OutputType>Library</OutputType>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>preview</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -45,7 +45,7 @@
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
     <!-- NU5048: The 'PackageIconUrl'/'iconUrl' element is deprecated -->
     <!-- NU5105: The package version uses SemVer 2.0.0 or components of SemVer 1.0.0 that are not supported on legacy clients -->
-    <!-- NETSDK1138: The target framework 'net5.0' is out of support. -->    
+    <!-- NETSDK1138: The target framework 'net5.0' is out of support. -->
     <NoWarn>$(NoWarn);NU5048;NU5105;NETSDK1138</NoWarn>
     <WarningsAsErrors>true</WarningsAsErrors>
   </PropertyGroup>

@@ -1,5 +1,7 @@
 namespace Stl.Rpc;
 
+#pragma warning disable SYSLIB0051
+
 [Serializable]
 public class RpcException : Exception
 {

@@ -17,15 +17,15 @@ public class RpcWebSocketTest : RpcTestBase
         if (isClient) {
             rpc.AddClient<ITestRpcServiceClient>();
             rpc.Service<ITestRpcServiceClient>().HasName(nameof(ITestRpcService));
-            commander.AddCommandService<ITestRpcServiceClient>();
+            commander.AddService<ITestRpcServiceClient>();
             rpc.AddClient<ITestRpcBackend, ITestRpcBackendClient>();
-            commander.AddCommandService<ITestRpcBackendClient>();
+            commander.AddService<ITestRpcBackendClient>();
         }
         else {
             rpc.AddServer<ITestRpcService, TestRpcService>();
-            commander.AddCommandService<TestRpcService>();
+            commander.AddService<TestRpcService>();
             rpc.AddServer<ITestRpcBackend, TestRpcBackend>();
-            commander.AddCommandService<TestRpcBackend>();
+            commander.AddService<TestRpcBackend>();
             services.AddSingleton<RpcPeerFactory>(c => static (hub, peerRef) => {
                 return peerRef.IsServer
                     ? new RpcServerPeer(hub, peerRef) {
@@ -50,7 +50,7 @@ public class RpcWebSocketTest : RpcTestBase
         await Assert.ThrowsAsync<DivideByZeroException>(
             () => client.Div(1, 0));
 
-        var peer = services.RpcHub().GetPeer(ClientPeerRef);
+        var peer = services.RpcHub().GetClientPeer(ClientPeerRef);
         await AssertNoCalls(peer);
     }
 
@@ -68,7 +68,7 @@ public class RpcWebSocketTest : RpcTestBase
         for (var i = 0; i < results.Length; i++)
             results[i].Should().Be((int?)i);
 
-        var peer = services.RpcHub().GetPeer(ClientPeerRef);
+        var peer = services.RpcHub().GetClientPeer(ClientPeerRef);
         await AssertNoCalls(peer);
     }
 
@@ -82,7 +82,7 @@ public class RpcWebSocketTest : RpcTestBase
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(
             () => commander.Call(new HelloCommand("error")));
 
-        var peer = services.RpcHub().GetPeer(ClientPeerRef);
+        var peer = services.RpcHub().GetClientPeer(ClientPeerRef);
         await AssertNoCalls(peer);
     }
 
@@ -91,7 +91,7 @@ public class RpcWebSocketTest : RpcTestBase
     {
         await using var _ = await WebHost.Serve();
         var services = ClientServices;
-        var peer = services.RpcHub().GetPeer(ClientPeerRef);
+        var peer = services.RpcHub().GetClientPeer(ClientPeerRef);
         var client = services.GetRequiredService<ITestRpcServiceClient>();
 
         // We need to make sure the connection is there before the next call
@@ -117,7 +117,7 @@ public class RpcWebSocketTest : RpcTestBase
     {
         await using var _ = await WebHost.Serve();
         var services = ClientServices;
-        var peer = services.RpcHub().GetPeer(ClientPeerRef);
+        var peer = services.RpcHub().GetClientPeer(ClientPeerRef);
         var client = services.GetRequiredService<ITestRpcServiceClient>();
         var startedAt = CpuTimestamp.Now;
         await client.Delay(TimeSpan.FromMilliseconds(200));
@@ -148,7 +148,7 @@ public class RpcWebSocketTest : RpcTestBase
     {
         await using var _ = await WebHost.Serve();
         var services = ClientServices;
-        var peer = services.RpcHub().GetPeer(ClientPeerRef);
+        var peer = services.RpcHub().GetClientPeer(ClientPeerRef);
         var client = ClientServices.GetRequiredService<ITestRpcServiceClient>();
         var backendClient = ClientServices.GetRequiredService<ITestRpcBackendClient>();
 
@@ -170,7 +170,7 @@ public class RpcWebSocketTest : RpcTestBase
     {
         await using var _ = await WebHost.Serve();
         var services = ClientServices;
-        var peer = services.RpcHub().GetPeer(ClientPeerRef);
+        var peer = services.RpcHub().GetClientPeer(ClientPeerRef);
         var client = services.GetRequiredService<ITestRpcServiceClient>();
 
         try {
@@ -193,9 +193,12 @@ public class RpcWebSocketTest : RpcTestBase
     [InlineData(50_000)]
     public async Task PerformanceTest(int iterationCount)
     {
+        if (TestRunnerInfo.IsBuildAgent())
+            iterationCount = 100;
+
         await using var _ = await WebHost.Serve();
         var services = ClientServices;
-        var peer = services.RpcHub().GetPeer(ClientPeerRef);
+        var peer = services.RpcHub().GetClientPeer(ClientPeerRef);
         var client = services.GetRequiredService<ITestRpcServiceClient>();
 
         var threadCount = Math.Max(1, HardwareInfo.ProcessorCount);

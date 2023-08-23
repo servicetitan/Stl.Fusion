@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Hosting.StaticWebAssets;
 using Microsoft.Extensions.FileProviders;
 using Templates.TodoApp.Services;
-using Stl.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using Microsoft.EntityFrameworkCore;
+using Stl.DependencyInjection;
 using Stl.Fusion.Blazor;
 using Stl.Fusion.Blazor.Authentication;
 using Stl.Fusion.EntityFramework;
@@ -15,6 +15,7 @@ using Stl.Fusion.EntityFramework.Npgsql;
 using Stl.Fusion.Extensions;
 using Stl.Fusion.Server;
 using Stl.Fusion.Server.Middlewares;
+using Stl.Interception.Interceptors;
 using Stl.IO;
 using Stl.Multitenancy;
 using Stl.OS;
@@ -60,7 +61,7 @@ public class Startup
 
         // IComputeService validation should be off in release
 #if !DEBUG
-        InterceptorBase.Options.Defaults.IsValidationEnabled = true;
+        InterceptorBase.Options.Defaults.IsValidationEnabled = false;
 #endif
 
         services.AddSettings<HostSettings>();
@@ -173,9 +174,10 @@ public class Startup
         });
 
         // Web
-        services.AddRouting();
-        services.AddMvc().AddApplicationPart(Assembly.GetExecutingAssembly());
+        // services.AddMvc().AddApplicationPart(Assembly.GetExecutingAssembly());
         services.AddServerSideBlazor(o => o.DetailedErrors = true);
+        services.AddRazorPages();
+        services.AddRazorComponents();
         fusion.AddBlazor().AddAuthentication().AddPresenceReporter(); // Must follow services.AddServerSideBlazor()!
     }
 
@@ -208,7 +210,7 @@ public class Startup
         // and set it as this server's content root.
         var baseDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "";
         var wwwRootPath = Path.Combine(baseDir, "wwwroot");
-        var dotNetDir = $"net{RuntimeInfo.DotNetCore.Version?.Major ?? 7}.0";
+        var dotNetDir = $"net{RuntimeInfo.DotNetCore.Version?.Major ?? 8}.0";
         if (!Directory.Exists(Path.Combine(wwwRootPath, "_framework")))
             // This is a regular build, not a build produced w/ "publish",
             // so we remap wwwroot to the client's wwwroot folder
@@ -225,7 +227,6 @@ public class Startup
             app.UseHsts();
         }
         app.UseHttpsRedirection();
-
         app.UseWebSockets(new WebSocketOptions() {
             KeepAliveInterval = TimeSpan.FromSeconds(30),
         });
@@ -246,12 +247,11 @@ public class Startup
         // API controllers
         app.UseRouting();
         app.UseAuthentication();
-        app.UseAuthorization();
         app.UseEndpoints(endpoints => {
             endpoints.MapBlazorHub();
             endpoints.MapRpcWebSocketServer();
             endpoints.MapFusionAuth();
-            endpoints.MapFusionBlazorSwitch();
+            endpoints.MapFusionBlazorMode();
             // endpoints.MapControllers();
             endpoints.MapFallbackToPage("/_Host");
         });

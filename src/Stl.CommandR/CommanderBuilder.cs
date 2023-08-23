@@ -121,26 +121,26 @@ public readonly struct CommanderBuilder
         return this;
     }
 
-    // AddCommandService
+    // AddService
 
-    public CommanderBuilder AddCommandService<TService>(
+    public CommanderBuilder AddService<TService>(
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         double? priorityOverride = null)
         where TService : class, ICommandService
-        => AddCommandService(typeof(TService), lifetime, priorityOverride);
-    public CommanderBuilder AddCommandService<TService, TImplementation>(
+        => AddService(typeof(TService), lifetime, priorityOverride);
+    public CommanderBuilder AddService<TService, TImplementation>(
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         double? priorityOverride = null)
         where TService : class
         where TImplementation : class, TService, ICommandService
-        => AddCommandService(typeof(TService), typeof(TImplementation), lifetime, priorityOverride);
+        => AddService(typeof(TService), typeof(TImplementation), lifetime, priorityOverride);
 
-    public CommanderBuilder AddCommandService(
+    public CommanderBuilder AddService(
         Type serviceType,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         double? priorityOverride = null)
-        => AddCommandService(serviceType, serviceType, lifetime, priorityOverride);
-    public CommanderBuilder AddCommandService(
+        => AddService(serviceType, serviceType, lifetime, priorityOverride);
+    public CommanderBuilder AddService(
         Type serviceType, Type implementationType,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         double? priorityOverride = null)

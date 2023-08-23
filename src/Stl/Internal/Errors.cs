@@ -67,8 +67,18 @@ public static class Errors
 
     public static Exception AlreadyDisposed()
         => new ObjectDisposedException("unknown", "The object is already disposed.");
+    public static Exception AlreadyDisposed(Type type)
+        => new ObjectDisposedException(type.GetName(), "The object is already disposed.");
+    public static Exception AlreadyDisposed<T>()
+        => AlreadyDisposed(typeof(T));
+
     public static Exception AlreadyDisposedOrDisposing()
         => new ObjectDisposedException("unknown", "The object is already disposed or disposing.");
+    public static Exception AlreadyDisposedOrDisposing(Type type)
+        => new ObjectDisposedException(type.GetName(), "The object is already disposed or disposing.");
+    public static Exception AlreadyDisposedOrDisposing<T>()
+        => AlreadyDisposedOrDisposing(typeof(T));
+
     public static Exception AlreadyStopped()
         => new InvalidOperationException("The process or task is already stopped.");
 

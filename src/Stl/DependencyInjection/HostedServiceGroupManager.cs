@@ -6,11 +6,9 @@ namespace Stl.DependencyInjection;
 /// Manages a group of <see cref="IHostedService"/>-s as a whole
 /// allowing to start or stop all of them.
 /// </summary>
-public class HostedServiceGroupManager : IHasServices, IEnumerable<IHostedService>
+public class HostedServiceGroupManager(IServiceProvider services) : IHasServices, IEnumerable<IHostedService>
 {
-    public IServiceProvider Services { get; }
-
-    public HostedServiceGroupManager(IServiceProvider services) => Services = services;
+    public IServiceProvider Services { get; } = services;
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     public IEnumerator<IHostedService> GetEnumerator()

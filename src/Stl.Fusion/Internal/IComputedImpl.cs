@@ -9,6 +9,7 @@ public interface IComputedImpl : IComputed
     bool AddUsedBy(IComputedImpl usedBy); // Should be called only from AddUsed
     void RemoveUsedBy(IComputedImpl usedBy);
     (int OldCount, int NewCount) PruneUsedBy();
+    void CopyUsedTo(ref ArrayBuffer<IComputedImpl> buffer);
 
     void RenewTimeouts(bool isNew);
     void CancelTimeouts();

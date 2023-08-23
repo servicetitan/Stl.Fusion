@@ -4,16 +4,15 @@ using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
 
-public class RpcClientInterceptor : RpcInterceptorBase
+public class RpcClientInterceptor(
+        RpcClientInterceptor.Options settings,
+        IServiceProvider services
+        ) : RpcInterceptorBase(settings, services)
 {
     public new record Options : RpcInterceptorBase.Options
     {
         public static Options Default { get; set; } = new();
     }
-
-    public RpcClientInterceptor(Options options, IServiceProvider services)
-        : base(options, services)
-    { }
 
     protected override Func<Invocation, object?> CreateHandler<T>(Invocation initialInvocation, MethodDef methodDef)
     {
@@ -50,9 +49,7 @@ public class RpcClientInterceptor : RpcInterceptorBase
         using var cts = new CancellationTokenSource(call.ConnectTimeout);
         using var linkedCts = cancellationToken.LinkWith(cts.Token);
         try {
-            await call.Peer.ConnectionState
-                .WhenConnected(linkedCts.Token)
-                .ConfigureAwait(false);
+            await call.Peer.ConnectionState.WhenConnected(linkedCts.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cts.IsCancellationRequested) {
             throw Errors.Disconnected(call.Peer);

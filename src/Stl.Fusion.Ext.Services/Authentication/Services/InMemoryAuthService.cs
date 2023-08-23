@@ -3,26 +3,17 @@ using Stl.Versioning;
 
 namespace Stl.Fusion.Authentication.Services;
 
-public partial class InMemoryAuthService : IAuth, IAuthBackend
+public partial class InMemoryAuthService(IServiceProvider services) : IAuth, IAuthBackend
 {
     private long _nextUserId;
 
     protected ConcurrentDictionary<(Symbol TenantId, Symbol UserId), User> Users { get; } = new();
     protected ConcurrentDictionary<(Symbol TenantId, Symbol SessionId), SessionInfo> SessionInfos { get; } = new();
-    protected VersionGenerator<long> VersionGenerator { get; }
-    protected ITenantResolver TenantResolver { get; }
-    protected ITenantRegistry TenantRegistry { get; }
-    protected MomentClockSet Clocks { get; }
-    protected ICommander Commander { get; }
-
-    public InMemoryAuthService(IServiceProvider services)
-    {
-        VersionGenerator = services.VersionGenerator<long>();
-        TenantResolver = services.GetRequiredService<ITenantResolver>();
-        TenantRegistry = services.GetRequiredService<ITenantRegistry>();
-        Clocks = services.Clocks();
-        Commander = services.Commander();
-    }
+    protected VersionGenerator<long> VersionGenerator { get; } = services.VersionGenerator<long>();
+    protected ITenantResolver TenantResolver { get; } = services.GetRequiredService<ITenantResolver>();
+    protected ITenantRegistry TenantRegistry { get; } = services.GetRequiredService<ITenantRegistry>();
+    protected MomentClockSet Clocks { get; } = services.Clocks();
+    protected ICommander Commander { get; } = services.Commander();
 
     // Command handlers
 

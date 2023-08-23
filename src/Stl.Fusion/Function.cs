@@ -28,7 +28,7 @@ public interface IFunction<T> : IFunction
         CancellationToken cancellationToken = default);
 }
 
-public abstract class FunctionBase<T> : IFunction<T>
+public abstract class FunctionBase<T>(IServiceProvider services) : IFunction<T>
 {
     protected static AsyncLockSet<ComputedInput> InputLocks => ComputedRegistry.Instance.InputLocks;
 
@@ -38,10 +38,7 @@ public abstract class FunctionBase<T> : IFunction<T>
     protected ILogger Log => _log ??= Services.LogFor(GetType());
     protected ILogger? DebugLog => (_debugLog ??= ValueOf.New(Log.IfEnabled(LogLevel.Debug))).Value;
 
-    public IServiceProvider Services { get; }
-
-    protected FunctionBase(IServiceProvider services)
-        => Services = services;
+    public IServiceProvider Services { get; } = services;
 
     async ValueTask<IComputed> IFunction.Invoke(ComputedInput input,
         IComputed? usedBy,

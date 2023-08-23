@@ -31,6 +31,7 @@ public static class StartupHelper
 
         var rpc = fusion.Rpc;
         rpc.AddWebSocketClient(builder.HostEnvironment.BaseAddress);
+        // You may comment this out - the call below just enables RPC call logging
         services.AddSingleton<RpcPeerFactory>(_ =>
             static (hub, peerRef) => peerRef.IsServer
                 ? throw new NotSupportedException("No server peers on the client.")
@@ -38,16 +39,16 @@ public static class StartupHelper
             );
 
         // Option 1: Client-side SimpleTodoService (no RPC)
-        // fusion.AddComputeService<ITodoService, SimpleTodoService>();
+        // fusion.AddService<ITodoService, SimpleTodoService>();
 
         // Option 2: Client-side TodoService and SandboxedKeyValueStore using InMemoryKeyValueStore (no RPC)
         // fusion.AddInMemoryKeyValueStore();
         // fusion.AddSandboxedKeyValueStore();
-        // fusion.AddComputeService<ITodoService, TodoService>();
+        // fusion.AddService<ITodoService, TodoService>();
 
         // Option 3: Client-side TodoService + remote SandboxedKeyValueStore -> DbKeyValueStore
-        // fusionClient.AddReplicaService<ISandboxedKeyValueStore, ISandboxedKeyValueStoreClientDef>();
-        // fusion.AddComputeService<ITodoService, TodoService>();
+        // fusion.AddClient<ISandboxedKeyValueStore>();
+        // fusion.AddService<ITodos, TodoService>();
 
         // Option 4: Remote TodoService, SandboxedKeyValueStore, and DbKeyValueStore
         fusion.AddClient<ITodos>();

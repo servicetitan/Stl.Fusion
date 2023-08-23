@@ -1,6 +1,9 @@
 namespace Stl.Fusion.Extensions.Services;
 
-public class InMemoryKeyValueStore : WorkerBase, IKeyValueStore
+public class InMemoryKeyValueStore(
+        InMemoryKeyValueStore.Options settings,
+        IServiceProvider services
+        ) : WorkerBase, IKeyValueStore
 {
     public record Options
     {
@@ -10,16 +13,11 @@ public class InMemoryKeyValueStore : WorkerBase, IKeyValueStore
         public IMomentClock? Clock { get; init; } = null;
     }
 
-    protected Options Settings { get; }
+    protected Options Settings { get; } = settings;
     protected IMomentClock Clock { get; }
+        = settings.Clock ?? services.Clocks().SystemClock;
     protected ConcurrentDictionary<(Symbol TenantId, Symbol Key), (string Value, Moment? ExpiresAt)> Store { get; }
-
-    public InMemoryKeyValueStore(Options settings, IServiceProvider services)
-    {
-        Settings = settings;
-        Clock = settings.Clock ?? services.Clocks().SystemClock;
-        Store = new();
-    }
+        = new();
 
     // Commands
 

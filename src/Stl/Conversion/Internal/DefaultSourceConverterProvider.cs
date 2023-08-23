@@ -2,14 +2,11 @@ using System.ComponentModel;
 
 namespace Stl.Conversion.Internal;
 
-public class DefaultSourceConverterProvider<TSource> : SourceConverterProvider<TSource>
+public class DefaultSourceConverterProvider<TSource>(IServiceProvider services) : SourceConverterProvider<TSource>
 {
     private readonly ConcurrentDictionary<Type, Converter> _cache = new();
 
-    protected IServiceProvider Services { get; }
-
-    public DefaultSourceConverterProvider(IServiceProvider services)
-        => Services = services;
+    protected IServiceProvider Services { get; } = services;
 
     public override Converter<TSource> To(Type targetType)
         => (Converter<TSource>) _cache.GetOrAdd(targetType, static (targetType1, self) => {

@@ -74,6 +74,9 @@ public class ProxyTypeGenerator
         AddProxyMethods();
         AddProxyInterfaceImplementation(); // Must be the last one
 
+        var disableObsoleteMemberWarnings = Trivia(
+            PragmaWarningDirectiveTrivia(Token(SyntaxKind.DisableKeyword), true)
+                .WithErrorCodes(SingletonSeparatedList<ExpressionSyntax>(IdentifierName("CS0618"))));
         ProxyDef = ProxyDef
             .WithMembers(List(
                 StaticFields
@@ -81,11 +84,13 @@ public class ProxyTypeGenerator
                 .Concat(Properties)
                 .Concat(Constructors)
                 .Concat(Methods)))
+            .WithLeadingTrivia(disableObsoleteMemberWarnings)
             .NormalizeWhitespace();
         // WriteDebug?.Invoke(ProxyDef.ToString());
 
         var proxyNamespaceRef = QualifiedName(NamespaceRef, IdentifierName(ProxyNamespaceSuffix));
-        var proxyNamespaceDef = FileScopedNamespaceDeclaration(proxyNamespaceRef).AddMembers(ProxyDef);
+        var proxyNamespaceDef = FileScopedNamespaceDeclaration(proxyNamespaceRef)
+            .AddMembers(ProxyDef);
 
         // Building Compilation unit
         var syntaxRoot = SemanticModel.SyntaxTree.GetRoot();
@@ -155,7 +160,7 @@ public class ProxyTypeGenerator
                     Parameter(Identifier(p.Name))
                         .WithType(p.Type.ToTypeRef()))));
 
-            // __cachedMethodN field 
+            // __cachedMethodN field
             var cachedMethodFieldName = "__cachedMethod" + methodIndex;
             StaticFields.Add(
                 PrivateStaticFieldDef(
@@ -166,11 +171,11 @@ public class ProxyTypeGenerator
                         IdentifierName(cachedMethodFieldName),
                         GetMethodInfoExpression(typeRef, method, parameters))));
 
-            // __cachedInterceptedN field 
+            // __cachedInterceptedN field
             var cachedInterceptedFieldName = "__cachedIntercepted" + methodIndex;
             Fields.Add(CachedInterceptedFieldDef(Identifier(cachedInterceptedFieldName), returnType));
 
-            // __cachedInterceptN field 
+            // __cachedInterceptN field
             if (!CachedInterceptFieldNames.TryGetValue(method.ReturnType, out var cachedInterceptFieldName)) {
                 cachedInterceptFieldName = "__cachedIntercept" + methodIndex;
                 CachedInterceptFieldNames.Add(method.ReturnType, cachedInterceptFieldName);

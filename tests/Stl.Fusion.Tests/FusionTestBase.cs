@@ -21,22 +21,15 @@ using User = Stl.Fusion.Tests.Model.User;
 
 namespace Stl.Fusion.Tests;
 
-public enum FusionTestDbType
-{
-    Sqlite = 0,
-    PostgreSql = 1,
-    MariaDb = 2,
-    SqlServer = 3,
-    InMemory = 4,
-}
-
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public abstract class FusionTestBase : RpcTestBase
 {
     private static readonly ReentrantAsyncLock InitializeLock = new(LockReentryMode.CheckedFail);
     protected static readonly ConcurrentDictionary<Symbol, string> ClientComputedCacheStore = new();
 
-    public FusionTestDbType DbType { get; init; } = FusionTestDbType.Sqlite;
+    public FusionTestDbType DbType { get; init; } = TestRunnerInfo.IsBuildAgent()
+        ? FusionTestDbType.InMemory
+        : FusionTestDbType.Sqlite;
     public bool UseRedisOperationLogChangeTracking { get; init; } = !TestRunnerInfo.IsBuildAgent();
     public bool UseInMemoryKeyValueStore { get; init; }
     public bool UseInMemoryAuthService { get; init; }
@@ -45,7 +38,7 @@ public abstract class FusionTestBase : RpcTestBase
 
     public FilePath SqliteDbPath { get; protected set; }
     public string PostgreSqlConnectionString { get; protected set; } =
-        "Server=localhost;Database=stl_fusion_tests;Port=5432;User Id=postgres;Password=postgres";
+        "Server=localhost;Database=stl_fusion_tests;Port=5432;User Id=postgres;Password=postgres;Minimum Pool Size=20;Maximum Pool Size=200;Multiplexing=true";
     public string MariaDbConnectionString { get; protected set; } =
         "Server=localhost;Database=stl_fusion_tests;Port=3306;User=root;Password=mariadb";
     public string SqlServerConnectionString { get; protected set; } =
@@ -53,12 +46,17 @@ public abstract class FusionTestBase : RpcTestBase
 
     protected FusionTestBase(ITestOutputHelper @out) : base(@out)
     {
-        var appTempDir = FilePath.GetApplicationTempDirectory("", true);
+        var appTempDir = TestRunnerInfo.IsGitHubAction()
+            ? new FilePath(Environment.GetEnvironmentVariable("RUNNER_TEMP"))
+            : FilePath.GetApplicationTempDirectory("", true);
         SqliteDbPath = appTempDir & FilePath.GetHashedName($"{GetType().Name}_{GetType().Namespace}.db");
     }
 
     public override async Task InitializeAsync()
     {
+        if (!DbType.IsAvailable())
+            return;
+
         using var __ = await InitializeLock.Lock().ConfigureAwait(false);
 
         for (var i = 0; i < 10 && File.Exists(SqliteDbPath); i++) {
@@ -86,11 +84,7 @@ public abstract class FusionTestBase : RpcTestBase
     }
 
     protected virtual bool MustSkip()
-        => TestRunnerInfo.IsGitHubAction()
-            && DbType
-                is FusionTestDbType.PostgreSql
-                or FusionTestDbType.MariaDb
-                or FusionTestDbType.SqlServer;
+        => !DbType.IsAvailable();
 
     protected override void ConfigureTestServices(IServiceCollection services, bool isClient)
     {
@@ -188,10 +182,6 @@ public abstract class FusionTestBase : RpcTestBase
                 default:
                     throw new NotSupportedException();
                 }
-#if NET5_0_OR_GREATER
-                if (DbType != FusionTestDbType.InMemory)
-                    builder.UseValidationCheckConstraints(c => c.UseRegex(false));
-#endif
                 builder.EnableSensitiveDataLogging();
             }, 256);
             services.AddDbContextServices<TestDbContext>(db => {

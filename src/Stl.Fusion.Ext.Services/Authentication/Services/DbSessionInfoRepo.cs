@@ -28,29 +28,25 @@ public interface IDbSessionInfoRepo<in TDbContext, TDbSessionInfo, in TDbUserId>
         TDbContext dbContext, TDbUserId userId, CancellationToken cancellationToken = default);
 }
 
-public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId> : DbServiceBase<TDbContext>,
-    IDbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>
+public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>(
+        DbAuthService<TDbContext>.Options settings,
+        IServiceProvider services
+        ) : DbServiceBase<TDbContext>(services), IDbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>
     where TDbContext : DbContext
     where TDbSessionInfo : DbSessionInfo<TDbUserId>, new()
     where TDbUserId : notnull
 {
-    protected DbAuthService<TDbContext>.Options Options { get; }
+    protected DbAuthService<TDbContext>.Options Settings { get; } = settings;
     protected IDbUserIdHandler<TDbUserId> DbUserIdHandler { get; init; }
+        = services.GetRequiredService<IDbUserIdHandler<TDbUserId>>();
     protected IDbEntityResolver<string, TDbSessionInfo> SessionResolver { get; init; }
+        = services.DbEntityResolver<string, TDbSessionInfo>();
     protected IDbEntityConverter<TDbSessionInfo, SessionInfo> SessionConverter { get; init; }
+        = services.DbEntityConverter<TDbSessionInfo, SessionInfo>();
     protected ITenantResolver<TDbContext> TenantResolver { get; init; }
+        = services.GetRequiredService<ITenantResolver<TDbContext>>();
 
     public Type SessionInfoEntityType => typeof(TDbSessionInfo);
-
-    public DbSessionInfoRepo(DbAuthService<TDbContext>.Options options, IServiceProvider services)
-        : base(services)
-    {
-        Options = options;
-        DbUserIdHandler = services.GetRequiredService<IDbUserIdHandler<TDbUserId>>();
-        SessionResolver = services.DbEntityResolver<string, TDbSessionInfo>();
-        SessionConverter = services.DbEntityConverter<TDbSessionInfo, SessionInfo>();
-        TenantResolver = services.GetRequiredService<ITenantResolver<TDbContext>>();
-    }
 
     // Write methods
 
@@ -97,7 +93,7 @@ public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId> : DbServic
     {
         var dbContext = CreateDbContext(tenant, true);
         await using var _ = dbContext.ConfigureAwait(false);
-        dbContext.DisableChangeTracking();
+        dbContext.EnableChangeTracking(false);
 
         var entities = await dbContext.Set<TDbSessionInfo>().AsQueryable()
             .Where(o => o.LastSeenAt < maxLastSeenAt)

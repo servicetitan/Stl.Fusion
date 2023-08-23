@@ -1,4 +1,5 @@
 ﻿#if NETFRAMEWORK
+using System.Net.Http;
 using System.Web.Http.Filters;
 using System.Web.Http.Controllers;
 using System.Web.Http;
@@ -40,7 +41,7 @@ public class ExceptionContextFixture : BaseFixture<
         Fixture.Register(() => _serviceProviderMock);
 
 #if NETFRAMEWORK
-        Fixture.Customize<HttpActionExecutedContext>(x => 
+        Fixture.Customize<HttpActionExecutedContext>(x =>
             x.Without(x => x.Response));
         Fixture.Register(() =>
             new HttpActionContext {

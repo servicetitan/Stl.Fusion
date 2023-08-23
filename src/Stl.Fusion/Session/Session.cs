@@ -14,7 +14,6 @@ public sealed partial class Session : IHasId<Symbol>, IRequirementTarget,
     IEquatable<Session>, IConvertibleTo<string>, IConvertibleTo<Symbol>,
     IHasJsonCompatibleToString
 {
-    public static Session Null { get; } = null!; // To gracefully bypass some nullability checks
     public static Session Default { get; } = new("~");
     public static SessionFactory Factory { get; set; } = DefaultSessionFactory.New();
     public static SessionValidator Validator { get; set; } = session => !session.IsDefault();

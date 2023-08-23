@@ -14,7 +14,6 @@ public class SerializationTest : TestBase
     public void SessionSerialization()
     {
         default(Session).AssertPassesThroughAllSerializers(Out);
-        Session.Null.AssertPassesThroughAllSerializers(Out);
         new Session("0123456789-0123456789").AssertPassesThroughAllSerializers(Out);
     }
 

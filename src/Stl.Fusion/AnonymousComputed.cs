@@ -1,11 +1,13 @@
 namespace Stl.Fusion;
 
-// Just a tagging interface 
 public interface IAnonymousComputed: IComputed
-{ }
+{
+    public IAnonymousComputedSource Source { get; }
+}
 
 public sealed class AnonymousComputed<T> : Computed<T>, IAnonymousComputed
 {
+    IAnonymousComputedSource IAnonymousComputed.Source => Source;
     public AnonymousComputedSource<T> Source { get; }
 
     public AnonymousComputed(

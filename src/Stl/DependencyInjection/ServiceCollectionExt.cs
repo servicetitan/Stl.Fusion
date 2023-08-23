@@ -19,21 +19,12 @@ public static class ServiceCollectionExt
 
     public static IServiceCollection RemoveAll(this IServiceCollection services, Func<ServiceDescriptor, bool> predicate)
     {
-        var buffer = ArrayBuffer<int>.Lease(false);
-        try {
-            var index = 0;
-            foreach (var service in services) {
-                if (predicate.Invoke(service))
-                    buffer.Add(index);
-                index++;
-            }
-            for (var i = buffer.Count - 1; i >= 0; i--)
+        for (var i = services.Count - 1; i >= 0; i--) {
+            var service = services[i];
+            if (predicate.Invoke(service))
                 services.RemoveAt(i);
-            return services;
         }
-        finally {
-            buffer.Release();
-        }
+        return services;
     }
 
     // Options

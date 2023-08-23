@@ -12,7 +12,8 @@ public abstract class DbAuthService<TDbContext> : DbServiceBase<TDbContext>, IAu
         public TimeSpan MinUpdatePresencePeriod { get; init; } = TimeSpan.FromMinutes(2.75);
     }
 
-    protected DbAuthService(IServiceProvider services) : base(services) { }
+    protected DbAuthService(IServiceProvider services) : base(services)
+    { }
 
     // IAuth
     public abstract Task SignOut(Auth_SignOut command, CancellationToken cancellationToken = default);

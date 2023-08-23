@@ -405,6 +405,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
                 // moreover, only Invalidated code can modify
                 // _used/_usedBy once invalidation flag is set
                 return (0, 0);
+
             var replacement = new HashSetSlim3<(ComputedInput Input, LTag Version)>();
             var oldCount = _usedBy.Count;
             foreach (var entry in _usedBy.Items) {
@@ -414,6 +415,15 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
             }
             _usedBy = replacement;
             return (oldCount, _usedBy.Count);
+        }
+    }
+
+    void IComputedImpl.CopyUsedTo(ref ArrayBuffer<IComputedImpl> buffer)
+    {
+        lock (Lock) {
+            var count = buffer.Count;
+            buffer.EnsureCapacity(count + _used.Count);
+            _used.CopyTo(buffer.Buffer.AsSpan(count));
         }
     }
 

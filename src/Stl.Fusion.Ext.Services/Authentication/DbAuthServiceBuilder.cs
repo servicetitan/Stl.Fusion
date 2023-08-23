@@ -29,7 +29,8 @@ public readonly struct DbAuthServiceBuilder<TDbContext, TDbSessionInfo, TDbUser,
         }
 
         // Operations framework
-        DbContext.AddOperations(operations => operations.TryAddIsolationLevelSelector(_ => new DbAuthIsolationLevelSelector<TDbContext>()));
+        DbContext.AddOperations(operations => operations.TryAddIsolationLevelSelector(
+            _ => new DbAuthIsolationLevelSelector<TDbContext>()));
 
         // DbAuthService
         fusion.AddAuthService<DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserId>>();

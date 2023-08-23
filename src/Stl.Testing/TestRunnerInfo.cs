@@ -36,13 +36,16 @@ public static class TestRunnerInfo
             Workflow = Environment.GetEnvironmentVariable("GITHUB_WORKFLOW") ?? "";
             Action = Environment.GetEnvironmentVariable("GITHUB_ACTION") ?? "";
             RunId = Environment.GetEnvironmentVariable("GITHUB_RUN_ID") ?? "";
-            var isActionRunning = Environment.GetEnvironmentVariable("GITHUB_ACTIONS") ?? "";
-            bool.TryParse(isActionRunning, out IsActionRunning);
+            IsActionRunning = !RunId.IsNullOrEmpty();
         }
     }
 
     public static bool IsBuildAgent()
-        => TeamCity.Version != null || IsGitHubAction();
+        => IsGitHubAction() || IsTeamCityAgent();
+
+    public static bool IsTeamCityAgent()
+        => TeamCity.Version != null;
+
     public static bool IsGitHubAction()
         => GitHub.IsActionRunning;
 }

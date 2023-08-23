@@ -65,7 +65,7 @@ public class DbCartService : ICartService
     {
         var dbContext = _dbHub.CreateDbContext();
         await using var _ = dbContext.ConfigureAwait(false);
-        dbContext.EnableChangeTracking(); // Otherwise LoadAsync below won't work
+        dbContext.EnableChangeTracking(true); // Otherwise LoadAsync below won't work
 
         var dbCart = await dbContext.Carts.FindAsync(DbKey.Compose(id), cancellationToken);
         if (dbCart == null)

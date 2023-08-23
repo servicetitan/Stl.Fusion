@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net7.0;net6.0;net5.0;netcoreapp3.1;netstandard2.1;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net7.0;net6.0;net5.0;netcoreapp3.1;netstandard2.1;netstandard2.0</TargetFrameworks>
     <PackageTags>servicetitan stl stl_fusion</PackageTags>
     <Description>Stl.Rpc - fast RPC library relying on Stl.Generators.</Description>
   </PropertyGroup>
@@ -10,10 +10,15 @@
     <PackageReference Include="System.Net.WebSockets" />
     <PackageReference Include="Microsoft.Extensions.Http" />
   </ItemGroup>
+
   <ItemGroup Condition="!$(TargetFramework.StartsWith('netstandard2.0'))">
     <PackageReference Include="MemoryPack.Generator" />
   </ItemGroup>
-  <ItemGroup Condition="!$(TargetFramework.StartsWith('net7'))">
+
+  <ItemGroup Condition="$(TargetFramework.StartsWith('net7'))">
+    <PackageReference Include="Microsoft.Extensions.Http" VersionOverride="$(MicrosoftExtensionsVersion7)" />
+  </ItemGroup>
+  <ItemGroup Condition="!($(TargetFramework.StartsWith('net8')) or $(TargetFramework.StartsWith('net7')))">
     <PackageReference Include="Microsoft.Extensions.Http" VersionOverride="$(MicrosoftExtensionsVersion6)" />
   </ItemGroup>
 
@@ -24,10 +29,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Stl.Generators\Stl.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Servers\" />
   </ItemGroup>
 
 </Project>

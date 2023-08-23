@@ -33,30 +33,27 @@ public record OperationReprocessorOptions
 /// Tries to reprocess commands that failed with a reprocessable (transient) error.
 /// Must be a transient service.
 /// </summary>
-public class OperationReprocessor : IOperationReprocessor
+public class OperationReprocessor(
+        OperationReprocessorOptions options,
+        IServiceProvider services
+        ) : IOperationReprocessor
 {
     private ITransientErrorDetector<IOperationReprocessor>? _transientErrorDetector;
     private IMomentClock? _delayClock;
     private ILogger? _log;
 
-    protected IServiceProvider Services { get; }
-    protected ITransientErrorDetector<IOperationReprocessor> TransientErrorDetector =>
-        _transientErrorDetector ??= Services.GetRequiredService<ITransientErrorDetector<IOperationReprocessor>>();
+    protected IServiceProvider Services { get; } = services;
+    protected ITransientErrorDetector<IOperationReprocessor> TransientErrorDetector
+        => _transientErrorDetector ??= Services.GetRequiredService<ITransientErrorDetector<IOperationReprocessor>>();
     protected HashSet<Exception> KnownTransientFailures { get; } = new();
     protected ILogger Log => _log ??= Services.LogFor(GetType());
 
-    public OperationReprocessorOptions Options { get; }
+    public OperationReprocessorOptions Options { get; } = options;
     public IMomentClock DelayClock => _delayClock ??= Options.DelayClock ?? Services.Clocks().CpuClock;
 
     public int FailedTryCount { get; protected set; }
     public Exception? LastError { get; protected set; }
     public CommandContext CommandContext { get; protected set; } = null!;
-
-    public OperationReprocessor(OperationReprocessorOptions options, IServiceProvider services)
-    {
-        Options = options;
-        Services = services;
-    }
 
     public void AddTransientFailure(Exception error)
     {

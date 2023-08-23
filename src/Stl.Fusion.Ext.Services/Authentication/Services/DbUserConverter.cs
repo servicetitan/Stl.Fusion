@@ -3,15 +3,14 @@ using Stl.Fusion.EntityFramework;
 
 namespace Stl.Fusion.Authentication.Services;
 
-public class DbUserConverter<TDbContext, TDbUser, TDbUserId> : DbEntityConverter<TDbContext, TDbUser, User>
+public class DbUserConverter<TDbContext, TDbUser, TDbUserId>
+    (IServiceProvider services) : DbEntityConverter<TDbContext, TDbUser, User>(services)
     where TDbContext : DbContext
     where TDbUser : DbUser<TDbUserId>, new()
     where TDbUserId : notnull
 {
-    protected IDbUserIdHandler<TDbUserId> DbUserIdHandler { get; init; }
-
-    public DbUserConverter(IServiceProvider services) : base(services)
-        => DbUserIdHandler = services.GetRequiredService<IDbUserIdHandler<TDbUserId>>();
+    protected IDbUserIdHandler<TDbUserId> DbUserIdHandler { get; init; } =
+        services.GetRequiredService<IDbUserIdHandler<TDbUserId>>();
 
     public override TDbUser NewEntity() => new();
     public override User NewModel() => new(Symbol.Empty, "");

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net7.0;net6.0;net5.0;netcoreapp3.1;net48;net471</TargetFrameworks>
+    <TargetFrameworks>net8.0;net7.0;net6.0;net5.0;netcoreapp3.1;net48;net471</TargetFrameworks>
     <IsTestProject>false</IsTestProject>
     <PackageTags>servicetitan stl testing</PackageTags>
     <Description>Stl.Testing is a collection of <!--
@@ -11,6 +11,7 @@
   <ItemGroup Condition="!$(TargetFramework.StartsWith('netstandard2.0'))">
     <PackageReference Include="MemoryPack.Generator" />
   </ItemGroup>
+
   <ItemGroup Condition="!$(TargetFramework.StartsWith('net4'))">
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
@@ -22,6 +23,7 @@
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="MessagePack" />
     <PackageReference Include="System.CommandLine" />
+    <PackageReference Include="System.Net.Http" />
     <PackageReference Include="xunit" />
     <PackageReference Include="Xunit.DependencyInjection.Logging" />
   </ItemGroup>

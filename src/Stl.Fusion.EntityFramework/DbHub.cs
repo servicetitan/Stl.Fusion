@@ -6,7 +6,7 @@ using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework;
 
-public class DbHub<TDbContext>
+public class DbHub<TDbContext>(IServiceProvider services)
     where TDbContext : DbContext
 {
     private ITenantRegistry<TDbContext>? _tenantRegistry;
@@ -17,7 +17,7 @@ public class DbHub<TDbContext>
     private ILogger? _log;
 
     protected ILogger Log => _log ??= Services.LogFor(GetType());
-    protected IServiceProvider Services { get; }
+    protected IServiceProvider Services { get; } = services;
 
     public ITenantRegistry<TDbContext> TenantRegistry
         => _tenantRegistry ??= Services.GetRequiredService<ITenantRegistry<TDbContext>>();
@@ -44,15 +44,12 @@ public class DbHub<TDbContext>
     public ICommander Commander
         => _commander ??= Services.Commander();
 
-    public DbHub(IServiceProvider services)
-        => Services = services;
-
     public TDbContext CreateDbContext(bool readWrite = false)
-        => DbContextFactory.CreateDbContext(Tenant.Default).ReadWrite(readWrite);
+        => DbContextFactory.CreateDbContext(Tenant.Default).SuppressExecutionStrategy().ReadWrite(readWrite);
     public TDbContext CreateDbContext(Symbol tenantId, bool readWrite = false)
-        => DbContextFactory.CreateDbContext(TenantRegistry.Get(tenantId)).ReadWrite(readWrite);
+        => DbContextFactory.CreateDbContext(TenantRegistry.Get(tenantId)).SuppressExecutionStrategy().ReadWrite(readWrite);
     public TDbContext CreateDbContext(Tenant tenant, bool readWrite = false)
-        => DbContextFactory.CreateDbContext(tenant).ReadWrite(readWrite);
+        => DbContextFactory.CreateDbContext(tenant).SuppressExecutionStrategy().ReadWrite(readWrite);
 
     public Task<TDbContext> CreateCommandDbContext(CancellationToken cancellationToken = default)
         => CreateCommandDbContext(Tenant.Default, cancellationToken);
@@ -66,23 +63,6 @@ public class DbHub<TDbContext>
         var commandContext = CommandContext.GetCurrent();
         var operationScope = commandContext.Items.Get<DbOperationScope<TDbContext>>().Require();
         var dbContext = CreateDbContext(tenant, readWrite: true);
-        ExecutionStrategyExt.Suspend(dbContext);
-        return InitializeDbContext();
-
-        async Task<TDbContext> InitializeDbContext()
-        {
-            try {
-                return await operationScope.InitializeDbContext(dbContext, tenant, cancellationToken).ConfigureAwait(false);
-            }
-            catch {
-                try {
-                    await dbContext.DisposeAsync().ConfigureAwait(false);
-                }
-                catch {
-                    // Intended
-                }
-                throw;
-            }
-        }
+        return operationScope.InitializeDbContext(dbContext, tenant, cancellationToken);
     }
 }

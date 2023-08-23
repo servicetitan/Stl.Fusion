@@ -32,7 +32,7 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
     protected ISessionResolver SessionResolver { get; }
     protected UIActionTracker UIActionTracker { get; }
 
-    public AuthStateProvider(Options options, IServiceProvider services)
+    public AuthStateProvider(Options settings, IServiceProvider services)
     {
         Services = services;
         SessionResolver = services.GetRequiredService<ISessionResolver>();
@@ -40,7 +40,7 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
         UIActionTracker = services.UIActionTracker();
 
         // ReSharper disable once VirtualMemberCallInConstructor
-        var stateOptions = GetStateOptions(options);
+        var stateOptions = GetStateOptions(settings);
         State = services.StateFactory().NewComputed(stateOptions, ComputeState);
     }
 
@@ -69,10 +69,10 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
         return _cachedStateValueTask;
     }
 
-    protected virtual ComputedState<AuthState>.Options GetStateOptions(Options options)
+    protected virtual ComputedState<AuthState>.Options GetStateOptions(Options settings)
         => new() {
             InitialValue = new(),
-            UpdateDelayer = options.UpdateDelayer,
+            UpdateDelayer = settings.UpdateDelayer,
             EventConfigurator = state => state.AddEventHandler(StateEventKind.Updated, OnStateChanged),
             MustFlowExecutionContext = true,
         };

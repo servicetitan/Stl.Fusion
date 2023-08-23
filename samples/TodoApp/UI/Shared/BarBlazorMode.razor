@@ -15,7 +15,7 @@
 
 @code {
     private bool _isPrerendering;
-    private bool _isServerSideBlazor = BlazorModeHelper.IsServerSideBlazor;
+    private bool _isServerSideBlazor = BlazorModeHelper.IsBlazorServer;
 
     [Parameter]
     public string CssClass { get; set; } = "";

@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           # Avoid shallow clone for Nerdbank.GitVersioning
           fetch-depth: 0
@@ -22,11 +22,12 @@ jobs:
           setCommonVars: true
 
       - run: "echo 'SemVer2: ${{ steps.nbgv.outputs.SemVer2 }}'"
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v1
+
+      - name: Setup .NET 8.0 Preview
+        uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: "7.0.200"
-          include-prerelease: true
+          dotnet-version: '8.0.x'
+          dotnet-quality: 'preview'
 
       - name: Install WASM tools
         run: dotnet workload install wasm-tools

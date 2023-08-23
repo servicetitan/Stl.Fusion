@@ -47,7 +47,7 @@
     [Parameter]
     public string CssClass { get; set; } = "";
 
-    protected override Task<User?> ComputeState(CancellationToken cancellationToken) 
+    protected override Task<User?> ComputeState(CancellationToken cancellationToken)
         => Auth.GetUser(Session, cancellationToken);
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

@@ -4,18 +4,13 @@ using Stl.Fusion.Server.Endpoints;
 namespace Stl.Fusion.Server.Controllers;
 
 [Route("~/fusion/blazorMode")]
-public sealed class BlazorSwitchController : ControllerBase
+public sealed class BlazorModeController(BlazorModeEndpoint handler) : ControllerBase
 {
-    private readonly BlazorSwitchEndpoint _handler;
-
-    public BlazorSwitchController(BlazorSwitchEndpoint handler)
-        => _handler = handler;
-
-    [HttpGet("{isServerSideBlazor}")]
-    public async Task<IActionResult> Invoke(bool isServerSideBlazor, string? redirectTo = null)
+    [HttpGet]
+    [HttpGet("{isBlazorServer}")]
+    public async Task<IActionResult> Invoke(string? isBlazorServer, string? redirectTo = null)
     {
-        var result = (BlazorSwitchEndpoint.RedirectResult)await _handler.Invoke(
-            HttpContext, isServerSideBlazor, redirectTo);
+        var result = await handler.Invoke(HttpContext, isBlazorServer, redirectTo);
         return Redirect(result.Url);
     }
 }
