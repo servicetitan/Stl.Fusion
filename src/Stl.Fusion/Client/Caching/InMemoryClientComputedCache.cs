@@ -2,14 +2,14 @@ using Stl.Rpc.Caching;
 
 namespace Stl.Fusion.Client.Caching;
 
-public sealed class InMemoryClientComputedCache : FlushingClientComputedCache
+public sealed class InMemoryClientComputedCache(
+        FlushingClientComputedCache.Options settings,
+        IServiceProvider services
+        ) : FlushingClientComputedCache(settings, services)
 {
     private static readonly ValueTask<TextOrBytes?> MissValueTask = new((TextOrBytes?)null);
 
     private readonly ConcurrentDictionary<RpcCacheKey, TextOrBytes> _cache = new();
-
-    public InMemoryClientComputedCache(Options settings, IServiceProvider services)
-        : base(settings, services) { }
 
     protected override ValueTask<TextOrBytes?> Fetch(RpcCacheKey key, CancellationToken cancellationToken)
         => _cache.TryGetValue(key, out var result)

@@ -38,14 +38,6 @@ public static class Errors
     public static Exception EndpointNotFound(string serviceName, string methodName)
         => new RpcException($"Endpoint not found: '{serviceName}.{methodName}'.");
 
-    public static Exception AlreadyConnected()
-        => new InvalidOperationException($"This {nameof(RpcPeer)} is already connected.");
-    public static Exception ConnectionTimeout()
-        => new TimeoutException("Connection time-out.");
-    public static Exception ConnectionTimeout(TimeSpan timeout)
-        => new TimeoutException($"Connection time-out ({timeout.ToShortString()}).");
-    public static Exception ConnectionRetryLimitExceeded()
-        => new ConnectionUnrecoverableException("Can't reconnect: retry limit exceeded.");
     public static Exception ConnectionUnrecoverable(Exception? innerException = null)
         => new ConnectionUnrecoverableException(innerException);
 
@@ -77,4 +69,9 @@ public static class Errors
         => Disconnected(peer.Ref.IsServer ? "client" : "server");
     public static Exception Disconnected(string partyName = "server")
         => new DisconnectedException($"The remote {partyName} is disconnected.");
+
+    public static Exception ClientRpcPeerRefExpected(string argumentName)
+        => new ArgumentOutOfRangeException(argumentName, "Client RpcPeerRef is expected.");
+    public static Exception ServerRpcPeerRefExpected(string argumentName)
+        => new ArgumentOutOfRangeException(argumentName, "Server RpcPeerRef is expected.");
 }

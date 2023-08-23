@@ -1,4 +1,4 @@
-﻿using Samples.MiniRpcApp;
+﻿using Samples.MiniRpc;
 using Stl.CommandR;
 using Stl.Fusion;
 using Stl.Fusion.Server;
@@ -12,7 +12,7 @@ var baseUrl = "http://localhost:22222/";
 await (args switch {
     [ "server" ] => RunServer(),
     [ "client" ] => RunClient(),
-    _ => RunBoth(),
+    _ => Task.WhenAll(RunServer(), RunClient()),
 });
 
 async Task RunServer()
@@ -73,6 +73,3 @@ async Task RunClient()
             WriteLine($"Word count changed: {wordCount}");
     };
 }
-
-Task RunBoth()
-    => Task.WhenAll(RunServer(), RunClient());

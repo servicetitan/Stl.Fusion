@@ -1,6 +1,7 @@
 namespace Stl.Fusion.Authentication;
 
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+// ReSharper disable once InconsistentNaming
 public partial record AuthBackend_SignIn : ISessionCommand<Unit>, IBackendCommand
 {
     [DataMember, MemoryPackOrder(0)]
@@ -10,7 +11,7 @@ public partial record AuthBackend_SignIn : ISessionCommand<Unit>, IBackendComman
     [DataMember, MemoryPackOrder(2)]
     public UserIdentity AuthenticatedIdentity { get; init; }
 
-    public AuthBackend_SignIn() : this(Session.Null, null!, null!) { }
+    public AuthBackend_SignIn() : this(null!, null!, null!) { }
     public AuthBackend_SignIn(Session session, User user)
         : this(session, user, user.Identities.Single().Key) { }
 

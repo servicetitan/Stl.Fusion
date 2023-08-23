@@ -11,7 +11,7 @@
     await ServerAuthHelper.UpdateAuthState(HttpContext);
     var authSchemas = await ServerAuthHelper.GetSchemas(HttpContext);
     var sessionId = ServerAuthHelper.Session.Id.Value;
-    var isServerSideBlazor = BlazorSwitchEndpoint.IsServerSideBlazor(HttpContext);
+    var isServerSideBlazor = BlazorModeEndpoint.IsBlazorServer(HttpContext);
     var isCloseWindowRequest = ServerAuthHelper.IsCloseWindowRequest(HttpContext, out var closeWindowFlowName);
     Layout = null;
 }

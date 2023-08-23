@@ -16,8 +16,8 @@ public static class Errors
             "Operations Framework services aren't registered. " +
             "Call DbContextBuilder<TDbContext>.AddDbOperations before calling this method to add them.");
 
-    public static Exception TenantPropertyIsReadOnly()
-        => new InvalidOperationException("DbContext is already created, so Tenant property cannot be changed at this point.");
+    public static Exception TenantCannotBeChanged()
+        => new InvalidOperationException("DbContext is already created, so its Tenant property cannot be changed at this point.");
     public static Exception NonDefaultTenantIsUsedInSingleTenantMode()
         => new NotSupportedException(
             "A tenant other than Tenant.Default is attempted to be used in single-tenant mode.");

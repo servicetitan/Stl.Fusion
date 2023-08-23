@@ -173,6 +173,7 @@ internal static class Program
                     .Add("test")
                     .Add("--nologo")
                     .Add("--no-restore")
+                    .Add("-p:ParallelizeTestCollections=false")
                     .Add("--blame")
                     .Add("--collect:\"XPlat Code Coverage\"")
                     .Add("--results-directory").Add(testOutputPath)

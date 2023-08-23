@@ -1,7 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Stl.Fusion.EntityFramework.Internal;
 
 namespace Stl.Fusion.EntityFramework;
+
+#pragma warning disable EF1001
 
 public static class DbContextExt
 {
@@ -10,72 +13,66 @@ public static class DbContextExt
         (sender, args) => throw Errors.DbContextIsReadOnly();
 #endif
 
-    // ConfigureMode
+    public static TDbContext ReadWrite<TDbContext>(this TDbContext dbContext, bool allowWrites = true)
+        where TDbContext : DbContext
+        => dbContext
+            .EnableChangeTracking(allowWrites)
+            .EnableSaveChanges(allowWrites);
 
-    public static TDbContext ReadWrite<TDbContext>(this TDbContext dbContext, bool readWrite = true)
+    public static TDbContext ReadWrite<TDbContext>(this TDbContext dbContext, bool? allowWrites)
+        where TDbContext : DbContext
+        => allowWrites is { } vAllowWrites
+            ? dbContext.ReadWrite(vAllowWrites)
+            : dbContext;
+
+    public static TDbContext EnableChangeTracking<TDbContext>(this TDbContext dbContext, bool mustEnable)
         where TDbContext : DbContext
     {
-        dbContext.EnableChangeTracking(readWrite);
-        dbContext.EnableSaveChanges(readWrite);
+        var ct = dbContext.ChangeTracker;
+        ct.LazyLoadingEnabled = false;
+        if (mustEnable) {
+            ct.AutoDetectChangesEnabled = true;
+            ct.QueryTrackingBehavior = QueryTrackingBehavior.TrackAll;
+        }
+        else {
+            ct.AutoDetectChangesEnabled = false;
+            ct.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
+        }
+        return dbContext;
+    }
+
+    public static TDbContext EnableSaveChanges<TDbContext>(this TDbContext dbContext, bool mustEnable)
+        where TDbContext : DbContext
+    {
+#if !NETSTANDARD2_0
+        if (mustEnable)
+            dbContext.SavingChanges -= FailOnSaveChanges;
+        else
+            dbContext.SavingChanges += FailOnSaveChanges;
+#else
+        // Do nothing. DbContext has no SavingChanges event in NETSTANDARD2_0
+#endif
+        return dbContext;
+    }
+
+    public static TDbContext SuppressExecutionStrategy<TDbContext>(this TDbContext dbContext)
+        where TDbContext : DbContext
+    {
         ExecutionStrategyExt.Suspend(dbContext);
         return dbContext;
     }
 
-    public static TDbContext ReadWrite<TDbContext>(this TDbContext dbContext, bool? readWrite)
+    public static TDbContext SuppressDispose<TDbContext>(this TDbContext dbContext)
         where TDbContext : DbContext
-        => readWrite.HasValue ? dbContext.ReadWrite(readWrite.GetValueOrDefault()) : dbContext;
-
-    // (Enable|Disable)ChangeTracking
-
-    public static void EnableChangeTracking(this DbContext dbContext, bool enable)
     {
-        if (enable)
-            dbContext.EnableChangeTracking();
-        else
-            dbContext.DisableChangeTracking();
-    }
-
-    public static void EnableChangeTracking(this DbContext dbContext)
-    {
-        var ct = dbContext.ChangeTracker;
-        ct.AutoDetectChangesEnabled = true;
-        ct.LazyLoadingEnabled = false;
-        ct.QueryTrackingBehavior = QueryTrackingBehavior.TrackAll;
-    }
-
-    public static void DisableChangeTracking(this DbContext dbContext)
-    {
-        var ct = dbContext.ChangeTracker;
-        ct.AutoDetectChangesEnabled = false;
-        ct.LazyLoadingEnabled = false;
-        ct.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
-    }
-
-    // (Enable|Disable)SaveChanges
-
-    public static void EnableSaveChanges(this DbContext dbContext, bool enable)
-    {
-        if (enable)
-            dbContext.EnableSaveChanges();
-        else
-            dbContext.DisableSaveChanges();
-    }
-
-    public static void EnableSaveChanges(this DbContext dbContext)
-    {
+        var dbContextPoolable = (IDbContextPoolable)dbContext;
+        dbContextPoolable.SnapshotConfiguration();
+        var pool = new SuppressDisposeDbContextPool(dbContextPoolable);
 #if !NETSTANDARD2_0
-        dbContext.SavingChanges -= FailOnSaveChanges;
+        dbContextPoolable.SetLease(new DbContextLease(pool, true));
 #else
-        // Do nothing. DbContext has no SavingChanges event.
+        dbContextPoolable.SetPool(pool);
 #endif
-    }
-
-    public static void DisableSaveChanges(this DbContext dbContext)
-    {
-#if !NETSTANDARD2_0
-        dbContext.SavingChanges += FailOnSaveChanges;
-#else
-        // Do nothing. DbContext has no SavingChanges event.
-#endif
+        return dbContext;
     }
 }

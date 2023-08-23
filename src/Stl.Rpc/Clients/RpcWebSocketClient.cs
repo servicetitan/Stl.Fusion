@@ -6,7 +6,10 @@ using Stl.Rpc.WebSockets;
 
 namespace Stl.Rpc.Clients;
 
-public class RpcWebSocketClient : RpcClient
+public class RpcWebSocketClient(
+        RpcWebSocketClient.Options settings,
+        IServiceProvider services
+        ) : RpcClient(services)
 {
     public record Options
     {
@@ -48,11 +51,7 @@ public class RpcWebSocketClient : RpcClient
         }
     }
 
-    public Options Settings { get; }
-
-    public RpcWebSocketClient(Options settings, IServiceProvider services)
-        : base(services)
-        => Settings = settings;
+    public Options Settings { get; } = settings;
 
     public override async Task<RpcConnection> CreateConnection(RpcClientPeer peer, CancellationToken cancellationToken)
     {

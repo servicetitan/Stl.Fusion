@@ -1,6 +1,10 @@
 namespace Stl.Fusion.Interception;
 
-public class ComputeMethodComputed<T> : Computed<T>
+// Just a tagging interface
+public interface IComputedMethodComputed : IComputed
+{ }
+
+public class ComputeMethodComputed<T> : Computed<T>, IComputedMethodComputed
 {
     public ComputeMethodComputed(ComputedOptions options, ComputeMethodInput input, LTag version)
         : base(options, input, version)

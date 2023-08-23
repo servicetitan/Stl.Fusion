@@ -3,21 +3,19 @@ using Stl.CommandR.Internal;
 
 namespace Stl.CommandR.Diagnostics;
 
-public class CommandTracer : ICommandHandler<ICommand>
+public class CommandTracer(IServiceProvider services) : ICommandHandler<ICommand>
 {
     private ActivitySource? _activitySource;
+    private ILogger? _log;
 
-    protected ILogger Log { get; init; }
-    protected IServiceProvider Services { get; }
+    protected IServiceProvider Services { get; } = services;
     protected ActivitySource ActivitySource {
         get => _activitySource ??= GetType().GetActivitySource();
         init => _activitySource = value;
     }
-
-    public CommandTracer(IServiceProvider services)
-    {
-        Services = services;
-        Log = services.LogFor(GetType());
+    protected ILogger Log {
+        get => _log ??= Services.LogFor(GetType());
+        init => _log = value;
     }
 
     [CommandFilter(Priority = CommanderCommandHandlerPriority.CommandTracer)]

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net7.0;net6.0;net5.0;netcoreapp3.1;netstandard2.1;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net7.0;net6.0;net5.0;netcoreapp3.1;netstandard2.1;netstandard2.0</TargetFrameworks>
     <PackageTags>servicetitan stl stl_fusion commandr</PackageTags>
     <Description>Stl.CommandR - a MediatR-like library <!--
     -->created to simplify CQRS implementations even further.<!--

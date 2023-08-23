@@ -5,12 +5,10 @@ public interface IPluginCache
     IPluginInstanceHandle GetOrCreate(Type pluginImplementationType);
 }
 
-public class PluginCache : IPluginCache
+public class PluginCache(IServiceProvider services) : IPluginCache
 {
-    private readonly IServiceProvider _services;
+    private readonly IServiceProvider _services = services;
     private readonly ConcurrentDictionary<Type, IPluginInstanceHandle> _cache = new();
-
-    public PluginCache(IServiceProvider services) => _services = services;
 
     public IPluginInstanceHandle GetOrCreate(Type pluginImplementationType)
         => _cache.GetOrAdd(pluginImplementationType, static (pluginImplementationType1, self) => {

@@ -2,7 +2,10 @@ using Stl.Plugins.Metadata;
 
 namespace Stl.Plugins.Internal;
 
-public class PredefinedPluginFinder : IPluginFinder
+public class PredefinedPluginFinder(
+        PredefinedPluginFinder.Options settings,
+        IPluginInfoProvider pluginInfoProvider
+        ) : IPluginFinder
 {
     public record Options
     {
@@ -10,13 +13,10 @@ public class PredefinedPluginFinder : IPluginFinder
         public bool ResolveIndirectDependencies { get; init; }
     }
 
-    public PluginSetInfo FoundPlugins { get; }
-
-    public PredefinedPluginFinder(Options options, IPluginInfoProvider pluginInfoProvider) 
-        => FoundPlugins = new PluginSetInfo(
-            options.PluginTypes.Distinct(),
-            pluginInfoProvider,
-            options.ResolveIndirectDependencies);
+    public PluginSetInfo FoundPlugins { get; } = new(
+        settings.PluginTypes.Distinct(),
+        pluginInfoProvider,
+        settings.ResolveIndirectDependencies);
 
     public Task Run(CancellationToken cancellationToken = default)
         => Task.CompletedTask;

@@ -129,14 +129,14 @@ public abstract class State<T> : ComputedInput,
     protected event Action<IState<T>, StateEventKind>? UntypedUpdating;
     protected event Action<IState<T>, StateEventKind>? UntypedUpdated;
 
-    protected State(Options options, IServiceProvider services, bool initialize = true)
+    protected State(Options settings, IServiceProvider services, bool initialize = true)
     {
         Initialize(this, RuntimeHelpers.GetHashCode(this));
         Services = services;
 
         // ReSharper disable once VirtualMemberCallInConstructor
         if (initialize)
-            Initialize(options);
+            Initialize(settings);
     }
 
     public void Deconstruct(out T value, out Exception? error)
@@ -167,20 +167,20 @@ public abstract class State<T> : ComputedInput,
 
     // Protected methods
 
-    protected virtual void Initialize(Options options)
+    protected virtual void Initialize(Options settings)
     {
-        _category = options.Category;
-        ComputedOptions = options.ComputedOptions;
+        _category = settings.Category;
+        ComputedOptions = settings.ComputedOptions;
         VersionGenerator = Services.VersionGenerator<LTag>();
-        options.EventConfigurator?.Invoke(this);
-        var untypedOptions = (IState.IOptions) options;
+        settings.EventConfigurator?.Invoke(this);
+        var untypedOptions = (IState.IOptions) settings;
         untypedOptions.EventConfigurator?.Invoke(this);
 
         var computed = CreateComputed();
         if (_snapshot != null)
             return; // CreateComputed sets Computed, if overriden (e.g. in MutableState)
 
-        computed.TrySetOutput(options.InitialOutput);
+        computed.TrySetOutput(settings.InitialOutput);
         Computed = computed;
         computed.Invalidate();
     }

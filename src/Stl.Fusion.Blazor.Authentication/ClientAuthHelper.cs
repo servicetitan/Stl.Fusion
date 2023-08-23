@@ -3,7 +3,7 @@ using Stl.Fusion.Authentication;
 
 namespace Stl.Fusion.Blazor.Authentication;
 
-public class ClientAuthHelper : IHasServices
+public class ClientAuthHelper(IServiceProvider services) : IHasServices
 {
     public static string SchemasJavaScriptExpression { get; set; } = "window.FusionAuth.schemas";
 
@@ -14,15 +14,12 @@ public class ClientAuthHelper : IHasServices
 
     protected (string Schema, string SchemaName)[]? CachedSchemas { get; set; }
 
-    public IServiceProvider Services { get; }
+    public IServiceProvider Services { get; } = services;
     public IAuth Auth => _auth ??= Services.GetRequiredService<IAuth>();
     public ISessionResolver SessionResolver => _sessionResolver ??= Services.GetRequiredService<ISessionResolver>();
     public Session Session => SessionResolver.Session;
     public ICommander Commander => _commander ??= Services.Commander();
     public IJSRuntime JSRuntime => _jsRuntime ??= Services.GetRequiredService<IJSRuntime>();
-
-    public ClientAuthHelper(IServiceProvider services)
-        => Services = services;
 
     public virtual async ValueTask<(string Name, string DisplayName)[]> GetSchemas()
     {

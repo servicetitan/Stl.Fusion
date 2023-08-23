@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using Stl.Fusion.EntityFramework;
 using Stl.Fusion.Internal;
 using Stl.Multitenancy;
 using Stl.Versioning;
@@ -16,9 +14,9 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     {
         var (session, user, authenticatedIdentity) = (command.Session, command.User, command.AuthenticatedIdentity);
         session.RequireValid();
+
         var context = CommandContext.GetCurrent();
         var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
-
         if (Computed.IsInvalidating()) {
             _ = GetSessionInfo(session, default); // Must go first!
             _ = GetAuthInfo(session, default);
@@ -82,9 +80,9 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     {
         var (session, ipAddress, userAgent, options) = command;
         session.RequireValid();
+
         var context = CommandContext.GetCurrent();
         var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
-
         if (Computed.IsInvalidating()) {
             var invSessionInfo = context.Operation().Items.Get<SessionInfo>();
             if (invSessionInfo == null)
@@ -103,7 +101,7 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
         var dbContext = await CreateCommandDbContext(tenant, cancellationToken).ConfigureAwait(false);
         await using var _1 = dbContext.ConfigureAwait(false);
 
-        var dbSessionInfo = await Sessions.Get(dbContext, session.Id, false, cancellationToken).ConfigureAwait(false);
+        var dbSessionInfo = await Sessions.Get(dbContext, session.Id, true, cancellationToken).ConfigureAwait(false);
         var isNew = dbSessionInfo == null;
         var now = Clocks.SystemClock.Now;
         var sessionInfo = SessionConverter.ToModel(dbSessionInfo)
@@ -114,28 +112,13 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
             UserAgent = userAgent.IsNullOrEmpty() ? sessionInfo.UserAgent : userAgent,
             Options = options.SetMany(sessionInfo.Options),
         };
-        try {
-            dbSessionInfo = await Sessions.Upsert(dbContext, session.Id, sessionInfo, cancellationToken)
-                .ConfigureAwait(false);
-            sessionInfo = SessionConverter.ToModel(dbSessionInfo);
-            context.Operation().Items.Set(sessionInfo); // invSessionInfo
-            context.Operation().Items.Set(isNew); // invIsNew
-            return sessionInfo!;
-        }
-        catch (DbUpdateException) {
-            var scope = context.Items.Get<DbOperationScope<TDbContext>>().Require();
-            await scope.Rollback().ConfigureAwait(false);
-
-            var readDbContext = CreateDbContext(tenant);
-            await using var __ = readDbContext.ConfigureAwait(false);
-
-            dbSessionInfo = await Sessions.Get(readDbContext, session.Id, false, cancellationToken).ConfigureAwait(false);
-            if (dbSessionInfo == null)
-                throw; // Something is off: it is supposed to be created concurrently
-
-            sessionInfo = SessionConverter.ToModel(dbSessionInfo);
-            return sessionInfo!;
-        }
+        dbSessionInfo = await Sessions
+            .Upsert(dbContext, session.Id, sessionInfo, cancellationToken)
+            .ConfigureAwait(false);
+        sessionInfo = SessionConverter.ToModel(dbSessionInfo);
+        context.Operation().Items.Set(sessionInfo); // invSessionInfo
+        context.Operation().Items.Set(isNew); // invIsNew
+        return sessionInfo!;
     }
 
     // [CommandHandler] inherited
@@ -144,23 +127,23 @@ public partial class DbAuthService<TDbContext, TDbSessionInfo, TDbUser, TDbUserI
     {
         var (session, options, expectedVersion) = command;
         session.RequireValid();
+
         var context = CommandContext.GetCurrent();
+        var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
         if (Computed.IsInvalidating()) {
             _ = GetSessionInfo(session, default); // Must go first!
             _ = GetOptions(session, default);
             return;
         }
 
-        var tenant = await TenantResolver.Resolve(command, context, cancellationToken).ConfigureAwait(false);
         var dbContext = await CreateCommandDbContext(tenant, cancellationToken).ConfigureAwait(false);
         await using var _1 = dbContext.ConfigureAwait(false);
 
-        var dbSessionInfo = await Sessions.Get(dbContext, session.Id, false, cancellationToken).ConfigureAwait(false);
+        var dbSessionInfo = await Sessions.Get(dbContext, session.Id, true, cancellationToken).ConfigureAwait(false);
         var sessionInfo = SessionConverter.ToModel(dbSessionInfo);
         if (sessionInfo == null)
             throw new KeyNotFoundException();
         VersionChecker.RequireExpected(sessionInfo.Version, expectedVersion);
-
         sessionInfo = sessionInfo with {
             LastSeenAt = Clocks.SystemClock.Now,
             Options = options,

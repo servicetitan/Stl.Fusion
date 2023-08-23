@@ -1,6 +1,6 @@
 namespace Stl.Fusion.UI;
 
-public class UICommander : IHasServices
+public class UICommander(IServiceProvider services) : IHasServices
 {
     private static readonly ConcurrentDictionary<Type, Func<UICommander, ICommand, CancellationToken, UIAction>>
         CreateUIActionInvokers = new();
@@ -8,18 +8,13 @@ public class UICommander : IHasServices
         .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
         .Single(m => Equals(m.Name, nameof(CreateUIAction)) && m.IsGenericMethod);
 
-    public IServiceProvider Services { get; }
-    public ICommander Commander { get; }
-    public UIActionTracker UIActionTracker { get; }
-    public IMomentClock Clock { get; }
+    private ICommander? _commander;
+    private UIActionTracker? _uiActionTracker;
 
-    public UICommander(IServiceProvider services)
-    {
-        Services = services;
-        Commander = services.Commander();
-        UIActionTracker = services.GetRequiredService<UIActionTracker>();
-        Clock = UIActionTracker.Clock;
-    }
+    public IServiceProvider Services { get; } = services;
+    public ICommander Commander => _commander ??= Services.Commander();
+    public UIActionTracker UIActionTracker => _uiActionTracker ??= Services.GetRequiredService<UIActionTracker>();
+    public IMomentClock Clock => UIActionTracker.Clock;
 
     public async Task<TResult> Call<TResult>(ICommand<TResult> command, CancellationToken cancellationToken = default)
     {

@@ -40,7 +40,7 @@ public class DbKeyValueTrimmer<TDbContext, TDbKeyValue> : DbTenantWorkerBase<TDb
         var runChain = new AsyncChain($"Trim({tenant.Id})", async cancellationToken1 => {
             var dbContext = CreateDbContext(tenant, true);
             await using var _ = dbContext.ConfigureAwait(false);
-            dbContext.DisableChangeTracking();
+            dbContext.EnableChangeTracking(false);
 
             lastTrimCount = 0;
             var minExpiresAt = Clocks.SystemClock.Now.ToDateTime();

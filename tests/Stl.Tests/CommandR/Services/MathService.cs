@@ -1,4 +1,5 @@
 using Stl.Interception;
+using ServiceProviderExt = Stl.CommandR.ServiceProviderExt;
 
 namespace Stl.Tests.CommandR.Services;
 
@@ -8,17 +9,13 @@ public interface IMathService : ICommandService, IRequiresFullProxy
     Task<double> RecSum(RecSumCommand command, CancellationToken cancellationToken = default);
 }
 
-public class MathService : ServiceBase, IMathService
+public class MathService(IServiceProvider services) : ServiceBase(services), IMathService
 {
     private readonly object _lock = new();
 
-    private ICommander Commander { get; }
+    private ICommander Commander { get; } = services.Commander();
 
     public long Value { get; set; }
-
-    public MathService(IServiceProvider services)
-        : base(services)
-        => Commander = services.Commander();
 
     [CommandHandler(Priority = 2)]
     protected virtual Task<double> Divide(DivCommand command, CancellationToken cancellationToken)

@@ -84,6 +84,6 @@ public class CommandRTestBase : TestBase
         services.AddSingleton<UserService>();
         commander.AddHandlers<UserService>();
 
-        commander.AddCommandService<IMathService, MathService>();
+        commander.AddService<IMathService, MathService>();
     }
 }

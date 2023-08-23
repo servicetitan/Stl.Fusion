@@ -5,7 +5,10 @@ using Stl.Fusion.Extensions.Internal;
 
 namespace Stl.Fusion.Extensions.Services;
 
-public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
+public partial class SandboxedKeyValueStore(
+        SandboxedKeyValueStore.Options settings,
+        IServiceProvider services
+        ) : ISandboxedKeyValueStore
 {
     public record Options
     {
@@ -18,20 +21,13 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
         public IMomentClock? Clock { get; set; } = null;
     }
 
-    protected Options Settings { get; }
-    protected IKeyValueStore Store { get; }
-    protected IAuth Auth { get; }
-    protected ITenantResolver TenantResolver { get; }
-    protected IMomentClock Clock { get; }
+    protected Options Settings { get; } = settings;
+    protected IKeyValueStore Store { get; } = services.GetRequiredService<IKeyValueStore>();
+    protected IAuth Auth { get; } = services.GetRequiredService<IAuth>();
+    protected ITenantResolver TenantResolver { get; } = services.GetRequiredService<ITenantResolver>();
+    protected IMomentClock Clock { get; } = settings.Clock ?? services.Clocks().SystemClock;
 
-    public SandboxedKeyValueStore(Options settings, IServiceProvider services)
-    {
-        Settings = settings;
-        Store = services.GetRequiredService<IKeyValueStore>();
-        Auth = services.GetRequiredService<IAuth>();
-        TenantResolver = services.GetRequiredService<ITenantResolver>();
-        Clock = settings.Clock ?? services.Clocks().SystemClock;
-    }
+    // Commands
 
     public virtual async Task Set(SandboxedKeyValueStore_Set command, CancellationToken cancellationToken = default)
     {
@@ -66,6 +62,8 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
         await Store.Remove(tenant, keys, cancellationToken).ConfigureAwait(false);
     }
 
+    // Compute methods
+
     public virtual async Task<string?> Get(Session session, string key, CancellationToken cancellationToken = default)
     {
         var keyChecker = await GetKeyChecker(session, cancellationToken).ConfigureAwait(false);
@@ -99,7 +97,7 @@ public partial class SandboxedKeyValueStore : ISandboxedKeyValueStore
     protected virtual async Task<KeyChecker> GetKeyChecker(
         Session session, CancellationToken cancellationToken = default)
     {
-        if (session == Session.Null)
+        if (session == null!)
             throw Errors.KeyViolatesSandboxedKeyValueStoreConstraints();
 
         var user = await Auth.GetUser(session, cancellationToken).ConfigureAwait(false);

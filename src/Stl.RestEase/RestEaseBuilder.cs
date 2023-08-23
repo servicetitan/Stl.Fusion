@@ -63,24 +63,26 @@ public readonly struct RestEaseBuilder
 
     // User-defined client-side services
 
-    public RestEaseBuilder AddClient<TClient>(string? clientName = null)
-        => AddClient(typeof(TClient), clientName);
+    public RestEaseBuilder AddClient<TClient>(
+        string? clientName = null, ServiceLifetime lifetime = ServiceLifetime.Transient)
+        => AddClient(typeof(TClient), clientName, lifetime);
 
-    public RestEaseBuilder AddClient(Type clientType, string? clientName = null)
+    public RestEaseBuilder AddClient(
+        Type clientType, string? clientName = null, ServiceLifetime lifetime = ServiceLifetime.Transient)
     {
         if (!(clientType is { IsInterface: true, IsVisible: true }))
             throw Errors.InterfaceTypeExpected(clientType, true, nameof(clientType));
         clientName ??= clientType.FullName ?? "";
 
-        object Factory(IServiceProvider c)
-        {
+        object Factory(IServiceProvider c) {
             var httpClientFactory = c.GetRequiredService<IHttpClientFactory>();
             var httpClient = httpClientFactory.CreateClient(clientName);
             var client = CreateRestClient(c, httpClient).For(clientType);
             return client;
         }
 
-        Services.TryAddSingleton(clientType, Factory);
+        var descriptor = new ServiceDescriptor(clientType, Factory, lifetime);
+        Services.TryAdd(descriptor);
         return this;
     }
 }

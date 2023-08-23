@@ -3,14 +3,13 @@ using Stl.Fusion.EntityFramework;
 
 namespace Stl.Fusion.Extensions.Services;
 
-public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext>, IKeyValueStore
+public class DbKeyValueStore<TDbContext, TDbKeyValue>(IServiceProvider services) : DbServiceBase<TDbContext>(services),
+    IKeyValueStore
     where TDbContext : DbContext
     where TDbKeyValue : DbKeyValue, new()
 {
-    public IDbEntityResolver<string, TDbKeyValue> KeyValueResolver { get; init; }
-
-    public DbKeyValueStore(IServiceProvider services) : base(services)
-        => KeyValueResolver = services.DbEntityResolver<string, TDbKeyValue>();
+    public IDbEntityResolver<string, TDbKeyValue> KeyValueResolver { get; init; } =
+        services.DbEntityResolver<string, TDbKeyValue>();
 
     // Commands
 
@@ -27,7 +26,7 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
 
         var dbContext = await CreateCommandDbContext(tenantId, cancellationToken).ConfigureAwait(false);
         await using var _ = dbContext.ConfigureAwait(false);
-        dbContext.DisableChangeTracking(); // Just to speed up things a bit
+        dbContext.EnableChangeTracking(false); // Just to speed up things a bit
 
         var keys = items.Select(i => i.Key).ToList();
         var dbKeyValues = await dbContext.Set<TDbKeyValue>().AsQueryable()
@@ -64,7 +63,7 @@ public class DbKeyValueStore<TDbContext, TDbKeyValue> : DbServiceBase<TDbContext
 
         var dbContext = await CreateCommandDbContext(tenantId, cancellationToken).ConfigureAwait(false);
         await using var _ = dbContext.ConfigureAwait(false);
-        dbContext.DisableChangeTracking(); // Just to speed up things a bit
+        dbContext.EnableChangeTracking(false); // Just to speed up things a bit
 
         var dbKeyValues = await dbContext.Set<TDbKeyValue>().AsQueryable()
 #pragma warning disable MA0002

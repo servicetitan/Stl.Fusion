@@ -14,7 +14,7 @@ public class RpcServerPeer : RpcPeer
 
     public async Task Connect(RpcConnection connection, CancellationToken cancellationToken = default)
     {
-        var connectionState = ConnectionState.LatestOrThrowIfCompleted();
+        var connectionState = ConnectionState.Last;
         if (connectionState.Value.IsConnected()) {
             Disconnect();
             using var cts = cancellationToken.LinkWith(StopToken);
@@ -40,7 +40,7 @@ public class RpcServerPeer : RpcPeer
                     throw Errors.ConnectionUnrecoverable(e);
                 }
 
-                var connectionState = ConnectionState.LatestOrThrowIfCompleted().Value;
+                var connectionState = ConnectionState.Last.Value;
                 if (connectionState.Connection != null)
                     return connectionState.Connection;
             }

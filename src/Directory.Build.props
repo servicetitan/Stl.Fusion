@@ -28,9 +28,10 @@
     <NoWarn>$(NoWarn);MA0009;MA0015;MA0016;MA0018;MA0026;MA0046;MA0048;MA0051;MA0056;MA0064;MA0097;MA0099</NoWarn>
     <!-- [VSTHRD002] Synchronously waiting on tasks or awaiters may cause deadlocks. Use await or JoinableTaskFactory.Run instead. -->
     <!-- [VSTHRD003] Avoid awaiting or returning a Task representing work that was not started within your context as that can lead to deadlocks. -->
+    <!-- [VSTHRD103] Cancel synchronously blocks. Await CancelAsync instead. -->
     <!-- [VSTHRD110] Observe the awaitable result of this method call by awaiting it, assigning to a variable, or passing it to another method. -->
     <!-- [VSTHRD200] Use "Async" suffix in names of methods that return an awaitable type. -->
-    <NoWarn>$(NoWarn);VSTHRD003;VSTHRD002;VSTHRD110;VSTHRD200</NoWarn>
+    <NoWarn>$(NoWarn);VSTHRD003;VSTHRD002;VSTHRD103;VSTHRD110;VSTHRD200</NoWarn>
   </PropertyGroup>
 
   <!--

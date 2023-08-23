@@ -1,13 +1,10 @@
 namespace Stl.Conversion.Internal;
 
-public class DefaultConverterProvider : ConverterProvider
+public class DefaultConverterProvider(IServiceProvider services) : ConverterProvider
 {
     private readonly ConcurrentDictionary<Type, ISourceConverterProvider> _cache = new();
 
-    protected IServiceProvider Services { get; }
-
-    public DefaultConverterProvider(IServiceProvider services)
-        => Services = services;
+    protected IServiceProvider Services { get; } = services;
 
     public override ISourceConverterProvider From(Type sourceType)
         => _cache.GetOrAdd(sourceType, static (sourceType1, self) => {

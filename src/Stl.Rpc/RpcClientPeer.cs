@@ -1,21 +1,15 @@
-using Stl.Net;
 using Stl.Rpc.Internal;
 
 namespace Stl.Rpc;
 
 public class RpcClientPeer : RpcPeer
 {
-    private long _reconnectsAt;
+    private volatile AsyncState<Moment> _reconnectAt = new(default, true);
 
     public RpcClientConnectionFactory ConnectionFactory { get; init; }
     public RpcClientPeerReconnectDelayer ReconnectDelayer { get; init; }
 
-    public Moment? ReconnectsAt {
-        get {
-            var reconnectsAt = Interlocked.Read(ref _reconnectsAt);
-            return reconnectsAt == 0 ? null : new Moment(reconnectsAt);
-        }
-    }
+    public AsyncState<Moment> ReconnectsAt => _reconnectAt;
 
     public RpcClientPeer(RpcHub hub, RpcPeerRef @ref)
         : base(hub, @ref)
@@ -29,25 +23,31 @@ public class RpcClientPeer : RpcPeer
 
     protected override async Task<RpcConnection> GetConnection(CancellationToken cancellationToken)
     {
-        var (connection, error, _, tryIndex) = ConnectionState.LatestOrThrowIfCompleted().Value;
-        if (connection != null)
-            return connection;
+        var connectionState = ConnectionState.Last.Value;
+        if (connectionState.Connection != null)
+            return connectionState.Connection;
 
-        var delay = ReconnectDelayer.GetDelay(this, tryIndex, error, cancellationToken);
+        var delay = ReconnectDelayer.GetDelay(this, connectionState.TryIndex, connectionState.Error, cancellationToken);
         if (delay.IsLimitExceeded)
             throw Errors.ConnectionUnrecoverable();
 
-        if (!delay.Task.IsCompleted) {
-            Interlocked.Exchange(ref _reconnectsAt, delay.EndsAt.EpochOffsetTicks);
-            try {
-                await delay.Task.ConfigureAwait(false);
-            }
-            finally {
-                Interlocked.Exchange(ref _reconnectsAt, 0);
-            }
+        SetReconnectsAt(delay.EndsAt);
+        try {
+            await delay.Task.ConfigureAwait(false);
+        }
+        finally {
+            SetReconnectsAt(default);
         }
 
         Log.LogInformation("'{PeerRef}': Connecting...", Ref);
         return await ConnectionFactory.Invoke(this, cancellationToken).ConfigureAwait(false);
+    }
+
+    protected void SetReconnectsAt(Moment value)
+    {
+        lock (Lock) {
+            if (_reconnectAt.Value != value)
+                _reconnectAt = _reconnectAt.SetNext(value);
+        }
     }
 }

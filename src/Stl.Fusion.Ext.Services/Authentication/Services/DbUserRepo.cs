@@ -28,27 +28,23 @@ public interface IDbUserRepo<in TDbContext, TDbUser, TDbUserId>
         TDbContext dbContext, UserIdentity userIdentity, bool forUpdate, CancellationToken cancellationToken = default);
 }
 
-public class DbUserRepo<TDbContext, TDbUser, TDbUserId> : DbServiceBase<TDbContext>,
-    IDbUserRepo<TDbContext, TDbUser, TDbUserId>
+public class DbUserRepo<TDbContext, TDbUser, TDbUserId>(
+        DbAuthService<TDbContext>.Options settings,
+        IServiceProvider services
+        ) : DbServiceBase<TDbContext>(services), IDbUserRepo<TDbContext, TDbUser, TDbUserId>
     where TDbContext : DbContext
     where TDbUser : DbUser<TDbUserId>, new()
     where TDbUserId : notnull
 {
-    protected DbAuthService<TDbContext>.Options Options { get; init; }
+    protected DbAuthService<TDbContext>.Options Settings { get; init; } = settings;
     protected IDbUserIdHandler<TDbUserId> DbUserIdHandler { get; init; }
+        = services.GetRequiredService<IDbUserIdHandler<TDbUserId>>();
     protected IDbEntityResolver<TDbUserId, TDbUser> UserResolver { get; init; }
+        = services.DbEntityResolver<TDbUserId, TDbUser>();
     protected IDbEntityConverter<TDbUser, User> UserConverter { get; init; }
+        = services.DbEntityConverter<TDbUser, User>();
 
     public Type UserEntityType => typeof(TDbUser);
-
-    public DbUserRepo(DbAuthService<TDbContext>.Options options, IServiceProvider services)
-        : base(services)
-    {
-        Options = options;
-        DbUserIdHandler = services.GetRequiredService<IDbUserIdHandler<TDbUserId>>();
-        UserResolver = services.DbEntityResolver<TDbUserId, TDbUser>();
-        UserConverter = services.DbEntityConverter<TDbUser, User>();
-    }
 
     // Write methods
 

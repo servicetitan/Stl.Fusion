@@ -6,7 +6,10 @@ using Stl.Rpc.WebSockets;
 
 namespace Stl.Rpc.Server;
 
-public class RpcWebSocketServer : RpcServiceBase
+public class RpcWebSocketServer(
+        RpcWebSocketServer.Options settings,
+        IServiceProvider services
+        ) : RpcServiceBase(services)
 {
     public record Options
     {
@@ -20,17 +23,11 @@ public class RpcWebSocketServer : RpcServiceBase
 #endif
     }
 
-    public Options Settings { get; }
+    public Options Settings { get; } = settings;
     public RpcWebSocketServerPeerRefFactory PeerRefFactory { get; }
+        = services.GetRequiredService<RpcWebSocketServerPeerRefFactory>();
     public RpcServerConnectionFactory ServerConnectionFactory { get; }
-
-    public RpcWebSocketServer(Options settings, IServiceProvider services)
-        : base(services)
-    {
-        Settings = settings;
-        PeerRefFactory = services.GetRequiredService<RpcWebSocketServerPeerRefFactory>();
-        ServerConnectionFactory = services.GetRequiredService<RpcServerConnectionFactory>();
-    }
+        = services.GetRequiredService<RpcServerConnectionFactory>();
 
     public async Task Invoke(HttpContext context)
     {
@@ -40,11 +37,8 @@ public class RpcWebSocketServer : RpcServiceBase
             return;
         }
 
-        var peerRef = PeerRefFactory.Invoke(this, context);
-        if (Hub.GetPeer(peerRef) is not RpcServerPeer peer) {
-            context.Response.StatusCode = (int)HttpStatusCode.NotFound;
-            return;
-        }
+        var peerRef = PeerRefFactory.Invoke(this, context).RequireServer();
+        var peer = Hub.GetServerPeer(peerRef);
 
 #if NET6_0_OR_GREATER
         var webSocketAcceptContext = Settings.ConfigureWebSocket.Invoke();

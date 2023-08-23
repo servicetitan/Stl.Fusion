@@ -29,16 +29,16 @@ public abstract class DbSessionInfoTrimmer<TDbContext> : DbTenantWorkerBase<TDbC
     }
 }
 
-public class DbSessionInfoTrimmer<TDbContext, TDbSessionInfo, TDbUserId> : DbSessionInfoTrimmer<TDbContext>
+public class DbSessionInfoTrimmer<TDbContext, TDbSessionInfo, TDbUserId>(
+        DbSessionInfoTrimmer<TDbContext>.Options settings,
+        IServiceProvider services
+        ) : DbSessionInfoTrimmer<TDbContext>(settings, services)
     where TDbContext : DbContext
     where TDbSessionInfo : DbSessionInfo<TDbUserId>, new()
     where TDbUserId : notnull
 {
     protected IDbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId> Sessions { get; }
-
-    public DbSessionInfoTrimmer(Options settings, IServiceProvider services)
-        : base(settings, services)
-        => Sessions = services.GetRequiredService<IDbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>>();
+        = services.GetRequiredService<IDbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>>();
 
     protected override Task RunInternal(Tenant tenant, CancellationToken cancellationToken)
     {

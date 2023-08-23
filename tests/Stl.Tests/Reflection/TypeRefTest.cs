@@ -51,7 +51,11 @@ public class TypeRefTest : TestBase
 
         r = (TypeRef)typeof(Option<int>);
         r1 = r.WithoutAssemblyVersions();
+#if !NETFRAMEWORK
         r1.AssemblyQualifiedName.Should().Be("Stl.Option`1[[System.Int32, System.Private.CoreLib]], Stl");
+#else
+        r1.AssemblyQualifiedName.Should().Be("Stl.Option`1[[System.Int32, mscorlib]], Stl");
+#endif
         r1.Resolve().Should().Be(typeof(Option<int>));
     }
 

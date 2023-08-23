@@ -9,10 +9,13 @@ public interface IClientComputed : IComputed, IDisposable
 {
     RpcOutboundCall? Call { get; }
     RpcCacheEntry? CacheEntry { get; }
+
+    Task WhenSynchronized();
 }
 
 public class ClientComputed<T> : ComputeMethodComputed<T>, IClientComputed
 {
+    private readonly TaskCompletionSource<Unit>? _whenSynchronizedSource;
     private RpcOutboundComputeCall<T>? _call;
 
     RpcOutboundCall? IClientComputed.Call => _call;
@@ -32,6 +35,8 @@ public class ClientComputed<T> : ComputeMethodComputed<T>, IClientComputed
         CacheEntry = cacheEntry;
         if (call != null)
             BindToCallFromLock(call);
+        else
+            _whenSynchronizedSource = TaskCompletionSourceExt.New<Unit>();
         StartAutoInvalidation();
     }
 
@@ -51,22 +56,24 @@ public class ClientComputed<T> : ComputeMethodComputed<T>, IClientComputed
     {
         lock (Lock)
             BindToCallFromLock(call);
+        _whenSynchronizedSource?.TrySetResult(default); // Should go after exit from lock!
     }
 
-    // Protected methods
+    public Task WhenSynchronized()
+        => _whenSynchronizedSource?.Task ?? Task.CompletedTask;
 
     protected void BindToCallFromLock(RpcOutboundComputeCall<T> call)
     {
         if (_call != null)
             return; // Should never happen, but just in case
 
-        _call = call;
         var whenInvalidated = call.WhenInvalidated;
         if (whenInvalidated.IsCompleted) {
             Invalidate(true);
-            return;
+            _call = call;
         }
 
+        _call = call;
         _ = whenInvalidated.ContinueWith(
             _ => Invalidate(true),
             CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
@@ -74,6 +81,7 @@ public class ClientComputed<T> : ComputeMethodComputed<T>, IClientComputed
 
     protected override void OnInvalidated()
     {
+        _whenSynchronizedSource?.TrySetResult(default);
         base.OnInvalidated();
         if (Function is IClientComputeMethodFunction fn)
             fn.OnInvalidated(this);

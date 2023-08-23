@@ -5,17 +5,16 @@ using Stl.Fusion.Operations.Reprocessing;
 
 namespace Stl.Fusion.EntityFramework.Operations;
 
-public class DbOperationScopeProvider<TDbContext> : DbServiceBase<TDbContext>, ICommandHandler<ICommand>
+public class DbOperationScopeProvider<TDbContext>(IServiceProvider services) : DbServiceBase<TDbContext>(services),
+    ICommandHandler<ICommand>
     where TDbContext : DbContext
 {
     // ReSharper disable once StaticMemberInGenericType
     protected static MemberInfo ExecutionStrategyShouldRetryOnMethod { get; } = typeof(ExecutionStrategy)
         .GetMethod("ShouldRetryOn", BindingFlags.Instance | BindingFlags.NonPublic)!;
 
-    protected IOperationCompletionNotifier OperationCompletionNotifier { get; }
-
-    public DbOperationScopeProvider(IServiceProvider services) : base(services)
-        => OperationCompletionNotifier = services.GetRequiredService<IOperationCompletionNotifier>();
+    protected IOperationCompletionNotifier OperationCompletionNotifier { get; } =
+        services.GetRequiredService<IOperationCompletionNotifier>();
 
     [CommandFilter(Priority = FusionEntityFrameworkCommandHandlerPriority.DbOperationScopeProvider)]
     public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)

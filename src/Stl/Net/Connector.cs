@@ -1,13 +1,15 @@
+using Stl.Internal;
+
 namespace Stl.Net;
 
 public sealed class Connector<TConnection> : WorkerBase
     where TConnection : class
 {
     private readonly Func<CancellationToken, Task<TConnection>> _connectionFactory;
-    private volatile AsyncEvent<State> _state = new(State.New(), true);
+    private volatile AsyncState<State> _state = new(State.New(), true);
     private long _reconnectsAt;
 
-    public AsyncEvent<Result<bool>> IsConnected { get; private set; } = new(false, true);
+    public AsyncState<Result<bool>> IsConnected { get; private set; } = new(false, true);
     public Moment? ReconnectsAt {
         get {
             var reconnectsAt = Interlocked.Read(ref _reconnectsAt);
@@ -16,6 +18,7 @@ public sealed class Connector<TConnection> : WorkerBase
     }
 
     public Func<TConnection, CancellationToken, Task>? Connected { get; init; }
+    public Func<Exception, bool> TerminalErrorDetector { get; init; } = static _ => false;
     public IRetryDelayer ReconnectDelayer { get; init; } = new RetryDelayer();
     public ILogger? Log { get; init; }
     public LogLevel LogLevel { get; init; } = LogLevel.Debug;
@@ -27,7 +30,7 @@ public sealed class Connector<TConnection> : WorkerBase
         LogTag = GetType().GetName();
     }
 
-    public Task<TConnection> GetConnection(CancellationToken cancellationToken)
+    public Task<TConnection> GetConnection(CancellationToken cancellationToken = default)
     {
         // ReSharper disable once InconsistentlySynchronizedField
         var state = _state;
@@ -54,7 +57,7 @@ public sealed class Connector<TConnection> : WorkerBase
 
     public void DropConnection(TConnection connection, Exception? error)
     {
-        AsyncEvent<State> prevState;
+        AsyncState<State> prevState;
         lock (Lock) {
             prevState = _state;
             if (!prevState.Value.ConnectionTask.IsCompleted)
@@ -64,9 +67,8 @@ public sealed class Connector<TConnection> : WorkerBase
                 return; // The connection is already renewed
 #pragma warning restore VSTHRD104
 
-            _state = prevState.AppendNext(State.New() with {
-                LastError = error,
-                TryIndex = prevState.Value.TryIndex + 1,
+            _state = prevState.SetNext(State.New() with {
+                LastError = error
             });
         }
         prevState.Value.Dispose();
@@ -76,7 +78,7 @@ public sealed class Connector<TConnection> : WorkerBase
 
     protected override async Task OnRun(CancellationToken cancellationToken)
     {
-        AsyncEvent<State>? state;
+        AsyncState<State>? state;
         lock (Lock)
             state = _state;
         while (true) {
@@ -98,8 +100,10 @@ public sealed class Connector<TConnection> : WorkerBase
             }
 
             if (connection != null) {
-                lock (Lock)
-                    IsConnected = IsConnected.AppendNext(true);
+                lock (Lock) {
+                    state = _state = _state.SetNext(new State(connectionSource));
+                    IsConnected = IsConnected.SetNext(true);
+                }
 
                 Log.IfEnabled(LogLevel)?.Log(LogLevel, "{LogTag}: Connected", LogTag);
                 try {
@@ -114,11 +118,12 @@ public sealed class Connector<TConnection> : WorkerBase
 
             lock (Lock) {
                 if (state == _state) {
-                    _state = state.AppendNext(State.New() with {
+                    var oldState = state;
+                    state = _state = oldState.SetNext(State.New() with {
                         LastError = error,
                         TryIndex = state.Value.TryIndex + 1,
                     });
-                    state.Value.Dispose();
+                    oldState.Value.Dispose();
                 }
                 else {
                     // It was updated by Reconnect, so we just switch to the new state
@@ -127,14 +132,18 @@ public sealed class Connector<TConnection> : WorkerBase
                 }
 
                 if (error != null) {
-                    IsConnected = IsConnected.AppendNext(Result.Error<bool>(error));
+                    IsConnected = IsConnected.SetNext(Result.Error<bool>(error));
                     Log?.LogError(error, "{LogTag}: Disconnected", LogTag);
                 }
                 else {
-                    IsConnected = IsConnected.AppendNext(false);
+                    IsConnected = IsConnected.SetNext(false);
                     Log?.LogError("{LogTag}: Disconnected", LogTag);
                 }
             }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            if (error != null && TerminalErrorDetector.Invoke(error))
+                throw error;
 
             if (state.Value.TryIndex is var tryIndex and > 0) {
                 var delayLogger = new RetryDelayLogger("reconnect", LogTag, Log, LogLevel);
@@ -162,11 +171,13 @@ public sealed class Connector<TConnection> : WorkerBase
             if (!prevState.Value.ConnectionTask.IsCompleted)
                 prevState.Value.ConnectionSource.TrySetCanceled();
 
-            _state = prevState.AppendNext(State.NewCancelled(StopToken));
-            _state.Complete(StopToken);
+            _state = prevState.SetNext(State.NewCancelled(StopToken));
+            _state.SetFinal(StopToken);
             prevState.Value.Dispose();
-            IsConnected = IsConnected.AppendNext(true);
-            IsConnected.Complete();
+
+            if (IsConnected.Value.IsValue(out var isConnected) && isConnected)
+                IsConnected = IsConnected.SetNext(false);
+            IsConnected.SetFinal(Errors.AlreadyDisposed(GetType()));
         }
         return Task.CompletedTask;
     }

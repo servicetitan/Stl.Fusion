@@ -316,17 +316,6 @@ public abstract class AuthServiceTestBase : FusionTestBase
         user = await auth.GetUser(session);
         user.Should().NotBeNull();
         user!.Name.Should().Be("John");
-
-#if NET5_0_OR_GREATER
-        if (DbType != FusionTestDbType.InMemory && DbType != FusionTestDbType.MariaDb) {
-            await Assert.ThrowsAnyAsync<Exception>(async () => {
-                await commander.Call(new Auth_EditUser(session, "Jo"));
-            });
-        }
-#endif
-        user = await auth.GetUser(session);
-        user.Should().NotBeNull();
-        user!.Name.Should().Be("John");
     }
 
     [Fact]

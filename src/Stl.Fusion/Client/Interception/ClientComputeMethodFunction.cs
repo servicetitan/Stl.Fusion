@@ -76,6 +76,9 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
             input, cacheResult.Value, VersionGenerator.NextVersion(), true,
             null, cacheEntry);
 
+        // SuppressFlow here ensures that "true" computed won't be registered as a dependency -
+        // which is correct, coz its cached version already became a dependency, and once
+        // the true computed is created, its cached (prev.) version will be invalidated.
         using var suppressFlow = ExecutionContextExt.SuppressFlow();
         _ = Task.Run(() => RemoteCompute(input, cache, computed, cancellationToken), cancellationToken);
         return computed;
@@ -123,38 +126,29 @@ public class ClientComputeMethodFunction<T> : ComputeFunctionBase<T>, IClientCom
         }
 
         var existingCacheEntry = existing?.CacheEntry;
-        var cacheEntriesAreIdentical = (bool?)null;
-        var computed = (ClientComputed<T>?)null;
-        if (cacheEntry != null && existingCacheEntry != null && existing!.IsConsistent()) {
-            cacheEntriesAreIdentical = existingCacheEntry.Result.DataEquals(cacheEntry.Result);
-            if (cacheEntriesAreIdentical == true) {
-                computed = existing!;
-                computed.BindToCall(call!); // call != null due to above conditions here
-            }
+        if (cacheEntry != null && existingCacheEntry != null
+            && existing!.IsConsistent()
+            && existingCacheEntry.Result.DataEquals(cacheEntry.Result)) {
+            // We know here that existing is consistent with the new result
+            existing!.BindToCall(call!); // cacheEntry != null -> call != null
+            return existing;
         }
-        computed ??= new ClientComputed<T>(
+
+        var computed = new ClientComputed<T>(
             input.MethodDef.ComputedOptions,
             input, result, VersionGenerator.NextVersion(), isConsistent,
             call);
 
-        // Update cached data:
-
-        if (cacheEntriesAreIdentical == true)
-            return computed; // We already know entries are identical
-
         var cacheKey = cacheInfoCapture?.Key;
         if (ReferenceEquals(cacheKey, null))
-            return computed; // Call failed -> no need to worry about the cache
+            return computed; // No cache key -> no need to worry about the cache
 
-        if (cacheEntry == null) {
-            // The result is already inconsistent or an error
+        // Update cache
+        if (cacheEntry == null)
             cache!.Remove(cacheKey);
-            return computed;
-        }
+        else if (existingCacheEntry == null || !existingCacheEntry.Result.DataEquals(cacheEntry.Result))
+            cache!.Set(cacheKey, cacheEntry.Result); // Update cache if data has changed
 
-        cacheEntriesAreIdentical ??= existingCacheEntry?.Result.DataEquals(cacheEntry.Result);
-        if (cacheEntriesAreIdentical != true)
-            cache!.Set(cacheKey, cacheEntry.Result); // Entries are different
         return computed;
     }
 

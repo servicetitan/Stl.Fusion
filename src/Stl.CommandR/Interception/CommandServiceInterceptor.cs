@@ -5,15 +5,12 @@ using Stl.Rpc.Infrastructure;
 
 namespace Stl.CommandR.Interception;
 
-public class CommandServiceInterceptor : InterceptorBase
+public class CommandServiceInterceptor(CommandServiceInterceptor.Options settings, IServiceProvider services)
+    : InterceptorBase(settings, services)
 {
     public new record Options : InterceptorBase.Options;
 
-    protected readonly ICommander Commander;
-
-    public CommandServiceInterceptor(Options options, IServiceProvider services)
-        : base(options, services)
-        => Commander = services.GetRequiredService<ICommander>();
+    protected readonly ICommander Commander = services.GetRequiredService<ICommander>();
 
     protected override Func<Invocation, object?> CreateHandler<T>(Invocation initialInvocation, MethodDef methodDef)
         => invocation => {

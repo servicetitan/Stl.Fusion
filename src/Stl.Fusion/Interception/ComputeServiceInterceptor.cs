@@ -2,13 +2,10 @@ using Stl.Fusion.Internal;
 
 namespace Stl.Fusion.Interception;
 
-public class ComputeServiceInterceptor : ComputeServiceInterceptorBase
+public class ComputeServiceInterceptor(ComputeServiceInterceptor.Options settings, IServiceProvider services)
+    : ComputeServiceInterceptorBase(settings, services)
 {
     public new record Options : ComputeServiceInterceptorBase.Options;
-
-    public ComputeServiceInterceptor(Options options, IServiceProvider services)
-        : base(options, services)
-    { }
 
     protected override ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method)
         => new ComputeMethodFunction<T>(method, Services, Hub.LTagVersionGenerator);

@@ -24,13 +24,16 @@ public static class EndpointRouteBuilderExt
         return endpoints;
     }
 
-    public static IEndpointRouteBuilder MapFusionBlazorSwitch(this IEndpointRouteBuilder endpoints)
+    public static IEndpointRouteBuilder MapFusionBlazorMode(this IEndpointRouteBuilder endpoints)
     {
         var services = endpoints.ServiceProvider;
-        var handler = services.GetRequiredService<BlazorSwitchEndpoint>();
+        var handler = services.GetRequiredService<BlazorModeEndpoint>();
         endpoints
-            .MapGet("/fusion/blazorMode/{isServerSideBlazor}", handler.Invoke)
-            .WithGroupName("FusionBlazorSwitch");
+            .MapGet("/fusion/blazorMode", handler.Invoke)
+            .WithGroupName("FusionBlazorMode");
+        endpoints
+            .MapGet("/fusion/blazorMode/{isBlazorServer}", handler.Invoke)
+            .WithGroupName("FusionBlazorMode");
         return endpoints;
     }
 }

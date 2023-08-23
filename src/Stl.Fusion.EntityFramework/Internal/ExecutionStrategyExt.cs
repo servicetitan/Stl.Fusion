@@ -47,6 +47,7 @@ public static class ExecutionStrategyExt
             return false;
         if (ShouldRetryOnCached is not { } shouldRetryOn)
             return false;
+
         return shouldRetryOn.Invoke(strategy, exception);
     }
 
@@ -55,6 +56,7 @@ public static class ExecutionStrategyExt
     {
         if (SuspendedCached is not { } suspended)
             return false;
+
         suspended.Value = true;
         return true;
     }
@@ -63,6 +65,7 @@ public static class ExecutionStrategyExt
     {
         if (CurrentCached is not { } current)
             return false;
+
         if (ExecutionStrategy.Current == null) {
             var executionStrategy = dbContext.Database.CreateExecutionStrategy();
             if (executionStrategy is ExecutionStrategy es) {

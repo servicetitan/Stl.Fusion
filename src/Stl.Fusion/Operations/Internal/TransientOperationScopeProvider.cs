@@ -8,18 +8,16 @@ namespace Stl.Fusion.Operations.Internal;
 /// In addition, this scope actually "sends" this notification from
 /// any other (nested) scope.
 /// </summary>
-public class TransientOperationScopeProvider : ICommandHandler<ICommand>
+public class TransientOperationScopeProvider(IServiceProvider services) : ICommandHandler<ICommand>
 {
     private ILogger? _log;
     private IOperationCompletionNotifier? _operationCompletionNotifier;
 
-    protected IServiceProvider Services { get; }
-    protected IOperationCompletionNotifier OperationCompletionNotifier =>
-        _operationCompletionNotifier ??= Services.GetRequiredService<IOperationCompletionNotifier>();
-    protected ILogger Log => _log ??= Services.LogFor(GetType());
+    protected IServiceProvider Services { get; } = services;
 
-    public TransientOperationScopeProvider(IServiceProvider services)
-        => Services = services;
+    protected IOperationCompletionNotifier OperationCompletionNotifier
+        => _operationCompletionNotifier ??= Services.GetRequiredService<IOperationCompletionNotifier>();
+    protected ILogger Log => _log ??= Services.LogFor(GetType());
 
     [CommandFilter(Priority = FusionOperationsCommandHandlerPriority.TransientOperationScopeProvider)]
     public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
@@ -52,7 +50,7 @@ public class TransientOperationScopeProvider : ICommandHandler<ICommand>
             if (error is OperationCanceledException)
                 throw;
 
-            // When this operation scope is used, no reprocessing is possible 
+            // When this operation scope is used, no reprocessing is possible
             if (scope.IsUsed)
                 Log.LogError(error, "Operation failed: {Command}", command);
             throw;
