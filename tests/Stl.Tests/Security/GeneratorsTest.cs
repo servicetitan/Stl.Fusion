@@ -2,10 +2,8 @@ using Stl.Generators;
 
 namespace Stl.Tests.Security;
 
-public class GeneratorsTest : TestBase
+public class GeneratorsTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public GeneratorsTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void Int32GeneratorTest()
     {

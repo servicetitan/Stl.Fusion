@@ -4,7 +4,7 @@ namespace Stl.Tests.Comparison;
 
 public class RefTest
 {
-    public record TestRecord(string X) { }
+    public record TestRecord(string X);
 
     [Fact]
     public void BasicTest()

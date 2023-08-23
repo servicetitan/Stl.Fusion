@@ -2,10 +2,8 @@ using Stl.Fusion.Tests.UIModels;
 
 namespace Stl.Fusion.Tests;
 
-public class ServerTimeModelTest : FusionTestBase
+public class ServerTimeModelTest(ITestOutputHelper @out) : FusionTestBase(@out)
 {
-    public ServerTimeModelTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task ServerTimeModelTest1()
     {

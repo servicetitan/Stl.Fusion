@@ -5,10 +5,8 @@ using Stl.Time.Testing;
 namespace Stl.Tests.Time;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class ClockTest : TestBase
+public class ClockTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public ClockTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task BasicTest()
     {

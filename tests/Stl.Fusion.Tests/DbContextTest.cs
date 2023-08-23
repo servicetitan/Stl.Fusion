@@ -3,10 +3,8 @@ using Stl.Fusion.Tests.Model;
 
 namespace Stl.Fusion.Tests;
 
-public class DbContextTest : FusionTestBase
+public class DbContextTest(ITestOutputHelper @out) : FusionTestBase(@out)
 {
-    public DbContextTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task BasicTest()
     {

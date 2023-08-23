@@ -8,10 +8,8 @@ using TextOrBytes = Stl.Serialization.TextOrBytes;
 
 namespace Stl.Tests.Serialization;
 
-public class SerializationTest : TestBase
+public class SerializationTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public SerializationTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void ExceptionInfoSerialization()
     {

@@ -2,10 +2,8 @@ using Stl.Fusion.Tests.Services;
 
 namespace Stl.Fusion.Tests;
 
-public class ListArgumentTest : SimpleFusionTestBase
+public class ListArgumentTest(ITestOutputHelper @out) : SimpleFusionTestBase(@out)
 {
-    public ListArgumentTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task BasicTest()
     {

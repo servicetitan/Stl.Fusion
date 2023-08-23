@@ -1,9 +1,7 @@
 namespace Stl.Tests.Collections;
 
-public class FenwickTreeTest : TestBase
+public class FenwickTreeTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public FenwickTreeTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void RandomTest()
     {

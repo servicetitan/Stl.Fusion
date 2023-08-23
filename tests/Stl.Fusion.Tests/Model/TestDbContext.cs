@@ -6,11 +6,9 @@ using Stl.Fusion.Extensions.Services;
 
 namespace Stl.Fusion.Tests.Model;
 
-public class DbAuthUser : DbUser<long>
-{ }
+public class DbAuthUser : DbUser<long>;
 
-public class DbAuthSessionInfo : DbSessionInfo<long>
-{ }
+public class DbAuthSessionInfo : DbSessionInfo<long>;
 
 public class TestDbContext : DbContextBase
 {

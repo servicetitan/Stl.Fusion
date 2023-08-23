@@ -3,17 +3,15 @@ using Stl.Reflection;
 
 namespace Stl.Tests.Reflection;
 
-public class TypeExtTest : TestBase
+public class TypeExtTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public class Nested { }
+    public class Nested;
 
     // ReSharper disable once UnusedMember.Global
     public static class NestedGeneric<T>
     {
-        public class InnerNested { }
+        public class InnerNested;
     }
-
-    public TypeExtTest(ITestOutputHelper @out) : base(@out) { }
 
     [Fact]
     public void GetAllBaseTypesTest()

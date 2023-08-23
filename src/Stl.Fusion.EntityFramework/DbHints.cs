@@ -1,6 +1,6 @@
 namespace Stl.Fusion.EntityFramework;
 
-public abstract record DbHint(Symbol Value) { }
+public abstract record DbHint(Symbol Value);
 
 public record DbLockingHint(Symbol Value) : DbHint(Value)
 {
@@ -16,4 +16,4 @@ public record DbWaitHint(Symbol Value) : DbHint(Value)
     public static DbLockingHint SkipLocked { get; } = new(nameof(SkipLocked));
 }
 
-public record DbCustomHint(Symbol Value) : DbHint(Value) { }
+public record DbCustomHint(Symbol Value) : DbHint(Value);

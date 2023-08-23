@@ -2,10 +2,8 @@ namespace Stl.Tests.CommandR;
 
 #pragma warning disable MA0012
 
-public class LocalCommandTest : CommandRTestBase
+public class LocalCommandTest(ITestOutputHelper @out) : CommandRTestBase(@out)
 {
-    public LocalCommandTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task BasicTest()
     {

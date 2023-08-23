@@ -1,9 +1,8 @@
 namespace Stl.Tests.CommandR.Services;
 
-public class LogCommandHandler : ServiceBase, ICommandHandler<LogCommand>, ICommandHandler<LogEvent>
+public class LogCommandHandler(IServiceProvider services) : ServiceBase(services), ICommandHandler<LogCommand>,
+    ICommandHandler<LogEvent>
 {
-    public LogCommandHandler(IServiceProvider services) : base(services) { }
-
     public Task OnCommand(
         LogCommand command, CommandContext context,
         CancellationToken cancellationToken)

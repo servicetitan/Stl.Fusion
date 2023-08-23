@@ -2,10 +2,8 @@
 
 namespace Stl.Tests.Redis;
 
-public class RedisHashTest : RedisTestBase
+public class RedisHashTest(ITestOutputHelper @out) : RedisTestBase(@out)
 {
-    public RedisHashTest(ITestOutputHelper @out) : base(@out) { }
-
     [SkipOnGitHubFact]
     public async Task BasicTest()
     {

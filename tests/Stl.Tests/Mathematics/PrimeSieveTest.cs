@@ -1,11 +1,7 @@
-using Stl.Mathematics;
-
 namespace Stl.Tests.Mathematics;
 
-public class PrimeSieveTest : TestBase
+public class PrimeSieveTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public PrimeSieveTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void BasicTest()
     {

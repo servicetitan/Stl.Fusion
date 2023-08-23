@@ -3,16 +3,11 @@ using Stl.Fusion.Authentication;
 
 namespace Stl.Fusion.Blazor.Authentication;
 
-public class AuthState : AuthenticationState
+public class AuthState(User? user, bool isSignOutForced = false)
+    : AuthenticationState(user.OrGuest().ToClaimsPrincipal())
 {
-    public new User? User { get; }
-    public bool IsSignOutForced { get; }
+    public new User? User { get; } = user;
+    public bool IsSignOutForced { get; } = isSignOutForced;
 
     public AuthState() : this(null) { }
-    public AuthState(User? user, bool isSignOutForced = false)
-        : base(user.OrGuest().ToClaimsPrincipal())
-    {
-        User = user;
-        IsSignOutForced = isSignOutForced;
-    }
 }

@@ -2,10 +2,8 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Stl.Tests.DependencyInjection;
 
-public class ServiceCollectionExtTest : TestBase
+public class ServiceCollectionExtTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public ServiceCollectionExtTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void RemoveAllTest()
     {

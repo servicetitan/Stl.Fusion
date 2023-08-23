@@ -58,11 +58,9 @@ public sealed class RpcByteArgumentSerializer : RpcArgumentSerializer
         }
     }
 
-    private class ItemPolymorphicSerializer : ItemSerializer
+    private class ItemPolymorphicSerializer(IByteSerializer serializer, IBufferWriter<byte> buffer)
+        : ItemSerializer(serializer, buffer)
     {
-        public ItemPolymorphicSerializer(IByteSerializer serializer, IBufferWriter<byte> buffer)
-            : base(serializer, buffer) { }
-
         public override void OnObject(Type type, object? item, int index)
         {
             var itemType = item?.GetType() ?? type;
@@ -72,11 +70,9 @@ public sealed class RpcByteArgumentSerializer : RpcArgumentSerializer
         }
     }
 
-    private class ItemNonPolymorphicSerializer : ItemSerializer
+    private class ItemNonPolymorphicSerializer(IByteSerializer serializer, IBufferWriter<byte> buffer)
+        : ItemSerializer(serializer, buffer)
     {
-        public ItemNonPolymorphicSerializer(IByteSerializer serializer, IBufferWriter<byte> buffer)
-            : base(serializer, buffer) { }
-
         public override void OnObject(Type type, object? item, int index)
         {
             Serializer.Write(Buffer, default(TypeRef));
@@ -101,11 +97,9 @@ public sealed class RpcByteArgumentSerializer : RpcArgumentSerializer
                 : Serializer.Read<T>(ref Data);
     }
 
-    private class ItemPolymorphicDeserializer : ItemDeserializer
+    private class ItemPolymorphicDeserializer(IByteSerializer serializer, ReadOnlyMemory<byte> data)
+        : ItemDeserializer(serializer, data)
     {
-        public ItemPolymorphicDeserializer(IByteSerializer serializer, ReadOnlyMemory<byte> data)
-            : base(serializer, data) { }
-
         public override object? OnObject(Type type, int index)
         {
             var typeRef = Serializer.Read<TypeRef>(ref Data);
@@ -117,11 +111,9 @@ public sealed class RpcByteArgumentSerializer : RpcArgumentSerializer
         }
     }
 
-    private class ItemNonPolymorphicDeserializer : ItemDeserializer
+    private class ItemNonPolymorphicDeserializer(IByteSerializer serializer, ReadOnlyMemory<byte> data)
+        : ItemDeserializer(serializer, data)
     {
-        public ItemNonPolymorphicDeserializer(IByteSerializer serializer, ReadOnlyMemory<byte> data)
-            : base(serializer, data) { }
-
         public override object? OnObject(Type type, int index)
         {
             var typeRef = Serializer.Read<TypeRef>(ref Data);

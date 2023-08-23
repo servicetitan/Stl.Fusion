@@ -2,10 +2,8 @@ using Stl.Fusion.Tests.Services;
 
 namespace Stl.Fusion.Tests;
 
-public class MutableStateTest : SimpleFusionTestBase
+public class MutableStateTest(ITestOutputHelper @out) : SimpleFusionTestBase(@out)
 {
-    public MutableStateTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task BasicTest()
     {

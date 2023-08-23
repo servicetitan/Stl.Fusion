@@ -7,18 +7,16 @@ using MessagePack;
 
 namespace Stl.Serialization;
 
-public class MemoryPackByteSerializer : IByteSerializer
+public class MemoryPackByteSerializer(MemoryPackSerializerOptions options) : IByteSerializer
 {
     private readonly ConcurrentDictionary<Type, MemoryPackByteSerializer> _typedSerializers = new();
 
     public static readonly MemoryPackSerializerOptions DefaultOptions = MemoryPackSerializerOptions.Default;
     public static readonly MemoryPackByteSerializer Default = new(DefaultOptions);
 
-    public MemoryPackSerializerOptions Options { get; }
+    public MemoryPackSerializerOptions Options { get; } = options;
 
     public MemoryPackByteSerializer() : this(DefaultOptions) { }
-    public MemoryPackByteSerializer(MemoryPackSerializerOptions options)
-        => Options = options;
 
     public IByteSerializer<T> ToTyped<T>(Type? serializedType = null)
         => (IByteSerializer<T>) GetTypedSerializer(serializedType ?? typeof(T));

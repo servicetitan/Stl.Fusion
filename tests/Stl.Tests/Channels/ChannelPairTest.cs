@@ -3,10 +3,8 @@ using Stl.Testing.Collections;
 namespace Stl.Tests.Channels;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class ChannelPairTest : TestBase
+public class ChannelPairTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public ChannelPairTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task TwistedPairTest()
     {

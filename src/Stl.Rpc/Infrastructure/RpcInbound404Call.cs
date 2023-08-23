@@ -2,12 +2,9 @@ using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
 
-public class RpcInbound404Call<TResult> : RpcInboundCall<TResult>
+public class RpcInbound404Call<TResult>(RpcInboundContext context, RpcMethodDef methodDef)
+    : RpcInboundCall<TResult>(context, methodDef)
 {
-    public RpcInbound404Call(RpcInboundContext context, RpcMethodDef methodDef)
-        : base(context, methodDef)
-    { }
-
     protected override Task<TResult> InvokeTarget()
     {
         var message = Context.Message;

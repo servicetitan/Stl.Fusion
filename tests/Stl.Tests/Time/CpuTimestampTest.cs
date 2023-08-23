@@ -1,9 +1,7 @@
 namespace Stl.Tests.Time;
 
-public class CpuTimestampTest : TestBase
+public class CpuTimestampTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public CpuTimestampTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task BasicTest()
     {

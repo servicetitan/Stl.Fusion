@@ -4,5 +4,4 @@ namespace Stl.Serialization;
 /// Indicates that type's ToString() can be deserialized
 /// with System.Text.Json / JSON.NET deserializers.
 /// </summary>
-public interface IHasJsonCompatibleToString
-{ }
+public interface IHasJsonCompatibleToString;

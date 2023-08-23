@@ -12,5 +12,4 @@ public interface ITenantRegistry
     public bool TryGet(Symbol tenantId, [MaybeNullWhen(false)] out Tenant tenant);
 }
 
-public interface ITenantRegistry<TContext> : ITenantRegistry
-{ }
+public interface ITenantRegistry<TContext> : ITenantRegistry;

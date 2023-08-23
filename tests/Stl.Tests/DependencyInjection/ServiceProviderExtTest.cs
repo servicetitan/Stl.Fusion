@@ -1,17 +1,11 @@
 namespace Stl.Tests.DependencyInjection;
 
-public class ServiceProviderExtTest : TestBase
+public class ServiceProviderExtTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public class A
+    public class A(string x, string y)
     {
-        public string X { get; }
-        public string Y { get; }
-
-        public A(string x, string y)
-        {
-            X = x;
-            Y = y;
-        }
+        public string X { get; } = x;
+        public string Y { get; } = y;
 
         public A(string x) : this(x, string.Empty) { }
     }
@@ -42,8 +36,6 @@ public class ServiceProviderExtTest : TestBase
             Y = y.ToString();
         }
     }
-
-    public ServiceProviderExtTest(ITestOutputHelper @out) : base(@out) { }
 
     [Fact]
     public void ActivateTest()

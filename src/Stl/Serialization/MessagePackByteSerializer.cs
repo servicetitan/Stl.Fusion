@@ -4,7 +4,7 @@ using Stl.Serialization.Internal;
 
 namespace Stl.Serialization;
 
-public class MessagePackByteSerializer : IByteSerializer
+public class MessagePackByteSerializer(MessagePackSerializerOptions options) : IByteSerializer
 {
     private readonly ConcurrentDictionary<Type, MessagePackByteSerializer> _typedSerializers = new();
 
@@ -12,11 +12,9 @@ public class MessagePackByteSerializer : IByteSerializer
     public static readonly MessagePackSerializerOptions DefaultOptions = new(DefaultResolver);
     public static readonly MessagePackByteSerializer Default = new(DefaultOptions);
 
-    public MessagePackSerializerOptions Options { get; }
+    public MessagePackSerializerOptions Options { get; } = options;
 
     public MessagePackByteSerializer() : this(DefaultOptions) { }
-    public MessagePackByteSerializer(MessagePackSerializerOptions options)
-        => Options = options;
 
     public IByteSerializer<T> ToTyped<T>(Type? serializedType = null)
         => (IByteSerializer<T>) GetTypedSerializer(serializedType ?? typeof(T));

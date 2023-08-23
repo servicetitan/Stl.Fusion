@@ -84,6 +84,8 @@ public class BatchProcessorTest
             await Task.WhenAll(tasks);
             true.Should().BeFalse("No exception was thrown.");
         }
-        catch (InvalidOperationException) { }
+        catch (InvalidOperationException) {
+            // Intended
+        }
     }
 }

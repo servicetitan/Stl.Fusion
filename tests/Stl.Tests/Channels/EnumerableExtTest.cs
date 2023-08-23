@@ -3,10 +3,8 @@ using Stl.Testing.Collections;
 namespace Stl.Tests.Channels;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class EnumerableExtTest : TestBase
+public class EnumerableExtTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public EnumerableExtTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task WithTimeoutTest()
     {

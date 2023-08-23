@@ -1,5 +1,4 @@
 namespace Stl.Interception;
 
 [AttributeUsage(AttributeTargets.Method)]
-public class ProxyIgnoreAttribute : Attribute
-{ }
+public class ProxyIgnoreAttribute : Attribute;

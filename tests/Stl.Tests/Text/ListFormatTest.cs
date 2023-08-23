@@ -1,9 +1,7 @@
 namespace Stl.Tests.Text;
 
-public class ListFormatTest : TestBase
+public class ListFormatTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public ListFormatTest(ITestOutputHelper @out) : base(@out) { }
-
     [Theory]
     [InlineData("\\", 0, null)]
     [InlineData("\\\\", 1, null)]

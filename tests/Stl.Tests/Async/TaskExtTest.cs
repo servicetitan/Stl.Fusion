@@ -3,10 +3,8 @@ using Stl.Testing.Collections;
 namespace Stl.Tests.Async;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class TaskExtTest : TestBase
+public class TaskExtTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public TaskExtTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task ToResultTest()
     {
@@ -117,7 +115,7 @@ public class TaskExtTest : TestBase
         async Task Test(int cl, int size)
         {
             var rnd = new Random(cl * size);
-            var seeds = Enumerable.Range(0, size).Select(_ => rnd.Next()).ToArray(); 
+            var seeds = Enumerable.Range(0, size).Select(_ => rnd.Next()).ToArray();
             var tasks = seeds.Select(seed => RandomIntDelay(seed, 200));
 
             // ReSharper disable once PossibleMultipleEnumeration
@@ -142,7 +140,7 @@ public class TaskExtTest : TestBase
         async Task UntypedTest(int cl, int size)
         {
             var rnd = new Random(cl * size);
-            var seeds = Enumerable.Range(0, size).Select(_ => rnd.Next()).ToArray(); 
+            var seeds = Enumerable.Range(0, size).Select(_ => rnd.Next()).ToArray();
             var tasks = seeds.Select(seed => (Task)RandomIntDelay(seed, 200));
 
             // ReSharper disable once PossibleMultipleEnumeration
@@ -159,8 +157,8 @@ public class TaskExtTest : TestBase
     Task<int> RandomIntDelay(int seed, int maxDelay)
     {
         var delay = seed % maxDelay;
-        return delay == 0 
-            ? FailIntDelay(seed * 353 % maxDelay) 
+        return delay == 0
+            ? FailIntDelay(seed * 353 % maxDelay)
             : IntDelay(delay);
     }
 

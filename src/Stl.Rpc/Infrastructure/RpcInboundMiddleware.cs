@@ -1,8 +1,7 @@
 namespace Stl.Rpc.Infrastructure;
 
-public abstract class RpcInboundMiddleware : RpcMiddleware
+public abstract class RpcInboundMiddleware(IServiceProvider services)
+    : RpcMiddleware(services)
 {
-    protected RpcInboundMiddleware(IServiceProvider services) : base(services) { }
-
     public abstract void BeforeCall(RpcInboundCall call);
 }

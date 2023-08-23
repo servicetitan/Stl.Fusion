@@ -3,10 +3,8 @@ using Stl.Fusion.Internal;
 
 namespace Stl.Fusion.Tests.Internal;
 
-public class InvalidatedHandlerSetTest : TestBase
+public class InvalidatedHandlerSetTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public InvalidatedHandlerSetTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void Test()
     {

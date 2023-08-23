@@ -2,7 +2,7 @@ using Stl.Conversion;
 
 namespace Stl.Tests.Conversion;
 
-public class ConverterProviderTest : TestBase
+public class ConverterProviderTest(ITestOutputHelper @out) : TestBase(@out)
 {
     public record LikeBool(bool Value) : IConvertibleTo<bool>
     {
@@ -35,8 +35,6 @@ public class ConverterProviderTest : TestBase
         public static LikeBool2 Parse(string source)
             => new(bool.Parse(source));
     }
-
-    public ConverterProviderTest(ITestOutputHelper @out) : base(@out) { }
 
     public virtual IConverterProvider GetConverters()
     {

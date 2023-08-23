@@ -1,9 +1,7 @@
 namespace Stl.Tests.Rpc;
 
-public class RetryDelaySeqTest : TestBase
+public class RetryDelaySeqTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public RetryDelaySeqTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void BasicTest()
     {

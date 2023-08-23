@@ -2,10 +2,8 @@ using Stl.Redis;
 
 namespace Stl.Tests.Redis;
 
-public class RedisPubSubTest : RedisTestBase
+public class RedisPubSubTest(ITestOutputHelper @out) : RedisTestBase(@out)
 {
-    public RedisPubSubTest(ITestOutputHelper @out) : base(@out) { }
-
     [SkipOnGitHubFact]
     public async Task BasicTest()
     {

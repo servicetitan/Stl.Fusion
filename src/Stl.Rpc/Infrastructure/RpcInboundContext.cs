@@ -25,10 +25,7 @@ public class RpcInboundContext
         Peer = peer;
         Message = message;
         CancellationToken = cancellationToken;
-        if (initializeCall)
-            Call = RpcInboundCall.New(message.CallTypeId, this, GetMethodDef());
-        else
-            Call = null!;
+        Call = initializeCall ? RpcInboundCall.New(message.CallTypeId, this, GetMethodDef()) : null!;
     }
 
     public Scope Activate()

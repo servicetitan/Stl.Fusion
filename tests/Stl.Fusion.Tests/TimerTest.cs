@@ -2,10 +2,8 @@ using Stl.Fusion.Tests.Services;
 
 namespace Stl.Fusion.Tests;
 
-public class TimerTest : FusionTestBase
+public class TimerTest(ITestOutputHelper @out) : FusionTestBase(@out)
 {
-    public TimerTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task BasicTest()
     {

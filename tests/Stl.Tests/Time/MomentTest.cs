@@ -3,10 +3,8 @@ using Stl.Testing.Collections;
 namespace Stl.Tests.Time;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class MomentTest : TestBase
+public class MomentTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public MomentTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void BasicTest()
     {

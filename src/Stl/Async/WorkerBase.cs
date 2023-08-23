@@ -3,16 +3,14 @@ using Stl.Internal;
 
 namespace Stl.Async;
 
-public abstract class WorkerBase : ProcessorBase, IWorker
+public abstract class WorkerBase(CancellationTokenSource? stopTokenSource = null)
+    : ProcessorBase(stopTokenSource), IWorker
 {
     private volatile Task? _whenRunning;
 
     protected bool MustFlowExecutionContext { get; init; } = false;
 
     public Task? WhenRunning => _whenRunning;
-
-    protected WorkerBase(CancellationTokenSource? stopTokenSource = null)
-        : base(stopTokenSource) { }
 
     protected override Task DisposeAsyncCore()
         => WhenRunning ?? Task.CompletedTask;

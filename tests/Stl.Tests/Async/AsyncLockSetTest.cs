@@ -7,7 +7,7 @@ using Stl.Testing.Collections;
 namespace Stl.Tests.Async;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class AsyncLockSetTest : AsyncLockTestBase
+public class AsyncLockSetTest(ITestOutputHelper @out) : AsyncLockTestBase(@out)
 {
     protected AsyncLockSet<string> CheckedFailSet { get; } = new(LockReentryMode.CheckedFail);
     protected AsyncLockSet<string> CheckedPassSet { get; } = new(LockReentryMode.CheckedPass);
@@ -34,8 +34,6 @@ public class AsyncLockSetTest : AsyncLockTestBase
         public override void Release()
             => LockSet.Release(Key);
     }
-
-    public AsyncLockSetTest(ITestOutputHelper @out) : base(@out) { }
 
     protected override AsyncLock CreateAsyncLock(LockReentryMode reentryMode)
     {

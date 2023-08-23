@@ -2,10 +2,8 @@ using Stl.Fusion.Tests.Services;
 
 namespace Stl.Fusion.Tests;
 
-public class ComputedInterceptorTest : FusionTestBase
+public class ComputedInterceptorTest(ITestOutputHelper @out) : FusionTestBase(@out)
 {
-    public ComputedInterceptorTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task AutoRecomputeTest()
     {

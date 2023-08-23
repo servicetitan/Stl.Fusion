@@ -7,12 +7,10 @@ using Xunit.DependencyInjection.Logging;
 
 namespace Stl.Tests.CommandR;
 
-public class CommandRTestBase : TestBase
+public class CommandRTestBase(ITestOutputHelper @out) : TestBase(@out)
 {
     protected bool UseDbContext { get; set; }
     protected Func<CommandHandler, Type, bool>? CommandHandlerFilter { get; set; }
-
-    public CommandRTestBase(ITestOutputHelper @out) : base(@out) { }
 
     protected virtual IServiceProvider CreateServices()
     {

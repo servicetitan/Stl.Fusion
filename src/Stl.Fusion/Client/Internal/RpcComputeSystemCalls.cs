@@ -8,12 +8,10 @@ public interface IRpcComputeSystemCalls : IRpcSystemService
     Task<RpcNoWait> Invalidate();
 }
 
-public class RpcComputeSystemCalls : RpcServiceBase, IRpcComputeSystemCalls
+public class RpcComputeSystemCalls(IServiceProvider services)
+    : RpcServiceBase(services), IRpcComputeSystemCalls
 {
     public static readonly Symbol Name = "$sys-c";
-
-    public RpcComputeSystemCalls(IServiceProvider services) : base(services)
-    { }
 
     public Task<RpcNoWait> Invalidate()
     {

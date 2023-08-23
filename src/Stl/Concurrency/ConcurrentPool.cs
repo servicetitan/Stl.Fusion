@@ -3,27 +3,20 @@ using Stl.Pooling;
 
 namespace Stl.Concurrency;
 
-public class ConcurrentPool<T> : IPool<T>
+public class ConcurrentPool<T>(Func<T> itemFactory, int capacity, int counterApproximationFactor) : IPool<T>
 {
     public static int DefaultCapacity => Math.Min(64, HardwareInfo.GetProcessorCountPo2Factor(32));
 
-    private readonly StochasticCounter _count;
-    private readonly ConcurrentQueue<T> _queue;
-    private readonly Func<T> _itemFactory;
+    private readonly StochasticCounter _count = new(counterApproximationFactor);
+    private readonly ConcurrentQueue<T> _queue = new();
+    private readonly Func<T> _itemFactory = itemFactory ?? throw new ArgumentNullException(nameof(itemFactory));
 
-    public int Capacity { get; }
+    public int Capacity { get; } = capacity;
 
     public ConcurrentPool(Func<T> itemFactory)
         : this(itemFactory, DefaultCapacity) { }
     public ConcurrentPool(Func<T> itemFactory, int capacity)
         : this(itemFactory, capacity, StochasticCounter.DefaultApproximationFactor) { }
-    public ConcurrentPool(Func<T> itemFactory, int capacity, int counterApproximationFactor)
-    {
-        Capacity = capacity;
-        _count = new StochasticCounter(counterApproximationFactor);
-        _queue = new ConcurrentQueue<T>();
-        _itemFactory = itemFactory ?? throw new ArgumentNullException(nameof(itemFactory));
-    }
 
     public ResourceLease<T> Rent()
     {

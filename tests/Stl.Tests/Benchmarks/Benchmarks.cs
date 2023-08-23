@@ -4,10 +4,8 @@ using Stl.Time.Internal;
 namespace Stl.Tests.Benchmarks;
 
 [Collection(nameof(PerformanceTests)), Trait("Category", nameof(PerformanceTests))]
-public class BenchmarkTest : TestBase
+public class BenchmarkTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public BenchmarkTest(ITestOutputHelper @out) : base(@out) { }
-
     void RunOne<T>(string title, int opCount, Func<int, T> action)
     {
         action(Math.Min(1, opCount / 10));

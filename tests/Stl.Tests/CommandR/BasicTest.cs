@@ -2,10 +2,8 @@ using Stl.Tests.CommandR.Services;
 
 namespace Stl.Tests.CommandR;
 
-public class BasicTest : CommandRTestBase
+public class BasicTest(ITestOutputHelper @out) : CommandRTestBase(@out)
 {
-    public BasicTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task LogCommandTest()
     {

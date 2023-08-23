@@ -6,7 +6,7 @@ using Stl.Fusion.Extensions.Services;
 
 namespace Templates.TodoApp.Services;
 
-public class AppDbContext : DbContextBase
+public class AppDbContext(DbContextOptions options) : DbContextBase(options)
 {
     // Stl.Fusion.EntityFramework tables
     public DbSet<DbUser<string>> Users { get; protected set; } = null!;
@@ -14,6 +14,4 @@ public class AppDbContext : DbContextBase
     public DbSet<DbSessionInfo<string>> Sessions { get; protected set; } = null!;
     public DbSet<DbKeyValue> KeyValues { get; protected set; } = null!;
     public DbSet<DbOperation> Operations { get; protected set; } = null!;
-
-    public AppDbContext(DbContextOptions options) : base(options) { }
 }

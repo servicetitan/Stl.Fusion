@@ -6,7 +6,7 @@ namespace Stl.Fusion.Blazor;
 
 public readonly struct FusionBlazorBuilder
 {
-    private class AddedTag { }
+    private class AddedTag;
     private static readonly ServiceDescriptor AddedTagDescriptor = new(typeof(AddedTag), new AddedTag());
 
     public FusionBuilder Fusion { get; }

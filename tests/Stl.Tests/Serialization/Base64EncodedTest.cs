@@ -1,9 +1,7 @@
 namespace Stl.Tests.Serialization;
 
-public class Base64EncodedTest : TestBase
+public class Base64EncodedTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public Base64EncodedTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void BasicTest()
     {

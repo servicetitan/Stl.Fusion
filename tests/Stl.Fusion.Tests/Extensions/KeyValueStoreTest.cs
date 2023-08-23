@@ -4,15 +4,9 @@ using Stl.Time.Testing;
 
 namespace Stl.Fusion.Tests.Extensions;
 
-public class InMemoryKeyValueStoreTest : KeyValueStoreTestBase
-{
-    public InMemoryKeyValueStoreTest(ITestOutputHelper @out) : base(@out, true) { }
-}
+public class InMemoryKeyValueStoreTest(ITestOutputHelper @out) : KeyValueStoreTestBase(@out, true);
 
-public class DbKeyValueStoreTest : KeyValueStoreTestBase
-{
-    public DbKeyValueStoreTest(ITestOutputHelper @out) : base(@out, false) { }
-}
+public class DbKeyValueStoreTest(ITestOutputHelper @out) : KeyValueStoreTestBase(@out, false);
 
 public abstract class KeyValueStoreTestBase : FusionTestBase
 {

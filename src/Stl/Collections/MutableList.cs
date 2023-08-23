@@ -17,11 +17,11 @@ public interface IMutableList<T> : IReadOnlyMutableList<T>, IList<T>
     bool Update<TState>(TState state, Func<TState, ImmutableList<T>, ImmutableList<T>> updater);
 }
 
-public class MutableList<T> : IMutableList<T>
+public class MutableList<T>(ImmutableList<T> items) : IMutableList<T>
 {
     private readonly object _lock = new();
-    private volatile TaskCompletionSource<Unit> _whenChangedSource;
-    private volatile ImmutableList<T> _items;
+    private volatile TaskCompletionSource<Unit> _whenChangedSource = TaskCompletionSourceExt.New<Unit>();
+    private volatile ImmutableList<T> _items = items;
 
     public ImmutableList<T> Items {
         get => _items;
@@ -40,11 +40,6 @@ public class MutableList<T> : IMutableList<T>
     }
 
     public MutableList() : this(ImmutableList<T>.Empty) { }
-    public MutableList(ImmutableList<T> items)
-    {
-        _whenChangedSource = TaskCompletionSourceExt.New<Unit>();
-        _items = items;
-    }
 
     public override string ToString()
         => $"{GetType().GetName()}({Count} item(s))";
@@ -124,11 +119,11 @@ public class MutableList<T> : IMutableList<T>
 
     public void Add(T item)
         => Update(item, static (v, items) => items.Add(v));
-    public bool Contains(T item) 
+    public bool Contains(T item)
         => Items.Contains(item);
     public void CopyTo(T[] array, int arrayIndex)
         => Items.CopyTo(array, arrayIndex);
-    public bool Remove(T item) 
+    public bool Remove(T item)
         => Update(item, static (v, items) => items.Remove(v));
     public int IndexOf(T item)
         => Items.IndexOf(item);

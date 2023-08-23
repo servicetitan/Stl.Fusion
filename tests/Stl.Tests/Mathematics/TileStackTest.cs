@@ -1,8 +1,6 @@
-using Stl.Mathematics;
-
 namespace Stl.Tests.Mathematics;
 
-public class TileStackTest : TestBase
+public class TileStackTest(ITestOutputHelper @out) : TestBase(@out)
 {
     public TileStack<long> LongTileStack = new(0L, 16L, 16_384L, 4);
     public TileStack<Moment> MomentTileStack = new(
@@ -10,8 +8,6 @@ public class TileStackTest : TestBase
         new Moment(TimeSpan.FromMinutes(3)),
         new Moment(TimeSpan.FromMinutes(3 * Math.Pow(4, 10))), // ~ almost 6 years
         4);
-
-    public TileStackTest(ITestOutputHelper @out) : base(@out) { }
 
     [Fact]
     public void LongTileStackTest()

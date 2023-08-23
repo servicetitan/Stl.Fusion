@@ -2,11 +2,9 @@ using Stl.Reflection;
 
 namespace Stl.Tests.Reflection;
 
-public class ActivatorExtTest : TestBase
+public class ActivatorExtTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public class SimpleClass { }
-
-    public ActivatorExtTest(ITestOutputHelper @out) : base(@out) { }
+    public class SimpleClass;
 
     [Fact]
     public void CreateInstanceTest()

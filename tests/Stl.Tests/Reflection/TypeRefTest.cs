@@ -2,10 +2,8 @@ using Stl.Reflection;
 
 namespace Stl.Tests.Reflection;
 
-public class TypeRefTest : TestBase
+public class TypeRefTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public TypeRefTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void BasicTest()
     {
@@ -62,16 +60,16 @@ public class TypeRefTest : TestBase
 #pragma warning disable RCS1102
     public class Nested
     {
-        public class SubNested { }
+        public class SubNested;
     }
 
-    private class PrivateNested { }
-    internal class InternalNested { }
-    protected class ProtectedNested { }
+    private class PrivateNested;
+    internal class InternalNested;
+    protected class ProtectedNested;
 #pragma warning restore RCS1102
 }
 
 public static class StaticType
 {
-    public class Nested { }
+    public class Nested;
 }

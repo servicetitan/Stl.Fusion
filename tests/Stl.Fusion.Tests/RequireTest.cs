@@ -4,10 +4,8 @@ using Stl.Fusion.Authentication;
 
 namespace Stl.Fusion.Tests;
 
-public class RequireTest : TestBase
+public class RequireTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public RequireTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void SimpleTest()
     {

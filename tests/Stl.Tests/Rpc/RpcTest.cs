@@ -5,10 +5,8 @@ using Stl.Testing.Collections;
 namespace Stl.Tests.Rpc;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class RpcWebSocketTest : RpcTestBase
+public class RpcWebSocketTest(ITestOutputHelper @out) : RpcTestBase(@out)
 {
-    public RpcWebSocketTest(ITestOutputHelper @out) : base(@out) { }
-
     protected override void ConfigureServices(IServiceCollection services, bool isClient)
     {
         base.ConfigureServices(services, isClient);

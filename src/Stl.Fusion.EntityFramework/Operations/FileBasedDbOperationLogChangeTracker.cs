@@ -4,15 +4,12 @@ using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework.Operations;
 
-public class FileBasedDbOperationLogChangeTracker<TDbContext>
-    : DbOperationCompletionTrackerBase<TDbContext, FileBasedDbOperationLogChangeTrackingOptions<TDbContext>>
+public class FileBasedDbOperationLogChangeTracker<TDbContext>(
+    FileBasedDbOperationLogChangeTrackingOptions<TDbContext> options,
+    IServiceProvider services
+    ) : DbOperationCompletionTrackerBase<TDbContext, FileBasedDbOperationLogChangeTrackingOptions<TDbContext>>(options, services)
     where TDbContext : DbContext
 {
-    public FileBasedDbOperationLogChangeTracker(
-        FileBasedDbOperationLogChangeTrackingOptions<TDbContext> options,
-        IServiceProvider services)
-        : base(options, services) { }
-
     protected override DbOperationCompletionTrackerBase.TenantWatcher CreateTenantWatcher(Symbol tenantId)
         => new TenantWatcher(this, tenantId);
 

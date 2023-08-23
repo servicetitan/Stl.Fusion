@@ -1,7 +1,5 @@
 namespace Stl.Interception;
 
-public interface IRequiresAsyncProxy
-{ }
+public interface IRequiresAsyncProxy;
 
-public interface IRequiresFullProxy : IRequiresAsyncProxy
-{ }
+public interface IRequiresFullProxy : IRequiresAsyncProxy;

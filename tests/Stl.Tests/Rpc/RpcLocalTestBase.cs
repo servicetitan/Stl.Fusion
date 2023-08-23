@@ -5,10 +5,8 @@ using Xunit.DependencyInjection.Logging;
 
 namespace Stl.Tests.Rpc;
 
-public abstract class RpcLocalTestBase : TestBase
+public abstract class RpcLocalTestBase(ITestOutputHelper @out) : TestBase(@out)
 {
-    protected RpcLocalTestBase(ITestOutputHelper @out) : base(@out) { }
-
     protected virtual ServiceProvider CreateServices(
         Action<IServiceCollection>? configureServices = null)
     {

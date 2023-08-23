@@ -2,10 +2,8 @@ using Stl.Fusion.Authentication;
 
 namespace Stl.Fusion.Tests.Authentication;
 
-public class AuthCommandSerializationTest : TestBase
+public class AuthCommandSerializationTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public AuthCommandSerializationTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void AuthCommandSerialization()
     {

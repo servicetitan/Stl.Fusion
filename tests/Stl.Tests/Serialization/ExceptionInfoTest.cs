@@ -1,15 +1,11 @@
 namespace Stl.Tests.Serialization;
 
-public class ExceptionInfoTest : TestBase
+public class ExceptionInfoTest(ITestOutputHelper @out) : TestBase(@out)
 {
 #pragma warning disable RCS1194
-    public class WeirdException : Exception
+    public class WeirdException() : Exception("")
 #pragma warning restore RCS1194
-    {
-        public WeirdException() : base("") { }
-    }
-
-    public ExceptionInfoTest(ITestOutputHelper @out) : base(@out) { }
+    { }
 
     [Fact]
     public void BasicTest()

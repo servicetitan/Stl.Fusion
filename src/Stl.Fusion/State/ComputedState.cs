@@ -18,8 +18,7 @@ public interface IComputedState : IState, IDisposable, IHasWhenDisposed
     CancellationToken DisposeToken { get; }
 }
 
-public interface IComputedState<T> : IState<T>, IComputedState
-{ }
+public interface IComputedState<T> : IState<T>, IComputedState;
 
 public abstract class ComputedState<T> : State<T>, IComputedState<T>
 {

@@ -21,12 +21,10 @@ public abstract record CommandHandler(
     public override int GetHashCode() => RuntimeHelpers.GetHashCode(this);
 }
 
-public abstract record CommandHandler<TCommand> : CommandHandler
+public abstract record CommandHandler<TCommand>(Symbol Id, bool IsFilter = false, double Priority = 0)
+    : CommandHandler(Id, typeof(TCommand), IsFilter, Priority)
     where TCommand : class, ICommand
 {
-    protected CommandHandler(Symbol id, bool isFilter = false, double priority = 0)
-        : base(id, typeof(TCommand), isFilter, priority) { }
-
     public override string ToString() => base.ToString();
 
     // This record relies on reference-based equality

@@ -31,10 +31,8 @@ public class TestClassBase : IRequiresAsyncProxy
     public virtual Task<int> NoProxy4(int a) => Task.FromResult(a);
 }
 
-internal class TestClass : TestClassBase, ITestInterface
+internal class TestClass(int x) : TestClassBase(x), ITestInterface
 {
-    public TestClass(int x) : base(x) { }
-
     public virtual Task Proxy1() => Task.CompletedTask;
     public virtual Task<int> Proxy2(int a, Task<bool> b) => Task.FromResult(1);
     public virtual Task<int> Proxy3() => Task.FromResult(0);

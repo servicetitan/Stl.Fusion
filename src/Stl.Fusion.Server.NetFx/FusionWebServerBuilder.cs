@@ -4,7 +4,7 @@ namespace Stl.Fusion.Server;
 
 public readonly struct FusionWebServerBuilder
 {
-    private class AddedTag { }
+    private class AddedTag;
     private static readonly ServiceDescriptor AddedTagDescriptor = new(typeof(AddedTag), new AddedTag());
 
     public FusionBuilder Fusion { get; }

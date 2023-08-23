@@ -1,9 +1,7 @@
 namespace Stl.Fusion.Tests;
 
-public class AnonymousComputedTest : SimpleFusionTestBase
+public class AnonymousComputedTest(ITestOutputHelper @out) : SimpleFusionTestBase(@out)
 {
-    public AnonymousComputedTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task BasicTest()
     {

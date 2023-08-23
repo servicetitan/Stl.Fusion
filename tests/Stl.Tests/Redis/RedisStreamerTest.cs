@@ -4,10 +4,8 @@ using Stl.Testing.Collections;
 namespace Stl.Tests.Redis;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class RedisStreamerTest : RedisTestBase
+public class RedisStreamerTest(ITestOutputHelper @out) : RedisTestBase(@out)
 {
-    public RedisStreamerTest(ITestOutputHelper @out) : base(@out) { }
-
     [SkipOnGitHubFact]
     public async Task BasicTest()
     {
@@ -82,7 +80,7 @@ public class RedisStreamerTest : RedisTestBase
     }
 
     async IAsyncEnumerable<int> Delays(
-        IEnumerable<double> delays, 
+        IEnumerable<double> delays,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var index = 0;

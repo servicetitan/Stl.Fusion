@@ -10,5 +10,4 @@ namespace Stl.CommandR.Commands;
 /// MVC action filter preventing such commands from being executed
 /// via any of your public endpoints.
 /// </remarks>
-public interface IBackendCommand : ICommand
-{ }
+public interface IBackendCommand : ICommand;

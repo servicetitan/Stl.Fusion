@@ -5,10 +5,8 @@ using Stl.Testing.Collections;
 namespace Stl.Tests.Diagnostics;
 
 [Collection(nameof(PerformanceTests)), Trait("Category", nameof(PerformanceTests))]
-public class SamplerTest : TestBase
+public class SamplerTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public SamplerTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void AlwaysNeverTest()
     {

@@ -4,11 +4,9 @@ using Stl.Fusion.EntityFramework;
 
 namespace Stl.Fusion.Authentication.Services;
 
-public class DbAuthIsolationLevelSelector<TDbContext> : DbIsolationLevelSelector<TDbContext>
+public class DbAuthIsolationLevelSelector<TDbContext>() : DbIsolationLevelSelector<TDbContext>(null)
     where TDbContext : DbContext
 {
-    public DbAuthIsolationLevelSelector() : base(null) { }
-
     public override IsolationLevel GetCommandIsolationLevel(CommandContext commandContext)
     {
         var command = commandContext.UntypedCommand;

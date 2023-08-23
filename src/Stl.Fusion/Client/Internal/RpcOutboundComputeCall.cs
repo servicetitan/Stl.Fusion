@@ -8,15 +8,13 @@ public interface IRpcOutboundComputeCall
     void SetInvalidated(RpcInboundContext context);
 }
 
-public class RpcOutboundComputeCall<TResult> : RpcOutboundCall<TResult>, IRpcOutboundComputeCall
+public class RpcOutboundComputeCall<TResult>(RpcOutboundContext context)
+    : RpcOutboundCall<TResult>(context), IRpcOutboundComputeCall
 {
     protected readonly TaskCompletionSource<Unit> WhenInvalidatedSource = TaskCompletionSourceExt.New<Unit>();
 
     public LTag ResultVersion { get; protected set; } = default;
     public Task WhenInvalidated => WhenInvalidatedSource.Task;
-
-    public RpcOutboundComputeCall(RpcOutboundContext context) : base(context)
-    { }
 
     public override void SetResult(object? result, RpcInboundContext? context)
     {

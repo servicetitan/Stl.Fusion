@@ -3,10 +3,8 @@ using Stl.Testing.Collections;
 namespace Stl.Tests.Time;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class ServerClockTest : TestBase
+public class ServerClockTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public ServerClockTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void BasicTest()
     {

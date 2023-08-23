@@ -8,8 +8,7 @@ public interface ICompletion : IMetaCommand, IBackendCommand
 }
 
 public interface ICompletion<out TCommand> : IMetaCommand<TCommand>, ICompletion
-    where TCommand : class, ICommand
-{ }
+    where TCommand : class, ICommand;
 
 public record Completion<TCommand>(TCommand Command, IOperation Operation)
     : ICompletion<TCommand>

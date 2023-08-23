@@ -1,9 +1,7 @@
 namespace Stl.Tests.CommandR.Services;
 
-public class LogEnterExitService : ServiceBase, ICommandService
+public class LogEnterExitService(IServiceProvider services) : ServiceBase(services), ICommandService
 {
-    public LogEnterExitService(IServiceProvider services) : base(services) { }
-
     [CommandFilter(1000)]
     public async Task OnAnyCommand(
         ICommand command, CommandContext context,

@@ -5,11 +5,10 @@ namespace Stl.Fusion;
 
 public interface IMutableState : IState, IMutableResult
 {
-    public new interface IOptions : IState.IOptions { }
+    public new interface IOptions : IState.IOptions;
 }
 
-public interface IMutableState<T> : IState<T>, IMutableResult<T>, IMutableState
-{ }
+public interface IMutableState<T> : IState<T>, IMutableResult<T>, IMutableState;
 
 public class MutableState<T> : State<T>, IMutableState<T>
 {

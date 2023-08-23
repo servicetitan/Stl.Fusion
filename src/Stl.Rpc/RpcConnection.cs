@@ -2,18 +2,12 @@ using Stl.Rpc.Infrastructure;
 
 namespace Stl.Rpc;
 
-public class RpcConnection
+public class RpcConnection(Channel<RpcMessage> channel, ImmutableOptionSet options)
 {
-    public Channel<RpcMessage> Channel { get; }
-    public ImmutableOptionSet Options { get; set; }
+    public Channel<RpcMessage> Channel { get; } = channel;
+    public ImmutableOptionSet Options { get; set; } = options;
 
     public RpcConnection(Channel<RpcMessage> channel)
         : this(channel, ImmutableOptionSet.Empty)
     { }
-
-    public RpcConnection(Channel<RpcMessage> channel, ImmutableOptionSet options)
-    {
-        Channel = channel;
-        Options = options;
-    }
 }

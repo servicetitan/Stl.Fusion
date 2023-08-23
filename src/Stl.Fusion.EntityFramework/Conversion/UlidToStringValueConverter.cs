@@ -2,11 +2,8 @@
 
 namespace Stl.Fusion.EntityFramework.Conversion;
 
-public class UlidToStringValueConverter : ValueConverter<Ulid, string>
+public class UlidToStringValueConverter(ConverterMappingHints mappingHints = null!)
+    : ValueConverter<Ulid, string>(x => x.ToString(), x => Ulid.Parse(x), DefaultHints.With(mappingHints))
 {
     private static readonly ConverterMappingHints DefaultHints = new(26, unicode: false);
-
-    public UlidToStringValueConverter(ConverterMappingHints mappingHints = null!)
-        : base(x => x.ToString(), x => Ulid.Parse(x), DefaultHints.With(mappingHints))
-    { }
 }

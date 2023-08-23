@@ -3,10 +3,8 @@ using Stl.Interception;
 
 namespace Stl.Tests.Interception;
 
-public class ArgumentListTest : TestBase
+public class ArgumentListTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public ArgumentListTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void InvokerTest()
     {

@@ -3,7 +3,8 @@ using Stl.Fusion.EntityFramework;
 
 namespace Stl.Fusion.Authentication.Services;
 
-public abstract class DbAuthService<TDbContext> : DbServiceBase<TDbContext>, IAuth, IAuthBackend
+public abstract class DbAuthService<TDbContext>(IServiceProvider services)
+    : DbServiceBase<TDbContext>(services), IAuth, IAuthBackend
     where TDbContext : DbContext
 {
     public record Options
@@ -11,9 +12,6 @@ public abstract class DbAuthService<TDbContext> : DbServiceBase<TDbContext>, IAu
         // The default should be less than 3 min - see PresenceService.Options
         public TimeSpan MinUpdatePresencePeriod { get; init; } = TimeSpan.FromMinutes(2.75);
     }
-
-    protected DbAuthService(IServiceProvider services) : base(services)
-    { }
 
     // IAuth
     public abstract Task SignOut(Auth_SignOut command, CancellationToken cancellationToken = default);

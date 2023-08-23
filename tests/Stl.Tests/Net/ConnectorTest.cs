@@ -6,10 +6,8 @@ using Stl.Testing.Collections;
 namespace Stl.Tests.Net;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class ConnectorTest : TestBase
+public class ConnectorTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public ConnectorTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public static async Task BasicTest()
     {

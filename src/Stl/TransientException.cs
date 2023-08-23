@@ -5,8 +5,7 @@ namespace Stl;
 /// <summary>
 /// A tagging interface for any exception that might be "cured" by retrying the operation.
 /// </summary>
-public interface ITransientException
-{ }
+public interface ITransientException;
 
 [Serializable]
 public class TransientException : Exception, ITransientException

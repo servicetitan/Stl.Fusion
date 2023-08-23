@@ -6,10 +6,8 @@ using Stl.Testing.Collections;
 namespace Stl.Fusion.Tests;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class ScreenshotServiceTest : SimpleFusionTestBase
+public class ScreenshotServiceTest(ITestOutputHelper @out) : SimpleFusionTestBase(@out)
 {
-    public ScreenshotServiceTest(ITestOutputHelper @out) : base(@out) { }
-
     protected override void ConfigureServices(ServiceCollection services)
     {
         base.ConfigureServices(services);

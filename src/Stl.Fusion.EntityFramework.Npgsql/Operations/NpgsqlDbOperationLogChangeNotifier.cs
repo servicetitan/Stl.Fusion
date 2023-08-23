@@ -4,15 +4,12 @@ using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework.Npgsql.Operations;
 
-public class NpgsqlDbOperationLogChangeNotifier<TDbContext> 
-    : DbOperationCompletionNotifierBase<TDbContext, NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>>
+public class NpgsqlDbOperationLogChangeNotifier<TDbContext>(
+    NpgsqlDbOperationLogChangeTrackingOptions<TDbContext> options,
+    IServiceProvider services
+    ) : DbOperationCompletionNotifierBase<TDbContext, NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>>(options, services)
     where TDbContext : DbContext
 {
-    public NpgsqlDbOperationLogChangeNotifier(
-        NpgsqlDbOperationLogChangeTrackingOptions<TDbContext> options,
-        IServiceProvider services)
-        : base(options, services) { }
-
     // Protected methods
 
     protected override async Task Notify(Tenant tenant)

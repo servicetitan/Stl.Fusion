@@ -9,7 +9,7 @@ namespace Stl.CommandR;
 
 public readonly struct CommanderBuilder
 {
-    private class AddedTag { }
+    private class AddedTag;
     private static readonly ServiceDescriptor AddedTagDescriptor = new(typeof(AddedTag), new AddedTag());
 
     public IServiceCollection Services { get; }

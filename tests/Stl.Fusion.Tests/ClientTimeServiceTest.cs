@@ -3,10 +3,8 @@ using Stl.Rpc;
 
 namespace Stl.Fusion.Tests;
 
-public class ClientTimeServiceTest : FusionTestBase
+public class ClientTimeServiceTest(ITestOutputHelper @out) : FusionTestBase(@out)
 {
-    public ClientTimeServiceTest(ITestOutputHelper @out) : base(@out) { }
-
     private TimeSpan GetEpsilon()
     {
 #if NETCOREAPP

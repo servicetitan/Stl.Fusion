@@ -2,10 +2,8 @@ using Stl.Tests.Rpc;
 
 namespace Stl.Fusion.Tests;
 
-public abstract class SimpleFusionTestBase : RpcLocalTestBase
+public abstract class SimpleFusionTestBase(ITestOutputHelper @out) : RpcLocalTestBase(@out)
 {
-    protected SimpleFusionTestBase(ITestOutputHelper @out) : base(@out) { }
-
     protected override void ConfigureServices(ServiceCollection services)
     {
         base.ConfigureServices(services);

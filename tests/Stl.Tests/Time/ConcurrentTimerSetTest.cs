@@ -4,7 +4,7 @@ using Stl.Testing.Collections;
 namespace Stl.Tests.Time;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class ConcurrentTimerSetTest : TestBase
+public class ConcurrentTimerSetTest(ITestOutputHelper @out) : TestBase(@out)
 {
     public class Timer
     {
@@ -19,8 +19,6 @@ public class ConcurrentTimerSetTest : TestBase
     }
 
     private int _runnerId;
-
-    public ConcurrentTimerSetTest(ITestOutputHelper @out) : base(@out) { }
 
     [Fact]
     public async Task BasicTest()

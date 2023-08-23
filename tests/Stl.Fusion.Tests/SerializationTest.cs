@@ -6,10 +6,8 @@ using User = Stl.Fusion.Authentication.User;
 
 namespace Stl.Fusion.Tests;
 
-public class SerializationTest : TestBase
+public class SerializationTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public SerializationTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void SessionSerialization()
     {

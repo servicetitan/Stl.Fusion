@@ -4,10 +4,8 @@ using Stl.Interception;
 
 namespace Stl.Fusion.Tests;
 
-public class EdgeCaseServiceTest : FusionTestBase
+public class EdgeCaseServiceTest(ITestOutputHelper @out) : FusionTestBase(@out)
 {
-    public EdgeCaseServiceTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact(Timeout = 30_000)]
     public async Task TestService()
     {

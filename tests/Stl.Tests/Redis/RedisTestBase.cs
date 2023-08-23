@@ -3,10 +3,8 @@ using Stl.Redis;
 
 namespace Stl.Tests.Redis;
 
-public class RedisTestBase : TestBase
+public class RedisTestBase(ITestOutputHelper @out) : TestBase(@out)
 {
-    public RedisTestBase(ITestOutputHelper @out) : base(@out) { }
-
     public virtual RedisDb GetRedisDb()
     {
         var redis = ConnectionMultiplexer.Connect("localhost");

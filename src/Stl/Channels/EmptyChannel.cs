@@ -1,7 +1,6 @@
 namespace Stl.Channels;
 
-public interface IEmptyChannel
-{ }
+public interface IEmptyChannel;
 
 public class EmptyChannel<T> : Channel<T, T>, IEmptyChannel
 {

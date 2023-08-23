@@ -11,7 +11,7 @@ using Xunit.DependencyInjection.Logging;
 namespace Stl.Tests;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public abstract class RpcTestBase : TestBase, IAsyncLifetime
+public abstract class RpcTestBase(ITestOutputHelper @out) : TestBase(@out), IAsyncLifetime
 {
     private static readonly ReentrantAsyncLock InitializeLock = new(LockReentryMode.CheckedFail);
     protected static readonly RpcPeerRef ClientPeerRef = RpcPeerRef.Default;
@@ -30,9 +30,6 @@ public abstract class RpcTestBase : TestBase, IAsyncLifetime
     public IServiceProvider WebServices => WebHost.Services;
     public RpcWebHost WebHost => _webHost ??= Services.GetRequiredService<RpcWebHost>();
     public ILogger? Log => (_log ??= Services.LogFor(GetType())).IfEnabled(LogLevel.Debug, IsLogEnabled);
-
-    protected RpcTestBase(ITestOutputHelper @out) : base(@out)
-    { }
 
     public override async Task InitializeAsync()
     {

@@ -1,18 +1,13 @@
 namespace Stl.Channels;
 
-public class ChannelPair<T>
+public class ChannelPair<T>(Channel<T> channel1, Channel<T> channel2)
 {
     public static readonly ChannelPair<T> Null = new(NullChannel<T>.Instance, NullChannel<T>.Instance);
 
-    public Channel<T> Channel1 { get; protected set; } = null!;
-    public Channel<T> Channel2 { get; protected set; } = null!;
+    public Channel<T> Channel1 { get; protected init; } = channel1;
+    public Channel<T> Channel2 { get; protected init; } = channel2;
 
-    protected ChannelPair() { }
-    public ChannelPair(Channel<T> channel1, Channel<T> channel2)
-    {
-        Channel1 = channel1;
-        Channel2 = channel2;
-    }
+    protected ChannelPair() : this(null!, null!) { }
 }
 
 public static class ChannelPair

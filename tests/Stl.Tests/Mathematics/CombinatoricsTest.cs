@@ -1,11 +1,7 @@
-using Stl.Mathematics;
-
 namespace Stl.Tests.Mathematics;
 
-public class CombinatoricsTest : TestBase
+public class CombinatoricsTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public CombinatoricsTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void CnkTest()
     {

@@ -4,7 +4,8 @@ using Stl.Rpc.Infrastructure;
 
 namespace Stl.Fusion.Client.Internal;
 
-public sealed class RpcComputeSystemCallSender : RpcServiceBase
+public sealed class RpcComputeSystemCallSender(IServiceProvider services)
+    : RpcServiceBase(services)
 {
     private IRpcComputeSystemCalls? _client;
     private RpcServiceDef? _computeSystemCallsServiceDef;
@@ -16,9 +17,6 @@ public sealed class RpcComputeSystemCallSender : RpcServiceBase
         ??= Hub.ServiceRegistry.Get<IRpcComputeSystemCalls>()!;
     private RpcMethodDef InvalidateMethodDef => _invalidateMethodDef
         ??= ComputeSystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcComputeSystemCalls.Invalidate)));
-
-    public RpcComputeSystemCallSender(IServiceProvider services) : base(services)
-    { }
 
     public async ValueTask Invalidate(RpcPeer peer, long callId, List<RpcHeader>? headers = null)
     {

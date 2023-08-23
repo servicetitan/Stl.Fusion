@@ -6,10 +6,8 @@ using Stl.Testing.Collections;
 namespace Stl.Fusion.Tests;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class FusionRpcReconnectionTest : SimpleFusionTestBase
+public class FusionRpcReconnectionTest(ITestOutputHelper @out) : SimpleFusionTestBase(@out)
 {
-    public FusionRpcReconnectionTest(ITestOutputHelper @out) : base(@out) { }
-
     protected override void ConfigureServices(ServiceCollection services)
     {
         base.ConfigureServices(services);

@@ -1,11 +1,7 @@
-using Stl.Mathematics;
-
 namespace Stl.Tests.Mathematics;
 
-public class MathExtTest : TestBase
+public class MathExtTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public MathExtTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void GcdLcmTest()
     {

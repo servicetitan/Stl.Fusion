@@ -20,12 +20,13 @@ public interface IMutableDictionary<TKey, TValue> : IReadOnlyMutableDictionary<T
     bool Update<TState>(TState state, Func<TState, ImmutableDictionary<TKey, TValue>, ImmutableDictionary<TKey, TValue>> updater);
 }
 
-public class MutableDictionary<TKey, TValue> : IMutableDictionary<TKey, TValue>
+public class MutableDictionary<TKey, TValue>(ImmutableDictionary<TKey, TValue> items)
+    : IMutableDictionary<TKey, TValue>
     where TKey : notnull
 {
     private readonly object _lock = new();
-    private volatile TaskCompletionSource<Unit> _whenChangedSource;
-    private volatile ImmutableDictionary<TKey, TValue> _items;
+    private volatile TaskCompletionSource<Unit> _whenChangedSource = TaskCompletionSourceExt.New<Unit>();
+    private volatile ImmutableDictionary<TKey, TValue> _items = items;
 
     public ImmutableDictionary<TKey, TValue> Items {
         get => _items;
@@ -49,11 +50,6 @@ public class MutableDictionary<TKey, TValue> : IMutableDictionary<TKey, TValue>
     public bool IsReadOnly { get; } = false;
 
     public MutableDictionary() : this(ImmutableDictionary<TKey, TValue>.Empty) { }
-    public MutableDictionary(ImmutableDictionary<TKey, TValue> items)
-    {
-        _whenChangedSource = TaskCompletionSourceExt.New<Unit>();
-        _items = items;
-    }
 
     public override string ToString()
         => $"{GetType().GetName()}({Count} item(s))";
@@ -128,7 +124,7 @@ public class MutableDictionary<TKey, TValue> : IMutableDictionary<TKey, TValue>
         => GetEnumerator();
     public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
         => Items.GetEnumerator();
-    public bool ContainsKey(TKey key) 
+    public bool ContainsKey(TKey key)
         => Items.ContainsKey(key);
 #pragma warning disable CS8767
     public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
@@ -141,13 +137,13 @@ public class MutableDictionary<TKey, TValue> : IMutableDictionary<TKey, TValue>
         => Update((key, value), static (v, items) => items.Add(v.key, v.value));
     public void Add(KeyValuePair<TKey, TValue> item)
         => Update(item, static (v, items) => items.Add(v.Key, v.Value));
-    public bool Contains(KeyValuePair<TKey, TValue> item) 
+    public bool Contains(KeyValuePair<TKey, TValue> item)
         => Items.Contains(item);
     public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         => Items.ToList().CopyTo(array, arrayIndex); // Sub-optimal, but who's gonna use it?
-    public bool Remove(KeyValuePair<TKey, TValue> item) 
+    public bool Remove(KeyValuePair<TKey, TValue> item)
         => Update(item, static (v, items) => items.Contains(v) ? items.Remove(v.Key) : items);
-    public bool Remove(TKey key) 
+    public bool Remove(TKey key)
         => Update(key, static (k, items) => items.Remove(k));
     public void Clear()
         => Update(ImmutableDictionary<TKey, TValue>.Empty);

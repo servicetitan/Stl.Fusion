@@ -46,10 +46,8 @@ public class InMemoryInMemoryAuthServiceTest : AuthServiceTestBase
     }
 }
 
-public abstract class AuthServiceTestBase : FusionTestBase
+public abstract class AuthServiceTestBase(ITestOutputHelper @out) : FusionTestBase(@out)
 {
-    protected AuthServiceTestBase(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task ContainerConfigTest()
     {

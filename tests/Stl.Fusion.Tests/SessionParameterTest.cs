@@ -3,10 +3,8 @@ using Stl.Fusion.Tests.Services;
 
 namespace Stl.Fusion.Tests;
 
-public class SessionParameterTest : SimpleFusionTestBase
+public class SessionParameterTest(ITestOutputHelper @out) : SimpleFusionTestBase(@out)
 {
-    public SessionParameterTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task BasicTest()
     {

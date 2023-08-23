@@ -1,9 +1,7 @@
 namespace Stl.Tests.Collections;
 
-public class RadixHeapSetTest : TestBase
+public class RadixHeapSetTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public RadixHeapSetTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void EmptyHeapTest()
     {

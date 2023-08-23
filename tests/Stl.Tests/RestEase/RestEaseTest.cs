@@ -1,13 +1,10 @@
 using Stl.RestEase;
-using Stl.Tests.Rpc;
 
 namespace Stl.Tests.RestEase;
 
 // Checks different request patterns with RestEase
-public class RestEaseTest : RpcTestBase
+public class RestEaseTest(ITestOutputHelper @out) : RpcTestBase(@out)
 {
-    public RestEaseTest(ITestOutputHelper @out) : base(@out) { }
-
     protected override void ConfigureServices(IServiceCollection services, bool isClient)
     {
         base.ConfigureServices(services, isClient);

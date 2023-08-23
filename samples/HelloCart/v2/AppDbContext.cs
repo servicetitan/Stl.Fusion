@@ -24,7 +24,7 @@ public class DbCartItem
     public decimal Quantity { get; set; }
 }
 
-public class AppDbContext : DbContextBase
+public class AppDbContext(DbContextOptions options) : DbContextBase(options)
 {
     public DbSet<DbProduct> Products { get; protected set; } = null!;
     public DbSet<DbCart> Carts { get; protected set; } = null!;
@@ -32,8 +32,6 @@ public class AppDbContext : DbContextBase
 
     // Stl.Fusion.EntityFramework tables
     public DbSet<DbOperation> Operations { get; protected set; } = null!;
-
-    public AppDbContext(DbContextOptions options) : base(options) { }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

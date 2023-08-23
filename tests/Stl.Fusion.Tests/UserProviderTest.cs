@@ -4,10 +4,8 @@ using Stl.Fusion.Tests.Services;
 
 namespace Stl.Fusion.Tests;
 
-public class UserProviderTest : FusionTestBase
+public class UserProviderTest(ITestOutputHelper @out) : FusionTestBase(@out)
 {
-    public UserProviderTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task InvalidateEverythingTest()
     {

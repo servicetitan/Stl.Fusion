@@ -3,17 +3,18 @@ using Stl.IO;
 
 namespace Stl.Testing;
 
-public class TestIdFormatter
+public class TestIdFormatter(string testId)
 {
     public static readonly string RunId = Guid.NewGuid().ToString("N");
 
     public string MachineId { get; set; } = Environment.MachineName.ToLowerInvariant() ?? "unknown";
-    public string TestId { get; set; }
+    public string TestId { get; set; } = testId;
     public int MaxLength { get; set; } = 12;
     public bool AlwaysHash { get; set; } = false;
 
-    public TestIdFormatter(Type testType) : this($"{testType.Name}_{testType.Namespace}") { }
-    public TestIdFormatter(string testId) => TestId = testId;
+    public TestIdFormatter(Type testType)
+        : this($"{testType.Name}_{testType.Namespace}")
+    { }
 
     public override string ToString() => Format();
     public static implicit operator string(TestIdFormatter f) => f.Format();

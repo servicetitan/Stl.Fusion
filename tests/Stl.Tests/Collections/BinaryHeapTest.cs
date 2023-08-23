@@ -1,9 +1,7 @@
 namespace Stl.Tests.Collections;
 
-public class BinaryHeapTest : TestBase
+public class BinaryHeapTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public BinaryHeapTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void EmptyHeapTest()
     {

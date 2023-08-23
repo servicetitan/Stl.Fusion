@@ -1,12 +1,9 @@
 using Stl.OS;
-using Xunit.Sdk;
 
 namespace Stl.Tests.OS;
 
-public class MiscInfoTest : TestBase
+public class MiscInfoTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public MiscInfoTest(ITestOutputHelper @out) : base(@out) { }
-
     void WriteLine(string line) => Out.WriteLine(line);
 
     [Fact]

@@ -2,10 +2,8 @@ using Stl.Diagnostics;
 
 namespace Stl.Tests.Diagnostics;
 
-public class ActivitySourceTest : TestBase
+public class ActivitySourceTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public ActivitySourceTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void GetActivitySourceTest()
     {

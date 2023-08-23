@@ -1,9 +1,7 @@
 namespace Stl.Tests;
 
-public class ResultTest : TestBase
+public class ResultTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public ResultTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void ErrorTest()
     {

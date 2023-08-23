@@ -7,10 +7,8 @@ using Stl.Testing.Collections;
 namespace Stl.Fusion.Tests;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class FusionRpcBasicTest : SimpleFusionTestBase
+public class FusionRpcBasicTest(ITestOutputHelper @out) : SimpleFusionTestBase(@out)
 {
-    public FusionRpcBasicTest(ITestOutputHelper @out) : base(@out) { }
-
     protected override void ConfigureServices(ServiceCollection services)
     {
         base.ConfigureServices(services);

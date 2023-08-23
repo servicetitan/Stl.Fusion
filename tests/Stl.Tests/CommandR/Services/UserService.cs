@@ -2,10 +2,8 @@ using Stl.Fusion.EntityFramework;
 
 namespace Stl.Tests.CommandR.Services;
 
-public class UserService : DbServiceBase<TestDbContext>, ICommandService
+public class UserService(IServiceProvider services) : DbServiceBase<TestDbContext>(services), ICommandService
 {
-    public UserService(IServiceProvider services) : base(services) { }
-
     [CommandHandler]
     private async Task RecAddUsers(
         RecAddUsersCommand command,

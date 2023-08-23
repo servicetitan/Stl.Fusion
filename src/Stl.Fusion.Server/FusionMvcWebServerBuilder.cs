@@ -7,8 +7,8 @@ namespace Stl.Fusion.Server;
 [StructLayout(LayoutKind.Auto)]
 public readonly struct FusionMvcWebServerBuilder
 {
-    private class AddedTag { }
-    private class ControllersAddedTag { }
+    private class AddedTag;
+    private class ControllersAddedTag;
     private static readonly ServiceDescriptor AddedTagDescriptor = new(typeof(AddedTag), new AddedTag());
     private static readonly ServiceDescriptor ControllersAddedTagDescriptor = new(typeof(ControllersAddedTag), new ControllersAddedTag());
 

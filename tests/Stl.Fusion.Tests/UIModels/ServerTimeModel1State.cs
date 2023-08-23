@@ -2,12 +2,10 @@ using Stl.Fusion.Tests.Services;
 
 namespace Stl.Fusion.Tests.UIModels;
 
-public class ServerTimeModel1State : ComputedState<ServerTimeModel1>
+public class ServerTimeModel1State(IServiceProvider services)
+    : ComputedState<ServerTimeModel1>(new() { InitialValue = new(default) }, services)
 {
     private ITimeService TimeService => Services.GetRequiredService<ITimeService>();
-
-    public ServerTimeModel1State(IServiceProvider services)
-        : base(new() { InitialValue = new(default) }, services) { }
 
     protected override async Task<ServerTimeModel1> Compute(CancellationToken cancellationToken)
     {

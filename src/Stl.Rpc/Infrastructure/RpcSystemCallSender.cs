@@ -2,7 +2,8 @@ using Stl.Interception;
 
 namespace Stl.Rpc.Infrastructure;
 
-public sealed class RpcSystemCallSender : RpcServiceBase
+public sealed class RpcSystemCallSender(IServiceProvider services)
+    : RpcServiceBase(services)
 {
     private IRpcSystemCalls? _client;
     private RpcServiceDef? _systemCallsServiceDef;
@@ -23,9 +24,6 @@ public sealed class RpcSystemCallSender : RpcServiceBase
         ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.Cancel)));
     public RpcMethodDef NotFoundMethodDef => _notFoundMethodDef
         ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.NotFound)));
-
-    public RpcSystemCallSender(IServiceProvider services) : base(services)
-    { }
 
     public ValueTask Complete<TResult>(RpcPeer peer, long callId,
         Result<TResult> result, bool allowPolymorphism,

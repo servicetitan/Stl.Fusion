@@ -1,11 +1,7 @@
-using Stl.Mathematics;
-
 namespace Stl.Tests.Mathematics;
 
-public class BitsTest : TestBase
+public class BitsTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public BitsTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void BasicTest()
     {

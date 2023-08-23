@@ -6,10 +6,8 @@ using Xunit.DependencyInjection.Logging;
 
 namespace Stl.Tests.Plugins;
 
-public class PluginTest : TestBase
+public class PluginTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public PluginTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void PluginHostBuilderTest()
     {

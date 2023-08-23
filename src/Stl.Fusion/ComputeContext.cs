@@ -85,7 +85,4 @@ public class ComputeContext
     }
 }
 
-internal class CachedComputeContext : ComputeContext
-{
-    internal CachedComputeContext(CallOptions callOptions) : base(callOptions) { }
-}
+internal class CachedComputeContext(CallOptions callOptions) : ComputeContext(callOptions);

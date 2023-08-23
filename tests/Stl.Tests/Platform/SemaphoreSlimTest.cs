@@ -3,10 +3,8 @@ using Stl.Testing.Collections;
 namespace Stl.Tests.Platform;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class SemaphoreSlimTest : TestBase
+public class SemaphoreSlimTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public SemaphoreSlimTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact(Timeout = 5000)]
     public async Task WaitTest1()
     {

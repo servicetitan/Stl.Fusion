@@ -24,14 +24,12 @@ public interface IDbEntityConverter<TDbEntity, TModel>
     TModel? ToModel(TDbEntity? source);
 }
 
-public abstract class DbEntityConverter<TDbContext, TDbEntity, TModel> : DbServiceBase<TDbContext>,
-    IDbEntityConverter<TDbEntity, TModel>
+public abstract class DbEntityConverter<TDbContext, TDbEntity, TModel>(IServiceProvider services)
+    : DbServiceBase<TDbContext>(services), IDbEntityConverter<TDbEntity, TModel>
     where TDbContext : DbContext
     where TDbEntity : class
     where TModel : notnull
 {
-    protected DbEntityConverter(IServiceProvider services) : base(services) { }
-
     public abstract TDbEntity NewEntity();
     public abstract TModel NewModel();
 

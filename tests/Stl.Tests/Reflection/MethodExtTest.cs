@@ -59,7 +59,7 @@ public class MethodExtTest
         public new virtual void MethodV() {}
     }
 
-    public class E : D, IMethodA, IMethodV { }
+    public class E : D, IMethodA, IMethodV;
 
     [Fact]
     public void GetBaseOrDeclaringMethodTest()

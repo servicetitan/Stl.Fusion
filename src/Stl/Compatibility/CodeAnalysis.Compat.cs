@@ -29,6 +29,6 @@ public sealed class MaybeNullWhenAttribute : Attribute
 /// <summary>Specifies that an output may be <see langword="null" /> even if the corresponding type disallows it.</summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter |
     AttributeTargets.ReturnValue)]
-public sealed class MaybeNullAttribute : Attribute { }
+public sealed class MaybeNullAttribute : Attribute;
 
 #endif

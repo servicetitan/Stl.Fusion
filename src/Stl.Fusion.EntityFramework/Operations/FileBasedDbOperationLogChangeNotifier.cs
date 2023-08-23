@@ -3,15 +3,12 @@ using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework.Operations;
 
-public class FileBasedDbOperationLogChangeNotifier<TDbContext> 
-    : DbOperationCompletionNotifierBase<TDbContext, FileBasedDbOperationLogChangeTrackingOptions<TDbContext>>
+public class FileBasedDbOperationLogChangeNotifier<TDbContext>(
+    FileBasedDbOperationLogChangeTrackingOptions<TDbContext> options,
+    IServiceProvider services
+    ) : DbOperationCompletionNotifierBase<TDbContext, FileBasedDbOperationLogChangeTrackingOptions<TDbContext>>(options, services)
     where TDbContext : DbContext
 {
-    public FileBasedDbOperationLogChangeNotifier(
-        FileBasedDbOperationLogChangeTrackingOptions<TDbContext> options, 
-        IServiceProvider services) 
-        : base(options, services) { }
-
     protected override Task Notify(Tenant tenant)
     {
         var filePath = Options.FilePathFactory(tenant);

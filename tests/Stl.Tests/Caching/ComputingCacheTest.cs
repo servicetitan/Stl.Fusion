@@ -2,10 +2,8 @@ using Stl.Caching;
 
 namespace Stl.Tests.Caching;
 
-public class ComputingCacheTest : TestBase
+public class ComputingCacheTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public ComputingCacheTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task ComputingCache_OrderByDependencyTest()
     {

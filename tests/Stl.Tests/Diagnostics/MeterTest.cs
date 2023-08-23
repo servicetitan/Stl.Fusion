@@ -2,10 +2,8 @@ using Stl.Diagnostics;
 
 namespace Stl.Tests.Diagnostics;
 
-public class MeterTest : TestBase
+public class MeterTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public MeterTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void GetMeterTest()
     {

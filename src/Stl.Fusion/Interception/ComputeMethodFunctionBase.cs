@@ -2,8 +2,7 @@ using Stl.Versioning;
 
 namespace Stl.Fusion.Interception;
 
-public interface IComputeMethodFunction : IComputeFunction
-{ }
+public interface IComputeMethodFunction : IComputeFunction;
 
 public abstract class ComputeMethodFunctionBase<T> : ComputeFunctionBase<T>, IComputeMethodFunction
 {

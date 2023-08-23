@@ -1,8 +1,7 @@
 namespace Stl.Fusion.Interception;
 
 // Just a tagging interface
-public interface IComputedMethodComputed : IComputed
-{ }
+public interface IComputedMethodComputed : IComputed;
 
 public class ComputeMethodComputed<T> : Computed<T>, IComputedMethodComputed
 {

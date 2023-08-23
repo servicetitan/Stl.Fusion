@@ -11,14 +11,12 @@ public interface IRpcSystemCalls : IRpcSystemService
     Task<Unit> NotFound(string serviceName, string methodName);
 }
 
-public class RpcSystemCalls : RpcServiceBase, IRpcSystemCalls, IRpcDynamicCallHandler
+public class RpcSystemCalls(IServiceProvider services)
+    : RpcServiceBase(services), IRpcSystemCalls, IRpcDynamicCallHandler
 {
     private static readonly Symbol OkMethodName = nameof(Ok);
 
     public static readonly Symbol Name = "$sys";
-
-    public RpcSystemCalls(IServiceProvider services) : base(services)
-    { }
 
     public Task<RpcNoWait> Ok(object? result)
     {

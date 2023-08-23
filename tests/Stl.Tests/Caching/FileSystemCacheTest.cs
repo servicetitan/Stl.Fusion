@@ -4,10 +4,8 @@ using Stl.IO;
 
 namespace Stl.Tests.Caching;
 
-public class FileSystemCacheTest : TestBase
+public class FileSystemCacheTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public FileSystemCacheTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task BasicTest()
     {

@@ -14,7 +14,7 @@ public class AsyncLockSet<TKey>
     private readonly ConcurrentDictionary<TKey, Entry> _entries;
     private readonly ConcurrentPool<AsyncLock> _lockPool;
 
-    public int AcquiredLockCount => _entries.Count;
+    public int Count => _entries.Count;
     public Func<AsyncLock> LockFactory { get; }
 
     public AsyncLockSet(LockReentryMode reentryMode)
@@ -22,7 +22,7 @@ public class AsyncLockSet<TKey>
     public AsyncLockSet(Func<AsyncLock> lockFactory)
         : this(lockFactory, DefaultConcurrencyLevel, DefaultCapacity) { }
     public AsyncLockSet(LockReentryMode reentryMode, int concurrencyLevel, int capacity)
-        : this(() => AsyncLock.New(reentryMode), DefaultConcurrencyLevel, DefaultCapacity) { }
+        : this(() => AsyncLock.New(reentryMode), concurrencyLevel, capacity) { }
     public AsyncLockSet(Func<AsyncLock> lockFactory, int concurrencyLevel, int capacity)
     {
         LockFactory = lockFactory;
@@ -47,7 +47,7 @@ public class AsyncLockSet<TKey>
 
     public void Release(TKey key)
     {
-        if (!_entries.TryGetValue(key, out var entry) || entry.AsyncLock is not { } asyncLock)
+        if (!_entries.TryGetValue(key, out var entry) || entry.AsyncLock == null)
             return;
 
         entry.EndUseWithLockRelease();

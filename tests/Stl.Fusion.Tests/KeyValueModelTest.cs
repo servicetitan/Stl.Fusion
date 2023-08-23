@@ -3,10 +3,8 @@ using Stl.Fusion.Tests.UIModels;
 
 namespace Stl.Fusion.Tests;
 
-public class KeyValueModelTest : FusionTestBase
+public class KeyValueModelTest(ITestOutputHelper @out) : FusionTestBase(@out)
 {
-    public KeyValueModelTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task BasicTest()
     {

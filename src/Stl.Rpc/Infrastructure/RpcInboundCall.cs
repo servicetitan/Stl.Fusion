@@ -96,14 +96,11 @@ public abstract class RpcInboundCall : RpcCall
     }
 }
 
-public class RpcInboundCall<TResult> : RpcInboundCall
+public class RpcInboundCall<TResult>(RpcInboundContext context, RpcMethodDef methodDef)
+    : RpcInboundCall(context, methodDef)
 {
     public Task<TResult> ResultTask { get; private set; } = null!;
     public override Task UntypedResultTask => ResultTask;
-
-    public RpcInboundCall(RpcInboundContext context, RpcMethodDef methodDef)
-        : base(context, methodDef)
-    { }
 
     public override ValueTask Run()
     {

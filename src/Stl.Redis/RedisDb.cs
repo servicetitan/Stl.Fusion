@@ -35,9 +35,5 @@ public class RedisDb
             : new RedisDb(Redis, FullKey(keyPrefix));
 }
 
-public class RedisDb<TContext> : RedisDb
-{
-    public RedisDb(IConnectionMultiplexer redis, string? keyPrefix = null)
-        : base(redis, keyPrefix)
-    { }
-}
+public class RedisDb<TContext>(IConnectionMultiplexer redis, string? keyPrefix = null)
+    : RedisDb(redis, keyPrefix);

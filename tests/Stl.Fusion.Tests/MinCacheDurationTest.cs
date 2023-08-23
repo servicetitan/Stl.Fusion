@@ -24,10 +24,8 @@ public class MinCacheDurationTestService : IComputeService
 }
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class MinCacheDurationTest : TestBase
+public class MinCacheDurationTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public MinCacheDurationTest(ITestOutputHelper @out) : base(@out) { }
-
     public static IServiceProvider CreateProviderFor<TService>()
         where TService : class, IComputeService
     {

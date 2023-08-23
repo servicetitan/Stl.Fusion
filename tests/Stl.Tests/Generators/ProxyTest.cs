@@ -3,10 +3,8 @@ using Stl.Reflection;
 
 namespace Stl.Tests.Generators;
 
-public class ProxyTest : TestBase
+public class ProxyTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public ProxyTest(ITestOutputHelper @out) : base(@out) { }
-
     [Theory]
     [InlineData(100_000)]
     [InlineData(1000_000)]

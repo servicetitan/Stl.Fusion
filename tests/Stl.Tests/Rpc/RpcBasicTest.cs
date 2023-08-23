@@ -6,10 +6,8 @@ using Stl.Testing.Collections;
 namespace Stl.Tests.Rpc;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class RpcBasicTest : RpcLocalTestBase
+public class RpcBasicTest(ITestOutputHelper @out) : RpcLocalTestBase(@out)
 {
-    public RpcBasicTest(ITestOutputHelper @out) : base(@out) { }
-
     protected override void ConfigureServices(ServiceCollection services)
     {
         base.ConfigureServices(services);

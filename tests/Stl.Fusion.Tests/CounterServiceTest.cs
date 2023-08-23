@@ -5,10 +5,8 @@ using Stl.Testing.Collections;
 namespace Stl.Fusion.Tests;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class CounterServiceTest : SimpleFusionTestBase
+public class CounterServiceTest(ITestOutputHelper @out) : SimpleFusionTestBase(@out)
 {
-    public CounterServiceTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task BasicTest()
     {

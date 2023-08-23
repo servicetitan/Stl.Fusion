@@ -27,7 +27,4 @@ public class RedisSequenceSet
         => Hash.Clear();
 }
 
-public sealed class RedisSequenceSet<TScope> : RedisSequenceSet
-{
-    public RedisSequenceSet(RedisHash hash) : base(hash) { }
-}
+public sealed class RedisSequenceSet<TScope>(RedisHash hash) : RedisSequenceSet(hash);

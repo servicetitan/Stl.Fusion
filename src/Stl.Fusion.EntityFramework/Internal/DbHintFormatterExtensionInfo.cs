@@ -2,7 +2,8 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace Stl.Fusion.EntityFramework.Internal;
 
-public sealed class DbHintFormatterExtensionInfo : DbContextOptionsExtensionInfo
+public sealed class DbHintFormatterExtensionInfo(IDbContextOptionsExtension extension)
+    : DbContextOptionsExtensionInfo(extension)
 {
     public new DbHintFormatterOptionsExtension Extension => (DbHintFormatterOptionsExtension) base.Extension;
     public override bool IsDatabaseProvider => false;
@@ -13,10 +14,6 @@ public sealed class DbHintFormatterExtensionInfo : DbContextOptionsExtensionInfo
             return $"DbHintFormatterType={extension.DbHintFormatterType}";
         }
     }
-
-    public DbHintFormatterExtensionInfo(IDbContextOptionsExtension extension)
-        : base(extension)
-    { }
 
 #if NET6_0_OR_GREATER
     public override int GetServiceProviderHashCode() => 0;

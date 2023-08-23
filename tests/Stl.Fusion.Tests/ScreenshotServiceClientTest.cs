@@ -3,10 +3,8 @@ using Stl.OS;
 
 namespace Stl.Fusion.Tests;
 
-public class ScreenshotServiceClientTest : FusionTestBase
+public class ScreenshotServiceClientTest(ITestOutputHelper @out) : FusionTestBase(@out)
 {
-    public ScreenshotServiceClientTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task BasicTest()
     {

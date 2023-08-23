@@ -3,10 +3,9 @@ using Stl.Rpc.Infrastructure;
 
 namespace Stl.Fusion.Server.Rpc;
 
-public class DefaultSessionReplacerRpcMiddleware : RpcInboundMiddleware
+public class DefaultSessionReplacerRpcMiddleware(IServiceProvider services)
+    : RpcInboundMiddleware(services)
 {
-    public DefaultSessionReplacerRpcMiddleware(IServiceProvider services) : base(services) { }
-
     public override void BeforeCall(RpcInboundCall call)
     {
         var connection = call.Context.Peer.ConnectionState.Value.Connection as SessionBoundRpcConnection;

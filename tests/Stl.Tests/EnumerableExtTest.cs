@@ -1,9 +1,7 @@
 namespace Stl.Tests;
 
-public class EnumerableExtTest : TestBase
+public class EnumerableExtTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public EnumerableExtTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public void BasicTest()
     {

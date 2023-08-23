@@ -4,10 +4,8 @@ using Stl.Testing.Collections;
 namespace Stl.Tests.Redis;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class RedisSequenceSetTest : RedisTestBase
+public class RedisSequenceSetTest(ITestOutputHelper @out) : RedisTestBase(@out)
 {
-    public RedisSequenceSetTest(ITestOutputHelper @out) : base(@out) { }
-
     [SkipOnGitHubFact]
     public async Task BasicTest()
     {

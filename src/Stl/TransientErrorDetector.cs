@@ -6,7 +6,7 @@ using Stl.Versioning;
 namespace Stl;
 
 /// <summary>
-/// Tells if an error is transient (might be gone on retry). 
+/// Tells if an error is transient (might be gone on retry).
 /// </summary>
 public interface ITransientErrorDetector
 {
@@ -14,11 +14,10 @@ public interface ITransientErrorDetector
 }
 
 /// <summary>
-/// Tells if an error is transient (might be gone on retry). 
+/// Tells if an error is transient (might be gone on retry).
 /// </summary>
 /// <typeparam name="TContext">Typically the service that requires this detector.</typeparam>
-public interface ITransientErrorDetector<TContext> : ITransientErrorDetector
-{ }
+public interface ITransientErrorDetector<TContext> : ITransientErrorDetector;
 
 /// <summary>
 /// Abstract base class for <see cref="ITransientErrorDetector"/>-s.

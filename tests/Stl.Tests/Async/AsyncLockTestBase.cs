@@ -5,7 +5,7 @@ using Stl.Testing.Collections;
 namespace Stl.Tests.Async;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public abstract class AsyncLockTestBase : TestBase
+public abstract class AsyncLockTestBase(ITestOutputHelper @out) : TestBase(@out)
 {
     protected class Resource
     {
@@ -69,8 +69,6 @@ public abstract class AsyncLockTestBase : TestBase
 #endif
         }
     }
-
-    protected AsyncLockTestBase(ITestOutputHelper @out) : base(@out) { }
 
     protected abstract AsyncLock CreateAsyncLock(LockReentryMode reentryMode);
     protected abstract void AssertResourcesReleased();

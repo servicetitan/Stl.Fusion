@@ -1,8 +1,7 @@
 namespace Stl.Mathematics;
 
 // Just a tagging interface
-public interface IArithmetics
-{ }
+public interface IArithmetics;
 
 public abstract class Arithmetics<T> : IArithmetics
     where T : notnull

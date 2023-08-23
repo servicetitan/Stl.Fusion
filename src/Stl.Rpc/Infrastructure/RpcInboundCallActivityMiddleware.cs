@@ -1,10 +1,9 @@
 namespace Stl.Rpc.Infrastructure;
 
-public class RpcInboundCallActivityMiddleware : RpcInboundMiddleware
+public class RpcInboundCallActivityMiddleware(IServiceProvider services)
+    : RpcInboundMiddleware(services)
 {
     public Sampler Sampler { get; init; } = Sampler.RandomShared(0.1);
-
-    public RpcInboundCallActivityMiddleware(IServiceProvider services) : base(services) { }
 
     public override void BeforeCall(RpcInboundCall call)
     {
