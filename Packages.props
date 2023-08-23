@@ -162,7 +162,7 @@
     <PackageReference Update="Microsoft.AspNetCore.Mvc.Testing" Version="$(AspNetCoreMvcTestingVersion)" />
     <PackageReference Update="Microsoft.NET.Test.Sdk" Version="17.6.3" />
     <PackageReference Update="Moq" Version="4.20.*" />
-    <PackageReference Update="xunit" Version="2.4.2" />
+    <PackageReference Update="xunit" Version="2.5.0" />
     <PackageReference Update="Xunit.DependencyInjection.Logging" Version="8.1.*" />
     <PackageReference Update="xunit.runner.visualstudio" Version="2.5.0" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
 
