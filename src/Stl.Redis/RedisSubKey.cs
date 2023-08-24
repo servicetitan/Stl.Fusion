@@ -5,20 +5,16 @@ namespace Stl.Redis;
 [Serializable]
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
-public readonly partial struct RedisSubKey
+[method: Newtonsoft.Json.JsonConstructor, JsonConstructor, MemoryPackConstructor]
+public readonly partial struct RedisSubKey(string key, RedisChannel.PatternMode patternMode)
 {
     [DataMember(Order = 0), MemoryPackOrder(0)]
-    public string Key { get; }
+    public string Key { get; } = key;
+
     [DataMember(Order = 1), MemoryPackOrder(1)]
-    public RedisChannel.PatternMode PatternMode { get; }
+    public RedisChannel.PatternMode PatternMode { get; } = patternMode;
 
     public RedisSubKey(string key) : this(key, RedisChannel.PatternMode.Auto) { }
-    [Newtonsoft.Json.JsonConstructor, JsonConstructor, MemoryPackConstructor]
-    public RedisSubKey(string key, RedisChannel.PatternMode patternMode)
-    {
-        Key = key;
-        PatternMode = patternMode;
-    }
 
     public override string ToString()
         => $"({JsonFormatter.Format(Key)}, {PatternMode})";

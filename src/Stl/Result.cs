@@ -167,7 +167,8 @@ public readonly struct Result<T> : IResult<T>, IEquatable<Result<T>>
     [JsonConstructor, Newtonsoft.Json.JsonConstructor]
     public Result(T valueOrDefault, Exception? error)
     {
-        if (error != null) valueOrDefault = default!;
+        if (error != null)
+            valueOrDefault = default!;
         ValueOrDefault = valueOrDefault;
         Error = error;
     }

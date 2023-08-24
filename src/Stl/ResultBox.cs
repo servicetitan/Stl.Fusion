@@ -65,7 +65,8 @@ public class ResultBox<T> : IResult<T>
     [JsonConstructor, Newtonsoft.Json.JsonConstructor]
     public ResultBox(T valueOrDefault, Exception? error)
     {
-        if (error != null) valueOrDefault = default!;
+        if (error != null)
+            valueOrDefault = default!;
         ValueOrDefault = valueOrDefault;
         Error = error;
     }

@@ -21,18 +21,15 @@ public abstract class ValueOf
 }
 
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
-public sealed partial class ValueOf<T> : ValueOf
+[method: JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
+public sealed partial class ValueOf<T>(T value) : ValueOf
 {
     [DataMember(Order = 0), MemoryPackOrder(0)]
-    public T Value { get; }
+    public T Value { get; } = value;
 
 #pragma warning disable CS8603
     public override object UntypedValue => Value;
 #pragma warning restore CS8603
-
-    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
-    public ValueOf(T value)
-        => Value = value;
 
     public override string ToString()
         => $"{GetType().Name}({Value})";

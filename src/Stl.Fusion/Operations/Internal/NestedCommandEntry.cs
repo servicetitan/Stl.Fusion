@@ -1,16 +1,11 @@
 namespace Stl.Fusion.Operations.Internal;
 
-public readonly struct NestedCommandEntry : IEquatable<NestedCommandEntry>
+[method: JsonConstructor, Newtonsoft.Json.JsonConstructor]
+public readonly struct NestedCommandEntry(ICommand command, OptionSet items)
+    : IEquatable<NestedCommandEntry>
 {
-    public ICommand Command { get; }
-    public OptionSet Items { get; }
-
-    [JsonConstructor, Newtonsoft.Json.JsonConstructor]
-    public NestedCommandEntry(ICommand command, OptionSet items)
-    {
-        Command = command;
-        Items = items;
-    }
+    public ICommand Command { get; } = command;
+    public OptionSet Items { get; } = items;
 
     public void Deconstruct(out ICommand command, out OptionSet items)
     {
