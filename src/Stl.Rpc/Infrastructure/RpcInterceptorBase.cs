@@ -5,9 +5,9 @@ using Stl.Internal;
 namespace Stl.Rpc.Infrastructure;
 
 public abstract class RpcInterceptorBase(
-        RpcInterceptorBase.Options settings,
-        IServiceProvider services
-        ) : InterceptorBase(settings, services)
+    RpcInterceptorBase.Options settings,
+    IServiceProvider services
+    ) : InterceptorBase(settings, services)
 {
     public new record Options : InterceptorBase.Options;
 

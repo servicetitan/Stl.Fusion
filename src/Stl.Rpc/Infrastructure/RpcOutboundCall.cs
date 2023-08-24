@@ -4,12 +4,13 @@ using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
 
-public abstract class RpcOutboundCall : RpcCall
+public abstract class RpcOutboundCall(RpcOutboundContext context)
+    : RpcCall(context.MethodDef!)
 {
     private static readonly ConcurrentDictionary<(byte, Type), Func<RpcOutboundContext, RpcOutboundCall>> FactoryCache = new();
 
-    public readonly RpcOutboundContext Context;
-    public readonly RpcPeer Peer;
+    public readonly RpcOutboundContext Context = context;
+    public readonly RpcPeer Peer = context.Peer!; // Calls
     public RpcMessage? Message;
     public Task ResultTask { get; protected init; } = null!;
     public TimeSpan ConnectTimeout;
@@ -23,13 +24,6 @@ public abstract class RpcOutboundCall : RpcCall
                 .MakeGenericType(tResult);
             return (Func<RpcOutboundContext, RpcOutboundCall>)type.GetConstructorDelegate(typeof(RpcOutboundContext))!;
         }).Invoke(context);
-
-    protected RpcOutboundCall(RpcOutboundContext context)
-        : base(context.MethodDef!)
-    {
-        Context = context;
-        Peer = context.Peer!; // Calls
-    }
 
     public override string ToString()
     {
