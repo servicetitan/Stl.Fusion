@@ -6,7 +6,7 @@ namespace Stl.Fusion.Client.Internal;
 
 public class RpcInboundComputeCall<TResult> : RpcInboundCall<TResult>
 {
-    private CancellationTokenSource? completionCancellationSource;
+    private CancellationTokenSource? _completionCancellationSource;
 
     public Computed<TResult>? Computed { get; protected set; }
 
@@ -29,9 +29,9 @@ public class RpcInboundComputeCall<TResult> : RpcInboundCall<TResult>
         Computed<TResult>? computed;
         lock (Lock) {
             // Let's cancel already running completion first
-            completionCancellationSource.CancelAndDisposeSilently();
-            completionCancellationSource = CancellationToken.CreateLinkedTokenSource();
-            cancellationToken = completionCancellationSource.Token;
+            _completionCancellationSource.CancelAndDisposeSilently();
+            _completionCancellationSource = CancellationToken.CreateLinkedTokenSource();
+            cancellationToken = _completionCancellationSource.Token;
             computed = Computed;
             if (computed != null) {
                 var versionHeader = FusionRpcHeaders.Version with { Value = computed.Version.ToString() };
@@ -55,7 +55,7 @@ public class RpcInboundComputeCall<TResult> : RpcInboundCall<TResult>
             return;
 
         lock (Lock) {
-            completionCancellationSource.CancelAndDisposeSilently();
+            _completionCancellationSource.CancelAndDisposeSilently();
             if (!PrepareToComplete())
                 return;
         }
@@ -69,14 +69,14 @@ public class RpcInboundComputeCall<TResult> : RpcInboundCall<TResult>
 
         // Result is produced
         lock (Lock) {
-            if (completionCancellationSource == null)
+            if (_completionCancellationSource == null)
                 return true; // CompleteEventually haven't started yet -> let it do the job
 
-            if (completionCancellationSource.IsCancellationRequested)
+            if (_completionCancellationSource.IsCancellationRequested)
                 return false; // CompleteEventually already ended -> we have to restart
 
             // CompleteEventually is running - let's try to cancel it
-            completionCancellationSource.CancelAndDisposeSilently();
+            _completionCancellationSource.CancelAndDisposeSilently();
         }
         _ = CompleteEventually();
         return true;

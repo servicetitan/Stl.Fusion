@@ -9,6 +9,7 @@ public sealed class RpcHub : ProcessorBase, IHasServices
     private RpcServiceRegistry? _serviceRegistry;
     private IEnumerable<RpcPeerTracker>? _peerTrackers;
     private RpcSystemCallSender? _systemCallSender;
+    private IRpcStreamResolver? _streamResolver;
     private RpcClient? _client;
     private IMomentClock? _clock;
 
@@ -27,6 +28,7 @@ public sealed class RpcHub : ProcessorBase, IHasServices
     internal RpcUnrecoverableErrorDetector UnrecoverableErrorDetector { get; }
     internal IEnumerable<RpcPeerTracker> PeerTrackers => _peerTrackers ??= Services.GetRequiredService<IEnumerable<RpcPeerTracker>>();
     internal RpcSystemCallSender SystemCallSender => _systemCallSender ??= Services.GetRequiredService<RpcSystemCallSender>();
+    internal IRpcStreamResolver StreamResolver => _streamResolver ??= Services.GetRequiredService<IRpcStreamResolver>();
     internal RpcClient Client => _client ??= Services.GetRequiredService<RpcClient>();
     internal IMomentClock Clock => _clock ??= Services.Clocks().CpuClock;
 
