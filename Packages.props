@@ -130,7 +130,7 @@
     <PackageReference Update="System.CommandLine.DragonFruit" Version="0.3.0-alpha.21216.1" />
     <PackageReference Update="System.Diagnostics.Common" Version="$(SystemXxxVersion)" />
     <PackageReference Update="System.Drawing.Common" Version="$(SystemXxxVersion)" />
-    <PackageReference Update="System.IO.Abstractions" Version="19.2.64" />
+    <PackageReference Update="System.IO.Abstractions" Version="19.2.67" />
     <PackageReference Update="System.Linq.Async" Version="$(SystemXxxVersion6)" />
     <PackageReference Update="System.Net.Http.Json" Version="$(SystemXxxVersion)" />
     <PackageReference Update="System.Net.Http" Version="4.3.*" />
