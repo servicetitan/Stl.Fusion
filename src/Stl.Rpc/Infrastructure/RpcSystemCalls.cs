@@ -12,8 +12,7 @@ public interface IRpcSystemCalls : IRpcSystemService
     Task<Unit> NotFound(string serviceName, string methodName);
 
     // Streams
-    Task<RpcNoWait> GetStream(RpcStreamId streamId, long skipTo, CancellationToken cancellationToken);
-    Task<RpcNoWait> StreamStart(TypeRef itemTypeRef);
+    Task<RpcNoWait> StreamAck(long offset);
     Task<RpcNoWait> StreamItem(object? item);
     Task<RpcNoWait> StreamEnd(ExceptionInfo? error);
 }
@@ -22,7 +21,7 @@ public class RpcSystemCalls(IServiceProvider services)
     : RpcServiceBase(services), IRpcSystemCalls, IRpcDynamicCallHandler
 {
     private static readonly Symbol OkMethodName = nameof(Ok);
-    private static readonly Symbol ItemMethodName = nameof(StreamItem);
+    private static readonly Symbol StreamItemMethodName = nameof(StreamItem);
 
     public static readonly Symbol Name = "$sys";
 
@@ -58,45 +57,58 @@ public class RpcSystemCalls(IServiceProvider services)
     public Task<Unit> NotFound(string serviceName, string methodName)
         => throw Errors.EndpointNotFound(serviceName, methodName);
 
-    public Task<RpcNoWait> GetStream(RpcStreamId streamId, long skipTo, CancellationToken cancellationToken)
+    public Task<RpcNoWait> StreamAck(long offset)
     {
-        throw new NotImplementedException();
-    }
-
-    public Task<RpcNoWait> StreamStart(TypeRef itemTypeRef)
-    {
-        throw new NotImplementedException();
+        var context = RpcInboundContext.GetCurrent();
+        var peer = context.Peer;
+        var streamId = context.Message.CallId;
+        var streamSender = peer.OutgoingStreams.Get(streamId);
+        streamSender?.OnAck(offset);
+        return RpcNoWait.Tasks.Completed;
     }
 
     public Task<RpcNoWait> StreamItem(object? item)
     {
-        throw new NotImplementedException();
+        var context = RpcInboundContext.GetCurrent();
+        var peer = context.Peer;
+        var streamId = context.Message.CallId;
+        var stream = peer.IncomingStreams.Get(streamId);
+        stream?.OnItem(item);
+        return RpcNoWait.Tasks.Completed;
     }
 
     public Task<RpcNoWait> StreamEnd(ExceptionInfo? error)
     {
-        throw new NotImplementedException();
+        var context = RpcInboundContext.GetCurrent();
+        var peer = context.Peer;
+        var streamId = context.Message.CallId;
+        var stream = peer.IncomingStreams.Get(streamId);
+        stream?.OnEnd(error);
+        return RpcNoWait.Tasks.Completed;
     }
-
 
     // IRpcDynamicCallHandler
 
     public bool IsValidCall(RpcInboundContext context, ref ArgumentList arguments, ref bool allowPolymorphism)
     {
         var call = context.Call;
-        var outboundCall = context.Peer.OutboundCalls.Get(context.Message.CallId);
-        if (outboundCall == null)
-            return false;
-
         var methodName = call.MethodDef.Method.Name;
         if (methodName == OkMethodName) {
+            var outboundCall = context.Peer.OutboundCalls.Get(context.Message.CallId);
+            if (outboundCall == null)
+                return false;
+
             var outboundMethodDef = outboundCall.MethodDef;
             arguments = outboundMethodDef.ResultListFactory.Invoke();
             allowPolymorphism = outboundMethodDef.AllowResultPolymorphism;
             return true;
         }
-        if (methodName == ItemMethodName && outboundCall is IRpcOutboundStreamCall outboundStreamCall) {
-            arguments = outboundStreamCall.ItemResultListFactory.Invoke();
+        if (methodName == StreamItemMethodName) {
+            var stream = context.Peer.IncomingStreams.Get(context.Message.CallId);
+            if (stream == null)
+                return false;
+
+            arguments = stream.CreateStreamItemArguments();
             allowPolymorphism = true;
             return true;
         }

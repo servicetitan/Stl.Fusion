@@ -4,13 +4,13 @@ using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
 
-public sealed class RpcOutboundContext
+public sealed class RpcOutboundContext(List<RpcHeader>? headers = null)
 {
     [ThreadStatic] private static RpcOutboundContext? _current;
 
     public static RpcOutboundContext? Current => _current;
 
-    public List<RpcHeader>? Headers;
+    public List<RpcHeader>? Headers = headers;
     public RpcMethodDef? MethodDef;
     public ArgumentList? Arguments;
     public CancellationToken CancellationToken;
@@ -19,6 +19,9 @@ public sealed class RpcOutboundContext
     public RpcPeer? Peer;
     public long RelatedCallId;
     public RpcCacheInfoCapture? CacheInfoCapture;
+
+    public static RpcOutboundContext GetCurrent()
+        => Current ?? throw Errors.NoCurrentRpcOutboundContext();
 
     public static Scope Use()
     {
@@ -34,9 +37,6 @@ public sealed class RpcOutboundContext
         context.CallTypeId = callTypeId;
         return new Scope(context, oldContext);
     }
-
-    public RpcOutboundContext(List<RpcHeader>? headers = null)
-        => Headers = headers;
 
     public RpcOutboundCall? PrepareCall(RpcMethodDef methodDef, ArgumentList arguments)
     {

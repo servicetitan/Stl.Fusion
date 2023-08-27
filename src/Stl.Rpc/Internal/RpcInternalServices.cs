@@ -18,7 +18,6 @@ public readonly record struct RpcInternalServices(RpcHub Hub)
     public RpcUnrecoverableErrorDetector UnrecoverableErrorDetector => Hub.UnrecoverableErrorDetector;
     public IEnumerable<RpcPeerTracker> PeerTrackers => Hub.PeerTrackers;
     public RpcSystemCallSender SystemCallSender => Hub.SystemCallSender;
-    public IRpcStreamResolver StreamResolver => Hub.StreamResolver;
     public RpcClient Client => Hub.Client;
     public IMomentClock Clock => Hub.Clock;
 

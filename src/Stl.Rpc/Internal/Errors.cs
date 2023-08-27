@@ -43,6 +43,8 @@ public static class Errors
 
     public static Exception NoCurrentRpcInboundContext()
         => new InvalidOperationException($"{nameof(RpcInboundContext)}.{nameof(RpcInboundContext.Current)} is unavailable.");
+    public static Exception NoCurrentRpcOutboundContext()
+        => new InvalidOperationException($"{nameof(RpcOutboundContext)}.{nameof(RpcOutboundContext.Current)} is unavailable.");
     public static Exception RpcOutboundContextChanged()
         => new InvalidOperationException(
             $"The scope returned from {nameof(RpcOutboundContext)}.{nameof(RpcOutboundContext.Use)} " +
@@ -74,4 +76,9 @@ public static class Errors
         => new ArgumentOutOfRangeException(argumentName, "Client RpcPeerRef is expected.");
     public static Exception ServerRpcPeerRefExpected(string argumentName)
         => new ArgumentOutOfRangeException(argumentName, "Server RpcPeerRef is expected.");
+
+    public static Exception InvalidRpcStreamKind(RpcStreamKind expectedKind)
+        => new InvalidOperationException($"Invalid RpcStream kind (expected: {expectedKind}).");
+    public static Exception RpcStreamIsAlreadyUsed()
+        => new InvalidOperationException("This RpcStream is already used in some other call.");
 }

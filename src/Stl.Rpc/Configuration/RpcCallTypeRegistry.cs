@@ -12,7 +12,6 @@ public static class RpcCallTypeRegistry
     {
         _callTypes = new (Type?, Type?)[256];
         _callTypes[RpcCallTypes.Regular] = (typeof(RpcInboundCall<>), typeof(RpcOutboundCall<>));
-        _callTypes[RpcCallTypes.Stream] = (typeof(RpcInboundCall<>), typeof(RpcOutboundStreamCall<>));
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

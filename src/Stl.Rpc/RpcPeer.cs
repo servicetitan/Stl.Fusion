@@ -23,6 +23,8 @@ public abstract class RpcPeer : WorkerBase
     public RpcInboundContextFactory InboundContextFactory { get; init; }
     public RpcInboundCallTracker InboundCalls { get; init; }
     public RpcOutboundCallTracker OutboundCalls { get; init; }
+    public RpcIncomingStreamTracker IncomingStreams { get; init; }
+    public RpcOutgoingStreamTracker OutgoingStreams { get; init; }
     public LogLevel CallLogLevel { get; init; } = LogLevel.None;
     public AsyncState<RpcPeerConnectionState> ConnectionState => _connectionState;
     public RpcPeerInternalServices InternalServices => new(this);
@@ -41,6 +43,10 @@ public abstract class RpcPeer : WorkerBase
         InboundCalls.Initialize(this);
         OutboundCalls = services.GetRequiredService<RpcOutboundCallTracker>();
         OutboundCalls.Initialize(this);
+        IncomingStreams = services.GetRequiredService<RpcIncomingStreamTracker>();
+        IncomingStreams.Initialize(this);
+        OutgoingStreams = services.GetRequiredService<RpcOutgoingStreamTracker>();
+        OutgoingStreams.Initialize(this);
     }
 
     public ValueTask Send(RpcMessage message)
@@ -192,13 +198,16 @@ public abstract class RpcPeer : WorkerBase
             Monitor.Exit(Lock);
         }
 
-        // 2. And we must abort all outbound calls.
+        // 2. And we must abort all outbound calls and streams.
         // Inbound calls are auto-aborted via StopToken,
         // which becomes RpcInboundCallContext.CancellationToken.
-        var outboundCallCount = await OutboundCalls.Abort(error).ConfigureAwait(false);
+        var abortCallsTask = OutboundCalls.Abort(error);
+        var abortStreamsTask = OutgoingStreams.Abort(error);
+        var outboundCallCount = await abortCallsTask.ConfigureAwait(false);
+        var outgoingStreamCount = await abortStreamsTask.ConfigureAwait(false);
         Log.LogInformation(
-            "'{PeerRef}': Stopped, aborted {OutboundCallCount} outbound call(s)",
-            Ref, outboundCallCount);
+            "'{PeerRef}': Stopped, aborted {OutboundCallCount} outbound call(s), {OutgoingStreamCount} stream(s)",
+            Ref, outboundCallCount, outgoingStreamCount);
     }
 
     protected async Task ProcessMessage(
