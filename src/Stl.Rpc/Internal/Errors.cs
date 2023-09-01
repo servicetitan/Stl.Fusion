@@ -77,8 +77,11 @@ public static class Errors
     public static Exception ServerRpcPeerRefExpected(string argumentName)
         => new ArgumentOutOfRangeException(argumentName, "Server RpcPeerRef is expected.");
 
-    public static Exception InvalidRpcStreamKind(RpcStreamKind expectedKind)
-        => new InvalidOperationException($"Invalid RpcStream kind (expected: {expectedKind}).");
-    public static Exception RpcStreamIsAlreadyUsed()
-        => new InvalidOperationException("This RpcStream is already used in some other call.");
+    public static Exception InvalidRpcObjectKind(RpcObjectKind expectedKind)
+        => new InvalidOperationException($"Invalid IRpcObject kind (expected: {expectedKind}).");
+    public static Exception RpcObjectIsAlreadyUsed()
+        => new InvalidOperationException("This IRpcObject is already used in some other call.");
+
+    public static Exception RemoteRpcStreamCanBeEnumeratedJustOnce()
+        => new InvalidOperationException("Remote RpcStream can be enumerated just once.");
 }

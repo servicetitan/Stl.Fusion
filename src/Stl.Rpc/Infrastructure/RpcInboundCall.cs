@@ -42,7 +42,7 @@ public abstract class RpcInboundCall : RpcCall
         : base(methodDef)
     {
         Context = context;
-        Id = NoWait ? 0 : context.Message.CallId;
+        Id = NoWait ? 0 : context.Message.RelatedId;
         var cancellationToken = Context.CancellationToken;
         if (NoWait)
             CancellationToken = cancellationToken;
@@ -57,7 +57,7 @@ public abstract class RpcInboundCall : RpcCall
         var message = Context.Message;
         var headers = message.Headers.OrEmpty();
         var arguments = Arguments != null ? Arguments.ToString() : $"ArgumentData: {message.ArgumentData}";
-        return $"{GetType().GetName()} #{message.CallId}: {MethodDef.Name}{arguments}"
+        return $"{GetType().GetName()} #{message.RelatedId}: {MethodDef.Name}{arguments}"
             + (headers.Count > 0 ? $", Headers: {headers.ToDelimitedString()}" : "");
     }
 

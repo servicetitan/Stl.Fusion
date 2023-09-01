@@ -12,8 +12,8 @@ public interface IRpcSystemCalls : IRpcSystemService
     Task<Unit> NotFound(string serviceName, string methodName);
 
     // Streams
-    Task<RpcNoWait> StreamAck(long offset);
-    Task<RpcNoWait> StreamItem(object? item);
+    Task<RpcNoWait> StreamAck(long nextIndex);
+    Task<RpcNoWait> StreamItem(long index, object? item);
     Task<RpcNoWait> StreamEnd(ExceptionInfo? error);
 }
 
@@ -29,7 +29,7 @@ public class RpcSystemCalls(IServiceProvider services)
     {
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
-        var outboundCallId = context.Message.CallId;
+        var outboundCallId = context.Message.RelatedId;
         peer.OutboundCalls.Get(outboundCallId)?.SetResult(result, context);
         return RpcNoWait.Tasks.Completed;
     }
@@ -38,7 +38,7 @@ public class RpcSystemCalls(IServiceProvider services)
     {
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
-        var outboundCallId = context.Message.CallId;
+        var outboundCallId = context.Message.RelatedId;
         peer.OutboundCalls.Get(outboundCallId)?.SetError(error.ToException()!, context);
         return RpcNoWait.Tasks.Completed;
     }
@@ -47,7 +47,7 @@ public class RpcSystemCalls(IServiceProvider services)
     {
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
-        var inboundCallId = context.Message.CallId;
+        var inboundCallId = context.Message.RelatedId;
         var inboundCall = peer.InboundCalls.Get(inboundCallId);
         if (inboundCall != null)
             _ = inboundCall.Complete(silentCancel: true);
@@ -57,23 +57,23 @@ public class RpcSystemCalls(IServiceProvider services)
     public Task<Unit> NotFound(string serviceName, string methodName)
         => throw Errors.EndpointNotFound(serviceName, methodName);
 
-    public Task<RpcNoWait> StreamAck(long offset)
+    public Task<RpcNoWait> StreamAck(long nextIndex)
     {
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
-        var streamId = context.Message.CallId;
-        var streamSender = peer.OutgoingStreams.Get(streamId);
-        streamSender?.OnAck(offset);
+        var streamId = context.Message.RelatedId;
+        var stream = peer.LocalObjects.Get(streamId) as RpcLocalStream;
+        stream?.OnAck(nextIndex);
         return RpcNoWait.Tasks.Completed;
     }
 
-    public Task<RpcNoWait> StreamItem(object? item)
+    public Task<RpcNoWait> StreamItem(long index, object? item)
     {
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
-        var streamId = context.Message.CallId;
-        var stream = peer.IncomingStreams.Get(streamId);
-        stream?.OnItem(item);
+        var streamId = context.Message.RelatedId;
+        var stream = peer.RemoteObjects.Get(streamId) as RpcStream;
+        stream?.OnItem(index, item);
         return RpcNoWait.Tasks.Completed;
     }
 
@@ -81,8 +81,8 @@ public class RpcSystemCalls(IServiceProvider services)
     {
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
-        var streamId = context.Message.CallId;
-        var stream = peer.IncomingStreams.Get(streamId);
+        var streamId = context.Message.RelatedId;
+        var stream = peer.RemoteObjects.Get(streamId) as RpcStream;
         stream?.OnEnd(error);
         return RpcNoWait.Tasks.Completed;
     }
@@ -94,7 +94,7 @@ public class RpcSystemCalls(IServiceProvider services)
         var call = context.Call;
         var methodName = call.MethodDef.Method.Name;
         if (methodName == OkMethodName) {
-            var outboundCall = context.Peer.OutboundCalls.Get(context.Message.CallId);
+            var outboundCall = context.Peer.OutboundCalls.Get(context.Message.RelatedId);
             if (outboundCall == null)
                 return false;
 
@@ -104,7 +104,7 @@ public class RpcSystemCalls(IServiceProvider services)
             return true;
         }
         if (methodName == StreamItemMethodName) {
-            var stream = context.Peer.IncomingStreams.Get(context.Message.CallId);
+            var stream = context.Peer.RemoteObjects.Get(context.Message.RelatedId) as RpcStream;
             if (stream == null)
                 return false;
 

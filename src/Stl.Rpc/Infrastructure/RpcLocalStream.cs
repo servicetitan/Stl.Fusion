@@ -1,20 +1,21 @@
 namespace Stl.Rpc.Infrastructure;
 
-public sealed class RpcStreamSender(long id, RpcStream stream) : WorkerBase
+public sealed class RpcLocalStream(RpcStream stream) : WorkerBase, IRpcObject
 {
-    private long _ackOffset = 0;
+    private long _ackIndex = 0;
     private TaskCompletionSource<Unit>? _whenAck;
 
-    public readonly long Id = id;
-    public readonly RpcStream Stream = stream;
-    public readonly RpcPeer Peer = stream.Peer!;
+    public long Id { get; } = stream.Id;
+    public RpcObjectKind Kind { get; } = stream.Kind;
+    public RpcStream Stream { get; } = stream;
+    public RpcPeer Peer { get; } = stream.Peer!;
 
     public void OnAck(long offset)
     {
         lock (Lock) {
             if (WhenRunning != null && offset != long.MaxValue)
                 this.Start();
-            _ackOffset = offset;
+            _ackIndex = offset;
             _whenAck?.TrySetResult(default);
         }
         if (offset == long.MaxValue)
@@ -30,7 +31,7 @@ public sealed class RpcStreamSender(long id, RpcStream stream) : WorkerBase
 
     protected override Task OnStop()
     {
-        Peer.OutgoingStreams.Unregister(Id, this);
+        Peer.LocalObjects.Unregister(this);
         return Task.CompletedTask;
     }
 }

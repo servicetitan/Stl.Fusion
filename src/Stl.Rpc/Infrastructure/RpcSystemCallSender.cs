@@ -85,13 +85,13 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
         return call.SendNoWait(false);
     }
 
-    public ValueTask StreamAck(RpcPeer peer, long streamId, long offset, List<RpcHeader>? headers = null)
+    public ValueTask StreamAck(RpcPeer peer, long streamId, long nextIndex, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
             RelatedCallId = streamId,
         };
-        var call = context.PrepareCall(StreamAckMethodDef, ArgumentList.New(offset))!;
+        var call = context.PrepareCall(StreamAckMethodDef, ArgumentList.New(nextIndex))!;
         return call.SendNoWait(false);
     }
 

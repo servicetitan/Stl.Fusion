@@ -128,7 +128,7 @@ public class SerializationTest(ITestOutputHelper @out) : TestBase(@out)
         void Test(RpcMessage m)
         {
             var ms = m.PassThroughAllSerializers();
-            ms.CallId.Should().Be(m.CallId);
+            ms.RelatedId.Should().Be(m.RelatedId);
             ms.Service.Should().Be(m.Service);
             ms.Method.Should().Be(m.Method);
             ms.ArgumentData.Data.ToArray().Should().Equal(m.ArgumentData.Data.ToArray());

@@ -1,9 +1,5 @@
 using Stl.Internal;
 
-#if !NETSTANDARD2_0
-using System.Diagnostics.CodeAnalysis;
-#endif
-
 namespace Stl.Rpc.Infrastructure;
 
 public abstract class RpcCallTracker<TRpcCall> : IEnumerable<TRpcCall>
@@ -37,7 +33,7 @@ public abstract class RpcCallTracker<TRpcCall> : IEnumerable<TRpcCall>
         => call.NoWait || Calls.TryRemove(call.Id, call);
 }
 
-public class RpcInboundCallTracker : RpcCallTracker<RpcInboundCall>
+public sealed class RpcInboundCallTracker : RpcCallTracker<RpcInboundCall>
 {
     public RpcInboundCall GetOrRegister(RpcInboundCall call)
     {
@@ -50,7 +46,7 @@ public class RpcInboundCallTracker : RpcCallTracker<RpcInboundCall>
     }
 }
 
-public class RpcOutboundCallTracker : RpcCallTracker<RpcOutboundCall>
+public sealed class RpcOutboundCallTracker : RpcCallTracker<RpcOutboundCall>
 {
     public static readonly TimeSpan AbortCheckPeriod = TimeSpan.FromSeconds(1);
 

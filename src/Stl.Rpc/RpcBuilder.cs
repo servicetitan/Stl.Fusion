@@ -46,8 +46,8 @@ public readonly struct RpcBuilder
         services.TryAddSingleton(c => new RpcOutboundMiddlewares(c));
         services.TryAddTransient(_ => new RpcInboundCallTracker());
         services.TryAddTransient(_ => new RpcOutboundCallTracker());
-        services.TryAddTransient(_ => new RpcIncomingStreamTracker());
-        services.TryAddTransient(_ => new RpcOutgoingStreamTracker());
+        services.TryAddTransient(_ => new RpcRemoteObjectTracker());
+        services.TryAddTransient(_ => new RpcLocalObjectTracker());
         services.TryAddSingleton(c => new RpcClientPeerReconnectDelayer(c));
         if (!OSInfo.IsAnyClient)
             AddInboundMiddleware<RpcInboundCallActivityMiddleware>();

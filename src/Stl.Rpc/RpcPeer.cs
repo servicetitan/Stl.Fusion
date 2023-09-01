@@ -23,8 +23,8 @@ public abstract class RpcPeer : WorkerBase
     public RpcInboundContextFactory InboundContextFactory { get; init; }
     public RpcInboundCallTracker InboundCalls { get; init; }
     public RpcOutboundCallTracker OutboundCalls { get; init; }
-    public RpcIncomingStreamTracker IncomingStreams { get; init; }
-    public RpcOutgoingStreamTracker OutgoingStreams { get; init; }
+    public RpcRemoteObjectTracker RemoteObjects { get; init; }
+    public RpcLocalObjectTracker LocalObjects { get; init; }
     public LogLevel CallLogLevel { get; init; } = LogLevel.None;
     public AsyncState<RpcPeerConnectionState> ConnectionState => _connectionState;
     public RpcPeerInternalServices InternalServices => new(this);
@@ -43,10 +43,10 @@ public abstract class RpcPeer : WorkerBase
         InboundCalls.Initialize(this);
         OutboundCalls = services.GetRequiredService<RpcOutboundCallTracker>();
         OutboundCalls.Initialize(this);
-        IncomingStreams = services.GetRequiredService<RpcIncomingStreamTracker>();
-        IncomingStreams.Initialize(this);
-        OutgoingStreams = services.GetRequiredService<RpcOutgoingStreamTracker>();
-        OutgoingStreams.Initialize(this);
+        RemoteObjects = services.GetRequiredService<RpcRemoteObjectTracker>();
+        RemoteObjects.Initialize(this);
+        LocalObjects = services.GetRequiredService<RpcLocalObjectTracker>();
+        LocalObjects.Initialize(this);
     }
 
     public ValueTask Send(RpcMessage message)
@@ -127,9 +127,8 @@ public abstract class RpcPeer : WorkerBase
                 var channelReader = connection.Channel.Reader;
                 if (semaphore == null)
                     while (await channelReader.WaitToReadAsync(readerAbortToken).ConfigureAwait(false))
-                    while (channelReader.TryRead(out var message)) {
+                    while (channelReader.TryRead(out var message))
                         _ = ProcessMessage(message, cancellationToken);
-                    }
                 else
                     while (await channelReader.WaitToReadAsync(readerAbortToken).ConfigureAwait(false))
                     while (channelReader.TryRead(out var message)) {
@@ -202,7 +201,7 @@ public abstract class RpcPeer : WorkerBase
         // Inbound calls are auto-aborted via StopToken,
         // which becomes RpcInboundCallContext.CancellationToken.
         var abortCallsTask = OutboundCalls.Abort(error);
-        var abortStreamsTask = OutgoingStreams.Abort(error);
+        var abortStreamsTask = LocalObjects.Abort(error);
         var outboundCallCount = await abortCallsTask.ConfigureAwait(false);
         var outgoingStreamCount = await abortStreamsTask.ConfigureAwait(false);
         Log.LogInformation(
