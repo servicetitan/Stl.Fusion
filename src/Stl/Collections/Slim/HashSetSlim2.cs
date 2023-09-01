@@ -7,19 +7,19 @@ public struct HashSetSlim2<T> : IHashSetSlim<T>
     private (T, T) _tuple;
     private HashSet<T>? _set;
 
-    private bool HasSet {
+    private readonly bool HasSet {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => _set != null;
     }
 
-    public int Count {
+    public readonly int Count {
         get {
             if (HasSet) return _set!.Count;
             return _count;
         }
     }
 
-    public bool Contains(T item)
+    public readonly bool Contains(T item)
     {
         if (HasSet) return _set!.Contains(item);
         if (_count >= 1 && EqualityComparer<T>.Default.Equals(_tuple.Item1, item)) return true;
@@ -84,7 +84,7 @@ public struct HashSetSlim2<T> : IHashSetSlim<T>
         _count = 0;
     }
 
-    public IEnumerable<T> Items {
+    public readonly IEnumerable<T> Items {
         get {
             if (HasSet) {
                 foreach (var item in _set!)
@@ -98,7 +98,7 @@ public struct HashSetSlim2<T> : IHashSetSlim<T>
         }
     }
 
-    public void Apply<TState>(TState state, Action<TState, T> action)
+    public readonly void Apply<TState>(TState state, Action<TState, T> action)
     {
         if (HasSet) {
             foreach (var item in _set!)
@@ -111,7 +111,7 @@ public struct HashSetSlim2<T> : IHashSetSlim<T>
         action(state, _tuple.Item2);
     }
 
-    public void Aggregate<TState>(ref TState state, Aggregator<TState, T> aggregator)
+    public readonly void Aggregate<TState>(ref TState state, Aggregator<TState, T> aggregator)
     {
         if (HasSet) {
             foreach (var item in _set!)
@@ -124,7 +124,7 @@ public struct HashSetSlim2<T> : IHashSetSlim<T>
         aggregator(ref state, _tuple.Item2);
     }
 
-    public TState Aggregate<TState>(TState state, Func<TState, T, TState> aggregator)
+    public readonly TState Aggregate<TState>(TState state, Func<TState, T, TState> aggregator)
     {
         if (HasSet) {
             foreach (var item in _set!)
@@ -138,7 +138,7 @@ public struct HashSetSlim2<T> : IHashSetSlim<T>
         return state;
     }
 
-    public void CopyTo(Span<T> target)
+    public readonly void CopyTo(Span<T> target)
     {
         var index = 0;
         if (HasSet) {
