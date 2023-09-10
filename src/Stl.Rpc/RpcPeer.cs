@@ -24,7 +24,7 @@ public abstract class RpcPeer : WorkerBase
     public RpcInboundCallTracker InboundCalls { get; init; }
     public RpcOutboundCallTracker OutboundCalls { get; init; }
     public RpcRemoteObjectTracker RemoteObjects { get; init; }
-    public RpcLocalObjectTracker LocalObjects { get; init; }
+    public RpcSharedObjectTracker SharedObjects { get; init; }
     public LogLevel CallLogLevel { get; init; } = LogLevel.None;
     public AsyncState<RpcPeerConnectionState> ConnectionState => _connectionState;
     public RpcPeerInternalServices InternalServices => new(this);
@@ -45,8 +45,8 @@ public abstract class RpcPeer : WorkerBase
         OutboundCalls.Initialize(this);
         RemoteObjects = services.GetRequiredService<RpcRemoteObjectTracker>();
         RemoteObjects.Initialize(this);
-        LocalObjects = services.GetRequiredService<RpcLocalObjectTracker>();
-        LocalObjects.Initialize(this);
+        SharedObjects = services.GetRequiredService<RpcSharedObjectTracker>();
+        SharedObjects.Initialize(this);
     }
 
     public ValueTask Send(RpcMessage message)
@@ -118,7 +118,8 @@ public abstract class RpcPeer : WorkerBase
                 var connectionState = SetConnectionState(connection, null, true);
                 readerAbortToken = connectionState.ReaderAbortSource!.Token;
 
-                // Recovery: let's re-send all outbound calls
+                // Recovery: re-send keep-alive object set & all outbound calls
+                _ = RemoteObjects.KeepAlive(readerAbortToken);
                 foreach (var call in OutboundCalls) {
                     readerAbortToken.ThrowIfCancellationRequested();
                     await call.SendRegistered(true).ConfigureAwait(false);
@@ -201,12 +202,12 @@ public abstract class RpcPeer : WorkerBase
         // Inbound calls are auto-aborted via StopToken,
         // which becomes RpcInboundCallContext.CancellationToken.
         var abortCallsTask = OutboundCalls.Abort(error);
-        var abortStreamsTask = LocalObjects.Abort(error);
+        var abortObjectsTask = SharedObjects.Abort(error);
         var outboundCallCount = await abortCallsTask.ConfigureAwait(false);
-        var outgoingStreamCount = await abortStreamsTask.ConfigureAwait(false);
+        var outgoingObjectCount = await abortObjectsTask.ConfigureAwait(false);
         Log.LogInformation(
-            "'{PeerRef}': Stopped, aborted {OutboundCallCount} outbound call(s), {OutgoingStreamCount} stream(s)",
-            Ref, outboundCallCount, outgoingStreamCount);
+            "'{PeerRef}': Stopped, aborted {OutboundCallCount} outbound call(s), {OutgoingObjectCount} object(s)",
+            Ref, outboundCallCount, outgoingObjectCount);
     }
 
     protected async Task ProcessMessage(

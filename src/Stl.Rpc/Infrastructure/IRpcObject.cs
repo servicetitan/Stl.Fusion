@@ -11,6 +11,13 @@ public enum RpcObjectKind
 public interface IRpcObject : IHasId<long>
 {
     RpcObjectKind Kind { get; }
+    ValueTask OnReconnected(CancellationToken cancellationToken);
+}
+
+public interface IRpcSharedObject : IRpcObject
+{
+    CpuTimestamp LastKeepAliveAt { get; }
+    void OnKeepAlive();
 }
 
 public static class RpcObjectExt

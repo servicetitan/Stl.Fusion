@@ -11,8 +11,11 @@ public interface IRpcSystemCalls : IRpcSystemService
     Task<RpcNoWait> Cancel();
     Task<Unit> NotFound(string serviceName, string methodName);
 
+    // Objects
+    Task<RpcNoWait> KeepAlive(long[] objectIds);
+
     // Streams
-    Task<RpcNoWait> StreamAck(long nextIndex);
+    Task<RpcNoWait> StreamAck(long nextIndex, bool mustReset);
     Task<RpcNoWait> StreamItem(long index, object? item);
     Task<RpcNoWait> StreamEnd(ExceptionInfo? error);
 }
@@ -57,13 +60,23 @@ public class RpcSystemCalls(IServiceProvider services)
     public Task<Unit> NotFound(string serviceName, string methodName)
         => throw Errors.EndpointNotFound(serviceName, methodName);
 
-    public Task<RpcNoWait> StreamAck(long nextIndex)
+    public async Task<RpcNoWait> KeepAlive(long[] objectIds)
     {
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
-        var streamId = context.Message.RelatedId;
-        var stream = peer.LocalObjects.Get(streamId) as RpcLocalStream;
-        stream?.OnAck(nextIndex);
+        await peer.SharedObjects.OnKeepAlive(objectIds).ConfigureAwait(false);
+        return default;
+    }
+
+    public Task<RpcNoWait> StreamAck(long nextIndex, bool mustReset)
+    {
+        var context = RpcInboundContext.GetCurrent();
+        var peer = context.Peer;
+        var objectId = context.Message.RelatedId;
+        if (peer.SharedObjects.Get(objectId) is RpcSharedStream stream)
+            stream.OnAck(nextIndex, mustReset);
+        else
+            _ = peer.Hub.SystemCallSender.StreamEnd(peer, objectId, Errors.RpcStreamNotFound());
         return RpcNoWait.Tasks.Completed;
     }
 
@@ -71,8 +84,8 @@ public class RpcSystemCalls(IServiceProvider services)
     {
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
-        var streamId = context.Message.RelatedId;
-        var stream = peer.RemoteObjects.Get(streamId) as RpcStream;
+        var objectId = context.Message.RelatedId;
+        var stream = peer.RemoteObjects.Get(objectId) as RpcStream;
         stream?.OnItem(index, item);
         return RpcNoWait.Tasks.Completed;
     }
@@ -81,8 +94,8 @@ public class RpcSystemCalls(IServiceProvider services)
     {
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
-        var streamId = context.Message.RelatedId;
-        var stream = peer.RemoteObjects.Get(streamId) as RpcStream;
+        var objectId = context.Message.RelatedId;
+        var stream = peer.RemoteObjects.Get(objectId) as RpcStream;
         stream?.OnEnd(error);
         return RpcNoWait.Tasks.Completed;
     }

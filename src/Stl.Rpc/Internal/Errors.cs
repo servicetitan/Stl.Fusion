@@ -84,4 +84,9 @@ public static class Errors
 
     public static Exception RemoteRpcStreamCanBeEnumeratedJustOnce()
         => new InvalidOperationException("Remote RpcStream can be enumerated just once.");
+
+    public static Exception RpcStreamNotFound()
+        => new KeyNotFoundException("RpcStream with the specified Id is not found.");
+    public static Exception RpcStreamInvalidPosition()
+        => new InvalidOperationException("RpcStream position is invalid.");
 }

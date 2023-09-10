@@ -18,43 +18,29 @@ public abstract partial class RpcStream : IRpcObject
     public static RpcStream<T> New<T>(IAsyncEnumerable<T> outgoingSource)
         => new(outgoingSource);
 
-    [JsonInclude, Newtonsoft.Json.JsonProperty, DataMember, MemoryPackOrder(0)]
-    protected long SerializedId {
-        get {
-            // This member must be never accessed directly - its only purpose is to be called on serialization
-            this.RequireKind(RpcObjectKind.Local);
-            Peer = RpcOutboundContext.GetCurrent().Peer!;
-            var localObjects = Peer.LocalObjects;
-            Id = localObjects.NextId(); // NOTE: Id changes on serialization!
-            var sharedStream = new RpcLocalStream(this);
-            localObjects.Register(sharedStream);
-            return Id;
-        }
-        set {
-            this.RequireKind(RpcObjectKind.Remote);
-            Id = value;
-            Peer = RpcInboundContext.GetCurrent().Peer;
-            Peer.RemoteObjects.Register(this);
-        }
-    }
+    [JsonInclude, Newtonsoft.Json.JsonProperty, DataMember, MemoryPackOrder(1)]
+    public int AckInterval { get; init; } = 100;
 
     [JsonInclude, Newtonsoft.Json.JsonProperty, DataMember, MemoryPackOrder(0)]
-    public int BlockSize { get; init; }
+    protected abstract long SerializedId { get; set; }
 
     // Non-serialized members
-    [JsonIgnore, MemoryPackIgnore] public long Id { get; private set; }
-    [JsonIgnore, MemoryPackIgnore] public RpcPeer? Peer { get; private set; }
+    [JsonIgnore, MemoryPackIgnore] public long Id { get; protected set; }
+    [JsonIgnore, MemoryPackIgnore] public RpcPeer? Peer { get; protected set; }
     [JsonIgnore, MemoryPackIgnore] public abstract Type ItemType { get; }
     [JsonIgnore, MemoryPackIgnore] public abstract RpcObjectKind Kind { get; }
 
     public override string ToString()
         => $"{GetType().GetName()}(#{Id} @ {Peer?.Ref}, {Kind})";
 
+    ValueTask IRpcObject.OnReconnected(CancellationToken cancellationToken) => OnReconnected(cancellationToken);
+
     // Protected methods
 
     protected internal abstract ArgumentList CreateStreamItemArguments();
     protected internal abstract void OnItem(long index, object? item);
     protected internal abstract void OnEnd(ExceptionInfo? error);
+    protected abstract ValueTask OnReconnected(CancellationToken cancellationToken);
 }
 
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
@@ -66,6 +52,26 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
     private bool _isCloseAckSent;
     private bool _isUnregistered;
     private readonly object _lock;
+
+    [JsonInclude, Newtonsoft.Json.JsonProperty, DataMember]
+    protected override long SerializedId {
+        get {
+            // This member must be never accessed directly - its only purpose is to be called on serialization
+            this.RequireKind(RpcObjectKind.Local);
+            Peer = RpcOutboundContext.GetCurrent().Peer!;
+            var sharedObjects = Peer.SharedObjects;
+            Id = sharedObjects.NextId(); // NOTE: Id changes on serialization!
+            var sharedStream = new RpcSharedStream<T>(this);
+            sharedObjects.Register(sharedStream);
+            return Id;
+        }
+        set {
+            this.RequireKind(RpcObjectKind.Remote);
+            Id = value;
+            Peer = RpcInboundContext.GetCurrent().Peer;
+            Peer.RemoteObjects.Register(this);
+        }
+    }
 
     [JsonIgnore] public override Type ItemType => typeof(T);
     [JsonIgnore] public override RpcObjectKind Kind
@@ -97,11 +103,17 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
                 throw Internal.Errors.RemoteRpcStreamCanBeEnumeratedJustOnce();
 
             _remoteChannel = Channel.CreateUnbounded<T>(RemoteChannelOptions);
-            return new Enumerator(this, cancellationToken);
+            return new RemoteChannelEnumerator(this, cancellationToken);
         }
     }
 
     // Protected methods
+
+    internal IAsyncEnumerable<T> GetLocalSource()
+    {
+        this.RequireKind(RpcObjectKind.Local);
+        return _localSource!;
+    }
 
     protected internal override ArgumentList CreateStreamItemArguments()
         => ArgumentList.New(0L, default(T));
@@ -134,6 +146,18 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
         }
     }
 
+    protected override ValueTask OnReconnected(CancellationToken cancellationToken)
+    {
+        lock (_lock) {
+            if (_remoteChannel == null)
+                return ValueTask.CompletedTask;
+
+            return _isCloseAckSent
+                ? SendCloseAck()
+                : SendAck(_nextIndex, true);
+        }
+    }
+
     // Private methods
 
     private void TryComplete(Exception? error = null)
@@ -160,37 +184,37 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
     private ValueTask SendCloseAck()
         => SendAck(long.MaxValue);
 
-    private ValueTask SendAck(long index)
+    private ValueTask SendAck(long index, bool mustReset = false)
     {
         var peer = Peer!;
-        return peer.Hub.SystemCallSender.StreamAck(peer, Id, index);
+        return peer.Hub.SystemCallSender.StreamAck(peer, Id, index, mustReset);
     }
 
     // Nested types
 
-    private class Enumerator(RpcStream<T> stream, CancellationToken cancellationToken) : IAsyncEnumerator<T>
+    private class RemoteChannelEnumerator(RpcStream<T> stream, CancellationToken cancellationToken) : IAsyncEnumerator<T>
     {
-        private readonly IAsyncEnumerator<T> _baseEnumerator =  stream._remoteChannel!.Reader
+        private readonly IAsyncEnumerator<T> _enumerator =  stream._remoteChannel!.Reader
             .ReadAllAsync(cancellationToken)
             .GetAsyncEnumerator(cancellationToken);
         private bool _isFirst = true;
 
-        public T Current => _baseEnumerator.Current;
+        public T Current => _enumerator.Current;
 
         public ValueTask DisposeAsync()
         {
             stream.TryComplete();
-            return _baseEnumerator.DisposeAsync();
+            return _enumerator.DisposeAsync();
         }
 
         public ValueTask<bool> MoveNextAsync()
         {
-            return _isFirst ? SendAckAndMoveNext() : _baseEnumerator.MoveNextAsync();
+            return _isFirst ? SendAckAndMoveNext() : _enumerator.MoveNextAsync();
 
             async ValueTask<bool> SendAckAndMoveNext() {
                 _isFirst = false;
                 await stream.SendAck(0).ConfigureAwait(false);
-                return await _baseEnumerator.MoveNextAsync().ConfigureAwait(false);
+                return await _enumerator.MoveNextAsync().ConfigureAwait(false);
             }
         }
     }
