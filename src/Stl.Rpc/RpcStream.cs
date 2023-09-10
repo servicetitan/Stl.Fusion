@@ -150,7 +150,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
     {
         lock (_lock) {
             if (_remoteChannel == null)
-                return ValueTask.CompletedTask;
+                return ValueTaskExt.CompletedTask;
 
             return _isCloseAckSent
                 ? SendCloseAck()

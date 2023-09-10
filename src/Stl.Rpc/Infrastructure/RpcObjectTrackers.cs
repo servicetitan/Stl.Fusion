@@ -128,7 +128,7 @@ public sealed class RpcSharedObjectTracker : RpcObjectTracker, IEnumerable<IRpcS
     {
         var hub = Peer.Hub;
         var clock = hub.Clock;
-        var halfKeepAlivePeriod = KeepAlivePeriod / 2;
+        var halfKeepAlivePeriod = KeepAlivePeriod.Multiply(0.5);
         var keepAliveTimeout = KeepAlivePeriod.Multiply(2.1);
         await clock.Delay(halfKeepAlivePeriod, cancellationToken).ConfigureAwait(false);
         while (true) {

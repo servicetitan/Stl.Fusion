@@ -60,12 +60,12 @@ public class RpcSystemCalls(IServiceProvider services)
     public Task<Unit> NotFound(string serviceName, string methodName)
         => throw Errors.EndpointNotFound(serviceName, methodName);
 
-    public async Task<RpcNoWait> KeepAlive(long[] objectIds)
+    public Task<RpcNoWait> KeepAlive(long[] objectIds)
     {
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
-        await peer.SharedObjects.OnKeepAlive(objectIds).ConfigureAwait(false);
-        return default;
+        peer.SharedObjects.OnKeepAlive(objectIds);
+        return RpcNoWait.Tasks.Completed;
     }
 
     public Task<RpcNoWait> StreamAck(long nextIndex, bool mustReset)
