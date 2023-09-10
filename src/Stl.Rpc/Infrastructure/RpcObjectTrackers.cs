@@ -59,18 +59,23 @@ public class RpcRemoteObjectTracker : RpcObjectTracker, IEnumerable<IRpcObject>
             && ReferenceEquals(obj, existingObj)
             && _weakRefs.TryRemove(obj.Id, weakRef);
 
-    public async Task KeepAlive(CancellationToken cancellationToken)
+    public async Task Maintain(CancellationToken cancellationToken)
     {
-        foreach (var (_, weakRef) in _weakRefs)
-            if (weakRef.TryGetTarget(out var obj))
-                await obj.OnReconnected(cancellationToken).ConfigureAwait(false);
+        try {
+            foreach (var (_, weakRef) in _weakRefs)
+                if (weakRef.TryGetTarget(out var obj))
+                    await obj.OnReconnected(cancellationToken).ConfigureAwait(false);
 
-        var hub = Peer.Hub;
-        var clock = hub.Clock;
-        var systemCallSender = hub.SystemCallSender;
-        while (true) {
-            await clock.Delay(KeepAlivePeriod, cancellationToken).ConfigureAwait(false);
-            await systemCallSender.KeepAlive(Peer, GetObjectIds()).ConfigureAwait(false);
+            var hub = Peer.Hub;
+            var clock = hub.Clock;
+            var systemCallSender = hub.SystemCallSender;
+            while (true) {
+                await clock.Delay(KeepAlivePeriod, cancellationToken).ConfigureAwait(false);
+                await systemCallSender.KeepAlive(Peer, GetObjectIds()).ConfigureAwait(false);
+            }
+        }
+        catch {
+            // Intended
         }
         // ReSharper disable once FunctionNeverReturns
     }
@@ -124,19 +129,24 @@ public sealed class RpcSharedObjectTracker : RpcObjectTracker, IEnumerable<IRpcS
     public bool Unregister(IRpcSharedObject obj)
         => _objects.TryRemove(obj.Id, obj);
 
-    public async Task KeepAlive(CancellationToken cancellationToken)
+    public async Task Maintain(CancellationToken cancellationToken)
     {
-        var hub = Peer.Hub;
-        var clock = hub.Clock;
-        var halfKeepAlivePeriod = KeepAlivePeriod.Multiply(0.5);
-        var keepAliveTimeout = KeepAlivePeriod.Multiply(2.1);
-        await clock.Delay(halfKeepAlivePeriod, cancellationToken).ConfigureAwait(false);
-        while (true) {
-            var minLastKeepAliveAt = CpuTimestamp.Now - keepAliveTimeout;
-            foreach (var (_, obj) in _objects)
-                if (obj.LastKeepAliveAt < minLastKeepAliveAt && Unregister(obj))
-                    TryDispose(obj);
-            await clock.Delay(KeepAlivePeriod, cancellationToken).ConfigureAwait(false);
+        try {
+            var hub = Peer.Hub;
+            var clock = hub.Clock;
+            var halfKeepAlivePeriod = KeepAlivePeriod.Multiply(0.5);
+            var keepAliveTimeout = KeepAlivePeriod.Multiply(2.1);
+            await clock.Delay(halfKeepAlivePeriod, cancellationToken).ConfigureAwait(false);
+            while (true) {
+                var minLastKeepAliveAt = CpuTimestamp.Now - keepAliveTimeout;
+                foreach (var (_, obj) in _objects)
+                    if (obj.LastKeepAliveAt < minLastKeepAliveAt && Unregister(obj))
+                        TryDispose(obj);
+                await clock.Delay(KeepAlivePeriod, cancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch {
+            // Intended
         }
         // ReSharper disable once FunctionNeverReturns
     }

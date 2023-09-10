@@ -119,7 +119,8 @@ public abstract class RpcPeer : WorkerBase
                 readerAbortToken = connectionState.ReaderAbortSource!.Token;
 
                 // Recovery: re-send keep-alive object set & all outbound calls
-                _ = RemoteObjects.KeepAlive(readerAbortToken);
+                _ = SharedObjects.Maintain(readerAbortToken);
+                _ = RemoteObjects.Maintain(readerAbortToken);
                 foreach (var call in OutboundCalls) {
                     readerAbortToken.ThrowIfCancellationRequested();
                     await call.SendRegistered(true).ConfigureAwait(false);
