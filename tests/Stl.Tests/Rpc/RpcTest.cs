@@ -202,6 +202,31 @@ public class RpcWebSocketTest(ITestOutputHelper @out) : RpcTestBase(@out)
         var stream2 = await client.StreamTuples(expected2.Count);
         (await stream2.ToListAsync()).Should().Equal(expected2);
         await AssertNoCalls(peer);
+
+        var stream3 = await client.StreamTuples(10, 5);
+        (await stream3.Take(5).CountAsync()).Should().Be(5);
+        var stream3f = await client.StreamTuples(10, 5);
+        try {
+            await stream3f.CountAsync();
+            Assert.Fail("No exception!");
+        }
+        catch (Exception e) {
+            e.Should().BeOfType<InvalidOperationException>();
+        }
+        await AssertNoCalls(peer);
+    }
+
+
+    [Fact]
+    public async Task StreamInputTest()
+    {
+        await using var _ = await WebHost.Serve();
+        var services = ClientServices;
+        var peer = services.RpcHub().GetClientPeer(ClientPeerRef);
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
+
+        var expected1 = AsyncEnumerable.Range(0, 500);
+        (await client.Count(RpcStream.New(expected1))).Should().Be(500);
     }
 
     [Fact]

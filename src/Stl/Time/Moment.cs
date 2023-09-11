@@ -8,7 +8,9 @@ namespace Stl.Time;
 [JsonConverter(typeof(MomentJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(MomentNewtonsoftJsonConverter))]
 [TypeConverter(typeof(MomentTypeConverter))]
-public readonly partial struct Moment : IEquatable<Moment>, IComparable<Moment>
+[method: MethodImpl(MethodImplOptions.AggressiveInlining)]
+public readonly partial struct Moment(long epochOffsetTicks)
+    : IEquatable<Moment>, IComparable<Moment>
 {
     public static readonly Moment MinValue = new(long.MinValue);
     public static readonly Moment MaxValue = new(long.MaxValue);
@@ -16,15 +18,12 @@ public readonly partial struct Moment : IEquatable<Moment>, IComparable<Moment>
 
     // AKA Unix Time
     [DataMember(Order = 0)]
-    public long EpochOffsetTicks { get; }
+    public long EpochOffsetTicks { get; } = epochOffsetTicks;
+
     public TimeSpan EpochOffset => new(EpochOffsetTicks);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Moment(long epochOffsetTicks)
-        => EpochOffsetTicks = epochOffsetTicks;
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Moment(TimeSpan epochOffset)
-        => EpochOffsetTicks = epochOffset.Ticks;
+    public Moment(TimeSpan epochOffset) : this(epochOffset.Ticks) { }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Moment(DateTime value)
