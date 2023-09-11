@@ -66,6 +66,9 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
         get {
             // This member must be never accessed directly - its only purpose is to be called on serialization
             this.RequireKind(RpcObjectKind.Local);
+            if (Id > 0) // Already registered
+                return Id;
+
             Peer = RpcOutboundContext.Current?.Peer ?? RpcInboundContext.GetCurrent().Peer;
             var sharedObjects = Peer.SharedObjects;
             Id = sharedObjects.NextId(); // NOTE: Id changes on serialization!
