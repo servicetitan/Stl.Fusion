@@ -185,6 +185,25 @@ public class RpcWebSocketTest(ITestOutputHelper @out) : RpcTestBase(@out)
         await AssertNoCalls(peer);
     }
 
+    [Fact]
+    public async Task StreamTest()
+    {
+        await using var _ = await WebHost.Serve();
+        var services = ClientServices;
+        var peer = services.RpcHub().GetClientPeer(ClientPeerRef);
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
+
+        var expected1 = Enumerable.Range(0, 5).ToList();
+        var stream1 = await client.StreamInt32(expected1.Count());
+        (await stream1.ToListAsync()).Should().Equal(expected1);
+        await AssertNoCalls(peer);
+
+        var expected2 = Enumerable.Range(0, 5).Select(x => new Tuple<int>(x)).ToList();
+        var stream2 = await client.StreamTuples(expected2.Count);
+        (await stream2.ToListAsync()).Should().Equal(expected2);
+        await AssertNoCalls(peer);
+    }
+
     [Theory]
     [InlineData(100)]
     [InlineData(1000)]
@@ -216,6 +235,44 @@ public class RpcWebSocketTest(ITestOutputHelper @out) : RpcTestBase(@out)
                     for (var i = count; i > 0; i--)
                         if (i != await client.Div(i, 1).ConfigureAwait(false))
                             Assert.Fail("Wrong result.");
+                }, CancellationToken.None);
+            }
+
+            await Task.WhenAll(tasks);
+            return elapsed = startedAt.Elapsed;
+        }
+    }
+
+    [Theory]
+    [InlineData(100)]
+    [InlineData(1000)]
+    [InlineData(50_000)]
+    public async Task StreamPerformanceTest(int itemCount)
+    {
+        if (TestRunnerInfo.IsBuildAgent())
+            itemCount = 100;
+
+        await using var _ = await WebHost.Serve();
+        var services = ClientServices;
+        var peer = services.RpcHub().GetClientPeer(ClientPeerRef);
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
+
+        var threadCount = Math.Max(1, HardwareInfo.ProcessorCount);
+        var tasks = new Task[threadCount];
+        await Run(10); // Warmup
+        var elapsed = await Run(itemCount);
+
+        var totalItemCount = threadCount * itemCount;
+        Out.WriteLine($"{itemCount}: {totalItemCount / elapsed.TotalSeconds:F} ops/s using {threadCount} threads");
+        await AssertNoCalls(peer);
+
+        async Task<TimeSpan> Run(int count)
+        {
+            var startedAt = CpuTimestamp.Now;
+            for (var threadIndex = 0; threadIndex < threadCount; threadIndex++) {
+                tasks[threadIndex] = Task.Run(async () => {
+                    var stream = await client.StreamInt32(count);
+                    (await stream.CountAsync()).Should().Be(count);
                 }, CancellationToken.None);
             }
 

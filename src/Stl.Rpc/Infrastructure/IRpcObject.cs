@@ -12,6 +12,7 @@ public interface IRpcObject : IHasId<long>
 {
     RpcObjectKind Kind { get; }
     ValueTask OnReconnected(CancellationToken cancellationToken);
+    void OnMissing();
 }
 
 public interface IRpcSharedObject : IRpcObject

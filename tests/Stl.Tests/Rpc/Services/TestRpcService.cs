@@ -22,6 +22,9 @@ public interface ITestRpcService : ICommandService
     ValueTask<RpcNoWait> MaybeSet(string key, string? value);
     ValueTask<string?> Get(string key);
 
+    Task<RpcStream<int>> StreamInt32(int count);
+    Task<RpcStream<ITuple>> StreamTuples(int count);
+
     [CommandHandler]
     Task<string> OnHello(HelloCommand command, CancellationToken cancellationToken = default);
 }
@@ -74,6 +77,12 @@ public class TestRpcService : ITestRpcService
 
     public ValueTask<string?> Get(string key)
         => new(_values.GetValueOrDefault(key));
+
+    public Task<RpcStream<int>> StreamInt32(int count)
+        => Task.FromResult(RpcStream.New(Enumerable.Range(0, count)));
+
+    public Task<RpcStream<ITuple>> StreamTuples(int count)
+        => Task.FromResult(RpcStream.New(Enumerable.Range(0, count).Select(x => (ITuple)new Tuple<int>(x))));
 
     public virtual async Task<string> OnHello(HelloCommand command, CancellationToken cancellationToken = default)
     {

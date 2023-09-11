@@ -146,5 +146,5 @@ public struct RingBuffer<T> : IReadOnlyList<T>
     private readonly int GetOffset(int index)
         => index < 0 || index >= Count
             ? throw new ArgumentOutOfRangeException(nameof(index))
-            : (_start + index) % Capacity;
+            : (_start + index) & Capacity;
 }

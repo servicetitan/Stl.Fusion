@@ -17,12 +17,11 @@ public abstract partial class RpcStream : IRpcObject
 
     public static RpcStream<T> New<T>(IAsyncEnumerable<T> outgoingSource)
         => new(outgoingSource);
+    public static RpcStream<T> New<T>(IEnumerable<T> outgoingSource)
+        => new(outgoingSource.ToAsyncEnumerable());
 
-    [JsonInclude, Newtonsoft.Json.JsonProperty, DataMember, MemoryPackOrder(1)]
-    public int AckInterval { get; init; } = 100;
-
-    [JsonInclude, Newtonsoft.Json.JsonProperty, DataMember, MemoryPackOrder(0)]
-    protected abstract long SerializedId { get; set; }
+    [DataMember, MemoryPackOrder(1)]
+    public int AckInterval { get; init; } = 128;
 
     // Non-serialized members
     [JsonIgnore, MemoryPackIgnore] public long Id { get; protected set; }
@@ -33,14 +32,19 @@ public abstract partial class RpcStream : IRpcObject
     public override string ToString()
         => $"{GetType().GetName()}(#{Id} @ {Peer?.Ref}, {Kind})";
 
-    ValueTask IRpcObject.OnReconnected(CancellationToken cancellationToken) => OnReconnected(cancellationToken);
+    ValueTask IRpcObject.OnReconnected(CancellationToken cancellationToken)
+        => OnReconnected(cancellationToken);
+
+    void IRpcObject.OnMissing()
+        => OnMissing();
 
     // Protected methods
 
     protected internal abstract ArgumentList CreateStreamItemArguments();
-    protected internal abstract void OnItem(long index, object? item);
-    protected internal abstract void OnEnd(ExceptionInfo? error);
+    protected internal abstract void OnItem(long index, long ackIndex, object? item);
+    protected internal abstract void OnEnd(long index, Exception? error);
     protected abstract ValueTask OnReconnected(CancellationToken cancellationToken);
+    protected abstract void OnMissing();
 }
 
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
@@ -53,12 +57,12 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
     private bool _isUnregistered;
     private readonly object _lock;
 
-    [JsonInclude, Newtonsoft.Json.JsonProperty, DataMember]
-    protected override long SerializedId {
+    [DataMember, MemoryPackOrder(0)]
+    public long SerializedId {
         get {
             // This member must be never accessed directly - its only purpose is to be called on serialization
             this.RequireKind(RpcObjectKind.Local);
-            Peer = RpcOutboundContext.GetCurrent().Peer!;
+            Peer = RpcOutboundContext.Current?.Peer ?? RpcInboundContext.GetCurrent().Peer;
             var sharedObjects = Peer.SharedObjects;
             Id = sharedObjects.NextId(); // NOTE: Id changes on serialization!
             var sharedStream = new RpcSharedStream<T>(this);
@@ -90,7 +94,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
     ~RpcStream()
     {
         if (_localSource == null)
-            TryCompleteUnsafe(Errors.AlreadyDisposed(GetType()));
+            TryComplete(null, true);
     }
 
     public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
@@ -103,6 +107,8 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
                 throw Internal.Errors.RemoteRpcStreamCanBeEnumeratedJustOnce();
 
             _remoteChannel = Channel.CreateUnbounded<T>(RemoteChannelOptions);
+            if (_nextIndex < 0) // Marked as missing
+                _remoteChannel.Writer.TryComplete(Internal.Errors.RpcStreamNotFound());
             return new RemoteChannelEnumerator(this, cancellationToken);
         }
     }
@@ -116,9 +122,9 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
     }
 
     protected internal override ArgumentList CreateStreamItemArguments()
-        => ArgumentList.New(0L, default(T));
+        => ArgumentList.New(0L, 0L, default(T));
 
-    protected internal override void OnItem(long index, object? item)
+    protected internal override void OnItem(long index, long ackIndex, object? item)
     {
         lock (_lock) {
             if (_remoteChannel == null)
@@ -128,21 +134,33 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
                 return;
 
             if (index > _nextIndex) {
-                TryCompleteUnsafe(Errors.InternalError($"RpcStream item #{_nextIndex} is missing."));
+                _ = SendAck(_nextIndex, true);
                 return;
             }
 
             _nextIndex++;
-            if (!_remoteChannel.Writer.TryWrite((T)item!))
-                TryCompleteUnsafe(Errors.InternalError("RpcStream failed to synchronously add an item."));
+            _remoteChannel.Writer.TryWrite((T)item!); // Must always succeed for unbounded channel
+            if (_nextIndex == ackIndex)
+                _ = SendAck(ackIndex);
         }
     }
 
-    protected internal override void OnEnd(ExceptionInfo? error)
+    protected internal override void OnEnd(long index, Exception? error)
     {
         lock (_lock) {
-            _isCloseAckSent = true;
-            TryCompleteUnsafe(error is { } vError ? vError.ToException() : null);
+            if (_remoteChannel == null)
+                throw Errors.InternalError("RpcStream got an item before the enumeration.");
+
+            if (index < _nextIndex)
+                return;
+
+            if (index > _nextIndex) {
+                _ = SendAck(_nextIndex, true);
+                return;
+            }
+
+            _nextIndex++;
+            TryCompleteUnsafe(error);
         }
     }
 
@@ -150,7 +168,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
     {
         lock (_lock) {
             if (_remoteChannel == null)
-                return ValueTaskExt.CompletedTask;
+                return default;
 
             return _isCloseAckSent
                 ? SendCloseAck()
@@ -158,22 +176,32 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
         }
     }
 
-    // Private methods
-
-    private void TryComplete(Exception? error = null)
+    protected override void OnMissing()
     {
-        lock (_lock)
-            TryCompleteUnsafe(error);
+        lock (_lock) {
+            _nextIndex = -1;
+            _remoteChannel?.Writer.TryComplete(Internal.Errors.RpcStreamNotFound());
+        }
     }
 
-    private void TryCompleteUnsafe(Exception? error = null)
+    // Private methods
+
+    private void TryComplete(Exception? error, bool isFinalizing = false)
+    {
+        lock (_lock)
+            TryCompleteUnsafe(error, isFinalizing);
+    }
+
+    private void TryCompleteUnsafe(Exception? error, bool isFinalizing = false)
     {
         if (_remoteChannel != null) {
             if (!_isCloseAckSent) {
                 _isCloseAckSent = true;
                 _ = SendCloseAck();
             }
-            _remoteChannel.Writer.TryComplete(error);
+            // ReSharper disable once InconsistentlySynchronizedField
+            if (!isFinalizing)
+                _remoteChannel.Writer.TryComplete(error);
         }
         if (_localSource == null && !_isUnregistered) {
             _isUnregistered = true;
@@ -186,6 +214,10 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
 
     private ValueTask SendAck(long index, bool mustReset = false)
     {
+        // ReSharper disable once InconsistentlySynchronizedField
+        if (_nextIndex < 0) // Marked as missing
+            return default;
+
         var peer = Peer!;
         return peer.Hub.SystemCallSender.StreamAck(peer, Id, index, mustReset);
     }
@@ -194,27 +226,58 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
 
     private class RemoteChannelEnumerator(RpcStream<T> stream, CancellationToken cancellationToken) : IAsyncEnumerator<T>
     {
-        private readonly IAsyncEnumerator<T> _enumerator =  stream._remoteChannel!.Reader
-            .ReadAllAsync(cancellationToken)
-            .GetAsyncEnumerator(cancellationToken);
-        private bool _isFirst = true;
+        private readonly ChannelReader<T> _reader =  stream._remoteChannel!.Reader;
+        private bool _isStarted;
+        private bool _isCompleted;
+        private Result<T> _current;
 
-        public T Current => _enumerator.Current;
+        public T Current => _isStarted
+            ? _current.Value
+            : throw new InvalidOperationException($"{nameof(MoveNextAsync)} should be called first.");
 
         public ValueTask DisposeAsync()
         {
-            stream.TryComplete();
-            return _enumerator.DisposeAsync();
+            if (!_isCompleted) {
+                _isCompleted = true;
+                stream.TryComplete(null);
+            }
+            return default;
         }
 
         public ValueTask<bool> MoveNextAsync()
         {
-            return _isFirst ? SendAckAndMoveNext() : _enumerator.MoveNextAsync();
+            if (_isCompleted)
+                return default;
+            if (!_reader.TryRead(out var current))
+                return Move();
 
-            async ValueTask<bool> SendAckAndMoveNext() {
-                _isFirst = false;
-                await stream.SendAck(0).ConfigureAwait(false);
-                return await _enumerator.MoveNextAsync().ConfigureAwait(false);
+            _current = current;
+            return ValueTaskExt.TrueTask;
+
+            async ValueTask<bool> Move()
+            {
+                try {
+                    if (!_isStarted) {
+                        _isStarted = true;
+                        await stream.SendAck(0).ConfigureAwait(false);
+                    }
+                    while (true) {
+                        if (!await _reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)) {
+                            _isCompleted = true;
+                            return false;
+                        }
+
+                        if (_reader.TryRead(out var current1)) {
+                            _current = current1;
+                            return true;
+                        }
+                    }
+                }
+                catch (Exception e) {
+                    _current = Result.Error<T>(e);
+                    _isCompleted = true;
+                    return true;
+                }
             }
         }
     }

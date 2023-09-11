@@ -17,7 +17,7 @@ public class PluginHost(IServiceProvider services) : IPluginHost
     public virtual ValueTask DisposeAsync()
         => Services is IAsyncDisposable ad
             ? ad.DisposeAsync()
-            : ValueTaskExt.CompletedTask;
+            : default;
 
     public virtual void Dispose()
     {

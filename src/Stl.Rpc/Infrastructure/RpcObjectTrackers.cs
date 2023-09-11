@@ -46,7 +46,7 @@ public class RpcRemoteObjectTracker : RpcObjectTracker, IEnumerable<IRpcObject>
     public void Register(IRpcObject obj)
     {
         var id = obj.Id;
-        if (id == 0)
+        if (id <= 0)
             throw new ArgumentOutOfRangeException(nameof(obj));
 
         obj.RequireKind(RpcObjectKind.Remote);
@@ -79,6 +79,14 @@ public class RpcRemoteObjectTracker : RpcObjectTracker, IEnumerable<IRpcObject>
         }
         // ReSharper disable once FunctionNeverReturns
     }
+
+    public void MissingObjects(long[] objectIds)
+    {
+        foreach (var objectId in objectIds)
+            Get(objectId)?.OnMissing();
+    }
+
+    // Private methods
 
     private long[] GetObjectIds()
     {
@@ -118,7 +126,7 @@ public sealed class RpcSharedObjectTracker : RpcObjectTracker, IEnumerable<IRpcS
     public void Register(IRpcSharedObject obj)
     {
         var id = obj.Id;
-        if (id == 0)
+        if (id <= 0)
             throw new ArgumentOutOfRangeException(nameof(obj));
 
         obj.RequireKind(RpcObjectKind.Local);
@@ -153,9 +161,20 @@ public sealed class RpcSharedObjectTracker : RpcObjectTracker, IEnumerable<IRpcS
 
     public void OnKeepAlive(long[] objectIds)
     {
-        foreach (var id in objectIds)
-            if (Get(id) is { } obj)
-                obj.OnKeepAlive();
+        var buffer = MemoryBuffer<long>.Lease(false);
+        try {
+            foreach (var id in objectIds) {
+                if (Get(id) is { } obj)
+                    obj.OnKeepAlive();
+                else
+                    buffer.Add(id);
+            }
+            if (buffer.Count > 0)
+                _ = Peer.Hub.SystemCallSender.MissingObjects(Peer, buffer.ToArray());
+        }
+        finally {
+            buffer.Release();
+        }
     }
 
     public async Task<int> Abort(Exception error)

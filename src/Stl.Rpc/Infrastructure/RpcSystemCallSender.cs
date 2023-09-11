@@ -12,6 +12,7 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
     private RpcMethodDef? _cancelMethodDef;
     private RpcMethodDef? _notFoundMethodDef;
     private RpcMethodDef? _keepAliveMethodDef;
+    private RpcMethodDef? _missingObjectsMethodDef;
     private RpcMethodDef? _streamAckMethodDef;
     private RpcMethodDef? _streamItemMethodDef;
     private RpcMethodDef? _streamEndMethodDef;
@@ -30,6 +31,8 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
         ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.NotFound)));
     public RpcMethodDef KeepAliveMethodDef => _keepAliveMethodDef
         ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.KeepAlive)));
+    public RpcMethodDef MissingObjectsMethodDef => _missingObjectsMethodDef
+        ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.MissingObjects)));
     public RpcMethodDef StreamAckMethodDef => _streamAckMethodDef
         ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.StreamAck)));
     public RpcMethodDef StreamItemMethodDef => _streamItemMethodDef
@@ -97,6 +100,15 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
         return call.SendNoWait(false);
     }
 
+    public ValueTask MissingObjects(RpcPeer peer, long[] objectIds, List<RpcHeader>? headers = null)
+    {
+        var context = new RpcOutboundContext(headers) {
+            Peer = peer,
+        };
+        var call = context.PrepareCall(MissingObjectsMethodDef, ArgumentList.New(objectIds))!;
+        return call.SendNoWait(false);
+    }
+
     public ValueTask StreamAck(RpcPeer peer, long objectId, long nextIndex, bool mustReset, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
@@ -107,24 +119,24 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
         return call.SendNoWait(false);
     }
 
-    public ValueTask StreamItem<TItem>(RpcPeer peer, long objectId, TItem result, List<RpcHeader>? headers = null)
+    public ValueTask StreamItem<TItem>(RpcPeer peer, long objectId, long index, long ackIndex, TItem result, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
             RelatedCallId = objectId,
         };
-        var call = context.PrepareCall(StreamItemMethodDef, ArgumentList.New(result))!;
+        var call = context.PrepareCall(StreamItemMethodDef, ArgumentList.New(index, ackIndex, result))!;
         return call.SendNoWait(true);
     }
 
-    public ValueTask StreamEnd(RpcPeer peer, long objectId, Exception? error, List<RpcHeader>? headers = null)
+    public ValueTask StreamEnd(RpcPeer peer, long objectId, long index, Exception? error, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
             RelatedCallId = objectId,
         };
         // An optimized version of Client.Error(result):
-        var call = context.PrepareCall(StreamEndMethodDef, ArgumentList.New(error.ToExceptionInfo()))!;
+        var call = context.PrepareCall(StreamEndMethodDef, ArgumentList.New(index, error.ToExceptionInfo()))!;
         return call.SendNoWait(false);
     }
 }

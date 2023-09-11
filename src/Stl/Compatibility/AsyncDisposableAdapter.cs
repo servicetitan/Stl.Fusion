@@ -16,7 +16,7 @@ public readonly struct AsyncDisposableAdapter<T> : IAsyncDisposable
     public ValueTask DisposeAsync()
     {
 #if !NETSTANDARD2_0
-        return Target?.DisposeAsync() ?? ValueTaskExt.CompletedTask;
+        return Target?.DisposeAsync() ?? default;
 #else
         if (Target is IAsyncDisposable ad)
             return ad.DisposeAsync();

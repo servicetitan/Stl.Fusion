@@ -4,7 +4,7 @@ namespace Stl.Rpc.Infrastructure;
 
 public abstract class RpcSharedStream(RpcStream stream) : WorkerBase, IRpcSharedObject
 {
-    protected static readonly Exception NoMoreItems = new();
+    protected static readonly Exception NoError = new();
 
     private long _lastKeepAliveAt = CpuTimestamp.Now.Value;
 
@@ -18,6 +18,10 @@ public abstract class RpcSharedStream(RpcStream stream) : WorkerBase, IRpcShared
     }
 
     ValueTask IRpcObject.OnReconnected(CancellationToken cancellationToken)
+        => throw Stl.Internal.Errors.InternalError(
+            $"This method should never be called on {nameof(RpcSharedStream)}.");
+
+    void IRpcObject.OnMissing()
         => throw Stl.Internal.Errors.InternalError(
             $"This method should never be called on {nameof(RpcSharedStream)}.");
 
@@ -71,15 +75,22 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
     {
         var localSource = Stream.GetLocalSource().WithCancellation(cancellationToken);
         var writer = _streamBuffer.Writer;
+        var error = NoError;
         try {
             await foreach (var item in localSource.ConfigureAwait(false))
                 await writer.WriteAsync(item, cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException e) when (cancellationToken.IsCancellationRequested) {
-            writer.Complete(e);
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+            error = Errors.RpcStreamNotFound();
         }
         catch (Exception e) {
-            await writer.WriteAsync(Result.Error<T>(e), cancellationToken).ConfigureAwait(false);
+            error = e;
+        }
+        try {
+            if (!cancellationToken.IsCancellationRequested)
+                await writer.WriteAsync(Result.Error<T>(error), cancellationToken).ConfigureAwait(false);
+        }
+        finally {
             writer.Complete();
         }
     }
@@ -88,41 +99,49 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
     {
         var ackReader = _acks.Reader;
         var streamBufferReader = _streamBuffer.Reader;
-        var buffer = new RingBuffer<Result<T>>(Stream.AckInterval * 2);
-        var isFullyBuffered = false;
+        var buffer = new RingBuffer<Result<T>>(Stream.AckInterval * 3);
+        var isBufferCompleted = false;
         var bufferOffset = 0L;
-        var nextIndex = 0L;
+        var index = 0L;
         while (true) {
             // 1. Await for acknowledgement
             var ack = await ackReader.ReadAsync(cancellationToken).ConfigureAwait(false);
             if (ack.NextIndex == long.MaxValue)
                 return; // The only point we exit is when the client tells us it's done
+
             if (ack.MustReset)
-                nextIndex = ack.NextIndex;
+                index = ack.NextIndex;
 
             // 2. Send as much as we can until we'll need to await for the next acknowledgement
-            var maxNextIndex = ack.NextIndex + Stream.AckInterval;
-            while (nextIndex < maxNextIndex) {
-                var bufferIndex = nextIndex - bufferOffset;
+            var ackIndex = index + Stream.AckInterval;
+            var maxIndex = ackIndex + Stream.AckInterval;
+            while (index < maxIndex) {
+                var bufferIndex = index - bufferOffset;
                 if (bufferIndex < 0L) {
                     // The requested item is somewhere before the buffer start position
-                    await Send(Result.Error<T>(Errors.RpcStreamInvalidPosition())).ConfigureAwait(false);
+                    await Send(index, ackIndex, Result.Error<T>(Errors.RpcStreamInvalidPosition())).ConfigureAwait(false);
                     break;
                 }
 
                 Result<T> item;
                 if (bufferIndex < buffer.Count) {
                     item = buffer[(int)bufferIndex];
-                    await Send(item).ConfigureAwait(false);
-                    if (!item.HasError)
-                        nextIndex++;
-                    break;
+                    await Send(index, ackIndex, item).ConfigureAwait(false);
+                    if (item.HasError)
+                        break;
+
+                    index++;
+                    continue;
                 }
 
-                if (isFullyBuffered) {
-                    // Weird case: the position is past buffer end + the stream is fully buffered
-                    await Send(Result.Error<T>(Errors.RpcStreamInvalidPosition())).ConfigureAwait(false);
+                if (isBufferCompleted)
                     break;
+
+                if (!streamBufferReader.TryRead(out item)) {
+                    if (!await streamBufferReader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
+                        item = Result.Error<T>(Errors.RpcStreamNotFound());
+                    else
+                        streamBufferReader.TryRead(out item);
                 }
 
                 // Must buffer at least one more item
@@ -130,32 +149,19 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
                     buffer.PullHead();
                     bufferOffset++;
                 }
-                var canRead = await streamBufferReader.WaitToReadAsync(cancellationToken).ConfigureAwait(false);
-                if (canRead) {
-                    try {
-                        streamBufferReader.TryRead(out item);
-                    }
-                    catch (Exception e) {
-                        isFullyBuffered = true;
-                        item = Result.Error<T>(e);
-                    }
-                }
-                else {
-                    isFullyBuffered = true;
-                    item = Result.Error<T>(NoMoreItems);
-                }
                 buffer.PushTail(item);
+                isBufferCompleted |= item.HasError;
                 // We'll send it on the next loop iteration
             }
         }
     }
 
-    private ValueTask Send(Result<T> item)
+    private ValueTask Send(long index, long ackIndex, Result<T> item)
     {
         if (item.IsValue(out var value))
-            return _systemCallSender.StreamItem(Peer, Id, value);
+            return _systemCallSender.StreamItem(Peer, Id, index, ackIndex, value);
 
-        var error = ReferenceEquals(item.Error, NoMoreItems) ? null : item.Error;
-        return _systemCallSender.StreamEnd(Peer, Id, error);
+        var error = ReferenceEquals(item.Error, NoError) ? null : item.Error;
+        return _systemCallSender.StreamEnd(Peer, Id, index, error);
     }
 }
