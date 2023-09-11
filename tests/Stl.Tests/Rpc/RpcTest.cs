@@ -205,12 +205,40 @@ public class RpcWebSocketTest(ITestOutputHelper @out) : RpcTestBase(@out)
         await AssertNoCalls(peer);
     }
 
+
+    [Fact]
+    public async Task StreamDebugTest()
+    {
+        await using var _ = await WebHost.Serve();
+        var services = ClientServices;
+        var peer = services.RpcHub().GetClientPeer(ClientPeerRef);
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
+
+        var tasks = new Task<List<int>>[3];
+        for (var i = 0; i < tasks.Length; i++) {
+            var taskIndex = i;
+            tasks[i] = Task.Run(async () => {
+                var stream = await client.StreamInt32(100_000);
+                var list = new List<int>();
+                await foreach (var j in stream.ConfigureAwait(false)) {
+                    if (j % 1000 == 0 || (j >= 75000 && j % 10 == 0))
+                        Out.WriteLine($"{taskIndex}: {j}");
+                    list.Add(j);
+                }
+                return list;
+            }, CancellationToken.None);
+        }
+        await Task.WhenAll(tasks);
+        await AssertNoCalls(peer);
+    }
+
     [Theory]
     [InlineData(100)]
     [InlineData(1000)]
     [InlineData(50_000)]
     public async Task PerformanceTest(int iterationCount)
     {
+        // ByteSerializer.Default = MessagePackByteSerializer.Default;
         if (TestRunnerInfo.IsBuildAgent())
             iterationCount = 100;
 
@@ -219,7 +247,7 @@ public class RpcWebSocketTest(ITestOutputHelper @out) : RpcTestBase(@out)
         var peer = services.RpcHub().GetClientPeer(ClientPeerRef);
         var client = services.GetRequiredService<ITestRpcServiceClient>();
 
-        var threadCount = Math.Max(1, HardwareInfo.ProcessorCount);
+        var threadCount = Math.Max(1, HardwareInfo.ProcessorCount / 4);
         var tasks = new Task[threadCount];
         await Run(10); // Warmup
         var elapsed = await Run(iterationCount);
@@ -247,7 +275,7 @@ public class RpcWebSocketTest(ITestOutputHelper @out) : RpcTestBase(@out)
     [Theory]
     [InlineData(100)]
     [InlineData(1000)]
-    [InlineData(5000)]
+    [InlineData(50_000)]
     public async Task StreamPerformanceTest(int itemCount)
     {
         if (TestRunnerInfo.IsBuildAgent())

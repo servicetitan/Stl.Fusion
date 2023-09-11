@@ -37,7 +37,7 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
             + (headers.Count > 0 ? $", Headers: {headers.ToDelimitedString()}" : "");
     }
 
-    public ValueTask RegisterAndSend()
+    public Task RegisterAndSend()
     {
         if (NoWait)
             return SendNoWait(MethodDef.AllowArgumentPolymorphism);
@@ -54,14 +54,14 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
         return sendTask;
     }
 
-    public ValueTask SendNoWait(bool allowPolymorphism)
+    public Task SendNoWait(bool allowPolymorphism)
     {
         var message = CreateMessage(Context.RelatedCallId, allowPolymorphism);
         Peer.CallLog?.Log(Peer.CallLogLevel, "'{PeerRef}': -> {Call}", Peer.Ref, this);
         return Peer.Send(message);
     }
 
-    public ValueTask SendRegistered(bool notifyCancelled = false)
+    public Task SendRegistered(bool notifyCancelled = false)
     {
         RpcMessage message;
         try {
@@ -70,13 +70,13 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
                 cacheInfoCapture.Key = new RpcCacheKey(MethodDef.Service.Name, MethodDef.Name, message.ArgumentData);
                 if (cacheInfoCapture.CaptureMode == RpcCacheInfoCaptureMode.KeyOnly) {
                     SetResult(null, null);
-                    return default;
+                    return Task.CompletedTask;
                 }
             }
         }
         catch (Exception error) {
             SetError(error, null, notifyCancelled);
-            return default;
+            return Task.CompletedTask;
         }
         Peer.CallLog?.Log(Peer.CallLogLevel, "'{PeerRef}': -> {Call}", Peer.Ref, this);
         return Peer.Send(message);

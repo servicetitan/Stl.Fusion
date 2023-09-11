@@ -17,12 +17,12 @@ public class RpcInboundComputeCall<TResult> : RpcInboundCall<TResult>
             throw Errors.InternalError($"{GetType().GetName()} is incompatible with NoWait option.");
     }
 
-    public override async ValueTask Complete(bool silentCancel = false)
+    public override Task Complete(bool silentCancel = false)
     {
         silentCancel |= CancellationToken.IsCancellationRequested;
         if (silentCancel) {
             PrepareToComplete(silentCancel); // This call also cancels any other running completion
-            return;
+            return Task.CompletedTask;
         }
 
         CancellationToken cancellationToken;
@@ -38,28 +38,11 @@ public class RpcInboundComputeCall<TResult> : RpcInboundCall<TResult>
                 ResultHeaders = ResultHeaders.TryAdd(versionHeader);
             }
         }
-        if (cancellationToken.IsCancellationRequested)
-            return;
-
-        if (computed == null) {
-            await base.Complete(silentCancel: false).ConfigureAwait(false);
-            return;
-        }
-
-        await SendResult().ConfigureAwait(false);
-        if (cancellationToken.IsCancellationRequested)
-            return;
-
-        await Computed!.WhenInvalidated(cancellationToken).SilentAwait(false);
-        if (cancellationToken.IsCancellationRequested)
-            return;
-
-        lock (Lock) {
-            _completionCancellationSource.CancelAndDisposeSilently();
-            if (!PrepareToComplete())
-                return;
-        }
-        await SendInvalidation().ConfigureAwait(false);
+        return cancellationToken.IsCancellationRequested
+            ? Task.CompletedTask
+            : computed == null
+                ? base.Complete(silentCancel: false)
+                : CompleteWithInvalidation(cancellationToken);
     }
 
     public override bool Restart()
@@ -99,7 +82,25 @@ public class RpcInboundComputeCall<TResult> : RpcInboundCall<TResult>
         }
     }
 
-    private ValueTask SendInvalidation()
+    private async Task CompleteWithInvalidation(CancellationToken cancellationToken)
+    {
+        await SendResult().ConfigureAwait(false);
+        if (cancellationToken.IsCancellationRequested)
+            return;
+
+        await Computed!.WhenInvalidated(cancellationToken).SilentAwait(false);
+        if (cancellationToken.IsCancellationRequested)
+            return;
+
+        lock (Lock) {
+            _completionCancellationSource.CancelAndDisposeSilently();
+            if (!PrepareToComplete())
+                return;
+        }
+        await SendInvalidation().ConfigureAwait(false);
+    }
+
+    private Task SendInvalidation()
     {
         var computeSystemCallSender = Hub.Services.GetRequiredService<RpcComputeSystemCallSender>();
         return computeSystemCallSender.Invalidate(Context.Peer, Id, ResultHeaders);

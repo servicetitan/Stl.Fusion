@@ -49,7 +49,7 @@ public abstract class RpcPeer : WorkerBase
         SharedObjects.Initialize(this);
     }
 
-    public ValueTask Send(RpcMessage message)
+    public Task Send(RpcMessage message)
     {
         // !!! Send should never throw an exception.
         // This method is optimized to run as quickly as possible,
@@ -58,13 +58,13 @@ public abstract class RpcPeer : WorkerBase
         var sendChannel = Sender;
         try {
             if (sendChannel == null || sendChannel.TryWrite(message))
-                return default;
+                return Task.CompletedTask;
 
             return CompleteSend(sendChannel, message);
         }
         catch (Exception e) {
             Log.LogError(e, "Send failed");
-            return default;
+            return Task.CompletedTask;
         }
     }
 
@@ -309,7 +309,7 @@ public abstract class RpcPeer : WorkerBase
         }
     }
 
-    private async ValueTask CompleteSend(ChannelWriter<RpcMessage> sendChannel, RpcMessage message)
+    private async Task CompleteSend(ChannelWriter<RpcMessage> sendChannel, RpcMessage message)
     {
         // !!! This method should never fail
         try {

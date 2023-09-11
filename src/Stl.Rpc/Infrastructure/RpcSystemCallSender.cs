@@ -40,14 +40,14 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
     public RpcMethodDef StreamEndMethodDef => _streamEndMethodDef
         ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.StreamEnd)));
 
-    public ValueTask Complete<TResult>(RpcPeer peer, long callId,
+    public Task Complete<TResult>(RpcPeer peer, long callId,
         Result<TResult> result, bool allowPolymorphism,
         List<RpcHeader>? headers = null)
         => result.IsValue(out var value)
             ? Ok(peer, callId, value, allowPolymorphism, headers)
             : Error(peer, callId, result.Error!, headers);
 
-    public ValueTask Ok<TResult>(RpcPeer peer, long callId,
+    public Task Ok<TResult>(RpcPeer peer, long callId,
         TResult result, bool allowPolymorphism,
         List<RpcHeader>? headers = null)
     {
@@ -71,7 +71,7 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
         }
     }
 
-    public ValueTask Error(RpcPeer peer, long callId, Exception error, List<RpcHeader>? headers = null)
+    public Task Error(RpcPeer peer, long callId, Exception error, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
@@ -81,7 +81,7 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
         return call.SendNoWait(false);
     }
 
-    public ValueTask Cancel(RpcPeer peer, long callId, List<RpcHeader>? headers = null)
+    public Task Cancel(RpcPeer peer, long callId, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
@@ -91,7 +91,7 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
         return call.SendNoWait(false);
     }
 
-    public ValueTask KeepAlive(RpcPeer peer, long[] objectIds, List<RpcHeader>? headers = null)
+    public Task KeepAlive(RpcPeer peer, long[] objectIds, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
@@ -100,7 +100,7 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
         return call.SendNoWait(false);
     }
 
-    public ValueTask MissingObjects(RpcPeer peer, long[] objectIds, List<RpcHeader>? headers = null)
+    public Task MissingObjects(RpcPeer peer, long[] objectIds, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
@@ -109,7 +109,7 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
         return call.SendNoWait(false);
     }
 
-    public ValueTask StreamAck(RpcPeer peer, long objectId, long nextIndex, bool mustReset, List<RpcHeader>? headers = null)
+    public Task StreamAck(RpcPeer peer, long objectId, long nextIndex, bool mustReset, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
@@ -119,7 +119,7 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
         return call.SendNoWait(false);
     }
 
-    public ValueTask StreamItem<TItem>(RpcPeer peer, long objectId, long index, long ackIndex, TItem result, List<RpcHeader>? headers = null)
+    public Task StreamItem<TItem>(RpcPeer peer, long objectId, long index, long ackIndex, TItem result, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
@@ -129,7 +129,7 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
         return call.SendNoWait(true);
     }
 
-    public ValueTask StreamEnd(RpcPeer peer, long objectId, long index, Exception? error, List<RpcHeader>? headers = null)
+    public Task StreamEnd(RpcPeer peer, long objectId, long index, Exception? error, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,

@@ -61,9 +61,9 @@ public abstract class RpcInboundCall : RpcCall
             + (headers.Count > 0 ? $", Headers: {headers.ToDelimitedString()}" : "");
     }
 
-    public abstract ValueTask Run();
+    public abstract Task Run();
 
-    public abstract ValueTask Complete(bool silentCancel = false);
+    public abstract Task Complete(bool silentCancel = false);
 
     public abstract bool Restart();
 
@@ -102,33 +102,32 @@ public class RpcInboundCall<TResult>(RpcInboundContext context, RpcMethodDef met
     public Task<TResult> ResultTask { get; private set; } = null!;
     public override Task UntypedResultTask => ResultTask;
 
-    public override ValueTask Run()
+    public override Task Run()
     {
         if (NoWait) {
             try {
                 Arguments ??= DeserializeArguments();
                 if (Arguments == null)
-                    return default; // No way to resolve argument list type -> the related call is already gone
+                    return Task.CompletedTask; // No way to resolve argument list type -> the related call is already gone
 
                 var peer = Context.Peer;
                 peer.CallLog?.Log(peer.CallLogLevel, "'{PeerRef}': <- {Call}", peer.Ref, this);
 
-                _ = InvokeTarget();
+                return InvokeTarget();
             }
-            catch {
-                // Intended
+            catch (Exception error) {
+                return Task.FromException<TResult>(error);
             }
-            return default;
         }
 
         lock (Lock) {
             if (!PrepareToStart())
-                return default;
+                return Task.CompletedTask;
 
             try {
                 Arguments ??= DeserializeArguments();
                 if (Arguments == null)
-                    return default; // No way to resolve argument list type -> the related call is already gone
+                    return Task.CompletedTask; // No way to resolve argument list type -> the related call is already gone
 
                 var peer = Context.Peer;
                 peer.CallLog?.Log(peer.CallLogLevel, "'{PeerRef}': <- {Call}", peer.Ref, this);
@@ -143,15 +142,15 @@ public class RpcInboundCall<TResult>(RpcInboundContext context, RpcMethodDef met
 
         return ResultTask.IsCompleted
             ? Complete()
-            : new ValueTask(CompleteEventually());
+            : CompleteEventually();
     }
 
-    public override ValueTask Complete(bool silentCancel = false)
+    public override Task Complete(bool silentCancel = false)
     {
         silentCancel |= CancellationToken.IsCancellationRequested;
         return PrepareToComplete(silentCancel) && !silentCancel
             ? SendResult()
-            : default;
+            : Task.CompletedTask;
     }
 
     public override bool Restart()
@@ -210,7 +209,7 @@ public class RpcInboundCall<TResult>(RpcInboundContext context, RpcMethodDef met
         return (Task<TResult>)methodDef.Invoker.Invoke(server, Arguments!);
     }
 
-    protected ValueTask SendResult()
+    protected Task SendResult()
     {
         var resultTask = ResultTask;
         Result<TResult> result;

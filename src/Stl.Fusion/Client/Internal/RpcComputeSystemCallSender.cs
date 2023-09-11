@@ -18,7 +18,7 @@ public sealed class RpcComputeSystemCallSender(IServiceProvider services)
     private RpcMethodDef InvalidateMethodDef => _invalidateMethodDef
         ??= ComputeSystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcComputeSystemCalls.Invalidate)));
 
-    public async ValueTask Invalidate(RpcPeer peer, long callId, List<RpcHeader>? headers = null)
+    public Task Invalidate(RpcPeer peer, long callId, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
@@ -26,6 +26,6 @@ public sealed class RpcComputeSystemCallSender(IServiceProvider services)
         };
         // An optimized version of Client.Error(result):
         var call = context.PrepareCall(InvalidateMethodDef, ArgumentList.Empty)!;
-        await call.SendNoWait(false).ConfigureAwait(false);
+        return call.SendNoWait(false);
     }
 }

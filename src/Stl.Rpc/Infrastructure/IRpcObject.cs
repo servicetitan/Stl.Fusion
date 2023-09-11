@@ -11,7 +11,7 @@ public enum RpcObjectKind
 public interface IRpcObject : IHasId<long>
 {
     RpcObjectKind Kind { get; }
-    ValueTask OnReconnected(CancellationToken cancellationToken);
+    Task OnReconnected(CancellationToken cancellationToken);
     void OnMissing();
 }
 

@@ -79,10 +79,10 @@ public class TestRpcService : ITestRpcService
         => new(_values.GetValueOrDefault(key));
 
     public Task<RpcStream<int>> StreamInt32(int count)
-        => Task.FromResult(RpcStream.New(Enumerable.Range(0, count)));
+        => Task.FromResult(RpcStream.New(AsyncEnumerable.Range(0, count)));
 
     public Task<RpcStream<ITuple>> StreamTuples(int count)
-        => Task.FromResult(RpcStream.New(Enumerable.Range(0, count).Select(x => (ITuple)new Tuple<int>(x))));
+        => Task.FromResult(RpcStream.New(AsyncEnumerable.Range(0, count).Select(x => (ITuple)new Tuple<int>(x))));
 
     public virtual async Task<string> OnHello(HelloCommand command, CancellationToken cancellationToken = default)
     {

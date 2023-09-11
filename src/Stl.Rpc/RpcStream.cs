@@ -22,7 +22,9 @@ public abstract partial class RpcStream : IRpcObject
         => new(outgoingSource.ToAsyncEnumerable());
 
     [DataMember, MemoryPackOrder(1)]
-    public int AckInterval { get; init; } = 128;
+    public int AckDistance { get; init; } = 500;
+    [DataMember, MemoryPackOrder(2)]
+    public int AdvanceDistance { get; init; } = 1001;
 
     // Non-serialized members
     [JsonIgnore, MemoryPackIgnore] public long Id { get; protected set; }
@@ -33,7 +35,7 @@ public abstract partial class RpcStream : IRpcObject
     public override string ToString()
         => $"{GetType().GetName()}(#{Id} @ {Peer?.Ref}, {Kind})";
 
-    ValueTask IRpcObject.OnReconnected(CancellationToken cancellationToken)
+    Task IRpcObject.OnReconnected(CancellationToken cancellationToken)
         => OnReconnected(cancellationToken);
 
     void IRpcObject.OnMissing()
@@ -42,9 +44,9 @@ public abstract partial class RpcStream : IRpcObject
     // Protected methods
 
     protected internal abstract ArgumentList CreateStreamItemArguments();
-    protected internal abstract void OnItem(long index, long ackIndex, object? item);
-    protected internal abstract void OnEnd(long index, Exception? error);
-    protected abstract ValueTask OnReconnected(CancellationToken cancellationToken);
+    protected internal abstract Task OnItem(long index, long ackIndex, object? item);
+    protected internal abstract Task OnEnd(long index, Exception? error);
+    protected abstract Task OnReconnected(CancellationToken cancellationToken);
     protected abstract void OnMissing();
 }
 
@@ -55,7 +57,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
     private readonly IAsyncEnumerable<T>? _localSource;
     private Channel<T>? _remoteChannel;
     private bool _isCloseAckSent;
-    private bool _isUnregistered;
+    private bool _isRemoteObjectRegistered;
     private readonly object _lock;
 
     [DataMember, MemoryPackOrder(0)]
@@ -71,10 +73,13 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
             return Id;
         }
         set {
-            this.RequireKind(RpcObjectKind.Remote);
-            Id = value;
-            Peer = RpcInboundContext.GetCurrent().Peer;
-            Peer.RemoteObjects.Register(this);
+            lock (_lock) {
+                this.RequireKind(RpcObjectKind.Remote);
+                Id = value;
+                Peer = RpcInboundContext.GetCurrent().Peer;
+                _isRemoteObjectRegistered = true;
+                Peer.RemoteObjects.Register(this);
+            }
         }
     }
 
@@ -94,8 +99,8 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
 
     ~RpcStream()
     {
-        if (_localSource == null)
-            TryComplete(null, true);
+        if (_lock != null!)
+            CloseRemoteChannel(null, true);
     }
 
     public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
@@ -125,55 +130,45 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
     protected internal override ArgumentList CreateStreamItemArguments()
         => ArgumentList.New(0L, 0L, default(T));
 
-    protected internal override void OnItem(long index, long ackIndex, object? item)
+    protected internal override Task OnItem(long index, long ackIndex, object? item)
     {
         lock (_lock) {
-            if (_remoteChannel == null)
-                throw Errors.InternalError("RpcStream got an item before the enumeration.");
+            if (_remoteChannel == null || index < _nextIndex)
+                return Task.CompletedTask;
 
             // Debug.WriteLine($"Got item: {index}, {ackIndex}");
-            if (index < _nextIndex)
-                return;
-
-            if (index > _nextIndex) {
-                _ = SendAck(_nextIndex, true);
-                return;
-            }
+            if (index > _nextIndex)
+                return SendAck(_nextIndex, true);
 
             _nextIndex++;
             _remoteChannel.Writer.TryWrite((T)item!); // Must always succeed for unbounded channel
             var delta = _nextIndex - ackIndex;
-            if (delta < 0 || delta % AckInterval != 0)
-                return;
+            if (delta >= 0 && delta % AckDistance == 0)
+                return SendAck(_nextIndex);
 
-            _ = SendAck(ackIndex);
+            return Task.CompletedTask;
         }
     }
 
-    protected internal override void OnEnd(long index, Exception? error)
+    protected internal override Task OnEnd(long index, Exception? error)
     {
         lock (_lock) {
-            if (_remoteChannel == null)
-                throw Errors.InternalError("RpcStream got an item before the enumeration.");
+            if (_remoteChannel == null || index < _nextIndex)
+                return Task.CompletedTask;
 
-            if (index < _nextIndex)
-                return;
-
-            if (index > _nextIndex) {
-                _ = SendAck(_nextIndex, true);
-                return;
-            }
+            if (index > _nextIndex)
+                return SendAck(_nextIndex, true);
 
             _nextIndex++;
-            TryCompleteUnsafe(error);
+            return CloseRemoteChannelUnsafe(error);
         }
     }
 
-    protected override ValueTask OnReconnected(CancellationToken cancellationToken)
+    protected override Task OnReconnected(CancellationToken cancellationToken)
     {
         lock (_lock) {
             if (_remoteChannel == null)
-                return default;
+                return Task.CompletedTask;
 
             return _isCloseAckSent
                 ? SendCloseAck()
@@ -191,39 +186,41 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
 
     // Private methods
 
-    private void TryComplete(Exception? error, bool isFinalizing = false)
+    private Task CloseRemoteChannel(Exception? error, bool isFinalizing = false)
     {
         lock (_lock)
-            TryCompleteUnsafe(error, isFinalizing);
+            return CloseRemoteChannelUnsafe(error, isFinalizing);
     }
 
-    private void TryCompleteUnsafe(Exception? error, bool isFinalizing = false)
+    private Task CloseRemoteChannelUnsafe(Exception? error, bool isFinalizing = false)
     {
+        var result = Task.CompletedTask;
         if (_remoteChannel != null) {
             if (!_isCloseAckSent) {
                 _isCloseAckSent = true;
-                _ = SendCloseAck();
+                result = SendCloseAck();
             }
             // ReSharper disable once InconsistentlySynchronizedField
             if (!isFinalizing)
                 _remoteChannel.Writer.TryComplete(error);
         }
-        if (_localSource == null && !_isUnregistered) {
-            _isUnregistered = true;
+        if (_isRemoteObjectRegistered) {
+            _isRemoteObjectRegistered = false;
             Peer?.RemoteObjects.Unregister(this);
         }
+        return result;
     }
 
-    private ValueTask SendCloseAck()
+    private Task SendCloseAck()
         => SendAck(long.MaxValue);
 
-    private ValueTask SendAck(long index, bool mustReset = false)
+    private Task SendAck(long index, bool mustReset = false)
     {
         // ReSharper disable once InconsistentlySynchronizedField
         if (_nextIndex < 0) // Marked as missing
-            return default;
+            return Task.CompletedTask;
 
-        // Debug.WriteLine($"ACK: ({index}, {mustReset})");
+        Debug.WriteLine($"ACK: ({index}, {mustReset})");
         var peer = Peer!;
         return peer.Hub.SystemCallSender.StreamAck(peer, Id, index, mustReset);
     }
@@ -234,7 +231,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
     {
         private readonly ChannelReader<T> _reader =  stream._remoteChannel!.Reader;
         private bool _isStarted;
-        private bool _isCompleted;
+        private bool _isEnded;
         private Result<T> _current;
 
         public T Current => _isStarted
@@ -242,46 +239,45 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
             : throw new InvalidOperationException($"{nameof(MoveNextAsync)} should be called first.");
 
         public ValueTask DisposeAsync()
-        {
-            if (!_isCompleted) {
-                _isCompleted = true;
-                stream.TryComplete(null);
-            }
-            return default;
-        }
+            => stream.CloseRemoteChannel(null).ToValueTask();
 
         public ValueTask<bool> MoveNextAsync()
         {
-            if (_isCompleted)
+            if (_isEnded)
                 return default;
-            if (!_reader.TryRead(out var current))
-                return Move();
 
-            _current = current;
+            try {
+                if (_reader.TryRead(out var current))
+                    _current = current;
+                else
+                    return MoveNext();
+            }
+            catch (Exception e) {
+                _current = Result.Error<T>(e);
+                _isEnded = true;
+            }
             return ValueTaskExt.TrueTask;
 
-            async ValueTask<bool> Move()
+            async ValueTask<bool> MoveNext()
             {
                 try {
                     if (!_isStarted) {
                         _isStarted = true;
                         await stream.SendAck(0).ConfigureAwait(false);
                     }
-                    while (true) {
-                        if (!await _reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)) {
-                            _isCompleted = true;
-                            return false;
-                        }
-
-                        if (_reader.TryRead(out var current1)) {
-                            _current = current1;
-                            return true;
-                        }
+                    if (!await _reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)) {
+                        _isEnded = true;
+                        return false;
                     }
+                    if (!_reader.TryRead(out var current1))
+                        throw Errors.InternalError("Couldn't read after successful WaitToReadAsync call.");
+
+                    _current = current1;
+                    return true;
                 }
                 catch (Exception e) {
                     _current = Result.Error<T>(e);
-                    _isCompleted = true;
+                    _isEnded = true;
                     return true;
                 }
             }
