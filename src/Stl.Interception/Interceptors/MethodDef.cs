@@ -82,7 +82,7 @@ public abstract class MethodDef
         if (methodDef.ReturnsTask) {
             var task = (Task)result!;
             if (methodDef.IsAsyncVoidMethod)
-                task = ToUnitTask(task);
+                return task.IsCompletedSuccessfully() ? TaskExt.UnitTask : ToUnitTask(task);
             return task;
         }
 
@@ -90,7 +90,7 @@ public abstract class MethodDef
             if (result is ValueTask<TResult> valueTask)
                 return valueTask.AsTask();
             if (result is ValueTask voidValueTask)
-                return ToUnitTask(voidValueTask);
+                return voidValueTask.IsCompletedSuccessfully ? TaskExt.UnitTask : ToUnitTask(voidValueTask);
         }
 
         return Task.FromResult((TResult)result!);

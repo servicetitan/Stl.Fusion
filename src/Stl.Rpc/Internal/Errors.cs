@@ -43,6 +43,8 @@ public static class Errors
 
     public static Exception NoCurrentRpcInboundContext()
         => new InvalidOperationException($"{nameof(RpcInboundContext)}.{nameof(RpcInboundContext.Current)} is unavailable.");
+    public static Exception NoCurrentRpcOutboundContext()
+        => new InvalidOperationException($"{nameof(RpcOutboundContext)}.{nameof(RpcOutboundContext.Current)} is unavailable.");
     public static Exception RpcOutboundContextChanged()
         => new InvalidOperationException(
             $"The scope returned from {nameof(RpcOutboundContext)}.{nameof(RpcOutboundContext.Use)} " +
@@ -74,4 +76,17 @@ public static class Errors
         => new ArgumentOutOfRangeException(argumentName, "Client RpcPeerRef is expected.");
     public static Exception ServerRpcPeerRefExpected(string argumentName)
         => new ArgumentOutOfRangeException(argumentName, "Server RpcPeerRef is expected.");
+
+    public static Exception InvalidRpcObjectKind(RpcObjectKind expectedKind)
+        => new InvalidOperationException($"Invalid IRpcObject kind (expected: {expectedKind}).");
+    public static Exception RpcObjectIsAlreadyUsed()
+        => new InvalidOperationException("This IRpcObject is already used in some other call.");
+
+    public static Exception RemoteRpcStreamCanBeEnumeratedJustOnce()
+        => new InvalidOperationException("Remote RpcStream can be enumerated just once.");
+
+    public static Exception RpcStreamNotFound()
+        => new KeyNotFoundException("RpcStream with the specified Id is not found.");
+    public static Exception RpcStreamInvalidPosition()
+        => new InvalidOperationException("RpcStream position is invalid.");
 }

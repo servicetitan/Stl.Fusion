@@ -2,16 +2,18 @@ namespace Stl.Tests.Collections;
 
 public class ArrayBufferTest
 {
-    private readonly Random _rnd = new Random();
+    private readonly Random _rnd = new();
 
     [Fact]
     public void CombinedTest()
     {
-        for (var i1 = 0; i1 < 100; i1++) {
-            var list = new List<byte>();
-            for (var l = 0; l < 100; l++) {
-                list.Add((byte) (_rnd.Next() % 256));
-                Test(list);
+        for (var iteration = 0; iteration < 10; iteration++) {
+            for (var length = 0; length < 50; length++) {
+                var list = new List<byte>(length);
+                for (var i = 0; i < length; i++) {
+                    list.Add((byte)(_rnd.Next() % 256));
+                    Test(list);
+                }
             }
         }
     }

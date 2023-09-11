@@ -23,6 +23,8 @@ public abstract class RpcPeer : WorkerBase
     public RpcInboundContextFactory InboundContextFactory { get; init; }
     public RpcInboundCallTracker InboundCalls { get; init; }
     public RpcOutboundCallTracker OutboundCalls { get; init; }
+    public RpcRemoteObjectTracker RemoteObjects { get; init; }
+    public RpcSharedObjectTracker SharedObjects { get; init; }
     public LogLevel CallLogLevel { get; init; } = LogLevel.None;
     public AsyncState<RpcPeerConnectionState> ConnectionState => _connectionState;
     public RpcPeerInternalServices InternalServices => new(this);
@@ -41,9 +43,13 @@ public abstract class RpcPeer : WorkerBase
         InboundCalls.Initialize(this);
         OutboundCalls = services.GetRequiredService<RpcOutboundCallTracker>();
         OutboundCalls.Initialize(this);
+        RemoteObjects = services.GetRequiredService<RpcRemoteObjectTracker>();
+        RemoteObjects.Initialize(this);
+        SharedObjects = services.GetRequiredService<RpcSharedObjectTracker>();
+        SharedObjects.Initialize(this);
     }
 
-    public ValueTask Send(RpcMessage message)
+    public Task Send(RpcMessage message)
     {
         // !!! Send should never throw an exception.
         // This method is optimized to run as quickly as possible,
@@ -52,13 +58,13 @@ public abstract class RpcPeer : WorkerBase
         var sendChannel = Sender;
         try {
             if (sendChannel == null || sendChannel.TryWrite(message))
-                return default;
+                return Task.CompletedTask;
 
             return CompleteSend(sendChannel, message);
         }
         catch (Exception e) {
             Log.LogError(e, "Send failed");
-            return default;
+            return Task.CompletedTask;
         }
     }
 
@@ -112,7 +118,9 @@ public abstract class RpcPeer : WorkerBase
                 var connectionState = SetConnectionState(connection, null, true);
                 readerAbortToken = connectionState.ReaderAbortSource!.Token;
 
-                // Recovery: let's re-send all outbound calls
+                // Recovery: re-send keep-alive object set & all outbound calls
+                _ = SharedObjects.Maintain(readerAbortToken);
+                _ = RemoteObjects.Maintain(readerAbortToken);
                 foreach (var call in OutboundCalls) {
                     readerAbortToken.ThrowIfCancellationRequested();
                     await call.SendRegistered(true).ConfigureAwait(false);
@@ -121,9 +129,8 @@ public abstract class RpcPeer : WorkerBase
                 var channelReader = connection.Channel.Reader;
                 if (semaphore == null)
                     while (await channelReader.WaitToReadAsync(readerAbortToken).ConfigureAwait(false))
-                    while (channelReader.TryRead(out var message)) {
+                    while (channelReader.TryRead(out var message))
                         _ = ProcessMessage(message, cancellationToken);
-                    }
                 else
                     while (await channelReader.WaitToReadAsync(readerAbortToken).ConfigureAwait(false))
                     while (channelReader.TryRead(out var message)) {
@@ -192,13 +199,16 @@ public abstract class RpcPeer : WorkerBase
             Monitor.Exit(Lock);
         }
 
-        // 2. And we must abort all outbound calls.
+        // 2. And we must abort all outbound calls and streams.
         // Inbound calls are auto-aborted via StopToken,
         // which becomes RpcInboundCallContext.CancellationToken.
-        var outboundCallCount = await OutboundCalls.Abort(error).ConfigureAwait(false);
+        var abortCallsTask = OutboundCalls.Abort(error);
+        var abortObjectsTask = SharedObjects.Abort(error);
+        var outboundCallCount = await abortCallsTask.ConfigureAwait(false);
+        var outgoingObjectCount = await abortObjectsTask.ConfigureAwait(false);
         Log.LogInformation(
-            "'{PeerRef}': Stopped, aborted {OutboundCallCount} outbound call(s)",
-            Ref, outboundCallCount);
+            "'{PeerRef}': Stopped, aborted {OutboundCallCount} outbound call(s), {OutgoingObjectCount} object(s)",
+            Ref, outboundCallCount, outgoingObjectCount);
     }
 
     protected async Task ProcessMessage(
@@ -299,7 +309,7 @@ public abstract class RpcPeer : WorkerBase
         }
     }
 
-    private async ValueTask CompleteSend(ChannelWriter<RpcMessage> sendChannel, RpcMessage message)
+    private async Task CompleteSend(ChannelWriter<RpcMessage> sendChannel, RpcMessage message)
     {
         // !!! This method should never fail
         try {

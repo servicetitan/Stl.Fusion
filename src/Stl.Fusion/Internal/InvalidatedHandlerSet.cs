@@ -97,7 +97,7 @@ public struct InvalidatedHandlerSet
     public void Clear()
         => _storage = null;
 
-    public void Invoke(IComputed computed)
+    public readonly void Invoke(IComputed computed)
     {
         switch (_storage) {
             case null:

@@ -162,6 +162,24 @@ public class RpcBasicTest(ITestOutputHelper @out) : RpcLocalTestBase(@out)
         await AssertNoCalls(clientPeer);
     }
 
+    [Fact]
+    public async Task StreamTest()
+    {
+        await using var services = CreateServices();
+        var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
+
+        var expected1 = Enumerable.Range(0, 5).ToList();
+        var stream1 = await client.StreamInt32(expected1.Count());
+        (await stream1.ToListAsync()).Should().Equal(expected1);
+        await AssertNoObjects(clientPeer);
+
+        var expected2 = Enumerable.Range(0, 5).Select(x => new Tuple<int>(x)).ToList();
+        var stream2 = await client.StreamTuples(expected2.Count);
+        (await stream2.ToListAsync()).Should().Equal(expected2);
+        await AssertNoObjects(clientPeer);
+    }
+
     [Theory]
     [InlineData(1000)]
     [InlineData(5000)]
@@ -186,5 +204,28 @@ public class RpcBasicTest(ITestOutputHelper @out) : RpcLocalTestBase(@out)
         var elapsed = startedAt.Elapsed;
         Out.WriteLine($"{iterationCount}: {iterationCount / elapsed.TotalSeconds:F} ops/s");
         await AssertNoCalls(clientPeer);
+    }
+
+    [Theory]
+    [InlineData(1000)]
+    [InlineData(5000)]
+    [InlineData(10_000)]
+    [InlineData(50_000)]
+    [InlineData(200_000)]
+    public async Task StreamPerformanceTest(int itemCount)
+    {
+        if (TestRunnerInfo.IsBuildAgent())
+            itemCount = 100;
+
+        await using var services = CreateServices();
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
+        var stream = await client.StreamInt32(200);
+        await stream.CountAsync();
+
+        stream = await client.StreamInt32(itemCount);
+        var startedAt = CpuTimestamp.Now;
+        (await stream.CountAsync()).Should().Be(itemCount);
+        var elapsed = startedAt.Elapsed;
+        Out.WriteLine($"{itemCount}: {itemCount / elapsed.TotalSeconds:F} ops/s");
     }
 }

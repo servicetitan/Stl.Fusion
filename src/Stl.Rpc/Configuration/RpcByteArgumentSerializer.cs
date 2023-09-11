@@ -5,12 +5,9 @@ using Stl.Rpc.Internal;
 
 namespace Stl.Rpc;
 
-public sealed class RpcByteArgumentSerializer : RpcArgumentSerializer
+public sealed class RpcByteArgumentSerializer(IByteSerializer serializer) : RpcArgumentSerializer
 {
-    private readonly IByteSerializer _serializer;
-
-    public RpcByteArgumentSerializer(IByteSerializer serializer)
-        => _serializer = serializer;
+    private readonly IByteSerializer _serializer = serializer;
 
     public override TextOrBytes Serialize(ArgumentList arguments, bool allowPolymorphism)
     {
@@ -40,16 +37,10 @@ public sealed class RpcByteArgumentSerializer : RpcArgumentSerializer
 
     // Nested types
 
-    private abstract class ItemSerializer : ArgumentListReader
+    private abstract class ItemSerializer(IByteSerializer serializer, IBufferWriter<byte> buffer) : ArgumentListReader
     {
-        protected readonly IByteSerializer Serializer;
-        protected readonly IBufferWriter<byte> Buffer;
-
-        protected ItemSerializer(IByteSerializer serializer, IBufferWriter<byte> buffer)
-        {
-            Serializer = serializer;
-            Buffer = buffer;
-        }
+        protected readonly IByteSerializer Serializer = serializer;
+        protected readonly IBufferWriter<byte> Buffer = buffer;
 
         public override void OnStruct<T>(T item, int index)
         {
@@ -80,16 +71,10 @@ public sealed class RpcByteArgumentSerializer : RpcArgumentSerializer
         }
     }
 
-    private abstract class ItemDeserializer : ArgumentListWriter
+    private abstract class ItemDeserializer(IByteSerializer serializer, ReadOnlyMemory<byte> data) : ArgumentListWriter
     {
-        protected readonly IByteSerializer Serializer;
-        protected ReadOnlyMemory<byte> Data;
-
-        protected ItemDeserializer(IByteSerializer serializer, ReadOnlyMemory<byte> data)
-        {
-            Serializer = serializer;
-            Data = data;
-        }
+        protected readonly IByteSerializer Serializer = serializer;
+        protected ReadOnlyMemory<byte> Data = data;
 
         public override T OnStruct<T>(int index)
             => typeof(T) == typeof(CancellationToken)

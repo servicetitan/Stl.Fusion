@@ -7,5 +7,5 @@ public class EmptyCache<TKey, TValue> : AsyncCacheBase<TKey, TValue>
         => ValueTaskExt.FromResult(Option.None<TValue>());
 
     protected override ValueTask Set(TKey key, Option<TValue> value, CancellationToken cancellationToken = default)
-        => ValueTaskExt.CompletedTask;
+        => default;
 }

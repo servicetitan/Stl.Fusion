@@ -6,12 +6,12 @@ public struct RefHashSetSlim1<T> : IRefHashSetSlim<T>
     private T? _item;
     private HashSet<T>? _set;
 
-    private bool HasSet {
+    private readonly bool HasSet {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => _set != null;
     }
 
-    public int Count {
+    public readonly int Count {
         get {
             if (HasSet) return _set!.Count;
             if (_item == null) return 0;
@@ -19,7 +19,7 @@ public struct RefHashSetSlim1<T> : IRefHashSetSlim<T>
         }
     }
 
-    public bool Contains(T item)
+    public readonly bool Contains(T item)
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
@@ -74,7 +74,7 @@ public struct RefHashSetSlim1<T> : IRefHashSetSlim<T>
         _item = default!;
     }
 
-    public IEnumerable<T> Items {
+    public readonly IEnumerable<T> Items {
         get {
             if (HasSet) {
                 foreach (var item in _set!)
@@ -86,7 +86,7 @@ public struct RefHashSetSlim1<T> : IRefHashSetSlim<T>
         }
     }
 
-    public void Apply<TState>(TState state, Action<TState, T> action)
+    public readonly void Apply<TState>(TState state, Action<TState, T> action)
     {
         if (HasSet) {
             foreach (var item in _set!)
@@ -98,7 +98,7 @@ public struct RefHashSetSlim1<T> : IRefHashSetSlim<T>
     }
 
 
-    public void Aggregate<TState>(ref TState state, Aggregator<TState, T> aggregator)
+    public readonly void Aggregate<TState>(ref TState state, Aggregator<TState, T> aggregator)
     {
         if (HasSet) {
             foreach (var item in _set!)
@@ -109,7 +109,7 @@ public struct RefHashSetSlim1<T> : IRefHashSetSlim<T>
         aggregator(ref state, _item);
     }
 
-    public TState Aggregate<TState>(TState state, Func<TState, T, TState> aggregator)
+    public readonly TState Aggregate<TState>(TState state, Func<TState, T, TState> aggregator)
     {
         if (HasSet) {
             foreach (var item in _set!)

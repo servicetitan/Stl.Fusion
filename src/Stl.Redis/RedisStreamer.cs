@@ -79,7 +79,7 @@ public sealed class RedisStreamer<T>
     public Task Write(
         IAsyncEnumerable<T> source,
         CancellationToken cancellationToken = default)
-        => Write(source, _ => ValueTaskExt.CompletedTask, cancellationToken);
+        => Write(source, _ => default, cancellationToken);
 
     public Task Write(
         IAsyncEnumerable<T> source,

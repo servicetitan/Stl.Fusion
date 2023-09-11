@@ -29,4 +29,10 @@ public static class TestHelpers
             peer.OutboundCalls.Count.Should().Be(0);
             peer.InboundCalls.Count.Should().Be(0);
         }, TimeSpan.FromSeconds(1));
+
+    public static Task AssertNoObjects(RpcPeer peer)
+        => TestExt.WhenMet(() => {
+            peer.RemoteObjects.Count.Should().Be(0);
+            peer.SharedObjects.Count.Should().Be(0);
+        }, TimeSpan.FromSeconds(1));
 }

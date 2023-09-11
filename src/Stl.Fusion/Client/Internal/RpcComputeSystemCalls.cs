@@ -17,7 +17,7 @@ public class RpcComputeSystemCalls(IServiceProvider services)
     {
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
-        var outboundCallId = context.Message.CallId;
+        var outboundCallId = context.Message.RelatedId;
         if (peer.OutboundCalls.Get(outboundCallId) is IRpcOutboundComputeCall outboundCall)
             outboundCall.SetInvalidated(context);
         return RpcNoWait.Tasks.Completed;

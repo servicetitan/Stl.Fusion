@@ -21,12 +21,12 @@ public readonly struct ConfiguredAsyncDisposableAdapter<T>
     {
 #if !NETSTANDARD2_0
         return Target?.DisposeAsync().ConfigureAwait(_continueOnCapturedContext)
-            ?? ValueTaskExt.CompletedTask.ConfigureAwait(_continueOnCapturedContext);
+            ?? default(ValueTask).ConfigureAwait(_continueOnCapturedContext);
 #else
         if (Target is IAsyncDisposable ad)
             return ad.DisposeAsync().ConfigureAwait(_continueOnCapturedContext);
         Target?.Dispose();
-        return ValueTaskExt.CompletedTask.ConfigureAwait(_continueOnCapturedContext);
+        return default(ValueTask).ConfigureAwait(_continueOnCapturedContext);
 #endif
     }
 }

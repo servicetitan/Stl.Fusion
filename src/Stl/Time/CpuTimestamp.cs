@@ -53,6 +53,8 @@ public readonly record struct CpuTimestamp(long Value) : IComparable<CpuTimestam
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static CpuTimestamp operator +(CpuTimestamp a, TimeSpan b)
         => new(a.Value + (long)(b.TotalSeconds * TickFrequency));
+    public static CpuTimestamp operator -(CpuTimestamp a, TimeSpan b)
+        => new(a.Value - (long)(b.TotalSeconds * TickFrequency));
 
     public static bool operator >(CpuTimestamp a, CpuTimestamp b) => a.Value > b.Value;
     public static bool operator >=(CpuTimestamp a, CpuTimestamp b) => a.Value >= b.Value;

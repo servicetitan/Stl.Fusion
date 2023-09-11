@@ -84,6 +84,11 @@ public static class Errors
 
     public static Exception KeyAlreadyExists()
         => new InvalidOperationException("Specified key already exists.");
+    public static Exception CollectionIsEmpty()
+        => new InvalidOperationException("Collection is empty.");
+    public static Exception CollectionIsFull()
+        => new InvalidOperationException("Collection has reached its capacity.");
+
     public static Exception AlreadyInvoked(string methodName)
         => new InvalidOperationException($"'{methodName}' can be invoked just once.");
     public static Exception AlreadyInitialized(string? propertyName = null)
