@@ -1,10 +1,12 @@
+using Stl.Concurrency;
 using Stl.Internal;
+using Stl.OS;
 
 namespace Stl.Rpc.Infrastructure;
 
 public abstract class RpcObjectTracker
 {
-    public static TimeSpan KeepAlivePeriod { get; set; } = TimeSpan.FromSeconds(1500);
+    public static TimeSpan KeepAlivePeriod { get; set; } = TimeSpan.FromSeconds(15);
 
     private RpcPeer _peer = null!;
 
@@ -25,20 +27,24 @@ public abstract class RpcObjectTracker
 
 public class RpcRemoteObjectTracker : RpcObjectTracker, IEnumerable<IRpcObject>
 {
-    private readonly ConcurrentDictionary<long, WeakReference<IRpcObject>> _weakRefs = new();
+    public static readonly GCHandlePool GCHandlePool = new(new GCHandlePool.Options() {
+        Capacity = HardwareInfo.GetProcessorCountPo2Factor(16),
+    });
 
-    public override int Count => _weakRefs.Count;
+    private readonly ConcurrentDictionary<long, GCHandle> _objects = new();
+
+    public override int Count => _objects.Count;
 
     public IRpcObject? Get(long id)
-        => _weakRefs.TryGetValue(id, out var weakRef) && weakRef.TryGetTarget(out var obj)
+        => _objects.TryGetValue(id, out var handle) && handle.Target is IRpcObject obj
             ? obj
             : null;
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     public IEnumerator<IRpcObject> GetEnumerator()
     {
-        foreach (var (_, weakRef) in _weakRefs) {
-            if (weakRef.TryGetTarget(out var obj))
+        foreach (var (_, handle) in _objects) {
+            if (handle.Target is IRpcObject obj)
                 yield return obj;
         }
     }
@@ -50,20 +56,29 @@ public class RpcRemoteObjectTracker : RpcObjectTracker, IEnumerable<IRpcObject>
             throw new ArgumentOutOfRangeException(nameof(obj));
 
         obj.RequireKind(RpcObjectKind.Remote);
-        _weakRefs[id] = new WeakReference<IRpcObject>(obj);
+        var handle = GCHandlePool.Acquire(obj, obj.GetHashCode());
+        _objects[id] = handle;
     }
 
     public bool Unregister(IRpcObject obj)
-        => _weakRefs.TryGetValue(obj.Id, out var weakRef)
-            && weakRef.TryGetTarget(out var existingObj)
-            && ReferenceEquals(obj, existingObj)
-            && _weakRefs.TryRemove(obj.Id, weakRef);
+    {
+        if (!(_objects.TryGetValue(obj.Id, out var handle)
+            && handle.Target is IRpcObject existingObj
+            && ReferenceEquals(obj, existingObj)))
+            return false;
+
+        if (!_objects.TryRemove(obj.Id, handle))
+            return false;
+
+        GCHandlePool.Release(handle);
+        return true;
+    }
 
     public async Task Maintain(CancellationToken cancellationToken)
     {
         try {
-            foreach (var (_, weakRef) in _weakRefs)
-                if (weakRef.TryGetTarget(out var obj))
+            foreach (var (_, handle) in _objects)
+                if (handle.Target is IRpcObject obj)
                     await obj.OnReconnected(cancellationToken).ConfigureAwait(false);
 
             var hub = Peer.Hub;
@@ -71,7 +86,8 @@ public class RpcRemoteObjectTracker : RpcObjectTracker, IEnumerable<IRpcObject>
             var systemCallSender = hub.SystemCallSender;
             while (true) {
                 await clock.Delay(KeepAlivePeriod, cancellationToken).ConfigureAwait(false);
-                await systemCallSender.KeepAlive(Peer, GetObjectIds()).ConfigureAwait(false);
+                var objectIds = GetAliveObjectIdsAndReleaseDeadHandles();
+                await systemCallSender.KeepAlive(Peer, objectIds).ConfigureAwait(false);
             }
         }
         catch {
@@ -88,17 +104,25 @@ public class RpcRemoteObjectTracker : RpcObjectTracker, IEnumerable<IRpcObject>
 
     // Private methods
 
-    private long[] GetObjectIds()
+    private long[] GetAliveObjectIdsAndReleaseDeadHandles()
     {
-        var buffer = MemoryBuffer<long>.Lease(false);
+        var buffer = ArrayBuffer<long>.Lease(false);
+        var purgeBuffer = ArrayBuffer<(long, GCHandle)>.Lease(false);
         try {
-            foreach (var (id, weakRef) in _weakRefs) {
-                if (weakRef.TryGetTarget(out _))
+            foreach (var (id, handle) in _objects) {
+                if (handle.Target is IRpcObject)
                     buffer.Add(id);
+                else
+                    purgeBuffer.Add((id, handle));
             }
+
+            foreach (var (id, handle) in purgeBuffer)
+                if (_objects.TryRemove(id, handle))
+                    GCHandlePool.Release(handle);
             return buffer.ToArray();
         }
         finally {
+            purgeBuffer.Release();
             buffer.Release();
         }
     }
