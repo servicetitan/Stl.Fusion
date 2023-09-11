@@ -309,7 +309,7 @@ public class RpcWebSocketTest(ITestOutputHelper @out) : RpcTestBase(@out)
         var peer = services.RpcHub().GetClientPeer(ClientPeerRef);
         var client = services.GetRequiredService<ITestRpcServiceClient>();
 
-        var threadCount = Math.Max(1, HardwareInfo.ProcessorCount);
+        var threadCount = Math.Max(1, HardwareInfo.ProcessorCount / 2);
         var tasks = new Task[threadCount];
         await Run(10); // Warmup
         var elapsed = await Run(itemCount);
