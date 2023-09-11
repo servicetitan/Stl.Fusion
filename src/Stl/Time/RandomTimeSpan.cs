@@ -4,35 +4,25 @@ namespace Stl.Time;
 
 [StructLayout(LayoutKind.Auto)]
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
-public readonly partial record struct RandomTimeSpan
+[method: JsonConstructor, Newtonsoft.Json.JsonConstructor]
+public readonly partial record struct RandomTimeSpan(
+    [property: DataMember(Order = 0), MemoryPackOrder(0)]
+    TimeSpan Origin,
+    [property: DataMember(Order = 1), MemoryPackOrder(1)]
+    TimeSpan MaxDelta = default)
 {
-    [DataMember(Order = 0), MemoryPackOrder(0)]
-    public TimeSpan Origin { get; init; }
-    [DataMember(Order = 1), MemoryPackOrder(1)]
-    public TimeSpan MaxDelta { get; init; }
     [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public TimeSpan Min => (Origin - MaxDelta).Positive();
     [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
     public TimeSpan Max => (Origin + MaxDelta).Positive();
 
-    [JsonConstructor, Newtonsoft.Json.JsonConstructor]
-    public RandomTimeSpan(TimeSpan origin, TimeSpan maxDelta = default)
-    {
-        Origin = origin;
-        MaxDelta = maxDelta;
-    }
-
     public RandomTimeSpan(TimeSpan origin, double maxDelta)
-    {
-        Origin = origin;
-        MaxDelta = TimeSpan.FromSeconds(maxDelta * origin.TotalSeconds);
-    }
+        : this(origin, TimeSpan.FromSeconds(maxDelta * origin.TotalSeconds))
+    { }
 
     public RandomTimeSpan(double originInSeconds, double maxDelta = default)
-    {
-        Origin = TimeSpan.FromSeconds(originInSeconds);
-        MaxDelta = TimeSpan.FromSeconds(maxDelta * originInSeconds);
-    }
+        : this(TimeSpan.FromSeconds(originInSeconds), TimeSpan.FromSeconds(maxDelta * originInSeconds))
+    { }
 
     // Conversion
 

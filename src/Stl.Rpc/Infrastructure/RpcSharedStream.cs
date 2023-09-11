@@ -7,7 +7,10 @@ public abstract class RpcSharedStream(RpcStream stream) : WorkerBase, IRpcShared
 {
     protected static readonly Exception NoError = new();
 
+    private ILogger? _log;
     private long _lastKeepAliveAt = CpuTimestamp.Now.Value;
+
+    protected ILogger Log => _log ??= Peer.Hub.Services.LogFor(GetType());
 
     public long Id { get; } = stream.Id;
     public RpcObjectKind Kind { get; } = stream.Kind;
@@ -41,6 +44,8 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
             SingleWriter = true,
         });
 
+    private long _lastAckIndex;
+
     public new RpcStream<T> Stream { get; } = (RpcStream<T>)stream;
 
     protected override async Task DisposeAsyncCore()
@@ -71,7 +76,7 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
             enumerator = Stream.GetLocalSource().GetAsyncEnumerator(cancellationToken);
             var isEnumerationEnded = false;
             var ackReader = _acks.Reader;
-            var buffer = new RingBuffer<Result<T>>(Stream.AckDistance * 3);
+            var buffer = new RingBuffer<Result<T>>(Stream.AdvanceDistance + 1);
             var bufferOffset = 0L;
             var index = 0L;
             var nextAckTask = ackReader.ReadAsync(cancellationToken);
@@ -82,10 +87,10 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
                 if (nextAckTask.IsCompleted)
                     ack = nextAckTask.Result;
                 else {
-                    Debug.WriteLine("-> Waiting for ACK");
+                    // Debug.WriteLine("-> Waiting for ACK");
                     ack = await nextAckTask.ConfigureAwait(false);
                 }
-                Debug.WriteLine($"-> ACK: {ack}");
+                // Debug.WriteLine($"-> ACK: {ack}");
                 if (ack.NextIndex == long.MaxValue)
                     return; // The only point we exit is when the client tells us it's done
 
@@ -162,6 +167,7 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
     private Task Send(long index, long ackIndex, Result<T> item)
     {
         // Debug.WriteLine($"Sent item: {index}, {ackIndex}");
+        _lastAckIndex = ackIndex;
         if (item.IsValue(out var value))
             return _systemCallSender.StreamItem(Peer, Id, index, ackIndex, value);
 

@@ -38,6 +38,9 @@ public sealed class RpcOutboundContext(List<RpcHeader>? headers = null)
         return new Scope(context, oldContext);
     }
 
+    public Scope Activate()
+        => new(this, _current);
+
     public RpcOutboundCall? PrepareCall(RpcMethodDef methodDef, ArgumentList arguments)
     {
         if (MethodDef != null)
@@ -72,8 +75,10 @@ public sealed class RpcOutboundContext(List<RpcHeader>? headers = null)
 
         internal Scope(RpcOutboundContext context, RpcOutboundContext? oldContext)
         {
+            Context = context;
             _oldContext = oldContext;
-            _current = Context = context;
+            if (Context != _oldContext)
+                _current = context;
         }
 
         public void Dispose()

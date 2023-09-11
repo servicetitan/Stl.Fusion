@@ -22,8 +22,9 @@ public interface ITestRpcService : ICommandService
     ValueTask<RpcNoWait> MaybeSet(string key, string? value);
     ValueTask<string?> Get(string key);
 
-    Task<RpcStream<int>> StreamInt32(int count);
-    Task<RpcStream<ITuple>> StreamTuples(int count);
+    Task<RpcStream<int>> StreamInt32(int count, int failAt = -1, RandomTimeSpan delay = default);
+    Task<RpcStream<ITuple>> StreamTuples(int count, int failAt = -1, RandomTimeSpan delay = default);
+    Task<int> Count(RpcStream<int> items, CancellationToken cancellationToken = default);
 
     [CommandHandler]
     Task<string> OnHello(HelloCommand command, CancellationToken cancellationToken = default);
@@ -78,11 +79,14 @@ public class TestRpcService : ITestRpcService
     public ValueTask<string?> Get(string key)
         => new(_values.GetValueOrDefault(key));
 
-    public Task<RpcStream<int>> StreamInt32(int count)
-        => Task.FromResult(RpcStream.New(AsyncEnumerable.Range(0, count)));
+    public Task<RpcStream<int>> StreamInt32(int count, int failAt = -1, RandomTimeSpan delay = default)
+        => Task.FromResult(RpcStream.New(Enumerate(count, failAt, delay)));
 
-    public Task<RpcStream<ITuple>> StreamTuples(int count)
-        => Task.FromResult(RpcStream.New(AsyncEnumerable.Range(0, count).Select(x => (ITuple)new Tuple<int>(x))));
+    public Task<RpcStream<ITuple>> StreamTuples(int count, int failAt = -1, RandomTimeSpan delay = default)
+        => Task.FromResult(RpcStream.New(Enumerate(count, failAt, delay).Select(x => (ITuple)new Tuple<int>(x))));
+
+    public Task<int> Count(RpcStream<int> items, CancellationToken cancellationToken = default)
+        => items.CountAsync(cancellationToken).AsTask();
 
     public virtual async Task<string> OnHello(HelloCommand command, CancellationToken cancellationToken = default)
     {
@@ -93,5 +97,23 @@ public class TestRpcService : ITestRpcService
             throw new ArgumentOutOfRangeException(nameof(command));
 
         return $"Hello, {command.Name}!";
+    }
+
+    // Private methods
+
+    private static async IAsyncEnumerable<int> Enumerate(
+        int count,
+        int failAt,
+        RandomTimeSpan delay,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var hasDelay = delay != default;
+        for (var i = 0; i < count; i++) {
+            if (i == failAt)
+                throw new InvalidOperationException("Fail!");
+            yield return i;
+            if (hasDelay)
+                await Task.Delay(delay.Next(), cancellationToken);
+        }
     }
 }

@@ -193,18 +193,41 @@ public class RpcWebSocketTest(ITestOutputHelper @out) : RpcTestBase(@out)
         var peer = services.RpcHub().GetClientPeer(ClientPeerRef);
         var client = services.GetRequiredService<ITestRpcServiceClient>();
 
-        var expected1 = Enumerable.Range(0, 100).ToList();
-        var stream1 = await client.StreamInt32(expected1.Count());
+        var expected1 = Enumerable.Range(0, 500).ToList();
+        var stream1 = await client.StreamInt32(expected1.Count);
         (await stream1.ToListAsync()).Should().Equal(expected1);
         await AssertNoCalls(peer);
-        return;
 
-        var expected2 = Enumerable.Range(0, 5).Select(x => new Tuple<int>(x)).ToList();
+        var expected2 = Enumerable.Range(0, 500).Select(x => new Tuple<int>(x)).ToList();
         var stream2 = await client.StreamTuples(expected2.Count);
         (await stream2.ToListAsync()).Should().Equal(expected2);
         await AssertNoCalls(peer);
+
+        var stream3 = await client.StreamTuples(10, 5);
+        (await stream3.Take(5).CountAsync()).Should().Be(5);
+        var stream3f = await client.StreamTuples(10, 5);
+        try {
+            await stream3f.CountAsync();
+            Assert.Fail("No exception!");
+        }
+        catch (Exception e) {
+            e.Should().BeOfType<InvalidOperationException>();
+        }
+        await AssertNoCalls(peer);
     }
 
+
+    [Fact]
+    public async Task StreamInputTest()
+    {
+        await using var _ = await WebHost.Serve();
+        var services = ClientServices;
+        var peer = services.RpcHub().GetClientPeer(ClientPeerRef);
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
+
+        var expected1 = AsyncEnumerable.Range(0, 500);
+        (await client.Count(RpcStream.New(expected1))).Should().Be(500);
+    }
 
     [Fact]
     public async Task StreamDebugTest()
@@ -221,7 +244,7 @@ public class RpcWebSocketTest(ITestOutputHelper @out) : RpcTestBase(@out)
                 var stream = await client.StreamInt32(100_000);
                 var list = new List<int>();
                 await foreach (var j in stream.ConfigureAwait(false)) {
-                    if (j % 1000 == 0 || (j >= 75000 && j % 10 == 0))
+                    if (j % 1000 == 0)
                         Out.WriteLine($"{taskIndex}: {j}");
                     list.Add(j);
                 }
@@ -286,7 +309,7 @@ public class RpcWebSocketTest(ITestOutputHelper @out) : RpcTestBase(@out)
         var peer = services.RpcHub().GetClientPeer(ClientPeerRef);
         var client = services.GetRequiredService<ITestRpcServiceClient>();
 
-        var threadCount = Math.Max(1, HardwareInfo.ProcessorCount);
+        var threadCount = Math.Max(1, HardwareInfo.ProcessorCount / 2);
         var tasks = new Task[threadCount];
         await Run(10); // Warmup
         var elapsed = await Run(itemCount);

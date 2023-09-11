@@ -10,27 +10,28 @@ namespace Stl.Rpc;
 [DataContract]
 public abstract partial class RpcStream : IRpcObject
 {
+    protected static readonly ConcurrentDictionary<object, Unit> ActiveObjects = new();
     protected static readonly UnboundedChannelOptions RemoteChannelOptions = new() {
         SingleReader = true,
         SingleWriter = true,
         AllowSynchronousContinuations = false, // We don't want sync handlers to "clog" the call processing loop
     };
 
-    public static RpcStream<T> New<T>(IAsyncEnumerable<T> outgoingSource)
-        => new(outgoingSource);
-    public static RpcStream<T> New<T>(IEnumerable<T> outgoingSource)
-        => new(outgoingSource.ToAsyncEnumerable());
-
     [DataMember, MemoryPackOrder(1)]
-    public int AckDistance { get; init; } = 500;
+    public int AckDistance { get; init; } = 50;
     [DataMember, MemoryPackOrder(2)]
-    public int AdvanceDistance { get; init; } = 1001;
+    public int AdvanceDistance { get; init; } = 151;
 
     // Non-serialized members
     [JsonIgnore, MemoryPackIgnore] public long Id { get; protected set; }
     [JsonIgnore, MemoryPackIgnore] public RpcPeer? Peer { get; protected set; }
     [JsonIgnore, MemoryPackIgnore] public abstract Type ItemType { get; }
     [JsonIgnore, MemoryPackIgnore] public abstract RpcObjectKind Kind { get; }
+
+    public static RpcStream<T> New<T>(IAsyncEnumerable<T> outgoingSource)
+        => new(outgoingSource);
+    public static RpcStream<T> New<T>(IEnumerable<T> outgoingSource)
+        => new(outgoingSource.ToAsyncEnumerable());
 
     public override string ToString()
         => $"{GetType().GetName()}(#{Id} @ {Peer?.Ref}, {Kind})";
@@ -100,7 +101,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
     ~RpcStream()
     {
         if (_lock != null!)
-            CloseRemoteChannel(null, true);
+            _ = CloseRemoteChannel(Errors.AlreadyDisposed(GetType()));
     }
 
     public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
@@ -186,13 +187,13 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
 
     // Private methods
 
-    private Task CloseRemoteChannel(Exception? error, bool isFinalizing = false)
+    private Task CloseRemoteChannel(Exception? error)
     {
         lock (_lock)
-            return CloseRemoteChannelUnsafe(error, isFinalizing);
+            return CloseRemoteChannelUnsafe(error);
     }
 
-    private Task CloseRemoteChannelUnsafe(Exception? error, bool isFinalizing = false)
+    private Task CloseRemoteChannelUnsafe(Exception? error)
     {
         var result = Task.CompletedTask;
         if (_remoteChannel != null) {
@@ -200,9 +201,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
                 _isCloseAckSent = true;
                 result = SendCloseAck();
             }
-            // ReSharper disable once InconsistentlySynchronizedField
-            if (!isFinalizing)
-                _remoteChannel.Writer.TryComplete(error);
+            _remoteChannel.Writer.TryComplete(error);
         }
         if (_isRemoteObjectRegistered) {
             _isRemoteObjectRegistered = false;
@@ -220,26 +219,43 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
         if (_nextIndex < 0) // Marked as missing
             return Task.CompletedTask;
 
-        Debug.WriteLine($"ACK: ({index}, {mustReset})");
+        // Debug.WriteLine($"ACK: ({index}, {mustReset})");
         var peer = Peer!;
         return peer.Hub.SystemCallSender.StreamAck(peer, Id, index, mustReset);
     }
 
     // Nested types
 
-    private class RemoteChannelEnumerator(RpcStream<T> stream, CancellationToken cancellationToken) : IAsyncEnumerator<T>
+    private class RemoteChannelEnumerator : IAsyncEnumerator<T>
     {
-        private readonly ChannelReader<T> _reader =  stream._remoteChannel!.Reader;
+        private readonly ChannelReader<T> _reader;
         private bool _isStarted;
         private bool _isEnded;
         private Result<T> _current;
+        private readonly RpcStream<T> _stream;
+        private readonly CancellationToken _cancellationToken;
+
+        public RemoteChannelEnumerator(RpcStream<T> stream, CancellationToken cancellationToken)
+        {
+            _stream = stream;
+            _cancellationToken = cancellationToken;
+            _reader = stream._remoteChannel!.Reader;
+            ActiveObjects.TryAdd(this, default);
+        }
 
         public T Current => _isStarted
             ? _current.Value
             : throw new InvalidOperationException($"{nameof(MoveNextAsync)} should be called first.");
 
-        public ValueTask DisposeAsync()
-            => stream.CloseRemoteChannel(null).ToValueTask();
+        public async ValueTask DisposeAsync()
+        {
+            try {
+                await _stream.CloseRemoteChannel(Errors.AlreadyDisposed(GetType())).ConfigureAwait(false);
+            }
+            finally {
+                ActiveObjects.TryRemove(this, out _);
+            }
+        }
 
         public ValueTask<bool> MoveNextAsync()
         {
@@ -263,9 +279,9 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
                 try {
                     if (!_isStarted) {
                         _isStarted = true;
-                        await stream.SendAck(0).ConfigureAwait(false);
+                        await _stream.SendAck(0).ConfigureAwait(false);
                     }
-                    if (!await _reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)) {
+                    if (!await _reader.WaitToReadAsync(_cancellationToken).ConfigureAwait(false)) {
                         _isEnded = true;
                         return false;
                     }
