@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
@@ -103,18 +104,23 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
         var isBufferCompleted = false;
         var bufferOffset = 0L;
         var index = 0L;
+        var ackIndex = (long)Stream.AckInterval;
         while (true) {
             // 1. Await for acknowledgement
+            // Debug.WriteLine("Waiting for ACK");
             var ack = await ackReader.ReadAsync(cancellationToken).ConfigureAwait(false);
+            // Debug.WriteLine($"Got ACK: {ack}");
             if (ack.NextIndex == long.MaxValue)
                 return; // The only point we exit is when the client tells us it's done
 
             if (ack.MustReset)
-                index = ack.NextIndex;
+                ackIndex = index = ack.NextIndex;
+            else
+                ackIndex = ack.NextIndex;
+            ackIndex += Stream.AckInterval;
+            var maxIndex = ackIndex + Stream.AckInterval;
 
             // 2. Send as much as we can until we'll need to await for the next acknowledgement
-            var ackIndex = index + Stream.AckInterval;
-            var maxIndex = ackIndex + Stream.AckInterval;
             while (index < maxIndex) {
                 var bufferIndex = index - bufferOffset;
                 if (bufferIndex < 0L) {
@@ -158,6 +164,7 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
 
     private ValueTask Send(long index, long ackIndex, Result<T> item)
     {
+        // Debug.WriteLine($"Sent item: {index}, {ackIndex}");
         if (item.IsValue(out var value))
             return _systemCallSender.StreamItem(Peer, Id, index, ackIndex, value);
 

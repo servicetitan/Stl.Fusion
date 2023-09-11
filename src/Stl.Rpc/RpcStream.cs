@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Stl.Interception;
 using Stl.Internal;
 using Stl.Rpc.Infrastructure;
@@ -130,6 +131,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
             if (_remoteChannel == null)
                 throw Errors.InternalError("RpcStream got an item before the enumeration.");
 
+            // Debug.WriteLine($"Got item: {index}, {ackIndex}");
             if (index < _nextIndex)
                 return;
 
@@ -140,8 +142,11 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
 
             _nextIndex++;
             _remoteChannel.Writer.TryWrite((T)item!); // Must always succeed for unbounded channel
-            if (_nextIndex == ackIndex)
-                _ = SendAck(ackIndex);
+            var delta = _nextIndex - ackIndex;
+            if (delta < 0 || delta % AckInterval != 0)
+                return;
+
+            _ = SendAck(ackIndex);
         }
     }
 
@@ -218,6 +223,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
         if (_nextIndex < 0) // Marked as missing
             return default;
 
+        // Debug.WriteLine($"ACK: ({index}, {mustReset})");
         var peer = Peer!;
         return peer.Hub.SystemCallSender.StreamAck(peer, Id, index, mustReset);
     }

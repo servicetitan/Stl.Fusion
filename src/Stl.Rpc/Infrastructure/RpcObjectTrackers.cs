@@ -4,7 +4,7 @@ namespace Stl.Rpc.Infrastructure;
 
 public abstract class RpcObjectTracker
 {
-    public static TimeSpan KeepAlivePeriod { get; set; } = TimeSpan.FromSeconds(15);
+    public static TimeSpan KeepAlivePeriod { get; set; } = TimeSpan.FromSeconds(1500);
 
     private RpcPeer _peer = null!;
 
