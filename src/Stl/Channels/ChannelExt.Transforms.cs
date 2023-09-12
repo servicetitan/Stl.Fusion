@@ -10,7 +10,7 @@ public static partial class ChannelExt
         this ChannelReader<TIn> reader,
         ChannelWriter<TOut> writer,
         Func<TIn, TOut> transformer,
-        ChannelCompletionMode channelCompletionMode,
+        ChannelCopyMode copyMode,
         CancellationToken cancellationToken = default)
     {
         try {
@@ -19,18 +19,20 @@ public static partial class ChannelExt
                 var newItem = transformer(item);
                 await writer.WriteAsync(newItem, cancellationToken).ConfigureAwait(false);
             }
-            if ((channelCompletionMode & ChannelCompletionMode.PropagateCompletion) != 0)
+            if ((copyMode & ChannelCopyMode.CopyCompletion) != 0)
                 writer.TryComplete();
         }
         catch (OperationCanceledException oce) {
-            if ((channelCompletionMode & ChannelCompletionMode.PropagateCancellation) != 0)
+            if ((copyMode & ChannelCopyMode.CopyCancellation) != 0)
                 writer.TryComplete(oce);
-            throw;
+            if ((copyMode & ChannelCopyMode.Silently) == 0)
+                throw;
         }
         catch (Exception e) {
-            if ((channelCompletionMode & ChannelCompletionMode.PropagateError) != 0)
+            if ((copyMode & ChannelCopyMode.CopyError) != 0)
                 writer.TryComplete(e);
-            throw;
+            if ((copyMode & ChannelCopyMode.Silently) == 0)
+                throw;
         }
     }
 
@@ -38,7 +40,7 @@ public static partial class ChannelExt
         this ChannelReader<TIn> reader,
         ChannelWriter<TOut> writer,
         Func<TIn, ValueTask<TOut>> transformer,
-        ChannelCompletionMode channelCompletionMode,
+        ChannelCopyMode copyMode,
         CancellationToken cancellationToken = default)
     {
         try {
@@ -47,18 +49,20 @@ public static partial class ChannelExt
                 var newItem = await transformer(item).ConfigureAwait(false);
                 await writer.WriteAsync(newItem, cancellationToken).ConfigureAwait(false);
             }
-            if ((channelCompletionMode & ChannelCompletionMode.PropagateCompletion) != 0)
+            if ((copyMode & ChannelCopyMode.CopyCompletion) != 0)
                 writer.TryComplete();
         }
         catch (OperationCanceledException oce) {
-            if ((channelCompletionMode & ChannelCompletionMode.PropagateCancellation) != 0)
+            if ((copyMode & ChannelCopyMode.CopyCancellation) != 0)
                 writer.TryComplete(oce);
-            throw;
+            if ((copyMode & ChannelCopyMode.Silently) == 0)
+                throw;
         }
         catch (Exception e) {
-            if ((channelCompletionMode & ChannelCompletionMode.PropagateError) != 0)
+            if ((copyMode & ChannelCopyMode.CopyError) != 0)
                 writer.TryComplete(e);
-            throw;
+            if ((copyMode & ChannelCopyMode.Silently) == 0)
+                throw;
         }
     }
 
@@ -69,7 +73,7 @@ public static partial class ChannelExt
         ChannelWriter<TOut> writer,
         Func<TIn, TOut> transformer,
         int concurrencyLevel,
-        ChannelCompletionMode channelCompletionMode,
+        ChannelCopyMode copyMode,
         CancellationToken cancellationToken = default)
     {
         if (concurrencyLevel <= 0)
@@ -96,14 +100,16 @@ public static partial class ChannelExt
                 }
             }
             catch (OperationCanceledException oce) {
-                if ((channelCompletionMode & ChannelCompletionMode.PropagateCancellation) != 0)
+                if ((copyMode & ChannelCopyMode.CopyCancellation) != 0)
                     writer.TryComplete(oce);
-                throw;
+                if ((copyMode & ChannelCopyMode.Silently) == 0)
+                    throw;
             }
             catch (Exception e) {
-                if ((channelCompletionMode & ChannelCompletionMode.PropagateError) != 0)
+                if ((copyMode & ChannelCopyMode.CopyError) != 0)
                     writer.TryComplete(e);
-                throw;
+                if ((copyMode & ChannelCopyMode.Silently) == 0)
+                    throw;
             }
         }
 
@@ -111,7 +117,7 @@ public static partial class ChannelExt
         for (var i = 0; i < concurrencyLevel; i++)
             workers[i] = Task.Run(Worker, cancellationToken);
         await Task.WhenAll(workers).ConfigureAwait(false);
-        if ((channelCompletionMode & ChannelCompletionMode.PropagateCompletion) != 0)
+        if ((copyMode & ChannelCopyMode.CopyCompletion) != 0)
             writer.TryComplete(error);
     }
 
@@ -120,7 +126,7 @@ public static partial class ChannelExt
         ChannelWriter<TOut> writer,
         Func<TIn, ValueTask<TOut>> transformer,
         int concurrencyLevel,
-        ChannelCompletionMode channelCompletionMode,
+        ChannelCopyMode copyMode,
         CancellationToken cancellationToken = default)
     {
         if (concurrencyLevel <= 0)
@@ -147,14 +153,16 @@ public static partial class ChannelExt
                 }
             }
             catch (OperationCanceledException oce) {
-                if ((channelCompletionMode & ChannelCompletionMode.PropagateCancellation) != 0)
+                if ((copyMode & ChannelCopyMode.CopyCancellation) != 0)
                     writer.TryComplete(oce);
-                throw;
+                if ((copyMode & ChannelCopyMode.Silently) == 0)
+                    throw;
             }
             catch (Exception e) {
-                if ((channelCompletionMode & ChannelCompletionMode.PropagateError) != 0)
+                if ((copyMode & ChannelCopyMode.CopyError) != 0)
                     writer.TryComplete(e);
-                throw;
+                if ((copyMode & ChannelCopyMode.Silently) == 0)
+                    throw;
             }
         }
 
@@ -162,7 +170,7 @@ public static partial class ChannelExt
         for (var i = 0; i < concurrencyLevel; i++)
             workers[i] = Task.Run(Worker, cancellationToken);
         await Task.WhenAll(workers).ConfigureAwait(false);
-        if ((channelCompletionMode & ChannelCompletionMode.PropagateCompletion) != 0)
+        if ((copyMode & ChannelCopyMode.CopyCompletion) != 0)
             writer.TryComplete(error);
     }
 }

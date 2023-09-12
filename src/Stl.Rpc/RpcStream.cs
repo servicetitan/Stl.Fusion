@@ -132,7 +132,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
     }
 
     protected internal override ArgumentList CreateStreamItemArguments()
-        => ArgumentList.New(0L, 0L, default(T));
+        => ArgumentList.New<long, int, T>(0L, 0, default!);
 
     protected internal override Task OnItem(long index, long ackIndex, object? item)
     {
@@ -224,7 +224,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
 
         // Debug.WriteLine($"ACK: ({index}, {mustReset})");
         var peer = Peer!;
-        return peer.Hub.SystemCallSender.StreamAck(peer, Id, index, mustReset);
+        return peer.Hub.SystemCallSender.Ack(peer, Id, index, mustReset);
     }
 
     // Nested types

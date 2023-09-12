@@ -146,47 +146,51 @@ public static class EnumerableExt
 
     public static async Task CopyTo<T>(this IEnumerable<T> source,
         ChannelWriter<T> writer,
-        ChannelCompletionMode channelCompletionMode,
+        ChannelCopyMode copyMode,
         CancellationToken cancellationToken = default)
     {
         try {
             foreach (var item in source)
                 await writer.WriteAsync(item, cancellationToken).ConfigureAwait(false);
-            if ((channelCompletionMode & ChannelCompletionMode.PropagateCompletion) != 0)
+            if ((copyMode & ChannelCopyMode.CopyCompletion) != 0)
                 writer.TryComplete();
         }
         catch (OperationCanceledException oce) {
-            if ((channelCompletionMode & ChannelCompletionMode.PropagateCancellation) != 0)
+            if ((copyMode & ChannelCopyMode.CopyCancellation) != 0)
                 writer.TryComplete(oce);
-            throw;
+            if ((copyMode & ChannelCopyMode.Silently) == 0)
+                throw;
         }
         catch (Exception e) {
-            if ((channelCompletionMode & ChannelCompletionMode.PropagateError) != 0)
+            if ((copyMode & ChannelCopyMode.CopyError) != 0)
                 writer.TryComplete(e);
-            throw;
+            if ((copyMode & ChannelCopyMode.Silently) == 0)
+                throw;
         }
     }
 
     public static async Task CopyTo<T>(this IAsyncEnumerable<T> source,
         ChannelWriter<T> writer,
-        ChannelCompletionMode channelCompletionMode,
+        ChannelCopyMode copyMode,
         CancellationToken cancellationToken = default)
     {
         try {
             await foreach (var item in source.WithCancellation(cancellationToken).ConfigureAwait(false))
                 await writer.WriteAsync(item, cancellationToken).ConfigureAwait(false);
-            if ((channelCompletionMode & ChannelCompletionMode.PropagateCompletion) != 0)
+            if ((copyMode & ChannelCopyMode.CopyCompletion) != 0)
                 writer.TryComplete();
         }
         catch (OperationCanceledException oce) {
-            if ((channelCompletionMode & ChannelCompletionMode.PropagateCancellation) != 0)
+            if ((copyMode & ChannelCopyMode.CopyCancellation) != 0)
                 writer.TryComplete(oce);
-            throw;
+            if ((copyMode & ChannelCopyMode.Silently) == 0)
+                throw;
         }
         catch (Exception e) {
-            if ((channelCompletionMode & ChannelCompletionMode.PropagateError) != 0)
+            if ((copyMode & ChannelCopyMode.CopyError) != 0)
                 writer.TryComplete(e);
-            throw;
+            if ((copyMode & ChannelCopyMode.Silently) == 0)
+                throw;
         }
     }
 
@@ -203,7 +207,7 @@ public static class EnumerableExt
         CancellationToken cancellationToken = default)
     {
         var channel = Channel.CreateUnbounded<T>(options);
-        _ = Task.Run(() => source.CopyTo(channel, ChannelCompletionMode.Full, cancellationToken), cancellationToken);
+        _ = source.CopyTo(channel, ChannelCopyMode.CopyAllSilently, cancellationToken);
         return channel;
     }
 
@@ -218,7 +222,7 @@ public static class EnumerableExt
         CancellationToken cancellationToken = default)
     {
         var channel = Channel.CreateUnbounded<T>(options);
-        _ = Task.Run(() => source.CopyTo(channel, ChannelCompletionMode.Full, cancellationToken), cancellationToken);
+        _ = source.CopyTo(channel, ChannelCopyMode.CopyAllSilently, cancellationToken);
         return channel;
     }
 
@@ -230,7 +234,7 @@ public static class EnumerableExt
         CancellationToken cancellationToken = default)
     {
         var channel = Channel.CreateBounded<T>(options);
-        _ = Task.Run(() => source.CopyTo(channel, ChannelCompletionMode.Full, cancellationToken), cancellationToken);
+        _ = source.CopyTo(channel, ChannelCopyMode.CopyAllSilently, cancellationToken);
         return channel;
     }
 
@@ -240,7 +244,7 @@ public static class EnumerableExt
         CancellationToken cancellationToken = default)
     {
         var channel = Channel.CreateBounded<T>(options);
-        _ = Task.Run(() => source.CopyTo(channel, ChannelCompletionMode.Full, cancellationToken), cancellationToken);
+        _ = source.CopyTo(channel, ChannelCopyMode.CopyAllSilently, cancellationToken);
         return channel;
     }
 }

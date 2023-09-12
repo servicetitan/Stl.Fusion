@@ -108,12 +108,18 @@ public class TestRpcService : ITestRpcService
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var hasDelay = delay != default;
+        var minDelay = TimeSpan.FromMilliseconds(1);
         for (var i = 0; i < count; i++) {
             if (i == failAt)
                 throw new InvalidOperationException("Fail!");
+
             yield return i;
-            if (hasDelay)
-                await Task.Delay(delay.Next(), cancellationToken);
+            if (!hasDelay)
+                continue;
+
+            var duration = delay.Next();
+            if (duration >= minDelay)
+                await Task.Delay(duration, cancellationToken);
         }
     }
 }

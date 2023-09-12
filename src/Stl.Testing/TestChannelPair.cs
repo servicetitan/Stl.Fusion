@@ -41,7 +41,7 @@ public class TestChannelPair<T> : ChannelPair<T>
                     Out.WriteLine($"{Name}.Channel2 -> {m}");
                     return m;
                 },
-                ChannelCompletionMode.Full
+                ChannelCopyMode.CopyAllSilently
             );
             Channel1 = cp1.Channel1;
             Channel2 = cp2.Channel2;

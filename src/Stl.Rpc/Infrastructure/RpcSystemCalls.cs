@@ -16,16 +16,16 @@ public interface IRpcSystemCalls : IRpcSystemService
     Task<RpcNoWait> MissingObjects(long[] objectIds);
 
     // Streams
-    Task<RpcNoWait> StreamAck(long nextIndex, bool mustReset);
-    Task<RpcNoWait> StreamItem(long index, long ackIndex, object? item);
-    Task<RpcNoWait> StreamEnd(long index, ExceptionInfo error);
+    Task<RpcNoWait> Ack(long nextIndex, bool mustReset);
+    Task<RpcNoWait> I(long index, int ackOffset, object? item);
+    Task<RpcNoWait> End(long index, ExceptionInfo error);
 }
 
 public class RpcSystemCalls(IServiceProvider services)
     : RpcServiceBase(services), IRpcSystemCalls, IRpcDynamicCallHandler
 {
     private static readonly Symbol OkMethodName = nameof(Ok);
-    private static readonly Symbol StreamItemMethodName = nameof(StreamItem);
+    private static readonly Symbol StreamItemMethodName = nameof(I);
 
     public static readonly Symbol Name = "$sys";
 
@@ -77,7 +77,7 @@ public class RpcSystemCalls(IServiceProvider services)
         return RpcNoWait.Tasks.Completed;
     }
 
-    public async Task<RpcNoWait> StreamAck(long nextIndex, bool mustReset)
+    public async Task<RpcNoWait> Ack(long nextIndex, bool mustReset)
     {
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
@@ -89,17 +89,17 @@ public class RpcSystemCalls(IServiceProvider services)
         return default;
     }
 
-    public Task<RpcNoWait> StreamItem(long index, long ackIndex, object? item)
+    public Task<RpcNoWait> I(long index, int ackOffset, object? item)
     {
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
         var objectId = context.Message.RelatedId;
         return peer.RemoteObjects.Get(objectId) is RpcStream stream
-            ? RpcNoWait.Tasks.From(stream.OnItem(index, ackIndex, item))
+            ? RpcNoWait.Tasks.From(stream.OnItem(index, index + ackOffset, item))
             : RpcNoWait.Tasks.Completed;
     }
 
-    public Task<RpcNoWait> StreamEnd(long index, ExceptionInfo error)
+    public Task<RpcNoWait> End(long index, ExceptionInfo error)
     {
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;

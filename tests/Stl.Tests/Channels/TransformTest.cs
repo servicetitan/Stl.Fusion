@@ -53,21 +53,21 @@ public class TransformTest
                 return i;
             },
             concurrencyLevel,
-            ChannelCompletionMode.Full));
+            ChannelCopyMode.CopyAllSilently));
         await TestOne(null, (s, t) => s.Reader.ConcurrentTransform(t.Writer,
             i => i,
             concurrencyLevel,
-            ChannelCompletionMode.Full));
+            ChannelCopyMode.CopyAllSilently));
         await TestOne(null,
             (s, t) => s.Reader.Transform(t.Writer,
             async i => {
                 await Task.Delay(1).ConfigureAwait(false);
                 return i;
             },
-            ChannelCompletionMode.Full));
+            ChannelCopyMode.CopyAllSilently));
         await TestOne(null, (s, t) => s.Reader.Transform(
             t.Writer,
             i => i,
-            ChannelCompletionMode.Full));
+            ChannelCopyMode.CopyAllSilently));
     }
 }

@@ -48,7 +48,7 @@ public sealed class RpcInboundCallTracker : RpcCallTracker<RpcInboundCall>
 
 public sealed class RpcOutboundCallTracker : RpcCallTracker<RpcOutboundCall>
 {
-    public static readonly TimeSpan AbortCheckPeriod = TimeSpan.FromSeconds(1);
+    public static TimeSpan AbortCheckPeriod { get; set; } = TimeSpan.FromSeconds(1);
 
     private long _lastId;
 

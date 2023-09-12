@@ -1,7 +1,10 @@
 using System.Diagnostics;
+using Stl.Channels;
 using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
+
+#pragma warning disable MA0042
 
 public abstract class RpcSharedStream(RpcStream stream) : WorkerBase, IRpcSharedObject
 {
@@ -44,8 +47,6 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
             SingleWriter = true,
         });
 
-    private long _lastAckIndex;
-
     public new RpcStream<T> Stream { get; } = (RpcStream<T>)stream;
 
     protected override async Task DisposeAsyncCore()
@@ -86,19 +87,29 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
                 (long NextIndex, bool MustReset) ack;
                 if (nextAckTask.IsCompleted)
                     ack = nextAckTask.Result;
-                else {
+                else
                     // Debug.WriteLine("-> Waiting for ACK");
                     ack = await nextAckTask.ConfigureAwait(false);
-                }
-                // Debug.WriteLine($"-> ACK: {ack}");
-                if (ack.NextIndex == long.MaxValue)
-                    return; // The only point we exit is when the client tells us it's done
 
-                nextAckTask = ackReader.ReadAsync(cancellationToken);
+                // Skip accumulated acknowledgements
+                while (true) {
+                    // Debug.WriteLine($"-> ACK: {ack}");
+                    if (ack.NextIndex == long.MaxValue)
+                        return; // Client tells us it's done w/ this stream
+
+                    if (ack.MustReset)
+                        index = ack.NextIndex;
+
+                    nextAckTask = ackReader.ReadAsync(cancellationToken);
+                    if (!nextAckTask.IsCompleted)
+                        break;
+
+                    ack = nextAckTask.Result;
+                }
+
+                // Process the latest acknowledgement
                 var ackIndex = ack.NextIndex + Stream.AckDistance;
                 var maxIndex = ack.NextIndex + Stream.AdvanceDistance;
-                if (ack.MustReset)
-                    index = ack.NextIndex;
 
                 // 2. Send as much as we can until we'll need to await for the next acknowledgement
                 while (index < maxIndex) {
@@ -167,11 +178,10 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
     private Task Send(long index, long ackIndex, Result<T> item)
     {
         // Debug.WriteLine($"Sent item: {index}, {ackIndex}");
-        _lastAckIndex = ackIndex;
         if (item.IsValue(out var value))
-            return _systemCallSender.StreamItem(Peer, Id, index, ackIndex, value);
+            return _systemCallSender.Item(Peer, Id, index, (int)(ackIndex - index), value);
 
         var error = ReferenceEquals(item.Error, NoError) ? null : item.Error;
-        return _systemCallSender.StreamEnd(Peer, Id, index, error);
+        return _systemCallSender.End(Peer, Id, index, error);
     }
 }

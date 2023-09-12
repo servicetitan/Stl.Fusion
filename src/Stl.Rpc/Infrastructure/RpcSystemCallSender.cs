@@ -13,9 +13,9 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
     private RpcMethodDef? _notFoundMethodDef;
     private RpcMethodDef? _keepAliveMethodDef;
     private RpcMethodDef? _missingObjectsMethodDef;
-    private RpcMethodDef? _streamAckMethodDef;
-    private RpcMethodDef? _streamItemMethodDef;
-    private RpcMethodDef? _streamEndMethodDef;
+    private RpcMethodDef? _ackMethodDef;
+    private RpcMethodDef? _itemMethodDef;
+    private RpcMethodDef? _endMethodDef;
 
     public IRpcSystemCalls Client => _client
         ??= Services.GetRequiredService<IRpcSystemCalls>();
@@ -33,12 +33,12 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
         ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.KeepAlive)));
     public RpcMethodDef MissingObjectsMethodDef => _missingObjectsMethodDef
         ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.MissingObjects)));
-    public RpcMethodDef StreamAckMethodDef => _streamAckMethodDef
-        ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.StreamAck)));
-    public RpcMethodDef StreamItemMethodDef => _streamItemMethodDef
-        ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.StreamItem)));
-    public RpcMethodDef StreamEndMethodDef => _streamEndMethodDef
-        ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.StreamEnd)));
+    public RpcMethodDef AckMethodDef => _ackMethodDef
+        ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.Ack)));
+    public RpcMethodDef ItemMethodDef => _itemMethodDef
+        ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.I)));
+    public RpcMethodDef EndMethodDef => _endMethodDef
+        ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.End)));
 
     public Task Complete<TResult>(RpcPeer peer, long callId,
         Result<TResult> result, bool allowPolymorphism,
@@ -91,6 +91,8 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
         return call.SendNoWait(false);
     }
 
+    // Objects
+
     public Task KeepAlive(RpcPeer peer, long[] objectIds, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
@@ -109,34 +111,36 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
         return call.SendNoWait(false);
     }
 
-    public Task StreamAck(RpcPeer peer, long objectId, long nextIndex, bool mustReset, List<RpcHeader>? headers = null)
+    // Streams
+
+    public Task Ack(RpcPeer peer, long objectId, long nextIndex, bool mustReset, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
             RelatedCallId = objectId,
         };
-        var call = context.PrepareCall(StreamAckMethodDef, ArgumentList.New(nextIndex, mustReset))!;
+        var call = context.PrepareCall(AckMethodDef, ArgumentList.New(nextIndex, mustReset))!;
         return call.SendNoWait(false);
     }
 
-    public Task StreamItem<TItem>(RpcPeer peer, long objectId, long index, long ackIndex, TItem result, List<RpcHeader>? headers = null)
+    public Task Item<TItem>(RpcPeer peer, long objectId, long index, int ackOffset, TItem result, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
             RelatedCallId = objectId,
         };
-        var call = context.PrepareCall(StreamItemMethodDef, ArgumentList.New(index, ackIndex, result))!;
+        var call = context.PrepareCall(ItemMethodDef, ArgumentList.New(index, ackOffset, result))!;
         return call.SendNoWait(true);
     }
 
-    public Task StreamEnd(RpcPeer peer, long objectId, long index, Exception? error, List<RpcHeader>? headers = null)
+    public Task End(RpcPeer peer, long objectId, long index, Exception? error, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
             RelatedCallId = objectId,
         };
         // An optimized version of Client.Error(result):
-        var call = context.PrepareCall(StreamEndMethodDef, ArgumentList.New(index, error.ToExceptionInfo()))!;
+        var call = context.PrepareCall(EndMethodDef, ArgumentList.New(index, error.ToExceptionInfo()))!;
         return call.SendNoWait(false);
     }
 }

@@ -39,7 +39,7 @@ public class ChannelPairTest(ITestOutputHelper @out) : TestBase(@out)
         var cp2 = ChannelPair.CreateTwisted(
             Channel.CreateBounded<int>(options),
             Channel.CreateBounded<int>(options));
-        _ = cp1.Channel2.Connect(cp2.Channel1, ChannelCompletionMode.Full);
+        _ = cp1.Channel2.Connect(cp2.Channel1, ChannelCopyMode.CopyAllSilently);
 
         await PassThroughTest(cp1.Channel1, cp2.Channel2);
         await PassThroughTest(cp2.Channel2, cp1.Channel1);
@@ -66,7 +66,7 @@ public class ChannelPairTest(ITestOutputHelper @out) : TestBase(@out)
                 Out.WriteLine($"<- {m}");
                 return m;
             },
-            ChannelCompletionMode.Full
+            ChannelCopyMode.CopyAllSilently
         );
 
         await PassThroughTest(cp1.Channel1, cp2.Channel2);

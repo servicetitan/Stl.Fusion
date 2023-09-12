@@ -6,8 +6,6 @@ namespace Stl.Rpc.Infrastructure;
 
 public abstract class RpcObjectTracker
 {
-    public static TimeSpan KeepAlivePeriod { get; set; } = TimeSpan.FromSeconds(15);
-
     private RpcPeer _peer = null!;
 
     public RpcPeer Peer {
@@ -27,7 +25,8 @@ public abstract class RpcObjectTracker
 
 public class RpcRemoteObjectTracker : RpcObjectTracker, IEnumerable<IRpcObject>
 {
-    public static readonly GCHandlePool GCHandlePool = new(new GCHandlePool.Options() {
+    public static TimeSpan KeepAlivePeriod { get; set; } = TimeSpan.FromSeconds(15);
+    public static GCHandlePool GCHandlePool { get; set; } = new(new GCHandlePool.Options() {
         Capacity = HardwareInfo.GetProcessorCountPo2Factor(16),
     });
 
@@ -130,7 +129,9 @@ public class RpcRemoteObjectTracker : RpcObjectTracker, IEnumerable<IRpcObject>
 
 public sealed class RpcSharedObjectTracker : RpcObjectTracker, IEnumerable<IRpcSharedObject>
 {
-    public static readonly TimeSpan AbortCheckPeriod = TimeSpan.FromSeconds(1);
+    public static TimeSpan ReleasePeriod { get; set; } = TimeSpan.FromSeconds(10);
+    public static TimeSpan ReleaseTimeout { get; set; }= TimeSpan.FromSeconds(65);
+    public static TimeSpan AbortCheckPeriod { get; set; } = TimeSpan.FromSeconds(1);
 
     private long _lastId;
     private readonly ConcurrentDictionary<long, IRpcSharedObject> _objects = new();
@@ -166,15 +167,12 @@ public sealed class RpcSharedObjectTracker : RpcObjectTracker, IEnumerable<IRpcS
         try {
             var hub = Peer.Hub;
             var clock = hub.Clock;
-            var halfKeepAlivePeriod = KeepAlivePeriod.Multiply(0.5);
-            var keepAliveTimeout = KeepAlivePeriod.Multiply(2.1);
-            await clock.Delay(halfKeepAlivePeriod, cancellationToken).ConfigureAwait(false);
             while (true) {
-                var minLastKeepAliveAt = CpuTimestamp.Now - keepAliveTimeout;
+                await clock.Delay(ReleasePeriod, cancellationToken).ConfigureAwait(false);
+                var minLastKeepAliveAt = CpuTimestamp.Now - ReleaseTimeout;
                 foreach (var (_, obj) in _objects)
                     if (obj.LastKeepAliveAt < minLastKeepAliveAt && Unregister(obj))
                         TryDispose(obj);
-                await clock.Delay(KeepAlivePeriod, cancellationToken).ConfigureAwait(false);
             }
         }
         catch {
@@ -219,7 +217,7 @@ public sealed class RpcSharedObjectTracker : RpcObjectTracker, IEnumerable<IRpcS
 
     // Private methods
 
-    public void TryDispose(IRpcSharedObject obj)
+    public static void TryDispose(IRpcSharedObject obj)
     {
         if (obj is IAsyncDisposable ad)
             _ = ad.DisposeAsync();

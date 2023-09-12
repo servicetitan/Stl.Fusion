@@ -216,7 +216,6 @@ public class RpcWebSocketTest(ITestOutputHelper @out) : RpcTestBase(@out)
         await AssertNoCalls(peer);
     }
 
-
     [Fact]
     public async Task StreamInputTest()
     {

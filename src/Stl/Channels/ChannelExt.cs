@@ -14,50 +14,52 @@ public static partial class ChannelExt
     public static async Task Copy<T>(
         this ChannelReader<T> reader,
         ChannelWriter<T> writer,
-        ChannelCompletionMode channelCompletionMode,
+        ChannelCopyMode copyMode,
         CancellationToken cancellationToken = default)
     {
         try {
             while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false))
             while (reader.TryRead(out var value))
                 await writer.WriteAsync(value, cancellationToken).ConfigureAwait(false);
-            if ((channelCompletionMode & ChannelCompletionMode.PropagateCompletion) != 0)
+            if ((copyMode & ChannelCopyMode.CopyCompletion) != 0)
                 writer.TryComplete();
         }
         catch (OperationCanceledException oce) {
-            if ((channelCompletionMode & ChannelCompletionMode.PropagateCancellation) != 0)
+            if ((copyMode & ChannelCopyMode.CopyCancellation) != 0)
                 writer.TryComplete(oce);
-            throw;
+            if ((copyMode & ChannelCopyMode.Silently) == 0)
+                throw;
         }
         catch (Exception e) {
-            if ((channelCompletionMode & ChannelCompletionMode.PropagateError) != 0)
+            if ((copyMode & ChannelCopyMode.CopyError) != 0)
                 writer.TryComplete(e);
-            throw;
+            if ((copyMode & ChannelCopyMode.Silently) == 0)
+                throw;
         }
     }
 
     public static Task Connect<T>(
         this Channel<T> channel1,
         Channel<T> channel2,
-        ChannelCompletionMode channelCompletionMode,
+        ChannelCopyMode copyMode,
         CancellationToken cancellationToken = default)
         => Task.WhenAll(
             Task.Run(() => channel1.Reader.Copy(
-                channel2, channelCompletionMode, cancellationToken), default),
+                channel2, copyMode, cancellationToken), default),
             Task.Run(() => channel2.Reader.Copy(
-                channel1, channelCompletionMode, cancellationToken), default)
+                channel1, copyMode, cancellationToken), default)
         );
 
     public static Task Connect<T1, T2>(
         this Channel<T1> channel1, Channel<T2> channel2,
         Func<T1, T2> adapter12, Func<T2, T1> adapter21,
-        ChannelCompletionMode channelCompletionMode,
+        ChannelCopyMode copyMode,
         CancellationToken cancellationToken = default)
         => Task.WhenAll(
             Task.Run(() => channel1.Reader.Transform(
-                channel2, adapter12, channelCompletionMode, cancellationToken), default),
+                channel2, adapter12, copyMode, cancellationToken), default),
             Task.Run(() => channel2.Reader.Transform(
-                channel1, adapter21, channelCompletionMode, cancellationToken), default)
+                channel1, adapter21, copyMode, cancellationToken), default)
         );
 
     public static async Task Consume<T>(
@@ -104,7 +106,7 @@ public static partial class ChannelExt
         _ = downstreamChannel.Connect(pair.Channel1,
             serializer.Read,
             serializer.Write,
-            ChannelCompletionMode.Full,
+            ChannelCopyMode.CopyAllSilently,
             cancellationToken);
         return pair.Channel2;
     }
@@ -128,7 +130,7 @@ public static partial class ChannelExt
         _ = downstreamChannel.Connect(pair.Channel1,
             serializer.Read,
             Write,
-            ChannelCompletionMode.Full,
+            ChannelCopyMode.CopyAllSilently,
             cancellationToken);
         return pair.Channel2;
 
@@ -170,7 +172,7 @@ public static partial class ChannelExt
         _ = channel.Connect(pair.Channel1,
             m => LogMessage(m, true),
             m => LogMessage(m, false),
-            ChannelCompletionMode.Full,
+            ChannelCopyMode.CopyAllSilently,
             cancellationToken);
         return pair.Channel2;
     }
