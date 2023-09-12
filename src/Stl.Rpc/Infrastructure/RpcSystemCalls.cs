@@ -83,7 +83,7 @@ public class RpcSystemCalls(IServiceProvider services)
         var peer = context.Peer;
         var objectId = context.Message.RelatedId;
         if (peer.SharedObjects.Get(objectId) is RpcSharedStream stream)
-            stream.OnAck(nextIndex, mustReset);
+            await stream.OnAck(nextIndex, mustReset).ConfigureAwait(false);
         else
             await peer.Hub.SystemCallSender.MissingObjects(peer, new[] { objectId }).ConfigureAwait(false);
         return default;

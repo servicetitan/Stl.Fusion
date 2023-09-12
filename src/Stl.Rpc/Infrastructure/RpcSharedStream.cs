@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Stl.Channels;
 using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
@@ -35,7 +34,7 @@ public abstract class RpcSharedStream(RpcStream stream) : WorkerBase, IRpcShared
     public void OnKeepAlive()
         => LastKeepAliveAt = CpuTimestamp.Now;
 
-    public abstract void OnAck(long nextIndex, bool mustReset);
+    public abstract Task OnAck(long nextIndex, bool mustReset);
 }
 
 public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(stream)
@@ -60,12 +59,18 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
         }
     }
 
-    public override void OnAck(long nextIndex, bool mustReset)
+    public override Task OnAck(long nextIndex, bool mustReset)
     {
-        LastKeepAliveAt = CpuTimestamp.Now;
-        if (WhenRunning == null)
-            this.Start();
-        _acks.Writer.TryWrite((nextIndex, mustReset)); // Must always succeed for unbounded channel
+        lock (Lock) {
+            LastKeepAliveAt = CpuTimestamp.Now;
+            if (WhenRunning == null)
+                this.Start();
+            else if (WhenRunning.IsCompleted)
+                return SendNotFound(nextIndex, nextIndex);
+
+            _acks.Writer.TryWrite((nextIndex, mustReset)); // Must always succeed for unbounded channel
+            return Task.CompletedTask;
+        }
     }
 
     // Protected & private methods
@@ -78,91 +83,93 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
             var isEnumerationEnded = false;
             var ackReader = _acks.Reader;
             var buffer = new RingBuffer<Result<T>>(Stream.AdvanceDistance + 1);
-            var bufferOffset = 0L;
+            var bufferStart = 0L;
             var index = 0L;
-            var nextAckTask = ackReader.ReadAsync(cancellationToken);
+            var whenAckReady = ackReader.WaitToReadAsync(cancellationToken).AsTask();
+            var whenMovedNext = SafeMoveNext(enumerator);
+            var whenMovedNextAsTask = (Task<bool>?)null;
             while (true) {
                 nextAck:
-                // 1. Await for acknowledgement
-                (long NextIndex, bool MustReset) ack;
-                if (nextAckTask.IsCompleted)
-                    ack = nextAckTask.Result;
-                else
-                    // Debug.WriteLine("-> Waiting for ACK");
-                    ack = await nextAckTask.ConfigureAwait(false);
-
-                // Skip accumulated acknowledgements
-                while (true) {
-                    // Debug.WriteLine($"-> ACK: {ack}");
+                // 1. Await for acknowledgement & process accumulated acknowledgements
+                (long NextIndex, bool MustReset) ack = (-1L, false);
+                if (!whenAckReady.IsCompleted) {
+                    // Debug.WriteLine($"{Id}: ?ACK");
+                    await whenAckReady.ConfigureAwait(false);
+                }
+                while (ackReader.TryRead(out var nextAck)) {
+                    ack = nextAck;
+                    // Debug.WriteLine($"{Id}: +ACK: {ack}");
                     if (ack.NextIndex == long.MaxValue)
                         return; // Client tells us it's done w/ this stream
 
-                    if (ack.MustReset)
+                    if (ack.MustReset || index < ack.NextIndex)
                         index = ack.NextIndex;
-
-                    nextAckTask = ackReader.ReadAsync(cancellationToken);
-                    if (!nextAckTask.IsCompleted)
-                        break;
-
-                    ack = nextAckTask.Result;
                 }
+                whenAckReady = ackReader.WaitToReadAsync(cancellationToken).AsTask();
+                if (ack.NextIndex < 0)
+                    goto nextAck;
 
-                // Process the latest acknowledgement
+                // 2. Remove what's useless from buffer
+                var bufferOffset = (int)(ack.NextIndex - bufferStart).Clamp(0, buffer.Count);
+                buffer.MoveHead(bufferOffset);
+                bufferStart += bufferOffset;
+
+                // 3. Recalculate the next range to send
                 var ackIndex = ack.NextIndex + Stream.AckDistance;
                 var maxIndex = ack.NextIndex + Stream.AdvanceDistance;
+                if (index < bufferStart) {
+                    // The requested item is somewhere before the buffer start position
+                    await SendInvalidPosition(index, ackIndex).ConfigureAwait(false);
+                    goto nextAck;
+                }
+                var bufferIndex = (int)(index - bufferStart);
 
-                // 2. Send as much as we can until we'll need to await for the next acknowledgement
+                // 3. Send as much as we can
                 while (index < maxIndex) {
-                    var bufferIndex = index - bufferOffset;
-                    if (bufferIndex < 0L) {
-                        // The requested item is somewhere before the buffer start position
-                        await SendInvalidPosition(index, ackIndex).ConfigureAwait(false);
-                        break;
-                    }
-
-                    if (nextAckTask.IsCompleted)
-                        break; // Got Ack, must restart
-
                     Result<T> item;
-                    var missingItemCount = 1 + bufferIndex - buffer.Count;
-                    if (missingItemCount > 0) {
-                        // Fill buffer loop
-                        while (missingItemCount-- > 0) {
-                            if (isEnumerationEnded) {
-                                // index > last item index, which means we've sent StreamEnd already
-                                await SendInvalidPosition(index, ackIndex).ConfigureAwait(false);
-                                goto nextAck;
-                            }
-
-                            try {
-                                var canMove = await enumerator.MoveNextAsync().ConfigureAwait(false);
-                                if (canMove)
-                                    item = enumerator.Current;
-                                else
-                                    item = Result.Error<T>(NoError);
-                            }
-                            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
-                                item = Result.Error<T>(Errors.RpcStreamNotFound());
-                            }
-                            catch (Exception e) {
-                                item = Result.Error<T>(e);
-                            }
-
-                            if (buffer.IsFull) {
-                                buffer.PullHead();
-                                bufferOffset++;
-                            }
-                            buffer.PushTail(item);
-                            isEnumerationEnded |= item.HasError;
+                    // Add enough items to buffer
+                    var missingCount = 1 + bufferIndex - buffer.Count;
+                    while (missingCount-- > 0) {
+                        if (isEnumerationEnded) {
+                            // The requested item is somewhere after the sequence's end
+                            await SendInvalidPosition(index, ackIndex).ConfigureAwait(false);
+                            goto nextAck;
                         }
-                        // Some items were buffered, let's retry sending them
-                        continue;
+
+                        try {
+                            if (whenAckReady.IsCompleted)
+                                goto nextAck; // Got Ack, must restart
+                            if (!whenMovedNext.IsCompleted) {
+                                // Both tasks aren't completed yet
+                                whenMovedNextAsTask ??= whenMovedNext.AsTask();
+                                var tCompleted = await Task.WhenAny(whenAckReady, whenMovedNextAsTask).ConfigureAwait(false);
+                                if (tCompleted == whenAckReady)
+                                    goto nextAck; // Got Ack, must restart
+                            }
+                            var canMove = whenMovedNext.Result;
+                            if (canMove) {
+                                item = enumerator.Current;
+                                whenMovedNextAsTask = null;
+                                whenMovedNext = SafeMoveNext(enumerator);
+                            }
+                            else
+                                item = Result.Error<T>(NoError);
+                        }
+                        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+                            item = Result.Error<T>(Errors.RpcStreamNotFound());
+                        }
+                        catch (Exception e) {
+                            item = Result.Error<T>(e);
+                        }
+
+                        isEnumerationEnded |= item.HasError;
+                        buffer.PushTail(item);
                     }
 
-                    item = buffer[(int)bufferIndex];
+                    item = buffer[bufferIndex++];
                     await Send(index++, ackIndex, item).ConfigureAwait(false);
                     if (item.HasError)
-                        break; // It's the last item -> all we can do now is to wait for Ack
+                        goto nextAck; // It's the last item -> all we can do now is to wait for Ack
                 }
             }
         }
@@ -172,16 +179,30 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
         }
     }
 
+    private Task SendNotFound(long index, long ackIndex)
+        => Send(index, ackIndex, Result.Error<T>(Errors.RpcStreamNotFound()));
+
     private Task SendInvalidPosition(long index, long ackIndex)
         => Send(index, ackIndex, Result.Error<T>(Errors.RpcStreamInvalidPosition()));
 
     private Task Send(long index, long ackIndex, Result<T> item)
     {
-        // Debug.WriteLine($"Sent item: {index}, {ackIndex}");
+        // Debug.WriteLine($"{Id}: <- #{index} (ack @ {ackIndex})");
         if (item.IsValue(out var value))
             return _systemCallSender.Item(Peer, Id, index, (int)(ackIndex - index), value);
 
         var error = ReferenceEquals(item.Error, NoError) ? null : item.Error;
         return _systemCallSender.End(Peer, Id, index, error);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static ValueTask<bool> SafeMoveNext(IAsyncEnumerator<T> enumerator)
+    {
+        try {
+            return enumerator.MoveNextAsync();
+        }
+        catch (Exception e) {
+            return ValueTaskExt.FromException<bool>(e);
+        }
     }
 }

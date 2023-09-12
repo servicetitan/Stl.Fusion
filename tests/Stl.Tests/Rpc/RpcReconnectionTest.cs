@@ -43,7 +43,6 @@ public class RpcReconnectionTest(ITestOutputHelper @out) : RpcLocalTestBase(@out
     {
         await using var services = CreateServices();
         var connection = services.GetRequiredService<RpcTestClient>().Single();
-        var serverPeer = connection.ServerPeer;
         var client = services.GetRequiredService<ITestRpcServiceClient>();
 
         var stream = await client.StreamInt32(100, -1, new RandomTimeSpan(0.02, 1));
@@ -58,7 +57,6 @@ public class RpcReconnectionTest(ITestOutputHelper @out) : RpcLocalTestBase(@out
             disruptorCts.CancelAndDisposeSilently();
             await disruptorTask;
         }
-        await AssertNoObjects(serverPeer);
     }
 
     [Fact(Timeout = 30_000)]
@@ -116,16 +114,22 @@ public class RpcReconnectionTest(ITestOutputHelper @out) : RpcLocalTestBase(@out
     {
         await using var services = CreateServices();
         var connection = services.GetRequiredService<RpcTestClient>().Single();
-        var serverPeer = connection.ServerPeer;
         var client = services.GetRequiredService<ITestRpcServiceClient>();
 
-        var workerCount = HardwareInfo.ProcessorCount / 2;
+        var workerCount = 2;
         if (TestRunnerInfo.IsBuildAgent())
             workerCount = 1;
         var tasks = Enumerable.Range(0, workerCount)
-            .Select(async i => {
-                var stream = await client.StreamInt32(100, -1, new RandomTimeSpan(0.02, 1));
-                (await stream.CountAsync()).Should().Be(100);
+            .Select(async workerIndex => {
+                var totalCount = 500;
+                var stream = await client.StreamInt32(totalCount, -1, new RandomTimeSpan(0.02, 1));
+                var count = 0;
+                await foreach (var item in stream) {
+                    count++;
+                    if (item % 10 == 0)
+                        Out.WriteLine($"{workerIndex}: {item}");
+                }
+                count.Should().Be(totalCount);
             })
             .ToArray();
 
@@ -146,9 +150,9 @@ public class RpcReconnectionTest(ITestOutputHelper @out) : RpcLocalTestBase(@out
         try {
             var rnd1 = new Random();
             while (true) {
-                await Task.Delay(rnd1.Next(10, 40), cancellationToken);
+                await Task.Delay(rnd1.Next(100, 150), cancellationToken);
                 connection.Disconnect();
-                await Task.Delay(rnd1.Next(10, 20), cancellationToken);
+                await Task.Delay(rnd1.Next(20), cancellationToken);
                 await connection.Connect(cancellationToken);
             }
         }

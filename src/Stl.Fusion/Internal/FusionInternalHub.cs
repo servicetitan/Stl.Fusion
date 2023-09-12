@@ -5,6 +5,8 @@ using Stl.Versioning;
 
 namespace Stl.Fusion.Internal;
 
+#pragma warning disable CS9124
+
 public sealed class FusionInternalHub(IServiceProvider services) : IHasServices
 {
     private VersionGenerator<LTag>? _lTagVersionGenerator;

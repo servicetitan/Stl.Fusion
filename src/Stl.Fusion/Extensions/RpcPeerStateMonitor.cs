@@ -46,7 +46,7 @@ public sealed class RpcPeerStateMonitor : WorkerBase
                         // Disconnected -> update ReconnectsAt value until the nextConnectionStateTask completes
                         using var reconnectAtCts = new CancellationTokenSource();
                         // ReSharper disable once AccessToDisposedClosure
-                        _ = nextConnectionStateTask.ContinueWith(_ => reconnectAtCts.Cancel(), CancellationToken.None);
+                        _ = nextConnectionStateTask.ContinueWith(_ => reconnectAtCts.Cancel(), TaskScheduler.Default);
                         try {
                             var reconnectAtChanges = peer.ReconnectsAt.Changes(reconnectAtCts.Token);
                             await foreach (var reconnectsAt in reconnectAtChanges.ConfigureAwait(false)) {

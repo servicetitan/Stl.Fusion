@@ -70,6 +70,14 @@ public struct RingBuffer<T> : IReadOnlyList<T>
         return result;
     }
 
+    public void MoveHead(int skipCount)
+    {
+        if (skipCount < 0 || skipCount > Count)
+            throw new ArgumentOutOfRangeException(nameof(skipCount));
+
+        _start = (_start + skipCount) & Capacity;
+    }
+
     public T PullHead()
         => TryPullHead(out var head) ? head! : throw Errors.CollectionIsEmpty();
 
