@@ -1,11 +1,15 @@
+using System.Globalization;
+using Stl.OS;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Internal;
 using Errors = Stl.Internal.Errors;
 
 namespace Stl.Rpc;
 
-public sealed class RpcHub : ProcessorBase, IHasServices
+public sealed class RpcHub : ProcessorBase, IHasServices, IHasId<Symbol>
 {
+    private static long _lastId;
+
     private RpcServiceRegistry? _serviceRegistry;
     private IEnumerable<RpcPeerTracker>? _peerTrackers;
     private RpcSystemCallSender? _systemCallSender;
@@ -32,6 +36,7 @@ public sealed class RpcHub : ProcessorBase, IHasServices
 
     internal ConcurrentDictionary<RpcPeerRef, RpcPeer> Peers { get; } = new();
 
+    public Symbol Id { get; init; } = NextId();
     public IServiceProvider Services { get; }
     public RpcConfiguration Configuration { get; }
     public RpcServiceRegistry ServiceRegistry => _serviceRegistry ??= Services.GetRequiredService<RpcServiceRegistry>();
@@ -90,4 +95,12 @@ public sealed class RpcHub : ProcessorBase, IHasServices
 
     public RpcServerPeer GetServerPeer(RpcPeerRef peerRef)
         => (RpcServerPeer)GetPeer(peerRef.RequireServer());
+
+    // Private methods
+
+    private static Symbol NextId()
+    {
+        var id = Interlocked.Increment(ref _lastId);
+        return $"{RuntimeInfo.Process.MachinePrefixedId.Value}-{id.ToString(CultureInfo.InvariantCulture)}";
+    }
 }

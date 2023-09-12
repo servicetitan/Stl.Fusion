@@ -113,13 +113,13 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
 
     // Streams
 
-    public Task Ack(RpcPeer peer, long objectId, long nextIndex, bool mustReset, List<RpcHeader>? headers = null)
+    public Task Ack(RpcPeer peer, long objectId, long nextIndex, string? resetKey, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
             RelatedCallId = objectId,
         };
-        var call = context.PrepareCall(AckMethodDef, ArgumentList.New(nextIndex, mustReset))!;
+        var call = context.PrepareCall(AckMethodDef, ArgumentList.New(nextIndex, resetKey))!;
         return call.SendNoWait(false);
     }
 

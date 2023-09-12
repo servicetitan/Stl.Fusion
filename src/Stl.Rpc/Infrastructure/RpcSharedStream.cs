@@ -34,7 +34,7 @@ public abstract class RpcSharedStream(RpcStream stream) : WorkerBase, IRpcShared
     public void OnKeepAlive()
         => LastKeepAliveAt = CpuTimestamp.Now;
 
-    public abstract Task OnAck(long nextIndex, bool mustReset);
+    public abstract Task OnAck(long nextIndex, string? resetKey);
 }
 
 public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(stream)
@@ -59,13 +59,22 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
         }
     }
 
-    public override Task OnAck(long nextIndex, bool mustReset)
+    public override Task OnAck(long nextIndex, string? resetKey)
     {
+        var mustReset = !ReferenceEquals(resetKey, null);
+        if (mustReset && !Equals(Stream.ResetKey, resetKey))
+            return SendNotFound(nextIndex, nextIndex);
+
+        LastKeepAliveAt = CpuTimestamp.Now;
         lock (Lock) {
-            LastKeepAliveAt = CpuTimestamp.Now;
-            if (WhenRunning == null)
-                this.Start();
-            else if (WhenRunning.IsCompleted)
+            var whenRunning = WhenRunning;
+            if (whenRunning == null) {
+                if (mustReset && nextIndex == 0)
+                    this.Start();
+                else
+                    return SendNotFound(nextIndex, nextIndex);
+            }
+            else if (whenRunning.IsCompleted)
                 return SendNotFound(nextIndex, nextIndex);
 
             _acks.Writer.TryWrite((nextIndex, mustReset)); // Must always succeed for unbounded channel

@@ -17,13 +17,14 @@ public abstract partial class RpcStream : IRpcObject
         AllowSynchronousContinuations = false, // We don't want sync handlers to "clog" the call processing loop
     };
 
-    [DataMember, MemoryPackOrder(1)]
-    public int AckDistance { get; init; } = 30;
     [DataMember, MemoryPackOrder(2)]
+    public int AckDistance { get; init; } = 30;
+    [DataMember, MemoryPackOrder(3)]
     public int AdvanceDistance { get; init; } = 61;
 
     // Non-serialized members
     [JsonIgnore, MemoryPackIgnore] public long Id { get; protected set; }
+    [JsonIgnore, MemoryPackIgnore] public string? ResetKey { get; protected set; }
     [JsonIgnore, MemoryPackIgnore] public RpcPeer? Peer { get; protected set; }
     [JsonIgnore, MemoryPackIgnore] public abstract Type ItemType { get; }
     [JsonIgnore, MemoryPackIgnore] public abstract RpcObjectKind Kind { get; }
@@ -69,7 +70,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
             if (Id > 0) // Already registered
                 return Id;
 
-            Peer = RpcOutboundContext.Current?.Peer ?? RpcInboundContext.GetCurrent().Peer;
+            Peer ??= RpcOutboundContext.Current?.Peer ?? RpcInboundContext.GetCurrent().Peer;
             var sharedObjects = Peer.SharedObjects;
             Id = sharedObjects.NextId(); // NOTE: Id changes on serialization!
             var sharedStream = new RpcSharedStream<T>(this);
@@ -77,12 +78,42 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
             return Id;
         }
         set {
+            this.RequireKind(RpcObjectKind.Remote);
             lock (_lock) {
-                this.RequireKind(RpcObjectKind.Remote);
+                if (Id != 0) {
+                    if (Id == value)
+                        return;
+                    throw Errors.AlreadyInitialized(nameof(SerializedId));
+                }
+
                 Id = value;
                 Peer = RpcInboundContext.GetCurrent().Peer;
                 _isRemoteObjectRegistered = true;
                 Peer.RemoteObjects.Register(this);
+            }
+        }
+    }
+
+    [DataMember, MemoryPackOrder(1)]
+    public string SerializedResetKey {
+        get {
+            // This member must be never accessed directly - its only purpose is to be called on serialization
+            this.RequireKind(RpcObjectKind.Local);
+            if (!ReferenceEquals(ResetKey, null)) // Already acquired
+                return ResetKey;
+
+            Peer ??= RpcOutboundContext.Current?.Peer ?? RpcInboundContext.GetCurrent().Peer;
+            return ResetKey = Peer.Hub.Id.Value;
+        }
+        set {
+            this.RequireKind(RpcObjectKind.Remote);
+            lock (_lock) {
+                if (!ReferenceEquals(ResetKey, null)) {
+                    if (Equals(ResetKey, value))
+                        return;
+                    throw Errors.AlreadyInitialized(nameof(SerializedResetKey));
+                }
+                ResetKey = value;
             }
         }
     }
@@ -141,7 +172,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
                 return Task.CompletedTask;
 
             if (index > _nextIndex)
-                return SendAckFromLock(_nextIndex, true);
+                return SendResetFromLock(_nextIndex);
 
             // Debug.WriteLine($"{Id}: +#{index} (ack @ {ackIndex})");
             _nextIndex++;
@@ -161,7 +192,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
                 return Task.CompletedTask;
 
             if (index > _nextIndex)
-                return SendAckFromLock(_nextIndex, true);
+                return SendResetFromLock(_nextIndex);
 
             // Debug.WriteLine($"{Id}: +{index} (ended!)");
             CloseFromLock(error);
@@ -172,7 +203,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
     protected override Task OnReconnected(CancellationToken cancellationToken)
     {
         lock (_lock)
-            return _remoteChannel != null ? SendAckFromLock(_nextIndex, true) : Task.CompletedTask;
+            return _remoteChannel != null ? SendResetFromLock(_nextIndex) : Task.CompletedTask;
     }
 
     protected override void OnMissing()
@@ -210,14 +241,17 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
     private Task SendCloseFromLock()
     {
         _nextIndex = int.MaxValue;
-        return SendAckFromLock(_nextIndex);
+        return SendAckFromLock(_nextIndex, true);
     }
+
+    private Task SendResetFromLock(long index)
+        => SendAckFromLock(index, true);
 
     private Task SendAckFromLock(long index, bool mustReset = false)
     {
         // Debug.WriteLine($"{Id}: <- ACK: ({index}, {mustReset})");
         return !_isMissing
-            ? Peer!.Hub.SystemCallSender.Ack(Peer, Id, index, mustReset)
+            ? Peer!.Hub.SystemCallSender.Ack(Peer, Id, index, mustReset ? ResetKey ?? "" : null)
             : Task.CompletedTask;
     }
 
@@ -273,7 +307,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
                 try {
                     if (!_isStarted) {
                         _isStarted = true;
-                        await _stream.SendAckFromLock(0).ConfigureAwait(false);
+                        await _stream.SendResetFromLock(0).ConfigureAwait(false);
                     }
                     if (!await _reader.WaitToReadAsync(_cancellationToken).ConfigureAwait(false)) {
                         _isEnded = true;

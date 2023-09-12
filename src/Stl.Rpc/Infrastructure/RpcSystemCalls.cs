@@ -16,7 +16,7 @@ public interface IRpcSystemCalls : IRpcSystemService
     Task<RpcNoWait> MissingObjects(long[] objectIds);
 
     // Streams
-    Task<RpcNoWait> Ack(long nextIndex, bool mustReset);
+    Task<RpcNoWait> Ack(long nextIndex, string? resetKey);
     Task<RpcNoWait> I(long index, int ackOffset, object? item);
     Task<RpcNoWait> End(long index, ExceptionInfo error);
 }
@@ -77,13 +77,13 @@ public class RpcSystemCalls(IServiceProvider services)
         return RpcNoWait.Tasks.Completed;
     }
 
-    public async Task<RpcNoWait> Ack(long nextIndex, bool mustReset)
+    public async Task<RpcNoWait> Ack(long nextIndex, string? resetKey)
     {
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
         var objectId = context.Message.RelatedId;
         if (peer.SharedObjects.Get(objectId) is RpcSharedStream stream)
-            await stream.OnAck(nextIndex, mustReset).ConfigureAwait(false);
+            await stream.OnAck(nextIndex, resetKey).ConfigureAwait(false);
         else
             await peer.Hub.SystemCallSender.MissingObjects(peer, new[] { objectId }).ConfigureAwait(false);
         return default;
