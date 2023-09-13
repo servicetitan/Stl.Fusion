@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq.Expressions;
@@ -6,6 +7,7 @@ using Microsoft.EntityFrameworkCore.Query.Internal;
 using Stl.Fusion.EntityFramework.Internal;
 using Stl.Multitenancy;
 using Stl.Net;
+using Stl.Pooling;
 
 namespace Stl.Fusion.EntityFramework;
 
@@ -221,8 +223,8 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
         for (var tryIndex = 0;; tryIndex++) {
             var dbContext = CreateDbContext(tenant);
             await using var _ = dbContext.ConfigureAwait(false);
+            var keys = ArrayPool<TKey>.Shared.Rent(batchSize);
             try {
-                var keys = new TKey[batchSize];
                 var i = 0;
                 foreach (var item in batch)
                     if (!item.TryCancel())
@@ -270,6 +272,9 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
 
                 if (!delay.Task.IsCompleted)
                     await delay.Task.ConfigureAwait(false);
+            }
+            finally {
+                ArrayPool<TKey>.Shared.Return(keys);
             }
         }
     }
