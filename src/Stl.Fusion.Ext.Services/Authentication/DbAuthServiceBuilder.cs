@@ -1,7 +1,10 @@
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Fusion.Authentication.Services;
 using Stl.Fusion.EntityFramework;
+using Stl.Fusion.EntityFramework.Internal;
 
 namespace Stl.Fusion.Authentication;
 
@@ -95,10 +98,16 @@ public readonly struct DbAuthServiceBuilder<TDbContext, TDbSessionInfo, TDbUser,
         else
             Services.AddSingleton(c => {
                 var options = optionsFactory.Invoke(c);
-                var queryTransformer = options.QueryTransformer;
-                return options with {
-                    QueryTransformer = query => queryTransformer.Invoke(query).Include(u => u.Identities),
-                };
+                var oldQueryTransformer = options.QueryTransformer;
+                Expression<Func<IQueryable<TDbUser>, IQueryable<TDbUser>>> queryTransformer =
+                    q => q.Include(u => u.Identities);
+                if (oldQueryTransformer != null) {
+                    var pQuery = oldQueryTransformer.Parameters[0];
+                    var eBody = queryTransformer.Body.Replace(pQuery, oldQueryTransformer.Body);
+                    queryTransformer = Expression.Lambda<Func<IQueryable<TDbUser>, IQueryable<TDbUser>>>(
+                        eBody, queryTransformer.Parameters[0]);
+                }
+                return options with { QueryTransformer = queryTransformer };
             });
         return this;
     }

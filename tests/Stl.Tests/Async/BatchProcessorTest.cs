@@ -11,7 +11,7 @@ public class BatchProcessorTest
         var batchIndex = 0;
         await using var processor = new BatchProcessor<int, (int, int)>() {
             ConcurrencyLevel = 2,
-            MaxBatchSize = 3,
+            BatchSize = 3,
             Implementation = async (batch, cancellationToken) => {
                 var bi = Interlocked.Increment(ref batchIndex);
                 await Task.Delay(100).ConfigureAwait(false);

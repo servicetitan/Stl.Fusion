@@ -37,4 +37,9 @@ public static class Errors
 
     public static Exception UnsupportedDbHint(DbHint hint)
         => new NotSupportedException($"Unsupported DbHint: {hint}");
+
+    public static Exception BatchSizeCannotBeChanged()
+        => new InvalidOperationException("ConfigureBatchProcessor delegate cannot change BatchProcessor's BatchSize.");
+    public static Exception BatchSizeIsTooLarge()
+        => new InvalidOperationException("DbEntityResolver's BatchSize is too large.");
 }

@@ -3,22 +3,12 @@ using Stl.Fusion.EntityFramework;
 
 namespace Samples.HelloCart.V3;
 
-public class DbCartService2 : ICartService
+public class DbCartService2(
+    DbHub<AppDbContext> dbHub,
+    IProductService products,
+    IDbEntityResolver<string, DbCart> cartResolver
+    ) : ICartService
 {
-    private readonly DbHub<AppDbContext> _dbHub;
-    private readonly IDbEntityResolver<string, DbCart> _cartResolver;
-    private readonly IProductService _products;
-
-    public DbCartService2(
-        DbHub<AppDbContext> dbHub,
-        IProductService products,
-        IDbEntityResolver<string, DbCart> cartResolver)
-    {
-        _dbHub = dbHub;
-        _cartResolver = cartResolver;
-        _products = products;
-    }
-
     public virtual async Task Edit(EditCommand<Cart> command, CancellationToken cancellationToken = default)
     {
         var (cartId, cart) = command;
@@ -29,7 +19,7 @@ public class DbCartService2 : ICartService
             return;
         }
 
-        await using var dbContext = await _dbHub.CreateCommandDbContext(cancellationToken);
+        await using var dbContext = await dbHub.CreateCommandDbContext(cancellationToken);
         var dbCart = await dbContext.Carts.FindAsync(DbKey.Compose(cartId), cancellationToken);
         if (cart == null) {
             if (dbCart != null)
@@ -69,7 +59,7 @@ public class DbCartService2 : ICartService
 
     public virtual async Task<Cart?> Get(string id, CancellationToken cancellationToken = default)
     {
-        var dbCart = await _cartResolver.Get(id, cancellationToken);
+        var dbCart = await cartResolver.Get(id, cancellationToken);
         return dbCart == null ? null : new Cart() {
             Id = dbCart.Id,
             Items = dbCart.Items.ToImmutableDictionary(i => i.DbProductId, i => i.Quantity),
@@ -82,7 +72,7 @@ public class DbCartService2 : ICartService
         if (cart == null)
             return 0;
         var itemTotals = await Task.WhenAll(cart.Items.Select(async item => {
-            var product = await _products.Get(item.Key, cancellationToken);
+            var product = await products.Get(item.Key, cancellationToken);
             return item.Value * (product?.Price ?? 0M);
         }));
         return itemTotals.Sum();

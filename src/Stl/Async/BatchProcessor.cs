@@ -2,20 +2,18 @@ using Stl.OS;
 
 namespace Stl.Async;
 
-public abstract class BatchProcessorBase<TIn, TOut> : WorkerBase
+public abstract class BatchProcessorBase<TIn, TOut>(Channel<BatchItem<TIn, TOut>> queue) : WorkerBase
 {
     public const int DefaultCapacity = 4096;
     public int ConcurrencyLevel { get; set; } = HardwareInfo.GetProcessorCountFactor();
-    public int MaxBatchSize { get; set; } = 256;
+    public int BatchSize { get; set; } = 256;
     public Func<CancellationToken, Task>? BatchingDelayTaskFactory { get; set; }
-    protected Channel<BatchItem<TIn, TOut>> Queue { get; }
+    protected Channel<BatchItem<TIn, TOut>> Queue { get; } = queue;
 
     protected BatchProcessorBase(int capacity = DefaultCapacity)
         : this(new BoundedChannelOptions(capacity)) { }
     protected BatchProcessorBase(BoundedChannelOptions options)
         : this(Channel.CreateBounded<BatchItem<TIn, TOut>>(options)) { }
-    protected BatchProcessorBase(Channel<BatchItem<TIn, TOut>> queue)
-        => Queue = queue;
 
     public async Task<TOut> Process(TIn input, CancellationToken cancellationToken = default)
     {
@@ -30,7 +28,7 @@ public abstract class BatchProcessorBase<TIn, TOut> : WorkerBase
     {
         var readLock = Queue;
         var concurrencyLevel = ConcurrencyLevel;
-        var maxBatchSize = MaxBatchSize;
+        var maxBatchSize = BatchSize;
 
         async Task Worker()
         {
@@ -104,7 +102,7 @@ public abstract class BatchProcessorBase<TIn, TOut> : WorkerBase
 public class BatchProcessor<TIn, TOut> : BatchProcessorBase<TIn, TOut>
 {
     public Func<List<BatchItem<TIn, TOut>>, CancellationToken, Task> Implementation { get; set; } =
-        (_, _) => throw new NotSupportedException("Set the delegate property to make it work.");
+        (_, _) => throw new NotSupportedException("Set the Implementation property to make it work.");
 
     public BatchProcessor(int capacity = DefaultCapacity) : base(capacity) { }
     public BatchProcessor(BoundedChannelOptions options) : base(options) { }

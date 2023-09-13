@@ -14,6 +14,7 @@ public readonly record struct BatchItem<TIn, TOut>(
     {
         if (!CancellationToken.IsCancellationRequested)
             return false;
+
         OutputSource.TrySetCanceled(CancellationToken);
         return true;
     }
