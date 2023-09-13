@@ -17,10 +17,10 @@ public abstract partial class RpcStream : IRpcObject
         AllowSynchronousContinuations = false, // We don't want sync handlers to "clog" the call processing loop
     };
 
-    [DataMember, MemoryPackOrder(2)]
+    [DataMember, MemoryPackOrder(1)]
     public int AckPeriod { get; init; } = 30;
-    [DataMember, MemoryPackOrder(3)]
-    public int SendAhead { get; init; } = 61;
+    [DataMember, MemoryPackOrder(2)]
+    public int AckAdvance { get; init; } = 61;
 
     // Non-serialized members
     [JsonIgnore, MemoryPackIgnore] public RpcObjectId Id { get; protected set; }

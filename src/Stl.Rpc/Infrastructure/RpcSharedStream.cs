@@ -91,7 +91,7 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
             enumerator = Stream.GetLocalSource().GetAsyncEnumerator(cancellationToken);
             var isEnumerationEnded = false;
             var ackReader = _acks.Reader;
-            var buffer = new RingBuffer<Result<T>>(Stream.SendAhead + 1);
+            var buffer = new RingBuffer<Result<T>>(Stream.AckAdvance + 1);
             var bufferStart = 0L;
             var index = 0L;
             var whenAckReady = ackReader.WaitToReadAsync(cancellationToken).AsTask();
@@ -125,7 +125,7 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
 
                 // 3. Recalculate the next range to send
                 var ackIndex = ack.NextIndex + Stream.AckPeriod;
-                var maxIndex = ack.NextIndex + Stream.SendAhead;
+                var maxIndex = ack.NextIndex + Stream.AckAdvance;
                 if (index < bufferStart) {
                     // The requested item is somewhere before the buffer start position
                     await SendInvalidPosition(index).ConfigureAwait(false);
