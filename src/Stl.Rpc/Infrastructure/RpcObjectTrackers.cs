@@ -124,8 +124,8 @@ public class RpcRemoteObjectTracker : RpcObjectTracker, IEnumerable<IRpcObject>
 
     public void Disconnect(params long[] localIds)
     {
-        foreach (var objectId in localIds)
-            Get(objectId)?.Disconnect();
+        foreach (var localId in localIds)
+            Get(localId)?.Disconnect();
     }
 
     // Private methods
@@ -211,11 +211,11 @@ public sealed class RpcSharedObjectTracker : RpcObjectTracker, IEnumerable<IRpcS
         // ReSharper disable once FunctionNeverReturns
     }
 
-    public Task KeepAlive(long[] objectIds)
+    public Task KeepAlive(long[] localIds)
     {
         var buffer = MemoryBuffer<long>.Lease(false);
         try {
-            foreach (var id in objectIds) {
+            foreach (var id in localIds) {
                 if (Get(id) is { } obj)
                     obj.KeepAlive();
                 else

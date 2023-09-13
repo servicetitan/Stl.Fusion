@@ -92,11 +92,11 @@ public class RpcSystemCalls(IServiceProvider services)
     {
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
-        var objectId = context.Message.RelatedId;
-        if (peer.SharedObjects.Get(objectId) is RpcSharedStream stream)
+        var localId = context.Message.RelatedId;
+        if (peer.SharedObjects.Get(localId) is RpcSharedStream stream)
             await stream.OnAck(nextIndex, hostId).ConfigureAwait(false);
         else
-            await peer.Hub.SystemCallSender.Disconnect(peer, new[] { objectId }).ConfigureAwait(false);
+            await peer.Hub.SystemCallSender.Disconnect(peer, new[] { localId }).ConfigureAwait(false);
         return default;
     }
 
@@ -104,8 +104,8 @@ public class RpcSystemCalls(IServiceProvider services)
     {
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
-        var objectId = context.Message.RelatedId;
-        return peer.RemoteObjects.Get(objectId) is RpcStream stream
+        var localId = context.Message.RelatedId;
+        return peer.RemoteObjects.Get(localId) is RpcStream stream
             ? RpcNoWait.Tasks.From(stream.OnItem(index, item))
             : RpcNoWait.Tasks.Completed;
     }
@@ -114,8 +114,8 @@ public class RpcSystemCalls(IServiceProvider services)
     {
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
-        var objectId = context.Message.RelatedId;
-        return peer.RemoteObjects.Get(objectId) is RpcStream stream
+        var localId = context.Message.RelatedId;
+        return peer.RemoteObjects.Get(localId) is RpcStream stream
             ? RpcNoWait.Tasks.From(stream.OnEnd(index, error.IsNone ? null : error.ToException()))
             : RpcNoWait.Tasks.Completed;
     }

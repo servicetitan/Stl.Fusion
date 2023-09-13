@@ -129,31 +129,31 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
 
     // Streams
 
-    public Task Ack(RpcPeer peer, long objectId, long nextIndex, Guid hostId, List<RpcHeader>? headers = null)
+    public Task Ack(RpcPeer peer, long localId, long nextIndex, Guid hostId, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
-            RelatedCallId = objectId,
+            RelatedCallId = localId,
         };
         var call = context.PrepareCall(AckMethodDef, ArgumentList.New(nextIndex, hostId))!;
         return call.SendNoWait(false);
     }
 
-    public Task Item<TItem>(RpcPeer peer, long objectId, long index, TItem result, List<RpcHeader>? headers = null)
+    public Task Item<TItem>(RpcPeer peer, long localId, long index, TItem result, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
-            RelatedCallId = objectId,
+            RelatedCallId = localId,
         };
         var call = context.PrepareCall(ItemMethodDef, ArgumentList.New(index, result))!;
         return call.SendNoWait(true);
     }
 
-    public Task End(RpcPeer peer, long objectId, long index, Exception? error, List<RpcHeader>? headers = null)
+    public Task End(RpcPeer peer, long localId, long index, Exception? error, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
-            RelatedCallId = objectId,
+            RelatedCallId = localId,
         };
         // An optimized version of Client.Error(result):
         var call = context.PrepareCall(EndMethodDef, ArgumentList.New(index, error.ToExceptionInfo()))!;
