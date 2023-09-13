@@ -91,14 +91,14 @@ public class Startup
                     multitenancy.UseMultitenantMode();
                     multitenancy.AddMultitenantRegistry(
                         Enumerable.Range(0, 3).Select(i => new Tenant($"tenant{i}")));
-                    multitenancy.AddMultitenantDbContextFactory(ConfigureTenantDbContext);
+                    multitenancy.AddTransientMultitenantDbContextFactory(ConfigureTenantDbContext);
                     // This call allows similar blocks for DbContext-s to call "UseDefault"
                     // to make them re-use the same multitenancy settings (registry, resolver, etc.)
                     multitenancy.MakeDefault();
                 });
             }
             else {
-                db.Services.AddDbContextFactory<AppDbContext>((c, db) => {
+                db.Services.AddTransientDbContextFactory<AppDbContext>((c, db) => {
                     // We use fakeTenant here solely to be able to
                     // re-use the configuration logic from
                     // ConfigureTenantDbContext.

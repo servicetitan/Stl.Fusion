@@ -25,7 +25,7 @@ public class AppV2 : AppBase
         // Add AppDbContext & related services
         var appTempDir = FilePath.GetApplicationTempDirectory("", true);
         var dbPath = appTempDir & "HelloCart_v01.db";
-        services.AddDbContextFactory<AppDbContext>(db => {
+        services.AddTransientDbContextFactory<AppDbContext>(db => {
             db.UseSqlite($"Data Source={dbPath}");
             db.EnableSensitiveDataLogging();
         });

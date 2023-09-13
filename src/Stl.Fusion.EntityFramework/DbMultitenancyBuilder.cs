@@ -74,7 +74,9 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
         return this;
     }
 
-    public DbMultitenancyBuilder<TDbContext> AddMultitenantDbContextFactory(
+    // AddMultitenantDbContextFactory
+
+    public DbMultitenancyBuilder<TDbContext> AddPooledMultitenantDbContextFactory(
         Action<IServiceProvider, Tenant, DbContextOptionsBuilder> dbContextOptionsBuilder)
     {
         AddMultitenantDbContextFactory((c, tenant, services) => {
@@ -91,7 +93,22 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
         return this;
     }
 
-    // AddMultitenantDbContextFactory
+    public DbMultitenancyBuilder<TDbContext> AddTransientMultitenantDbContextFactory(
+        Action<IServiceProvider, Tenant, DbContextOptionsBuilder> dbContextOptionsBuilder)
+    {
+        AddMultitenantDbContextFactory((c, tenant, services) => {
+            services.AddTransientDbContextFactory<TDbContext>(
+                db => {
+                    // This ensures logging settings from the main container
+                    // are applied to tenant DbContexts
+                    var loggerFactory = c.GetService<ILoggerFactory>();
+                    if (loggerFactory != null)
+                        db.UseLoggerFactory(loggerFactory);
+                    dbContextOptionsBuilder.Invoke(c, tenant, db);
+                });
+        });
+        return this;
+    }
 
     public DbMultitenancyBuilder<TDbContext> AddMultitenantDbContextFactory(
         Action<IServiceProvider, Tenant, ServiceCollection> dbServiceCollectionBuilder)

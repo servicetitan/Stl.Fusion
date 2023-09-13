@@ -64,9 +64,9 @@ public class CommandRTestBase(ITestOutputHelper @out) : TestBase(@out)
             var testType = GetType();
             var appTempDir = FilePath.GetApplicationTempDirectory("", true);
             var dbPath = appTempDir & FilePath.GetHashedName($"{testType.Name}_{testType.Namespace}.db");
-            services.AddPooledDbContextFactory<TestDbContext>(db => {
+            services.AddTransientDbContextFactory<TestDbContext>(db => {
                 db.UseSqlite($"Data Source={dbPath}", sqlite => { });
-            }, 256);
+            });
             services.AddDbContextServices<TestDbContext>(db => {
                 db.AddOperations();
                 db.AddEntityResolver<string, User>();

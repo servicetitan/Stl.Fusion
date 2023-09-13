@@ -147,7 +147,7 @@ public abstract class FusionTestBase : RpcTestBase
                 fusion.AddDbKeyValueStore<TestDbContext>();
 
             // DbContext & related services
-            services.AddPooledDbContextFactory<TestDbContext>(builder => {
+            services.AddTransientDbContextFactory<TestDbContext>(builder => {
                 switch (DbType) {
                 case FusionTestDbType.Sqlite:
                     builder.UseSqlite($"Data Source={SqliteDbPath}");
@@ -183,7 +183,7 @@ public abstract class FusionTestBase : RpcTestBase
                     throw new NotSupportedException();
                 }
                 builder.EnableSensitiveDataLogging();
-            }, 256);
+            });
             services.AddDbContextServices<TestDbContext>(db => {
                 if (UseRedisOperationLogChangeTracking)
                     db.AddRedisDb("localhost", "Fusion.Tests");

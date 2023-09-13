@@ -38,4 +38,5 @@ public class PooledDbContextFactory<TContext> : IDbContextFactory<TContext>
 #pragma warning restore EF1001
 }
 
+
 #endif

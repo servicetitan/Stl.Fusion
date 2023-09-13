@@ -9,7 +9,8 @@ namespace Microsoft.EntityFrameworkCore;
 ///     <see cref="M:EntityFrameworkServiceCollectionExtensions.AddDbContextPool" /> methods.
 /// </summary>
 /// <typeparam name="TContext"> The <see cref="T:Microsoft.EntityFrameworkCore.DbContext" /> type to create. </typeparam>
-public interface IDbContextFactory<out TContext> where TContext : DbContext
+public interface IDbContextFactory<out TContext>
+    where TContext : DbContext
 {
     /// <summary>
     ///     <para>
