@@ -72,34 +72,67 @@ public static class MathExt
 
     // Format & parse for arbitrary radix
 
-    public static unsafe string Format(long number, string digits)
+    public static readonly string Digits64 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_";
+
+    public static string Format(long number, int radix)
+        => radix <= 64
+            ? Format(number, Digits64.AsSpan(0, radix))
+            : throw new ArgumentOutOfRangeException(nameof(radix));
+
+    public static string Format(ulong number, int radix)
+        => radix <= 64
+            ? Format(number, Digits64.AsSpan(0, radix))
+            : throw new ArgumentOutOfRangeException(nameof(radix));
+
+    public static unsafe string Format(long number, ReadOnlySpan<char> digits)
     {
         var radix = digits.Length;
-        var size = radix < 10 ? 65 : 21; // Just to simplify the calc.
+        var size = radix < 10 ? 65 : 21; // Just to simplify the calculation
         Span<char> buffer = stackalloc char[size];
 #if !NETSTANDARD2_0
-        return new String(FormatTo(number, digits, buffer));
+        return new string(FormatTo(number, digits, buffer));
 #else
         return FormatTo(number, digits, buffer).ToString();
 #endif
     }
 
-    public static Span<char> FormatTo(long number, string digits, Span<char> buffer)
+    public static unsafe string Format(ulong number, ReadOnlySpan<char> digits)
+    {
+        var radix = digits.Length;
+        var size = radix < 10 ? 65 : 21; // Just to simplify the calculation
+        Span<char> buffer = stackalloc char[size];
+#if !NETSTANDARD2_0
+        return new string(FormatTo(number, digits, buffer));
+#else
+        return FormatTo(number, digits, buffer).ToString();
+#endif
+    }
+
+    public static Span<char> FormatTo(long number, int radix, Span<char> buffer)
+        => radix <= 64
+            ? FormatTo(number, Digits64.AsSpan(0, radix), buffer)
+            : throw new ArgumentOutOfRangeException(nameof(radix));
+
+    public static Span<char> FormatTo(ulong number, int radix, Span<char> buffer)
+        => radix <= 64
+            ? FormatTo(number, Digits64.AsSpan(0, radix), buffer)
+            : throw new ArgumentOutOfRangeException(nameof(radix));
+
+    public static Span<char> FormatTo(long number, ReadOnlySpan<char> digits, Span<char> buffer)
     {
         var radix = digits.Length;
         if (radix < 2)
             throw new ArgumentOutOfRangeException(nameof(digits));
 
-        var sDigits = digits.AsSpan();
         if (number == 0) {
-            buffer[0] = sDigits[0];
+            buffer[0] = digits[0];
             return buffer[..1];
         }
         var index = buffer.Length;
         var n = Math.Abs(number);
         while (n != 0)  {
-            var digit = (int) (n % radix);
-            buffer[--index] = sDigits[digit];
+            var digit = (int)(n % radix);
+            buffer[--index] = digits[digit];
             n /= radix;
         }
         if (number < 0)
@@ -109,16 +142,41 @@ public static class MathExt
         return buffer[..tail.Length];
     }
 
-    public static long Parse(string number, string digits)
-        => Parse(number.AsSpan(), digits);
-    public static long Parse(ReadOnlySpan<char> number, string digits)
-        => TryParse(number, digits, out var result)
+    public static Span<char> FormatTo(ulong number, ReadOnlySpan<char> digits, Span<char> buffer)
+    {
+        var radix = (ulong)digits.Length;
+        if (radix < 2)
+            throw new ArgumentOutOfRangeException(nameof(digits));
+
+        if (number == 0) {
+            buffer[0] = digits[0];
+            return buffer[..1];
+        }
+        var index = buffer.Length;
+        while (number != 0)  {
+            var digit = (int)(number % radix);
+            buffer[--index] = digits[digit];
+            number /= radix;
+        }
+        var tail = buffer[index..];
+        tail.CopyTo(buffer);
+        return buffer[..tail.Length];
+    }
+
+    public static long ParseInt64(ReadOnlySpan<char> number, int radix)
+        => radix <= 64
+            ? ParseInt64(number, Digits64.AsSpan(0, radix))
+            : throw new ArgumentOutOfRangeException(nameof(radix));
+    public static long ParseInt64(ReadOnlySpan<char> number, ReadOnlySpan<char> digits)
+        => TryParseInt64(number, digits, out var result)
             ? result
             : throw new ArgumentOutOfRangeException(nameof(number));
 
-    public static bool TryParse(string number, string digits, out long result)
-        => TryParse(number.AsSpan(), digits, out result);
-    public static bool TryParse(ReadOnlySpan<char> number, string digits, out long result)
+    public static bool TryParseInt64(ReadOnlySpan<char> number, int radix, out long result)
+        => radix <= 64
+            ? TryParseInt64(number, Digits64.AsSpan(0, radix), out result)
+            : throw new ArgumentOutOfRangeException(nameof(radix));
+    public static bool TryParseInt64(ReadOnlySpan<char> number, ReadOnlySpan<char> digits, out long result)
     {
         var radix = digits.Length;
         if (radix < 2)
@@ -128,7 +186,6 @@ public static class MathExt
         if (number.IsEmpty)
             return false;
 
-        var sDigits = digits.AsSpan();
         var sign = 1L;
         if (number[0] == '-') {
             sign = -1;
@@ -137,7 +194,7 @@ public static class MathExt
         var multiplier = 1L;
         for (var i = number.Length - 1; i >= 0; i--) {
             var c = number[i];
-            var digit = sDigits.IndexOf(c);
+            var digit = digits.IndexOf(c);
             if (digit == -1)
                 return false;
 

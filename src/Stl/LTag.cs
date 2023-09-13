@@ -12,7 +12,7 @@ namespace Stl;
 [TypeConverter(typeof(LTagTypeConverter))]
 public readonly partial struct LTag : IEquatable<LTag>
 {
-    public static readonly string Base62Digits = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private const int StringRadix = 62;
     public static readonly LTag Default = default;
 
     /// <summary>
@@ -41,19 +41,17 @@ public readonly partial struct LTag : IEquatable<LTag>
     public static explicit operator long(LTag value) => value.Value;
 
     /// <inheritdoc />
-    public override string ToString()
+    public override unsafe string ToString()
     {
-        unsafe {
-            Span<char> buffer = stackalloc char[16];
-            buffer[0] = '@';
-            var n = MathExt.FormatTo(Value, Base62Digits, buffer[1..]);
-            var slice = buffer[..(n.Length + 1)];
+        Span<char> buffer = stackalloc char[16];
+        buffer[0] = '@';
+        var n = MathExt.FormatTo(Value, StringRadix, buffer[1..]);
+        var resultSpan = buffer[..(n.Length + 1)];
 #if !NETSTANDARD2_0
-            return new string(slice);
+        return new string(resultSpan);
 #else
-            return new string(slice.ToArray());
+        return new string(resultSpan.ToArray());
 #endif
-        }
     }
 
     /// <summary>
@@ -80,7 +78,7 @@ public readonly partial struct LTag : IEquatable<LTag>
             return false;
         if (formattedLTag[0] != '@')
             return false;
-        if (!MathExt.TryParse(formattedLTag.AsSpan(1), Base62Digits, out var value))
+        if (!MathExt.TryParseInt64(formattedLTag.AsSpan(1), StringRadix, out var value))
             return false;
         lTag = new LTag(value);
         return true;

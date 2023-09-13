@@ -23,7 +23,7 @@ public class RpcWebSocketClient(
         public string ClientIdParameterName { get; init; } = "clientId";
 
         public static string DefaultHostUrlResolver(RpcWebSocketClient client, RpcClientPeer peer)
-            => peer.Ref.Id.Value;
+            => peer.Ref.Key.Value;
 
         public static Uri DefaultConnectionUriResolver(RpcWebSocketClient client, RpcClientPeer peer)
         {

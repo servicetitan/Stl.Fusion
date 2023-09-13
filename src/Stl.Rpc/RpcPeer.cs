@@ -3,7 +3,7 @@ using Stl.Rpc.Internal;
 
 namespace Stl.Rpc;
 
-public abstract class RpcPeer : WorkerBase
+public abstract class RpcPeer : WorkerBase, IHasId<Guid>
 {
     private ILogger? _log;
     private readonly Lazy<ILogger?> _callLogLazy;
@@ -28,6 +28,7 @@ public abstract class RpcPeer : WorkerBase
     public LogLevel CallLogLevel { get; init; } = LogLevel.None;
     public AsyncState<RpcPeerConnectionState> ConnectionState => _connectionState;
     public RpcPeerInternalServices InternalServices => new(this);
+    public Guid Id { get; init; } = Guid.NewGuid();
 
     protected RpcPeer(RpcHub hub, RpcPeerRef @ref)
     {
@@ -119,6 +120,7 @@ public abstract class RpcPeer : WorkerBase
                 readerAbortToken = connectionState.ReaderAbortSource!.Token;
 
                 // Recovery: re-send keep-alive object set & all outbound calls
+                await Hub.SystemCallSender.Handshake(this, new RpcHandshake(Id));
                 _ = SharedObjects.Maintain(readerAbortToken);
                 _ = RemoteObjects.Maintain(readerAbortToken);
                 foreach (var call in OutboundCalls) {
@@ -245,7 +247,7 @@ public abstract class RpcPeer : WorkerBase
 
     // Private methods
 
-    protected RpcPeerConnectionState SetConnectionState(RpcConnection? connection, Exception? error, bool renewReaderAbortSource = false)
+    protected RpcPeerConnectionState SetConnectionState(RpcConnection? connection, Exception? error, bool mustRenew = false)
     {
         if (error != null)
             connection = null;
@@ -257,20 +259,26 @@ public abstract class RpcPeer : WorkerBase
         Exception? terminalError = null;
         try {
             var readerAbortSource = state.ReaderAbortSource;
-            if (connection == null || readerAbortSource?.IsCancellationRequested == true)
+            var handshakeSource = state.HandshakeSource;
+            if (connection == null || readerAbortSource?.IsCancellationRequested == true) {
                 readerAbortSource = null;
-            else if (renewReaderAbortSource)
+                handshakeSource = null;
+            }
+            else if (mustRenew) {
                 readerAbortSource = StopToken.CreateLinkedTokenSource();
+                handshakeSource = new();
+            }
             var tryIndex = error == null ? 0 : state.TryIndex + 1;
 
             // Let's check if any changes are made at all
             if (oldState.Connection == connection
                 && oldState.Error == error
+                && oldState.TryIndex == tryIndex
                 && oldState.ReaderAbortSource == readerAbortSource
-                && oldState.TryIndex == tryIndex)
+                && oldState.HandshakeSource == handshakeSource)
                 return connectionState.Value; // Nothing is changed
 
-            state = new RpcPeerConnectionState(connection, error, readerAbortSource, tryIndex);
+            state = new RpcPeerConnectionState(connection, error, tryIndex, readerAbortSource, handshakeSource);
             _connectionState = connectionState = connectionState.SetNext(state);
 
             if (error != null && Hub.UnrecoverableErrorDetector.Invoke(error, StopToken)) {
@@ -288,6 +296,8 @@ public abstract class RpcPeer : WorkerBase
                 oldState.ReaderAbortSource.CancelAndDisposeSilently();
                 _sender = state.Channel?.Writer;
             }
+            if (state.HandshakeSource != oldState.HandshakeSource)
+                oldState.HandshakeSource?.TrySetCanceled();
             if (state.Connection != oldState.Connection)
                 oldState.Channel?.Writer.TryComplete(error); // Reliably shut down the old channel
             Monitor.Exit(Lock);

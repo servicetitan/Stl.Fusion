@@ -1,16 +1,16 @@
 namespace Stl.Rpc;
 
-public record RpcPeerRef(Symbol Id, bool IsServer = false)
+public record RpcPeerRef(Symbol Key, bool IsServer = false)
 {
     public static RpcPeerRef Default { get; set; } = NewClient("default");
 
-    public static RpcPeerRef NewServer(Symbol id)
-        => new(id, true);
-    public static RpcPeerRef NewClient(Symbol id)
-        => new(id);
+    public static RpcPeerRef NewServer(Symbol key)
+        => new(key, true);
+    public static RpcPeerRef NewClient(Symbol key)
+        => new(key);
 
     public override string ToString()
-        => $"{(IsServer ? "server" : "client")}:{Id}";
+        => $"{(IsServer ? "server" : "client")}:{Key}";
 
     // Operators
 

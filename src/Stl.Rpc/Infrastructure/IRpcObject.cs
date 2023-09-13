@@ -8,17 +8,17 @@ public enum RpcObjectKind
     Remote,
 }
 
-public interface IRpcObject : IHasId<long>
+public interface IRpcObject : IHasId<RpcObjectId>
 {
     RpcObjectKind Kind { get; }
-    Task OnReconnected(CancellationToken cancellationToken);
-    void OnMissing();
+    Task Reconnect(CancellationToken cancellationToken);
+    void Disconnect();
 }
 
 public interface IRpcSharedObject : IRpcObject
 {
     CpuTimestamp LastKeepAliveAt { get; }
-    void OnKeepAlive();
+    void KeepAlive();
 }
 
 public static class RpcObjectExt

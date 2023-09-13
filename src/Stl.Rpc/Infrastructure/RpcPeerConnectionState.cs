@@ -5,12 +5,16 @@ namespace Stl.Rpc.Infrastructure;
 public sealed record RpcPeerConnectionState(
     RpcConnection? Connection = null,
     Exception? Error = null,
+    int TryIndex = 0,
     CancellationTokenSource? ReaderAbortSource = null,
-    int TryIndex = 0)
+    TaskCompletionSource<RpcHandshake>? HandshakeSource = null)
 {
+    private static readonly TaskCompletionSource<RpcHandshake> NoHandshakeSource
+        = new TaskCompletionSource<RpcHandshake>().WithCancellation();
     public static readonly RpcPeerConnectionState Initial = new();
 
     public Channel<RpcMessage>? Channel = Connection?.Channel;
+    public Task<RpcHandshake> HandshakeTask => (HandshakeSource ?? NoHandshakeSource).Task;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsConnected()

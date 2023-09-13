@@ -14,7 +14,7 @@ public abstract class RpcSharedStream(RpcStream stream) : WorkerBase, IRpcShared
 
     protected ILogger Log => _log ??= Peer.Hub.Services.LogFor(GetType());
 
-    public long Id { get; } = stream.Id;
+    public RpcObjectId Id { get; } = stream.Id;
     public RpcObjectKind Kind { get; } = stream.Kind;
     public RpcStream Stream { get; } = stream;
     public RpcPeer Peer { get; } = stream.Peer!;
@@ -23,18 +23,18 @@ public abstract class RpcSharedStream(RpcStream stream) : WorkerBase, IRpcShared
         set => Interlocked.Exchange(ref _lastKeepAliveAt, value.Value);
     }
 
-    Task IRpcObject.OnReconnected(CancellationToken cancellationToken)
+    Task IRpcObject.Reconnect(CancellationToken cancellationToken)
         => throw Stl.Internal.Errors.InternalError(
             $"This method should never be called on {nameof(RpcSharedStream)}.");
 
-    void IRpcObject.OnMissing()
+    void IRpcObject.Disconnect()
         => throw Stl.Internal.Errors.InternalError(
             $"This method should never be called on {nameof(RpcSharedStream)}.");
 
-    public void OnKeepAlive()
+    public void KeepAlive()
         => LastKeepAliveAt = CpuTimestamp.Now;
 
-    public abstract Task OnAck(long nextIndex, string? resetKey);
+    public abstract Task OnAck(long nextIndex, Guid hostId);
 }
 
 public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(stream)
@@ -59,11 +59,11 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
         }
     }
 
-    public override Task OnAck(long nextIndex, string? resetKey)
+    public override Task OnAck(long nextIndex, Guid hostId)
     {
-        var mustReset = !ReferenceEquals(resetKey, null);
-        if (mustReset && !Equals(Stream.ResetKey, resetKey))
-            return SendNotFound(nextIndex, nextIndex);
+        var mustReset = hostId != default;
+        if (mustReset && !Equals(Stream.Id.HostId, hostId))
+            return SendMissing();
 
         LastKeepAliveAt = CpuTimestamp.Now;
         lock (Lock) {
@@ -72,10 +72,10 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
                 if (mustReset && nextIndex == 0)
                     this.Start();
                 else
-                    return SendNotFound(nextIndex, nextIndex);
+                    return SendMissing();
             }
             else if (whenRunning.IsCompleted)
-                return SendNotFound(nextIndex, nextIndex);
+                return SendMissing();
 
             _acks.Writer.TryWrite((nextIndex, mustReset)); // Must always succeed for unbounded channel
             return Task.CompletedTask;
@@ -91,7 +91,7 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
             enumerator = Stream.GetLocalSource().GetAsyncEnumerator(cancellationToken);
             var isEnumerationEnded = false;
             var ackReader = _acks.Reader;
-            var buffer = new RingBuffer<Result<T>>(Stream.AdvanceDistance + 1);
+            var buffer = new RingBuffer<Result<T>>(Stream.SendAhead + 1);
             var bufferStart = 0L;
             var index = 0L;
             var whenAckReady = ackReader.WaitToReadAsync(cancellationToken).AsTask();
@@ -124,11 +124,11 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
                 bufferStart += bufferOffset;
 
                 // 3. Recalculate the next range to send
-                var ackIndex = ack.NextIndex + Stream.AckDistance;
-                var maxIndex = ack.NextIndex + Stream.AdvanceDistance;
+                var ackIndex = ack.NextIndex + Stream.AckPeriod;
+                var maxIndex = ack.NextIndex + Stream.SendAhead;
                 if (index < bufferStart) {
                     // The requested item is somewhere before the buffer start position
-                    await SendInvalidPosition(index, ackIndex).ConfigureAwait(false);
+                    await SendInvalidPosition(index).ConfigureAwait(false);
                     goto nextAck;
                 }
                 var bufferIndex = (int)(index - bufferStart);
@@ -141,7 +141,7 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
                     while (missingCount-- > 0) {
                         if (isEnumerationEnded) {
                             // The requested item is somewhere after the sequence's end
-                            await SendInvalidPosition(index, ackIndex).ConfigureAwait(false);
+                            await SendInvalidPosition(index).ConfigureAwait(false);
                             goto nextAck;
                         }
 
@@ -176,7 +176,7 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
                     }
 
                     item = buffer[bufferIndex++];
-                    await Send(index++, ackIndex, item).ConfigureAwait(false);
+                    await Send(index++, item).ConfigureAwait(false);
                     if (item.HasError)
                         goto nextAck; // It's the last item -> all we can do now is to wait for Ack
                 }
@@ -188,20 +188,20 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
         }
     }
 
-    private Task SendNotFound(long index, long ackIndex)
-        => Send(index, ackIndex, Result.Error<T>(Errors.RpcStreamNotFound()));
+    private Task SendMissing()
+        => _systemCallSender.Disconnect(Peer, new[] { Id.LocalId });
 
-    private Task SendInvalidPosition(long index, long ackIndex)
-        => Send(index, ackIndex, Result.Error<T>(Errors.RpcStreamInvalidPosition()));
+    private Task SendInvalidPosition(long index)
+        => Send(index, Result.Error<T>(Errors.RpcStreamInvalidPosition()));
 
-    private Task Send(long index, long ackIndex, Result<T> item)
+    private Task Send(long index, Result<T> item)
     {
         // Debug.WriteLine($"{Id}: <- #{index} (ack @ {ackIndex})");
         if (item.IsValue(out var value))
-            return _systemCallSender.Item(Peer, Id, index, (int)(ackIndex - index), value);
+            return _systemCallSender.Item(Peer, Id.LocalId, index, value);
 
         var error = ReferenceEquals(item.Error, NoError) ? null : item.Error;
-        return _systemCallSender.End(Peer, Id, index, error);
+        return _systemCallSender.End(Peer, Id.LocalId, index, error);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

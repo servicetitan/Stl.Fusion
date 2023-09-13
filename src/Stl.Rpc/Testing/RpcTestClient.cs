@@ -39,7 +39,7 @@ public class RpcTestClient(
     public IEnumerator<RpcTestConnection> GetEnumerator() => _connections.Values.Distinct().GetEnumerator();
 
     public RpcTestConnection CreateDefaultConnection()
-        => CreateConnection(RpcPeerRef.Default.Id, "server-default");
+        => CreateConnection(RpcPeerRef.Default.Key, "server-default");
 
     public RpcTestConnection CreateRandomConnection()
     {

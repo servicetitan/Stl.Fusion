@@ -1,20 +1,17 @@
-using System.Globalization;
-using Stl.OS;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Internal;
 using Errors = Stl.Internal.Errors;
 
 namespace Stl.Rpc;
 
-public sealed class RpcHub : ProcessorBase, IHasServices, IHasId<Symbol>
+public sealed class RpcHub : ProcessorBase, IHasServices, IHasId<Guid>
 {
-    private static long _lastId;
-
     private RpcServiceRegistry? _serviceRegistry;
     private IEnumerable<RpcPeerTracker>? _peerTrackers;
     private RpcSystemCallSender? _systemCallSender;
     private RpcClient? _client;
     private IMomentClock? _clock;
+    private ulong _lastPeerInstanceId;
 
     internal RpcServiceNameBuilder ServiceNameBuilder { get; }
     internal RpcMethodNameBuilder MethodNameBuilder { get; }
@@ -36,11 +33,11 @@ public sealed class RpcHub : ProcessorBase, IHasServices, IHasId<Symbol>
 
     internal ConcurrentDictionary<RpcPeerRef, RpcPeer> Peers { get; } = new();
 
-    public Symbol Id { get; init; } = NextId();
     public IServiceProvider Services { get; }
     public RpcConfiguration Configuration { get; }
     public RpcServiceRegistry ServiceRegistry => _serviceRegistry ??= Services.GetRequiredService<RpcServiceRegistry>();
     public RpcInternalServices InternalServices => new(this);
+    public Guid Id { get; init; } = Guid.NewGuid();
 
     public RpcHub(IServiceProvider services)
     {
@@ -95,12 +92,4 @@ public sealed class RpcHub : ProcessorBase, IHasServices, IHasId<Symbol>
 
     public RpcServerPeer GetServerPeer(RpcPeerRef peerRef)
         => (RpcServerPeer)GetPeer(peerRef.RequireServer());
-
-    // Private methods
-
-    private static Symbol NextId()
-    {
-        var id = Interlocked.Increment(ref _lastId);
-        return $"{RuntimeInfo.Process.MachinePrefixedId.Value}-{id.ToString(CultureInfo.InvariantCulture)}";
-    }
 }

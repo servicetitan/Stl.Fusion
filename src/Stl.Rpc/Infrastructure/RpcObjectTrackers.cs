@@ -34,8 +34,8 @@ public class RpcRemoteObjectTracker : RpcObjectTracker, IEnumerable<IRpcObject>
 
     public override int Count => _objects.Count;
 
-    public IRpcObject? Get(long id)
-        => _objects.TryGetValue(id, out var handle) && handle.Target is IRpcObject obj
+    public IRpcObject? Get(long localId)
+        => _objects.TryGetValue(localId, out var handle) && handle.Target is IRpcObject obj
             ? obj
             : null;
 
@@ -50,24 +50,43 @@ public class RpcRemoteObjectTracker : RpcObjectTracker, IEnumerable<IRpcObject>
 
     public void Register(IRpcObject obj)
     {
+        obj.RequireKind(RpcObjectKind.Remote);
         var id = obj.Id;
-        if (id <= 0)
+        if (id.IsNone)
             throw new ArgumentOutOfRangeException(nameof(obj));
 
-        obj.RequireKind(RpcObjectKind.Remote);
-        var handle = GCHandlePool.Acquire(obj, obj.GetHashCode());
-        _objects[id] = handle;
+        while (true) {
+            GCHandle handle;
+            while (_objects.TryGetValue(id.LocalId, out handle) && handle.Target is IRpcObject existingObj) {
+                if (ReferenceEquals(obj, existingObj))
+                    return; // Already registered
+
+                // Another object with the same id.LocalId is registered,
+                // which means we switched to another peer instance (e.g. via LB),
+                // and got an object with the same LocalId as we already have.
+                // The only reasonable thing here is to remove the old one,
+                // which is already unusable at this point.
+                existingObj.Disconnect(); // This call must unregister it
+            }
+
+            handle = GCHandlePool.Acquire(obj, obj.GetHashCode());
+            if (_objects.TryAdd(id.LocalId, handle))
+                return;
+        }
     }
 
     public bool Unregister(IRpcObject obj)
     {
-        if (!(_objects.TryGetValue(obj.Id, out var handle)
-            && handle.Target is IRpcObject existingObj
-            && ReferenceEquals(obj, existingObj)))
-            return false;
-
-        if (!_objects.TryRemove(obj.Id, handle))
-            return false;
+        obj.RequireKind(RpcObjectKind.Remote);
+        var localId = obj.Id.LocalId;
+        if (!_objects.TryGetValue(localId, out var handle))
+            return false; // Already unregistered or never was
+        if (handle.Target is not { } existingObj)
+            return false; // Handle target is dead - prob. it was pointing to another object, which died
+        if (!ReferenceEquals(obj, existingObj))
+            return false; // Another object is registered w/ the same LocalId already
+        if (!_objects.TryRemove(localId, handle))
+            return false; // Concurrent Unregister won
 
         GCHandlePool.Release(handle);
         return true;
@@ -76,17 +95,25 @@ public class RpcRemoteObjectTracker : RpcObjectTracker, IEnumerable<IRpcObject>
     public async Task Maintain(CancellationToken cancellationToken)
     {
         try {
+            var handshake = await Peer.ConnectionState.Value.HandshakeTask.ConfigureAwait(false);
+            var remotePeerId = handshake.RemotePeerId;
+            var reconnectTasks = new List<Task>();
             foreach (var (_, handle) in _objects)
-                if (handle.Target is IRpcObject obj)
-                    await obj.OnReconnected(cancellationToken).ConfigureAwait(false);
+                if (handle.Target is IRpcObject obj) {
+                    if (obj.Id.HostId == remotePeerId)
+                        reconnectTasks.Add(obj.Reconnect(cancellationToken));
+                    else
+                        obj.Disconnect();
+                }
+            await Task.WhenAll(reconnectTasks).ConfigureAwait(false);
 
             var hub = Peer.Hub;
             var clock = hub.Clock;
             var systemCallSender = hub.SystemCallSender;
             while (true) {
                 await clock.Delay(KeepAlivePeriod, cancellationToken).ConfigureAwait(false);
-                var objectIds = GetAliveObjectIdsAndReleaseDeadHandles();
-                await systemCallSender.KeepAlive(Peer, objectIds).ConfigureAwait(false);
+                var localIds = GetAliveLocalIdsAndReleaseDeadHandles();
+                await systemCallSender.KeepAlive(Peer, localIds).ConfigureAwait(false);
             }
         }
         catch {
@@ -95,15 +122,15 @@ public class RpcRemoteObjectTracker : RpcObjectTracker, IEnumerable<IRpcObject>
         // ReSharper disable once FunctionNeverReturns
     }
 
-    public void MissingObjects(long[] objectIds)
+    public void Disconnect(params long[] localIds)
     {
-        foreach (var objectId in objectIds)
-            Get(objectId)?.OnMissing();
+        foreach (var objectId in localIds)
+            Get(objectId)?.Disconnect();
     }
 
     // Private methods
 
-    private long[] GetAliveObjectIdsAndReleaseDeadHandles()
+    private long[] GetAliveLocalIdsAndReleaseDeadHandles()
     {
         var buffer = ArrayBuffer<long>.Lease(false);
         var purgeBuffer = ArrayBuffer<(long, GCHandle)>.Lease(false);
@@ -138,8 +165,8 @@ public sealed class RpcSharedObjectTracker : RpcObjectTracker, IEnumerable<IRpcS
 
     public override int Count => _objects.Count;
 
-    public long NextId()
-        => Interlocked.Increment(ref _lastId);
+    public RpcObjectId NextId()
+        => new(Peer.Id, Interlocked.Increment(ref _lastId));
 
     public IRpcSharedObject? Get(long id)
         => _objects.GetValueOrDefault(id);
@@ -150,17 +177,20 @@ public sealed class RpcSharedObjectTracker : RpcObjectTracker, IEnumerable<IRpcS
 
     public void Register(IRpcSharedObject obj)
     {
+        obj.RequireKind(RpcObjectKind.Local);
         var id = obj.Id;
-        if (id <= 0)
+        if (id.IsNone)
             throw new ArgumentOutOfRangeException(nameof(obj));
 
-        obj.RequireKind(RpcObjectKind.Local);
-        if (!_objects.TryAdd(id, obj))
+        if (!_objects.TryAdd(id.LocalId, obj))
             throw Internal.Errors.RpcObjectIsAlreadyUsed();
     }
 
     public bool Unregister(IRpcSharedObject obj)
-        => _objects.TryRemove(obj.Id, obj);
+    {
+        obj.RequireKind(RpcObjectKind.Local);
+        return _objects.TryRemove(obj.Id.LocalId, obj);
+    }
 
     public async Task Maintain(CancellationToken cancellationToken)
     {
@@ -181,18 +211,19 @@ public sealed class RpcSharedObjectTracker : RpcObjectTracker, IEnumerable<IRpcS
         // ReSharper disable once FunctionNeverReturns
     }
 
-    public void OnKeepAlive(long[] objectIds)
+    public Task KeepAlive(long[] objectIds)
     {
         var buffer = MemoryBuffer<long>.Lease(false);
         try {
             foreach (var id in objectIds) {
                 if (Get(id) is { } obj)
-                    obj.OnKeepAlive();
+                    obj.KeepAlive();
                 else
                     buffer.Add(id);
             }
-            if (buffer.Count > 0)
-                _ = Peer.Hub.SystemCallSender.MissingObjects(Peer, buffer.ToArray());
+            return buffer.Count > 0
+                ? Peer.Hub.SystemCallSender.Disconnect(Peer, buffer.ToArray())
+                : Task.CompletedTask;
         }
         finally {
             buffer.Release();
@@ -205,7 +236,7 @@ public sealed class RpcSharedObjectTracker : RpcObjectTracker, IEnumerable<IRpcS
         for (int i = 0;; i++) {
             var abortedCountBefore = abortedIds.Count;
             foreach (var obj in this)
-                if (abortedIds.Add(obj.Id))
+                if (abortedIds.Add(obj.Id.LocalId))
                     TryDispose(obj);
             if (i >= 2 && abortedCountBefore == abortedIds.Count)
                 break;

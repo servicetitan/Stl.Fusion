@@ -93,11 +93,36 @@ public class SerializationTest(ITestOutputHelper @out) : TestBase(@out)
         Test(new RpcHeader("", "b"));
         Test(new RpcHeader("xxx", "yyy"));
 
-        void Test(RpcHeader h)
-        {
+        void Test(RpcHeader h) {
             var hs = h.PassThroughAllSerializers();
             hs.Name.Should().Be(h.Name);
             hs.Value.Should().Be(h.Value);
+        }
+    }
+
+    [Fact]
+    public void RpcHandshakeSerialization()
+    {
+        Test(new RpcHandshake(default));
+        Test(new RpcHandshake(new Guid()));
+
+        void Test(RpcHandshake h) {
+            var hs = h.PassThroughAllSerializers();
+            hs.RemotePeerId.Should().Be(h.RemotePeerId);
+        }
+    }
+
+
+    [Fact]
+    public void RpcObjectIdSerialization()
+    {
+        Test(default);
+        Test(new RpcObjectId(new Guid(), 2));
+
+        void Test(RpcObjectId o) {
+            var os = o.PassThroughAllSerializers();
+            os.HostId.Should().Be(o.HostId);
+            os.LocalId.Should().Be(o.LocalId);
         }
     }
 
@@ -125,8 +150,7 @@ public class SerializationTest(ITestOutputHelper @out) : TestBase(@out)
                 new("v", "@OVhtp0TRc"),
             }));
 
-        void Test(RpcMessage m)
-        {
+        void Test(RpcMessage m) {
             var ms = m.PassThroughAllSerializers();
             ms.RelatedId.Should().Be(m.RelatedId);
             ms.Service.Should().Be(m.Service);
@@ -161,29 +185,21 @@ public class SerializationTest(ITestOutputHelper @out) : TestBase(@out)
     [Fact]
     public void Base64DataSerialization()
     {
-        void Test(Base64Encoded src)
-        {
-            var dst = src.PassThroughAllSerializers(Out);
-            src.Data.SequenceEqual(dst.Data).Should().BeTrue();
-        }
-
         Test(default);
         Test(new Base64Encoded(null!));
         Test(new Base64Encoded(Array.Empty<byte>()));
         Test(new Base64Encoded(new byte[] {1}));
         Test(new Base64Encoded(new byte[] {1, 2}));
+
+        void Test(Base64Encoded src) {
+            var dst = src.PassThroughAllSerializers(Out);
+            src.Data.SequenceEqual(dst.Data).Should().BeTrue();
+        }
     }
 
     [Fact]
     public void TextOrBytesSerialization()
     {
-        void Test(TextOrBytes src)
-        {
-            var dst = src.PassThroughAllSerializers(Out);
-            dst.Format.Should().Be(src.Format);
-            dst.Bytes.SequenceEqual(src.Bytes).Should().BeTrue();
-        }
-
         Test(default);
 
         Test(TextOrBytes.EmptyText);
@@ -195,6 +211,12 @@ public class SerializationTest(ITestOutputHelper @out) : TestBase(@out)
         Test(new TextOrBytes(Array.Empty<byte>()));
         Test(new TextOrBytes(new byte[] {1}));
         Test(new TextOrBytes(new byte[] {1, 2}));
+
+        void Test(TextOrBytes src) {
+            var dst = src.PassThroughAllSerializers(Out);
+            dst.Format.Should().Be(src.Format);
+            dst.Bytes.SequenceEqual(src.Bytes).Should().BeTrue();
+        }
     }
 
     [Fact]
@@ -233,18 +255,17 @@ public class SerializationTest(ITestOutputHelper @out) : TestBase(@out)
     [Fact]
     public void ValueOfSerialization()
     {
-        void Test<T>(ValueOf<T>? src)
-        {
+        Test<int>(null);
+        Test<string>(null);
+        Test(ValueOf.New(1));
+        Test(ValueOf.New("1"));
+
+        void Test<T>(ValueOf<T>? src) {
             var dst = src.PassThroughAllSerializers(Out);
             if (src == null)
                 dst.Should().BeNull();
             else
                 dst!.Value.Should().Be(src.Value);
         }
-
-        Test<int>(null);
-        Test<string>(null);
-        Test(ValueOf.New(1));
-        Test(ValueOf.New("1"));
     }
 }

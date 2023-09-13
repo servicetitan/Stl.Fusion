@@ -8,24 +8,22 @@ public class ParseFormatTest
     [Fact]
     public void BasicTest()
     {
-        var binary = "01";
-        var f = MathExt.Format(0, binary);
-        f.Should().Be("0");
-        f = MathExt.Format(1, binary);
-        f.Should().Be("1");
-        f = MathExt.Format(2, binary);
-        f.Should().Be("10");
-        f = MathExt.Format(3, binary);
-        f.Should().Be("11");
-        f = MathExt.Format(4, binary);
-        f.Should().Be("100");
+        var binary = "01".AsSpan();
+        MathExt.Format(0, binary).Should().Be("0");
+        MathExt.Format(1, binary).Should().Be("1");
+        MathExt.Format(2, binary).Should().Be("10");
+        MathExt.Format(3, 2).Should().Be("11");
+        MathExt.Format(4, 2).Should().Be("100");
 
-        f = MathExt.Format(-1, binary);
-        f.Should().Be("-1");
-        f = MathExt.Format(-2, binary);
-        f.Should().Be("-10");
-        f = MathExt.Format(-3, binary);
-        f.Should().Be("-11");
+        MathExt.Format(-1, binary).Should().Be("-1");
+        MathExt.Format(-2, binary).Should().Be("-10");
+        MathExt.Format(-3, 2).Should().Be("-11");
+
+        MathExt.Format(0ul, binary).Should().Be("0");
+        MathExt.Format(1ul, binary).Should().Be("1");
+        MathExt.Format(2ul, binary).Should().Be("10");
+        MathExt.Format(3ul, 2).Should().Be("11");
+        MathExt.Format(4ul, 2).Should().Be("100");
     }
 
     [Fact]
@@ -43,8 +41,8 @@ public class ParseFormatTest
         for (var i = 0; i < 1000; i++) {
             foreach (var alphabet in alphabets) {
                 var n = rnd.Next();
-                var f = MathExt.Format(n, alphabet);
-                var p = MathExt.Parse(f, alphabet);
+                var f = MathExt.Format(n, alphabet.AsSpan());
+                var p = MathExt.ParseInt64(f.AsSpan(), alphabet.AsSpan());
                 p.Should().Be(n);
             }
         }
