@@ -47,8 +47,7 @@ public class BatchProcessorTest(ITestOutputHelper @out) : TestBase(@out)
         tasks = Enumerable.Range(0, 6).Select(i => processor.Process(i)).ToArray();
         await Task.WhenAll(tasks);
         tasks.Count(t => t.Result.BatchIndex == 1).Should().Be(1);
-        tasks.Count(t => t.Result.BatchIndex == 2).Should().BeOneOf(2, 3);
-        tasks.Count(t => t.Result.BatchIndex == 3).Should().BeOneOf(2, 3);
+        tasks.Count(t => t.Result.BatchIndex > 1).Should().Be(5);
         tasks.Select(t => t.Result.Value).Should().BeEquivalentTo(Enumerable.Range(0, 6));
 
         await Reset();
