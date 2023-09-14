@@ -190,7 +190,6 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
         var tenant = TenantRegistry.Get(tenantId);
         var batchProcessor = new BatchProcessor<TKey, TDbEntity?> {
             BatchSize = Settings.BatchSize,
-            ConcurrencyLevel = 1,
             Implementation = (batch, cancellationToken) => ProcessBatch(tenant, batch, cancellationToken),
         };
         Settings.ConfigureBatchProcessor?.Invoke(batchProcessor);
@@ -212,7 +211,7 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
 
     protected virtual async Task ProcessBatch(
         Tenant tenant,
-        List<BatchItem<TKey, TDbEntity?>> batch,
+        List<BatchProcessor<TKey, TDbEntity?>.Item> batch,
         CancellationToken cancellationToken)
     {
         if (batch.Count == 0)
@@ -227,8 +226,7 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
             try {
                 var i = 0;
                 foreach (var item in batch)
-                    if (!item.TryCancel())
-                        keys[i++] = item.Input;
+                    keys[i++] = item.Input;
                 var lastKey = keys[i - 1];
                 for (; i < batchSize; i++)
                     keys[i] = lastKey;

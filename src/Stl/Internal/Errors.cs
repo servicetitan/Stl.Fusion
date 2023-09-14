@@ -115,6 +115,9 @@ public static class Errors
     public static Exception NotSupported(string message)
         => new NotSupportedException(message);
 
+    public static Exception UnprocessedBatchItem()
+        => new InvalidOperationException("This batch item wasn't processed.");
+
     public static Exception InternalError(string message)
         => new SystemException(message);
 
