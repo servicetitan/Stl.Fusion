@@ -41,7 +41,7 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
         public Expression<Func<TDbEntity, TKey>>? KeyExtractor { get; init; }
         public Expression<Func<IQueryable<TDbEntity>, IQueryable<TDbEntity>>>? QueryTransformer { get; init; }
         public Action<Dictionary<TKey, TDbEntity>> PostProcessor { get; init; } = _ => { };
-        public int BatchSize { get; init; } = 14; // Max. EF.CompileQuery parameter count = 15
+        public int BatchSize { get; init; } = 15; // Max. EF.CompileQuery parameter count = 15
         public Action<BatchProcessor<TKey, TDbEntity?>>? ConfigureBatchProcessor { get; init; }
         public TimeSpan? Timeout { get; init; } = TimeSpan.FromSeconds(1);
         public IRetryDelayer RetryDelayer { get; init; } = new RetryDelayer() {
@@ -193,6 +193,7 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
         var tenant = TenantRegistry.Get(tenantId);
         var batchProcessor = new BatchProcessor<TKey, TDbEntity?> {
             BatchSize = Settings.BatchSize,
+            WorkerPolicy = BatchProcessorWorkerPolicy.DbDefault,
             Implementation = (batch, cancellationToken) => ProcessBatch(tenant, batch, cancellationToken),
             Log = Log,
         };

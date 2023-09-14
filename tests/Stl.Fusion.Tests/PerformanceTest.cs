@@ -42,7 +42,7 @@ public abstract class PerformanceTestBase : FusionTestBase
         var readersPerCore = 16;
         var readerCount = HardwareInfo.GetProcessorCountFactor(readersPerCore);
         var fusionIterationCount = opCountPerCore / readersPerCore;
-        var nonFusionIterationCount = fusionIterationCount / 6000;
+        var nonFusionIterationCount = fusionIterationCount / (UseEntityResolver ? 2000 : 6000);
 
         var withoutSerialization = (Action<User>) (_ => { });
         var withSerialization = (Action<User>) (u => JsonSerializer.Serialize(u)); // STJ serializer

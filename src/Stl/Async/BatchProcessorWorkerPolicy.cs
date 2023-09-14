@@ -16,9 +16,12 @@ public interface IBatchProcessorWorkerPolicy
 public record BatchProcessorWorkerPolicy : IBatchProcessorWorkerPolicy
 {
     public static IBatchProcessorWorkerPolicy Default { get; set; } = new BatchProcessorWorkerPolicy();
+    public static IBatchProcessorWorkerPolicy DbDefault { get; set; } = new BatchProcessorWorkerPolicy() {
+        MaxWorkerCount = Math.Max(1, HardwareInfo.GetProcessorCountFactor() / 2),
+    };
 
     public int MinWorkerCount { get; init; } = 1;
-    public int MaxWorkerCount { get; init; } = HardwareInfo.GetProcessorCountFactor(2);
+    public int MaxWorkerCount { get; init; } = HardwareInfo.GetProcessorCountFactor();
 
     public TimeSpan KillWorkerAt { get; init; } = TimeSpan.FromMilliseconds(1);
     public TimeSpan Kill8WorkersAt { get; init; } = TimeSpan.FromMilliseconds(0.1);
