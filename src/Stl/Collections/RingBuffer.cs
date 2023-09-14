@@ -125,9 +125,25 @@ public struct RingBuffer<T> : IReadOnlyList<T>
         _buffer[_start] = head;
     }
 
+    public void PushHeadAndMoveTailIfFull(T head)
+    {
+        if (IsFull)
+            _end = (_end - 1) & Capacity;
+        _start = (_start - 1) & Capacity;
+        _buffer[_start] = head;
+    }
+
     public void PushTail(T tail)
     {
         AssertNotFull();
+        _buffer[_end] = tail;
+        _end = (_end + 1) & Capacity;
+    }
+
+    public void PushTailAndMoveHeadIfFull(T tail)
+    {
+        if (IsFull)
+            _start = (_start + 1) & Capacity;
         _buffer[_end] = tail;
         _end = (_end + 1) & Capacity;
     }

@@ -3,10 +3,7 @@ using Xunit.DependencyInjection;
 
 namespace Stl.Testing.Output;
 
-public class TestOutputHelperAccessor : ITestOutputHelperAccessor
+public class TestOutputHelperAccessor(ITestOutputHelper? output) : ITestOutputHelperAccessor
 {
-    public ITestOutputHelper? Output { get; set; }
-
-    public TestOutputHelperAccessor(ITestOutputHelper? output)
-        => Output = output;
+    public ITestOutputHelper? Output { get; set; } = output;
 }

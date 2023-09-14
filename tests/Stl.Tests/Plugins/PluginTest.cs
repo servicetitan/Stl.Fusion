@@ -1,7 +1,7 @@
 using Stl.Caching;
 using Stl.Plugins;
 using Stl.Reflection;
-using Stl.Testing.Output;
+using Xunit.DependencyInjection;
 using Xunit.DependencyInjection.Logging;
 
 namespace Stl.Tests.Plugins;
@@ -80,7 +80,7 @@ public class PluginTest(ITestOutputHelper @out) : TestBase(@out)
                     logging.AddProvider(
 #pragma warning disable CS0618
                         new XunitTestOutputLoggerProvider(
-                            new TestOutputHelperAccessor(Out),
+                            new TestOutputHelperAccessor() { Output = Out },
                             (_, level) => level >= LogLevel.Debug));
 #pragma warning restore CS0618
                 });

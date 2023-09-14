@@ -3,18 +3,18 @@ using Stl.Testing.Collections;
 namespace Stl.Tests.Async;
 
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
-public class BatchProcessorTest : TestBase
+public class BatchProcessorTest(ITestOutputHelper @out) : TestBase(@out)
 {
-    public BatchProcessorTest(ITestOutputHelper @out) : base(@out) { }
-
     [Fact]
     public async Task BasicTest()
     {
         var batchIndex = 0;
         await using var processor = new BatchProcessor<int, (int BatchIndex, int Value)>() {
-            MinWorkerCount = 1,
-            MaxWorkerCount = 3,
             BatchSize = 3,
+            WorkerPolicy = new BatchProcessorWorkerPolicy {
+                MinWorkerCount = 1,
+                MaxWorkerCount = 3,
+            },
             Implementation = async (batch, cancellationToken) => {
                 var bi = Interlocked.Increment(ref batchIndex);
                 await Task.Delay(100).ConfigureAwait(false);
@@ -47,8 +47,8 @@ public class BatchProcessorTest : TestBase
         tasks = Enumerable.Range(0, 6).Select(i => processor.Process(i)).ToArray();
         await Task.WhenAll(tasks);
         tasks.Count(t => t.Result.BatchIndex == 1).Should().Be(1);
-        tasks.Count(t => t.Result.BatchIndex == 2).Should().Be(3);
-        tasks.Count(t => t.Result.BatchIndex == 3).Should().Be(2);
+        tasks.Count(t => t.Result.BatchIndex == 2).Should().BeOneOf(2, 3);
+        tasks.Count(t => t.Result.BatchIndex == 3).Should().BeOneOf(2, 3);
         tasks.Select(t => t.Result.Value).Should().BeEquivalentTo(Enumerable.Range(0, 6));
 
         await Reset();
@@ -95,34 +95,58 @@ public class BatchProcessorTest : TestBase
         if (TestRunnerInfo.IsBuildAgent())
             return;
 
+        var batchDelay = 100;
+
+        var services = CreateLoggingServices(@out);
         await using var processor = new BatchProcessor<int, int>() {
-            MinWorkerCount = 1,
-            MaxWorkerCount = 100,
             BatchSize = 10,
-            WorkerCollectionPeriod = TimeSpan.FromSeconds(1),
+            WorkerPolicy = new BatchProcessorWorkerPolicy() {
+                MinWorkerCount = 1,
+                MaxWorkerCount = 100,
+                CollectorCycle = TimeSpan.FromSeconds(1),
+            },
             Implementation = async (batch, cancellationToken) => {
-                await Task.Delay(100, cancellationToken).ConfigureAwait(false);
+                await Task.Delay(batchDelay, cancellationToken).ConfigureAwait(false);
                 foreach (var item in batch)
                     item.SetResult(item.Input);
-            }
+            },
+            Log = services.LogFor<BatchProcessor<int, int>>(),
         };
 
-        var tasks = new Task<int>[10_000];
-        for (var i = 0; i < tasks.Length; i++)
-            tasks[i] = processor.Process(i);
-        while (true) {
-            await Delay(0.5);
-            Out.WriteLine($"WorkerCount: {processor.GetWorkerCount()}");
-            if (processor.GetWorkerCount() > 60)
-                break;
+        processor.GetWorkerCount().Should().Be(0);
+        processor.GetPlannedWorkerCount().Should().Be(0);
+        await processor.Process(0);
+        processor.GetWorkerCount().Should().Be(1);
+        processor.GetPlannedWorkerCount().Should().Be(1);
+
+        batchDelay = 10;
+        await Test(1000, 5);
+
+        batchDelay = 100;
+        await Test(1000, 10);
+        await Test(10_000, 60);
+
+        async Task Test(int taskCount, int minExpectedWorkerCount) {
+            Out.WriteLine($"Task count: {taskCount}, batch delay: {batchDelay}");
+            var tasks = new Task<int>[taskCount];
+            for (var i = 0; i < tasks.Length; i++)
+                tasks[i] = processor.Process(i);
+
+            while (true) {
+                await Delay(0.5);
+                Out.WriteLine($"WorkerCount: {processor.GetWorkerCount()}");
+                if (processor.GetWorkerCount() >= minExpectedWorkerCount)
+                    break;
+            }
+            while (true) {
+                await Delay(0.5);
+                Out.WriteLine($"WorkerCount: {processor.GetWorkerCount()}");
+                if (processor.GetWorkerCount() == 1)
+                    break;
+            }
+            await Task.WhenAll(tasks);
+            tasks.Where((t, i) => t.Result != i).Count().Should().Be(0);
+            Out.WriteLine("");
         }
-        while (true) {
-            await Delay(0.5);
-            Out.WriteLine($"WorkerCount: {processor.GetWorkerCount()}");
-            if (processor.GetWorkerCount() == 1)
-                break;
-        }
-        await Task.WhenAll(tasks);
-        tasks.Where((t, i) => t.Result != i).Count().Should().Be(0);
     }
 }

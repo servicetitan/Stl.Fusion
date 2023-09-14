@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework;
 using Stl.IO;
-using Stl.Testing.Output;
 using Stl.Tests.CommandR.Services;
+using Xunit.DependencyInjection;
 using Xunit.DependencyInjection.Logging;
 
 namespace Stl.Tests.CommandR;
@@ -49,7 +49,7 @@ public class CommandRTestBase(ITestOutputHelper @out) : TestBase(@out)
             logging.AddProvider(
 #pragma warning disable CS0618
                 new XunitTestOutputLoggerProvider(
-                    new TestOutputHelperAccessor(Out),
+                    new TestOutputHelperAccessor() { Output = Out },
                     LogFilter));
 #pragma warning restore CS0618
         });

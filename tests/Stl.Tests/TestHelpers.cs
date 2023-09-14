@@ -1,5 +1,7 @@
 using Stl.Generators;
 using Stl.Rpc;
+using Xunit.DependencyInjection;
+using Xunit.DependencyInjection.Logging;
 
 namespace Stl.Tests;
 
@@ -20,6 +22,24 @@ public static class TestHelpers
             GC.Collect();
             Thread.Sleep(10);
         }
+    }
+
+    public static IServiceProvider CreateLoggingServices(ITestOutputHelper @out)
+    {
+        var services = new ServiceCollection();
+        services.AddLogging(logging => {
+            logging.ClearProviders();
+            logging.SetMinimumLevel(LogLevel.Debug);
+            logging.AddDebug();
+            logging.Services.AddSingleton<ILoggerProvider>(_ => {
+#pragma warning disable CS0618
+                return new XunitTestOutputLoggerProvider(
+                    new TestOutputHelperAccessor() { Output = @out },
+                    (_, level) => level >= LogLevel.Debug);
+#pragma warning restore CS0618
+            });
+        });
+        return services.BuildServiceProvider();
     }
 
     // Rpc
