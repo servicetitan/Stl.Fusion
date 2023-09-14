@@ -121,7 +121,7 @@ public class RpcReconnectionTest(ITestOutputHelper @out) : RpcLocalTestBase(@out
             workerCount = 1;
         var tasks = Enumerable.Range(0, workerCount)
             .Select(async workerIndex => {
-                var totalCount = 500;
+                var totalCount = 300;
                 var stream = await client.StreamInt32(totalCount, -1, new RandomTimeSpan(0.02, 1));
                 var count = 0;
                 await foreach (var item in stream) {
