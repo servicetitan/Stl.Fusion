@@ -28,9 +28,10 @@ public static class ServiceCollectionExt
         Action<IServiceProvider, DbContextOptionsBuilder>? optionsAction)
         where TDbContext : DbContext
     {
-        services.AddDbContext<TDbContext>(optionsAction, ServiceLifetime.Transient, ServiceLifetime.Singleton);
+        services.AddDbContext<TDbContext>(optionsAction, ServiceLifetime.Singleton, ServiceLifetime.Singleton);
+        services.RemoveAll(x => x.ServiceType == typeof(TDbContext));
         services.AddSingleton<IDbContextFactory<TDbContext>>(
-            c => new FuncDbContextFactory<TDbContext>(c.GetRequiredService<TDbContext>));
+            c => new FuncDbContextFactory<TDbContext>(() => c.Activate<TDbContext>()));
         return services;
     }
 }
