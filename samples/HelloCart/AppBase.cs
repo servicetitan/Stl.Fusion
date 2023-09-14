@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Samples.HelloCart.V2;
 using static System.Console;
 
@@ -14,8 +15,9 @@ public abstract class AppBase
 
     public virtual async Task InitializeAsync(IServiceProvider services)
     {
-        var dbContext = services.GetService<AppDbContext>();
-        if (dbContext != null) {
+        var dbContextFactory = services.GetService<IDbContextFactory<AppDbContext>>();
+        if (dbContextFactory != null) {
+            await using var dbContext = await dbContextFactory.CreateDbContextAsync();
             await dbContext.Database.EnsureDeletedAsync();
             await dbContext.Database.EnsureCreatedAsync();
         }
