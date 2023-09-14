@@ -42,7 +42,7 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
         public Expression<Func<TDbEntity, TKey>>? KeyExtractor { get; init; }
         public Expression<Func<IQueryable<TDbEntity>, IQueryable<TDbEntity>>>? QueryTransformer { get; init; }
         public Action<Dictionary<TKey, TDbEntity>> PostProcessor { get; init; } = _ => { };
-        public int BatchSize { get; init; } = 8;
+        public int BatchSize { get; init; } = 14; // Max. EF.CompileQuery parameter count = 15
         public Action<BatchProcessor<TKey, TDbEntity?>>? ConfigureBatchProcessor { get; init; }
         public TimeSpan? Timeout { get; init; } = TimeSpan.FromSeconds(1);
         public IRetryDelayer RetryDelayer { get; init; } = new RetryDelayer() {
@@ -54,7 +54,7 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
     // ReSharper disable once StaticMemberInGenericType
     protected static MethodInfo DbContextSetMethod { get; } = typeof(DbContext)
         .GetMethods(BindingFlags.Public | BindingFlags.Instance)
-        .Single(m => m.Name == nameof(DbContext.Set) && m.IsGenericMethod && m.GetParameters().Length == 0)
+        .Single(m => Equals(m.Name, nameof(DbContext.Set)) && m.IsGenericMethod && m.GetParameters().Length == 0)
         .MakeGenericMethod(typeof(TDbEntity));
     protected static MethodInfo QueryableWhereMethod { get; }
         = new Func<IQueryable<TDbEntity>, Expression<Func<TDbEntity, bool>>, IQueryable<TDbEntity>>(Queryable.Where).Method;
@@ -155,12 +155,14 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
         lambdaParameters[0] = pDbContext;
         pKeys.CopyTo(lambdaParameters, 1);
         var lambda = Expression.Lambda(eBody, lambdaParameters);
+#pragma warning disable EF1001
         var query = new CompiledAsyncEnumerableQuery<TDbContext, TDbEntity>(lambda);
+#pragma warning restore EF1001
 
         // Locating query.Execute methods
         var mExecute = query.GetType()
             .GetMethods()
-            .SingleOrDefault(m => m.Name == nameof(query.Execute)
+            .SingleOrDefault(m => Equals(m.Name, nameof(query.Execute))
                 && m.IsGenericMethod
                 && m.GetGenericArguments().Length == batchSize)
             ?.MakeGenericMethod(pKeys.Select(p => p.Type).ToArray());
