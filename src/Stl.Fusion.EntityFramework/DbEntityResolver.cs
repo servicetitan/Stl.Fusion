@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore.Query.Internal;
 using Stl.Fusion.EntityFramework.Internal;
 using Stl.Multitenancy;
 using Stl.Net;
-using Stl.Pooling;
 
 namespace Stl.Fusion.EntityFramework;
 

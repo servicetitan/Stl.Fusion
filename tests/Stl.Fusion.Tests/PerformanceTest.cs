@@ -8,11 +8,10 @@ namespace Stl.Fusion.Tests;
 public abstract class PerformanceTestBase : FusionTestBase
 {
     public int UserCount = 1000;
+    public bool UseEntityResolver = false;
 
     protected PerformanceTestBase(ITestOutputHelper @out) : base(@out)
-    {
-        UseLogging = false;
-    }
+        => UseLogging = false;
 
     public override async Task InitializeAsync()
     {
@@ -35,7 +34,10 @@ public abstract class PerformanceTestBase : FusionTestBase
             return; // Shouldn't run this test on build agents
 
         var users = Services.GetRequiredService<IUserService>();
+        ((UserService)users).UseEntityResolver = UseEntityResolver;
         var plainUsers = Services.GetRequiredService<UserService>();
+        plainUsers.UseEntityResolver = UseEntityResolver;
+
         var opCountPerCore = 8_000_000;
         var readersPerCore = 16;
         var readerCount = HardwareInfo.GetProcessorCountFactor(readersPerCore);

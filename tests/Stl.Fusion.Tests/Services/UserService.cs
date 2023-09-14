@@ -44,12 +44,16 @@ public partial record UserService_Delete(
 
 public class UserService : DbServiceBase<TestDbContext>, IUserService
 {
+    private readonly IDbEntityResolver<long, User> _userResolver;
+
     public bool IsProxy { get; }
+    public bool UseEntityResolver { get; set; }
 
     public UserService(IServiceProvider services) : base(services)
     {
         var type = GetType();
         IsProxy = type != type.NonProxyType();
+        _userResolver = services.GetRequiredService<IDbEntityResolver<long, User>>();
     }
 
     public virtual async Task Create(UserService_Add command, CancellationToken cancellationToken = default)
@@ -138,6 +142,9 @@ public class UserService : DbServiceBase<TestDbContext>, IUserService
     {
         // Debug.WriteLine($"Get {userId}");
         await Everything().ConfigureAwait(false);
+
+        if (UseEntityResolver)
+            return await _userResolver.Get(userId, cancellationToken).ConfigureAwait(false);
 
         var dbContext = CreateDbContext();
         await using var _ = dbContext.ConfigureAwait(false);

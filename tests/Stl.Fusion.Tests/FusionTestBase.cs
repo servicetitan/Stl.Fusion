@@ -147,42 +147,42 @@ public abstract class FusionTestBase : RpcTestBase
                 fusion.AddDbKeyValueStore<TestDbContext>();
 
             // DbContext & related services
-            services.AddTransientDbContextFactory<TestDbContext>(builder => {
+            services.AddTransientDbContextFactory<TestDbContext>(db => {
                 switch (DbType) {
                 case FusionTestDbType.Sqlite:
-                    builder.UseSqlite($"Data Source={SqliteDbPath}");
+                    db.UseSqlite($"Data Source={SqliteDbPath}");
                     break;
                 case FusionTestDbType.InMemory:
-                    builder.UseInMemoryDatabase(SqliteDbPath)
+                    db.UseInMemoryDatabase(SqliteDbPath)
                         .ConfigureWarnings(warnings => {
                             warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning);
                         });
                     break;
                 case FusionTestDbType.PostgreSql:
-                    builder.UseNpgsql(PostgreSqlConnectionString, npgsql => {
+                    db.UseNpgsql(PostgreSqlConnectionString, npgsql => {
                         npgsql.EnableRetryOnFailure(0);
                     });
-                    builder.UseNpgsqlHintFormatter();
+                    db.UseNpgsqlHintFormatter();
                     break;
                 case FusionTestDbType.MariaDb:
 #if NET5_0_OR_GREATER || NETCOREAPP
                     var serverVersion = ServerVersion.AutoDetect(MariaDbConnectionString);
-                    builder.UseMySql(MariaDbConnectionString, serverVersion, mySql => {
+                    db.UseMySql(MariaDbConnectionString, serverVersion, mySql => {
 #else
-                    builder.UseMySql(MariaDbConnectionString, mySql => {
+                    db.UseMySql(MariaDbConnectionString, mySql => {
 #endif
                         mySql.EnableRetryOnFailure(0);
                     });
                     break;
                 case FusionTestDbType.SqlServer:
-                    builder.UseSqlServer(SqlServerConnectionString, sqlServer => {
+                    db.UseSqlServer(SqlServerConnectionString, sqlServer => {
                         sqlServer.EnableRetryOnFailure(0);
                     });
                     break;
                 default:
                     throw new NotSupportedException();
                 }
-                builder.EnableSensitiveDataLogging();
+                db.EnableSensitiveDataLogging();
             });
             services.AddDbContextServices<TestDbContext>(db => {
                 if (UseRedisOperationLogChangeTracking)
