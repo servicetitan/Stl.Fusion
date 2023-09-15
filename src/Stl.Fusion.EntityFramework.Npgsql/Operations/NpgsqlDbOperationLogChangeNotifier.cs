@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework.Operations;
+using Stl.Locking;
 using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework.Npgsql.Operations;
@@ -10,18 +11,48 @@ public class NpgsqlDbOperationLogChangeNotifier<TDbContext>(
     ) : DbOperationCompletionNotifierBase<TDbContext, NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>>(options, services)
     where TDbContext : DbContext
 {
+    private readonly ConcurrentDictionary<Symbol, CachedInfo> _cache = new();
+
     // Protected methods
 
     protected override async Task Notify(Tenant tenant)
     {
-        var dbContext = CreateDbContext(tenant);
-        await using var _ = dbContext.ConfigureAwait(false);
-
-#pragma warning disable MA0074
-        var qPayload = AgentInfo.Id.Value.Replace("'", "''");
-#pragma warning restore MA0074
-        await dbContext.Database
-            .ExecuteSqlRawAsync($"NOTIFY {Options.ChannelName}, '{qPayload}'")
-            .ConfigureAwait(false);
+        var info = GetCachedInfo(tenant);
+        var (dbContext, sql, asyncLock) = info;
+        using var _ = await asyncLock.Lock().ConfigureAwait(false);
+        using var cts = new CancellationTokenSource(1000);
+        try {
+            await dbContext.Database.ExecuteSqlRawAsync(sql, cts.Token).ConfigureAwait(false);
+        }
+        catch {
+            // Dispose dbContext & remove cached info to make sure it gets recreated
+            try {
+                await dbContext.DisposeAsync().ConfigureAwait(false);
+            }
+            catch {
+                // Intended
+            }
+            _cache.TryRemove(tenant.Id, info);
+        }
     }
+
+    private CachedInfo GetCachedInfo(Tenant tenant)
+        => _cache.GetOrAdd(tenant.Id, static (_, x) => x.self.CreateCachedInfo(x.tenant), (tenant, self: this));
+
+    private CachedInfo CreateCachedInfo(Tenant tenant)
+    {
+        var dbContext = CreateDbContext(tenant);
+        var quotedPayload = AgentInfo.Id.Value
+#if NETSTANDARD2_0
+            .Replace("'", "''");
+#else
+            .Replace("'", "''", StringComparison.Ordinal);
+#endif
+        var sql = $"NOTIFY {Options.ChannelName}, '{quotedPayload}'";
+        return new CachedInfo(dbContext, sql, new SimpleAsyncLock());
+    }
+
+    // Nested types
+
+    private record CachedInfo(TDbContext DbContext, string Sql, SimpleAsyncLock AsyncLock);
 }
