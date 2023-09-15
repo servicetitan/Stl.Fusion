@@ -41,7 +41,11 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
         public Expression<Func<TDbEntity, TKey>>? KeyExtractor { get; init; }
         public Expression<Func<IQueryable<TDbEntity>, IQueryable<TDbEntity>>>? QueryTransformer { get; init; }
         public Action<Dictionary<TKey, TDbEntity>> PostProcessor { get; init; } = _ => { };
+#if NETSTANDARD2_0
+        public int BatchSize { get; init; } = 5; // Max. EF.CompileQuery parameter count = 8
+#else
         public int BatchSize { get; init; } = 15; // Max. EF.CompileQuery parameter count = 15
+#endif
         public Action<BatchProcessor<TKey, TDbEntity?>>? ConfigureBatchProcessor { get; init; }
         public TimeSpan? Timeout { get; init; } = TimeSpan.FromSeconds(1);
         public IRetryDelayer RetryDelayer { get; init; } = new RetryDelayer() {
