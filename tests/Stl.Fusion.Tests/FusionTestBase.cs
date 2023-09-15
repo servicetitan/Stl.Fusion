@@ -25,20 +25,21 @@ namespace Stl.Fusion.Tests;
 public abstract class FusionTestBase : RpcTestBase
 {
     private static readonly ReentrantAsyncLock InitializeLock = new(LockReentryMode.CheckedFail);
-    protected static readonly ConcurrentDictionary<Symbol, string> ClientComputedCacheStore = new();
 
-    public FusionTestDbType DbType { get; init; } = TestRunnerInfo.IsBuildAgent()
+    public FusionTestDbType DbType { get; set; } = TestRunnerInfo.IsBuildAgent()
         ? FusionTestDbType.InMemory
         : FusionTestDbType.Sqlite;
-    public bool UseRedisOperationLogChangeTracking { get; init; } = !TestRunnerInfo.IsBuildAgent();
-    public bool UseInMemoryKeyValueStore { get; init; }
-    public bool UseInMemoryAuthService { get; init; }
-    public bool UseClientComputedCache { get; init; }
-    public LogLevel RpcCallLogLevel { get; init; } = LogLevel.None;
+    public bool IsConsoleApp { get; set; } = false;
+    public bool UseOperationLogChangeTracking { get; set; } = true;
+    public bool UseRedisOperationLogChangeTracking { get; set; } = !TestRunnerInfo.IsBuildAgent();
+    public bool UseInMemoryKeyValueStore { get; set; }
+    public bool UseInMemoryAuthService { get; set; }
+    public bool UseClientComputedCache { get; set; }
+    public LogLevel RpcCallLogLevel { get; set; } = LogLevel.None;
 
     public FilePath SqliteDbPath { get; protected set; }
     public string PostgreSqlConnectionString { get; protected set; } =
-        "Server=localhost;Database=stl_fusion_tests;Port=5432;User Id=postgres;Password=postgres;Enlist=false;Minimum Pool Size=5;Maximum Pool Size=20;Connection Idle Lifetime=30";
+        "Server=localhost;Database=stl_fusion_tests;Port=5432;User Id=postgres;Password=postgres;Enlist=false;Minimum Pool Size=5;Maximum Pool Size=200;Connection Idle Lifetime=30";
     public string MariaDbConnectionString { get; protected set; } =
         "Server=localhost;Database=stl_fusion_tests;Port=3306;User=root;Password=mariadb";
     public string SqlServerConnectionString { get; protected set; } =
@@ -54,7 +55,7 @@ public abstract class FusionTestBase : RpcTestBase
 
     public override async Task InitializeAsync()
     {
-        if (!DbType.IsAvailable())
+        if (!IsConsoleApp && !DbType.IsAvailable())
             return;
 
         using var __ = await InitializeLock.Lock().ConfigureAwait(false);
@@ -185,14 +186,18 @@ public abstract class FusionTestBase : RpcTestBase
                 db.EnableSensitiveDataLogging();
             });
             services.AddDbContextServices<TestDbContext>(db => {
-                if (UseRedisOperationLogChangeTracking)
+                var useRedis = UseOperationLogChangeTracking && UseRedisOperationLogChangeTracking;
+                if (useRedis)
                     db.AddRedisDb("localhost", "Fusion.Tests");
                 db.AddOperations(operations => {
+                    if (!UseOperationLogChangeTracking)
+                        return;
+
                     operations.ConfigureOperationLogReader(_ => new() {
                         // Enable this if you debug multi-host invalidation
                         // MaxCommitDuration = TimeSpan.FromMinutes(5),
                     });
-                    if (UseRedisOperationLogChangeTracking)
+                    if (useRedis)
                         operations.AddRedisOperationLogChangeTracking();
                     else if (DbType == FusionTestDbType.PostgreSql)
                         operations.AddNpgsqlOperationLogChangeTracking();

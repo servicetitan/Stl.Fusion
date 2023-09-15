@@ -3,6 +3,9 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net8.0;net7.0;net6.0;net5.0;netcoreapp3.1</TargetFrameworks>
+    <!--
+    <TargetFrameworks>net8.0;net7.0;net6.0;net5.0;netcoreapp3.1;net48;net471</TargetFrameworks>
+    -->
     <ServerGarbageCollection>true</ServerGarbageCollection>
   </PropertyGroup>
 
