@@ -6,7 +6,7 @@ public readonly partial struct UserIdentity : IEquatable<UserIdentity>
 {
     private static readonly ListFormat IdFormat = ListFormat.SlashSeparated;
 
-    public static UserIdentity None { get; } = default;
+    public static readonly UserIdentity None;
     public static string DefaultSchema { get; } = "Default";
 
     [DataMember(Order = 0), MemoryPackOrder(0)]

@@ -32,7 +32,7 @@ public class ExceptionInfoTest(ITestOutputHelper @out) : TestBase(@out)
     }
 
     [Fact]
-    public void LegacyExceptionInfoTest()
+    public void OldExceptionInfoTest()
     {
         var t = new TypeEvolutionTester<OldExceptionInfo, ExceptionInfo>(
             (li, i) => Assert.True(li.TypeRef == i.TypeRef && Equals(li.Message, i.Message)));

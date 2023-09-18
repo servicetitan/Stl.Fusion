@@ -8,7 +8,7 @@ public readonly partial struct ExceptionInfo : IEquatable<ExceptionInfo>
     private static readonly Type[] ExceptionCtorArgumentTypes1 = { typeof(string), typeof(Exception) };
     private static readonly Type[] ExceptionCtorArgumentTypes2 = { typeof(string) };
 
-    public static ExceptionInfo None { get; } = default;
+    public static readonly ExceptionInfo None = default;
     public static Func<TypeRef, Type>? UnknownExceptionTypeResolver { get; set; } = null;
 
     private readonly string _message;
@@ -41,7 +41,7 @@ public readonly partial struct ExceptionInfo : IEquatable<ExceptionInfo>
     public override string ToString()
         => IsNone
             ? $"{GetType().Name}()"
-            : $"{GetType().Name}({TypeRef}, {JsonFormatter.Format(Message)})";
+            : $"{GetType().Name}({TypeRef.ToString()}, {JsonFormatter.Format(Message)})";
 
     public Exception? ToException()
     {

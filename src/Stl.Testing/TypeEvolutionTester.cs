@@ -74,10 +74,15 @@ public class TypeEvolutionTester<TOld, TNew>
     {
         var s = new MessagePackByteSerializer();
         using var buffer = s.Write(value);
-        var b0 = buffer.WrittenMemory.ToArray();
-        Output?.WriteLine($"MessagePackByteSerializer: {JsonFormatter.Format(b0)}");
-        var v0 = s.Read<TNew>(b0);
+        var bytes = buffer.WrittenMemory.ToArray();
+        Output?.WriteLine($"MessagePackByteSerializer: {JsonFormatter.Format(bytes)}");
+        s.Write(buffer, value);
+
+        bytes = buffer.WrittenMemory.ToArray();
+        var v0 = s.Read<TNew>(bytes, out var readLength);
         AssertEqual(value, v0);
+        var v1 = s.Read<TNew>(bytes[readLength..]);
+        AssertEqual(value, v1);
     }
 
     // MemoryPack serializer
@@ -86,9 +91,14 @@ public class TypeEvolutionTester<TOld, TNew>
     {
         var s = new MemoryPackByteSerializer();
         using var buffer = s.Write(value);
-        var b0 = buffer.WrittenMemory.ToArray();
-        Output?.WriteLine($"MemoryPackByteSerializer: {JsonFormatter.Format(b0)}");
-        var v0 = s.Read<TNew>(b0);
+        var bytes = buffer.WrittenMemory.ToArray();
+        Output?.WriteLine($"MemoryPackByteSerializer: {JsonFormatter.Format(bytes)}");
+        s.Write(buffer, value);
+
+        bytes = buffer.WrittenMemory.ToArray();
+        var v0 = s.Read<TNew>(bytes, out var readLength);
         AssertEqual(value, v0);
+        var v1 = s.Read<TNew>(bytes[readLength..]);
+        AssertEqual(value, v1);
     }
 }

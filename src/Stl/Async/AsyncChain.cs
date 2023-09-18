@@ -3,8 +3,8 @@ namespace Stl.Async;
 [StructLayout(LayoutKind.Auto)]
 public readonly record struct AsyncChain(string Name, Func<CancellationToken, Task> Start)
 {
-    public static AsyncChain None { get; } = new("(no-operation)", _ => Task.CompletedTask);
-    public static AsyncChain NeverEnding { get; } = new("(never-ending)", _ => TaskExt.NeverEndingTask);
+    public static readonly AsyncChain None = new("(no-operation)", _ => Task.CompletedTask);
+    public static readonly AsyncChain NeverEnding = new("(never-ending)", _ => TaskExt.NeverEndingTask);
 
     public AsyncChain(Func<CancellationToken, Task> start)
         : this("(unnamed)", start) { }

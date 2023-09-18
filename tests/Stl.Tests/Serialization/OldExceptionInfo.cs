@@ -10,7 +10,7 @@ public readonly partial struct OldExceptionInfo : IEquatable<OldExceptionInfo>
     private static readonly Type[] ExceptionCtorArgumentTypes1 = { typeof(string), typeof(Exception) };
     private static readonly Type[] ExceptionCtorArgumentTypes2 = { typeof(string) };
 
-    public static OldExceptionInfo None { get; } = default;
+    public static readonly OldExceptionInfo None = default;
     public static Func<OldExceptionInfo, Exception?> ToExceptionConverter { get; set; } = DefaultToExceptionConverter;
 
     private readonly string _message;
