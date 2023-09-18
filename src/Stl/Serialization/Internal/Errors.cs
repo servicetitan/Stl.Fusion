@@ -13,5 +13,5 @@ public static class Errors
             $"The serializer implements '{supportedType}' serialization, but '{requestedType}' was requested to (de)serialize.");
 
     public static Exception RemoteException(ExceptionInfo exceptionInfo)
-        => new RemoteException(exceptionInfo, $"Remote exception: {exceptionInfo.ToString()}");
+        => new RemoteException(exceptionInfo, exceptionInfo.Message.NullIfEmpty() ?? "Unknown error.");
 }

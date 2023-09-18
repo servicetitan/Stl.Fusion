@@ -122,13 +122,12 @@ public class SimplestProviderTest(ITestOutputHelper @out) : FusionTestBase(@out)
         var p = Services.GetRequiredService<ISimplestProvider>();
         p.SetValue("");
 
-        var c1 = await Computed.Capture(() => p.Fail(typeof(TransientException), false));
+        var c1 = await Computed.Capture(() => p.Fail(typeof(TransientException)));
         c1.Error.Should().BeOfType<TransientException>();
         await c1.WhenInvalidated().WaitAsync(TimeSpan.FromSeconds(1));
 
-        c1 = await Computed.Capture(() => p.Fail(typeof(TransientException), true));
-        c1.Error.Should().BeOfType<ServiceException>()
-            .Which.InnerException.Should().BeOfType<TransientException>();
+        c1 = await Computed.Capture(() => p.Fail(typeof(ServiceException)));
+        c1.Error.Should().BeOfType<ServiceException>();
         await Delay(1);
         var c2 = await c1.Update();
         c2.Should().BeSameAs(c1);

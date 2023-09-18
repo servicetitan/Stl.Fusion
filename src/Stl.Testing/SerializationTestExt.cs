@@ -1,5 +1,4 @@
 using System.Text;
-using Cysharp.Text;
 using FluentAssertions;
 using Microsoft.Toolkit.HighPerformance.Buffers;
 using Newtonsoft.Json;

@@ -19,7 +19,7 @@ public interface ISimplestProvider
     [ComputeMethod(MinCacheDuration = 0.5, TransientErrorInvalidationDelay = 0.5)]
     Task<int> GetCharCount();
     [ComputeMethod(TransientErrorInvalidationDelay = 0.5)]
-    Task<int> Fail(Type exceptionType, bool wrapToResultException);
+    Task<int> Fail(Type exceptionType);
 
     [CommandHandler]
     Task SetValue(SetValueCommand command, CancellationToken cancellationToken = default);
@@ -61,11 +61,10 @@ public class SimplestProvider : ISimplestProvider, IHasId<Type>, IComputeService
         }
     }
 
-    public virtual Task<int> Fail(Type exceptionType, bool wrapToResultException)
+    public virtual Task<int> Fail(Type exceptionType)
     {
-        var e = ExceptionInfo.ToExceptionConverter.Invoke(
-            new ExceptionInfo(exceptionType, "Fail!"))!;
-        throw e.MaybeToResultException(wrapToResultException);
+        var e = new ExceptionInfo(exceptionType, "Fail!");
+        throw e.ToException()!;
     }
 
     public virtual Task SetValue(SetValueCommand command, CancellationToken cancellationToken = default)
