@@ -76,7 +76,7 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
 
     // AddMultitenantDbContextFactory
 
-    public DbMultitenancyBuilder<TDbContext> AddPooledMultitenantDbContextFactory(
+    public DbMultitenancyBuilder<TDbContext> AddMultitenantPooledDbContextFactory(
         Action<IServiceProvider, Tenant, DbContextOptionsBuilder> dbContextOptionsBuilder)
     {
         AddMultitenantDbContextFactory((c, tenant, services) => {
@@ -93,7 +93,7 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
         return this;
     }
 
-    public DbMultitenancyBuilder<TDbContext> AddTransientMultitenantDbContextFactory(
+    public DbMultitenancyBuilder<TDbContext> AddMultitenantTransientDbContextFactory(
         Action<IServiceProvider, Tenant, DbContextOptionsBuilder> dbContextOptionsBuilder)
     {
         AddMultitenantDbContextFactory((c, tenant, services) => {
