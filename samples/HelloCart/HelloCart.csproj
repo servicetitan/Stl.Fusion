@@ -22,8 +22,5 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Stl.Generators\Stl.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
-  <ItemGroup>
-    <_ContentIncludedByDefault Remove="obj\project.packagespec.json" />
-  </ItemGroup>
 
 </Project>
