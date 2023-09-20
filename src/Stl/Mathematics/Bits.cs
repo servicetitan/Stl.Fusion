@@ -30,7 +30,7 @@ public static class Bits
 #if !NETSTANDARD
         const ulong highBit = 1UL << 63;
         if (Lzcnt.X64.IsSupported)
-            return highBit >> (int) Lzcnt.X64.LeadingZeroCount(n);
+            return highBit >> (int)Lzcnt.X64.LeadingZeroCount(n);
 #endif
         n |= n >> 1;
         n |= n >> 2;
@@ -97,4 +97,3 @@ public static class Bits
         }
     }
 }
-

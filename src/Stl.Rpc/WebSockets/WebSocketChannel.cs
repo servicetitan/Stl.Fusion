@@ -41,7 +41,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
     private volatile CancellationTokenSource? _stopCts;
     private readonly Channel<T> _readChannel;
     private readonly Channel<T> _writeChannel;
-    private ArrayPoolBufferWriter<byte> _writeBuffer;
+    private ArrayPoolBuffer<byte> _writeBuffer;
     private readonly int _writeFrameSize;
     private readonly int _writeBufferSize;
     private readonly int _releaseBufferSize;
@@ -91,7 +91,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
         _defaultMessageType = Serializer.DefaultFormat == DataFormat.Text
             ? WebSocketMessageType.Text
             : WebSocketMessageType.Binary;
-        _writeBuffer = new ArrayPoolBufferWriter<byte>(settings.WriteBufferSize);
+        _writeBuffer = new ArrayPoolBuffer<byte>(settings.WriteBufferSize);
 
         _readChannel = Channel.CreateBounded<T>(settings.ReadChannelOptions);
         _writeChannel = Channel.CreateBounded<T>(settings.WriteChannelOptions);
@@ -130,6 +130,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
         await WhenClosed.SilentAwait(false);
         if (Settings.OwnsWebSocket)
             WebSocket.Dispose();
+        _writeBuffer.Dispose();
     }
 
     // Private methods
@@ -205,7 +206,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
                         return; // Nothing to copy
 
                     part.CopyTo(MemoryMarshal.AsMemory(memory));
-                    _writeBuffer.Reset(length);
+                    _writeBuffer.Index = length;
                     return;
                 }
                 var isEndOfMessage = end == memory.Length;
@@ -219,7 +220,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
         finally {
             if (_writeBuffer.WrittenCount == 0 && _writeBuffer.Capacity > _releaseBufferSize) {
                 _writeBuffer.Dispose();
-                _writeBuffer = new ArrayPoolBufferWriter<byte>(_writeBufferSize);
+                _writeBuffer = new ArrayPoolBuffer<byte>(_writeBufferSize);
             }
         }
     }
@@ -228,8 +229,8 @@ public sealed class WebSocketChannel<T> : Channel<T>
     {
         var readBufferSize = Settings.ReadBufferSize;
         var readBuffer = ArrayPool<byte>.Shared.Rent(readBufferSize);
-        var byteBuffer = new ArrayPoolBufferWriter<byte>();
-        var textBuffer = new ArrayPoolBufferWriter<byte>();
+        var byteBuffer = new ArrayPoolBuffer<byte>();
+        var textBuffer = new ArrayPoolBuffer<byte>();
         try {
             while (true) {
                 T value;
@@ -251,7 +252,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
                                 if (TryDeserializeBytes(ref buffer, out value))
                                     yield return value;
 
-                            RenewBuffer(ref byteBuffer, readBufferSize);
+                            byteBuffer.Reset(readBufferSize, _releaseBufferSize);
                         }
                     }
                     continue;
@@ -267,7 +268,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
                             if (TryDeserializeText(textBuffer.WrittenMemory, out value))
                                 yield return value;
 
-                            RenewBuffer(ref textBuffer, readBufferSize);
+                            textBuffer.Reset(readBufferSize, _releaseBufferSize);
                         }
                     }
                     break;
@@ -310,7 +311,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
         }
     }
 
-    private bool TrySerialize(T value, ArrayPoolBufferWriter<byte> buffer)
+    private bool TrySerialize(T value, ArrayPoolBuffer<byte> buffer)
     {
         var startOffset = buffer.WrittenCount;
         try {
@@ -329,7 +330,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
             return true;
         }
         catch (Exception e) {
-            buffer.Reset(startOffset);
+            buffer.Index = startOffset;
             ErrorLog?.LogError(e, "Couldn't serialize the value of type '{Type}'", value?.GetType().FullName ?? "null");
             return false;
         }
@@ -375,16 +376,6 @@ public sealed class WebSocketChannel<T> : Channel<T>
             ErrorLog?.LogError(e, "Couldn't deserialize: {Data}", new TextOrBytes(DataFormat.Text, bytes));
             value = default!;
             return false;
-        }
-    }
-
-    private void RenewBuffer(ref ArrayPoolBufferWriter<byte> buffer, int capacity)
-    {
-        if (buffer.Capacity <= _releaseBufferSize)
-            buffer.Reset();
-        else {
-            buffer.Dispose();
-            buffer = new ArrayPoolBufferWriter<byte>(capacity);
         }
     }
 }

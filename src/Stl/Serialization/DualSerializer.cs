@@ -1,5 +1,5 @@
 using System.Buffers;
-using Microsoft.Toolkit.HighPerformance.Buffers;
+using Stl.IO;
 using Stl.Serialization.Internal;
 
 namespace Stl.Serialization;
@@ -52,12 +52,12 @@ public sealed record DualSerializer<T>(
 
     public TextOrBytes Write(T value, DataFormat format)
     {
-        using var bufferWriter = new ArrayPoolBufferWriter<byte>();
+        using var bufferWriter = new ArrayPoolBuffer<byte>();
         if (format == DataFormat.Text)
             TextSerializer.Write(bufferWriter, value);
         else
             ByteSerializer.Write(bufferWriter, value);
-        return new TextOrBytes(format, bufferWriter.WrittenMemory.ToArray());
+        return new TextOrBytes(format, bufferWriter.WrittenSpan.ToArray());
     }
 
     public void Write(IBufferWriter<byte> bufferWriter, T value)

@@ -2,6 +2,7 @@ using System.Text;
 using FluentAssertions;
 using Microsoft.Toolkit.HighPerformance.Buffers;
 using Newtonsoft.Json;
+using Stl.IO;
 using Xunit.Abstractions;
 
 namespace Stl.Testing;
@@ -80,7 +81,7 @@ public static class SerializationTestExt
         output?.WriteLine($"SystemJsonSerializer: {json}");
         value = s.Read(json);
 
-        using var buffer = new ArrayPoolBufferWriter<byte>();
+        using var buffer = new ArrayPoolBuffer<byte>();
         s.Write(buffer, value);
         var bytes = buffer.WrittenMemory;
         var json2 = Encoding.UTF8.GetDecoder().Convert(bytes.Span);
@@ -109,7 +110,7 @@ public static class SerializationTestExt
         output?.WriteLine($"NewtonsoftJsonSerializer: {json}");
         value = s.Read(json);
 
-        using var buffer = new ArrayPoolBufferWriter<byte>();
+        using var buffer = new ArrayPoolBuffer<byte>();
         s.Write(buffer, value);
         var bytes = buffer.WrittenMemory;
         var json2 = Encoding.UTF8.GetDecoder().Convert(bytes.Span);

@@ -2,6 +2,7 @@ using System.Text;
 using FluentAssertions;
 using Microsoft.Toolkit.HighPerformance.Buffers;
 using Newtonsoft.Json;
+using Stl.IO;
 using Xunit.Abstractions;
 
 namespace Stl.Testing;
@@ -40,7 +41,7 @@ public class TypeEvolutionTester<TOld, TNew>
         var v0 = s.Read<TNew>(json);
         AssertEqual(value, v0);
 
-        using var buffer = new ArrayPoolBufferWriter<byte>();
+        using var buffer = new ArrayPoolBuffer<byte>();
         s.Write(buffer, value);
         var bytes = buffer.WrittenMemory;
         var json2 = Encoding.UTF8.GetDecoder().Convert(bytes.Span);
@@ -59,7 +60,7 @@ public class TypeEvolutionTester<TOld, TNew>
         var v0 = s.Read<TNew>(json);
         AssertEqual(value, v0);
 
-        using var buffer = new ArrayPoolBufferWriter<byte>();
+        using var buffer = new ArrayPoolBuffer<byte>();
         s.Write(buffer, value);
         var bytes = buffer.WrittenMemory;
         var json2 = Encoding.UTF8.GetDecoder().Convert(bytes.Span);

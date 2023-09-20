@@ -1,25 +1,24 @@
 using System.Buffers;
 using Microsoft.Toolkit.HighPerformance.Buffers;
 using Stl.Interception;
+using Stl.IO;
 using Stl.Rpc.Internal;
 
 namespace Stl.Rpc;
 
 public sealed class RpcByteArgumentSerializer(IByteSerializer serializer) : RpcArgumentSerializer
 {
-    private readonly IByteSerializer _serializer = serializer;
-
     public override TextOrBytes Serialize(ArgumentList arguments, bool allowPolymorphism)
     {
         if (arguments.Length == 0)
             return TextOrBytes.EmptyBytes;
 
-        using var buffer = new ArrayPoolBufferWriter<byte>(256);
-        var serializer = allowPolymorphism
-            ? (ItemSerializer)new ItemPolymorphicSerializer(_serializer, buffer)
-            : new ItemNonPolymorphicSerializer(_serializer, buffer);
-        arguments.Read(serializer);
-        return new TextOrBytes(buffer.WrittenSpan.ToArray());
+        using var buffer = new ArrayPoolBuffer<byte>(256);
+        var itemSerializer = allowPolymorphism
+            ? (ItemSerializer)new ItemPolymorphicSerializer(serializer, buffer)
+            : new ItemNonPolymorphicSerializer(serializer, buffer);
+        arguments.Read(itemSerializer);
+        return new TextOrBytes(buffer.WrittenSpan.ToArray()); // That's why we retain the last buffer
     }
 
     public override void Deserialize(ref ArgumentList arguments, bool allowPolymorphism, TextOrBytes data)
@@ -30,8 +29,8 @@ public sealed class RpcByteArgumentSerializer(IByteSerializer serializer) : RpcA
             return;
 
         var deserializer = allowPolymorphism
-            ? (ItemDeserializer)new ItemPolymorphicDeserializer(_serializer, bytes)
-            : new ItemNonPolymorphicDeserializer(_serializer, bytes);
+            ? (ItemDeserializer)new ItemPolymorphicDeserializer(serializer, bytes)
+            : new ItemNonPolymorphicDeserializer(serializer, bytes);
         arguments.Write(deserializer);
     }
 
