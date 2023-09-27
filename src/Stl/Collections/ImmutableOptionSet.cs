@@ -12,7 +12,7 @@ public readonly partial struct ImmutableOptionSet(
 
     private readonly ImmutableDictionary<Symbol, object>? _items = items ?? ImmutableDictionary<Symbol, object>.Empty;
 
-    [JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
+    [JsonIgnore, MemoryPackIgnore]
     public ImmutableDictionary<Symbol, object> Items
         => _items ?? ImmutableDictionary<Symbol, object>.Empty;
 
