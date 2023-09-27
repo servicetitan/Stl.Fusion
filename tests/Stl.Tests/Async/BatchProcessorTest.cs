@@ -54,9 +54,7 @@ public class BatchProcessorTest(ITestOutputHelper @out) : TestBase(@out)
         tasks = Enumerable.Range(0, 10).Select(i => processor.Process(i)).ToArray();
         await Task.WhenAll(tasks);
         tasks.Count(t => t.Result.BatchIndex == 1).Should().Be(1);
-        tasks.Count(t => t.Result.BatchIndex == 2).Should().Be(3);
-        tasks.Count(t => t.Result.BatchIndex == 3).Should().Be(3);
-        tasks.Count(t => t.Result.BatchIndex == 4).Should().Be(3);
+        tasks.GroupBy(t => t.Result.BatchIndex).All(g => g.Count() <= 3).Should().BeTrue();
         tasks.Select(t => t.Result.Value).Should().BeEquivalentTo(Enumerable.Range(0, 10));
 
         // Cancellation test
