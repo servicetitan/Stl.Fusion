@@ -234,15 +234,14 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
 
     protected async Task Reset(Exception error, bool isStopped = false)
     {
+        RemoteObjects.Abort();
+        await SharedObjects.Abort(error).ConfigureAwait(false);
+        if (isStopped)
+            await OutboundCalls.Abort(error).ConfigureAwait(false);
         // Inbound calls are auto-aborted via peerChangedToken from OnRun,
         // which becomes RpcInboundCallContext.CancellationToken, so here
         // we must just clear them.
         InboundCalls.Clear();
-        RemoteObjects.Abort();
-        var abortCallsTask = OutboundCalls.Abort(error);
-        var abortObjectsTask = SharedObjects.Abort(error);
-        await abortCallsTask.ConfigureAwait(false);
-        await abortObjectsTask.ConfigureAwait(false);
         Log.LogInformation("'{PeerRef}': {Action}", Ref, isStopped ? "Stopped" : "Peer changed");
     }
 
