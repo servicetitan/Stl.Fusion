@@ -1,14 +1,18 @@
 namespace Stl.Collections;
 
+[StructLayout(LayoutKind.Auto)]
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
-public readonly partial struct ImmutableOptionSet : IServiceProvider, IEquatable<ImmutableOptionSet>
+[method: Newtonsoft.Json.JsonConstructor]
+public readonly partial struct ImmutableOptionSet(
+    ImmutableDictionary<Symbol, object>? items
+    ) : IServiceProvider, IEquatable<ImmutableOptionSet>
 {
     public static readonly ImmutableOptionSet Empty = new(ImmutableDictionary<Symbol, object>.Empty);
 
-    private readonly ImmutableDictionary<Symbol, object>? _items;
+    private readonly ImmutableDictionary<Symbol, object>? _items = items ?? ImmutableDictionary<Symbol, object>.Empty;
 
-    [JsonIgnore, MemoryPackIgnore]
+    [JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
     public ImmutableDictionary<Symbol, object> Items
         => _items ?? ImmutableDictionary<Symbol, object>.Empty;
 
@@ -22,10 +26,6 @@ public readonly partial struct ImmutableOptionSet : IServiceProvider, IEquatable
 
     public object? this[Symbol key] => Items.TryGetValue(key, out var v) ? v : null;
     public object? this[Type optionType] => this[optionType.ToSymbol()];
-
-    [Newtonsoft.Json.JsonConstructor]
-    public ImmutableOptionSet(ImmutableDictionary<Symbol, object>? items)
-        => _items = items ?? ImmutableDictionary<Symbol, object>.Empty;
 
     [JsonConstructor, MemoryPackConstructor]
     public ImmutableOptionSet(Dictionary<string, NewtonsoftJsonSerialized<object>>? jsonCompatibleItems)

@@ -2,6 +2,8 @@ using System.Runtime.Serialization;
 using MemoryPack;
 using Stl.Fusion.Blazor;
 using Stl.Fusion.Extensions;
+using Stl.Rpc;
+using Stl.Rpc.Infrastructure;
 
 namespace Templates.TodoApp.Abstractions;
 
@@ -37,6 +39,9 @@ public sealed partial record Todos_Remove(
 
 public interface ITodos : IComputeService
 {
+    Task<RpcObjectId> GetTestObjectId();
+    Task<RpcStream<int>> GetTestStream();
+
     // Commands
     [CommandHandler]
     Task<Todo> AddOrUpdate(Todos_AddOrUpdate command, CancellationToken cancellationToken = default);

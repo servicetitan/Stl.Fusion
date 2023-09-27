@@ -4,8 +4,8 @@ namespace Stl.Time;
 public partial record RetryDelaySeq(
     [property: DataMember, MemoryPackOrder(0)] TimeSpan Min,
     [property: DataMember, MemoryPackOrder(1)] TimeSpan Max,
-    [property: DataMember, MemoryPackOrder(2)] double Spread)
-    : IEnumerable<TimeSpan>
+    [property: DataMember, MemoryPackOrder(2)] double Spread
+    ) : IEnumerable<TimeSpan>
 {
     public const double DefaultMinInSeconds = 0.5;
     public const double DefaultMaxInSeconds = 5;

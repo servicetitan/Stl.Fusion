@@ -19,9 +19,9 @@ public interface IOption
     object? Value { get; }
 }
 
+[StructLayout(LayoutKind.Auto)]
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [DebuggerDisplay("{" + nameof(DebugValue) + "}")]
-[StructLayout(LayoutKind.Auto)]
 public readonly partial struct Option<T> : IEquatable<Option<T>>, IOption
 {
     /// <inheritdoc />

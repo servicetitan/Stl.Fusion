@@ -1,5 +1,6 @@
 namespace Stl.Fusion.Authentication;
 
+[StructLayout(LayoutKind.Auto)]
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
 public readonly partial struct UserIdentity : IEquatable<UserIdentity>

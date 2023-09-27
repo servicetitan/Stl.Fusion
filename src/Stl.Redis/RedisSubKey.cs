@@ -2,6 +2,7 @@ using StackExchange.Redis;
 
 namespace Stl.Redis;
 
+[StructLayout(LayoutKind.Auto)]
 [Serializable]
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]

@@ -123,6 +123,7 @@ public interface IMutableResult<T> : IResult<T>, IMutableResult
 /// A struct describing strongly typed result of a computation.
 /// </summary>
 /// <typeparam name="T">The type of <see cref="Value"/>.</typeparam>
+[StructLayout(LayoutKind.Auto)]
 [DebuggerDisplay("({" + nameof(ValueOrDefault) + "}, Error = {" + nameof(Error) + "})")]
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 public readonly partial struct Result<T> : IResult<T>, IEquatable<Result<T>>

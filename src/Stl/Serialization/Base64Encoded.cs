@@ -3,28 +3,27 @@ using Stl.Serialization.Internal;
 
 namespace Stl.Serialization;
 
+[StructLayout(LayoutKind.Sequential)] // Important!
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [JsonConverter(typeof(Base64EncodedJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(Base64EncodedNewtonsoftJsonConverter))]
 [TypeConverter(typeof(Base64EncodedTypeConverter))]
-public readonly partial struct Base64Encoded : IEquatable<Base64Encoded>, IReadOnlyCollection<byte>
+[method: MemoryPackConstructor]
+public readonly partial struct Base64Encoded(byte[] data)
+    : IEquatable<Base64Encoded>, IReadOnlyCollection<byte>
 {
-    private readonly byte[]? _data;
+    private readonly byte[]? _data = data;
 
     [DataMember(Order = 0), MemoryPackOrder(0)]
     public byte[] Data => _data ?? Array.Empty<byte>();
 
-    [MemoryPackIgnore]
+    [IgnoreDataMember, MemoryPackIgnore]
     public int Count => Data.Length;
 
     public byte this[int index] {
         get => Data[index];
         set => Data[index] = value;
     }
-
-    [MemoryPackConstructor]
-    public Base64Encoded(byte[] data)
-        => _data = data;
 
     public override string ToString()
         => $"{GetType().Name}({Count} byte(s))";

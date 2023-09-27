@@ -1,5 +1,6 @@
 @page "/todo"
 @using System.Globalization
+@using Stl.Rpc
 @inherits ComputedStateComponent<Todo[]>
 @inject ITodos Todos
 @inject Session Session
@@ -76,8 +77,15 @@
     // Check your explanation on our Discord: https://discord.gg/EKEwv6d
     [CascadingParameter] protected Task<AuthState> AuthState { get; set; } = null!;
 
-    protected override Task OnInitializedAsync()
-        => State.Update().AsTask();
+    protected override async Task OnInitializedAsync()
+    {
+        var objectId = await Todos.GetTestObjectId();
+        Log.LogInformation("Test ObjectId: {ObjectId}", objectId);
+        var stream = await Todos.GetTestStream();
+        Log.LogInformation("Test stream: {Stream}", stream);
+        var itemCount = await stream.CountAsync();
+        Log.LogInformation("Test stream item count: {Count}", itemCount);
+    }
 
     protected override async Task<Todo[]> ComputeState(CancellationToken cancellationToken)
     {

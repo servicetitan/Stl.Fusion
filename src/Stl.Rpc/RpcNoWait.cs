@@ -1,5 +1,6 @@
 namespace Stl.Rpc;
 
+[StructLayout(LayoutKind.Sequential)] // Important!
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 public readonly partial struct RpcNoWait
 {

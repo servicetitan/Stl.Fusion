@@ -24,7 +24,7 @@ public interface IChat : IComputeService
 
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 // ReSharper disable once InconsistentNaming
-public partial record Chat_Post(
+public sealed partial record Chat_Post(
     [property: DataMember, MemoryPackOrder(0)] Symbol ChatId,
     [property: DataMember, MemoryPackOrder(1)] string Message
     ) : ICommand<Unit>;

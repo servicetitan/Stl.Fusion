@@ -19,10 +19,9 @@ public abstract record PageRef : IHasJsonCompatibleToString
 
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 public partial record PageRef<TKey>(
-    [property: DataMember(Order = 0), MemoryPackOrder(0)]
-    int Count,
-    [property: DataMember(Order = 1), MemoryPackOrder(1)]
-    Option<TKey> After = default) : PageRef
+    [property: DataMember(Order = 0), MemoryPackOrder(0)] int Count,
+    [property: DataMember(Order = 1), MemoryPackOrder(1)] Option<TKey> After = default
+    ) : PageRef
 {
     public override string ToString()
         => After.IsNone()

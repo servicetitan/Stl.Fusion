@@ -4,6 +4,7 @@ using Stl.IO.Internal;
 
 namespace Stl.IO;
 
+[StructLayout(LayoutKind.Auto)]
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [JsonConverter(typeof(FilePathJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(FilePathNewtonsoftJsonConverter))]
@@ -17,20 +18,30 @@ public readonly partial struct FilePath : IEquatable<FilePath>, IComparable<File
     [DataMember(Order = 0), MemoryPackOrder(0)]
     public string Value => _value ?? "";
 
-    [MemoryPackIgnore] public int Length => Value.Length;
-    [MemoryPackIgnore] public bool IsEmpty => _value.IsNullOrEmpty();
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
+    public int Length => Value.Length;
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
+    public bool IsEmpty => _value.IsNullOrEmpty();
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
 #if !NETSTANDARD2_0
-    [MemoryPackIgnore] public bool IsFullyQualified => Path.IsPathFullyQualified(Value);
+    public bool IsFullyQualified => Path.IsPathFullyQualified(Value);
 #else
-    [MemoryPackIgnore] public bool IsFullyQualified => PathCompatExt.IsPathFullyQualified(Value);
+    public bool IsFullyQualified => PathCompatExt.IsPathFullyQualified(Value);
 #endif
-    [MemoryPackIgnore] public bool IsRooted => Path.IsPathRooted(Value);
-    [MemoryPackIgnore] public bool HasExtension => Path.HasExtension(Value);
-    [MemoryPackIgnore] public string Extension => Path.GetExtension(Value);
-    [MemoryPackIgnore] public FilePath DirectoryPath => Path.GetDirectoryName(Value);
-    [MemoryPackIgnore] public FilePath FileName => Path.GetFileName(Value);
-    [MemoryPackIgnore] public FilePath FileNameWithoutExtension => Path.GetFileNameWithoutExtension(Value);
-    [MemoryPackIgnore] public FilePath FullPath => Path.GetFullPath(Value);
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
+    public bool IsRooted => Path.IsPathRooted(Value);
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
+    public bool HasExtension => Path.HasExtension(Value);
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
+    public string Extension => Path.GetExtension(Value);
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
+    public FilePath DirectoryPath => Path.GetDirectoryName(Value);
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
+    public FilePath FileName => Path.GetFileName(Value);
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
+    public FilePath FileNameWithoutExtension => Path.GetFileNameWithoutExtension(Value);
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
+    public FilePath FullPath => Path.GetFullPath(Value);
 
     public static FilePath New(string? value) => new(value ?? "");
 

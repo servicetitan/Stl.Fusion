@@ -6,7 +6,7 @@ public partial class OptionSet : IServiceProvider
 {
     private volatile ImmutableDictionary<Symbol, object> _items;
 
-    [JsonIgnore, MemoryPackIgnore]
+    [JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
     public ImmutableDictionary<Symbol, object> Items {
         get => _items;
         set => _items = value;

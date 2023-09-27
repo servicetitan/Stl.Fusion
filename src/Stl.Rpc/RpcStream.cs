@@ -17,16 +17,20 @@ public abstract partial class RpcStream : IRpcObject
         AllowSynchronousContinuations = false, // We don't want sync handlers to "clog" the call processing loop
     };
 
-    [DataMember, MemoryPackOrder(1)]
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     public int AckPeriod { get; init; } = 30;
-    [DataMember, MemoryPackOrder(2)]
+    [DataMember(Order = 1), MemoryPackOrder(1)]
     public int AckAdvance { get; init; } = 61;
 
     // Non-serialized members
-    [JsonIgnore, MemoryPackIgnore] public RpcObjectId Id { get; protected set; }
-    [JsonIgnore, MemoryPackIgnore] public RpcPeer? Peer { get; protected set; }
-    [JsonIgnore, MemoryPackIgnore] public abstract Type ItemType { get; }
-    [JsonIgnore, MemoryPackIgnore] public abstract RpcObjectKind Kind { get; }
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
+    public RpcObjectId Id { get; protected set; }
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
+    public RpcPeer? Peer { get; protected set; }
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
+    public abstract Type ItemType { get; }
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
+    public abstract RpcObjectKind Kind { get; }
 
     public static RpcStream<T> New<T>(IAsyncEnumerable<T> outgoingSource)
         => new(outgoingSource);
@@ -63,7 +67,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
     private bool _isDisconnected;
     private readonly object _lock = new();
 
-    [DataMember, MemoryPackOrder(0)]
+    [DataMember(Order = 2), MemoryPackOrder(2)]
     public RpcObjectId SerializedId {
         get {
             // This member must be never accessed directly - its only purpose is to be called on serialization
@@ -95,9 +99,10 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
         }
     }
 
-    [JsonIgnore] public override Type ItemType => typeof(T);
-    [JsonIgnore] public override RpcObjectKind Kind
-        => _localSource != null ? RpcObjectKind.Local : RpcObjectKind.Remote;
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember]
+    public override Type ItemType => typeof(T);
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember]
+    public override RpcObjectKind Kind => _localSource != null ? RpcObjectKind.Local : RpcObjectKind.Remote;
 
     [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
     public RpcStream() { }

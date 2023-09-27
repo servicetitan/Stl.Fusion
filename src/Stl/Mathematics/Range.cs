@@ -5,9 +5,9 @@ namespace Stl.Mathematics;
 /// of type <typeparamref name="T"/>.
 /// </summary>
 /// <typeparam name="T">Type of the elements inside the range.</typeparam>
+[StructLayout(LayoutKind.Sequential)] // Important!
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
-[StructLayout(LayoutKind.Sequential)]
 public readonly partial struct Range<T> : IEquatable<Range<T>>
     where T : notnull
 {

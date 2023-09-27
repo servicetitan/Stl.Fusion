@@ -4,6 +4,7 @@ using Stl.Text.Internal;
 
 namespace Stl.Text;
 
+[StructLayout(LayoutKind.Auto)]
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [JsonConverter(typeof(SymbolJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(SymbolNewtonsoftJsonConverter))]
@@ -20,9 +21,9 @@ public readonly partial struct Symbol : IRequirementTarget,
     [DataMember(Order = 0), MemoryPackOrder(0)]
     public string Value => _value ?? "";
 
-    [MemoryPackIgnore]
+    [IgnoreDataMember, MemoryPackIgnore]
     public int HashCode => _hashCode;
-    [MemoryPackIgnore]
+    [IgnoreDataMember, MemoryPackIgnore]
     public bool IsEmpty => Value.Length == 0;
 
     [MemoryPackConstructor]

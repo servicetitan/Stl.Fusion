@@ -1,17 +1,14 @@
 namespace Stl.Pooling;
 
-[StructLayout(LayoutKind.Sequential)]
-public readonly struct Owned<TItem, TOwner> : IDisposable, IEquatable<Owned<TItem, TOwner>>
+[StructLayout(LayoutKind.Auto)]
+public readonly struct Owned<TItem, TOwner>(
+    TItem subject,
+    TOwner owner
+    ) : IDisposable, IEquatable<Owned<TItem, TOwner>>
     where TOwner : IDisposable
 {
-    public TItem Subject { get; }
-    public TOwner Owner { get; }
-
-    public Owned(TItem subject, TOwner owner)
-    {
-        Subject = subject;
-        Owner = owner;
-    }
+    public TItem Subject { get; } = subject;
+    public TOwner Owner { get; } = owner;
 
     public void Deconstruct(out TItem item, out TOwner owner)
     {

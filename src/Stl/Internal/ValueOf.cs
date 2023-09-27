@@ -6,7 +6,7 @@ public abstract class ValueOf
     private static readonly MethodInfo FactoryMethod =
         typeof(ValueOf).GetMethod(nameof(Factory), BindingFlags.Static | BindingFlags.NonPublic)!;
 
-    [MemoryPackIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
     public abstract object UntypedValue { get; }
 
     public static ValueOf<T> New<T>(T value) => new(value);

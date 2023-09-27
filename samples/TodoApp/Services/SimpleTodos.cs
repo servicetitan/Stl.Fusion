@@ -1,4 +1,6 @@
 ﻿using Stl.Fusion.Extensions;
+using Stl.Rpc;
+using Stl.Rpc.Infrastructure;
 using Templates.TodoApp.Abstractions;
 
 namespace Templates.TodoApp.Services;
@@ -8,6 +10,12 @@ namespace Templates.TodoApp.Services;
 public class SimpleTodos : ITodos
 {
     private ImmutableList<Todo> _store = ImmutableList<Todo>.Empty; // It's always sorted by Id though
+
+    public Task<RpcObjectId> GetTestObjectId()
+        => Task.FromResult(new RpcObjectId(Guid.NewGuid(), 1));
+
+    public Task<RpcStream<int>> GetTestStream()
+        => Task.FromResult(new RpcStream<int>(Enumerable.Range(0, 5).ToAsyncEnumerable()));
 
     // Commands
 

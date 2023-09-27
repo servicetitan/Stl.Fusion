@@ -9,8 +9,8 @@ public enum DataFormat
     Text = 1,
 }
 
-[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [StructLayout(LayoutKind.Auto)]
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 public readonly partial record struct TextOrBytes(
     [property: DataMember(Order = 0), MemoryPackOrder(0)]
     DataFormat Format,

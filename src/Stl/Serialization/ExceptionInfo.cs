@@ -17,7 +17,7 @@ public readonly partial struct ExceptionInfo : IEquatable<ExceptionInfo>
     public TypeRef TypeRef { get; }
     [DataMember(Order = 1), MemoryPackOrder(1)]
     public string Message => _message ?? "";
-    [IgnoreDataMember, MemoryPackIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
     public bool IsNone => TypeRef.AssemblyQualifiedName.IsEmpty;
 
     [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]

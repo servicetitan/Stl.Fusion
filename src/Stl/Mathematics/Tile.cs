@@ -2,9 +2,9 @@ using Stl.Mathematics.Internal;
 
 namespace Stl.Mathematics;
 
+[StructLayout(LayoutKind.Sequential)] // Important!
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
-[StructLayout(LayoutKind.Auto)]
 public readonly partial struct Tile<T>
     where T : notnull
 {
