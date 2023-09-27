@@ -54,11 +54,11 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
         return sendTask;
     }
 
-    public Task SendNoWait(bool allowPolymorphism)
+    public Task SendNoWait(bool allowPolymorphism, ChannelWriter<RpcMessage>? sender = null)
     {
         var message = CreateMessage(Context.RelatedCallId, allowPolymorphism);
         Peer.CallLog?.Log(Peer.CallLogLevel, "'{PeerRef}': -> {Call}", Peer.Ref, this);
-        return Peer.Send(message);
+        return Peer.Send(message, sender);
     }
 
     public Task SendRegistered(bool notifyCancelled = false)

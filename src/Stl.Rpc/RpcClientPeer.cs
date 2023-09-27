@@ -24,8 +24,9 @@ public class RpcClientPeer : RpcPeer
     protected override async Task<RpcConnection> GetConnection(CancellationToken cancellationToken)
     {
         var connectionState = ConnectionState.Last.Value;
-        if (connectionState.Connection != null)
-            return connectionState.Connection;
+        if (connectionState.IsConnected())
+            throw Stl.Internal.Errors.InternalError(
+                $"{nameof(RpcClient)}.{nameof(GetConnection)}() is called, but the peer is already connected.");
 
         var delay = ReconnectDelayer.GetDelay(this, connectionState.TryIndex, connectionState.Error, cancellationToken);
         if (delay.IsLimitExceeded)

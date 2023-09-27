@@ -44,6 +44,9 @@ public sealed class RpcInboundCallTracker : RpcCallTracker<RpcInboundCall>
         // and we should rarely land here, so we do this separately
         return Calls.GetOrAdd(call.Id, static (_, call1) => call1, call);
     }
+
+    public void Clear()
+        => Calls.Clear();
 }
 
 public sealed class RpcOutboundCallTracker : RpcCallTracker<RpcOutboundCall>
@@ -64,7 +67,7 @@ public sealed class RpcOutboundCallTracker : RpcCallTracker<RpcOutboundCall>
         }
     }
 
-    public async Task<int> Abort(Exception error)
+    public async Task Abort(Exception error)
     {
         var abortedCallIds = new HashSet<long>();
         for (int i = 0;; i++) {
@@ -78,6 +81,5 @@ public sealed class RpcOutboundCallTracker : RpcCallTracker<RpcOutboundCall>
 
             await Task.Delay(AbortCheckPeriod).ConfigureAwait(false);
         }
-        return abortedCallIds.Count;
     }
 }

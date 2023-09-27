@@ -35,6 +35,10 @@ public static class Errors
     public static Exception NoMethod(Type serviceType, string methodName)
         => new KeyNotFoundException($"Can't resolve method '{methodName}' (by name) of '{serviceType.GetName()}'.");
 
+    public static Exception HandshakeFailed()
+        => new RpcException("Handshake failed.");
+    public static Exception PeerChanged()
+        => new RpcException("Remote RpcPeer has been changed.");
     public static Exception EndpointNotFound(string serviceName, string methodName)
         => new RpcException($"Endpoint not found: '{serviceName}.{methodName}'.");
 

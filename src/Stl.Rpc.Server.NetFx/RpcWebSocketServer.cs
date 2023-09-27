@@ -76,7 +76,7 @@ public class RpcWebSocketServer(
                 .Invoke(peer, channel, options, cancellationToken)
                 .ConfigureAwait(false);
 
-            await peer.Connect(connection, cancellationToken).ConfigureAwait(false);
+            peer.SetConnection(connection);
             await channel.WhenClosed.ConfigureAwait(false);
         }
         catch (Exception e) when (e is not OperationCanceledException) {

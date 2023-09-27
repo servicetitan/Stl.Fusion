@@ -40,12 +40,12 @@ public sealed class AsyncState<T>(T value, bool runContinuationsAsynchronously) 
     public Task<AsyncState<T>> WhenNext(CancellationToken cancellationToken)
         => _next.Task.WaitAsync(cancellationToken);
 
-    public async Task<T> When(Func<T, bool> predicate, CancellationToken cancellationToken = default)
+    public async Task<AsyncState<T>> When(Func<T, bool> predicate, CancellationToken cancellationToken = default)
     {
         var current = this;
         while (!predicate.Invoke(current.Value))
             current = await current.WhenNext(cancellationToken).ConfigureAwait(false);
-        return current.Value;
+        return current;
     }
 
     public async IAsyncEnumerable<T> Changes(

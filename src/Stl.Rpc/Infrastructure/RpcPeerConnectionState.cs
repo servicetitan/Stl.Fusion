@@ -4,17 +4,14 @@ namespace Stl.Rpc.Infrastructure;
 
 public sealed record RpcPeerConnectionState(
     RpcConnection? Connection = null,
+    RpcHandshake? Handshake = null,
     Exception? Error = null,
     int TryIndex = 0,
-    CancellationTokenSource? ReaderAbortSource = null,
-    TaskCompletionSource<RpcHandshake>? HandshakeSource = null)
+    CancellationTokenSource? ReaderAbortSource = null)
 {
-    private static readonly TaskCompletionSource<RpcHandshake> NoHandshakeSource
-        = new TaskCompletionSource<RpcHandshake>().WithCancellation();
-    public static readonly RpcPeerConnectionState Initial = new();
+    public static readonly RpcPeerConnectionState Disconnected = new();
 
     public Channel<RpcMessage>? Channel = Connection?.Channel;
-    public Task<RpcHandshake> HandshakeTask => (HandshakeSource ?? NoHandshakeSource).Task;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsConnected()
@@ -30,4 +27,14 @@ public sealed record RpcPeerConnectionState(
         connection = Connection;
         return connection != null;
     }
+
+    public RpcPeerConnectionState NextConnected(
+        RpcConnection connection,
+        RpcHandshake handshake,
+        CancellationTokenSource readerAbortToken)
+        => new(connection, handshake, null, 0, readerAbortToken);
+
+    public RpcPeerConnectionState NextDisconnected(Exception? error = null)
+        => error == null ? Disconnected
+            : new RpcPeerConnectionState(null, null, error, TryIndex + 1);
 }

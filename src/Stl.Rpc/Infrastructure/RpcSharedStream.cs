@@ -37,16 +37,24 @@ public abstract class RpcSharedStream(RpcStream stream) : WorkerBase, IRpcShared
     public abstract Task OnAck(long nextIndex, Guid hostId);
 }
 
-public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(stream)
+public sealed class RpcSharedStream<T> : RpcSharedStream
 {
-    private readonly RpcSystemCallSender _systemCallSender = stream.Peer!.Hub.SystemCallSender;
+    private readonly RpcSystemCallSender _systemCallSender;
     private readonly Channel<(long NextIndex, bool MustReset)> _acks = Channel.CreateUnbounded<(long, bool)>(
         new() {
             SingleReader = true,
             SingleWriter = true,
         });
+    private readonly Batcher _batcher;
 
-    public new RpcStream<T> Stream { get; } = (RpcStream<T>)stream;
+    public RpcSharedStream(RpcStream stream) : base(stream)
+    {
+        _systemCallSender = stream.Peer!.Hub.SystemCallSender;
+        Stream = (RpcStream<T>)stream;
+        _batcher = new(this);
+    }
+
+    public new RpcStream<T> Stream { get; }
 
     protected override async Task DisposeAsyncCore()
     {
@@ -124,7 +132,6 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
                 bufferStart += bufferOffset;
 
                 // 3. Recalculate the next range to send
-                var ackIndex = ack.NextIndex + Stream.AckPeriod;
                 var maxIndex = ack.NextIndex + Stream.AckAdvance;
                 if (index < bufferStart) {
                     // The requested item is somewhere before the buffer start position
@@ -141,19 +148,24 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
                     while (missingCount-- > 0) {
                         if (isEnumerationEnded) {
                             // The requested item is somewhere after the sequence's end
+                            await _batcher.Flush(index).ConfigureAwait(false);
                             await SendInvalidPosition(index).ConfigureAwait(false);
                             goto nextAck;
                         }
 
                         try {
-                            if (whenAckReady.IsCompleted)
+                            if (whenAckReady.IsCompleted) {
+                                await _batcher.Flush(index).ConfigureAwait(false);
                                 goto nextAck; // Got Ack, must restart
+                            }
                             if (!whenMovedNext.IsCompleted) {
                                 // Both tasks aren't completed yet
                                 whenMovedNextAsTask ??= whenMovedNext.AsTask();
                                 var tCompleted = await Task.WhenAny(whenAckReady, whenMovedNextAsTask).ConfigureAwait(false);
-                                if (tCompleted == whenAckReady)
+                                if (tCompleted == whenAckReady) {
+                                    await _batcher.Flush(index).ConfigureAwait(false);
                                     goto nextAck; // Got Ack, must restart
+                                }
                             }
                             var canMove = whenMovedNext.Result;
                             if (canMove) {
@@ -176,10 +188,14 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
                     }
 
                     item = buffer[bufferIndex++];
-                    await Send(index++, item).ConfigureAwait(false);
-                    if (item.HasError)
-                        goto nextAck; // It's the last item -> all we can do now is to wait for Ack
+                    await _batcher.Add(index++, item).ConfigureAwait(false);
+                    if (item.HasError) {
+                        // It's the last item -> all we can do now is to wait for Ack;
+                        // Note that Batcher.Add automatically flushes on error.
+                        goto nextAck;
+                    }
                 }
+                await _batcher.Flush(index).ConfigureAwait(false);
             }
         }
         finally {
@@ -212,6 +228,62 @@ public sealed class RpcSharedStream<T>(RpcStream stream) : RpcSharedStream(strea
         }
         catch (Exception e) {
             return ValueTaskExt.FromException<bool>(e);
+        }
+    }
+
+    // Nested types
+
+    private sealed class Batcher(RpcSharedStream<T> stream)
+    {
+        private const int BatchSize = 64;
+
+        private readonly bool _isPolymorphic = !(typeof(T).IsValueType || typeof(T).IsSealed);
+        private readonly List<T> _items = new(BatchSize);
+        private Type? _itemType;
+
+        public async ValueTask Add(long index, Result<T> item)
+        {
+            if (!item.IsValue(out var vItem)) {
+                await Flush(index).ConfigureAwait(false);
+                await stream.Send(index, item).ConfigureAwait(false);
+                return;
+            }
+
+            if (_isPolymorphic) {
+                var itemType = vItem?.GetType();
+                if (_items.Count >= BatchSize || (itemType != null && itemType != _itemType))
+                    await Flush(index).ConfigureAwait(false);
+                _itemType ??= itemType;
+            }
+            else if (_items.Count >= BatchSize)
+                await Flush(index).ConfigureAwait(false);
+
+            _items.Add(item);
+        }
+
+        public Task Flush(long nextIndex)
+        {
+            var count = _items.Count;
+            if (count == 0)
+                return Task.CompletedTask;
+
+            if (count == 1) {
+                var result = stream.Send(nextIndex - count, _items[0]);
+                _items.Clear();
+                _itemType = null;
+                return result;
+            }
+
+            {
+                var items = _isPolymorphic
+                    ? (T[])Array.CreateInstance(_itemType ?? typeof(T), count)
+                    : new T[count];
+                _items.CopyTo(items);
+                var result = stream._systemCallSender.Batch(stream.Peer, stream.Id.LocalId, nextIndex - count, items);
+                _items.Clear();
+                _itemType = null;
+                return result;
+            }
         }
     }
 }

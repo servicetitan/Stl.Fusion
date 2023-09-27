@@ -14,7 +14,7 @@ public readonly partial struct Moment(long epochOffsetTicks)
 {
     public static readonly Moment MinValue = new(long.MinValue);
     public static readonly Moment MaxValue = new(long.MaxValue);
-    public static readonly Moment EpochStart = new(0); // AKA Unix Epoch
+    public static readonly Moment EpochStart = default; // AKA Unix Epoch
 
     // AKA Unix Time
     [DataMember(Order = 0)]

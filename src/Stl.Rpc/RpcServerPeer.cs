@@ -1,4 +1,3 @@
-using System;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Internal;
 
@@ -6,21 +5,27 @@ namespace Stl.Rpc;
 
 public class RpcServerPeer : RpcPeer
 {
+    private volatile AsyncState<RpcConnection?> _nextConnection = new(null, true);
+
     public TimeSpan CloseTimeout { get; init; } = TimeSpan.FromMinutes(10);
 
     public RpcServerPeer(RpcHub hub, RpcPeerRef @ref)
         : base(hub, @ref)
         => LocalServiceFilter = static serviceDef => !serviceDef.IsBackend;
 
-    public async Task Connect(RpcConnection connection, CancellationToken cancellationToken = default)
+    public void SetConnection(RpcConnection connection)
     {
-        var connectionState = ConnectionState.Last;
-        if (connectionState.Value.IsConnected()) {
-            Disconnect();
-            using var cts = cancellationToken.LinkWith(StopToken);
-            await connectionState.WhenDisconnected(cts.Token).ConfigureAwait(false);
+        AsyncState<RpcPeerConnectionState> connectionState;
+        lock (Lock) {
+            connectionState = ConnectionState;
+            if (connectionState.Value.Connection == connection)
+                return; // Already using connection
+            if (_nextConnection.Value == connection)
+                return; // Already "scheduled" to use connection
+
+            _nextConnection = _nextConnection.SetNext(connection);
         }
-        SetConnectionState(connection, null);
+        _ = Disconnect(true, null, connectionState);
     }
 
     // Protected methods
@@ -28,24 +33,23 @@ public class RpcServerPeer : RpcPeer
     protected override async Task<RpcConnection> GetConnection(CancellationToken cancellationToken)
     {
         while (true) {
-            var cts = cancellationToken.CreateLinkedTokenSource();
-            try {
-                try {
-                    await ConnectionState
-                        .WhenConnected(cts.Token)
-                        .WaitAsync(CloseTimeout, cancellationToken)
-                        .ConfigureAwait(false);
+            AsyncState<RpcConnection?> nextConnection;
+            lock (Lock) {
+                nextConnection = _nextConnection;
+                var connection = nextConnection.Value;
+                if (connection != null) {
+                    _nextConnection = nextConnection.SetNext(null); // This allows SetConnection to work properly
+                    return connection;
                 }
-                catch (TimeoutException e) {
-                    throw Errors.ConnectionUnrecoverable(e);
-                }
-
-                var connectionState = ConnectionState.Last.Value;
-                if (connectionState.Connection != null)
-                    return connectionState.Connection;
             }
-            finally {
-                cts.CancelAndDisposeSilently();
+            try {
+                await nextConnection
+                    .When(x => x != null, cancellationToken)
+                    .WaitAsync(CloseTimeout, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (TimeoutException e) {
+                throw Errors.ConnectionUnrecoverable(e);
             }
         }
     }

@@ -21,6 +21,7 @@ public interface IRpcSystemCalls : IRpcSystemService
     // Streams
     Task<RpcNoWait> Ack(long nextIndex, Guid hostId = default);
     Task<RpcNoWait> I(long index, object? item);
+    Task<RpcNoWait> B(long index, object? items);
     Task<RpcNoWait> End(long index, ExceptionInfo error);
 }
 
@@ -28,17 +29,13 @@ public class RpcSystemCalls(IServiceProvider services)
     : RpcServiceBase(services), IRpcSystemCalls, IRpcDynamicCallHandler
 {
     private static readonly Symbol OkMethodName = nameof(Ok);
-    private static readonly Symbol StreamItemMethodName = nameof(I);
+    private static readonly Symbol ItemMethodName = nameof(I);
+    private static readonly Symbol BatchMethodName = nameof(B);
 
     public static readonly Symbol Name = "$sys";
 
     public Task<RpcNoWait> Handshake(RpcHandshake handshake)
-    {
-        var context = RpcInboundContext.GetCurrent();
-        var peer = context.Peer;
-        peer.ConnectionState.Value.HandshakeSource?.TrySetResult(handshake);
-        return RpcNoWait.Tasks.Completed;
-    }
+        => RpcNoWait.Tasks.Completed; // Does nothing: this call is processed inside RpcPeer.OnRun
 
     public Task<RpcNoWait> Ok(object? result)
     {
@@ -76,7 +73,7 @@ public class RpcSystemCalls(IServiceProvider services)
     {
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
-        await peer.SharedObjects.KeepAlive(localIds);
+        await peer.SharedObjects.KeepAlive(localIds).ConfigureAwait(false);
         return default;
     }
 
@@ -110,6 +107,16 @@ public class RpcSystemCalls(IServiceProvider services)
             : RpcNoWait.Tasks.Completed;
     }
 
+    public Task<RpcNoWait> B(long index, object? items)
+    {
+        var context = RpcInboundContext.GetCurrent();
+        var peer = context.Peer;
+        var localId = context.Message.RelatedId;
+        return peer.RemoteObjects.Get(localId) is RpcStream stream
+            ? RpcNoWait.Tasks.From(stream.OnBatch(index, items))
+            : RpcNoWait.Tasks.Completed;
+    }
+
     public Task<RpcNoWait> End(long index, ExceptionInfo error)
     {
         var context = RpcInboundContext.GetCurrent();
@@ -136,12 +143,21 @@ public class RpcSystemCalls(IServiceProvider services)
             allowPolymorphism = outboundMethodDef.AllowResultPolymorphism;
             return true;
         }
-        if (methodName == StreamItemMethodName) {
+        if (methodName == ItemMethodName) {
             var stream = context.Peer.RemoteObjects.Get(context.Message.RelatedId) as RpcStream;
             if (stream == null)
                 return false;
 
             arguments = stream.CreateStreamItemArguments();
+            allowPolymorphism = true;
+            return true;
+        }
+        if (methodName == BatchMethodName) {
+            var stream = context.Peer.RemoteObjects.Get(context.Message.RelatedId) as RpcStream;
+            if (stream == null)
+                return false;
+
+            arguments = stream.CreateStreamBatchArguments();
             allowPolymorphism = true;
             return true;
         }

@@ -80,10 +80,17 @@ public class TestRpcService : ITestRpcService
         => new(_values.GetValueOrDefault(key));
 
     public Task<RpcStream<int>> StreamInt32(int count, int failAt = -1, RandomTimeSpan delay = default)
-        => Task.FromResult(RpcStream.New(Enumerate(count, failAt, delay)));
+    {
+        var seq = Enumerate(count, failAt, delay);
+        return Task.FromResult(RpcStream.New(seq));
+    }
 
     public Task<RpcStream<ITuple>> StreamTuples(int count, int failAt = -1, RandomTimeSpan delay = default)
-        => Task.FromResult(RpcStream.New(Enumerate(count, failAt, delay).Select(x => (ITuple)new Tuple<int>(x))));
+    {
+        var seq = Enumerate(count, failAt, delay)
+            .Select(x => (x & 2) == 0 ? (ITuple)new Tuple<int>(x) : new Tuple<long>(x));
+        return Task.FromResult(RpcStream.New(seq));
+    }
 
     public Task<int> Count(RpcStream<int> items, CancellationToken cancellationToken = default)
         => items.CountAsync(cancellationToken).AsTask();

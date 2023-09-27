@@ -45,7 +45,9 @@ public abstract partial class RpcStream : IRpcObject
     // Protected methods
 
     protected internal abstract ArgumentList CreateStreamItemArguments();
+    protected internal abstract ArgumentList CreateStreamBatchArguments();
     protected internal abstract Task OnItem(long index, object? item);
+    protected internal abstract Task OnBatch(long index, object? items);
     protected internal abstract Task OnEnd(long index, Exception? error);
     protected abstract Task Reconnect(CancellationToken cancellationToken);
     protected abstract void Disconnect();
@@ -145,6 +147,9 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
     protected internal override ArgumentList CreateStreamItemArguments()
         => ArgumentList.New<long, T>(0L, default!);
 
+    protected internal override ArgumentList CreateStreamBatchArguments()
+        => ArgumentList.New<long, T[]>(0L, default!);
+
     protected internal override Task OnItem(long index, object? item)
     {
         lock (_lock) {
@@ -158,6 +163,26 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
             // Debug.WriteLine($"{Id}: +#{index} (ack @ {ackIndex})");
             _nextIndex++;
             _remoteChannel.Writer.TryWrite((T)item!); // Must always succeed for unbounded channel
+            return Task.CompletedTask;
+        }
+    }
+
+    protected internal override Task OnBatch(long index, object? items)
+    {
+        lock (_lock) {
+            if (_remoteChannel == null)
+                return Task.CompletedTask;
+            if (index < _nextIndex)
+                return MaybeSendAckFromLock(index);
+            if (index > _nextIndex)
+                return SendResetFromLock(_nextIndex);
+
+            var typedItems = (T[])items!;
+            foreach (var item in typedItems) {
+                // Debug.WriteLine($"{Id}: +#{index} (ack @ {ackIndex})");
+                _nextIndex++;
+                _remoteChannel.Writer.TryWrite(item); // Must always succeed for unbounded channel
+            }
             return Task.CompletedTask;
         }
     }

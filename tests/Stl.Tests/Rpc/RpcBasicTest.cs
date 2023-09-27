@@ -174,7 +174,9 @@ public class RpcBasicTest(ITestOutputHelper @out) : RpcLocalTestBase(@out)
         (await stream1.ToListAsync()).Should().Equal(expected1);
         await AssertNoObjects(clientPeer);
 
-        var expected2 = Enumerable.Range(0, 5).Select(x => new Tuple<int>(x)).ToList();
+        var expected2 = Enumerable.Range(0, 5)
+            .Select(x => (x & 2) == 0 ? (ITuple)new Tuple<int>(x) : new Tuple<long>(x))
+            .ToList();
         var stream2 = await client.StreamTuples(expected2.Count);
         (await stream2.ToListAsync()).Should().Equal(expected2);
         await AssertNoObjects(clientPeer);

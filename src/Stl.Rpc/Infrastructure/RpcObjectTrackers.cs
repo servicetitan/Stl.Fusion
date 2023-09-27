@@ -92,11 +92,10 @@ public class RpcRemoteObjectTracker : RpcObjectTracker, IEnumerable<IRpcObject>
         return true;
     }
 
-    public async Task Maintain(CancellationToken cancellationToken)
+    public async Task Maintain(RpcPeerConnectionState connectionState, CancellationToken cancellationToken)
     {
         try {
-            var handshake = await Peer.ConnectionState.Value.HandshakeTask.ConfigureAwait(false);
-            var remotePeerId = handshake.RemotePeerId;
+            var remotePeerId = connectionState.Handshake!.RemotePeerId;
             var reconnectTasks = new List<Task>();
             foreach (var (_, handle) in _objects)
                 if (handle.Target is IRpcObject obj) {
@@ -126,6 +125,15 @@ public class RpcRemoteObjectTracker : RpcObjectTracker, IEnumerable<IRpcObject>
     {
         foreach (var localId in localIds)
             Get(localId)?.Disconnect();
+    }
+
+    public void Abort()
+    {
+        var objects = _objects;
+        _objects.Clear();
+        foreach (var (_, handle) in objects)
+            if (handle.Target is IRpcObject obj)
+                obj.Disconnect();
     }
 
     // Private methods
@@ -192,7 +200,7 @@ public sealed class RpcSharedObjectTracker : RpcObjectTracker, IEnumerable<IRpcS
         return _objects.TryRemove(obj.Id.LocalId, obj);
     }
 
-    public async Task Maintain(CancellationToken cancellationToken)
+    public async Task Maintain(RpcPeerConnectionState connectionState, CancellationToken cancellationToken)
     {
         try {
             var hub = Peer.Hub;
@@ -230,7 +238,7 @@ public sealed class RpcSharedObjectTracker : RpcObjectTracker, IEnumerable<IRpcS
         }
     }
 
-    public async Task<int> Abort(Exception error)
+    public async Task Abort(Exception error)
     {
         var abortedIds = new HashSet<long>();
         for (int i = 0;; i++) {
@@ -243,7 +251,6 @@ public sealed class RpcSharedObjectTracker : RpcObjectTracker, IEnumerable<IRpcS
 
             await Task.Delay(AbortCheckPeriod).ConfigureAwait(false);
         }
-        return abortedIds.Count;
     }
 
     // Private methods

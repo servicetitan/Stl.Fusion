@@ -66,8 +66,8 @@ public class RpcTestConnection
     public void Disconnect(Exception? error = null)
     {
         Channels = null;
-        ClientPeer.Disconnect(error);
-        ServerPeer.Disconnect(error);
+        _ = ClientPeer.Disconnect(true, error);
+        _ = ServerPeer.Disconnect(true, error);
     }
 
     public Task Reconnect(CancellationToken cancellationToken = default)
@@ -91,8 +91,8 @@ public class RpcTestConnection
                 _channels = _channels.SetNext(null);
             _channels.SetFinal(new ConnectionUnrecoverableException());
         }
-        ClientPeer.Disconnect();
-        ServerPeer.Disconnect();
+        _ = ClientPeer.Disconnect();
+        _ = ServerPeer.Disconnect();
     }
 
     public async Task<Channel<RpcMessage>> PullClientChannel(CancellationToken cancellationToken)
@@ -100,7 +100,7 @@ public class RpcTestConnection
         // ReSharper disable once InconsistentlySynchronizedField
         var channels = await WhenConnected(cancellationToken).ConfigureAwait(false);
         var serverConnection = new RpcConnection(channels.Channel2);
-        await ServerPeer.Connect(serverConnection, cancellationToken).ConfigureAwait(false);
+        ServerPeer.SetConnection(serverConnection);
         return channels.Channel1;
     }
 

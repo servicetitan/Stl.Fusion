@@ -16,6 +16,7 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
     private RpcMethodDef? _disconnectMethodDef;
     private RpcMethodDef? _ackMethodDef;
     private RpcMethodDef? _itemMethodDef;
+    private RpcMethodDef? _batchMethodDef;
     private RpcMethodDef? _endMethodDef;
 
     public IRpcSystemCalls Client => _client
@@ -40,18 +41,24 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
         ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.Ack)));
     public RpcMethodDef ItemMethodDef => _itemMethodDef
         ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.I)));
+    public RpcMethodDef BatchMethodDef => _batchMethodDef
+        ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.B)));
     public RpcMethodDef EndMethodDef => _endMethodDef
         ??= SystemCallsServiceDef.Methods.Single(m => Equals(m.Method.Name, nameof(IRpcSystemCalls.End)));
 
     // Handshake
 
-    public Task Handshake(RpcPeer peer, RpcHandshake handshake, List<RpcHeader>? headers = null)
+    public Task Handshake(
+        RpcPeer peer,
+        ChannelWriter<RpcMessage> sender, // Handshake is sent before exposing the Sender, so we pass it directly
+        RpcHandshake handshake,
+        List<RpcHeader>? headers = null)
     {
-        var context = new RpcOutboundContext(headers) {
+        var context = new RpcOutboundContext() {
             Peer = peer,
         };
         var call = context.PrepareCall(HandshakeMethodDef, ArgumentList.New(handshake))!;
-        return call.SendNoWait(false);
+        return call.SendNoWait(false, sender);
     }
 
     // Regular calls
@@ -139,13 +146,23 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
         return call.SendNoWait(false);
     }
 
-    public Task Item<TItem>(RpcPeer peer, long localId, long index, TItem result, List<RpcHeader>? headers = null)
+    public Task Item<TItem>(RpcPeer peer, long localId, long index, TItem item, List<RpcHeader>? headers = null)
     {
         var context = new RpcOutboundContext(headers) {
             Peer = peer,
             RelatedCallId = localId,
         };
-        var call = context.PrepareCall(ItemMethodDef, ArgumentList.New(index, result))!;
+        var call = context.PrepareCall(ItemMethodDef, ArgumentList.New(index, item))!;
+        return call.SendNoWait(true);
+    }
+
+    public Task Batch<TItem>(RpcPeer peer, long localId, long index, TItem[] items, List<RpcHeader>? headers = null)
+    {
+        var context = new RpcOutboundContext(headers) {
+            Peer = peer,
+            RelatedCallId = localId,
+        };
+        var call = context.PrepareCall(BatchMethodDef, ArgumentList.New(index, items))!;
         return call.SendNoWait(true);
     }
 
