@@ -129,11 +129,10 @@ public class RpcRemoteObjectTracker : RpcObjectTracker, IEnumerable<IRpcObject>
 
     public void Abort()
     {
-        var objects = _objects;
+        var objects = _objects.Values.Select(h => h.Target as IRpcObject).ToList();
         _objects.Clear();
-        foreach (var (_, handle) in objects)
-            if (handle.Target is IRpcObject obj)
-                obj.Disconnect();
+        foreach (var obj in objects)
+            obj?.Disconnect();
     }
 
     // Private methods
