@@ -14,7 +14,7 @@ public partial class TextSerialized<T> : IEquatable<TextSerialized<T>>
     private Option<T> _valueOption;
     private Option<string> _dataOption;
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
     public T Value {
         get => _valueOption.IsSome(out var v) ? v : Deserialize();
         set {

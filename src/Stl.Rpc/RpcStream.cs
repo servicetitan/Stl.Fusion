@@ -61,22 +61,24 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
     private long _nextIndex;
     private bool _isRegistered;
     private bool _isDisconnected;
-    private readonly object _lock;
+    private readonly object _lock = new();
 
     [DataMember, MemoryPackOrder(0)]
     public RpcObjectId SerializedId {
         get {
             // This member must be never accessed directly - its only purpose is to be called on serialization
             this.RequireKind(RpcObjectKind.Local);
-            if (!Id.IsNone) // Already registered
-                return Id;
+            lock (_lock) {
+                if (!Id.IsNone) // Already registered
+                    return Id;
 
-            Peer ??= RpcOutboundContext.Current?.Peer ?? RpcInboundContext.GetCurrent().Peer;
-            var sharedObjects = Peer.SharedObjects;
-            Id = sharedObjects.NextId(); // NOTE: Id changes on serialization!
-            var sharedStream = new RpcSharedStream<T>(this);
-            sharedObjects.Register(sharedStream);
-            return Id;
+                Peer ??= RpcOutboundContext.Current?.Peer ?? RpcInboundContext.GetCurrent().Peer;
+                var sharedObjects = Peer.SharedObjects;
+                Id = sharedObjects.NextId(); // NOTE: Id changes on serialization!
+                var sharedStream = new RpcSharedStream<T>(this);
+                sharedObjects.Register(sharedStream);
+                return Id;
+            }
         }
         set {
             this.RequireKind(RpcObjectKind.Remote);
@@ -98,18 +100,14 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
         => _localSource != null ? RpcObjectKind.Local : RpcObjectKind.Remote;
 
     [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
-    public RpcStream()
-        => _lock = new();
+    public RpcStream() { }
 
     public RpcStream(IAsyncEnumerable<T> localSource)
-    {
-        _localSource = localSource;
-        _lock = null!; // Must not be used for local streams
-    }
+        => _localSource = localSource;
 
     ~RpcStream()
     {
-        if (_lock != null!)
+        if (_localSource == null)
             Close(Errors.AlreadyDisposed(GetType()));
     }
 

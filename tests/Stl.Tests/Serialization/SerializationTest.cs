@@ -66,6 +66,25 @@ public class SerializationTest(ITestOutputHelper @out) : TestBase(@out)
     }
 
     [Fact]
+    public void ResultSerialization()
+    {
+        default(Result<int>).AssertPassesThroughAllSerializers(Out);
+        Result.New(1).AssertPassesThroughAllSerializers(Out);
+        var r = Result.Error<int>(new InvalidOperationException()).PassThroughAllSerializers();
+        r.Error.Should().BeOfType<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void ResultBoxSerialization()
+    {
+        default(ResultBox<int>).AssertPassesThroughAllSerializers(Out);
+        var r = new ResultBox<int>(1).PassThroughAllSerializers(Out);
+        r.Value.Should().Be(1);
+        r = new ResultBox<int>(0, new InvalidOperationException()).PassThroughAllSerializers();
+        r.Error.Should().BeOfType<InvalidOperationException>();
+    }
+
+    [Fact]
     public void LTagSerialization()
     {
         default(LTag).AssertPassesThroughAllSerializers(Out);

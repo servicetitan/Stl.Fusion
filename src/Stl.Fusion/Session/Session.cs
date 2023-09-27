@@ -22,7 +22,7 @@ public sealed partial class Session : IHasId<Symbol>, IRequirementTarget,
 
     [DataMember(Order = 0), MemoryPackOrder(0)]
     public Symbol Id { get; }
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
     public string Hash => _hash ??= ComputeHash();
 
     public static Session New()

@@ -11,9 +11,9 @@ public readonly partial record struct RandomTimeSpan(
     [property: DataMember(Order = 1), MemoryPackOrder(1)]
     TimeSpan MaxDelta = default)
 {
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
     public TimeSpan Min => (Origin - MaxDelta).Positive();
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
     public TimeSpan Max => (Origin + MaxDelta).Positive();
 
     public RandomTimeSpan(TimeSpan origin, double maxDelta)

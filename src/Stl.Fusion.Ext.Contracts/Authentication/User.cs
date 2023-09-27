@@ -27,7 +27,7 @@ public partial record User : IHasId<Symbol>, IHasVersion<long>, IRequirementTarg
     public long Version { get; init; }
     [DataMember, MemoryPackOrder(3)]
     public ImmutableDictionary<string, string> Claims { get; init; }
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
     public ImmutableDictionary<UserIdentity, string> Identities { get; init; }
 
     [DataMember(Name = nameof(Identities)), MemoryPackOrder(4)]

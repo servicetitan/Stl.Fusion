@@ -26,9 +26,9 @@ public readonly partial struct Range<T> : IEquatable<Range<T>>
     /// <summary>
     /// Indicates whether the range is empty (has no items).
     /// </summary>
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
     public bool IsEmpty => EqualityComparer<T>.Default.Equals(Start, End);
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
     public bool IsNegative => Comparer<T>.Default.Compare(Start, End) > 0;
 
     /// <summary>

@@ -57,7 +57,7 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
     public Task SendNoWait(bool allowPolymorphism, ChannelWriter<RpcMessage>? sender = null)
     {
         var message = CreateMessage(Context.RelatedCallId, allowPolymorphism);
-        Peer.CallLog?.Log(Peer.CallLogLevel, "'{PeerRef}': -> {Call}", Peer.Ref, this);
+        Peer.CallLog?.Log(Peer.CallLogLevel, "'{PeerRef}': -> {Call} -> #{RelatedId}", Peer.Ref, this, message.RelatedId);
         return Peer.Send(message, sender);
     }
 
@@ -79,15 +79,15 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
             SetError(error, null, notifyCancelled);
             return Task.CompletedTask;
         }
-        Peer.CallLog?.Log(Peer.CallLogLevel, "'{PeerRef}': -> {Call}", Peer.Ref, this);
+        Peer.CallLog?.Log(Peer.CallLogLevel, "'{PeerRef}': -> {Call} -> #{RelatedId}", Peer.Ref, this, message.RelatedId);
         return Peer.Send(message);
     }
 
-    public virtual RpcMessage CreateMessage(long callId, bool allowPolymorphism)
+    public virtual RpcMessage CreateMessage(long relatedId, bool allowPolymorphism)
     {
         var argumentData = Peer.ArgumentSerializer.Serialize(Context.Arguments!, allowPolymorphism);
         var message = new RpcMessage(
-            Context.CallTypeId, callId,
+            Context.CallTypeId, relatedId,
             MethodDef.Service.Name, MethodDef.Name,
             argumentData, Context.Headers);
         return message;

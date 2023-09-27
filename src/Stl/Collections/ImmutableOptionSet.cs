@@ -13,7 +13,7 @@ public readonly partial struct ImmutableOptionSet : IServiceProvider, IEquatable
         => _items ?? ImmutableDictionary<Symbol, object>.Empty;
 
     [DataMember(Order = 0), MemoryPackOrder(0)]
-    [JsonPropertyName(nameof(Items)),  Newtonsoft.Json.JsonIgnore]
+    [JsonPropertyName(nameof(Items)), Newtonsoft.Json.JsonIgnore]
     public Dictionary<string, NewtonsoftJsonSerialized<object>> JsonCompatibleItems
         => Items.ToDictionary(
             p => p.Key.Value,

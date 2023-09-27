@@ -13,7 +13,7 @@ public partial class OptionSet : IServiceProvider
     }
 
     [DataMember(Order = 0), MemoryPackOrder(0)]
-    [JsonPropertyName(nameof(Items)),  Newtonsoft.Json.JsonIgnore]
+    [JsonPropertyName(nameof(Items)), Newtonsoft.Json.JsonIgnore]
     public Dictionary<string, NewtonsoftJsonSerialized<object>> JsonCompatibleItems
         => Items.ToDictionary(
             p => p.Key.Value,

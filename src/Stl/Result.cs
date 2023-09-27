@@ -124,29 +124,35 @@ public interface IMutableResult<T> : IResult<T>, IMutableResult
 /// </summary>
 /// <typeparam name="T">The type of <see cref="Value"/>.</typeparam>
 [DebuggerDisplay("({" + nameof(ValueOrDefault) + "}, Error = {" + nameof(Error) + "})")]
-public readonly struct Result<T> : IResult<T>, IEquatable<Result<T>>
+[DataContract, MemoryPackable(GenerateType.VersionTolerant)]
+public readonly partial struct Result<T> : IResult<T>, IEquatable<Result<T>>
 {
     /// <inheritdoc />
+    [DataMember(Order = 0), MemoryPackOrder(0)]
     public T? ValueOrDefault { get; }
     /// <inheritdoc />
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
     public Exception? Error { get; }
 
+    [DataMember(Order = 1), MemoryPackOrder(1)]
+    public ExceptionInfo? ExceptionInfo => Error?.ToExceptionInfo();
+
     /// <inheritdoc />
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
     public bool HasValue {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => Error == null;
     }
 
     /// <inheritdoc />
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
     public bool HasError {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         get => Error != null;
     }
 
     /// <inheritdoc />
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
     public T Value {
         get {
             if (Error != null)
@@ -164,13 +170,25 @@ public readonly struct Result<T> : IResult<T>, IEquatable<Result<T>>
     /// </summary>
     /// <param name="valueOrDefault"><see cref="ValueOrDefault"/> value.</param>
     /// <param name="error"><see cref="Error"/> value.</param>
-    [JsonConstructor, Newtonsoft.Json.JsonConstructor]
     public Result(T valueOrDefault, Exception? error)
     {
         if (error != null)
             valueOrDefault = default!;
         ValueOrDefault = valueOrDefault;
         Error = error;
+    }
+
+    [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
+    public Result(T valueOrDefault, ExceptionInfo? exceptionInfo)
+    {
+        if (exceptionInfo is { IsNone: false } vExceptionInfo) {
+            ValueOrDefault = default;
+            Error = vExceptionInfo.ToException();
+        }
+        else {
+            ValueOrDefault = valueOrDefault;
+            Error = null;
+        }
     }
 
     public override string ToString()

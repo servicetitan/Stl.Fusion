@@ -8,7 +8,7 @@ public abstract partial record ArgumentList
 
     public static ArgumentList Empty { get; } = new ArgumentList0();
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
     public abstract int Length { get; }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -70,7 +70,7 @@ public abstract partial record ArgumentList
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 public sealed partial record ArgumentList0 : ArgumentList
 {
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember]
     public override int Length => 0;
 
     public override string ToString() => "()";

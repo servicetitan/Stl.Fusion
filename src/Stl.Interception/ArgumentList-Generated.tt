@@ -85,7 +85,7 @@ public abstract record ArgumentList<#=itemCount#> : ArgumentList
     protected static Type?[] CreateNonDefaultItemTypes()
         => new Type?[<#=itemCount#>];
 
-    [JsonIgnore, Newtonsoft.Json.JsonIgnore, MemoryPackIgnore]
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
     public override int Length => <#=itemCount#>;
 }
 
