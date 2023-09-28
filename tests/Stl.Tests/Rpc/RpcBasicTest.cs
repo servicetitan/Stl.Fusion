@@ -1,4 +1,5 @@
 using Stl.Rpc;
+using Stl.Rpc.Diagnostics;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Testing;
 using Stl.Testing.Collections;
@@ -53,6 +54,29 @@ public class RpcBasicTest(ITestOutputHelper @out) : RpcLocalTestBase(@out)
         divTracer.EnterCount.Should().Be(2);
         divTracer.ExitCount.Should().Be(2);
         divTracer.ErrorCount.Should().Be(1);
+    }
+
+
+    [Fact]
+    public async Task TraceActivityTest()
+    {
+        await using var services = CreateServices(s => {
+            s.AddSingleton<RpcMethodTracerFactory>(method => new RpcMethodActivityTracer(method) {
+                UseCounters = true,
+            });
+        });
+        var clientPeer = services.GetRequiredService<RpcTestClient>().Single().ClientPeer;
+        var client = services.GetRequiredService<ITestRpcServiceClient>();
+
+        var divMethod = services.RpcHub().ServiceRegistry[typeof(ITestRpcService)]["Div:2"];
+        var divTracer = (RpcMethodActivityTracer)divMethod.Tracer!;
+
+        (await client.Div(6, 2)).Should().Be(3);
+        await Assert.ThrowsAsync<DivideByZeroException>(
+            () => client.Div(1, 0));
+        await AssertNoCalls(clientPeer);
+
+        divTracer.Counters.Should().NotBeNull();
     }
 
     [Fact]

@@ -12,9 +12,6 @@ public class RpcMethodActivityTrace(RpcMethodActivityTracer tracer, Activity act
     protected void Complete(Task resultTask)
     {
         activity.Dispose();
-        tracer.CallCount?.Add(1);
-        if (!resultTask.IsCompletedSuccessfully())
-            tracer.ErrorCount?.Add(1);
-        tracer.CallDuration?.Record(activity.Duration.TotalMilliseconds);
+        tracer.Counters?.Complete(resultTask, activity);
     }
 }
