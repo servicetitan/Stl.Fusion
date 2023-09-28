@@ -56,7 +56,6 @@ public class RpcBasicTest(ITestOutputHelper @out) : RpcLocalTestBase(@out)
         divTracer.ErrorCount.Should().Be(1);
     }
 
-
     [Fact]
     public async Task TraceActivityTest()
     {
