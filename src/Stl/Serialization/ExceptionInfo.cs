@@ -84,7 +84,7 @@ public readonly partial struct ExceptionInfo : IEquatable<ExceptionInfo>
 
         var (type, message) = (exceptionInfo.TypeRef.TryResolve(), exceptionInfo.Message);
         type ??= UnknownExceptionTypeResolver?.Invoke(exceptionInfo.TypeRef);
-        if (!typeof(Exception).IsAssignableFrom(type))
+        if (type == null || !typeof(Exception).IsAssignableFrom(type))
             return null;
 
         var ctor = type.GetConstructor(ExceptionCtorArgumentTypes1);

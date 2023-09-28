@@ -61,8 +61,11 @@ public class RpcSystemCalls(IServiceProvider services)
         var peer = context.Peer;
         var inboundCallId = context.Message.RelatedId;
         var inboundCall = peer.InboundCalls.Get(inboundCallId);
-        if (inboundCall != null)
+        if (inboundCall != null) {
+            peer.Log.IfEnabled(LogLevel.Warning)
+                ?.LogWarning("Remote call cancelled on the client side: {Call}", inboundCallId);
             await inboundCall.Complete(silentCancel: true).ConfigureAwait(false);
+        }
         return default;
     }
 

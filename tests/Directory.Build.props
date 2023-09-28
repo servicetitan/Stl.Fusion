@@ -36,8 +36,9 @@
     <!-- [MA0011] Use an overload of 'TryParse' that has a 'System.IFormatProvider' parameter -->
     <!-- [MA0051] Method is too long (41 lines; maximum allowed: 40)-->
     <!-- [MA0074] Use an overload of 'Contains' that has a StringComparison parameter -->
+    <!-- [NETSDK1206] Found version-specific or distribution-specific runtime identifier(s): alpine-arm, alpine-arm64, alpine-x64. Affected libraries: SQLitePCLRaw.lib.e_sqlite3. In .NET 8.0 and higher, assets for version-specific and distribution-specific runtime identifiers will not be found by default. See https://aka.ms/dotnet/rid-usage for details. -->
     <!-- [RCS1155] Use StringComparison when comparing strings. -->
-    <NoWarn>$(NoWarn);MA0002;MA0004;MA0006;MA0011;MA0051;MA0074;RCS1155</NoWarn>
+    <NoWarn>$(NoWarn);MA0002;MA0004;MA0006;MA0011;MA0051;MA0074;NETSDK1206;RCS1155</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

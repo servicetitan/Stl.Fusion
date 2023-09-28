@@ -84,6 +84,7 @@ public sealed class RpcSystemCallSender(IServiceProvider services)
             return call.SendNoWait(allowPolymorphism);
         }
         catch (Exception error) {
+            Log.LogError(error, "PrepareCall for call #{CallId} failed.", callId);
             if (headers != null) {
                 while (headers.Count > headerCount)
                     headers.RemoveAt(headers.Count - 1);

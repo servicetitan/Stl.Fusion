@@ -1,21 +1,23 @@
 using Stl.Generators;
 using Stl.Interception;
+using Stl.Rpc.Diagnostics;
 using Stl.Rpc.Infrastructure;
 
 namespace Stl.Rpc;
 
 public delegate Symbol RpcServiceNameBuilder(Type serviceType);
-public delegate Symbol RpcMethodNameBuilder(RpcMethodDef methodDef);
+public delegate Symbol RpcMethodNameBuilder(RpcMethodDef method);
 public delegate void RpcPeerTracker(RpcPeer peer);
 public delegate RpcPeer RpcPeerFactory(RpcHub hub, RpcPeerRef peerRef);
 public delegate RpcInboundContext RpcInboundContextFactory(RpcPeer peer, RpcMessage message, CancellationToken cancellationToken);
-public delegate RpcPeer? RpcCallRouter(RpcMethodDef methodDef, ArgumentList arguments);
+public delegate RpcPeer? RpcCallRouter(RpcMethodDef method, ArgumentList arguments);
 public delegate Task<RpcConnection> RpcClientConnectionFactory(RpcClientPeer peer, CancellationToken cancellationToken);
 public delegate Task<RpcConnection> RpcServerConnectionFactory(
     RpcServerPeer peer, Channel<RpcMessage> channel, ImmutableOptionSet options, CancellationToken cancellationToken);
 public delegate string RpcClientIdGenerator();
 public delegate bool RpcBackendServiceDetector(Type serviceType, Symbol serviceName);
 public delegate bool RpcUnrecoverableErrorDetector(Exception error, CancellationToken cancellationToken);
+public delegate RpcMethodTracer? RpcMethodTracerFactory(RpcMethodDef method);
 
 public static class RpcDefaultDelegates
 {
@@ -26,7 +28,7 @@ public static class RpcDefaultDelegates
         static methodDef => $"{methodDef.Method.Name}:{methodDef.ParameterTypes.Length}";
 
     public static RpcCallRouter CallRouter { get; set; } =
-        static (methodDef, arguments) => methodDef.Hub.GetPeer(RpcPeerRef.Default);
+        static (method, arguments) => method.Hub.GetPeer(RpcPeerRef.Default);
 
     public static RpcInboundContextFactory InboundContextFactory { get; set; } =
         static (peer, message, cancellationToken) => new RpcInboundContext(peer, message, cancellationToken);
@@ -55,4 +57,7 @@ public static class RpcDefaultDelegates
         static (error, cancellationToken)
             => cancellationToken.IsCancellationRequested
             || error is ConnectionUnrecoverableException;
+
+    public static RpcMethodTracerFactory MethodTracerFactory { get; set; } =
+        static method => null;
 }

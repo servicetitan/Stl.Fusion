@@ -61,7 +61,7 @@ public sealed class RpcOutboundContext(List<RpcHeader>? headers = null)
         // Call
         Call = RpcOutboundCall.New(this);
         if (!Call.NoWait)
-            hub.OutboundMiddlewares.PrepareCall(this);
+            hub.OutboundMiddlewares.NullIfEmpty()?.PrepareCall(this);
         return Call;
     }
 

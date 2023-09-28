@@ -41,6 +41,7 @@ public readonly struct RpcBuilder
         services.TryAddSingleton(_ => RpcDefaultDelegates.UnrecoverableErrorDetector);
         services.TryAddSingleton(_ => RpcDefaultDelegates.ClientConnectionFactory);
         services.TryAddSingleton(_ => RpcDefaultDelegates.ServerConnectionFactory);
+        services.TryAddSingleton(_ => RpcDefaultDelegates.MethodTracerFactory);
         services.TryAddSingleton(_ => RpcArgumentSerializer.Default);
         services.TryAddSingleton(c => new RpcInboundMiddlewares(c));
         services.TryAddSingleton(c => new RpcOutboundMiddlewares(c));
@@ -49,8 +50,6 @@ public readonly struct RpcBuilder
         services.TryAddTransient(_ => new RpcRemoteObjectTracker());
         services.TryAddTransient(_ => new RpcSharedObjectTracker());
         services.TryAddSingleton(c => new RpcClientPeerReconnectDelayer(c));
-        if (!OSInfo.IsAnyClient)
-            AddInboundMiddleware<RpcInboundCallActivityMiddleware>();
 
         // Interceptors
         services.TryAddSingleton(_ => RpcClientInterceptor.Options.Default);

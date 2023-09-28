@@ -10,26 +10,25 @@ public sealed class RpcHub : ProcessorBase, IHasServices, IHasId<Guid>
     private IEnumerable<RpcPeerTracker>? _peerTrackers;
     private RpcSystemCallSender? _systemCallSender;
     private RpcClient? _client;
-    private IMomentClock? _clock;
-    private ulong _lastPeerInstanceId;
 
-    internal RpcServiceNameBuilder ServiceNameBuilder { get; }
-    internal RpcMethodNameBuilder MethodNameBuilder { get; }
-    internal RpcCallRouter CallRouter { get; }
-    internal RpcArgumentSerializer ArgumentSerializer { get; }
-    internal RpcInboundContextFactory InboundContextFactory { get; }
-    internal RpcInboundMiddlewares InboundMiddlewares { get; }
-    internal RpcOutboundMiddlewares OutboundMiddlewares { get; }
-    internal RpcPeerFactory PeerFactory { get; }
-    internal RpcClientConnectionFactory ClientConnectionFactory { get; }
-    internal RpcClientIdGenerator ClientIdGenerator { get; }
-    internal RpcClientPeerReconnectDelayer ClientPeerReconnectDelayer { get; }
-    internal RpcBackendServiceDetector BackendServiceDetector { get; }
-    internal RpcUnrecoverableErrorDetector UnrecoverableErrorDetector { get; }
+    internal readonly RpcServiceNameBuilder ServiceNameBuilder;
+    internal readonly RpcMethodNameBuilder MethodNameBuilder;
+    internal readonly RpcCallRouter CallRouter;
+    internal readonly RpcArgumentSerializer ArgumentSerializer;
+    internal readonly RpcInboundContextFactory InboundContextFactory;
+    internal readonly RpcInboundMiddlewares InboundMiddlewares;
+    internal readonly RpcOutboundMiddlewares OutboundMiddlewares;
+    internal readonly RpcPeerFactory PeerFactory;
+    internal readonly RpcClientConnectionFactory ClientConnectionFactory;
+    internal readonly RpcClientIdGenerator ClientIdGenerator;
+    internal readonly RpcClientPeerReconnectDelayer ClientPeerReconnectDelayer;
+    internal readonly RpcBackendServiceDetector BackendServiceDetector;
+    internal readonly RpcUnrecoverableErrorDetector UnrecoverableErrorDetector;
+    internal readonly RpcMethodTracerFactory MethodTracerFactory;
+    internal readonly IMomentClock Clock;
     internal IEnumerable<RpcPeerTracker> PeerTrackers => _peerTrackers ??= Services.GetRequiredService<IEnumerable<RpcPeerTracker>>();
     internal RpcSystemCallSender SystemCallSender => _systemCallSender ??= Services.GetRequiredService<RpcSystemCallSender>();
     internal RpcClient Client => _client ??= Services.GetRequiredService<RpcClient>();
-    internal IMomentClock Clock => _clock ??= Services.Clocks().CpuClock;
 
     internal ConcurrentDictionary<RpcPeerRef, RpcPeer> Peers { get; } = new();
 
@@ -59,6 +58,8 @@ public sealed class RpcHub : ProcessorBase, IHasServices, IHasId<Guid>
         ClientPeerReconnectDelayer = services.GetRequiredService<RpcClientPeerReconnectDelayer>();
         BackendServiceDetector = services.GetRequiredService<RpcBackendServiceDetector>();
         UnrecoverableErrorDetector = services.GetRequiredService<RpcUnrecoverableErrorDetector>();
+        MethodTracerFactory = services.GetRequiredService<RpcMethodTracerFactory>();
+        Clock = services.Clocks().CpuClock;
     }
 
     protected override Task DisposeAsyncCore()

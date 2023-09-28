@@ -60,6 +60,7 @@ public sealed class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<Rpc
         var sb = StringBuilderExt.Acquire();
         sb.AppendLine(title);
         DumpTo(sb, dumpMethods);
+        // ReSharper disable once TemplateIsNotCompileTimeConstantProblem
         log.Log(logLevel, sb.ToStringAndRelease().TrimEnd());
     }
 
@@ -68,7 +69,7 @@ public sealed class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<Rpc
 #pragma warning disable MA0011
         foreach (var serviceDef in _serviceByName.Values.OrderBy(s => s.Name)) {
             var serverInfo = serviceDef.HasServer  ? $" -> {serviceDef.ServerResolver}" : "";
-            sb.AppendLine($"{indent}'{serviceDef.Name}': {serviceDef.Type.GetName()}{serverInfo}, {serviceDef.MethodCount} method(s)");
+            sb.AppendLine($"{indent}'{serviceDef.Name}': {serviceDef.Type.GetName()}{serverInfo}, {serviceDef.Methods.Count} method(s)");
             if (!dumpMethods)
                 continue;
 

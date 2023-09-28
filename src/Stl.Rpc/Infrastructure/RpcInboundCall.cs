@@ -1,4 +1,5 @@
 using Stl.Interception;
+using Stl.Rpc.Diagnostics;
 using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
@@ -10,6 +11,7 @@ public abstract class RpcInboundCall : RpcCall
     private static readonly ConcurrentDictionary<(byte, Type), Func<RpcInboundContext, RpcMethodDef, RpcInboundCall>> FactoryCache = new();
 
     protected readonly CancellationTokenSource? CancellationTokenSource;
+    protected ILogger Log => Context.Peer.Log;
 
     public readonly RpcInboundContext Context;
     public readonly CancellationToken CancellationToken;
@@ -124,22 +126,31 @@ public class RpcInboundCall<TResult>(RpcInboundContext context, RpcMethodDef met
             if (!PrepareToStart())
                 return Task.CompletedTask;
 
+            RpcMethodTrace? trace = null;
+            var inboundMiddlewares = Hub.InboundMiddlewares.NullIfEmpty();
             try {
                 Arguments ??= DeserializeArguments();
                 if (Arguments == null)
                     return Task.CompletedTask; // No way to resolve argument list type -> the related call is already gone
 
+                // Before call
                 var peer = Context.Peer;
                 peer.CallLog?.Log(peer.CallLogLevel, "'{PeerRef}': <- {Call}", peer.Ref, this);
+                if (MethodDef.Tracer is { } tracer && tracer.Sampler.Next.Invoke())
+                    trace = tracer.TryStartTrace(this);
+                inboundMiddlewares?.BeforeCall(this);
 
-                Hub.InboundMiddlewares.BeforeCall(this);
+                // Call
                 ResultTask = InvokeTarget();
+                trace?.OnResultTaskReady(this);
+                inboundMiddlewares?.OnResultTaskReady(this);
             }
             catch (Exception error) {
                 ResultTask = Task.FromException<TResult>(error);
+                trace?.OnResultTaskReady(this);
+                inboundMiddlewares?.OnResultTaskReady(this);
             }
         }
-
         return ResultTask.IsCompleted
             ? Complete()
             : CompleteEventually();
@@ -215,10 +226,16 @@ public class RpcInboundCall<TResult>(RpcInboundContext context, RpcMethodDef met
         Result<TResult> result;
         if (!resultTask.IsCompleted)
             result = InvocationIsStillInProgressErrorResult();
-        else if (resultTask.Exception is { } error)
+        else if (resultTask.Exception is { } error) {
+            Log.IfEnabled(LogLevel.Error)
+                ?.LogError(error, "Remote call completed with an error: {Call}", this);
             result = new Result<TResult>(default!, error.GetBaseException());
-        else if (resultTask.IsCanceled)
+        }
+        else if (resultTask.IsCanceled) {
+            Log.IfEnabled(LogLevel.Warning)
+                ?.LogWarning("Remote call cancelled on the server side: {Call}", this);
             result = new Result<TResult>(default!, new TaskCanceledException());
+        }
         else
             result = resultTask.Result;
 

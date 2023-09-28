@@ -1,5 +1,6 @@
 using Stl.Interception;
 using Stl.Interception.Interceptors;
+using Stl.Rpc.Diagnostics;
 
 namespace Stl.Rpc;
 
@@ -19,6 +20,7 @@ public sealed class RpcMethodDef : MethodDef
     public Func<ArgumentList> ArgumentListFactory { get; }
     public Func<ArgumentList> ResultListFactory { get; }
     public bool NoWait { get; }
+    public RpcMethodTracer? Tracer { get; }
 
     public RpcMethodDef(RpcServiceDef service, MethodInfo method)
         : base(service.Type, method)
@@ -43,6 +45,8 @@ public sealed class RpcMethodDef : MethodDef
 
         if (!IsAsyncMethod)
             IsValid = false;
+
+        Tracer = Hub.MethodTracerFactory.Invoke(this);
     }
 
     public override string ToString()
