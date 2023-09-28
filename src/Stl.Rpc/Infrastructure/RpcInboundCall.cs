@@ -232,8 +232,8 @@ public class RpcInboundCall<TResult>(RpcInboundContext context, RpcMethodDef met
             result = new Result<TResult>(default!, error.GetBaseException());
         }
         else if (resultTask.IsCanceled) {
-            Log.IfEnabled(LogLevel.Warning)
-                ?.LogWarning("Remote call cancelled on the server side: {Call}", this);
+            Log.IfEnabled(LogLevel.Debug)
+                ?.LogDebug("Remote call cancelled on the server side: {Call}", this);
             result = new Result<TResult>(default!, new TaskCanceledException());
         }
         else
