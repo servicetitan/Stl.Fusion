@@ -56,9 +56,16 @@ public class RpcWebSocketClient(
     public override async Task<RpcConnection> CreateConnection(RpcClientPeer peer, CancellationToken cancellationToken)
     {
         var uri = Settings.ConnectionUriResolver(this, peer);
-        var webSocket = Services.GetRequiredService<ClientWebSocket>();
-        await webSocket.ConnectAsync(uri, cancellationToken)
-            .WaitAsync(Settings.ConnectTimeout, cancellationToken)
+        using var cts = new CancellationTokenSource(Settings.ConnectTimeout);
+        var ctsToken = cts.Token;
+        // ReSharper disable once UseAwaitUsing
+        using var _ = cancellationToken.Register(static x => (x as CancellationTokenSource)?.Cancel(), cts);
+        var webSocket = await Task.Run(async () => {
+                var ws = Services.GetRequiredService<ClientWebSocket>();
+                await ws.ConnectAsync(uri, ctsToken).ConfigureAwait(false);
+                return ws;
+            }, ctsToken)
+            .WaitAsync(ctsToken) // MAUI sometimes stuck in sync part of ConnectAsync
             .ConfigureAwait(false);
 
         var channel = new WebSocketChannel<RpcMessage>(Settings.WebSocketChannelOptions, webSocket, Services);

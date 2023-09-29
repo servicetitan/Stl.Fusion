@@ -117,9 +117,9 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
                 try {
                     if (connectionState.IsFinal)
                         return;
+
                     while (connectionState.Value.IsConnected())
                         connectionState = SetConnectionState(connectionState.Value.NextDisconnected(), connectionState);
-
                     var connection = await GetConnection(cancellationToken).ConfigureAwait(false);
                     if (connection == null)
                         throw Errors.ConnectionUnrecoverable();
