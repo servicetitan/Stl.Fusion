@@ -18,11 +18,24 @@ public class CommandTracer(IServiceProvider services) : ICommandHandler<ICommand
         init => _log = value;
     }
 
+    public LogLevel ErrorLogLevel { get; init; } = LogLevel.Error;
+
     [CommandFilter(Priority = CommanderCommandHandlerPriority.CommandTracer)]
     public async Task OnCommand(ICommand command, CommandContext context, CancellationToken cancellationToken)
     {
         using var activity = StartActivity(command, context);
-        await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
+        try {
+            await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception e) {
+            if (Log.IsEnabled(ErrorLogLevel)) {
+                var message = context.IsOutermost ?
+                    "Outermost command failed: {Command}" :
+                    "Nested command failed: {Command}";
+                // ReSharper disable once TemplateIsNotCompileTimeConstantProblem
+                Log.Log(ErrorLogLevel, e, message, command);
+            }
+        }
     }
 
     protected virtual Activity? StartActivity(ICommand command, CommandContext context)
