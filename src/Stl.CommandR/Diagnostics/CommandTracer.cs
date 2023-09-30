@@ -28,7 +28,7 @@ public class CommandTracer(IServiceProvider services) : ICommandHandler<ICommand
             await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
         }
         catch (Exception e) {
-            if (Log.IsEnabled(ErrorLogLevel)) {
+            if (activity != null && Log.IsEnabled(ErrorLogLevel)) {
                 var message = context.IsOutermost ?
                     "Outermost command failed: {Command}" :
                     "Nested command failed: {Command}";
@@ -40,7 +40,8 @@ public class CommandTracer(IServiceProvider services) : ICommandHandler<ICommand
 
     protected virtual Activity? StartActivity(ICommand command, CommandContext context)
     {
-        if (!ShouldTrace(command, context)) return null;
+        if (!ShouldTrace(command, context))
+            return null;
 
         var operationName = command.GetType().GetOperationName("Run");
         var activity = ActivitySource.StartActivity(operationName);
