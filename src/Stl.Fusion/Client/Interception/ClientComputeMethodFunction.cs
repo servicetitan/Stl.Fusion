@@ -129,7 +129,7 @@ public class ClientComputeMethodFunction<T>(
         // 4. Re-entering the lock & check if cached is still consistent
         using var _ = await InputLocks.Lock(input).ConfigureAwait(false);
         if (!cached.IsConsistent())
-            return; // Since the call was bound to cached, it's properly cancelled already.
+            return; // Since the call was bound to cached, it's properly cancelled already
 
         var synchronizedSource = cached.SynchronizedSource;
         if (!result.HasError && cacheEntry?.IsResultIdenticalTo(cached.CacheEntry!) == true) {
@@ -141,7 +141,7 @@ public class ClientComputeMethodFunction<T>(
         // 5. Now, let's update cache entry
         UpdateCache(cache, cacheEntry, result);
 
-        // 6. Create the new computed - it invalidates the old one upon registring
+        // 6. Create the new computed - it invalidates the cached one upon registering
         var computed = new ClientComputed<T>(
             input.MethodDef.ComputedOptions,
             input, result, VersionGenerator.NextVersion(),
