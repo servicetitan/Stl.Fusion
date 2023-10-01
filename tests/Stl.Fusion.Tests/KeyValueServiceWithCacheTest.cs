@@ -30,18 +30,18 @@ public class KeyValueServiceWithCacheTest : FusionTestBase
 
         var c1 = await GetComputed(kv1, "1");
         c1.Value.Should().Be("a");
-        c1.Call.Should().NotBeNull(); // Not from cache
-        c1.CacheEntry.Should().BeNull(); // Not from cache
+        c1.WhenSynchronized.IsCompleted.Should().BeTrue();
 
         await Assert.ThrowsAnyAsync<TimeoutException>(() =>
             c1.WhenInvalidated().WaitAsync(smallTimeout));
 
         var c2 = await GetComputed(kv2, "1");
         c2.Value.Should().Be("a");
-        var whenSynchronized = c2.WhenSynchronized();
-        whenSynchronized.IsCompleted.Should().BeFalse();
-        await whenSynchronized;
-        c2.Call.Should().NotBeNull();
+        c2.WhenSynchronized.IsCompleted.Should().BeFalse();
+        await c2.WhenSynchronized();
+        c2.WhenSynchronized.IsCompleted.Should().BeTrue();
+        c2 = await GetComputed(kv2, "1");
+        c2.WhenSynchronized.IsCompleted.Should().BeTrue();
 
         await kv.Set("1", "a");
         await c1.WhenInvalidated().WaitAsync(timeout);
@@ -66,9 +66,9 @@ public class KeyValueServiceWithCacheTest : FusionTestBase
         await kv.Set("1", "a");
         await kv.Set("2", "b");
         var c1 = await GetComputed(kv1, "1");
-        c1.CacheEntry.Should().BeNull(); // Not from cache
+        c1.WhenSynchronized().IsCompleted.Should().BeTrue();
         var c2 = await GetComputed(kv1, "2");
-        c2.CacheEntry.Should().BeNull(); // Not from cache
+        c2.WhenSynchronized().IsCompleted.Should().BeTrue();
 
         var state1 = ClientServices.StateFactory().NewComputed<string>(
             FixedDelayer.Get(0.1),
@@ -86,9 +86,7 @@ public class KeyValueServiceWithCacheTest : FusionTestBase
                 return $"{s1} {s2}";
             });
 
-        var whenSynchronized = state.WhenSynchronized();
-        // whenSynchronized.IsCompleted.Should().BeFalse();
-        await whenSynchronized;
+        await state.WhenSynchronized();
         state.Value.Should().Be("a b");
 
         state1.WhenNonInitial().IsCompleted.Should().BeTrue();
@@ -96,8 +94,7 @@ public class KeyValueServiceWithCacheTest : FusionTestBase
         state.WhenNonInitial().IsCompleted.Should().BeTrue();
 
         await kv.Set("2", "c");
-        whenSynchronized = state.WhenSynchronized();
-        whenSynchronized.IsCompleted.Should().BeTrue();
+        state.WhenSynchronized().IsCompleted.Should().BeTrue();
         state.Value.Should().Be("a b");
         await state.When(x => x == "a c").WaitAsync(TimeSpan.FromSeconds(1));
     }

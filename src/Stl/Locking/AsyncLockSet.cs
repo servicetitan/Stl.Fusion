@@ -143,20 +143,15 @@ public class AsyncLockSet<TKey>
         }
     }
 
-    public readonly struct Releaser : IDisposable
-    {
-        private readonly Entry _entry;
-        private readonly AsyncLockReleaser _releaser;
+    // Nested types
 
-        public Releaser(object entry, AsyncLockReleaser releaser)
-        {
-            _entry = (Entry) entry;
-            _releaser = releaser;
-        }
+    public readonly struct Releaser(object entry, AsyncLockReleaser releaser) : IDisposable
+    {
+        private readonly Entry _entry = (Entry)entry;
 
         public void Dispose()
         {
-            _releaser.Dispose();
+            releaser.Dispose();
             _entry.EndUse();
         }
     }

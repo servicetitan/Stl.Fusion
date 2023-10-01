@@ -4,7 +4,7 @@ namespace Stl.Rpc.Caching;
 
 [StructLayout(LayoutKind.Auto)]
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
-public partial class RpcCacheKey : IEquatable<RpcCacheKey>
+public sealed partial class RpcCacheKey : IEquatable<RpcCacheKey>
 {
     private readonly int _hashCode;
 

@@ -6,6 +6,10 @@ public abstract class FlushingClientComputedCache : ClientComputedCache
 {
     public new record Options : ClientComputedCache.Options
     {
+        public Options() { }
+        public Options(string version)
+            => Version = version;
+
         public static new Options Default { get; set; } = new();
 
         public TimeSpan FlushDelay { get; init; } = TimeSpan.FromSeconds(0.25);

@@ -32,9 +32,8 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
         var sw = Stopwatch.StartNew();
         var c1 = await GetScreenshotComputed(service1);
         Out.WriteLine($"Miss in: {sw.ElapsedMilliseconds}ms");
-        c1.Call.Should().NotBeNull();
+        c1.WhenSynchronized().IsCompleted.Should().BeTrue();
         c1.Options.ClientCacheMode.Should().Be(ClientCacheMode.Cache);
-        c1.Call!.ResultTask.IsCompleted.Should().BeTrue(); // First cache miss should resolve via Rpc
 
         sw.Restart();
         var c2 = await GetScreenshotComputed(service2);
@@ -42,16 +41,17 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
         var whenSynchronized = c2.WhenSynchronized();
         whenSynchronized.IsCompleted.Should().BeFalse();
         await whenSynchronized;
-        c2.Call.Should().NotBeNull();
+        c2 = await GetScreenshotComputed(service2);
+        c2.WhenSynchronized().IsCompleted.Should().BeTrue();
 
         sw.Restart();
         await c2.WhenInvalidated().WaitAsync(timeout);
         Out.WriteLine($"Invalidated in: {sw.ElapsedMilliseconds}ms");
 
         sw.Restart();
-        c2 = (ClientComputed<Screenshot>)await c2.Update().ConfigureAwait(false);
+        c2 = await GetScreenshotComputed(service2);
         Out.WriteLine($"Updated in: {sw.ElapsedMilliseconds}ms");
-        c2.Call!.ResultTask.IsCompleted.Should().BeTrue(); // Should resolve via Rpc at this point
+        c2.WhenSynchronized().IsCompleted.Should().BeTrue();
     }
 
     [Fact]
@@ -76,9 +76,9 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
         var sw = Stopwatch.StartNew();
         var c1 = await GetScreenshotAltComputed(service1);
         Out.WriteLine($"Miss in: {sw.ElapsedMilliseconds}ms");
-        c1.Options.ClientCacheMode.Should().Be(ClientCacheMode.NoCache);
-        c1.Call!.ResultTask.IsCompleted.Should().BeTrue(); // First cache miss should resolve via Rpc
         c1.Output.Value.Should().NotBeNull();
+        c1.Options.ClientCacheMode.Should().Be(ClientCacheMode.NoCache);
+        c1.WhenSynchronized().IsCompleted.Should().BeTrue();
 
         sw.Restart();
         await c1.WhenInvalidated().WaitAsync(timeout);
@@ -87,8 +87,8 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
         sw.Restart();
         var c2 = await GetScreenshotAltComputed(service2);
         Out.WriteLine($"2nd miss in: {sw.ElapsedMilliseconds}ms");
-        c2.Call!.ResultTask.IsCompleted.Should().BeTrue();
-        c1.Output.Value.Should().NotBeNull();
+        c2.Output.Value.Should().NotBeNull();
+        c2.WhenSynchronized().IsCompleted.Should().BeTrue();
 
         sw.Restart();
         await c2.WhenInvalidated().WaitAsync(timeout);
@@ -97,8 +97,8 @@ public class ScreenshotServiceClientWithCacheTest : FusionTestBase
         sw.Restart();
         c2 = (ClientComputed<Screenshot>)await c2.Update().ConfigureAwait(false);
         Out.WriteLine($"Updated in: {sw.ElapsedMilliseconds}ms");
-        c2.Call!.ResultTask.IsCompleted.Should().BeTrue(); // Should resolve via Rpc at this point
         c2.Output.Value.Should().NotBeNull();
+        c2.WhenSynchronized().IsCompleted.Should().BeTrue();
     }
 
     private static async Task<ClientComputed<Screenshot>> GetScreenshotComputed(IScreenshotService service)

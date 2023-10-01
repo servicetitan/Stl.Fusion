@@ -1,89 +1,101 @@
+using Stl.Caching;
 using Stl.Fusion.Client.Internal;
 using Stl.Fusion.Interception;
+using Stl.Fusion.Internal;
 using Stl.Rpc.Caching;
-using Stl.Rpc.Infrastructure;
 
 namespace Stl.Fusion.Client.Interception;
 
-public interface IClientComputed : IComputed, IDisposable
-{
-    RpcOutboundCall? Call { get; }
-    RpcCacheEntry? CacheEntry { get; }
+#pragma warning disable VSTHRD104
+#pragma warning disable MA0055
 
-    Task WhenSynchronized();
+public interface IClientComputed : IComputed, IMaybeCachedValue, IDisposable
+{
+    Task WhenCallBound { get; }
+    RpcCacheEntry? CacheEntry { get; }
 }
 
 public class ClientComputed<T> : ComputeMethodComputed<T>, IClientComputed
 {
-    private readonly TaskCompletionSource<Unit>? _whenSynchronizedSource;
-    private RpcOutboundComputeCall<T>? _call;
+    internal readonly TaskCompletionSource<RpcOutboundComputeCall<T>?> CallSource;
+    internal readonly TaskCompletionSource<Unit> SynchronizedSource;
 
-    RpcOutboundCall? IClientComputed.Call => _call;
-    public RpcOutboundComputeCall<T>? Call => _call;
+    Task IClientComputed.WhenCallBound => CallSource.Task;
+    public Task<RpcOutboundComputeCall<T>?> WhenCallBound => CallSource.Task;
     public RpcCacheEntry? CacheEntry { get; }
+    public Task WhenSynchronized => SynchronizedSource.Task;
 
     public ClientComputed(
         ComputedOptions options,
         ComputeMethodInput input,
         Result<T> output,
         LTag version,
-        bool isConsistent,
-        RpcOutboundComputeCall<T>? call = null,
-        RpcCacheEntry? cacheEntry = null)
-        : base(options, input, output, version, isConsistent)
+        RpcCacheEntry? cacheEntry,
+        TaskCompletionSource<Unit>? synchronizedSource = null)
+        : base(options, input, output, version, true, SkipComputedRegistration.Option)
     {
+        CallSource = TaskCompletionSourceExt.New<RpcOutboundComputeCall<T>?>();
         CacheEntry = cacheEntry;
-        if (call != null)
-            BindToCallFromLock(call);
-        else
-            _whenSynchronizedSource = TaskCompletionSourceExt.New<Unit>();
+        SynchronizedSource = synchronizedSource ?? TaskCompletionSourceExt.New<Unit>();
+        ComputedRegistry.Instance.Register(this);
         StartAutoInvalidation();
     }
 
-#pragma warning disable MA0055
     ~ClientComputed() => Dispose();
-#pragma warning restore MA0055
 
     public void Dispose()
     {
-        RpcOutboundComputeCall<T>? call;
-        lock (Lock)
-            call = _call;
+        if (!WhenCallBound.IsCompleted)
+            return;
+
+        var call = WhenCallBound.Result;
         call?.Unregister(!this.IsInvalidated());
     }
 
-    public void BindToCall(RpcOutboundComputeCall<T> call)
-    {
-        lock (Lock)
-            BindToCallFromLock(call);
-        _whenSynchronizedSource?.TrySetResult(default); // Should go after exit from lock!
-    }
+    // Internal methods
 
-    public Task WhenSynchronized()
-        => _whenSynchronizedSource?.Task ?? Task.CompletedTask;
-
-    protected void BindToCallFromLock(RpcOutboundComputeCall<T> call)
+    internal bool BindToCall(RpcOutboundComputeCall<T>? call)
     {
-        if (_call != null)
-            return; // Should never happen, but just in case
+        if (!CallSource.TrySetResult(call)) {
+            if (call == null) {
+                // Call from OnInvalidated - we need to cancel the old call
+                var boundCall = WhenCallBound.Result;
+                boundCall?.SetInvalidated(true);
+            }
+            else {
+                // Normal BindToCall, we cancel the call to ensure its invalidation sub. is gone
+                call.SetInvalidated(true);
+            }
+            return false;
+        }
+        if (call == null) // Invalidated before being bound to call - nothing else to do
+            return true;
 
         var whenInvalidated = call.WhenInvalidated;
         if (whenInvalidated.IsCompleted) {
+            // No call (call prepare error - e.g. if there is no such RPC service),
+            // or the call result is already invalidated
             Invalidate(true);
-            _call = call;
+            return true;
         }
 
-        _call = call;
         _ = whenInvalidated.ContinueWith(
             _ => Invalidate(true),
             CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+        return true;
     }
 
     protected override void OnInvalidated()
     {
-        _whenSynchronizedSource?.TrySetResult(default);
-        base.OnInvalidated();
-        if (Function is IClientComputeMethodFunction fn)
-            fn.OnInvalidated(this);
+        BindToCall(null);
+        // PseudoUnregister is used here just to trigger the
+        // Unregistered event in ComputedRegistry.
+        // We want to keep this computed while it's possible:
+        // ClientComputed.Compute tries to use the existing
+        // one to update. If this computed instance is gone
+        // from registry, ClientComputed is going to be created
+        // anew and will hit the cache.
+        ComputedRegistry.Instance.PseudoUnregister(this);
+        CancelTimeouts();
     }
 }

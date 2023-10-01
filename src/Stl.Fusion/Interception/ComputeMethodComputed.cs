@@ -1,3 +1,5 @@
+using Stl.Fusion.Internal;
+
 namespace Stl.Fusion.Interception;
 
 // Just a tagging interface
@@ -20,6 +22,16 @@ public class ComputeMethodComputed<T> : Computed<T>, IComputedMethodComputed
         if (isConsistent)
             ComputedRegistry.Instance.Register(this);
     }
+
+    protected ComputeMethodComputed(
+        ComputedOptions options,
+        ComputeMethodInput input,
+        Result<T> output,
+        LTag version,
+        bool isConsistent,
+        SkipComputedRegistration _)
+        : base(options, input, output, version, isConsistent)
+    { }
 
     protected override void OnInvalidated()
     {

@@ -105,11 +105,8 @@ public abstract class FusionTestBase : RpcTestBase
                     ? new RpcServerPeer(hub, peerRef) { CallLogLevel = RpcCallLogLevel }
                     : new RpcClientPeer(hub, peerRef) { CallLogLevel = RpcCallLogLevel });
             if (UseClientComputedCache)
-                fusion.AddSharedClientComputedCache<
-                    InMemoryClientComputedCache,
-                    FlushingClientComputedCache.Options>(_ => new() {
-                    Version = CpuTimestamp.Now.ToString(),
-                });
+                fusion.AddSharedClientComputedCache<InMemoryClientComputedCache, FlushingClientComputedCache.Options>(
+                    _ => new FlushingClientComputedCache.Options(CpuTimestamp.Now.ToString()));
             fusion.AddClient<ITimeService>();
             fusion.AddClient<IUserService>();
             fusion.AddClient<IScreenshotService>();

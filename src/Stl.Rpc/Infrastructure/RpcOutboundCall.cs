@@ -43,7 +43,7 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
             return SendNoWait(MethodDef.AllowArgumentPolymorphism);
 
         Peer.OutboundCalls.Register(this);
-        var sendTask = SendRegistered();
+        var sendTask = SendRegistered(false);
 
         // RegisterCancellationHandler must follow SendRegistered,
         // coz it's possible that ResultTask is already completed
@@ -61,7 +61,7 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
         return Peer.Send(message, sender);
     }
 
-    public Task SendRegistered(bool notifyCancelled = false)
+    public Task SendRegistered(bool notifyCancelled)
     {
         RpcMessage message;
         try {
@@ -94,8 +94,8 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
     }
 
     public abstract void SetResult(object? result, RpcInboundContext? context);
-    public abstract void SetError(Exception error, RpcInboundContext? context, bool notifyCancelled = false);
-    public abstract bool SetCancelled(CancellationToken cancellationToken, RpcInboundContext? context);
+    public abstract void SetError(Exception error, RpcInboundContext? context, bool notifyCancelled);
+    public abstract bool Cancel(CancellationToken cancellationToken);
 
     public void Unregister(bool notifyCancelled = false)
     {
@@ -140,7 +140,7 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
         var ctr = cancellationToken.Register(static state => {
             var call = (RpcOutboundCall)state!;
             if (call.Context.CancellationToken.IsCancellationRequested)
-                call.SetCancelled(call.Context.CancellationToken, null);
+                call.Cancel(call.Context.CancellationToken);
             else {
                 // timeoutCts is timed out
                 var error = Errors.CallTimeout(call.Peer);
@@ -186,7 +186,7 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
         }
     }
 
-    public override void SetError(Exception error, RpcInboundContext? context, bool notifyCancelled = false)
+    public override void SetError(Exception error, RpcInboundContext? context, bool notifyCancelled)
     {
         if (ResultSource.TrySetException(error)) {
             Unregister(notifyCancelled);
@@ -195,7 +195,7 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
         }
     }
 
-    public override bool SetCancelled(CancellationToken cancellationToken, RpcInboundContext? context)
+    public override bool Cancel(CancellationToken cancellationToken)
     {
         var isCancelled = ResultSource.TrySetCanceled(cancellationToken);
         if (isCancelled) {

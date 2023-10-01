@@ -7,7 +7,7 @@ public record ComputedOptions
     public static ComputedOptions Default { get; set; } = new();
     public static ComputedOptions ClientDefault { get; set; } = new() {
         MinCacheDuration = TimeSpan.FromMinutes(1),
-        ClientCacheMode = Fusion.ClientCacheMode.Cache,
+        ClientCacheMode = ClientCacheMode.Cache,
     };
     public static ComputedOptions MutableStateDefault { get; set; } = new() {
         TransientErrorInvalidationDelay = TimeSpan.MaxValue,
@@ -23,7 +23,9 @@ public record ComputedOptions
     {
         var isClientServiceMethod = type.IsInterface || typeof(InterfaceProxy).IsAssignableFrom(type);
         var cma = method.GetAttribute<ComputeMethodAttribute>(true, true);
-        var rma = isClientServiceMethod ? method.GetAttribute<ClientComputeMethodAttribute>(true, true) : null;
+        var rma = isClientServiceMethod
+            ? method.GetAttribute<ClientComputeMethodAttribute>(true, true)
+            : null;
         var a = rma ?? cma;
         if (a == null)
             return null;

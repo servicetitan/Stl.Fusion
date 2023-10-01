@@ -1,3 +1,4 @@
+using Stl.Rpc.Caching;
 using Stl.Rpc.Infrastructure;
 
 namespace Stl.Fusion.Client.Internal;
@@ -11,19 +12,31 @@ public interface IRpcOutboundComputeCall
 public class RpcOutboundComputeCall<TResult>(RpcOutboundContext context)
     : RpcOutboundCall<TResult>(context), IRpcOutboundComputeCall
 {
-    protected readonly TaskCompletionSource<Unit> WhenInvalidatedSource = TaskCompletionSourceExt.New<Unit>();
+    protected readonly TaskCompletionSource<Unit> WhenInvalidatedSource
+        = TaskCompletionSourceExt.New<Unit>(); // Must not allow synchronous continuations!
 
-    public LTag ResultVersion { get; protected set; } = default;
+    public LTag ResultVersion { get; protected set; }
     public Task WhenInvalidated => WhenInvalidatedSource.Task;
+
+    public LTag GetResultVersion(RpcInboundContext? context)
+    {
+        var versionHeader = context?.Message.Headers.GetOrDefault(FusionRpcHeaders.Version.Name);
+        return versionHeader is { } vVersionHeader
+            ? LTag.TryParse(vVersionHeader.Value, out var v) ? v : default
+            : default;
+    }
 
     public override void SetResult(object? result, RpcInboundContext? context)
     {
+        // ReSharper disable once InconsistentlySynchronizedField
+        if (Context.CacheInfoCapture is { CaptureMode: RpcCacheInfoCaptureMode.KeyOnly }) {
+            base.SetResult(result, context);
+            return;
+        }
+
         var resultVersion = GetResultVersion(context);
         // We always use Lock to update ResultSource in this type
         lock (Lock) {
-            if (IsResultVersionChanged(resultVersion))
-                SetInvalidated(true);
-
             var typedResult = default(TResult)!;
             try {
                 if (result != null)
@@ -40,69 +53,71 @@ public class RpcOutboundComputeCall<TResult>(RpcOutboundContext context)
         }
     }
 
-    public override void SetError(Exception error, RpcInboundContext? context, bool notifyCancelled = false)
+    public override void SetError(Exception error, RpcInboundContext? context, bool notifyCancelled)
     {
         var resultVersion = GetResultVersion(context);
         // We always use Lock to update ResultSource in this type
         lock (Lock) {
-            if (notifyCancelled || IsResultVersionChanged(resultVersion))
-                SetInvalidated(true);
-
             if (ResultSource.TrySetException(error)) {
                 ResultVersion = resultVersion;
-                if (Context.CacheInfoCapture is { } cacheInfoCapture)
-                    cacheInfoCapture.ResultSource?.TrySetException(error);
+                if (Context.CacheInfoCapture is { } cacheInfoCapture) {
+                    if (error is OperationCanceledException)
+                        cacheInfoCapture.ResultSource?.TrySetCanceled();
+                    else
+                        cacheInfoCapture.ResultSource?.TrySetResult(default);
+                }
             }
+            if (notifyCancelled)
+                SetInvalidatedUnsafe(true);
         }
     }
 
-    public override bool SetCancelled(CancellationToken cancellationToken, RpcInboundContext? context)
+    public override bool Cancel(CancellationToken cancellationToken)
     {
         // We always use Lock to update ResultSource in this type
         lock (Lock) {
-            // No need to call WhenInvalidatedSource.TrySetResult() here,
-            // coz ClientComputeMethodFunction won't get to a point
-            // where it's going to await for invalidation.
-            return base.SetCancelled(cancellationToken, context);
+            var isCancelled = ResultSource.TrySetCanceled(cancellationToken);
+            if (isCancelled && Context.CacheInfoCapture is { } cacheInfoCapture)
+                cacheInfoCapture.ResultSource?.TrySetCanceled();
+            WhenInvalidatedSource.TrySetResult(default);
+            Unregister(true);
+            return isCancelled;
         }
     }
 
-    public void SetInvalidated(RpcInboundContext context)
+    public void SetInvalidated(RpcInboundContext? context)
+        // Let's be pessimistic here and ignore version check here
+        => SetInvalidated(false);
+
+    public void SetInvalidated(bool notifyCancelled)
     {
-        var resultVersion = GetResultVersion(context);
-        if (resultVersion == default)
-            return; // Should never happen
-
         lock (Lock) {
-            if (!ResultTask.IsCompleted || ResultVersion != resultVersion)
-                return; // No result yet or version mismatch -> nothing to invalidate
-
-            SetInvalidated();
+            if (SetInvalidatedUnsafe(notifyCancelled)) {
+                if (ResultSource.TrySetCanceled() && Context.CacheInfoCapture is { } cacheInfoCapture)
+                    cacheInfoCapture.ResultSource?.TrySetCanceled();
+            }
         }
     }
 
     // Private methods
 
-    private void SetInvalidated(bool notifyCancelled = false)
+    private bool SetInvalidatedUnsafe(bool notifyCancelled)
     {
-        if (WhenInvalidatedSource.TrySetResult(default))
-            Unregister(notifyCancelled);
+        if (!WhenInvalidatedSource.TrySetResult(default))
+            return false;
+
+        Unregister(notifyCancelled);
+        return true;
     }
 
-    private bool IsResultVersionChanged(LTag resultVersion)
+    private bool IsCorrectVersion(LTag resultVersion)
     {
         if (resultVersion == default)
-            return true; // Not a compute method call
+            return false; // Not a compute method call
+        if (!ResultTask.IsCompleted)
+            return false; // No version is available yet
 
         // We already have a result w/ mismatching version
-        return ResultTask.IsCompleted && ResultVersion != resultVersion;
-    }
-
-    private LTag GetResultVersion(RpcInboundContext? context)
-    {
-        var versionHeader = context?.Message.Headers.GetOrDefault(FusionRpcHeaders.Version.Name);
-        return versionHeader is { } vVersionHeader
-            ? LTag.TryParse(vVersionHeader.Value, out var v) ? v : default
-            : default;
+        return ResultVersion == resultVersion;
     }
 }

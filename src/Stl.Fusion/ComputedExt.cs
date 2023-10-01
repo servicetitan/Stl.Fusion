@@ -1,3 +1,4 @@
+using Stl.Caching;
 using Stl.Fusion.Client.Interception;
 using Stl.Fusion.Internal;
 
@@ -232,10 +233,12 @@ public static partial class ComputedExt
 
     // WhenSynchronized & Synchronize
 
-    public static Task WhenSynchronized(this IComputed computed)
+    public static Task WhenSynchronized(
+        this IComputed computed,
+        CancellationToken cancellationToken = default)
     {
-        if (computed is IClientComputed clientComputed)
-            return clientComputed.WhenSynchronized();
+        if (computed is IMaybeCachedValue mcv)
+            return mcv.WhenSynchronized.WaitAsync(cancellationToken);
 
         if (computed is IStateBoundComputed stateBoundComputed) {
             var state = stateBoundComputed.State;
@@ -253,7 +256,7 @@ public static partial class ComputedExt
         }
 
         // Computed is a regular computed instance
-        var computedImpl = (IComputedImpl) computed;
+        var computedImpl = (IComputedImpl)computed;
         var usedBuffer = ArrayBuffer<IComputedImpl>.Lease(false);
         var taskBuffer = ArrayBuffer<Task>.Lease(false);
         try {
@@ -277,11 +280,12 @@ public static partial class ComputedExt
         }
     }
 
-    public static async ValueTask<Computed<T>> Synchronize<T>(this Computed<T> computed,
+    public static async ValueTask<Computed<T>> Synchronize<T>(
+        this Computed<T> computed,
         CancellationToken cancellationToken = default)
     {
         while (true) {
-            var whenSynchronized = computed.WhenSynchronized();
+            var whenSynchronized = computed.WhenSynchronized(cancellationToken);
             if (!whenSynchronized.IsCompleted)
                 await whenSynchronized.WaitAsync(cancellationToken).ConfigureAwait(false);
             if (computed.IsConsistent())

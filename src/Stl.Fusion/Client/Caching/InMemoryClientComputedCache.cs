@@ -3,9 +3,9 @@ using Stl.Rpc.Caching;
 namespace Stl.Fusion.Client.Caching;
 
 public sealed class InMemoryClientComputedCache(
-        FlushingClientComputedCache.Options settings,
-        IServiceProvider services
-        ) : FlushingClientComputedCache(settings, services)
+    FlushingClientComputedCache.Options settings,
+    IServiceProvider services
+    ) : FlushingClientComputedCache(settings, services)
 {
     private static readonly ValueTask<TextOrBytes?> MissValueTask = new((TextOrBytes?)null);
 

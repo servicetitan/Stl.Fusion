@@ -120,7 +120,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
     {
         _options = options;
         Input = input;
-        _state = (int) (isConsistent ? ConsistencyState.Consistent : ConsistencyState.Invalidated);
+        _state = (int)(isConsistent ? ConsistencyState.Consistent : ConsistencyState.Invalidated);
         _output = output;
         Version = version;
     }

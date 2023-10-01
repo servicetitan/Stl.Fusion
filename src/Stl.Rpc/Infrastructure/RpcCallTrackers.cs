@@ -74,7 +74,7 @@ public sealed class RpcOutboundCallTracker : RpcCallTracker<RpcOutboundCall>
             var abortedCallCountBefore = abortedCallIds.Count;
             foreach (var call in this) {
                 if (abortedCallIds.Add(call.Id))
-                    call.SetError(error, null);
+                    call.SetError(error, null, false);
             }
             if (i >= 2 && abortedCallCountBefore == abortedCallIds.Count)
                 break;

@@ -6,11 +6,13 @@ public class SharedClientComputedCache : ClientComputedCache
 {
     public static ClientComputedCache Instance { get; private set; } = null!;
 
-    public SharedClientComputedCache(ClientComputedCache instance)
-        : base(instance.Settings, instance.Services)
+    public SharedClientComputedCache(ClientComputedCache instance, bool initialize = true)
+        : base(instance.Settings, instance.Services, false)
     {
         Instance = instance;
-        WhenInitialized = instance.WhenInitialized;
+        if (initialize)
+            // ReSharper disable once VirtualMemberCallInConstructor
+            WhenInitialized = Initialize(Settings.Version);
     }
 
     public override ValueTask<TextOrBytes?> Get(RpcCacheKey key, CancellationToken cancellationToken = default)

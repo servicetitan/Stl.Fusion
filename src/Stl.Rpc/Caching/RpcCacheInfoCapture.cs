@@ -6,11 +6,11 @@ public enum RpcCacheInfoCaptureMode
     KeyOnly,
 }
 
-public class RpcCacheInfoCapture
+public sealed class RpcCacheInfoCapture
 {
     public readonly RpcCacheInfoCaptureMode CaptureMode;
     public RpcCacheKey? Key;
-    public TaskCompletionSource<TextOrBytes>? ResultSource;
+    public TaskCompletionSource<TextOrBytes>? ResultSource; // Must never be an error, but can be cancelled
 
     public RpcCacheInfoCapture(RpcCacheInfoCaptureMode captureMode = default)
     {
@@ -19,22 +19,16 @@ public class RpcCacheInfoCapture
             ResultSource = new();
     }
 
-    public async ValueTask<RpcCacheEntry?> GetEntry(CancellationToken cancellationToken = default)
+    public async ValueTask<RpcCacheEntry?> GetEntry()
     {
         if (ReferenceEquals(Key, null) ||  ResultSource == null)
             return null;
 
         try {
-            var result = await ResultSource.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+            var result = await ResultSource.Task.ConfigureAwait(false);
             return new RpcCacheEntry(Key, result);
         }
         catch (OperationCanceledException) {
-            if (cancellationToken.IsCancellationRequested)
-                throw;
-
-            return null;
-        }
-        catch (Exception) {
             return null;
         }
     }

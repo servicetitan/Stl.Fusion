@@ -125,10 +125,13 @@ public static class StateExt
 
     // WhenSynchronized & Synchronize
 
-    public static Task WhenSynchronized(this IState state)
-        => state.Computed.WhenSynchronized();
+    public static Task WhenSynchronized(
+        this IState state,
+        CancellationToken cancellationToken = default)
+        => state.Computed.WhenSynchronized(cancellationToken);
 
-    public static ValueTask<Computed<T>> Synchronize<T>(this IState<T> state,
+    public static ValueTask<Computed<T>> Synchronize<T>(
+        this IState<T> state,
         CancellationToken cancellationToken = default)
         => state.Computed.Synchronize(cancellationToken);
 }
