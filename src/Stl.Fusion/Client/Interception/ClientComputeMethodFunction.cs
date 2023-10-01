@@ -50,14 +50,11 @@ public class ClientComputeMethodFunction<T>(
         var cacheInfoCapture = cache != null ? new RpcCacheInfoCapture() : null;
         var call = SendRpcCall(input, cacheInfoCapture, cancellationToken);
 
-        var typedResultTask = (Task<T>)call.ResultTask;
-        var result = typedResultTask.IsCompletedSuccessfully()
-            ? (Result<T>)typedResultTask.Result
-            : await typedResultTask.ToResultAsync().ConfigureAwait(false);
+        var result = await call.UnwrapResult().ConfigureAwait(false);
         var cacheEntry = cacheInfoCapture == null ? null :
             await UpdateCache(cache!, cacheInfoCapture, result).ConfigureAwait(false);
 
-        var synchronizedSource = existing?.SynchronizedSource ?? AlreadySynchronized.Source;
+        var synchronizedSource = existing?.SynchronizedSource ?? AlwaysSynchronized.Source;
         var computed = new ClientComputed<T>(
             input.MethodDef.ComputedOptions,
             input, result, VersionGenerator.NextVersion(),
@@ -120,10 +117,7 @@ public class ClientComputeMethodFunction<T>(
         }
 
         // 3. Await for its completion
-        var typedResultTask = (Task<T>)call.ResultTask;
-        var result = typedResultTask.IsCompletedSuccessfully()
-            ? (Result<T>)typedResultTask.Result
-            : await typedResultTask.ToResultAsync().ConfigureAwait(false);
+        var result = await call.UnwrapResult().ConfigureAwait(false);
         var cacheEntry = await cacheInfoCapture.GetEntry().ConfigureAwait(false);
 
         // 4. Re-entering the lock & check if cached is still consistent

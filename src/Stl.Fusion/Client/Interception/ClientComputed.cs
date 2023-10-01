@@ -90,12 +90,15 @@ public class ClientComputed<T> : ComputeMethodComputed<T>, IClientComputed
         BindToCall(null);
         // PseudoUnregister is used here just to trigger the
         // Unregistered event in ComputedRegistry.
-        // We want to keep this computed while it's possible:
-        // ClientComputed.Compute tries to use the existing
-        // one to update. If this computed instance is gone
-        // from registry, ClientComputed is going to be created
-        // anew and will hit the cache.
-        ComputedRegistry.Instance.PseudoUnregister(this);
+        // We want to keep this computed unless SynchronizedSource is
+        // AlwaysSynchronized.Source, which means it doesn't use cache.
+        // Otherwise (i.e. when SynchronizedSource is actually used)
+        // the next computed won't reuse the existing SynchronizedSource,
+        // which may render it as indefinitely incomplete.
+        if (ReferenceEquals(SynchronizedSource, AlwaysSynchronized.Source))
+            ComputedRegistry.Instance.Unregister(this);
+        else
+            ComputedRegistry.Instance.PseudoUnregister(this);
         CancelTimeouts();
     }
 }

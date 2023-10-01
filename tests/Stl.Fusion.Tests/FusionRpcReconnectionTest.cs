@@ -138,12 +138,17 @@ public class FusionRpcReconnectionTest(ITestOutputHelper @out) : SimpleFusionTes
         try {
             var rnd = new Random();
             var callCount = 0L;
-            while (CpuTimestamp.Now < endAt) {
-                var delay = rnd.Next(10, 100);
-                var invDelay = rnd.Next(10, 100);
-                var result = await client.Delay(delay, invDelay).WaitAsync(timeout);
-                result.Should().Be((delay, invDelay));
-                callCount++;
+            try {
+                while (CpuTimestamp.Now < endAt) {
+                    var delay = rnd.Next(10, 100);
+                    var invDelay = rnd.Next(10, 100);
+                    var result = await client.Delay(delay, invDelay).WaitAsync(timeout);
+                    result.Should().Be((delay, invDelay));
+                    callCount++;
+                }
+            }
+            catch (OperationCanceledException) {
+                // That's ok
             }
 
             disruptorCts.CancelAndDisposeSilently();

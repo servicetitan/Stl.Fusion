@@ -169,6 +169,19 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
         ResultTask = ResultSource.Task;
     }
 
+    public async ValueTask<Result<TResult>> UnwrapResult()
+    {
+        try {
+            return await ResultSource.Task.ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) {
+            throw;
+        }
+        catch (Exception e) {
+            return Result.Error<TResult>(e);
+        }
+    }
+
     public override void SetResult(object? result, RpcInboundContext? context)
     {
         var typedResult = default(TResult)!;
