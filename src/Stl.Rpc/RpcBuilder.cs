@@ -194,16 +194,18 @@ public readonly struct RpcBuilder
         return service;
     }
 
-    public RpcBuilder AddInboundMiddleware<TMiddleware>()
+    public RpcBuilder AddInboundMiddleware<TMiddleware>(Func<IServiceProvider, TMiddleware>? factory = null)
         where TMiddleware : RpcInboundMiddleware
-        => AddInboundMiddleware(typeof(TMiddleware));
+        => AddInboundMiddleware(typeof(TMiddleware), factory);
 
-    public RpcBuilder AddInboundMiddleware(Type middlewareType)
+    public RpcBuilder AddInboundMiddleware(Type middlewareType, Func<IServiceProvider, object>? factory = null)
     {
         if (!typeof(RpcInboundMiddleware).IsAssignableFrom(middlewareType))
             throw Stl.Internal.Errors.MustBeAssignableTo<RpcInboundMiddleware>(middlewareType, nameof(middlewareType));
 
-        var descriptor = ServiceDescriptor.Singleton(typeof(RpcInboundMiddleware), middlewareType);
+        var descriptor = factory != null
+            ? ServiceDescriptor.Singleton(typeof(RpcInboundMiddleware), factory)
+            : ServiceDescriptor.Singleton(typeof(RpcInboundMiddleware), middlewareType);
         Services.TryAddEnumerable(descriptor);
         return this;
     }
@@ -223,16 +225,18 @@ public readonly struct RpcBuilder
         return this;
     }
 
-    public RpcBuilder AddOutboundMiddleware<TMiddleware>()
+    public RpcBuilder AddOutboundMiddleware<TMiddleware>(Func<IServiceProvider, TMiddleware>? factory = null)
         where TMiddleware : RpcOutboundMiddleware
-        => AddOutboundMiddleware(typeof(TMiddleware));
+        => AddOutboundMiddleware(typeof(TMiddleware), factory);
 
-    public RpcBuilder AddOutboundMiddleware(Type middlewareType)
+    public RpcBuilder AddOutboundMiddleware(Type middlewareType, Func<IServiceProvider, object>? factory = null)
     {
         if (!typeof(RpcOutboundMiddleware).IsAssignableFrom(middlewareType))
             throw Stl.Internal.Errors.MustBeAssignableTo<RpcOutboundMiddleware>(middlewareType, nameof(middlewareType));
 
-        var descriptor = ServiceDescriptor.Singleton(typeof(RpcOutboundMiddleware), middlewareType);
+        var descriptor = factory != null
+            ? ServiceDescriptor.Singleton(typeof(RpcOutboundMiddleware), factory)
+            : ServiceDescriptor.Singleton(typeof(RpcOutboundMiddleware), middlewareType);
         Services.TryAddEnumerable(descriptor);
         return this;
     }

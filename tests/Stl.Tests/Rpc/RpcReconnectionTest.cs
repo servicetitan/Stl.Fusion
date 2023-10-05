@@ -143,7 +143,15 @@ public class RpcReconnectionTest(ITestOutputHelper @out) : RpcLocalTestBase(@out
         }
     }
 
-// Private methods
+    // Protected methods
+
+    protected override ServiceProvider CreateServices(Action<IServiceCollection>? configureServices = null)
+        => base.CreateServices(services => {
+            services.AddRpc().AddInboundMiddleware(c => new RpcRandomDelayMiddleware(c));
+            configureServices?.Invoke(services);
+        });
+
+    // Private methods
 
     private async Task ConnectionDisruptor(RpcTestConnection connection, CancellationToken cancellationToken)
     {

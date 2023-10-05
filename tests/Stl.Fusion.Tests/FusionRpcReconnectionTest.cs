@@ -1,5 +1,6 @@
 using Stl.Fusion.Tests.Services;
 using Stl.OS;
+using Stl.Rpc;
 using Stl.Rpc.Testing;
 using Stl.Testing.Collections;
 
@@ -175,4 +176,12 @@ public class FusionRpcReconnectionTest(ITestOutputHelper @out) : SimpleFusionTes
             }
         }
     }
+
+    // Protected methods
+
+    protected override ServiceProvider CreateServices(Action<IServiceCollection>? configureServices = null)
+        => base.CreateServices(services => {
+            services.AddRpc().AddInboundMiddleware(c => new RpcRandomDelayMiddleware(c));
+            configureServices?.Invoke(services);
+        });
 }

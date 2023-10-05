@@ -4,9 +4,12 @@ using Stl.Rpc.Infrastructure;
 
 namespace Stl.Fusion.Client.Internal;
 
-public class RpcInboundComputeCall<TResult> : RpcInboundCall<TResult>
+public interface IRpcInboundComputeCall
+{ }
+
+public class RpcInboundComputeCall<TResult> : RpcInboundCall<TResult>, IRpcInboundComputeCall
 {
-    private CancellationTokenSource? _completionCancellationSource;
+    private CancellationTokenSource? _stopCompletionSource;
 
     public Computed<TResult>? Computed { get; protected set; }
 
@@ -15,54 +18,6 @@ public class RpcInboundComputeCall<TResult> : RpcInboundCall<TResult>
     {
         if (NoWait)
             throw Errors.InternalError($"{GetType().GetName()} is incompatible with NoWait option.");
-    }
-
-    public override Task Complete(bool silentCancel = false)
-    {
-        silentCancel |= CancellationToken.IsCancellationRequested;
-        if (silentCancel) {
-            PrepareToComplete(silentCancel); // This call also cancels any other running completion
-            return Task.CompletedTask;
-        }
-
-        CancellationToken cancellationToken;
-        Computed<TResult>? computed;
-        lock (Lock) {
-            // Let's cancel already running completion first
-            _completionCancellationSource.CancelAndDisposeSilently();
-            _completionCancellationSource = CancellationToken.CreateLinkedTokenSource();
-            cancellationToken = _completionCancellationSource.Token;
-            computed = Computed;
-            if (computed != null) {
-                var versionHeader = FusionRpcHeaders.Version with { Value = computed.Version.ToString() };
-                ResultHeaders = ResultHeaders.TryAdd(versionHeader);
-            }
-        }
-        return cancellationToken.IsCancellationRequested
-            ? Task.CompletedTask
-            : computed == null
-                ? base.Complete(silentCancel: false)
-                : CompleteWithInvalidation(cancellationToken);
-    }
-
-    public override bool Restart()
-    {
-        if (!ResultTask.IsCompleted)
-            return true; // Result isn't produced yet
-
-        // Result is produced
-        lock (Lock) {
-            if (_completionCancellationSource == null)
-                return true; // CompleteEventually haven't started yet -> let it do the job
-
-            if (_completionCancellationSource.IsCancellationRequested)
-                return false; // CompleteEventually already ended -> we have to restart
-
-            // CompleteEventually is running - let's try to cancel it
-            _completionCancellationSource.CancelAndDisposeSilently();
-        }
-        _ = CompleteEventually();
-        return true;
     }
 
     // Protected & private methods
@@ -76,28 +31,67 @@ public class RpcInboundComputeCall<TResult> : RpcInboundCall<TResult>
         finally {
             if (ccs.Context.TryGetCaptured<TResult>(out var computed)) {
                 lock (Lock)
-                    Computed = computed;
+                    Computed ??= computed;
             }
             ccs.Dispose();
         }
     }
 
-    private async Task CompleteWithInvalidation(CancellationToken cancellationToken)
+    protected override Task CompleteSendResult()
     {
-        await SendResult().ConfigureAwait(false);
-        if (cancellationToken.IsCancellationRequested)
-            return;
-
-        await Computed!.WhenInvalidated(cancellationToken).SilentAwait(false);
-        if (cancellationToken.IsCancellationRequested)
-            return;
-
+        Computed<TResult>? computed;
+        CancellationToken stopCompletionToken;
         lock (Lock) {
-            _completionCancellationSource.CancelAndDisposeSilently();
-            if (!PrepareToComplete())
-                return;
+            // 1. Check if we even need to do any work here
+            if (CancellationToken.IsCancellationRequested) {
+                Unregister();
+                return Task.CompletedTask;
+            }
+
+            // 2. Cancel already running completion first
+            _stopCompletionSource.CancelAndDisposeSilently();
+            var stopCompletionSource = CancellationToken.CreateLinkedTokenSource();
+            stopCompletionToken = stopCompletionSource.Token;
+            _stopCompletionSource = stopCompletionSource;
+
+            // 3. Retrieve Computed + update ResultHeaders
+            computed = Computed;
+            if (computed != null) {
+                var versionHeader = FusionRpcHeaders.Version with { Value = computed.Version.ToString() };
+                ResultHeaders = ResultHeaders.TryAdd(versionHeader);
+            }
         }
-        await SendInvalidation().ConfigureAwait(false);
+
+        // 4. Actually run completion
+        return CompleteAsync();
+
+        async Task CompleteAsync() {
+            var mustUnregister = false;
+            try {
+                await SendResult().WaitAsync(stopCompletionToken).ConfigureAwait(false);
+                if (computed != null) {
+                    await computed.WhenInvalidated(stopCompletionToken).ConfigureAwait(false);
+                    await SendInvalidation().ConfigureAwait(false);
+                }
+                mustUnregister = true;
+            }
+            finally {
+                if (mustUnregister || CancellationToken.IsCancellationRequested)
+                    Unregister();
+            }
+        }
+    }
+
+    protected override bool Unregister()
+    {
+        lock (Lock) {
+            if (!Context.Peer.InboundCalls.Unregister(this))
+                return false; // Already completed or NoWait
+
+            CancellationTokenSource.DisposeSilently();
+            _stopCompletionSource.DisposeSilently();
+        }
+        return true;
     }
 
     private Task SendInvalidation()

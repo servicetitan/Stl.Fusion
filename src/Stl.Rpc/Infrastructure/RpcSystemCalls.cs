@@ -55,7 +55,7 @@ public class RpcSystemCalls(IServiceProvider services)
         return RpcNoWait.Tasks.Completed;
     }
 
-    public async Task<RpcNoWait> Cancel()
+    public Task<RpcNoWait> Cancel()
     {
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
@@ -64,9 +64,9 @@ public class RpcSystemCalls(IServiceProvider services)
         if (inboundCall != null) {
             peer.Log.IfEnabled(LogLevel.Debug)
                 ?.LogDebug("Remote call cancelled on the client side: {Call}", inboundCallId);
-            await inboundCall.Complete(silentCancel: true).ConfigureAwait(false);
+            inboundCall.Cancel();
         }
-        return default;
+        return RpcNoWait.Tasks.Completed;
     }
 
     public Task<Unit> NotFound(string serviceName, string methodName)

@@ -6,11 +6,11 @@ namespace Stl.Fusion.Server.Rpc;
 public class DefaultSessionReplacerRpcMiddleware(IServiceProvider services)
     : RpcInboundMiddleware(services)
 {
-    public override void BeforeCall(RpcInboundCall call)
+    public override Task OnBeforeCall(RpcInboundCall call)
     {
         var connection = call.Context.Peer.ConnectionState.Value.Connection as SessionBoundRpcConnection;
         if (connection == null)
-            return;
+            return Task.CompletedTask;
 
         var arguments = call.Arguments;
         var tItem0 = arguments!.GetType(0);
@@ -31,5 +31,6 @@ public class DefaultSessionReplacerRpcMiddleware(IServiceProvider services)
             else
                 session.RequireValid();
         }
+        return Task.CompletedTask;
     }
 }

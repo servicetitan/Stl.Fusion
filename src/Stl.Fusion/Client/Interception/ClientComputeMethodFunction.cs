@@ -55,13 +55,10 @@ public class ClientComputeMethodFunction<T>(
             await UpdateCache(cache!, cacheInfoCapture, result).ConfigureAwait(false);
 
         var synchronizedSource = existing?.SynchronizedSource ?? AlwaysSynchronized.Source;
-        var computed = new ClientComputed<T>(
+        return new ClientComputed<T>(
             input.MethodDef.ComputedOptions,
             input, result, VersionGenerator.NextVersion(),
-            cacheEntry, synchronizedSource);
-        computed.BindToCall(call);
-        synchronizedSource.TrySetResult(default);
-        return computed;
+            cacheEntry, call, synchronizedSource);
     }
 
     private async ValueTask<Computed<T>> ComputeCachedOrRpc(
@@ -139,10 +136,8 @@ public class ClientComputeMethodFunction<T>(
         var computed = new ClientComputed<T>(
             input.MethodDef.ComputedOptions,
             input, result, VersionGenerator.NextVersion(),
-            cacheEntry, synchronizedSource);
-        computed.BindToCall(call);
+            cacheEntry, call, synchronizedSource);
         ((IComputedImpl)computed).RenewTimeouts(true);
-        synchronizedSource.TrySetResult(default);
     }
 
     public override async ValueTask<Computed<T>> Invoke(ComputedInput input,

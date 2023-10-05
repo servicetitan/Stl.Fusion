@@ -32,6 +32,7 @@ public static class CancellationTokenSourceExt
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void DisposeSilently(this CancellationTokenSource? cancellationTokenSource)
     {
         if (cancellationTokenSource == null)

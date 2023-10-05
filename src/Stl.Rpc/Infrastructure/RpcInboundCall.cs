@@ -4,6 +4,8 @@ using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
 
+#pragma warning disable MA0022
+#pragma warning disable RCS1210
 #pragma warning disable VSTHRD103
 
 public abstract class RpcInboundCall : RpcCall
@@ -65,35 +67,30 @@ public abstract class RpcInboundCall : RpcCall
 
     public abstract Task Run();
 
-    public abstract Task Complete(bool silentCancel = false);
-
-    public abstract bool Restart();
+    public void Cancel()
+        => CancellationTokenSource.CancelAndDisposeSilently();
 
     // Protected methods
+
+    protected abstract Task StartCompletion();
 
     protected bool PrepareToStart()
     {
         var inboundCalls = Context.Peer.InboundCalls;
-        while (true) {
-            var existingCall = inboundCalls.GetOrRegister(this);
-            if (existingCall == this)
-                break;
+        var existingCall = inboundCalls.GetOrRegister(this);
+        if (existingCall == this)
+            return true;
 
-            if (existingCall.Restart())
-                return false;
-        }
-        return true;
+        _ = existingCall.StartCompletion(); // Starts or restarts the completion
+        return false;
     }
 
-    protected bool PrepareToComplete(bool cancel = false)
+    protected virtual bool Unregister()
     {
         if (!Context.Peer.InboundCalls.Unregister(this))
             return false; // Already completed or NoWait
 
-        if (cancel)
-            CancellationTokenSource.CancelAndDisposeSilently();
-        else
-            CancellationTokenSource?.Dispose();
+        CancellationTokenSource.DisposeSilently();
         return true;
     }
 }
@@ -114,7 +111,6 @@ public class RpcInboundCall<TResult>(RpcInboundContext context, RpcMethodDef met
 
                 var peer = Context.Peer;
                 peer.CallLog?.Log(peer.CallLogLevel, "'{PeerRef}': <- {Call}", peer.Ref, this);
-
                 return InvokeTarget();
             }
             catch (Exception error) {
@@ -138,45 +134,20 @@ public class RpcInboundCall<TResult>(RpcInboundContext context, RpcMethodDef met
                 peer.CallLog?.Log(peer.CallLogLevel, "'{PeerRef}': <- {Call}", peer.Ref, this);
                 if (MethodDef.Tracer is { } tracer && tracer.Sampler.Next.Invoke())
                     trace = tracer.TryStartTrace(this);
-                inboundMiddlewares?.BeforeCall(this);
 
                 // Call
-                ResultTask = InvokeTarget();
-                trace?.OnResultTaskReady(this);
-                inboundMiddlewares?.OnResultTaskReady(this);
+                ResultTask = inboundMiddlewares != null
+                    ? InvokeTarget(inboundMiddlewares)
+                    : InvokeTarget();
             }
             catch (Exception error) {
                 ResultTask = Task.FromException<TResult>(error);
+            }
+            finally {
                 trace?.OnResultTaskReady(this);
-                inboundMiddlewares?.OnResultTaskReady(this);
             }
         }
-        return ResultTask.IsCompleted
-            ? Complete()
-            : CompleteEventually();
-    }
-
-    public override Task Complete(bool silentCancel = false)
-    {
-        silentCancel |= CancellationToken.IsCancellationRequested;
-        return PrepareToComplete(silentCancel) && !silentCancel
-            ? SendResult()
-            : Task.CompletedTask;
-    }
-
-    public override bool Restart()
-    {
-        if (!ResultTask.IsCompleted)
-            return true; // Result isn't produced yet
-
-        // Result is produced
-        var inboundCalls = Context.Peer.InboundCalls;
-        if (inboundCalls.Get(Id) == this)
-            return true; // CompleteEventually haven't started yet -> let it do the job
-
-        // Result might be sent, but likely isn't delivered - let's re-send it
-        _ = SendResult();
-        return true;
+        return StartCompletion();
     }
 
     // Protected methods
@@ -213,11 +184,52 @@ public class RpcInboundCall<TResult>(RpcInboundContext context, RpcMethodDef met
         return arguments;
     }
 
+    protected async Task<TResult> InvokeTarget(RpcInboundMiddlewares middlewares)
+    {
+        await middlewares.BeforeCall(this).ConfigureAwait(false);
+        Task<TResult> resultTask = null!;
+        try {
+            resultTask = InvokeTarget();
+            return await resultTask.ConfigureAwait(false);
+        }
+        catch (Exception e) {
+            resultTask ??= Task.FromException<TResult>(e);
+            throw;
+        }
+        finally {
+            await middlewares.AfterCall(this, resultTask).ConfigureAwait(false);
+        }
+    }
+
     protected virtual Task<TResult> InvokeTarget()
     {
         var methodDef = MethodDef;
         var server = methodDef.Service.Server;
         return (Task<TResult>)methodDef.Invoker.Invoke(server, Arguments!);
+    }
+
+    protected override Task StartCompletion()
+    {
+        if (!ResultTask.IsCompleted)
+            return Complete();
+
+        _ = CompleteSendResult();
+        return Task.CompletedTask;
+    }
+
+    protected async Task Complete()
+    {
+        await ResultTask.SilentAwait(false);
+        _ = CompleteSendResult();
+    }
+
+    protected virtual Task CompleteSendResult()
+    {
+        var mustSendResult = !CancellationToken.IsCancellationRequested;
+        Unregister();
+        return mustSendResult
+            ? SendResult()
+            : Task.CompletedTask;
     }
 
     protected Task SendResult()
@@ -242,11 +254,6 @@ public class RpcInboundCall<TResult>(RpcInboundContext context, RpcMethodDef met
         var systemCallSender = Hub.SystemCallSender;
         return systemCallSender.Complete(Context.Peer, Id, result, MethodDef.AllowResultPolymorphism, ResultHeaders);
     }
-
-    protected Task CompleteEventually()
-        => ResultTask.ContinueWith(
-            _ => Complete(),
-            CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
 
     // Private methods
 

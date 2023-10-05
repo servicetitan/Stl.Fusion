@@ -193,9 +193,9 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
             // Intended
         }
         if (ResultSource.TrySetResult(typedResult)) {
-            Unregister();
             if (context != null && Context.CacheInfoCapture is { } cacheInfoCapture)
                 cacheInfoCapture.ResultSource?.TrySetResult(context.Message.ArgumentData);
+            Unregister();
         }
     }
 

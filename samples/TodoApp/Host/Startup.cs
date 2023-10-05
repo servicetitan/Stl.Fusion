@@ -21,23 +21,18 @@ using Stl.Multitenancy;
 using Stl.OS;
 using Stl.Rpc;
 using Stl.Rpc.Server;
+using Stl.Rpc.Testing;
 using Templates.TodoApp.Abstractions;
 using Templates.TodoApp.UI;
 
 namespace Templates.TodoApp.Host;
 
-public class Startup
+public class Startup(IConfiguration cfg, IWebHostEnvironment environment)
 {
-    private IConfiguration Cfg { get; }
-    private IWebHostEnvironment Env { get; }
+    private IConfiguration Cfg { get; } = cfg;
+    private IWebHostEnvironment Env { get; } = environment;
     private HostSettings HostSettings { get; set; } = null!;
     private ILogger Log { get; set; } = NullLogger<Startup>.Instance;
-
-    public Startup(IConfiguration cfg, IWebHostEnvironment environment)
-    {
-        Cfg = cfg;
-        Env = environment;
-    }
 
     public void ConfigureServices(IServiceCollection services)
     {
@@ -111,6 +106,13 @@ public class Startup
         // Fusion services
         var fusion = services.AddFusion(RpcServiceMode.Server, true);
         var fusionServer = fusion.AddWebServer();
+#if true
+        // Enable this to test how client behaves w/ a delay
+        fusion.Rpc.AddInboundMiddleware(c => new RpcRandomDelayMiddleware(c) {
+            Delay = new(0.1, 0.05),
+        });
+#endif
+
         // fusionServer.AddMvc().AddControllers();
         if (HostSettings.UseInMemoryAuthService)
             fusion.AddInMemoryAuthService();

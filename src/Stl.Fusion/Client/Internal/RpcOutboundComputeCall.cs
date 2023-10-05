@@ -28,15 +28,13 @@ public class RpcOutboundComputeCall<TResult>(RpcOutboundContext context)
 
     public override void SetResult(object? result, RpcInboundContext? context)
     {
-        // ReSharper disable once InconsistentlySynchronizedField
-        if (Context.CacheInfoCapture is { CaptureMode: RpcCacheInfoCaptureMode.KeyOnly }) {
-            base.SetResult(result, context);
-            return;
-        }
-
         var resultVersion = GetResultVersion(context);
         // We always use Lock to update ResultSource in this type
         lock (Lock) {
+            // The code below is a copy of base.SetResult
+            // except the Unregister call in the end.
+            // We don't unregister the call here, coz
+            // we'll need to await for invalidation
             var typedResult = default(TResult)!;
             try {
                 if (result != null)

@@ -41,6 +41,27 @@ public class ClientComputed<T> : ComputeMethodComputed<T>, IClientComputed
         StartAutoInvalidation();
     }
 
+    public ClientComputed(
+        ComputedOptions options,
+        ComputeMethodInput input,
+        Result<T> output,
+        LTag version,
+        RpcCacheEntry? cacheEntry,
+        RpcOutboundComputeCall<T> call,
+        TaskCompletionSource<Unit>? synchronizedSource = null)
+        : base(options, input, output, version, true, SkipComputedRegistration.Option)
+    {
+        CallSource = TaskCompletionSourceExt.New<RpcOutboundComputeCall<T>?>().WithResult(call);
+        CacheEntry = cacheEntry;
+        SynchronizedSource = synchronizedSource ??= TaskCompletionSourceExt.New<Unit>();
+        ComputedRegistry.Instance.Register(this);
+
+        // This should go after .Register(this)
+        synchronizedSource.TrySetResult(default); // Call is there -> synchronized
+        BindWhenInvalidatedToCall(call);
+        StartAutoInvalidation();
+    }
+
     ~ClientComputed() => Dispose();
 
     public void Dispose()
@@ -71,20 +92,24 @@ public class ClientComputed<T> : ComputeMethodComputed<T>, IClientComputed
         if (call == null) // Invalidated before being bound to call - nothing else to do
             return true;
 
+        BindWhenInvalidatedToCall(call);
+        return true;
+    }
+
+    protected void BindWhenInvalidatedToCall(RpcOutboundComputeCall<T> call)
+    {
         var whenInvalidated = call.WhenInvalidated;
         if (whenInvalidated.IsCompleted) {
             // No call (call prepare error - e.g. if there is no such RPC service),
             // or the call result is already invalidated
             Invalidate(true);
-            return true;
+            return;
         }
 
         _ = whenInvalidated.ContinueWith(
             _ => Invalidate(true),
             CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
-        return true;
     }
-
     protected override void OnInvalidated()
     {
         BindToCall(null);
