@@ -51,7 +51,7 @@ public class RpcSystemCalls(IServiceProvider services)
         var context = RpcInboundContext.GetCurrent();
         var peer = context.Peer;
         var outboundCallId = context.Message.RelatedId;
-        peer.OutboundCalls.Get(outboundCallId)?.SetError(error.ToException()!, context, false);
+        peer.OutboundCalls.Get(outboundCallId)?.SetError(error.ToException()!, context);
         return RpcNoWait.Tasks.Completed;
     }
 

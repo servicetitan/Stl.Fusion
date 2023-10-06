@@ -139,7 +139,8 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
                         throw Errors.HandshakeFailed();
 
                     // Processing Handshake
-                    if (lastHandshake != null && lastHandshake.RemotePeerId != handshake.RemotePeerId) {
+                    var isPeerChanged = lastHandshake != null && lastHandshake.RemotePeerId != handshake.RemotePeerId;
+                    if (isPeerChanged) {
                         // Remote RpcPeer changed -> we must abort every call/object
                         peerChangedSource.CancelAndDisposeSilently();
                         peerChangedSource = cancellationToken.CreateLinkedTokenSource();
@@ -159,9 +160,9 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
                     // Recovery: re-send keep-alive object set & all outbound calls
                     _ = SharedObjects.Maintain(connectionState.Value, readerAbortToken);
                     _ = RemoteObjects.Maintain(connectionState.Value, readerAbortToken);
-                    foreach (var call in OutboundCalls) {
+                    foreach (var outboundCall in OutboundCalls) {
                         readerAbortToken.ThrowIfCancellationRequested();
-                        await call.SendRegistered(true).ConfigureAwait(false);
+                        await outboundCall.Reconnect(isPeerChanged, readerAbortToken).ConfigureAwait(false);
                     }
 
 #pragma warning disable CA2012

@@ -43,7 +43,7 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
             return SendNoWait(MethodDef.AllowArgumentPolymorphism);
 
         Peer.OutboundCalls.Register(this);
-        var sendTask = SendRegistered(false);
+        var sendTask = SendRegistered();
 
         // RegisterCancellationHandler must follow SendRegistered,
         // coz it's possible that ResultTask is already completed
@@ -61,7 +61,7 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
         return Peer.Send(message, sender);
     }
 
-    public Task SendRegistered(bool notifyCancelled)
+    public Task SendRegistered(bool isFirst = true)
     {
         RpcMessage message;
         try {
@@ -76,7 +76,7 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
             }
         }
         catch (Exception error) {
-            SetError(error, null, notifyCancelled);
+            SetError(error, null, isFirst);
             return Task.CompletedTask;
         }
         Peer.CallLog?.Log(Peer.CallLogLevel, "'{PeerRef}': -> {Call} -> #{RelatedId}", Peer.Ref, this, message.RelatedId);
@@ -94,8 +94,11 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
     }
 
     public abstract void SetResult(object? result, RpcInboundContext? context);
-    public abstract void SetError(Exception error, RpcInboundContext? context, bool notifyCancelled);
+    public abstract void SetError(Exception error, RpcInboundContext? context, bool assumeCancelled = false);
     public abstract bool Cancel(CancellationToken cancellationToken);
+
+    public virtual Task Reconnect(bool isPeerChanged, CancellationToken cancellationToken)
+        => SendRegistered(false);
 
     public void Unregister(bool notifyCancelled = false)
     {
@@ -106,7 +109,9 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
             NotifyCancelled();
     }
 
-    public void NotifyCancelled()
+    // Protected methods
+
+    protected void NotifyCancelled()
     {
         if (Context.CacheInfoCapture is { CaptureMode: RpcCacheInfoCaptureMode.KeyOnly })
             return; // The call had never happened, so no need for cancellation notification
@@ -125,8 +130,6 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
         }
     }
 
-    // Protected methods
-
     protected void RegisterCancellationHandler()
     {
         var cancellationToken = Context.CancellationToken;
@@ -144,7 +147,7 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
             else {
                 // timeoutCts is timed out
                 var error = Errors.CallTimeout(call.Peer);
-                call.SetError(error, null, true);
+                call.SetError(error, null);
             }
         }, this, useSynchronizationContext: false);
         _ = ResultTask.ContinueWith(_ => {
@@ -193,16 +196,16 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
             // Intended
         }
         if (ResultSource.TrySetResult(typedResult)) {
+            Unregister();
             if (context != null && Context.CacheInfoCapture is { } cacheInfoCapture)
                 cacheInfoCapture.ResultSource?.TrySetResult(context.Message.ArgumentData);
-            Unregister();
         }
     }
 
-    public override void SetError(Exception error, RpcInboundContext? context, bool notifyCancelled)
+    public override void SetError(Exception error, RpcInboundContext? context, bool assumeCancelled = false)
     {
         if (ResultSource.TrySetException(error)) {
-            Unregister(notifyCancelled);
+            Unregister(context == null && !assumeCancelled);
             if (Context.CacheInfoCapture is { } cacheInfoCapture)
                 cacheInfoCapture.ResultSource?.TrySetException(error);
         }

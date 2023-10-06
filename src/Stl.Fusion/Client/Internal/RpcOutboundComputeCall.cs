@@ -1,4 +1,3 @@
-using Stl.Rpc.Caching;
 using Stl.Rpc.Infrastructure;
 
 namespace Stl.Fusion.Client.Internal;
@@ -16,19 +15,22 @@ public class RpcOutboundComputeCall<TResult>(RpcOutboundContext context)
         = TaskCompletionSourceExt.New<Unit>(); // Must not allow synchronous continuations!
 
     public LTag ResultVersion { get; protected set; }
+    // ReSharper disable once InconsistentlySynchronizedField
     public Task WhenInvalidated => WhenInvalidatedSource.Task;
 
-    public LTag GetResultVersion(RpcInboundContext? context)
+    public override Task Reconnect(bool isPeerChanged, CancellationToken cancellationToken)
     {
-        var versionHeader = context?.Message.Headers.GetOrDefault(FusionRpcHeaders.Version.Name);
-        return versionHeader is { } vVersionHeader
-            ? LTag.TryParse(vVersionHeader.Value, out var v) ? v : default
-            : default;
+        // ReSharper disable once InconsistentlySynchronizedField
+        if (!isPeerChanged || !ResultSource.Task.IsCompleted)
+            return base.Reconnect(isPeerChanged, cancellationToken);
+
+        SetInvalidated(false);
+        return Task.CompletedTask;
     }
 
     public override void SetResult(object? result, RpcInboundContext? context)
     {
-        var resultVersion = GetResultVersion(context);
+        var resultVersion = context.GetResultVersion();
         // We always use Lock to update ResultSource in this type
         lock (Lock) {
             // The code below is a copy of base.SetResult
@@ -43,30 +45,41 @@ public class RpcOutboundComputeCall<TResult>(RpcOutboundContext context)
             catch (InvalidCastException) {
                 // Intended
             }
-            if (ResultSource.TrySetResult(typedResult)) {
-                ResultVersion = resultVersion;
-                if (context != null && Context.CacheInfoCapture is { } cacheInfoCapture)
-                    cacheInfoCapture.ResultSource?.TrySetResult(context.Message.ArgumentData);
+
+            if (!ResultSource.TrySetResult(typedResult)) {
+                // Result is already set
+                if (context == null || ResultVersion != resultVersion)  // Non-peer set or version mismatch
+                    SetInvalidatedUnsafe(true);
+                return;
             }
+
+            ResultVersion = resultVersion;
+            if (context != null && Context.CacheInfoCapture is { } cacheInfoCapture)
+                cacheInfoCapture.ResultSource?.TrySetResult(context.Message.ArgumentData);
         }
     }
 
-    public override void SetError(Exception error, RpcInboundContext? context, bool notifyCancelled)
+    public override void SetError(Exception error, RpcInboundContext? context, bool assumeCancelled = false)
     {
-        var resultVersion = GetResultVersion(context);
+        var resultVersion = context.GetResultVersion();
         // We always use Lock to update ResultSource in this type
         lock (Lock) {
-            if (ResultSource.TrySetException(error)) {
-                ResultVersion = resultVersion;
-                if (Context.CacheInfoCapture is { } cacheInfoCapture) {
-                    if (error is OperationCanceledException)
-                        cacheInfoCapture.ResultSource?.TrySetCanceled();
-                    else
-                        cacheInfoCapture.ResultSource?.TrySetResult(default);
-                }
+            if (!ResultSource.TrySetException(error)) {
+                // Result is already set
+                if (context == null || ResultVersion != resultVersion)  // Non-peer set or version mismatch
+                    SetInvalidatedUnsafe(!assumeCancelled);
+                return;
             }
-            if (notifyCancelled)
-                SetInvalidatedUnsafe(true);
+
+            ResultVersion = resultVersion;
+            if (Context.CacheInfoCapture is { } cacheInfoCapture) {
+                if (error is OperationCanceledException)
+                    cacheInfoCapture.ResultSource?.TrySetCanceled();
+                else
+                    cacheInfoCapture.ResultSource?.TrySetResult(default);
+            }
+            if (context == null) // Non-peer set
+                SetInvalidatedUnsafe(!assumeCancelled);
         }
     }
 
@@ -106,16 +119,5 @@ public class RpcOutboundComputeCall<TResult>(RpcOutboundContext context)
 
         Unregister(notifyCancelled);
         return true;
-    }
-
-    private bool IsCorrectVersion(LTag resultVersion)
-    {
-        if (resultVersion == default)
-            return false; // Not a compute method call
-        if (!ResultTask.IsCompleted)
-            return false; // No version is available yet
-
-        // We already have a result w/ mismatching version
-        return ResultVersion == resultVersion;
     }
 }

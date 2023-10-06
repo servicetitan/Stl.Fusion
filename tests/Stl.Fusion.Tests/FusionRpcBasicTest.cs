@@ -44,7 +44,7 @@ public class FusionRpcBasicTest(ITestOutputHelper @out) : SimpleFusionTestBase(@
     {
         var services = CreateServices();
         var testClient = services.GetRequiredService<RpcTestClient>();
-        var clientPeer = testClient.Connections.Values.Single().ClientPeer;
+        var clientPeer = testClient.Connections.First().Value.ClientPeer;
         var connectionMonitor = new RpcPeerStateMonitor(services) {
             StartDelay = TimeSpan.Zero,
         };
