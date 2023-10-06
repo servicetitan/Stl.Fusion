@@ -45,7 +45,7 @@ public class ScreenshotServiceTest(ITestOutputHelper @out) : SimpleFusionTestBas
             return;
 
         await using var services = CreateServices();
-        var connection = services.GetRequiredService<RpcTestClient>().Single();
+        var connection = services.GetRequiredService<RpcTestClient>().Connections.Values.Single();
         var screenshots = services.GetRequiredService<IScreenshotService>();
 
         var c = await GetScreenshotComputed(screenshots);

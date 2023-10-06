@@ -7,7 +7,7 @@ namespace Stl.Rpc.Testing;
 public class RpcTestClient(
     RpcTestClient.Options settings,
     IServiceProvider services
-    ) : RpcClient(services), IEnumerable<RpcTestConnection>
+    ) : RpcClient(services)
 {
     public record Options
     {
@@ -35,8 +35,7 @@ public class RpcTestClient(
     public RpcTestConnection this[RpcPeerRef peerRef]
         => _connections.GetValueOrDefault(peerRef) ?? throw new KeyNotFoundException();
 
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    public IEnumerator<RpcTestConnection> GetEnumerator() => _connections.Values.Distinct().GetEnumerator();
+    public IReadOnlyDictionary<RpcPeerRef, RpcTestConnection> Connections => _connections;
 
     public RpcTestConnection CreateDefaultConnection()
         => CreateConnection(RpcPeerRef.Default.Key, "server-default");
