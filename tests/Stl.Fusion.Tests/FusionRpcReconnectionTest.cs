@@ -107,6 +107,55 @@ public class FusionRpcReconnectionTest(ITestOutputHelper @out) : SimpleFusionTes
         await AssertNoCalls(clientPeer);
     }
 
+    [Fact]
+    public async Task Case4()
+    {
+        await using var services = CreateServices();
+        var connection = services.GetRequiredService<RpcTestClient>().Single();
+        var clientPeer = connection.ClientPeer;
+        var client = services.GetRequiredService<IReconnectTester>();
+
+        var c1 = await Computed.Capture(() => client.GetTime());
+        c1.Invalidate();
+        var c1a = await Computed.Capture(() => client.GetTime());
+        c1a.Value.Should().Be(c1.Value);
+        c1 = c1a;
+
+        await connection.Reconnect();
+        var c2 = await Computed.Capture(() => client.GetTime());
+        c2.Should().BeSameAs(c1);
+        c2.Invalidate();
+        var c2a = await c2.Update();
+        c2a.Value.Should().Be(c1.Value);
+    }
+
+    [Fact]
+    public async Task Case5()
+    {
+        await using var services = CreateServices();
+        var connection = services.GetRequiredService<RpcTestClient>().Single();
+        var clientPeer = connection.ClientPeer;
+        var client = services.GetRequiredService<IReconnectTester>();
+        var server = services.GetRequiredService<ReconnectTester>();
+
+        for (var i = 0; i < 50; i++) {
+            var ctTask = client.GetTime();
+            server.InvalidateGetTime();
+            var stTask = server.GetTime();
+            await connection.Reconnect();
+            var st = await stTask;
+            var ct = await ctTask;
+            if (ct == st)
+                Out.WriteLine($"{i}: In sync");
+            else {
+                Out.WriteLine($"{i}: Syncing...");
+                var c = await Computed.Capture(() => client.GetTime());
+                await c.When(x => x == st).WaitAsync(TimeSpan.FromSeconds(1));
+                Out.WriteLine($"{i}: Synced");
+            }
+        }
+    }
+
     [Fact(Timeout = 30_000)]
     public async Task ReconnectionTest()
     {
