@@ -168,7 +168,7 @@ public class BatchProcessor<T, TResult>(Channel<BatchProcessor<T, TResult>.Item>
                 }
                 workerCount = Workers.Count;
             }
-            if (workerCount >= wp.MaxWorkerCount)
+            if (workerCount >= wp.MaxWorkerCount && workerCount > wp.MinWorkerCount)
                 Log?.LogWarning("{BatchProcessor}: High worker count: {WorkerCount}",
                     GetType().GetName(), workerCount);
         }
