@@ -7,6 +7,7 @@ public sealed class ComputedGraphPruner : WorkerBase
         public static Options Default { get; set; } = new();
 
         public bool AutoActivate { get; init; } = true;
+        public bool MustPruneRegistry { get; init; } = true;
         public RandomTimeSpan CheckPeriod { get; init; } = TimeSpan.FromMinutes(5).ToRandom(0.1);
         public RandomTimeSpan NextBatchDelay { get; init; } = TimeSpan.FromSeconds(0.1).ToRandom(0.25);
         public RetryDelaySeq RetryDelays { get; init; } = RetryDelaySeq.Exp(TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(10));
@@ -45,6 +46,15 @@ public sealed class ComputedGraphPruner : WorkerBase
             this.Start();
     }
 
+    public Task PruneOnce(CancellationToken cancellationToken)
+        => CreatePruneOnceChain().Run(cancellationToken);
+
+    public AsyncChain CreatePruneOnceChain()
+        => CreatePruneDisposedInstancesChain()
+            .Append(CreatePruneEdgesChain());
+
+    // Protected methods
+
     protected override async Task OnRun(CancellationToken cancellationToken)
     {
         var computedRegistry = ComputedRegistry.Instance;
@@ -63,76 +73,96 @@ public sealed class ComputedGraphPruner : WorkerBase
         }
         _whenActivatedSource.TrySetResult(default);
 
-        var activitySource = GetType().GetActivitySource();
-
-        var pruneDisposed = new AsyncChain("PruneDisposed()", async ct => {
-            var registry = ComputedRegistry.Instance;
-            using var keyEnumerator = registry.Keys.GetEnumerator();
-            var disposedCount = 0L;
-            var remainingBatchCapacity = Settings.BatchSize;
-            var batchCount = 0;
-            while (keyEnumerator.MoveNext()) {
-                if (--remainingBatchCapacity <= 0) {
-                    await Clock.Delay(Settings.NextBatchDelay.Next(), ct).ConfigureAwait(false);
-                    remainingBatchCapacity = Settings.BatchSize;
-                    batchCount++;
-                }
-
-                var computedInput = keyEnumerator.Current!;
-                if (registry.Get(computedInput) is IComputedImpl c && c.IsConsistent() && computedInput.IsDisposed) {
-                    disposedCount++;
-                    c.Invalidate();
-                }
-            }
-
-            if (disposedCount > 0)
-                Log.LogInformation(
-                    "Removed {DisposedCount} instances originating from disposed compute services " +
-                    "in {BatchCount} batches (x {BatchSize})",
-                    disposedCount, batchCount + 1, Settings.BatchSize);
-        }).Trace(() => activitySource.StartActivity("PruneDisposed"), Log).Silence();
-
-        var pruneEdges = new AsyncChain("PruneEdges()", async ct => {
-            var registry = ComputedRegistry.Instance;
-            using var keyEnumerator = registry.Keys.GetEnumerator();
-            var computedCount = 0L;
-            var consistentCount = 0L;
-            var edgeCount = 0L;
-            var removedEdgeCount = 0L;
-            var remainingBatchCapacity = Settings.BatchSize;
-            var batchCount = 0;
-            while (keyEnumerator.MoveNext()) {
-                if (--remainingBatchCapacity <= 0) {
-                    await Clock.Delay(Settings.NextBatchDelay.Next(), ct).ConfigureAwait(false);
-                    remainingBatchCapacity = Settings.BatchSize;
-                    batchCount++;
-                }
-
-                var computedInput = keyEnumerator.Current!;
-                computedCount++;
-                if (registry.Get(computedInput) is IComputedImpl c && c.IsConsistent()) {
-                    consistentCount++;
-                    var (oldEdgeCount, newEdgeCount) = c.PruneUsedBy();
-                    edgeCount += oldEdgeCount;
-                    removedEdgeCount += oldEdgeCount - newEdgeCount;
-                }
-            }
-
-            Log.LogInformation(
-                "Processed {ConsistentCount}/{ComputedCount} instances, " +
-                "removed {RemovedEdgeCount}/{EdgeCount} \"used by\" edges, " +
-                "in {BatchCount} batches (x {BatchSize})",
-                consistentCount, computedCount, removedEdgeCount, edgeCount,
-                batchCount + 1, Settings.BatchSize);
-        }).Trace(() => activitySource.StartActivity("PruneEdges"), Log).Silence();
-
-        var chain = pruneEdges.Prepend(pruneDisposed)
+        var chain = CreatePruneOnceChain()
             .AppendDelay(Settings.CheckPeriod, Clock)
             .RetryForever(Settings.RetryDelays, Clock)
             .CycleForever()
             .Log(Log);
-
         cancellationToken.ThrowIfCancellationRequested();
         await chain.Start(cancellationToken).ConfigureAwait(false);
+    }
+
+    // Private methods
+
+    private AsyncChain CreatePruneDisposedInstancesChain()
+    {
+        var activitySource = GetType().GetActivitySource();
+        return new AsyncChain(nameof(PruneDisposedInstances) + "()", PruneDisposedInstances)
+            .Trace(() => activitySource.StartActivity(nameof(PruneDisposedInstances)), Log)
+            .Silence();
+    }
+
+    private AsyncChain CreatePruneEdgesChain()
+    {
+        var activitySource = GetType().GetActivitySource();
+        return new AsyncChain(nameof(PruneEdges) + "()", PruneEdges)
+            .Trace(() => activitySource.StartActivity(nameof(PruneEdges)), Log)
+            .Silence();
+    }
+
+    private async Task PruneDisposedInstances(CancellationToken cancellationToken)
+    {
+        var registry = ComputedRegistry.Instance;
+        using var keyEnumerator = registry.Keys.GetEnumerator();
+        var disposedCount = 0L;
+        var remainingBatchCapacity = Settings.BatchSize;
+        var batchCount = 0;
+        while (keyEnumerator.MoveNext()) {
+            if (--remainingBatchCapacity <= 0) {
+                await Clock.Delay(Settings.NextBatchDelay.Next(), cancellationToken).ConfigureAwait(false);
+                remainingBatchCapacity = Settings.BatchSize;
+                batchCount++;
+            }
+
+            var computedInput = keyEnumerator.Current!;
+            if (registry.Get(computedInput) is IComputedImpl c && c.IsConsistent() && computedInput.IsDisposed) {
+                disposedCount++;
+                c.Invalidate();
+            }
+        }
+        if (disposedCount == 0)
+            return;
+
+        Log.LogInformation(
+            "Removed {DisposedCount} instances originating from disposed compute services " +
+            "in {BatchCount} batches (x {BatchSize})",
+            disposedCount, batchCount + 1, Settings.BatchSize);
+    }
+
+    private async Task PruneEdges(CancellationToken ct)
+    {
+        var registry = ComputedRegistry.Instance;
+        using var keyEnumerator = registry.Keys.GetEnumerator();
+        var computedCount = 0L;
+        var consistentCount = 0L;
+        var edgeCount = 0L;
+        var removedEdgeCount = 0L;
+        var remainingBatchCapacity = Settings.BatchSize;
+        var batchCount = 0;
+        while (keyEnumerator.MoveNext()) {
+            if (--remainingBatchCapacity <= 0) {
+                await Clock.Delay(Settings.NextBatchDelay.Next(), ct).ConfigureAwait(false);
+                remainingBatchCapacity = Settings.BatchSize;
+                batchCount++;
+            }
+
+            var computedInput = keyEnumerator.Current!;
+            computedCount++;
+            if (registry.Get(computedInput) is IComputedImpl c && c.IsConsistent()) {
+                consistentCount++;
+                var (oldEdgeCount, newEdgeCount) = c.PruneUsedBy();
+                edgeCount += oldEdgeCount;
+                removedEdgeCount += oldEdgeCount - newEdgeCount;
+            }
+        }
+        await Clock.Delay(Settings.NextBatchDelay.Next(), ct).ConfigureAwait(false);
+        if (Settings.MustPruneRegistry)
+            await registry.Prune().ConfigureAwait(false);
+
+        Log.LogInformation(
+            "Processed {ConsistentCount}/{ComputedCount} instances, " +
+            "removed {RemovedEdgeCount}/{EdgeCount} \"used by\" edges, " +
+            "in {BatchCount} batches (x {BatchSize})",
+            consistentCount, computedCount, removedEdgeCount, edgeCount, batchCount + 1, Settings.BatchSize);
     }
 }
