@@ -25,7 +25,7 @@ public interface ISimplestProvider
     Task SetValue(SetValueCommand command, CancellationToken cancellationToken = default);
 }
 
-public class SimplestProvider : ISimplestProvider, IHasId<Type>, IComputeService
+public class SimplestProvider : ISimplestProvider, IHasId<Type>, IComputeService, IHasIsDisposed
 {
     private static volatile string _value = "";
     private readonly bool _isCaching;
@@ -33,6 +33,7 @@ public class SimplestProvider : ISimplestProvider, IHasId<Type>, IComputeService
     public Type Id => GetType();
     public int GetValueCallCount { get; private set; }
     public int GetCharCountCallCount { get; private set; }
+    public bool IsDisposed => false;
 
     public SimplestProvider()
         => _isCaching = GetType().Name.EndsWith("Proxy");
