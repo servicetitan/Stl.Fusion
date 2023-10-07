@@ -238,13 +238,14 @@ public class RadixHeapSet<T> : IEnumerable<(long Priority, T Value)>
     {
         if (priority < MinPriority)
             throw new ArgumentOutOfRangeException(nameof(priority));
+
         var xor = MinPriority ^ priority;
-        return xor == 0 ? 0 : 1 + Bits.MsbIndex((ulong) xor);
+        return xor == 0 ? 0 : 1 + Bits.LeadingBitIndex((ulong)xor);
     }
 
     private int GetBucketIndexUnchecked(long priority)
     {
         var xor = MinPriority ^ priority;
-        return xor == 0 ? 0 : 1 + Bits.MsbIndex((ulong) xor);
+        return xor == 0 ? 0 : 1 + Bits.LeadingBitIndex((ulong)xor);
     }
 }

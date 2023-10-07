@@ -53,8 +53,8 @@ public static class Combinatorics
             var srcSpan = src.Span;
             var dstSpan = dst.Span;
             while (mask != 0) {
-                var lsb = Bits.Lsb(mask);
-                var bitIndex = Bits.Index(lsb);
+                var lsb = Bits.TrailingBitMask(mask);
+                var bitIndex = Bits.TrailingZeroCount(lsb);
                 dstSpan[dstIndex++] = srcSpan[bitIndex];
                 mask ^= lsb;
             }

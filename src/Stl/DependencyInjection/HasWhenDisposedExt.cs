@@ -1,6 +1,6 @@
 using Stl.Internal;
 
-namespace Stl.Async;
+namespace Stl.DependencyInjection;
 
 public static class HasWhenDisposedExt
 {

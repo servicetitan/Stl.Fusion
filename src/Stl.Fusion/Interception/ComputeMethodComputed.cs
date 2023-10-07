@@ -1,4 +1,5 @@
 using Stl.Fusion.Internal;
+using Errors = Stl.Internal.Errors;
 
 namespace Stl.Fusion.Interception;
 
@@ -9,7 +10,10 @@ public class ComputeMethodComputed<T> : Computed<T>, IComputedMethodComputed
 {
     public ComputeMethodComputed(ComputedOptions options, ComputeMethodInput input, LTag version)
         : base(options, input, version)
-        => ComputedRegistry.Instance.Register(this);
+    {
+        input.ThrowIfDisposed();
+        ComputedRegistry.Instance.Register(this);
+    }
 
     protected ComputeMethodComputed(
         ComputedOptions options,
@@ -19,8 +23,11 @@ public class ComputeMethodComputed<T> : Computed<T>, IComputedMethodComputed
         bool isConsistent = true)
         : base(options, input, output, version, isConsistent)
     {
-        if (isConsistent)
-            ComputedRegistry.Instance.Register(this);
+        if (!isConsistent)
+            return;
+
+        input.ThrowIfDisposed();
+        ComputedRegistry.Instance.Register(this);
     }
 
     protected ComputeMethodComputed(

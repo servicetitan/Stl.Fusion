@@ -5,19 +5,24 @@ public class BitsTest(ITestOutputHelper @out) : TestBase(@out)
     [Fact]
     public void BasicTest()
     {
-        Assert.Equal(64, Bits.Count(ulong.MaxValue));
-        Assert.Equal(64, Bits.MsbIndex(0));
-        Assert.Equal(64, Bits.LsbIndex(0));
+        Bits.PopCount(ulong.MaxValue).Should().Be(64);
+        Bits.LeadingBitIndex(0).Should().Be(64);
+        Bits.LeadingZeroCount(0).Should().Be(64);
+        Bits.TrailingZeroCount(0).Should().Be(64);
+        Bits.LeadingBitMask(0).Should().Be(0);
+        Bits.TrailingBitMask(0).Should().Be(0);
         for (var i = 0; i < 64; i++) {
             var x = 1ul << i;
             var xl = x | (x >> 1) | (x >> 5);
             var xh = x | (x << 1) | (x << 5);
-            Assert.Equal(i, Bits.MsbIndex(xl));
-            Assert.Equal(i, Bits.LsbIndex(xh));
-            Assert.Equal(x, Bits.Msb(xl));
-            Assert.Equal(x, Bits.Lsb(xh));
-            Assert.True(Bits.IsPowerOf2(x));
-            Assert.True(i < 1 || !Bits.IsPowerOf2(xl));
+            Bits.LeadingBitIndex(xl).Should().Be(i);
+            Bits.LeadingZeroCount(xl).Should().Be(63 - i);
+            Bits.TrailingZeroCount(xh).Should().Be(i);
+            Bits.LeadingBitMask(xl).Should().Be(x);
+            Bits.TrailingBitMask(xh).Should().Be(x);
+            Bits.IsPowerOf2(x).Should().BeTrue();
+            Bits.IsPowerOf2(xh).Should().Be(x == xh);
+            Bits.IsPowerOf2(xl).Should().Be(x == xl);
         }
     }
 }

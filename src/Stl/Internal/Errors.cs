@@ -30,6 +30,16 @@ public static class Errors
             : new ArgumentOutOfRangeException(argumentName, message);
     }
 
+    public static Exception MustNotImplement<TExpected>(Type type, string? argumentName = null)
+        => MustNotImplement(type, typeof(TExpected), argumentName);
+    public static Exception MustNotImplement(Type type, Type expectedType, string? argumentName = null)
+    {
+        var message = $"'{type}' must not implement '{expectedType}'.";
+        return argumentName.IsNullOrEmpty()
+            ? new InvalidOperationException(message)
+            : new ArgumentOutOfRangeException(argumentName, message);
+    }
+
     public static Exception MustBeAssignableTo<TExpected>(Type type, string? argumentName = null)
         => MustBeAssignableTo(type, typeof(TExpected), argumentName);
     public static Exception MustBeAssignableTo(Type type, Type mustBeAssignableToType, string? argumentName = null)

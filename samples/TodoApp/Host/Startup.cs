@@ -177,7 +177,12 @@ public class Startup(IConfiguration cfg, IWebHostEnvironment environment)
 
         // Web
         // services.AddMvc().AddApplicationPart(Assembly.GetExecutingAssembly());
-        services.AddServerSideBlazor(o => o.DetailedErrors = true);
+        services.AddServerSideBlazor(o => {
+            o.DetailedErrors = true;
+            // Just to test TodoUI disposal handling - you shouldn't use settings like this in production:
+            o.DisconnectedCircuitMaxRetained = 1;
+            o.DisconnectedCircuitRetentionPeriod = TimeSpan.FromSeconds(30);
+        });
         services.AddRazorPages();
         services.AddRazorComponents();
         fusion.AddBlazor().AddAuthentication().AddPresenceReporter(); // Must follow services.AddServerSideBlazor()!

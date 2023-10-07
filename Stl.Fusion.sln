@@ -107,7 +107,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{91471F20-7
 		docs\QA.md = docs\QA.md
 		docs\README.md = docs\README.md
 		docs\Story.md = docs\Story.md
-		docs\TaskList-AY.md = docs\TaskList-AY.md
+		docs\Tasks.md = docs\Tasks.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniRpc", "samples\MiniRpc\MiniRpc.csproj", "{99131CAD-DDC3-4B1A-ABB8-63E0FF32B03E}"

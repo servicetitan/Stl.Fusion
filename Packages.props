@@ -138,6 +138,7 @@
     <PackageReference Update="System.Net.WebSockets.Client" Version="4.3.*" />
     <PackageReference Update="System.Reactive" Version="6.0.*" />
     <PackageReference Update="System.Runtime.Loader" Version="4.3.*" />
+    <PackageReference Update="System.Runtime.Numerics" Version="$(SystemXxxVersion)" />
     <PackageReference Update="System.Text.Json" Version="$(SystemXxxVersion)" />
     <PackageReference Update="System.Threading.Channels" Version="$(SystemXxxVersion)" />
     <PackageReference Update="UAParser" Version="3.1.*" />

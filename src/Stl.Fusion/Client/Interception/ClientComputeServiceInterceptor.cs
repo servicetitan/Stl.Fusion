@@ -1,6 +1,7 @@
 using Stl.Fusion.Client.Caching;
 using Stl.Fusion.Interception;
 using Stl.Interception;
+using Stl.Internal;
 using Stl.Rpc;
 using Stl.Rpc.Infrastructure;
 
@@ -42,7 +43,5 @@ public class ClientComputeServiceInterceptor(
         => new ClientComputeMethodFunction<T>(method, Hub.LTagVersionGenerator, Cache, Services);
 
     protected override void ValidateTypeInternal(Type type)
-    {
-        Hub.CommandServiceInterceptor.ValidateType(type);
-    }
+        => Hub.CommandServiceInterceptor.ValidateType(type);
 }

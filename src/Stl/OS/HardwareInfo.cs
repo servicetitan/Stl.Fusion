@@ -32,6 +32,12 @@ public static class HardwareInfo
     public static int GetProcessorCountPo2Factor(int multiplier = 1, int singleThreadedMultiplier = 1)
         => (IsSingleThreaded ? singleThreadedMultiplier : multiplier) * ProcessorCountPo2;
 
+    public static int GetProcessorCountFraction(int fraction)
+        => Math.Max(1, ProcessorCount / fraction);
+
+    public static int GetProcessorCountPo2Fraction(int fraction)
+        => Math.Max(1, ProcessorCountPo2 / fraction);
+
     private static void MaybeRefresh()
     {
         var now = Environment.TickCount;

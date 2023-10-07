@@ -9,18 +9,18 @@ public abstract class MethodDef
     private string? _fullName;
     private Func<object, ArgumentList, Task>? _invoker;
 
-    public Type Type { get; }
-    public MethodInfo Method { get; }
-    public ParameterInfo[] Parameters { get; }
-    public Type[] ParameterTypes { get; }
+    public readonly Type Type;
+    public readonly MethodInfo Method;
+    public readonly ParameterInfo[] Parameters;
+    public readonly Type[] ParameterTypes;
     public int CancellationTokenIndex { get; init; } = -1;
 
     public string FullName => _fullName ??= $"{Type.GetName()}.{Method.Name}";
-    public bool IsAsyncMethod { get; }
-    public bool IsAsyncVoidMethod { get; }
-    public bool ReturnsTask { get; }
-    public bool ReturnsValueTask { get; }
-    public Type UnwrappedReturnType { get; }
+    public readonly bool IsAsyncMethod;
+    public readonly bool IsAsyncVoidMethod;
+    public readonly bool ReturnsTask;
+    public readonly bool ReturnsValueTask;
+    public readonly Type UnwrappedReturnType;
     public Func<object, ArgumentList, Task> Invoker => _invoker ??= CreateInvoker();
 
     public bool IsValid { get; init; } = true;

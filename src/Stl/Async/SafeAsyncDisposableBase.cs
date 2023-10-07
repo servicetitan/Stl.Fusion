@@ -10,6 +10,7 @@ public abstract class SafeAsyncDisposableBase : IAsyncDisposable, IDisposable, I
     private volatile int _isDisposing;
     private volatile Task? _disposeTask;
 
+    public bool IsDisposed => _disposeTask != null;
     public Task? WhenDisposed => _disposeTask;
 
     public void Dispose()

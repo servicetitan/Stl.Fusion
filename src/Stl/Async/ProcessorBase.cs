@@ -8,6 +8,7 @@ public abstract class ProcessorBase : IAsyncDisposable, IDisposable, IHasWhenDis
     protected object Lock => StopTokenSource;
 
     public CancellationToken StopToken { get; }
+    public bool IsDisposed => _disposeTask != null;
     public Task? WhenDisposed => _disposeTask;
 
     protected ProcessorBase(CancellationTokenSource? stopTokenSource = null)

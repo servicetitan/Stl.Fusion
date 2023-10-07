@@ -2,82 +2,104 @@ using Stl.OS;
 
 namespace Stl.Concurrency;
 
-public sealed class StochasticCounter
+[StructLayout(LayoutKind.Auto)]
+public struct StochasticCounter
 {
-    public static readonly int DefaultApproximationFactor = Math.Min(8, HardwareInfo.GetProcessorCountPo2Factor());
+    public const int MaxPrecision = 2048;
+    public static int DefaultPrecision => HardwareInfo.ProcessorCountPo2;
 
-    private long _value = 0;
-    private readonly uint _approximationMask;
-    public int ApproximationStep { get; }
-    public int ApproximationStepLog2 { get; }
+    private readonly int _mask;
+    private volatile int _value;
 
-    public long ApproximateValue {
+    public int Value {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => Interlocked.Read(ref _value) << ApproximationStepLog2;
+        get => _value;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        set => Interlocked.Exchange(ref _value, value >> ApproximationStepLog2);
+        set => Interlocked.Exchange(ref _value, value);
     }
 
-    public StochasticCounter()
-        : this(DefaultApproximationFactor) { }
-    public StochasticCounter(int approximationFactor)
-    {
-        if (approximationFactor < 1)
-            throw new ArgumentOutOfRangeException(nameof(approximationFactor));
-        approximationFactor *= HardwareInfo.ProcessorCount;
-        ApproximationStep = (int) Bits.GreaterOrEqualPowerOf2((uint) approximationFactor);
-        ApproximationStepLog2 = Bits.MsbIndex((ulong) ApproximationStep);
-        _approximationMask = ((uint) ApproximationStep - 1) << 2;
+    public int Precision {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => _mask + 1;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Reset() => Interlocked.Exchange(ref _value, 0);
+    public StochasticCounter(int precision)
+    {
+        if (precision < 1)
+            throw new ArgumentOutOfRangeException(nameof(precision));
+
+        precision = Math.Min(MaxPrecision, precision);
+        _mask = (int)Bits.GreaterOrEqualPowerOf2((ulong)precision) - 1;
+    }
+
+    // Overloads w/o random
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool Increment(int random, out long approximateValue)
+    public bool TryIncrement(int max)
+        => TryIncrement(NextRandom(), max);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool TryDecrement(int min)
+        => TryDecrement(NextRandom(), min);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int? Increment()
+        => Increment(NextRandom());
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int? Decrement()
+        => Decrement(NextRandom());
+
+    // Overloads with random
+
+    public bool TryIncrement(int random, int max)
     {
-        if ((_approximationMask & (uint) random) != 0) {
-            approximateValue = 0;
+        if (_value > max)
+            return false;
+
+        if (Increment(random) is { } value && value > max) {
+            Interlocked.Add(ref _value, -(_mask + 1)); // Revert increment
             return false;
         }
-        var value = Interlocked.Increment(ref _value);
-        approximateValue = value << ApproximationStepLog2;
+
+        return true;
+    }
+
+    public bool TryDecrement(int random, int min)
+    {
+        if (_value < min)
+            return false;
+
+        if (Decrement(random) is { } value && value < min) {
+            Interlocked.Add(ref _value, _mask + 1); // Revert decrement
+            return false;
+        }
+
         return true;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Increment(int random)
-    {
-        if ((_approximationMask & (uint) random) != 0)
-            return;
-
-        Interlocked.Increment(ref _value);
-    }
+    public int? Increment(int random)
+        => (random & _mask) == 0
+            ? Interlocked.Add(ref _value, _mask + 1)
+            : null;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public bool Decrement(int random, out long approximateValue)
-    {
-        if ((_approximationMask & (uint) random) != 0) {
-            approximateValue = 0;
-            return false;
-        }
-        var value = Interlocked.Decrement(ref _value);
-        if (value < 0) {
-            Interlocked.CompareExchange(ref _value, 0, value);
-            value = 0;
-        }
-        approximateValue = value << ApproximationStepLog2;
-        return true;
-    }
+    public int? Decrement(int random)
+        => (random & _mask) == 0
+            ? Interlocked.Add(ref _value, -(_mask + 1))
+            : null;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void Decrement(int random)
+    public int NextRandom()
     {
-        if ((_approximationMask & (uint) random) != 0)
-            return;
+        if (_mask == 0)
+            return 0; // Doesn't make any sense to randomize in this case
 
-        var value = Interlocked.Decrement(ref _value);
-        if (value < 0)
-            Interlocked.CompareExchange(ref _value, 0, value);
+#if NET7_0_OR_GREATER
+        return Random.Shared.Next();
+#else
+        return ConcurrentRandom.Next();
+#endif
     }
 }

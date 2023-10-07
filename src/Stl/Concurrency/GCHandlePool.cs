@@ -1,6 +1,6 @@
 namespace Stl.Concurrency;
 
-public sealed class GCHandlePool : IDisposable
+public sealed class GCHandlePool(GCHandlePool.Options settings) : IDisposable
 {
     public record Options
     {
@@ -8,29 +8,18 @@ public sealed class GCHandlePool : IDisposable
 
         public int Capacity { get; init; } = 1024;
         public GCHandleType HandleType { get; init; } = GCHandleType.Weak;
-        public StochasticCounter OperationCounter { get; init; } = new();
+        public int OperationCounterPrecision { get; init; } = StochasticCounter.DefaultPrecision;
     }
 
-    private readonly ConcurrentQueue<GCHandle> _queue;
-    private readonly StochasticCounter _opCounter;
-    private volatile int _capacity;
+    private readonly ConcurrentQueue<GCHandle> _queue = new();
+    private StochasticCounter _opCounter = new(settings.OperationCounterPrecision);
 
-    public GCHandleType HandleType { get; }
-
-    public int Capacity {
-        get => _capacity;
-        set => Interlocked.Exchange(ref _capacity, value);
-    }
+    public GCHandleType HandleType { get; } = settings.HandleType;
+    public int Capacity { get; } = settings.Capacity;
 
     public GCHandlePool() : this(Options.Default) { }
-    public GCHandlePool(GCHandleType handleType) : this(Options.Default with { HandleType = handleType }) { }
-    public GCHandlePool(Options settings)
-    {
-        _queue = new ConcurrentQueue<GCHandle>();
-        _opCounter = settings.OperationCounter;
-        HandleType = settings.HandleType;
-        Capacity = settings.Capacity;
-    }
+    public GCHandlePool(GCHandleType handleType)
+        : this(Options.Default with { HandleType = handleType }) { }
 
 #pragma warning disable MA0055
     ~GCHandlePool() => Dispose();
@@ -43,38 +32,33 @@ public sealed class GCHandlePool : IDisposable
     }
 
     public GCHandle Acquire(object? target)
-        => Acquire(target, Thread.CurrentThread.ManagedThreadId);
+        => Acquire(target, _opCounter.NextRandom());
     public GCHandle Acquire(object? target, int random)
     {
         if (_queue.TryDequeue(out var handle)) {
-            if (random == 0)
-                random = handle.GetHashCode();
             _opCounter.Decrement(random);
             if (target != null)
                 handle.Target = target;
             return handle;
         }
 
-        _opCounter.Reset();
+        _opCounter.Value = 0;
         return GCHandle.Alloc(target, HandleType);
     }
 
     public bool Release(GCHandle handle)
-        => Release(handle, Thread.CurrentThread.ManagedThreadId);
+        => Release(handle, _opCounter.NextRandom());
     public bool Release(GCHandle handle, int random)
     {
-        if (_opCounter.ApproximateValue >= Capacity) {
+        if (!_opCounter.TryIncrement(Capacity, random)) {
             handle.Free();
             return false;
         }
         if (!handle.IsAllocated)
             return false;
 
-        if (random == 0)
-            random = handle.GetHashCode();
-        _opCounter.Increment(random);
-        _queue.Enqueue(handle);
         handle.Target = null;
+        _queue.Enqueue(handle);
         return true;
     }
 
@@ -82,6 +66,6 @@ public sealed class GCHandlePool : IDisposable
     {
         while (_queue.TryDequeue(out var handle))
             handle.Free();
-        _opCounter.ApproximateValue = _queue.Count;
+        _opCounter.Value = 0;
     }
 }

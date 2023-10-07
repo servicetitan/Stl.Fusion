@@ -43,7 +43,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
 
     public ComputedOptions Options => _options;
     public ComputedInput Input { get; }
-    public ConsistencyState ConsistencyState => (ConsistencyState) _state;
+    public ConsistencyState ConsistencyState => (ConsistencyState)_state;
     public IFunction<T> Function => (IFunction<T>) Input.Function;
     public LTag Version { get; }
     public Type OutputType => typeof(T);

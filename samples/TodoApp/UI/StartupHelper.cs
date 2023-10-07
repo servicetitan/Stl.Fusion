@@ -11,6 +11,7 @@ using Stl.Fusion.UI;
 using Stl.OS;
 using Stl.Rpc;
 using Templates.TodoApp.Abstractions;
+using Templates.TodoApp.Services;
 
 namespace Templates.TodoApp.UI;
 
@@ -65,8 +66,9 @@ public static class StartupHelper
 
         // Other UI-related services
         var fusion = services.AddFusion();
-        fusion.AddComputedGraphPruner(_ => new() { CheckPeriod = TimeSpan.FromSeconds(30) });
+        fusion.AddComputedGraphPruner(_ => new() { CheckPeriod = TimeSpan.FromSeconds(10) });
         fusion.AddFusionTime();
+        fusion.AddService<TodoUI>(ServiceLifetime.Scoped);
 
         // Default update delay is 0.5s
         services.AddScoped<IUpdateDelayer>(c => new UpdateDelayer(c.UIActionTracker(), 0.5));

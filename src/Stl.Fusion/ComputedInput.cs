@@ -2,7 +2,7 @@ using Stl.Fusion.Internal;
 
 namespace Stl.Fusion;
 
-public abstract class ComputedInput : IEquatable<ComputedInput>
+public abstract class ComputedInput : IEquatable<ComputedInput>, IHasIsDisposed
 {
     public IFunction Function { get; private set; } = null!;
     public int HashCode { get; private set; }
@@ -10,6 +10,7 @@ public abstract class ComputedInput : IEquatable<ComputedInput>
         get => Function.ToString() ?? "";
         init => throw Errors.ComputedInputCategoryCannotBeSet();
     }
+    public virtual bool IsDisposed => false;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected void Initialize(IFunction function, int hashCode)
@@ -22,6 +23,13 @@ public abstract class ComputedInput : IEquatable<ComputedInput>
         => $"{Category} #{HashCode}";
 
     public abstract IComputed? GetExistingComputed();
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ThrowIfDisposed()
+    {
+        if (IsDisposed)
+            throw Stl.Internal.Errors.AlreadyDisposed(GetDisposedType());
+    }
 
     // Equality
 
@@ -37,4 +45,9 @@ public abstract class ComputedInput : IEquatable<ComputedInput>
         => Equals(left, right);
     public static bool operator !=(ComputedInput? left, ComputedInput? right)
         => !Equals(left, right);
+
+    // Protected methods
+
+    protected virtual Type GetDisposedType()
+        => GetType();
 }

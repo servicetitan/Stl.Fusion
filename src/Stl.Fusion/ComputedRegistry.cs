@@ -2,6 +2,7 @@ using Stl.Concurrency;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
 using Stl.Locking;
+using Stl.OS;
 using Stl.Time.Internal;
 using Errors = Stl.Fusion.Internal.Errors;
 
@@ -21,9 +22,9 @@ public sealed class ComputedRegistry : IDisposable
 
     private readonly ConcurrentDictionary<ComputedInput, GCHandle> _storage;
     private readonly GCHandlePool _gcHandlePool;
-    private readonly StochasticCounter _opCounter;
+    private StochasticCounter _opCounter;
     private volatile ComputedGraphPruner _graphPruner = null!;
-    private volatile int _pruneCounterThreshold;
+    private volatile int _pruneOpCounterThreshold;
     private Task? _pruneTask;
     private object Lock => _storage;
 
@@ -43,7 +44,8 @@ public sealed class ComputedRegistry : IDisposable
         if (_gcHandlePool.HandleType != GCHandleType.Weak)
             throw new ArgumentOutOfRangeException(
                 $"{nameof(settings)}.{nameof(settings.GCHandlePool)}.{nameof(_gcHandlePool.HandleType)}");
-        _opCounter = new StochasticCounter();
+
+        _opCounter = new StochasticCounter(HardwareInfo.GetProcessorCountPo2Factor(2));
         InputLocks = settings.LocksFactory?.Invoke() ?? new AsyncLockSet<ComputedInput>(
             LockReentryMode.CheckedFail,
             settings.ConcurrencyLevel, settings.InitialCapacity);
@@ -59,7 +61,7 @@ public sealed class ComputedRegistry : IDisposable
         var random = Randomize(key.HashCode);
         OnOperation(random);
         if (_storage.TryGetValue(key, out var handle)) {
-            var value = (IComputed?) handle.Target;
+            var value = (IComputed?)handle.Target;
             if (value != null)
                 return value;
 
@@ -73,9 +75,9 @@ public sealed class ComputedRegistry : IDisposable
     {
         // Debug.WriteLine($"{nameof(Register)}: {computed}");
 
-        OnRegister?.Invoke(computed);
         var key = computed.Input;
         var random = Randomize(key.HashCode);
+        OnRegister?.Invoke(computed);
         OnOperation(random);
 
         var spinWait = new SpinWait();
@@ -111,9 +113,9 @@ public sealed class ComputedRegistry : IDisposable
         if (computed.ConsistencyState != ConsistencyState.Invalidated)
             throw Errors.WrongComputedState(computed.ConsistencyState);
 
-        OnUnregister?.Invoke(computed);
         var key = computed.Input;
         var random = Randomize(key.HashCode);
+        OnUnregister?.Invoke(computed);
         OnOperation(random);
 
         if (!_storage.TryGetValue(key, out var handle))
@@ -177,13 +179,15 @@ public sealed class ComputedRegistry : IDisposable
 
     // Private methods
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void OnOperation()
+    {
+        if (_opCounter.Increment() is { } c && c > _pruneOpCounterThreshold)
+            TryPrune();
+    }
+
     private void OnOperation(int random)
     {
-        if (!_opCounter.Increment(random, out var opCounterValue))
-            return;
-
-        if (opCounterValue > _pruneCounterThreshold)
+        if (_opCounter.Increment(random) is { } c && c > _pruneOpCounterThreshold)
             TryPrune();
     }
 
@@ -191,9 +195,10 @@ public sealed class ComputedRegistry : IDisposable
     {
         lock (Lock) {
             // Double check locking
-            if (_opCounter.ApproximateValue <= _pruneCounterThreshold)
+            if (_opCounter.Value <= _pruneOpCounterThreshold)
                 return;
-            _opCounter.ApproximateValue = 0;
+
+            _opCounter.Value = 0;
             _ = Prune();
         }
     }
@@ -211,7 +216,7 @@ public sealed class ComputedRegistry : IDisposable
         }
         lock (Lock) {
             UpdatePruneCounterThreshold();
-            _opCounter.ApproximateValue = 0;
+            _opCounter.Value = 0;
         }
     }
 
@@ -219,9 +224,9 @@ public sealed class ComputedRegistry : IDisposable
     {
         lock (Lock) {
             // Should be called inside Lock
-            var capacity = (long) _storage.GetCapacity();
-            var nextThreshold = (int) Math.Min(int.MaxValue >> 1, capacity);
-            _pruneCounterThreshold = nextThreshold;
+            var capacity = _storage.GetCapacity();
+            var nextThreshold = capacity.Clamp(1024, int.MaxValue >> 1);
+            _pruneOpCounterThreshold = nextThreshold;
         }
     }
 

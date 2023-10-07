@@ -6,6 +6,7 @@ namespace Stl.Fusion.Interception;
 public sealed class ComputeMethodDef : MethodDef
 {
     public ComputedOptions ComputedOptions { get; init; } = ComputedOptions.Default;
+    public readonly bool IsDisposable;
 
     public ComputeMethodDef(
         Type type,
@@ -24,6 +25,7 @@ public sealed class ComputeMethodDef : MethodDef
             return;
         }
 
+        IsDisposable = typeof(IHasIsDisposed).IsAssignableFrom(type);
         ComputedOptions = computedOptions;
     }
 

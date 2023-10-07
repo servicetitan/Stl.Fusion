@@ -1,9 +1,10 @@
 @page "/todo"
 @using System.Globalization
-@using Stl.Rpc
+@using Templates.TodoApp.Services
 @inherits ComputedStateComponent<Todo[]>
-@inject ITodos Todos
 @inject Session Session
+@inject ITodos Todos
+@inject TodoUI TodoUI
 @inject UICommander UICommander
 @inject ILogger<TodoPage> Log
 
@@ -89,7 +90,7 @@
 
     protected override async Task<Todo[]> ComputeState(CancellationToken cancellationToken)
     {
-        var items = await Todos.List(Session, PageSize + 1, cancellationToken);
+        var items = await TodoUI.List(PageSize + 1, cancellationToken);
         HasMore = items.Length > PageSize;
         if (HasMore)
             items = items[..PageSize];

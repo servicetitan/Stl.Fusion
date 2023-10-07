@@ -216,6 +216,8 @@ public readonly struct FusionBuilder
             throw Stl.Internal.Errors.MustBeAssignableTo(implementationType, serviceType, nameof(implementationType));
         if (!typeof(IComputeService).IsAssignableFrom(implementationType))
             throw Stl.Internal.Errors.MustImplement<IComputeService>(implementationType, nameof(implementationType));
+        if (lifetime == ServiceLifetime.Scoped && !typeof(IHasIsDisposed).IsAssignableFrom(implementationType))
+            throw Stl.Internal.Errors.MustImplement<IHasIsDisposed>(implementationType, nameof(implementationType));
 
         if (lifetime != ServiceLifetime.Singleton)
             return AddServiceImpl(serviceType, implementationType, lifetime);
