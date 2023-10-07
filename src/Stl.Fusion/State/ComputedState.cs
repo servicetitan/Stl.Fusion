@@ -7,7 +7,7 @@ public interface IComputedState : IState, IDisposable, IHasWhenDisposed
         public static bool MustFlowExecutionContext { get; set; } = false;
     }
 
-    public new interface IOptions : IState.IOptions
+    public interface IOptions : IState.IOptions
     {
         IUpdateDelayer? UpdateDelayer { get; init; }
         public bool MustFlowExecutionContext { get; init; }
@@ -41,6 +41,7 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
     public CancellationToken DisposeToken { get; }
     public Task UpdateCycleTask { get; private set; } = null!;
     public Task? WhenDisposed => _whenDisposed;
+    public override bool IsDisposed => _whenDisposed != null;
 
     protected ComputedState(Options settings, IServiceProvider services, bool initialize = true)
         : base(settings, services, false)
@@ -79,10 +80,11 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
         lock (Lock) {
             if (_whenDisposed != null)
                 return;
+
             _whenDisposed = UpdateCycleTask ?? Task.CompletedTask;
-            GC.SuppressFinalize(this);
-            _disposeTokenSource.CancelAndDisposeSilently();
         }
+        GC.SuppressFinalize(this);
+        _disposeTokenSource.CancelAndDisposeSilently();
     }
 
     protected virtual async Task UpdateCycle()
@@ -106,6 +108,7 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
                 Log.LogError(e, "Failure inside UpdateCycle()");
             }
         }
+        Computed.Invalidate();
     }
 
     public override IComputed? GetExistingComputed()

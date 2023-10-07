@@ -15,5 +15,10 @@ public sealed class FuncComputedState<T> : ComputedState<T>
     }
 
     protected override Task<T> Compute(CancellationToken cancellationToken)
-        => Computer(this, cancellationToken);
+    {
+        if (IsDisposed)
+            throw new ObjectDisposedException(ToString());
+
+        return Computer.Invoke(this, cancellationToken);
+    }
 }

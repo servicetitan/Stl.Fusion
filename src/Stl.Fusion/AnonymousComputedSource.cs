@@ -12,9 +12,11 @@ public interface IAnonymousComputedSource : IFunction
 
 public class AnonymousComputedSource<T> : ComputedInput,
     IFunction<T>, IAnonymousComputedSource,
-    IEquatable<AnonymousComputedSource<T>>
+    IEquatable<AnonymousComputedSource<T>>,
+    IDisposable
 {
     private volatile AnonymousComputed<T>? _computed;
+    private volatile Func<AnonymousComputedSource<T>, CancellationToken, ValueTask<T>>? _computer;
     private string? _category;
     private ILogger? _log;
 
@@ -31,11 +33,13 @@ public class AnonymousComputedSource<T> : ComputedInput,
 
     public ComputedOptions ComputedOptions { get; init; }
     public VersionGenerator<LTag> VersionGenerator { get; init; }
-    public Func<AnonymousComputedSource<T>, CancellationToken, ValueTask<T>> Computer { get; }
+    public Func<AnonymousComputedSource<T>, CancellationToken, ValueTask<T>> Computer
+        => _computer ?? throw new ObjectDisposedException(ToString());
     public event Action<AnonymousComputed<T>>? Invalidated;
     public event Action<AnonymousComputed<T>>? Updated;
 
     public bool IsComputed => _computed != null;
+    public override bool IsDisposed => _computer == null;
     public AnonymousComputed<T> Computed {
         get => _computed ?? throw Errors.AnonymousComputedSourceIsNotComputedYet();
         private set {
@@ -57,13 +61,29 @@ public class AnonymousComputedSource<T> : ComputedInput,
         string? category = null)
     {
         Services = services;
-        Computer = computer;
+        _computer = computer;
         _category = category;
 
         ComputedOptions = ComputedOptions.Default;
         VersionGenerator = services.VersionGenerator<LTag>();
         AsyncLock = new ReentrantAsyncLock(LockReentryMode.CheckedFail);
         Initialize(this, RuntimeHelpers.GetHashCode(this));
+    }
+
+    public void Dispose()
+    {
+        if (_computer == null)
+            return;
+
+        Computed<T>? computed;
+        lock (Lock) {
+            if (_computer == null)
+                return;
+
+            computed = _computed;
+            _computer = null;
+        }
+        computed?.Invalidate();
     }
 
     // ComputedInput
