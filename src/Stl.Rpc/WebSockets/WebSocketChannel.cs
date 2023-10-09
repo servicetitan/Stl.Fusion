@@ -1,7 +1,6 @@
 using System.Buffers;
 using System.Net.WebSockets;
 using Microsoft.Toolkit.HighPerformance;
-using Microsoft.Toolkit.HighPerformance.Buffers;
 using Stl.IO;
 using Stl.IO.Internal;
 using Stl.Rpc.Internal;
@@ -298,8 +297,6 @@ public sealed class WebSocketChannel<T> : Channel<T>
             message = "Internal Server Error.";
             ErrorLog?.LogError(error, "WebSocket is closing after an error");
         }
-        else
-            Log?.LogInformation("WebSocket is closing");
 
         try {
             await WebSocket.CloseAsync(status, message, default)
