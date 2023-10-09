@@ -4,9 +4,8 @@ public class UICommander(IServiceProvider services) : IHasServices
 {
     private static readonly ConcurrentDictionary<Type, Func<UICommander, ICommand, CancellationToken, UIAction>>
         CreateUIActionInvokers = new();
-    private static readonly MethodInfo CreateUIActionMethod = typeof(UICommander)
-        .GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-        .Single(m => Equals(m.Name, nameof(CreateUIAction)) && m.IsGenericMethod);
+    private static readonly MethodInfo CreateUIActionTypedMethod = typeof(UICommander)
+        .GetMethod(nameof(CreateUIActionTyped), BindingFlags.Static | BindingFlags.NonPublic)!;
 
     private ICommander? _commander;
     private UIActionTracker? _uiActionTracker;
@@ -69,11 +68,17 @@ public class UICommander(IServiceProvider services) : IHasServices
 
     // Private methods
 
-    private static UIAction CreateUIAction(UICommander commander, ICommand command, CancellationToken cancellationToken)
+    private static UIAction CreateUIAction(UICommander uiCommander, ICommand command, CancellationToken cancellationToken)
         => CreateUIActionInvokers.GetOrAdd(
             command.GetResultType(),
-            static tCommand => (Func<UICommander, ICommand, CancellationToken, UIAction>)CreateUIActionMethod
+            static tCommand => (Func<UICommander, ICommand, CancellationToken, UIAction>)CreateUIActionTypedMethod
                 .MakeGenericMethod(tCommand)
                 .CreateDelegate(typeof(Func<UICommander, ICommand, CancellationToken, UIAction>))
-            ).Invoke(commander, command, cancellationToken);
+        ).Invoke(uiCommander, command, cancellationToken);
+
+    private static UIAction CreateUIActionTyped<TResult>(
+        UICommander uiCommander,
+        ICommand command,
+        CancellationToken cancellationToken)
+        => uiCommander.CreateUIAction<TResult>(command, cancellationToken);
 }
