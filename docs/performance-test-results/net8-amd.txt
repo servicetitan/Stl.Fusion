@@ -1,0 +1,64 @@
+.NET: 8.0.0-rc.1.23419.4
+Database: PostgreSql
+With Stl.Fusion:
+  Multiple readers, 1 mutator:
+    Setup: 384.00M calls (960 readers x 400.00K)
+    Speed: 143.68M 142.68M 145.95M -> 145.95M calls/s
+  Single reader, no mutators:
+    Setup: 8.00M calls (1 readers x 8.00M)
+    Speed: 9.13M 9.48M 9.54M -> 9.54M calls/s
+Without Stl.Fusion:
+  Multiple readers, 1 mutator:
+    Setup: 63.36K calls (960 readers x 66.00)
+    Speed: 12.96K 10.72K 12.09K -> 12.96K calls/s
+  Single reader, no mutators:
+    Setup: 1.32K calls (1 readers x 1.32K)
+    Speed: 940.12 1.02K 1.01K -> 1.02K calls/s
+
+Database: MariaDb
+With Stl.Fusion:
+  Multiple readers, 1 mutator:
+    Setup: 384.00M calls (960 readers x 400.00K)
+    Speed: 140.29M 138.80M 139.26M -> 140.29M calls/s
+  Single reader, no mutators:
+    Setup: 8.00M calls (1 readers x 8.00M)
+    Speed: 9.16M 9.28M 9.24M -> 9.28M calls/s
+Without Stl.Fusion:
+  Multiple readers, 1 mutator:
+    Setup: 63.36K calls (960 readers x 66.00)
+    Speed: 12.62K 12.18K 14.52K -> 14.52K calls/s
+  Single reader, no mutators:
+    Setup: 1.32K calls (1 readers x 1.32K)
+    Speed: 626.08 606.61 645.77 -> 645.77 calls/s
+
+Database: SqlServer
+With Stl.Fusion:
+  Multiple readers, 1 mutator:
+    Setup: 384.00M calls (960 readers x 400.00K)
+    Speed: 137.70M 134.05M 137.42M -> 137.70M calls/s
+  Single reader, no mutators:
+    Setup: 8.00M calls (1 readers x 8.00M)
+    Speed: 8.90M 9.01M 9.05M -> 9.05M calls/s
+Without Stl.Fusion:
+  Multiple readers, 1 mutator:
+    Setup: 63.36K calls (960 readers x 66.00)
+    Speed: 16.16K 16.66K 11.20K -> 16.66K calls/s
+  Single reader, no mutators:
+    Setup: 1.32K calls (1 readers x 1.32K)
+    Speed: 854.94 858.63 863.33 -> 863.33 calls/s
+
+Database: Sqlite
+With Stl.Fusion:
+  Multiple readers, 1 mutator:
+    Setup: 384.00M calls (960 readers x 400.00K)
+    Speed: 140.36M 141.40M 139.42M -> 141.40M calls/s
+  Single reader, no mutators:
+    Setup: 8.00M calls (1 readers x 8.00M)
+    Speed: 8.82M 8.90M 8.92M -> 8.92M calls/s
+Without Stl.Fusion:
+  Multiple readers, 1 mutator:
+    Setup: 63.36K calls (960 readers x 66.00)
+    Speed: 16.50K 15.84K 14.62K -> 16.50K calls/s
+  Single reader, no mutators:
+    Setup: 1.32K calls (1 readers x 1.32K)
+    Speed: 3.53K 3.74K 3.79K -> 3.79K calls/s
