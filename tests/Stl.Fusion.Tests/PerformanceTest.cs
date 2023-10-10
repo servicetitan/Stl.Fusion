@@ -74,10 +74,44 @@ public abstract class PerformanceTestBase : FusionTestBase
         int threadCount, int iterationCount, bool isWarmup = false)
     {
         if (!isWarmup)
-            await Test(title, users, extraAction, enableMutations, threadCount, iterationCount / 4, true);
+            await Test(title, users, extraAction, enableMutations, threadCount, iterationCount / 2, true);
 
-        async Task Mutator(string name, CancellationToken cancellationToken)
-        {
+        var operationCount = threadCount * iterationCount;
+        var bestElapsed = TimeSpan.MaxValue;
+        var runCount = isWarmup ? 1 : 3;
+        for (var i = 0; i < runCount; i++) {
+            var lastElapsed = await Run().ConfigureAwait(false);
+            bestElapsed = TimeSpanExt.Min(bestElapsed, lastElapsed);
+        }
+        WriteLine($"  {title}:");
+        WriteLine($"    Operations: {operationCount} ({threadCount} readers x {iterationCount})");
+        WriteLine($"    Speed:      {FormatCount(operationCount / bestElapsed.TotalSeconds)} calls/s");
+
+        async Task<TimeSpan> Run() {
+            using var stopCts = new CancellationTokenSource();
+            var cancellationToken = stopCts.Token;
+            var startTime = CpuClock.Now;
+            var mutatorTask = enableMutations
+                ? Task.Run(() => Mutator("W", cancellationToken), CancellationToken.None)
+                : Task.CompletedTask;
+            var tasks = Enumerable
+                .Range(0, threadCount)
+                .Select(i => Task.Run(() => Reader($"R{i}", iterationCount), CancellationToken.None))
+                .ToArray();
+            var results = await Task.WhenAll(tasks);
+            var elapsed = CpuClock.Now - startTime;
+
+            // ReSharper disable once MethodHasAsyncOverload
+            stopCts.Cancel();
+            // ReSharper disable once MethodHasAsyncOverload
+            await mutatorTask.SilentAwait(false);
+
+            results.Length.Should().Be(threadCount);
+            results.All(r => r == iterationCount).Should().BeTrue();
+            return elapsed;
+        }
+
+        async Task Mutator(string name, CancellationToken cancellationToken) {
             var rnd = new Random();
             var count = 0L;
 
@@ -96,8 +130,7 @@ public abstract class PerformanceTestBase : FusionTestBase
             }
         }
 
-        async Task<long> Reader(string name, int iterationCount)
-        {
+        async Task<long> Reader(string name, int iterationCount) {
             var rnd = new Random();
             var count = 0L;
 
@@ -113,36 +146,23 @@ public abstract class PerformanceTestBase : FusionTestBase
             return count;
         }
 
-        void WriteLine(string line)
-        {
+        string FormatCount(double value) {
+            var scale = "";
+            if (value >= 1000_000) {
+                scale = "M";
+                value /= 1000_000;
+            }
+            else if (value >= 1000) {
+                scale = "K";
+                value /= 1000;
+            }
+            return $"{value:N}{scale}";
+        }
+
+        void WriteLine(string line) {
             if (!isWarmup)
                 Out.WriteLine(line);
         }
-
-        var operationCount = threadCount * iterationCount;
-        var stopCts = new CancellationTokenSource();
-
-        WriteLine($"  {title}:");
-        WriteLine($"    Operations: {operationCount} ({threadCount} readers x {iterationCount})");
-
-        var startTime = CpuClock.Now;
-        var mutatorTask = enableMutations
-            ? Task.Run(() => Mutator("W", stopCts.Token))
-            : Task.CompletedTask;
-        var tasks = Enumerable
-            .Range(0, threadCount)
-            .Select(i => Task.Run(() => Reader($"R{i}", iterationCount)))
-            .ToArray();
-        var results = await Task.WhenAll(tasks);
-        var elapsed = CpuClock.Now - startTime;
-
-        stopCts.Cancel();
-        await mutatorTask.SilentAwait(false);
-
-        WriteLine($"    Speed:      {operationCount / 1000.0 / elapsed.TotalSeconds:F3} K Ops/sec (took {elapsed.TotalSeconds:F3} sec)");
-
-        results.Length.Should().Be(threadCount);
-        results.All(r => r == iterationCount).Should().BeTrue();
     }
 }
 
