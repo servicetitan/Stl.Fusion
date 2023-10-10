@@ -90,14 +90,16 @@ public abstract class PerformanceTestBase : FusionTestBase
         async Task<TimeSpan> Run() {
             using var stopCts = new CancellationTokenSource();
             var cancellationToken = stopCts.Token;
-            var startTime = CpuClock.Now;
             var mutatorTask = enableMutations
                 ? Task.Run(() => Mutator("W", cancellationToken), CancellationToken.None)
                 : Task.CompletedTask;
+            var whenReadySource = TaskCompletionSourceExt.New<Unit>();
             var tasks = Enumerable
                 .Range(0, threadCount)
-                .Select(i => Task.Run(() => Reader($"R{i}", iterationCount), CancellationToken.None))
+                .Select(i => Task.Run(() => Reader($"R{i}", iterationCount, whenReadySource.Task), CancellationToken.None))
                 .ToArray();
+            var startTime = CpuClock.Now;
+            whenReadySource.SetResult(default);
             var results = await Task.WhenAll(tasks);
             var elapsed = CpuClock.Now - startTime;
 
@@ -130,11 +132,12 @@ public abstract class PerformanceTestBase : FusionTestBase
             }
         }
 
-        async Task<long> Reader(string name, int iterationCount) {
+        async Task<long> Reader(string name, int iterationCount1, Task whenReady) {
             var rnd = new Random();
             var count = 0L;
 
-            for (; iterationCount > 0; iterationCount--) {
+            await whenReady.ConfigureAwait(false);
+            for (; iterationCount1 > 0; iterationCount1--) {
                 var userId = (long) rnd.Next(UserCount);
                 // Log.LogDebug($"{name}: R {userId}");
                 var user = await users.Get(userId).ConfigureAwait(false);
