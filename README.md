@@ -28,51 +28,76 @@ So what DREAM means?
   to speed up function calls by caching their output for a given input. 
   Fusion provides a *transparent memoization* for any function, so
   when you call `GetUser(id)` multiple times, its actual computation
-  happens just once for every `id` assuming there is enough RAM to cache 
+  happens just once for every `id` - at least while there is enough RAM to cache 
   every result.
+
 - **[Reactive](https://en.wikipedia.org/wiki/Reactive_programming)** 
   part of your Fusion-based code reacts to changes by triggering 
   *invalidations*. Invalidation is a call to memoizing function inside
   a special `using (Computed.Invalidate()) { ... }` block, which
-  marks the cached result for some specific call (e.g. `GetUser(3)`) as
-  *inconsistent with the ground truth*, which guarantees it will be 
-  recomputed on the next *actual* (non-invalidating) call.
-  The invalidation is *cascading*: 
-  if `GetUserPic("user@gmail.com")` calls `GetUser(3)`, its result will be invalidated 
-  as well in this case, and the same will happen with every other computed
-  result that depends on `GetUser(3)` directly or indirectly.
-  This means Fusion tracks data dependencies between cached results;
-  the dependency graph is built and updated in real-time, and this process
-  is completely transparent for the developers.
-- The dependency graph can be 
+  marks its currently cached result (if any) as **inconsistent**, 
+  so it's going to be recomputed on the next call.
+  > Any cached result is identified by `(object, method, arguments...)` tuple - so  invalidating `service1.GetUser(5)` wouldn't render
+`service1.GetUser(1)` result inconsistent, as well as the result of `service5.GetUser(5)`.
+  
+  > The invalidation is *cascading*: if `service1.GetUser(5)` call happened inside `GetUserPic("user@gmail.com")` call, the second result becomes dependent on the first one, and invalidation of the first one invalidates the second one. 
+
+- So Fusion not just memoizes the results of such calls, but also captures and tracks
+  the dependencies between them. The dependency graph updated in real-time, 
+  but completely transparent for developers. That's why Fusion-based code 
+  looks and reads exactly as your regular code - the only difference is that
+  it has a few extra `using (Computed.Invalidate()) { ... }` blocks.
+
+- Finally, Fusion's dependency graph can be 
   **[Distributed](https://en.wikipedia.org/wiki/Distributed_computing)**:
-  Fusion allows you to create *invalidation-aware caching RPC clients* 
-  for any of such functions.
-  - They eliminate network chattiness by re-using locally cached results while
-    it's known they aren't invalidated on the server side yet.
-    The pub/sub, delivery, and processing of invalidation messages 
-    happens automatically and transparently for you.
-  - Moreover, such clients register their results in Fusion's dependency graph
-    like any other Fusion functions, so if you client-side code declares 
-    `GetUserName(id) => server.GetUser(id).Name` function, 
-    `GetUserName(id)` result will be invalidated once `GetUser(id)`
-    gets invalidated on the server side. And that's what powers
-    all real-time UI updates on the client side in Fusion samples.
+  since technically any result is "observable" under the hood, the
+  act of "observation" can be propagated over network. And Fusion does this 
+  completely transparently for you as well - by providing 
+  *invalidation-aware caching RPC clients* for any Fusion-based service.
+    
+"Invalidation-aware" part means such clients auto-subscribe to the 
+invalidation event associated with every remote call they make.     
+
+> In fact, the "call" concept in Fusion's RPC protocol always means 
+"and subscribe to the invalidation". Since the invalidation happens
+just once per call result, it's just a single extra message per call,
+which is sent after "call result" message.
+
+So invalidation-aware client precisely knows when every cached result is consistent.
+And this allows it to simply eliminate every call which "hits" a consistent result -
+thus eliminating the need for a network round trip at all. 
+**And that's how Fusion solves network chattiness problem.**
+
+Finally, such a client behaves like any other Fusion service - 
+so the results it produces become dependencies of local Fusion services
+calling it.
+    
+Now, imagine your client-side Fusion-based service has this function:
+```
+string GetUserName(id)
+    => (await userServiceClient.GetUser(id)).Name;
+```
+any result it produces becomes dependent on a remote result of 
+`userServiceClient.GetUser(id)`, so they'll auto-invalidate once their
+remote dependencies will. 
+**And that's what powers all real-time UI updates in Fusion apps.**
   
 > [Lot traceability](https://en.wikipedia.org/wiki/Traceability) is probably the 
 > best real-world analogy of how this approach works. 
 > It allows to identify every product *([computed value])* 
 > that uses certain ingredient *(another [computed value])*,
-> and consequently, even every buyer of a product *(think UI control)* that uses certain ingredient. 
+> and consequently, even every buyer of a product *(think UI control)* that 
+> uses certain ingredient. 
+>
 > So if you want every consumer to have the most up-to-date version 
 > of every product they bought *(think real-time UI)*,
 > lot traceability makes this possible.
 > 
 > And assuming every purchase order triggers the whole build chain and uses
 > the most recent ingredients, merely notifying the consumers they can buy 
-> a newer version of their 📱 is enough. It's up to them to decide when to update -
+> a newer version of their 📱 is enough. It's up to them to decide when to upgrade -
 > they can do this immediately or postpone this till the next 💰, but
-> the important piece is: they are aware the product they have is obsolete now.
+> the important piece is: they are aware the product they have can be upgraded.
 
 We know all of this sounds weird. That's why there are lots of
 visual proofs in the remaining part of this document.
@@ -90,12 +115,31 @@ And if you prefer text - just continue reading!
 
 ## "What is your evidence?"<sup><a href="https://www.youtube.com/watch?v=7O-aNYTtx44<">*</a></sup>
 
-This is [Fusion+Blazor Sample](https://github.com/servicetitan/Stl.Fusion.Samples#3-blazor-samples)
+Let's start with some big guns (very solid proofs):
+
+> Check out [Actual Chat] – a very new chat app built by the minds behind Fusion.
+>
+> Actual Chat fuses **real-time audio, live transcription, and AI assistance**
+> to let you communicate with utmost efficiency.
+> With clients for **WebAssembly, iOS, Android, and Windows**, it boasts nearly
+> 100% code sharing across these platforms.
+> Beyond real-time updates, several of its features, like offline mode,
+> are powered by Fusion.
+>
+> We're posting some code examples from Actual Chat codebase [here](https://actual.chat/chat/san4Cohzym), 
+> so join this chat to learn how we use it in a real app.
+
+Now, samples:
+
+Below is [Fusion+Blazor Sample](https://github.com/servicetitan/Stl.Fusion.Samples#3-blazor-samples)
 delivering real-time updates to 3 browser windows:
 
 ![](docs/img/Stl-Fusion-Chat-Sample.gif)
 
-<img src="https://img.shields.io/badge/-Live!-red" valign="middle"> Play with [live version of this sample](https://fusion-samples.servicetitan.com) right now!
+<img src="https://img.shields.io/badge/-Live!-red" valign="middle">~~Play with 
+[live version of this sample](https://fusion-samples.servicetitan.com) right now~~ &ndash; 
+sorry, it is temporarily broken due to issues with .NET 8 RC1 and Docker.
+**But you can still run it locally.**
 
 The sample supports [**both** Blazor Server and Blazor WebAssembly 
 hosting modes](https://docs.microsoft.com/en-us/aspnet/core/blazor/hosting-models?view=aspnetcore-3.1).
@@ -109,13 +153,19 @@ including sign-in state:
 compares "raw" [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/)-based
 Data Access Layer (DAL) against its version relying on Fusion:
 
-![](docs/img/Performance.jpg)
+| Calls/s | PostgreSQL | MariaDB | SQL Server | Sqlite |
+|-|-|-|-|-|
+| Single reader | 1.02K | 645.77 | 863.33 | 3.79K |
+| 960 readers (high concurrency) | 12.96K | 14.52K | 16.66K | 16.50K |
+| Single reader + Fusion  | 9.54**M** | 9.28**M** | 9.05**M** | 8.92**M** |
+| 960 readers + Fusion | 145.95**M** | 140.29**M** | 137.70**M** | 141.40**M** |
 
 Fusion's transparent caching ensures every API call result your code produces is cached, and moreover, even when such results are recomputed, they mostly use other cached dependencies instead of hitting a much slower storage (DB in this case).
 
-This feature alone speeds up even a very basic logic 
-(fetching a single random user) by ~ **3000x**, and
-the more complex logic you have, the larger performance gain you're expected to see. 
+And interestingly, even when there are no "layers" of dependencies (think only "layer zero" is there), Fusion manages to speed up the API calls this test runs by **8,000 to 10,000** times.
+
+You can find the raw output for this test [here](./docs/performance-test-results/net8-amd.txt).
+
 
 ## How Fusion works?
 
@@ -410,7 +460,7 @@ and call `​/api​/Sum​/Accumulate` and `/api/Sum/GetAccumulator`
 ## Next Steps
 
 * Check out [Samples], [Tutorial], [Slides], or go to [Documentation Home]
-* Join our [Discord Server] to ask questions and track project updates.
+* Join our [Discord Server] to ask questions and track project updates. *If you're curious, "why Discord," the server was created long before the first line of [Actual Chat]'s code was written. However, a Fusion-powered alternative will be available quite soon :)*
 
 ## Posts And Other Content
 * [Fusion: 1st birthday, 1K+ stars on GitHub, System.Text.Json support in v1.4](https://alexyakunin.medium.com/fusion-1st-birthday-1k-stars-on-github-system-text-json-support-in-v1-4-c73e9feb45c7?source=friends_link&sk=2e261e0dacce92f05d31baac400c3032)
@@ -444,6 +494,7 @@ please help us to make it better by completing [Fusion Feedback Form]
 [Tutorial]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/README.md
 [Slides]: https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html
 [MMORPG]: https://en.wikipedia.org/wiki/Massively_multiplayer_online_role-playing_game
+[Actual Chat]: https://actual.chat
 
 [Discord]: https://discord.gg/EKEwv6d
 [Discord Server]: https://discord.gg/EKEwv6d
