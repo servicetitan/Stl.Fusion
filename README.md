@@ -21,7 +21,7 @@ a novel technique that gracefully solves a number of well-known problems:
 | 🤹 Real-time cache invalidation | No good solutions - <br/>it's an [infamously hard problem](https://martinfowler.com/bliki/TwoHardThings.html) |
 | 📪 Automatic & transparent pub/sub | A fair amount of code |
 | 🤬 Network chattiness | A fair amount of code |
-| 💰 Single codebase for Blazor WebAssembly, Server, and Hybrid | No good alternatives |
+| 💰 Single codebase for Blazor WebAssembly, Server, and Hybrid/MAUI | No good alternatives |
 
 So what DREAM means?
 - **[Memoization](https://en.wikipedia.org/wiki/Memoization)** is a way
