@@ -7,9 +7,9 @@ using Stl.Rpc.WebSockets;
 namespace Stl.Rpc.Server;
 
 public class RpcWebSocketServer(
-        RpcWebSocketServer.Options settings,
-        IServiceProvider services
-        ) : RpcServiceBase(services)
+    RpcWebSocketServer.Options settings,
+    IServiceProvider services
+    ) : RpcServiceBase(services)
 {
     public record Options
     {
@@ -60,9 +60,6 @@ public class RpcWebSocketServer(
         }
         catch (OperationCanceledException) {
             // Intended: this is typically a normal connection termination
-        }
-        catch (Exception e) when (e is not OperationCanceledException) {
-            Log.LogWarning(e, "WebSocket connection was closed with an error");
         }
     }
 }
