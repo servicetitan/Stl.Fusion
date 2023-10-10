@@ -18,7 +18,7 @@ public static class ComputedExt
             // Inlined existing.UseNew(context, usedBy)
             if (usedBy != null)
                 ((IComputedImpl)usedBy).AddUsed(existing);
-            ((IComputedImpl)existing).RenewTimeouts(false);
+            existing.RenewTimeouts(false);
             return true;
         }
 
@@ -71,7 +71,7 @@ public static class ComputedExt
     {
         if (usedBy != null)
             ((IComputedImpl)usedBy).AddUsed(computed);
-        ((IComputedImpl)computed).RenewTimeouts(!ReferenceEquals(computed, existing));
+        computed.RenewTimeouts(!ReferenceEquals(computed, existing));
         context.Capture(computed);
     }
 

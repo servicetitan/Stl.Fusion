@@ -23,7 +23,7 @@ public abstract class InterceptorBase : Interceptor, IHasServices
     private readonly Func<MethodInfo, Invocation, Func<Invocation, object?>?> _createHandlerUntyped;
     private readonly Func<MethodInfo, Invocation, MethodDef?> _createMethodDef;
     private readonly ConcurrentDictionary<MethodInfo, MethodDef?> _methodDefCache = new();
-    private readonly ConcurrentDictionary<MethodInfo, Func<Invocation, object?>?> _handlerCache = new();
+    private readonly ConcurrentDictionary<MethodInfo, Func<Invocation, object?>?> _handlerCache = new(1, 64);
     private readonly ConcurrentDictionary<Type, Unit> _validateTypeCache = new();
 
     protected readonly ILogger Log;
@@ -67,6 +67,7 @@ public abstract class InterceptorBase : Interceptor, IHasServices
             : (TResult)handler.Invoke(invocation)!;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Func<Invocation, object?>? GetHandler(Invocation invocation)
         => _handlerCache.GetOrAdd(invocation.Method, _createHandlerUntyped, invocation);
 

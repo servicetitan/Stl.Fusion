@@ -63,7 +63,7 @@ public static class AnonymousComputedSourceExt
 
             await computed.WhenInvalidated(cancellationToken).ConfigureAwait(false);
 
-            var hasTransientError = computed.Error is { } error && ((IComputedImpl) computed).IsTransientError(error);
+            var hasTransientError = computed.Error is { } error && computed.IsTransientError(error);
             retryCount = hasTransientError ? retryCount + 1 : 0;
 
             await updateDelayer.Delay(retryCount, cancellationToken).ConfigureAwait(false);

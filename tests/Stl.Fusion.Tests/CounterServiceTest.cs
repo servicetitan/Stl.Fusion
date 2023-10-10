@@ -68,7 +68,7 @@ public class CounterServiceTest(ITestOutputHelper @out) : SimpleFusionTestBase(@
         sw.Start();
         var c = await Computed.Capture(() => counters.GetFirstNonZero("x", "y wait"));
         sw.ElapsedMilliseconds.Should().BeLessThan(250);
-        var cImpl = (IComputedImpl) c;
+        var cImpl = (IComputedImpl)c;
         c.Value.Should().Be(1);
         cImpl.Used.Length.Should().Be(1);
 

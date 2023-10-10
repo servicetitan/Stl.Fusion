@@ -115,7 +115,7 @@ public sealed class ComputedGraphPruner : WorkerBase
             }
 
             var computedInput = keyEnumerator.Current!;
-            if (registry.Get(computedInput) is IComputedImpl c && c.IsConsistent() && computedInput.IsDisposed) {
+            if (registry.Get(computedInput) is { } c && c.IsConsistent() && computedInput.IsDisposed) {
                 disposedCount++;
                 c.Invalidate();
             }
@@ -148,9 +148,9 @@ public sealed class ComputedGraphPruner : WorkerBase
 
             var computedInput = keyEnumerator.Current!;
             computedCount++;
-            if (registry.Get(computedInput) is IComputedImpl c && c.IsConsistent()) {
+            if (registry.Get(computedInput) is { } c && c.IsConsistent()) {
                 consistentCount++;
-                var (oldEdgeCount, newEdgeCount) = c.PruneUsedBy();
+                var (oldEdgeCount, newEdgeCount) = ((IComputedImpl)c).PruneUsedBy();
                 edgeCount += oldEdgeCount;
                 removedEdgeCount += oldEdgeCount - newEdgeCount;
             }

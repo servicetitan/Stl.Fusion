@@ -33,7 +33,7 @@ public static class FusionSettings
     {
         var isServer = Mode == FusionMode.Server;
         var cpuCountPo2 = HardwareInfo.ProcessorCountPo2;
-        TimeoutsConcurrencyLevel = (cpuCountPo2 / (isServer ? 1 : 4)).Clamp(1, isServer ? 1024 : 4);
+        TimeoutsConcurrencyLevel = (isServer ? cpuCountPo2 : cpuCountPo2 / 16).Clamp(1, isServer ? 256 : 4);
         ComputedRegistryConcurrencyLevel = cpuCountPo2 * (isServer ? 4 : 1);
         var computedRegistryCapacity = (ComputedRegistryConcurrencyLevel * 32).Clamp(256, 8192);
         var primeSieve = GetPrimeSieve(computedRegistryCapacity + 16);

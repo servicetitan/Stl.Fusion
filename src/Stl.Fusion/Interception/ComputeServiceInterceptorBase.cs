@@ -46,12 +46,12 @@ public abstract class ComputeServiceInterceptorBase(
             // InvokeAndStrip allows to get rid of one extra allocation
             // of a task stripping the result of regular Invoke.
             var task = function.InvokeAndStrip(input, usedBy, null, cancellationToken);
-            if (ctIndex >= 0)
+            if (cancellationToken != default)
                 // We don't want memory leaks + unexpected cancellation later
                 arguments.SetCancellationToken(ctIndex, default);
 
             // ReSharper disable once HeapView.BoxingAllocation
-            return methodDef.ReturnsValueTask ? new ValueTask<T>(task) : task;
+            return computeMethodDef.ReturnsValueTask ? new ValueTask<T>(task) : task;
         };
     }
 
@@ -69,7 +69,5 @@ public abstract class ComputeServiceInterceptorBase(
     }
 
     protected override void ValidateTypeInternal(Type type)
-    {
-        Hub.CommandServiceInterceptor.ValidateType(type);
-    }
+        => Hub.CommandServiceInterceptor.ValidateType(type);
 }

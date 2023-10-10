@@ -137,7 +137,7 @@ public class ClientComputeMethodFunction<T>(
             input.MethodDef.ComputedOptions,
             input, result, VersionGenerator.NextVersion(),
             cacheEntry, call, synchronizedSource);
-        ((IComputedImpl)computed).RenewTimeouts(true);
+        computed.RenewTimeouts(true);
     }
 
     public override async ValueTask<Computed<T>> Invoke(ComputedInput input,

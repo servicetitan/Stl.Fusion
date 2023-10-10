@@ -39,7 +39,7 @@ public abstract class FusionTestBase : RpcTestBase
 
     public FilePath SqliteDbPath { get; protected set; }
     public string PostgreSqlConnectionString { get; protected set; } =
-        "Server=localhost;Database=stl_fusion_tests;Port=5432;User Id=postgres;Password=postgres;Enlist=false;Minimum Pool Size=5;Maximum Pool Size=500;Connection Idle Lifetime=30";
+        "Server=localhost;Database=stl_fusion_tests;Port=5432;User Id=postgres;Password=postgres;Enlist=false;Minimum Pool Size=5;Maximum Pool Size=1000;Connection Idle Lifetime=30";
     public string MariaDbConnectionString { get; protected set; } =
         "Server=localhost;Database=stl_fusion_tests;Port=3306;User=root;Password=mariadb";
     public string SqlServerConnectionString { get; protected set; } =
@@ -80,7 +80,8 @@ public abstract class FusionTestBase : RpcTestBase
         catch {
             // Intended - somehow it fails on GitHub build agent
         }
-        Out.WriteLine("DB is recreated.");
+        if (!IsConsoleApp)
+            Out.WriteLine("DB is recreated.");
         await Services.HostedServices().Start();
     }
 
@@ -145,7 +146,7 @@ public abstract class FusionTestBase : RpcTestBase
                 fusion.AddDbKeyValueStore<TestDbContext>();
 
             // DbContext & related services
-            services.AddTransientDbContextFactory<TestDbContext>(db => {
+            services.AddPooledDbContextFactory<TestDbContext>(db => {
                 switch (DbType) {
                 case FusionTestDbType.Sqlite:
                     db.UseSqlite($"Data Source={SqliteDbPath}");

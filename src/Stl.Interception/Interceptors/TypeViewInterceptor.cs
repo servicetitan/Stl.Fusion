@@ -6,7 +6,7 @@ namespace Stl.Interception.Interceptors;
 public class TypeViewInterceptor : Interceptor
 {
     private readonly Func<(MethodInfo, Type), Invocation, Func<Invocation, object?>> _createHandler;
-    private readonly ConcurrentDictionary<(MethodInfo, Type), Func<Invocation, object?>?> _handlerCache = new();
+    private readonly ConcurrentDictionary<(MethodInfo, Type), Func<Invocation, object?>?> _handlerCache = new(1, 64);
     private readonly MethodInfo _createConvertingHandlerMethod;
     private readonly MethodInfo _createTaskConvertingHandlerMethod;
     private readonly MethodInfo _createValueTaskConvertingHandlerMethod;

@@ -7,7 +7,7 @@ public interface IComputedState : IState, IDisposable, IHasWhenDisposed
         public static bool MustFlowExecutionContext { get; set; } = false;
     }
 
-    public interface IOptions : IState.IOptions
+    public new interface IOptions : IState.IOptions
     {
         IUpdateDelayer? UpdateDelayer { get; init; }
         public bool MustFlowExecutionContext { get; init; }

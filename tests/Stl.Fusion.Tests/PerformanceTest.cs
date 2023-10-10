@@ -40,13 +40,13 @@ public abstract class PerformanceTestBase : FusionTestBase
         plainUsers.UseEntityResolver = UseEntityResolver;
 
         var opCountPerCore = 8_000_000;
-        var readersPerCore = 16;
+        var readersPerCore = 20;
         var readerCount = HardwareInfo.GetProcessorCountFactor(readersPerCore);
         var fusionIterationCount = opCountPerCore / readersPerCore;
         var nonFusionIterationCount = fusionIterationCount / (UseEntityResolver ? 2000 : 6000);
 
-        var withoutSerialization = (Action<User>) (_ => { });
-        var withSerialization = (Action<User>) (u => JsonSerializer.Serialize(u)); // STJ serializer
+        var withoutSerialization = (Action<User>?)null;
+        var withSerialization = (Action<User>?)(u => JsonSerializer.Serialize(u)); // STJ serializer
         var enableSerialization = false;
 
         Out.WriteLine($".NET: {RuntimeInfo.DotNetCore.VersionString ?? RuntimeInformation.FrameworkDescription}");
@@ -71,7 +71,7 @@ public abstract class PerformanceTestBase : FusionTestBase
     }
 
     private async Task Test(string title,
-        IUserService users, Action<User> extraAction, bool enableMutations,
+        IUserService users, Action<User>? extraAction, bool enableMutations,
         int threadCount, int iterationCount, bool isWarmup = false)
     {
         if (!isWarmup)
@@ -85,6 +85,8 @@ public abstract class PerformanceTestBase : FusionTestBase
         var bestElapsed = TimeSpan.MaxValue;
         var sb = new StringBuilder();
         for (var i = 0; i < runCount; i++) {
+            if (i > 0)
+                await Task.Delay(250).ConfigureAwait(false);
             var lastElapsed = await Run().ConfigureAwait(false);
             sb.Append(FormatCount(operationCount / lastElapsed.TotalSeconds)).Append(' ');
             bestElapsed = TimeSpanExt.Min(bestElapsed, lastElapsed);
@@ -148,7 +150,7 @@ public abstract class PerformanceTestBase : FusionTestBase
                 // Log.LogDebug($"{name}: R {userId} done");
                 if (user!.Id == userId)
                     count++;
-                extraAction(user);
+                extraAction?.Invoke(user);
             }
             return count;
         }

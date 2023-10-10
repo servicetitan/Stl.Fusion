@@ -67,8 +67,7 @@ public class StateSnapshot<T> : IStateSnapshot<T>
             RetryCount = 0;
         }
         else {
-            var computedImpl = (IComputedImpl) computed;
-            if (!computedImpl.IsTransientError(error)) {
+            if (!computed.IsTransientError(error)) {
                 // Non-transient error
                 LastNonErrorComputed = prevSnapshot.LastNonErrorComputed;
                 UpdateCount = 1 + prevSnapshot.UpdateCount;

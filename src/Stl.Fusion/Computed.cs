@@ -245,31 +245,6 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
             this.Invalidate(timeout);
     }
 
-    public void RenewTimeouts(bool isNew)
-    {
-        if (ConsistencyState == ConsistencyState.Invalidated)
-            return; // We shouldn't register miss here, since it's going to be counted as hit anyway
-
-        var minCacheDuration = Options.MinCacheDuration;
-        if (minCacheDuration != default) {
-            var keepAliveSlot = Timeouts.GetKeepAliveSlot(Timeouts.Clock.Now + minCacheDuration);
-            var lastKeepAliveSlot = Interlocked.Exchange(ref _lastKeepAliveSlot, keepAliveSlot);
-            if (lastKeepAliveSlot != keepAliveSlot)
-                Timeouts.KeepAlive.AddOrUpdateToLater(this, keepAliveSlot);
-        }
-
-        ComputedRegistry.Instance.ReportAccess(this, isNew);
-    }
-
-    public void CancelTimeouts()
-    {
-        var options = Options;
-        if (options.MinCacheDuration != default) {
-            Interlocked.Exchange(ref _lastKeepAliveSlot, 0);
-            Timeouts.KeepAlive.Remove(this);
-        }
-    }
-
     // Update
 
     async ValueTask<IComputed> IComputed.Update(CancellationToken cancellationToken)
@@ -324,7 +299,8 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
 
     // IComputedImpl methods
 
-    IComputedImpl[] IComputedImpl.Used {
+    IComputedImpl[] IComputedImpl.Used => Used;
+    protected internal IComputedImpl[] Used {
         get {
             var result = new IComputedImpl[_used.Count];
             lock (Lock) {
@@ -334,7 +310,8 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
         }
     }
 
-    (ComputedInput Input, LTag Version)[] IComputedImpl.UsedBy {
+    (ComputedInput Input, LTag Version)[] IComputedImpl.UsedBy => UsedBy;
+    protected internal (ComputedInput Input, LTag Version)[] UsedBy {
         get {
             var result = new (ComputedInput Input, LTag Version)[_usedBy.Count];
             lock (Lock) {
@@ -344,9 +321,10 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
         }
     }
 
-    void IComputedImpl.AddUsed(IComputedImpl used)
+    void IComputedImpl.AddUsed(IComputedImpl used) => AddUsed(used);
+    protected internal void AddUsed(IComputedImpl used)
     {
-        // Debug.WriteLine($"{nameof(IComputedImpl.AddUsed)}: {this} <- {used}");
+        // Debug.WriteLine($"{nameof(AddUsed)}: {this} <- {used}");
         lock (Lock) {
             if (ConsistencyState != ConsistencyState.Computing) {
                 // The current computed is either:
@@ -367,7 +345,8 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
         }
     }
 
-    bool IComputedImpl.AddUsedBy(IComputedImpl usedBy)
+    bool IComputedImpl.AddUsedBy(IComputedImpl usedBy) => AddUsedBy(usedBy);
+    protected internal bool AddUsedBy(IComputedImpl usedBy)
     {
         lock (Lock) {
             switch (ConsistencyState) {
@@ -384,7 +363,8 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
         }
     }
 
-    void IComputedImpl.RemoveUsedBy(IComputedImpl usedBy)
+    void IComputedImpl.RemoveUsedBy(IComputedImpl usedBy) => RemoveUsedBy(usedBy);
+    protected internal void RemoveUsedBy(IComputedImpl usedBy)
     {
         lock (Lock) {
             if (ConsistencyState == ConsistencyState.Invalidated)
@@ -397,7 +377,8 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
         }
     }
 
-    (int OldCount, int NewCount) IComputedImpl.PruneUsedBy()
+    (int OldCount, int NewCount) IComputedImpl.PruneUsedBy() => PruneUsedBy();
+    protected internal (int OldCount, int NewCount) PruneUsedBy()
     {
         lock (Lock) {
             if (ConsistencyState != ConsistencyState.Consistent)
@@ -418,12 +399,40 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
         }
     }
 
-    void IComputedImpl.CopyUsedTo(ref ArrayBuffer<IComputedImpl> buffer)
+    void IComputedImpl.CopyUsedTo(ref ArrayBuffer<IComputedImpl> buffer) => CopyUsedTo(ref buffer);
+    protected internal void CopyUsedTo(ref ArrayBuffer<IComputedImpl> buffer)
     {
         lock (Lock) {
             var count = buffer.Count;
             buffer.EnsureCapacity(count + _used.Count);
             _used.CopyTo(buffer.Buffer.AsSpan(count));
+        }
+    }
+
+    void IComputedImpl.RenewTimeouts(bool isNew) => RenewTimeouts(isNew);
+    protected internal void RenewTimeouts(bool isNew)
+    {
+        if (ConsistencyState == ConsistencyState.Invalidated)
+            return; // We shouldn't register miss here, since it's going to be counted later anyway
+
+        var minCacheDuration = Options.MinCacheDuration;
+        if (minCacheDuration != default) {
+            var keepAliveSlot = Timeouts.GetKeepAliveSlot(Timeouts.Clock.Now + minCacheDuration);
+            var lastKeepAliveSlot = Interlocked.Exchange(ref _lastKeepAliveSlot, keepAliveSlot);
+            if (lastKeepAliveSlot != keepAliveSlot)
+                Timeouts.KeepAlive.AddOrUpdateToLater(this, keepAliveSlot);
+        }
+
+        ComputedRegistry.Instance.ReportAccess(this, isNew);
+    }
+
+    void IComputedImpl.CancelTimeouts() => CancelTimeouts();
+    protected internal void CancelTimeouts()
+    {
+        var options = Options;
+        if (options.MinCacheDuration != default) {
+            Interlocked.Exchange(ref _lastKeepAliveSlot, 0);
+            Timeouts.KeepAlive.Remove(this);
         }
     }
 
@@ -434,7 +443,7 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
         => _state = (int)newState;
 
     bool IComputedImpl.IsTransientError(Exception error) => IsTransientError(error);
-    private bool IsTransientError(Exception error)
+    protected internal bool IsTransientError(Exception error)
     {
         ITransientErrorDetector? transientErrorDetector = null;
         try {

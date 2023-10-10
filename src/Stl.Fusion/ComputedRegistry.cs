@@ -225,7 +225,8 @@ public sealed class ComputedRegistry : IDisposable
         lock (Lock) {
             // Should be called inside Lock
             var capacity = _storage.GetCapacity();
-            var nextThreshold = capacity.Clamp(1024, int.MaxValue >> 1);
+            var doubleCapacity = Math.Max(capacity, capacity << 1);
+            var nextThreshold = doubleCapacity.Clamp(1024, int.MaxValue >> 1);
             _pruneOpCounterThreshold = nextThreshold;
         }
     }

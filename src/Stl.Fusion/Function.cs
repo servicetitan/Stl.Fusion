@@ -82,7 +82,6 @@ public abstract class FunctionBase<T>(IServiceProvider services) : IFunction<T>
         CancellationToken cancellationToken = default)
     {
         context ??= ComputeContext.Current;
-
         var computed = GetExisting(input);
         return computed.TryUseExisting(context, usedBy)
             ? computed.StripToTask(context)

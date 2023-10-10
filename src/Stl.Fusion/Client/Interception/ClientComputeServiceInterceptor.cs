@@ -1,7 +1,6 @@
 using Stl.Fusion.Client.Caching;
 using Stl.Fusion.Interception;
 using Stl.Interception;
-using Stl.Internal;
 using Stl.Rpc;
 using Stl.Rpc.Infrastructure;
 

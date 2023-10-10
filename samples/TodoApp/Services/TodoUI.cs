@@ -16,7 +16,7 @@ public class TodoUI(Session session, ITodos todos) : IComputeService, IDisposabl
 
     [ComputeMethod]
     public virtual Task<Todo?> Get(string id, CancellationToken cancellationToken = default)
-        => todos.Get(session, id, cancellationToken);
+        => todos.Get(Session, id, cancellationToken);
 
     [ComputeMethod]
     public virtual Task<Todo[]> List(PageRef<string> pageRef, CancellationToken cancellationToken = default)
