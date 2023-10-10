@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using Stl.Fusion.Tests.Model;
 using Stl.Fusion.Tests.Services;
@@ -76,16 +77,19 @@ public abstract class PerformanceTestBase : FusionTestBase
         if (!isWarmup)
             await Test(title, users, extraAction, enableMutations, threadCount, iterationCount / 2, true);
 
-        var operationCount = threadCount * iterationCount;
-        var bestElapsed = TimeSpan.MaxValue;
         var runCount = isWarmup ? 1 : 3;
+        var operationCount = threadCount * iterationCount;
+        WriteLine($"  {title}:");
+        WriteLine($"    Setup: {FormatCount(operationCount)} calls ({threadCount} readers x {FormatCount(iterationCount)})");
+
+        var bestElapsed = TimeSpan.MaxValue;
+        var sb = new StringBuilder();
         for (var i = 0; i < runCount; i++) {
             var lastElapsed = await Run().ConfigureAwait(false);
+            sb.Append(FormatCount(operationCount / lastElapsed.TotalSeconds)).Append(' ');
             bestElapsed = TimeSpanExt.Min(bestElapsed, lastElapsed);
         }
-        WriteLine($"  {title}:");
-        WriteLine($"    Operations: {operationCount} ({threadCount} readers x {iterationCount})");
-        WriteLine($"    Speed:      {FormatCount(operationCount / bestElapsed.TotalSeconds)} calls/s");
+        WriteLine($"    Speed: {sb}-> {FormatCount(operationCount / bestElapsed.TotalSeconds)} calls/s");
 
         async Task<TimeSpan> Run() {
             using var stopCts = new CancellationTokenSource();
