@@ -63,23 +63,23 @@ invalidation event associated with every remote call they make.
 just once per call result, it's just a single extra message per call,
 which is sent after "call result" message.
 
-So invalidation-aware client precisely knows when every cached result is consistent.
-And this allows it to simply eliminate every call which "hits" a consistent result -
-thus eliminating the need for a network round trip at all. 
+Any invalidation-aware client knows precisely whether any result it caches 
+is consistent or not.
+This allows it to instantly respond to a call which "hits" a consistent result -
+what's the point for making a network round trip if you know for sure you 
+already have the right value to return?
 **And that's how Fusion solves network chattiness problem.**
 
-Finally, such a client behaves like any other Fusion service - 
-so the results it produces become dependencies of local Fusion services
-calling it.
-    
-Now, imagine your client-side Fusion-based service has this function:
+Finally, such clients act as "normal" Fusion services - 
+the results they produce become dependencies of other Fusion-backed
+calls. So if you write a client-side method like this one:
 ```
 string GetUserName(id)
     => (await userServiceClient.GetUser(id)).Name;
 ```
-any result it produces becomes dependent on a remote result of 
-`userServiceClient.GetUser(id)`, so they'll auto-invalidate once their
-remote dependencies will. 
+Any result it produces becomes dependent on a remote result of 
+`userServiceClient.GetUser(id)`, so it will auto-invalidate as soon as
+its remote dependency will.
 **And that's what powers all real-time UI updates in Fusion apps.**
   
 > [Lot traceability](https://en.wikipedia.org/wiki/Traceability) is probably the 
