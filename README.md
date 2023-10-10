@@ -115,7 +115,7 @@ And if you prefer text - just continue reading!
 
 ## "What is your evidence?"<sup><a href="https://www.youtube.com/watch?v=7O-aNYTtx44<">*</a></sup>
 
-Let's start with some big guns (very solid proofs):
+Let's start with some big guns:
 
 > Check out [Actual Chat] – a very new chat app built by the minds behind Fusion.
 >
