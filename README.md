@@ -42,7 +42,7 @@ So what DREAM means?
   
   > The invalidation is *cascading*: if `service1.GetUser(5)` call happened inside `GetUserPic("user@gmail.com")` call, the second result becomes dependent on the first one, and invalidation of the first one invalidates the second one. 
 
-- So Fusion not only memoizes the results of such calls, but also captures and tracks
+  So Fusion not only memoizes the results of such calls, but also captures and tracks
   the dependencies between them. The dependency graph updated in real-time, 
   but completely transparent for developers. That's why Fusion-based code 
   looks and reads exactly as your regular code - the only difference is that
