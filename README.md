@@ -160,12 +160,11 @@ Data Access Layer (DAL) against its version relying on Fusion:
 | Single reader + Fusion  | 9.54**M** | 9.28**M** | 9.05**M** | 8.92**M** |
 | 960 readers + Fusion | 145.95**M** | 140.29**M** | 137.70**M** | 141.40**M** |
 
+The raw output for this test on on Ryzen Threadripper 3960X is [here](./docs/performance-test-results/net8-amd.txt).
+
 Fusion's transparent caching ensures every API call result your code produces is cached, and moreover, even when such results are recomputed, they mostly use other cached dependencies instead of hitting a much slower storage (DB in this case).
 
 And interestingly, even when there are no "layers" of dependencies (think only "layer zero" is there), Fusion manages to speed up the API calls this test runs by **8,000 to 10,000** times.
-
-You can find the raw output for this test [here](./docs/performance-test-results/net8-amd.txt).
-
 
 ## How Fusion works?
 
