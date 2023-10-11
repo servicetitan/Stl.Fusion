@@ -161,12 +161,15 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
                         continue;
 
                     // Recovery: re-send keep-alive object set & all outbound calls
-                    _ = SharedObjects.Maintain(connectionState.Value, readerAbortToken);
-                    _ = RemoteObjects.Maintain(connectionState.Value, readerAbortToken);
-                    foreach (var outboundCall in OutboundCalls) {
-                        readerAbortToken.ThrowIfCancellationRequested();
-                        await outboundCall.Reconnect(isPeerChanged, readerAbortToken).ConfigureAwait(false);
-                    }
+                    var connectionStateValue = connectionState.Value;
+                    _ = Task.Run(async () => {
+                        _ = SharedObjects.Maintain(connectionStateValue, readerAbortToken);
+                        _ = RemoteObjects.Maintain(connectionStateValue, readerAbortToken);
+                        foreach (var outboundCall in OutboundCalls) {
+                            readerAbortToken.ThrowIfCancellationRequested();
+                            await outboundCall.Reconnect(isPeerChanged, readerAbortToken).ConfigureAwait(false);
+                        }
+                    }, readerAbortToken);
 
 #pragma warning disable CA2012
                     if (semaphore == null)
