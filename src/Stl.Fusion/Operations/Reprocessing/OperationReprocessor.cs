@@ -1,5 +1,6 @@
 using Stl.Fusion.Operations.Internal;
 using Stl.Generators;
+using Stl.OS;
 using Errors = Stl.Internal.Errors;
 
 namespace Stl.Fusion.Operations.Reprocessing;
@@ -29,11 +30,17 @@ public record OperationReprocessorOptions
     public IMomentClock? DelayClock { get; init; }
     public Func<ICommand, CommandContext, bool> Filter { get; init; } = DefaultFilter;
 
-    // We don't want to reprocess any UI commands:
-    // - they're anyway reprocessed on the server side
-    // - so reprocessing them on UI as well is kinda excessive.
     public static bool DefaultFilter(ICommand command, CommandContext context)
-        => !context.Commander.Services.IsScoped(); // Commander is a scoped service instance
+    {
+        if (FusionSettings.Mode != FusionMode.Server)
+            return false; // Only server can do the reprocessing
+
+        // No reprocessing for commands running from scoped Commander instances,
+        // i.e. no reprocessing for UI commands:
+        // - the underlying backend commands are anyway reprocessed on the server side
+        // - so reprocessing UI commands means N*N times reprocessing.
+        return !context.Commander.Services.IsScoped();
+    }
 }
 
 /// <summary>
