@@ -5,6 +5,8 @@ using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework.Npgsql.Operations;
 
+#pragma warning disable EF1002
+
 public class NpgsqlDbOperationLogChangeTracker<TDbContext>(
     NpgsqlDbOperationLogChangeTrackingOptions<TDbContext> options,
     IServiceProvider services

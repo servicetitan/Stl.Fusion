@@ -25,21 +25,22 @@
     <MicrosoftExtensionsVersion6>$(AspNetCoreVersion6)</MicrosoftExtensionsVersion6>
     <CSharpVersion>4.4.*</CSharpVersion>
     <!-- EF Core -->
-    <EntityFrameworkCoreVersion>$(AspNetCoreVersion7)</EntityFrameworkCoreVersion>
+    <EntityFrameworkCoreVersion>$(AspNetCoreVersion)</EntityFrameworkCoreVersion>
     <EntityFrameworkCoreVersion7>$(AspNetCoreVersion7)</EntityFrameworkCoreVersion7>
     <EntityFrameworkCoreVersion6>$(AspNetCoreVersion6)</EntityFrameworkCoreVersion6>
     <EntityFrameworkCoreVersion5>$(AspNetCoreVersion5)</EntityFrameworkCoreVersion5>
     <EntityFrameworkCoreVersion3>$(AspNetCoreVersion3)</EntityFrameworkCoreVersion3>
-    <EntityFrameworkCoreNpgsqlVersion>7.0.4</EntityFrameworkCoreNpgsqlVersion>
+    <EntityFrameworkCoreNpgsqlVersion>8.0.0-rc.2</EntityFrameworkCoreNpgsqlVersion>
     <EntityFrameworkCoreNpgsqlVersion7>7.0.4</EntityFrameworkCoreNpgsqlVersion7>
     <EntityFrameworkCoreNpgsqlVersion6>$(EntityFrameworkCoreVersion6)</EntityFrameworkCoreNpgsqlVersion6>
     <EntityFrameworkCoreNpgsqlVersion5>$(EntityFrameworkCoreVersion5)</EntityFrameworkCoreNpgsqlVersion5>
     <EntityFrameworkCoreNpgsqlVersion3>$(EntityFrameworkCoreVersion3)</EntityFrameworkCoreNpgsqlVersion3>
-    <MySqlConnectorVersion>2.2.*</MySqlConnectorVersion>
-    <MySqlConnectorVersion6>2.1.*</MySqlConnectorVersion6>
+    <MySqlConnectorVersion>2.3.0-beta.3</MySqlConnectorVersion>
+    <MySqlConnectorVersion7>2.2.*</MySqlConnectorVersion7>
+    <MySqlConnectorVersion6>$(MySqlConnectorVersion7)</MySqlConnectorVersion6>
     <MySqlConnectorVersion5>$(MySqlConnectorVersion6)</MySqlConnectorVersion5>
     <MySqlConnectorVersion3>0.*</MySqlConnectorVersion3>
-    <EntityFrameworkCoreMySqlVersion>$(EntityFrameworkCoreVersion)</EntityFrameworkCoreMySqlVersion>
+    <EntityFrameworkCoreMySqlVersion>8.0.0-beta.1</EntityFrameworkCoreMySqlVersion>
     <EntityFrameworkCoreMySqlVersion7>$(EntityFrameworkCoreVersion7)</EntityFrameworkCoreMySqlVersion7>
     <EntityFrameworkCoreMySqlVersion6>$(EntityFrameworkCoreVersion6)</EntityFrameworkCoreMySqlVersion6>
     <EntityFrameworkCoreMySqlVersion5>$(EntityFrameworkCoreVersion5)</EntityFrameworkCoreMySqlVersion5>

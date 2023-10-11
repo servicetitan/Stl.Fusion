@@ -33,6 +33,7 @@
     <PackageReference Include="MySqlConnector" VersionOverride="$(MySqlConnectorVersion7)" />
     -->
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" VersionOverride="$(EntityFrameworkCoreMySqlVersion7)" />
+    <PackageReference Include="MySqlConnector" VersionOverride="$(MySqlConnectorVersion7)" />
     <PackageReference Include="System.Drawing.Common" VersionOverride="$(SystemXxxVersion7)" />
   </ItemGroup>
   <ItemGroup Condition="$(TargetFramework.StartsWith('net6'))">
