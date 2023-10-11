@@ -3,7 +3,8 @@ using Stl.CommandR.Internal;
 
 namespace Stl.CommandR;
 
-public abstract class CommandContext : ICommandContext, IHasServices, IAsyncDisposable
+public abstract class CommandContext(ICommander commander)
+    : ICommandContext, IAsyncDisposable
 {
     private static readonly ConcurrentDictionary<Type, Type> CommandContextTypeCache = new();
 
@@ -11,7 +12,7 @@ public abstract class CommandContext : ICommandContext, IHasServices, IAsyncDisp
     public static CommandContext? Current => CurrentLocal.Value;
 
     protected internal IServiceScope ServiceScope { get; protected init; } = null!;
-    public ICommander Commander { get; }
+    public ICommander Commander { get; } = commander;
     public abstract ICommand UntypedCommand { get; }
     public abstract Task UntypedResultTask { get; }
     public abstract Result<object> UntypedResult { get; }
@@ -59,9 +60,6 @@ public abstract class CommandContext : ICommandContext, IHasServices, IAsyncDisp
     }
 
     // Constructors
-
-    protected CommandContext(ICommander commander)
-        => Commander = commander;
 
     // IAsyncDisposable
 
