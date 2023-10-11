@@ -27,6 +27,13 @@ public record OperationReprocessorOptions
     public int MaxRetryCount { get; init; } = 3;
     public RetryDelaySeq RetryDelays { get; init; } = RetryDelaySeq.Exp(0.50, 3, 0.33);
     public IMomentClock? DelayClock { get; init; }
+    public Func<ICommand, CommandContext, bool> Filter { get; init; } = DefaultFilter;
+
+    // We don't want to reprocess any UI commands:
+    // - they're anyway reprocessed on the server side
+    // - so reprocessing them on UI as well is kinda excessive.
+    public static bool DefaultFilter(ICommand command, CommandContext context)
+        => !context.Commander.Services.IsScoped(); // Commander is a scoped service instance
 }
 
 /// <summary>
@@ -97,11 +104,13 @@ public class OperationReprocessor(
         var isReprocessingAllowed =
             context.IsOutermost // Should be a top-level command
             && command is not IMetaCommand // No reprocessing for meta commands
-            && !Computed.IsInvalidating();
+            && !Computed.IsInvalidating()
+            && Options.Filter.Invoke(command, context);
         if (!isReprocessingAllowed) {
             await context.InvokeRemainingHandlers(cancellationToken).ConfigureAwait(false);
             return;
         }
+
         if (CommandContext != null)
             throw Errors.InternalError(
                 $"{GetType().GetName()} cannot be used more than once in the same command execution pipeline.");
