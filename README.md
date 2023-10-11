@@ -136,10 +136,8 @@ delivering real-time updates to 3 browser windows:
 
 ![](docs/img/Stl-Fusion-Chat-Sample.gif)
 
-<img src="https://img.shields.io/badge/-Live!-red" valign="middle">~~Play with 
-[live version of this sample](https://fusion-samples.servicetitan.com) right now~~ &ndash; 
-sorry, it is temporarily broken due to issues with .NET 8 RC1 and Docker.
-**But you can still run it locally.**
+<img src="https://img.shields.io/badge/-Live!-red" valign="middle"> Play with 
+[live version of this sample](https://fusion-samples.servicetitan.com) right now!
 
 The sample supports [**both** Blazor Server and Blazor WebAssembly 
 hosting modes](https://docs.microsoft.com/en-us/aspnet/core/blazor/hosting-models?view=aspnetcore-3.1).
