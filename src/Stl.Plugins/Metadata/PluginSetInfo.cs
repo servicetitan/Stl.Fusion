@@ -2,7 +2,7 @@ namespace Stl.Plugins.Metadata;
 
 public class PluginSetInfo
 {
-    public static PluginSetInfo Empty { get; } = new(
+    public static readonly PluginSetInfo Empty = new(
         ImmutableDictionary<TypeRef, PluginInfo>.Empty,
         ImmutableDictionary<TypeRef, ImmutableHashSet<TypeRef>>.Empty,
         ImmutableDictionary<TypeRef, ImmutableArray<TypeRef>>.Empty);
@@ -81,7 +81,7 @@ public class PluginSetInfo
 
     // Private methods
 
-    // This method is used instead of .ToHashSet to eliminate #if NETFRAMEWORK 
+    // This method is used instead of .ToHashSet to eliminate #if NETFRAMEWORK
     private static HashSet<TSource> ToHashSet<TSource>(IEnumerable<TSource> source)
         => new(source);
 

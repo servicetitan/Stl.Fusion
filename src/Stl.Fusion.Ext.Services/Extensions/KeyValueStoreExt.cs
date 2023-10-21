@@ -2,7 +2,7 @@ namespace Stl.Fusion.Extensions;
 
 public static class KeyValueStoreExt
 {
-    public static ListFormat ListFormat { get; } = ListFormat.SlashSeparated;
+    public static ListFormat ListFormat { get; set; } = ListFormat.SlashSeparated;
     public static char Delimiter => ListFormat.Delimiter;
 
     // Set

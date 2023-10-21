@@ -1,4 +1,4 @@
-// ReSharper disable UnusedAutoPropertyAccessor.Global
+﻿// ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable ArrangeConstructorOrDestructorBody
 using Cysharp.Text;
@@ -10,7 +10,7 @@ namespace Stl.Interception;
 
 public abstract partial record ArgumentList
 {
-    public static ImmutableArray<Type> Types { get; } = ImmutableArray.Create(new [] {
+    public static readonly ImmutableArray<Type> Types = ImmutableArray.Create(new [] {
         typeof(ArgumentList0),
         typeof(ArgumentList<>),
         typeof(ArgumentList<, >),

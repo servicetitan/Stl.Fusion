@@ -7,7 +7,7 @@ namespace Stl.Serialization.Internal;
 /// </summary>
 public sealed class NoneByteSerializer : IByteSerializer
 {
-    public static NoneByteSerializer Instance { get; } = new();
+    public static readonly NoneByteSerializer Instance = new();
 
     public object? Read(ReadOnlyMemory<byte> data, Type type, out int readLength)
         => throw Errors.NoSerializer();
@@ -24,7 +24,7 @@ public sealed class NoneByteSerializer : IByteSerializer
 /// </summary>
 public sealed class NoneByteSerializer<T> : IByteSerializer<T>
 {
-    public static NoneByteSerializer<T> Instance { get; } = new();
+    public static readonly NoneByteSerializer<T> Instance = new();
 
     public T Read(ReadOnlyMemory<byte> data, out int readLength)
         => throw Errors.NoSerializer();

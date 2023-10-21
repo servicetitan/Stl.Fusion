@@ -19,7 +19,7 @@ public record DivCommand : ICommand<double>
 
 public record RecSumCommand : ICommand<double>
 {
-    public static AsyncLocal<object> Tag { get; } = new();
+    public static readonly AsyncLocal<object> Tag = new();
 
     public double[] Arguments { get; init; } = Array.Empty<double>();
 }

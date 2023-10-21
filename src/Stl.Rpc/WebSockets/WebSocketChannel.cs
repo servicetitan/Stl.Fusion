@@ -12,7 +12,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
 {
     public record Options
     {
-        public static Options Default { get; } = new();
+        public static readonly Options Default = new();
 
         public bool OwnsWebSocket { get; init; } = true;
         public int WriteFrameSize { get; init; } = 4400;

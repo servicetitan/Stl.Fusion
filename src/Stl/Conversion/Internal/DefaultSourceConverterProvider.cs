@@ -23,22 +23,22 @@ public class DefaultSourceConverterProvider<TSource>(IServiceProvider services) 
 
         // 0. Can we simply cast to base / descendant?
         if (tTarget.IsAssignableFrom(tSource)) {
-            var pInstance =
+            var fInstance =
                 typeof(CastToBaseConverter<,>)
                     .MakeGenericType(tSource, tTarget)
-                    .GetProperty(
+                    .GetField(
                         nameof(CastToBaseConverter<TTarget, TTarget>.Instance),
                         BindingFlags.Static | BindingFlags.Public);
-            return (Converter<TSource, TTarget>) pInstance!.GetValue(null)!;
+            return (Converter<TSource, TTarget>) fInstance!.GetValue(null)!;
         }
         if (tSource.IsAssignableFrom(tTarget)) {
-            var pInstance =
+            var fInstance =
                 typeof(CastToDescendantConverter<,>)
                     .MakeGenericType(tSource, tTarget)
-                    .GetProperty(
+                    .GetField(
                         nameof(CastToDescendantConverter<TTarget, TTarget>.Instance),
                         BindingFlags.Static | BindingFlags.Public);
-            return (Converter<TSource, TTarget>) pInstance!.GetValue(null)!;
+            return (Converter<TSource, TTarget>) fInstance!.GetValue(null)!;
         }
 
         // 1. Is there IConverter<,> service?

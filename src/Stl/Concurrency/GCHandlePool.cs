@@ -4,7 +4,7 @@ public sealed class GCHandlePool(GCHandlePool.Options settings) : IDisposable
 {
     public record Options
     {
-        public static Options Default { get; } = new();
+        public static readonly Options Default = new();
 
         public int Capacity { get; init; } = 1024;
         public GCHandleType HandleType { get; init; } = GCHandleType.Weak;

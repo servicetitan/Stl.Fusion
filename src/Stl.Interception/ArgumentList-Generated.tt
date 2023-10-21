@@ -49,7 +49,7 @@ namespace Stl.Interception;
 
 public abstract partial record ArgumentList
 {
-    public static ImmutableArray<Type> Types { get; } = ImmutableArray.Create(new [] {
+    public static readonly ImmutableArray<Type> Types = ImmutableArray.Create(new [] {
         typeof(ArgumentList0),
 <# for (var itemCount = 1; itemCount <= maxItemCount; itemCount++) {
 #>

@@ -10,7 +10,7 @@ public static class HardwareInfo
         // Environment.TickCount is negative in WebAssembly @ startup
         Environment.TickCount - (RefreshIntervalTicks << 1);
 
-    public static bool IsSingleThreaded { get; } = OSInfo.IsWebAssembly;
+    public static readonly bool IsSingleThreaded = OSInfo.IsWebAssembly;
 
     public static int ProcessorCount {
         get {

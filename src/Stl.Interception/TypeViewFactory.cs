@@ -9,15 +9,12 @@ public interface ITypeViewFactory
         where TView : class;
 }
 
-public class TypeViewFactory : ITypeViewFactory
+public class TypeViewFactory(TypeViewInterceptor interceptor) : ITypeViewFactory
 {
-    public static ITypeViewFactory Default { get; } =
+    public static ITypeViewFactory Default { get; set; } =
         new TypeViewFactory(new TypeViewInterceptor(DependencyInjection.ServiceProviderExt.Empty));
 
-    protected Interceptor Interceptor { get; }
-
-    public TypeViewFactory(TypeViewInterceptor interceptor)
-        => Interceptor = interceptor;
+    protected Interceptor Interceptor { get; } = interceptor;
 
     public object CreateView(object implementation, Type viewType)
     {

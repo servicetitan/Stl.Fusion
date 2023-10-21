@@ -2,7 +2,7 @@ namespace Stl.DependencyInjection;
 
 public static class ServiceProviderExt
 {
-    public static IServiceProvider Empty { get; } = new ServiceCollection().BuildServiceProvider();
+    public static readonly IServiceProvider Empty = new ServiceCollection().BuildServiceProvider();
 
     // Logging extensions
 

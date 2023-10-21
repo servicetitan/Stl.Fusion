@@ -6,7 +6,7 @@ namespace Stl.Fusion.Blazor;
 
 public class BlazorModeHelper(NavigationManager navigator)
 {
-    public static bool IsBlazorServer { get; } = OSInfo.Kind != OSKind.WebAssembly;
+    public static readonly bool IsBlazorServer = OSInfo.Kind != OSKind.WebAssembly;
 
     protected NavigationManager Navigator { get; } = navigator;
 

@@ -7,7 +7,7 @@ namespace Stl.Serialization.Internal;
 /// </summary>
 public sealed class NullTextSerializer : ITextSerializer
 {
-    public static NullTextSerializer Instance { get; } = new();
+    public static readonly NullTextSerializer Instance = new();
 
     public bool PreferStringApi => false;
 
@@ -50,7 +50,7 @@ public sealed class NullTextSerializer : ITextSerializer
 /// </summary>
 public sealed class NullTextSerializer<T> : ITextSerializer<T>
 {
-    public static NullTextSerializer<T> Instance { get; } = new();
+    public static readonly NullTextSerializer<T> Instance = new();
 
     public bool PreferStringApi => false;
 

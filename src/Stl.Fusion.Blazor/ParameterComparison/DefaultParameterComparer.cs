@@ -8,7 +8,7 @@ public class DefaultParameterComparer : ParameterComparer
         .GetInterfaces()
         .Single(x => Equals(x.Name, "IEventCallback"));
 
-    public static ParameterComparer Instance { get; } = new DefaultParameterComparer();
+    public static ParameterComparer Instance { get; set; } = new DefaultParameterComparer();
 
     // Mostly copied from Microsoft.AspNetCore.Components.ChangeDetection
     public override bool AreEqual(object? oldValue, object? newValue)

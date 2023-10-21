@@ -10,9 +10,9 @@ public sealed record Sampler(
     Func<Sampler> Duplicate)
 {
 #pragma warning disable CS8603
-    public static Sampler Always { get; } =
+    public static readonly Sampler Always =
         new(nameof(Always), 1, static () => true, () => Always);
-    public static Sampler Never { get; } =
+    public static readonly Sampler Never =
         new(nameof(Never), 0, static () => false, () => Never);
 #pragma warning restore CS8603
 

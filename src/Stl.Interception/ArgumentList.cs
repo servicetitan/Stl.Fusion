@@ -6,7 +6,7 @@ public abstract partial record ArgumentList
 {
     protected static readonly ConcurrentDictionary<(Type, MethodInfo), Func<object, ArgumentList, object?>> InvokerCache = new();
 
-    public static ArgumentList Empty { get; } = new ArgumentList0();
+    public static readonly ArgumentList Empty = new ArgumentList0();
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
     public abstract int Length { get; }

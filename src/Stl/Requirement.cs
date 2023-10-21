@@ -13,15 +13,15 @@ public abstract record Requirement
     public abstract object CheckUntyped([NotNull] object? value);
 #endif
 
-    public static FuncRequirement<T> New<T>(ExceptionBuilder exceptionBuilder, Func<T?, bool> validator) 
+    public static FuncRequirement<T> New<T>(ExceptionBuilder exceptionBuilder, Func<T?, bool> validator)
         => new(exceptionBuilder, validator);
-    public static FuncRequirement<T> New<T>(Func<T?, bool> validator) 
+    public static FuncRequirement<T> New<T>(Func<T?, bool> validator)
         => new(validator);
 }
 
 public abstract record Requirement<T> : Requirement
 {
-    private const string MustExistPropertyName = "MustExist";
+    private const string MustExistFieldOrPropertyName = "MustExist";
     // ReSharper disable once StaticMemberInGenericType
     private static readonly object MustExistLock = new();
     private static volatile Requirement<T>? _mustExist;
@@ -36,10 +36,10 @@ public abstract record Requirement<T> : Requirement
 
                 var type = typeof(T);
                 var result = type
-                    .GetProperty(MustExistPropertyName, BindingFlags.Public | BindingFlags.Static)
+                    .GetField(MustExistFieldOrPropertyName, BindingFlags.Public | BindingFlags.Static)
                     ?.GetValue(null) as Requirement<T>;
                 result ??= type
-                    .GetField(MustExistPropertyName, BindingFlags.Public | BindingFlags.Static)
+                    .GetProperty(MustExistFieldOrPropertyName, BindingFlags.Public | BindingFlags.Static)
                     ?.GetValue(null) as Requirement<T>;
                 result ??= MustExistRequirement<T>.Default;
                 return _mustExist = result;

@@ -20,7 +20,7 @@ public static class ByteSerializer
 
 public static class ByteSerializer<T>
 {
-    public static IByteSerializer<T> Default { get; } = ByteSerializer.Default.ToTyped<T>();
+    public static readonly IByteSerializer<T> Default = ByteSerializer.Default.ToTyped<T>();
     public static readonly IByteSerializer<T> None = NoneByteSerializer<T>.Instance;
     public static readonly IByteSerializer<T> Null = NullByteSerializer<T>.Instance;
 

@@ -3,7 +3,7 @@ namespace Stl.Conversion.Internal;
 public class CastToDescendantConverter<TSource, TTarget> : Converter<TSource, TTarget>
     where TTarget : TSource
 {
-    public static CastToDescendantConverter<TSource, TTarget> Instance { get; } = new();
+    public static readonly CastToDescendantConverter<TSource, TTarget> Instance = new();
 
     public override TTarget Convert(TSource source)
         => (TTarget) source!;

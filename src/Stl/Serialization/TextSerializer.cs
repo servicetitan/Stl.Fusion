@@ -14,7 +14,7 @@ public static class TextSerializer
 
 public static class TextSerializer<T>
 {
-    public static ITextSerializer<T> Default { get; } = TextSerializer.Default.ToTyped<T>();
+    public static readonly ITextSerializer<T> Default = TextSerializer.Default.ToTyped<T>();
     public static readonly ITextSerializer<T> None = NoneTextSerializer<T>.Instance;
     public static readonly ITextSerializer<T> Null  = NullTextSerializer<T>.Instance;
 

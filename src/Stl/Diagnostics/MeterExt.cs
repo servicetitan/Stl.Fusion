@@ -4,5 +4,5 @@ namespace Stl.Diagnostics;
 
 public static class MeterExt
 {
-    public static Meter Unknown { get; } = new("<Unknown>");
+    public static readonly Meter Unknown = new("<Unknown>");
 }

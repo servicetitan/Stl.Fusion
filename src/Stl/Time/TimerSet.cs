@@ -3,9 +3,7 @@ namespace Stl.Time;
 public record TimerSetOptions
 {
     public static readonly TimerSetOptions Default = new();
-
-    // ReSharper disable once StaticMemberInGenericType
-    public static TimeSpan MinQuanta { get; } = TimeSpan.FromMilliseconds(10);
+    public static readonly TimeSpan MinQuanta = TimeSpan.FromMilliseconds(10);
 
     public TimeSpan Quanta { get; init; } = TimeSpan.FromSeconds(1);
     public IMomentClock Clock { get; init; } = MomentClockSet.Default.CpuClock;

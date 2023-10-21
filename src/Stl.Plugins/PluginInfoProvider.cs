@@ -10,7 +10,7 @@ public interface IPluginInfoProvider
     /// </summary>
     public class Query
     {
-        public static Query Instance { get; } = new();
+        public static readonly Query Instance = new();
     }
 
     ImmutableHashSet<TypeRef> GetDependencies(Type pluginType);

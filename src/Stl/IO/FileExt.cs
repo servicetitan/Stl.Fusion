@@ -4,8 +4,8 @@ namespace Stl.IO;
 
 public static class FileExt
 {
-    public static Encoding DefaultReadEncoding { get; } = Encoding.UTF8;
-    public static Encoding DefaultWriteEncoding { get; } = new UTF8Encoding(false, true);
+    public static readonly Encoding DefaultReadEncoding = Encoding.UTF8;
+    public static readonly Encoding DefaultWriteEncoding = new UTF8Encoding(false, true);
 
     public static Task WriteText(string path, string? contents, CancellationToken cancellationToken = default)
         => WriteText(path, contents, null, cancellationToken);

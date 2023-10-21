@@ -5,8 +5,10 @@ namespace Stl.Requirements;
 
 public readonly record struct ExceptionBuilder
 {
-    public static Func<string, Exception> DefaultExceptionFactory { get; } = message => new ValidationException(message);
-    public static string DefaultMessageTemplate { get; } = "{0}: validation failed.";
+    public static Func<string, Exception> DefaultExceptionFactory { get; set; }
+        = message => new ValidationException(message);
+    public static string DefaultMessageTemplate { get; set; }
+        = "{0}: validation failed.";
 
     public string? MessageTemplate { get; init; }
     public string? TargetName { get; init; }
@@ -41,7 +43,7 @@ public readonly record struct ExceptionBuilder
                 string.Format(CultureInfo.InvariantCulture, message, targetName, value)),
             Func<Exception> simple => simple.Invoke(),
             _ => DefaultExceptionFactory.Invoke(
-                string.Format(CultureInfo.InvariantCulture, message, targetName, value)), 
+                string.Format(CultureInfo.InvariantCulture, message, targetName, value)),
         };
         return exception;
     }

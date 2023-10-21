@@ -3,8 +3,8 @@ namespace Stl.Multitenancy;
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 public partial record Tenant : IHasId<Symbol>
 {
-    public static Tenant Default { get; } = new(Symbol.Empty, "The only tenant", "");
-    public static Tenant Dummy { get; } = new("*", "Example tenant", "__example");
+    public static readonly Tenant Default = new(Symbol.Empty, "The only tenant", "");
+    public static readonly Tenant Dummy = new("*", "Example tenant", "__example");
 
     [DataMember, MemoryPackOrder(0)]
     public Symbol Id { get; init; } = Symbol.Empty;

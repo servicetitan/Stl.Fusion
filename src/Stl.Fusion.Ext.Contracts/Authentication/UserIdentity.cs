@@ -8,7 +8,7 @@ public readonly partial struct UserIdentity : IEquatable<UserIdentity>
     private static readonly ListFormat IdFormat = ListFormat.SlashSeparated;
 
     public static readonly UserIdentity None;
-    public static string DefaultSchema { get; } = "Default";
+    public static string DefaultSchema { get; set; } = "Default";
 
     [DataMember(Order = 0), MemoryPackOrder(0)]
     public Symbol Id { get; }
