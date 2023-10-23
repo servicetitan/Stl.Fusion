@@ -4,9 +4,9 @@ namespace Stl.CommandR.Rpc;
 
 public class RpcOutboundCommandCallMiddleware : RpcOutboundMiddleware
 {
-    public const int DefaultPriority = 10;
-    public static readonly TimeSpan DefaultConnectTimeout = TimeSpan.FromSeconds(1.5);
-    public static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(10);
+    public static TimeSpan DefaultConnectTimeout { get; set; } = TimeSpan.FromSeconds(1.5);
+    public static TimeSpan DefaultTimeout { get; set; } = TimeSpan.FromSeconds(10);
+    public int DefaultPriority { get; set; } = 10;
 
     public TimeSpan ConnectTimeout { get; set; } = DefaultConnectTimeout;
     public TimeSpan Timeout { get; set; } = DefaultTimeout;
