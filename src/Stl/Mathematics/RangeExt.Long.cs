@@ -18,7 +18,7 @@ public static partial class RangeExt
         => range.Start <= containedRange.Start && containedRange.End <= range.End;
 
     public static bool Overlaps(this Range<long> range, Range<long> otherRange)
-        => range.IntersectWith(otherRange).Size() > 0;
+        => !range.IntersectWith(otherRange).IsEmptyOrNegative;
 
     public static Range<long> MinMaxWith(this Range<long> range, Range<long> other)
         => (Math.Min(range.Start, other.Start), Math.Max(range.End, other.End));
@@ -28,6 +28,6 @@ public static partial class RangeExt
     public static Range<long> IntersectWith(this Range<long> range, Range<long> other)
     {
         var result = new Range<long>(Math.Max(range.Start, other.Start), Math.Min(range.End, other.End));
-        return result.Size() < 0 ? default : result;
+        return result.IsEmptyOrNegative ? default : result;
     }
 }
