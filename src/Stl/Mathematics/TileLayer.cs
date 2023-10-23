@@ -63,6 +63,9 @@ public class TileLayer<T>
 
     public Tile<T>[] GetCoveringTiles(Range<T> range)
     {
+        if (range.IsEmptyOrNegative)
+            return Array.Empty<Tile<T>>();
+
         var tiles = ArrayBuffer<Tile<T>>.Lease(true);
         try {
             GetCoveringTiles(range, ref tiles);
@@ -104,6 +107,8 @@ public class TileLayer<T>
             GetCoveringTiles(range, ref appendTo);
             return;
         }
+        if (range.IsEmptyOrNegative)
+            return;
 
         var tiles = ArrayBuffer<Tile<T>>.Lease(true);
         try {

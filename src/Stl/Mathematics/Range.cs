@@ -30,6 +30,8 @@ public readonly partial struct Range<T> : IEquatable<Range<T>>
     public bool IsEmpty => EqualityComparer<T>.Default.Equals(Start, End);
     [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
     public bool IsNegative => Comparer<T>.Default.Compare(Start, End) > 0;
+    [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
+    public bool IsEmptyOrNegative => Comparer<T>.Default.Compare(Start, End) >= 0;
 
     /// <summary>
     /// Creates a new range.

@@ -63,6 +63,11 @@ public class TileStackTest(ITestOutputHelper @out) : TestBase(@out)
         s.TryGetSmallestCoveringTile((-17, 0), out tile).Should().BeTrue();
         tile.Should().Be(new Tile<long>(-64, 0, layer1));
 
+        layer0.GetCoveringTiles((0, 0)).Should().BeEmpty();
+        layer0.GetCoveringTiles((0, -1)).Should().BeEmpty();
+        layer0.GetCoveringTiles((-16, -16)).Should().BeEmpty();
+        layer0.GetCoveringTiles((-16, -17)).Should().BeEmpty();
+
         layer0.GetCoveringTiles((-1, 1)).Select(t => t.Range)
             .Should()
             .BeEquivalentTo(new Range<long>[] {
@@ -76,6 +81,10 @@ public class TileStackTest(ITestOutputHelper @out) : TestBase(@out)
                 (-64, 0),
                 (0, 64),
             });
+
+        s.GetOptimalCoveringTiles((0, 0)).Should().BeEmpty();
+        s.GetOptimalCoveringTiles((0, -1)).Should().BeEmpty();
+        s.GetOptimalCoveringTiles((16, -1000)).Should().BeEmpty();
 
         s.GetOptimalCoveringTiles((-17, 257)).Select(t => t.Range)
             .Should()
