@@ -6,13 +6,17 @@ public static partial class RangeExt
         => Math.Abs(range.Start - otherRange.Start) < epsilon
             && Math.Abs(range.End - otherRange.End) < epsilon;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float Size(this Range<float> range)
         => range.End - range.Start;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Range<float> Move(this Range<float> range, float offset)
         => new(range.Start + offset, range.End + offset);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Range<float> Expand(this Range<float> range, float offset)
         => new(range.Start - offset, range.End + offset);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Range<float> Resize(this Range<float> range, float size)
         => new(range.Start, range.Start + size);
 
@@ -32,6 +36,6 @@ public static partial class RangeExt
     public static Range<float> IntersectWith(this Range<float> range, Range<float> other)
     {
         var result = new Range<float>(Math.Max(range.Start, other.Start), Math.Min(range.End, other.End));
-        return result.IsEmptyOrNegative ? default : result;
+        return result.Positive();
     }
 }

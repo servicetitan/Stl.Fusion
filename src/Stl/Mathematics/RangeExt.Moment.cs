@@ -2,13 +2,17 @@ namespace Stl.Mathematics;
 
 public static partial class RangeExt
 {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static TimeSpan Size(this Range<Moment> range)
         => range.End - range.Start;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Range<Moment> Move(this Range<Moment> range, TimeSpan offset)
         => new(range.Start + offset, range.End + offset);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Range<Moment> Expand(this Range<Moment> range, TimeSpan offset)
         => new(range.Start - offset, range.End + offset);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Range<Moment> Resize(this Range<Moment> range, TimeSpan size)
         => new(range.Start, range.Start + size);
 
@@ -28,6 +32,6 @@ public static partial class RangeExt
     public static Range<Moment> IntersectWith(this Range<Moment> range, Range<Moment> other)
     {
         var result = new Range<Moment>(Moment.Max(range.Start, other.Start), Moment.Min(range.End, other.End));
-        return result.Size() < TimeSpan.Zero ? default : result;
+        return result.Positive();
     }
 }

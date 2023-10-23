@@ -50,6 +50,7 @@ public readonly partial struct Range<T> : IEquatable<Range<T>>
     /// </summary>
     /// <param name="start"><see cref="Start"/> property value.</param>
     /// <param name="end"><see cref="End"/> property value.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Deconstruct(out T start, out T end)
     {
         start = Start;
@@ -74,16 +75,23 @@ public readonly partial struct Range<T> : IEquatable<Range<T>>
     /// </summary>
     /// <param name="source">Source tuple.</param>
     /// <returns>A range constructed from a tuple.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static implicit operator Range<T>((T Start, T End) source)
         => new(source.Start, source.End);
 
     // Misc. operations
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Range<T> Positive()
+        => IsNegative ? new Range<T>(Start, Start) : this;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public Range<T> Normalize()
         => IsNegative ? -this : this;
 
     // Equality
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool Equals(Range<T> other)
     {
         var equalityComparer = EqualityComparer<T>.Default;
@@ -103,6 +111,7 @@ public readonly partial struct Range<T> : IEquatable<Range<T>>
     /// <param name="left">Left operand.</param>
     /// <param name="right">Right operand.</param>
     /// <returns><code>true</code> if two ranges are equal; otherwise, <code>false</code>.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator ==(Range<T> left, Range<T> right)
         => left.Equals(right);
 
@@ -112,9 +121,11 @@ public readonly partial struct Range<T> : IEquatable<Range<T>>
     /// <param name="left">Left operand.</param>
     /// <param name="right">Right operand.</param>
     /// <returns><code>true</code> if two ranges aren't equal; otherwise, <code>false</code>.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool operator !=(Range<T> left, Range<T> right)
         => !left.Equals(right);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Range<T> operator -(Range<T> range)
             => new(range.End, range.Start);
 }
