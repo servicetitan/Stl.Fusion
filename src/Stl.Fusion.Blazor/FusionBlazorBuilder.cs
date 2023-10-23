@@ -31,6 +31,6 @@ public readonly struct FusionBlazorBuilder
             c.GetRequiredService<UIActionFailureTracker.Options>(), c));
         services.TryAddScoped(c => new BlazorModeHelper(
             c.GetRequiredService<NavigationManager>()));
-        services.TryAddScoped(_ => new BlazorCircuitContext());
+        services.TryAddScoped(c => new BlazorCircuitContext(c));
     }
 }

@@ -3,28 +3,33 @@ using Stl.Internal;
 
 namespace Stl.Fusion.Blazor;
 
-public class BlazorCircuitContext : IDisposable
+public class BlazorCircuitContext(IServiceProvider services) : ProcessorBase
 {
-    private volatile int _isDisposing;
+    private static long _lastId;
+
+    private readonly TaskCompletionSource<Unit> _whenReady = TaskCompletionSourceExt.New<Unit>();
     private volatile int _isPrerendering;
     private ComponentBase? _rootComponent;
+    private Dispatcher? _dispatcher;
+    private ILogger? _log;
 
+    protected ILogger Log => _log ??= Services.LogFor(GetType());
+
+    public IServiceProvider Services { get; } = services;
+    public long Id { get; } = Interlocked.Increment(ref _lastId);
+    public Task WhenReady => _whenReady.Task;
     public bool IsPrerendering => _isPrerendering != 0;
-    public bool IsDisposing => _isDisposing != 0;
+    public Dispatcher Dispatcher => _dispatcher ??= RootComponent.GetDispatcher();
 
     public ComponentBase RootComponent {
         get => _rootComponent ?? throw Errors.NotInitialized(nameof(RootComponent));
         set {
-            if (_rootComponent == value)
-                return;
-            if (_rootComponent != null)
+            if (Interlocked.CompareExchange(ref _rootComponent, value, null) != null)
                 throw Errors.AlreadyInitialized(nameof(RootComponent));
-            _rootComponent = value;
+
+            _whenReady.TrySetResult(default);
         }
     }
-
-    public Dispatcher Dispatcher
-        => RootComponent.GetDispatcher();
 
     public ClosedDisposable<(BlazorCircuitContext, int)> Prerendering(bool isPrerendering = true)
     {
@@ -33,15 +38,4 @@ public class BlazorCircuitContext : IDisposable
             (this, oldIsPrerendering),
             state => Interlocked.Exchange(ref state.Context._isPrerendering, state.OldIsPrerendering));
     }
-
-    public void Dispose()
-    {
-        if (0 != Interlocked.CompareExchange(ref _isDisposing, 1, 0))
-            return;
-        Dispose(true);
-        GC.SuppressFinalize(this);
-    }
-
-    protected virtual void Dispose(bool disposing)
-    { }
 }
