@@ -50,11 +50,11 @@ So what DREAM means?
   which usually reside only in a code that applies low-level mutations
   (e.g. on your backend services applying changes to the DB).
 
-- Finally, Fusion's dependency graph can be 
+- Finally, Fusion's dependency graph can be
   **[Distributed](https://en.wikipedia.org/wiki/Distributed_computing)**:
-  since Fusion-backed call result is "observable" under the hood, the
-  act of "observation" can be extended to remote results.
-  And Fusion does this completely transparently for you as well - by providing 
+  since any Fusion-backed call result is "observable" under the hood,
+  the act of "observation" can be extended to remote results.
+  And Fusion does this completely transparently as well - by providing 
   *invalidation-aware caching RPC clients* for any Fusion-based service.
     
 "Invalidation-aware" part means such clients auto-subscribe to the 
