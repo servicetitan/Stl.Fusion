@@ -8,7 +8,7 @@ public class TypedFactoryInterceptor(IServiceProvider services) : Interceptor
     private static readonly ConcurrentDictionary<MethodInfo, ObjectFactory> ObjectFactoryCache = new();
 
     public override void Intercept(Invocation invocation)
-        => throw Errors.NotSupported("TypeFactory doesn't support void methods.");
+        => throw Errors.NotSupported($"{nameof(TypedFactoryInterceptor)} doesn't support void methods.");
 
     public override TResult Intercept<TResult>(Invocation invocation)
     {
