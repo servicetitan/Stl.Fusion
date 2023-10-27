@@ -13,8 +13,8 @@ public class TypedFactoryInterceptor(IServiceProvider services) : Interceptor
     public override TResult Intercept<TResult>(Invocation invocation)
     {
         // ObjectFactory is `object ObjectFactory(IServiceProvider, object[] args)`.
-        var m = ObjectFactoryCache.GetOrAdd(invocation.Method, CreateFactoryMethod);
-        return (TResult)m(services, invocation.Arguments.ToArray());
+        var factory = ObjectFactoryCache.GetOrAdd(invocation.Method, CreateFactoryMethod);
+        return (TResult)factory(services, invocation.Arguments.ToArray());
     }
 
     private static ObjectFactory CreateFactory(MethodInfo method)
