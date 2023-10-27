@@ -62,8 +62,9 @@ invalidation event associated with every remote call they make.
 
 > In fact, the "call" concept in Fusion's RPC protocol always means 
 "and subscribe to the invalidation". Since the invalidation happens
-just once per call result, it's just a single extra message per call,
-which is sent after "call result" message.
+just once per any call, it's a single extra message per call,
+which might be sent after "call result" message once this result
+becomes inconsistent.
 
 Any invalidation-aware client knows precisely whether any result it caches 
 is consistent or not.
