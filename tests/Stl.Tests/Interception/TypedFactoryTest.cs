@@ -2,6 +2,17 @@ using Stl.Interception;
 
 namespace Stl.Tests.Interception;
 
+public interface ITestTypedFactory : IRequiresFullProxy
+{
+    TestFactoryClass CreateTestClass(int int32);
+}
+
+public class TestFactoryClass(IServiceProvider services, int int32)
+{
+    public IServiceProvider Services { get; } = services;
+    public int Int32 { get; } = int32;
+}
+
 public class TypedFactoryTest
 {
     [Fact]
@@ -46,15 +57,4 @@ public class TypedFactoryTest
         x2.Should().NotBeSameAs(x);
         x2.Should().NotBeSameAs(x1);
     }
-}
-
-public interface ITestTypedFactory : IRequiresFullProxy
-{
-    TestFactoryClass CreateTestClass(int ctorArg0);
-}
-
-public class TestFactoryClass(IServiceProvider services, int int32)
-{
-    public IServiceProvider Services { get; } = services;
-    public int Int32 { get; } = int32;
 }
