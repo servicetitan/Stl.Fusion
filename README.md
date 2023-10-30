@@ -10,12 +10,77 @@
 [![Downloads](https://img.shields.io/nuget/dt/Stl)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion)
 
 Fusion is a .NET library that implements 
-**D**istributed **REA**ctive **M**emoization (**DREAM**) &ndash; 
-a novel technique that gracefully solves a number of well-known problems:
+**D**istributed **REA**ctive **M**emoization (**DREAM** 🦄) &ndash; a novel abstraction somewhat similar to MobX or Flux/Redux, but **contrary to such libraries, it deals with a distributed state, which is just partially loaded, and thus can be arbitrary large.** The state Fusion tracks typically spans through every application layer, connecting your backend services, front-end servers, and even every client of your app!
+
+Obviously, there is no way to fit such a large state in RAM, so Fusion:
+- Spawns the *observed part* of the state on-demand.
+- Ensures the *dependencies* of this part stay in memory - so once any deep dependency is *tagged as inconsistent*, any piece of state that's dependent on it is tagged as inconsistent as well.
+- *Destroys what becomes unobserved*.
+
+[Lot traceability](https://en.wikipedia.org/wiki/Traceability) is probably the best real-world analogy of what Fusion does:
+- For every "product" 🥗 ([computed value]), Fusion keeps track of its "recipe" 📝 (function and its arguments) and every ingredient (other products) used to produce a specific instance of 🥗:<br/>
+  > 🥗<sub>v1</sub> = `📝("salad")` + 🥬<sub>v1</sub>🥦<sub>v1</sub>🍅<sub>v1</sub>
+- While all the "ingredients" used to produce 🥗<sub>v1</sub> aren't "contaminated" ("invalidated" in Fusion terms), Fusion ensures that calling a recipe `📝("salad")` again resolves to the same cached instance 🥗<sub>v1</sub>
+- Once any of such ingredients gets tagged as "contaminated" (think marked "dirty" / inconsistent with the ground truth), Fusion immediately tags every product which uses it directly or indirectly as "contaminated" as well - in cascading fashion:
+  > `invalidate(`🍅<sub>v1</sub>`)` is guaranteed to trigger `invalidate(`🥗<sub>v1</sub>`)`
+- So next time you call `📝("salad")`, it will produce a new 🥗 instance:
+  > 🥗<sub>v2</sub> = `📝("salad")` + 🥬<sub>v1</sub>🥦<sub>v1</sub>🍅<sub>v2</sub>
+
+And the best part is: **Fusion does it does all of that transparently for you,** so your Fusion-based code looks almost identical to the code without it. All you need is to:
+- "Implement" `IComputeService` (a tagging interface) on your Fusion service to ensure call intercepting proxy is generated for it in compile time.
+- Mark methods requiring "Fusion behavior" with `[ComputeMethod]` + declare them as `virtual`
+- Register such service via `serviceCollection.AddFusion().AddService<MyService>()`
+- Resolve it as usual - i.e. pass them as dependencies, use `serviceProvider.GetRequiredService<MyService>()`, etc.
+- Use `using (Computed.Invalidate()) { ... }` block to invalidate a result of a certain call (and thus all of its dependencies) or a set of them. Here is how it looks like:
+  ```
+  var avatars = await GetUserAvatars(userId);
+  using (Computed.Invalidate()) {
+      // Any call to "compute method" inside this block invalidates
+      // the result of the same call (i.e. a call with the same arguments).
+      // Compute method calls inside this block complete instantly, 
+      // returning completed Task<TResult>, so no need await them.
+
+      _ = userService.GetUser(userId);
+      foreach (var avatar in avatars)
+          _ = userAvatarService.GetAvatar(userId, avatar.Id);
+  }
+  ```
+
+Since any Fusion-backed call result is "observable" under the hood, the act of "observation" can be extended to remote results, so **the dependency graph can be distributed**. And again, Fusion does this completely transparently - by providing *invalidation-aware caching RPC clients* for any Fusion-based service.
+
+To make it work, Fusion uses its own WebSocket-based RPC protocol, which is quite similar to any other RPC protocol:
+1. To "send" the call to a remote peer, client sends "call" message
+2. The peer responds to it with "call result" message
+3. **And the unique step:** the peer may later send a message telling that the call result it sent earlier was invalidated.
+    
+*Step 3* doesn't change much in terms of network traffic: it's either zero or one extra message per call (i.e. 3 messages instead of 2 in the worst case). But this small addition allows Fusion's invalidation-aware clients to know precisely when a given cached call result becomes inconsistent. 
+
+And if you think about this, *any cached & still consistent result is as good as the data you'll get from the remote server, right?* So it's totally fine to resolve a call that "hits" such a result locally, incurring no network round-trip. In other words, any Fusion service shared over the network behaves like this:
+
+> "Hey, I'm smart enough to tell when any data I give you gets changed. So please don't bother me with the repeating calls requesting the same data unless I told you it's changed."
+
+Finally, such clients act as "regular" Fusion services - the results they produce are also backed by [computed values], so they extend the local dependency graph the same way. Look at this code:
+```
+string GetUserName(id)
+    => (await userService.GetUser(id)).Name;
+```
+
+You can't tell whether `userService` here is a local compute service or an invalidation-aware client of a remote Fusion service:
+- Both options are of the same base type (e.g. `IUserService`). The implementations are different though: Fusion service client is registered via `fusion.AddClient<TInterface>()` vs `fusion.AddServer<TInterface, TService>()` for the server.
+- And behave identically: 
+  - Every call you make to `userService` terminates instantly if its previous result is still consistent
+  - And if `GetUserName` is a method of another computed service (a local one), [computed value] backing `GetUser(id)` call that it makes would automatically extend Fusion's dependency graph for `GetUserName(id)` call!
+
+So Fusion also abstracts away service location (local vs remote) and turns remote services into something that's quite similar to the local ones &ndash; i.e. services which instantly respond to maybe 99% of calls.
+
+> That's why Fusion+Blazor apps have 100% identical WASM & Blazor Server code.</br>
+> That's what powers real-time UI updates in Fusion apps.</br>
+
+And that's how Fusion solves a set of other hard problems with a single 🔨:
 
 | Problem | So you don't need... |
 |-|-|
-| 📱 Client-side state management | Fluxor, Redux, MobX, Recoil, ... |
+| 📱 Client-side state management | MobX, Flux/Redux, Recoil, ... |
 | 🚀 Real-time updates | SignalR, WebSockets, gRPC streaming, ... |
 | 📇 In-memory cache | Redis, memcached, ... |
 | 🤹 Real-time cache invalidation | No good solutions - <br/>it's an [infamously hard problem](https://martinfowler.com/bliki/TwoHardThings.html) |
@@ -23,98 +88,16 @@ a novel technique that gracefully solves a number of well-known problems:
 | 🤬 Network chattiness | A fair amount of code |
 | 💰 Single codebase for Blazor WebAssembly, Server, and Hybrid/MAUI | No good alternatives |
 
-So what DREAM means?
-- **[Memoization](https://en.wikipedia.org/wiki/Memoization)** is a way
-  to speed up function calls by caching their output for a given input. 
-  Fusion provides a *transparent memoization* for any function, so
-  when you call `GetUser(id)` multiple times, its actual computation
-  happens just once for every `id` - at least while there is enough RAM to cache 
-  every result.
-
-- **[Reactive](https://en.wikipedia.org/wiki/Reactive_programming)** 
-  part of your Fusion-based code reacts to changes by triggering 
-  *invalidations*. Invalidation is a call to memoizing function inside
-  a special `using (Computed.Invalidate()) { ... }` block, which
-  marks its currently cached result (if any) as **inconsistent**, 
-  so it's going to be recomputed on the next call.
-  > Any cached result is identified by `(object, method, arguments...)` tuple - so  invalidating `service1.GetUser(5)` wouldn't render
-`service1.GetUser(1)` result inconsistent, as well as the result of `service5.GetUser(5)`.
-  
-  > The invalidation is *cascading*: if `service1.GetUser(5)` call happened inside `GetUserPic("user@gmail.com")` call, the second result becomes dependent on the first one, and invalidation of the first one invalidates the second one. 
-
-  So Fusion not only memoizes the results of such calls, but also captures and tracks
-  the dependencies between them. The dependency graph is updated in real-time,
-  completely transparently for you. That's why Fusion-based code 
-  looks exactly as regular code - the only difference is that
-  it has a few extra `using (Computed.Invalidate()) { ... }` blocks,
-  which usually reside only in a code that applies low-level mutations
-  (e.g. on your backend services applying changes to the DB).
-
-- Finally, Fusion's dependency graph can be
-  **[Distributed](https://en.wikipedia.org/wiki/Distributed_computing)**:
-  since any Fusion-backed call result is "observable" under the hood,
-  the act of "observation" can be extended to remote results.
-  And Fusion does this completely transparently as well - by providing 
-  *invalidation-aware caching RPC clients* for any Fusion-based service.
-    
-"Invalidation-aware" part means such clients auto-subscribe to the 
-invalidation event associated with every remote call they make.     
-
-> In fact, the "call" concept in Fusion's RPC protocol always means 
-"and subscribe to the invalidation". Since the invalidation happens
-just once per any call, it's a single extra message per call,
-which might be sent after "call result" message once this result
-becomes inconsistent.
-
-Any invalidation-aware client knows precisely whether any result it caches 
-is consistent or not.
-This allows it to instantly respond to a call which "hits" a consistent result -
-what's the point for making a network round trip if you know for sure you 
-already have the right value to return?
-**And that's how Fusion solves network chattiness problem.**
-
-Finally, such clients act as "normal" Fusion services - 
-the results they produce become dependencies of other Fusion-backed
-calls. So if you write a client-side method like this one:
-```
-string GetUserName(id)
-    => (await userServiceClient.GetUser(id)).Name;
-```
-Any result it produces becomes dependent on a remote result of 
-`userServiceClient.GetUser(id)`, so it will auto-invalidate as soon as
-its remote dependency will.
-**And that's what powers all real-time UI updates in Fusion apps.**
-  
-> [Lot traceability](https://en.wikipedia.org/wiki/Traceability) is probably the 
-> best real-world analogy of how this approach works. 
-> It allows to identify every product *([computed value])* 
-> that uses certain ingredient *(another [computed value])*,
-> and consequently, even every buyer of a product *(think UI control)* that 
-> uses certain ingredient. 
->
-> So if you want every consumer to have the most up-to-date version 
-> of every product they bought *(think real-time UI)*,
-> lot traceability makes this possible.
-> 
-> And assuming every purchase order triggers the whole build chain and uses
-> the most recent ingredients, merely notifying the consumers they can buy 
-> a newer version of their 📱 is enough. It's up to them to decide when to upgrade -
-> they can do this immediately or postpone this till the next 💰, but
-> the important piece is: they are aware the product they have can be upgraded.
-
-We know all of this sounds weird. That's why there are lots of
-visual proofs in the remaining part of this document.
-But if you'll find anything concerning in Fusion's source code 
-or [samples], please feel free to grill us with questions on [Discord]!
+**All of this sounds way too good to believe it really works, right?** That's why there are lots of visual proofs in the remaining part of this document. But if you'll find anything concerning in Fusion's source code or [samples], please feel free to grill us with questions on [Discord]!
 
 [<img align="right" width="150" src="./docs/img/FusionSlides.jpg"/>](https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html)
 If you prefer slides and 🕵 detective stories, check out
 ["Why real-time web apps need Blazor and Fusion?" talk](https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html) -
 it explains how all these problems are connected and
 describes how you can code a simplified version of 
-Fusion's key abstraction in C#. 
+Fusion's key abstraction in C#.
 
-And if you prefer text - just continue reading!
+> The slides are slightly outdated - e.g. now Fusion clients use `Stl.Rpc` rather than HTTP to communicate with the server, but all the concepts they cover are still intact.
 
 ## "What is your evidence?"<sup><a href="https://www.youtube.com/watch?v=7O-aNYTtx44<">*</a></sup>
 
@@ -132,7 +115,7 @@ Let's start with some big guns:
 > We're posting some code examples from Actual Chat codebase [here](https://actual.chat/chat/san4Cohzym), 
 > so join this chat to learn how we use it in a real app.
 
-Now, samples:
+Now, the samples:
 
 Below is [Fusion+Blazor Sample](https://github.com/servicetitan/Stl.Fusion.Samples#3-blazor-samples)
 delivering real-time updates to 3 browser windows:
@@ -149,6 +132,16 @@ Fusion still keeps in sync literally every piece of shared state there,
 including sign-in state:
 
 ![](https://github.com/servicetitan/Stl.Fusion.Samples/raw/master/docs/img/Samples-Blazor-Auth.gif)
+
+## Is Fusion fast?
+
+**Yes, it's incredibly fast.** Let's start from RPC call duration distribution for one of the most frequent calls on [Actual Chat]:
+
+![](docs/img/GetTile.jpg)
+
+`IChats.GetTile` reads a small "chat tile" - typically 5 entries pinned to specific ID range, so it can be efficiently cached. And even for these calls the typical response time is barely measurable: every X axis mark is 10x larger than the previous one, so **the highest peak you see is at `0.03ms`!**
+
+The next bump at ~ `4-5ms` is when the service actually goes to the DB - i.e. it's the time you'd expect to see without Fusion. The load would be way higher though, coz *the calls you see on this chart are the calls which "made it" to the server* - in other words, they weren't eliminated by the client / its Fusion services.
 
 [A small benchmark in Fusion test suite](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Fusion.Tests/PerformanceTest.cs) 
 compares "raw" [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/)-based
@@ -167,7 +160,19 @@ Fusion's transparent caching ensures every API call result your code produces is
 
 And interestingly, even when there are no "layers" of dependencies (think only "layer zero" is there), Fusion manages to speed up the API calls this test runs by **8,000 to 10,000** times.
 
-## How Fusion works?
+## What makes Fusion so fast?
+
+Everything:
+- The concept itself is all about eliminating any unnecessary computation. Think `msbuild`, but for your method call results: what's computed and consistent is never recomputed.
+- Fusion caches call results in memory, so if it's a hit, they're instantly available. No round-trips to external caches, no serialization/deserialization, etc.
+- Moreover, there is also no cloning: what's cached is the .NET object or struct returned from a call, so any call result is "shared". It's way more CPU cache-friendly than e.g. deserializing a new copy on any hit.
+- Fusion uses its own `Stl.Interception` library to intercept method calls, and although there is no benchmark yet, these are the fastest call interceptors available on .NET - they're marginally faster than e.g. the ones provided by [Castle.DynamicProxy](http://www.castleproject.org/projects/dynamicproxy/). They don't box call arguments and require just 1 allocation per call in average.
+- The same is true about `Stl.Rpc` - a part of Fusion responsible for its RPC calls. Its [preliminary benchmark results](https://servicetitan.github.io/Stl.Fusion.Samples/rpc-benchmark) show it is ~ **1.5x faster than SignalR**, and ~ **3x faster than gRPC**.
+- `Stl.Rpc` uses the fastest serializers available on .NET &ndash; [MemoryPack](https://github.com/Cysharp/MemoryPack) by default (it doesn't require IL Emit in runtime), though you can also use [MessagePack](https://github.com/MessagePack-CSharp/MessagePack-CSharp) (it's slightly faster, but requires IL Emit) or anything else you prefer.
+- All critical execution paths in Fusion are heavily optimized. [Archived version of this page](https://web.archive.org/web/20201212144353/https://github.com/servicetitan/Stl.Fusion) shows the performance on above test currently 3x better than it was 2 years ago.
+- Fusion's author is a pretty hardcore performance expert on .NET making [such risky bets like this one](https://itnext.io/geting-4x-speedup-with-net-core-3-0-simd-intrinsics-5c9c31c47991) and winning :)
+
+## How Fusion works - a brief intro
 
 There are 4 components:
 1. [Compute Services] are services exposing methods "backed" by Fusion's 
@@ -246,7 +251,7 @@ the same method with the same arguments.
 A typical Compute Service looks as follows:
 
 ```cs
-public class ExampleService
+public class ExampleService : IComputeService
 {
     [ComputeMethod]
     public virtual async Task<string> GetValue(string key)
@@ -301,7 +306,7 @@ Compute services are registered ~ almost like singletons:
 var services = new ServiceCollection();
 var fusion = services.AddFusion(); // It's ok to call it many times
 // ~ Like service.AddSingleton<[TService, ]TImplementation>()
-fusion.AddComputeService<ExampleService>();
+fusion.AddService<ExampleService>();
 ```
 
 Check out [CounterService](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/src/HelloBlazorServer/Services/CounterService.cs)
