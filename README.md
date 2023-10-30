@@ -32,7 +32,7 @@ And the best part is: **Fusion does it does all of that transparently for you,**
 - Register such service via `serviceCollection.AddFusion().AddService<MyService>()`
 - Resolve it as usual - i.e. pass them as dependencies, use `serviceProvider.GetRequiredService<MyService>()`, etc.
 - Use `using (Computed.Invalidate()) { ... }` block to invalidate a result of a certain call (and thus all of its dependencies) or a set of them. Here is how it looks like:
-  ```
+  ```cs
   var avatars = await GetUserAvatars(userId);
   using (Computed.Invalidate()) {
       // Any call to "compute method" inside this block invalidates
@@ -60,7 +60,7 @@ And if you think about this, *any cached & still consistent result is as good as
 > "Hey, I'm smart enough to tell when any data I give you gets changed. So please don't bother me with the repeating calls requesting the same data unless I told you it's changed."
 
 Finally, such clients act as "regular" Fusion services - the results they produce are also backed by [computed values], so they extend the local dependency graph the same way. Look at this code:
-```
+```cs
 string GetUserName(id)
     => (await userService.GetUser(id)).Name;
 ```
