@@ -10,7 +10,7 @@
 [![Downloads](https://img.shields.io/nuget/dt/Stl)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion)
 
 Fusion is a .NET library that implements 
-**D**istributed **REA**ctive **M**emoization (**DREAM** 🦄) &ndash; a novel abstraction somewhat similar to MobX or Flux/Redux, but **contrary to such libraries, it deals with a distributed state, which is just partially loaded, and thus can be arbitrary large.** The state Fusion tracks typically spans through every application layer, connecting your backend services, front-end servers, and even every client of your app!
+**D**istributed **REA**ctive **M**emoization (**DREAM** 🦄) &ndash; a novel abstraction somewhat similar to MobX or Flux/Redux, but **contrary to such libraries, it deals with a distributed state, which can be arbitrary large.** The state Fusion tracks typically spans through every application layer, connecting your backend services, front-end servers, and even every client of your app!
 
 Obviously, there is no way to fit such a large state in RAM, so Fusion:
 - Spawns the *observed part* of the state on-demand.
