@@ -169,7 +169,7 @@ Everything:
 - The same is true about `Stl.Rpc` - a part of Fusion responsible for its RPC calls. Its [preliminary benchmark results](https://servicetitan.github.io/Stl.Fusion.Samples/rpc-benchmark) show it is ~ **1.5x faster than SignalR**, and ~ **3x faster than gRPC**.
 - `Stl.Rpc` uses the fastest serializers available on .NET &ndash; [MemoryPack](https://github.com/Cysharp/MemoryPack) by default (it doesn't require IL Emit in runtime), though you can also use [MessagePack](https://github.com/MessagePack-CSharp/MessagePack-CSharp) (it's slightly faster, but requires IL Emit) or anything else you prefer.
 - All critical execution paths in Fusion are heavily optimized. [Archived version of this page](https://web.archive.org/web/20201212144353/https://github.com/servicetitan/Stl.Fusion) shows the performance on above test currently 3x better than it was 2 years ago.
-- Fusion's author is a pretty hardcore performance expert on .NET making [such risky bets like this one](https://itnext.io/geting-4x-speedup-with-net-core-3-0-simd-intrinsics-5c9c31c47991) and winning :)
+- Fusion's author is a .NET expert capable of proving [risky statements about .NET performance](https://itnext.io/geting-4x-speedup-with-net-core-3-0-simd-intrinsics-5c9c31c47991?source=friends_link&sk=1df41ee25e91d59db66e8b5b6cd453ee) or writing a very detailed [.NET and Golang comparison](https://alexyakunin.medium.com/go-vs-c-part-1-goroutines-vs-async-await-ac909c651c11?source=friends_link&sk=9c90d12db581879061bc88f0b43c564a).
 
 ## How Fusion works - a brief intro
 
