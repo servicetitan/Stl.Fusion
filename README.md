@@ -23,7 +23,7 @@ Obviously, there is no way to fit such a large state in RAM, so Fusion:
 - While all the "ingredients" used to produce 🥗<sub>v1</sub> aren't "contaminated" ("invalidated" in Fusion terms), Fusion ensures that calling a recipe `📝("salad")` again resolves to the same cached instance 🥗<sub>v1</sub>
 - Once any of such ingredients gets tagged as "contaminated" (think marked "dirty" / inconsistent with the ground truth), Fusion immediately tags every product which uses it directly or indirectly as "contaminated" as well - in cascading fashion:
   > `invalidate(`🍅<sub>v1</sub>`)` is guaranteed to trigger `invalidate(`🥗<sub>v1</sub>`)`
-- So next time you call `📝("salad")`, it will produce a new 🥗 instance:
+- So when you call `📝("salad")` next time, it will produce a new 🥗 instance:
   > 🥗<sub>v2</sub> = `📝("salad")` + 🥬<sub>v1</sub>🥦<sub>v1</sub>🍅<sub>v2</sub>
 
 And the best part is: **Fusion does it does all of that transparently for you,** so your Fusion-based code looks almost identical to the code without it. All you need is to:
