@@ -142,7 +142,7 @@ including sign-in state:
 
 The next bump at ~ `4-5ms` is when the service actually goes to the DB - i.e. it's the time you'd expect to see without Fusion. The load would be way higher though, coz *the calls you see on this chart are the calls which "made it" to the server* - in other words, they weren't eliminated by the client / its Fusion services.
 
-[A small benchmark in Fusion test suite](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Fusion.Tests/PerformanceTest.cs) 
+[A small synthetic benchmark in Fusion test suite](https://github.com/servicetitan/Stl.Fusion/blob/master/tests/Stl.Fusion.Tests/PerformanceTest.cs) 
 compares "raw" [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/)-based
 Data Access Layer (DAL) against its version relying on Fusion:
 
