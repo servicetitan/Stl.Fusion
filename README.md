@@ -134,7 +134,7 @@ including sign-in state:
 
 ## Is Fusion fast?
 
-**Yes, it's incredibly fast.** Let's start from RPC call duration distribution for one of the most frequent calls on [Actual Chat]:
+**Yes, it's incredibly fast.** Here is an RPC call duration distribution for one of the most frequent calls on [Actual Chat]:
 
 ![](docs/img/GetTile.jpg)
 
