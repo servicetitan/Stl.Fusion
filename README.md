@@ -161,7 +161,6 @@ And interestingly, even when there are no "layers" of dependencies (think only "
 
 ## What makes Fusion so fast?
 
-Everything:
 - The concept itself is all about eliminating any unnecessary computation. Think `msbuild`, but for your method call results: what's computed and consistent is never recomputed.
 - Fusion caches call results in memory, so if it's a hit, they're instantly available. No round-trips to external caches, no serialization/deserialization, etc.
 - Moreover, there is also no cloning: what's cached is the .NET object or struct returned from a call, so any call result is "shared". It's way more CPU cache-friendly than e.g. deserializing a new copy on any hit.
