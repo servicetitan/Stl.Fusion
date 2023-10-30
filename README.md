@@ -73,9 +73,8 @@ You can't tell whether `userService` here is a local compute service or an inval
 
 So Fusion also abstracts away service location (local vs remote) and turns remote services into something that's quite similar to the local ones &ndash; i.e. services which instantly respond to maybe 99% of calls.
 
-> That's why Fusion+Blazor apps have 100% identical WASM & Blazor Server code.</br>
-> That's what powers real-time UI updates in Fusion apps.</br>
-
+That's why Fusion+Blazor apps have 100% identical WASM & Blazor Server code.</br>
+That's what powers real-time UI updates in Fusion apps.</br>
 And that's how Fusion solves a set of other hard problems with a single 🔨:
 
 | Problem | So you don't need... |
