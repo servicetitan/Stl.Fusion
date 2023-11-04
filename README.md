@@ -10,11 +10,11 @@
 [![Downloads](https://img.shields.io/nuget/dt/Stl)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion)
 
 Fusion is a .NET library that implements 
-**D**istributed **REA**ctive **M**emoization (**DREAM** 🦄) &ndash; a novel abstraction somewhat similar to MobX or Flux/Redux, but **contrary to such libraries, it deals with a distributed state, which can be arbitrary large.** The state Fusion tracks typically spans through every application layer, connecting your backend services, front-end servers, and even every client of your app!
+**D**istributed **REA**ctive **M**emoization (**DREAM** 🦄) &ndash; a novel abstraction somewhat similar to MobX or Flux/Redux, but **contrary to such libraries, it deals with an arbitrary large distributed state.** The state Fusion tracks typically spans through your backend microservices, front-end servers, and even every client of your app!
 
 Obviously, there is no way to fit such a large state in RAM, so Fusion:
 - Spawns the *observed part* of the state on-demand.
-- Ensures the *dependencies* of this part stay in memory - so once any deep dependency is *tagged as inconsistent*, any piece of state that's dependent on it is tagged as inconsistent as well.
+- Ensures the *dependencies* of an observed part stay in memory to enable "dependency -> observed dependants" lookups
 - *Destroys what becomes unobserved*.
 
 [Lot traceability](https://en.wikipedia.org/wiki/Traceability) is probably the best real-world analogy of what Fusion does:
