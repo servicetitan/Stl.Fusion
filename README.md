@@ -26,12 +26,12 @@ Obviously, there is no way to fit such a large state in RAM, so Fusion:
 - So when you call `📝("salad")` next time, it will produce a new 🥗 instance:
   > 🥗<sub>v2</sub> = `📝("salad")` + 🥬<sub>v1</sub>🥦<sub>v1</sub>🍅<sub>v2</sub>
 
-And the best part is: **Fusion does it does all of that transparently for you,** so your Fusion-based code looks almost identical to the code without it. All you need is to:
+And the best part is: **Fusion does all of that transparently for you,** so your Fusion-based code is almost identical to the code without it. All you need is to:
 - "Implement" `IComputeService` (a tagging interface) on your Fusion service to ensure call intercepting proxy is generated for it in compile time.
 - Mark methods requiring "Fusion behavior" with `[ComputeMethod]` + declare them as `virtual`
-- Register such service via `serviceCollection.AddFusion().AddService<MyService>()`
-- Resolve it as usual - i.e. pass them as dependencies, use `serviceProvider.GetRequiredService<MyService>()`, etc.
-- Use `using (Computed.Invalidate()) { ... }` block to invalidate a result of a certain call (and thus all of its dependencies) or a set of them. Here is how it looks like:
+- Register the service via `serviceCollection.AddFusion().AddService<MyService>()`
+- Resolve it as usual - i.e., pass them as dependencies, use `serviceProvider.GetRequiredService<MyService>()`, etc.
+- Use `using (Computed.Invalidate()) { ... }` block to invalidate the result of a certain call (and thus all of its dependencies) or a set of them. Here is how it looks like:
   ```cs
   var avatars = await GetUserAvatars(userId);
   using (Computed.Invalidate()) {
