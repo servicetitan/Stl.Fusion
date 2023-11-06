@@ -74,7 +74,7 @@ So any `Computed<T>` is *observable*. Moreover, it can be a "replica" of a remot
     
 *Step 3* doesn't change much in terms of network traffic: it's either zero or one extra message per call (i.e. 3 messages instead of 2 in the worst case). But this small addition allows [Compute Service Clients] to know precisely when a given cached call result becomes inconsistent. 
 
-The presence of *step 3* makes a huge difference: any cached & still consistent result is as good as the data you'll get from the remote server, right?So it's totally fine to resolve a call that "hits" such a result locally, incurring no network round-trip! 
+The presence of *step 3* makes a huge difference: any cached & still consistent result is as good as the data you'll get from the remote server, right? So it's totally fine to resolve a call that "hits" such a result locally, incurring no network round-trip! 
 
 [Compute Service Clients] act as local [Compute Services]. Look at this code:
 ```cs
