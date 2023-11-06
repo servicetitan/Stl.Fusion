@@ -16,14 +16,9 @@ to build and run everything.
 - [Slides] explain what problem Fusion solves, 
   how a simplified version of Fusion's key abstraction could be implemented in C#, 
   and points on interesting connections with many other problems
+- [Tutorial] covers key abstractions and code examples helping to learn them.
 - [Overview] is a bit outdated and much more boring version of what [Slides] cover
-- [Tutorial] covers key abstractions and code examples helping to learn them
-  Although you can simply browse it, you can also run and modify any
-  C# code featured here. All you need is
-  [Try .NET](https://github.com/dotnet/try/blob/master/DotNetTryLocal.md)
-  or [Docker](https://www.docker.com/).  
 - [The Story Behind Fusion](Story.md) &ndash; maybe you'll find it interesting too
-- [Q/A](QA.md) answers some of the most frequent questions.
 
 Posts:
 - [Fusion: Current State and Upcoming Features](https://alexyakunin.medium.com/fusion-current-state-and-upcoming-features-88bc4201594b?source=friends_link&sk=375290c4538167fe99419a744f3d42d5)
@@ -44,12 +39,9 @@ Videos:
   **Check out its description - there is TOC + links to interesting parts.**
 * More videos are upcoming.
 
-Please remember that you can always ask for help:
+You can always ask for help here:
 * [Discord Server] &ndash; <a href="https://discord.gg/EKEwv6d">
   <img valign="middle" src="https://img.shields.io/discord/729970863419424788.svg" alt="Discord Server">
-  </a>
-* [Gitter] &ndash; <a href="https://gitter.im/Stl-Fusion/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge">
-  <img valign="middle" src="https://badges.gitter.im/Stl-Fusion/community.svg" alt="Gitter">
   </a>
 
 ## Credits
@@ -62,7 +54,6 @@ Contributors:
 * [Alexey Ananyev](https://github.com/hypercodeplace) &ndash; misc. fixes
 * [Alexey Golub](https://github.com/Tyrrrz) &ndash; minor fixes; FYI we use his 
   [CliWrap](https://github.com/Tyrrrz/CliWrap) in our build pipeline, and his
-  [CliFx](https://github.com/Tyrrrz/CliFx) is pretty amazing too!
 * [Alex Yakunin](https://github.com/alexyakunin) ([Medium](https://medium.com/@alexyakunin)) &ndash; 
   the creator of Fusion.
 
@@ -73,16 +64,11 @@ Indirect contributors & everyone else who made Fusion possible:
   yeah, Steve is the creator of it as well!
 * [Quora](https://www.quora.com/) — a huge part of the inspiration for Fusion was Quora's LiveNode framework
 * [Microsoft](microsoft.com) &ndash; for .NET Core and Blazor.
-* The authors and maintainers of every library used by Fusion. Most notably,
-  [DynamicProxy from Castle.Core](http://www.castleproject.org/projects/dynamicproxy/),
-  [RestEase](https://github.com/canton7/RestEase), and 
-  [Json.NET](https://www.newtonsoft.com/json).
 
 [Slides]: https://alexyakunin.github.io/Stl.Fusion.Materials/Slides/Fusion_v2/Slides.html
 [Overview]: Overview.md
 [Tutorial]: https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/README.md
 [Fusion Samples]: https://github.com/servicetitan/Stl.Fusion.Samples
 
-[Gitter]: https://gitter.im/Stl-Fusion/community
 [Discord Server]: https://discord.gg/EKEwv6d
 [Fusion Feedback Form]: https://forms.gle/TpGkmTZttukhDMRB6
