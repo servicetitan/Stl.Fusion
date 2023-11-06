@@ -32,7 +32,7 @@ And the best part is: **Fusion does all of that transparently for you,** so Fusi
 
 The magic happens when `[ComputeMethod]`-s are invoked:
 1. When Fusion knows that a value for a given call (think `(serviceInstance, method, args...)` cache key) is still consistent, *Fusion returns it instantly, without letting the method to run*.
-2. And when the value isn't cached or tagged as inconsistent, *Fusion lets the method run, but captures new value's dependencies in process.* "Dependency" is a value of one `[ComputeMethod]` call accessed during the evaluation of another `[ComputeMethod]` call. 
+2. And when the value isn't cached or tagged as inconsistent, *Fusion lets the method run, but captures new value's dependencies in process.* "Dependency" is one `[ComputeMethod]` call triggered during the evaluation of another `[ComputeMethod]` call. 
 
 The second step allows Fusion to track which values are expected to change when one of them changes. It's quite similar to [lot traceability](https://en.wikipedia.org/wiki/Traceability), but implemented for arbitrary functions rather than manufacturing processes.
 
@@ -134,8 +134,8 @@ delivering real-time updates to 3 browser windows:
 The sample supports [**both** Blazor Server and Blazor WebAssembly 
 hosting modes](https://docs.microsoft.com/en-us/aspnet/core/blazor/hosting-models?view=aspnetcore-3.1).
 And even if you use different modes in different windows, 
-Fusion still keeps in sync literally every piece of shared state there,
-including sign-in state:
+Fusion still keeps in sync literally every bit of a shared state there,
+including the sign-in state:
 
 ![](https://github.com/servicetitan/Stl.Fusion.Samples/raw/master/docs/img/Samples-Blazor-Auth.gif)
 
@@ -173,7 +173,7 @@ And interestingly, even when there are no "layers" of dependencies (think only "
 - Moreover, there is also no cloning: what's cached is the .NET object or struct returned from a call, so any call result is "shared". It's way more CPU cache-friendly than e.g. deserializing a new copy on any hit.
 - Fusion uses its own `Stl.Interception` library to intercept method calls, and although there is no benchmark yet, these are the fastest call interceptors available on .NET - they're marginally faster than e.g. the ones provided by [Castle.DynamicProxy](http://www.castleproject.org/projects/dynamicproxy/). They don't box call arguments and require just 1 allocation per call.
 - The same is true about `Stl.Rpc` - a part of Fusion responsible for its RPC calls. Its [preliminary benchmark results](https://servicetitan.github.io/Stl.Fusion.Samples/rpc-benchmark) show it is ~ **1.5x faster than SignalR**, and ~ **3x faster than gRPC**.
-- `Stl.Rpc` uses the fastest serializers available on .NET &ndash; [MemoryPack](https://github.com/Cysharp/MemoryPack) by default (it doesn't require IL Emit in runtime), though you can also use [MessagePack](https://github.com/MessagePack-CSharp/MessagePack-CSharp) (it's slightly faster, but requires IL Emit) or anything else you prefer.
+- `Stl.Rpc` uses the fastest serializers available on .NET &ndash; [MemoryPack](https://github.com/Cysharp/MemoryPack) by default (it doesn't require runtime IL Emit), though you can also use [MessagePack](https://github.com/MessagePack-CSharp/MessagePack-CSharp) (it's slightly faster, but requires IL Emit) or anything else you prefer.
 - All critical execution paths in Fusion are heavily optimized. [Archived version of this page](https://web.archive.org/web/20201212144353/https://github.com/servicetitan/Stl.Fusion) shows the performance on above test currently 3x better than it was 2 years ago.
 
 ## Does Fusion scale?
@@ -183,7 +183,7 @@ run the game in real time for 1M+ players, because every player observes a tiny 
 
 And that's exactly what Fusion does:
 - It spawns the observed part of the state on-demand (i.e. when you call a [Compute Service] method)
-- Ensures the dependency graph backing this part of the state stays in memory while someone uses this
+- Ensures the dependency graph backing this part of the state stays in memory while someone uses it
 - Destroys what's unobserved.
 
 Check out ["Scaling Fusion Services" part of the Tutorial](https://github.com/servicetitan/Stl.Fusion.Samples/blob/master/docs/tutorial/Part08.md) to see a much more robust description of how Fusion scales.
@@ -230,7 +230,7 @@ public class ExampleService : IComputeService
 }
 ```
 
-`[ComputeMethod]` indicates that every time you call this method,  its result is "backed" by [Computed Value], and thus it captures   dependencies when it runs and instantly returns the result, if the current computed value for a given call is still consisntent.
+`[ComputeMethod]` indicates that every time you call this method,  its result is "backed" by [Computed Value], and thus it captures   dependencies when it runs and instantly returns the result, if the current computed value is still consisntent.
 
 Compute services are registered ~ almost like singletons:
 ```cs
@@ -271,7 +271,7 @@ You see it uses `IFusionTime` - one of built-in compute services that provides `
 
 But what's important here is that `MomentsAgoBadge` is inherited from 
 [ComputedStateComponent<T>](https://github.com/servicetitan/Stl.Fusion/blob/master/src/Stl.Fusion.Blazor/Components/ComputedStateComponent.cs) - 
-an abstract type which provides `ComputeState` method. As you might guess, this method is a [Compute Method] too, so captures its dependencies & its result gets invalidated once cascading invalidation from one of its "ingredients" "hits" it.
+an abstract type which provides `ComputeState` method. As you might guess, this method behaves like a [Compute Method].
 
 `ComputedStateComponent<T>` exposes `State` property (of `ComputedState<T>` type), 
 which allows you to get the most recent output of  `ComputeState()`' via its 
@@ -311,7 +311,7 @@ and [AppUserBadge.razor](https://github.com/alexyakunin/BoardGames/blob/main/src
 
 Real-time typically implies you use events to deliver change 
 notifications to every client which state might be impacted by
-this change. Which means you have to:
+this change, so you have to:
 
 1. *Know which clients to notify about a particular event.* This alone is 
    a fairly hard problem - in particular, you need to know what every client
@@ -347,7 +347,7 @@ to identifying and track data dependencies automatically.
 ## Why Fusion is a game changer for Blazor apps with complex UI?
 
 **Fusion allows you to create truly independent UI components.**
-You can embed them in any parts of UI you like without any need
+You can embed them in any part of UI without any need
 to worry of how they'll interact with each other.
 
 **This makes Fusion a perfect fit for
@@ -361,11 +361,8 @@ Besides that, if your invalidation logic is correct,
 You might think all of this works only in Blazor Server mode. 
 But no, **all these UI components work in Blazor WebAssembly 
 mode as well, which is another unique feature Fusion provides.**
-Any [Compute Service] can be substituted with [Compute Service Client] on
-the client, which not simply proxies the calls, but also completely 
+Any [Compute Service] can be substituted with [Compute Service Client], which not simply proxies the calls, but also completely 
 kills the chattiness you'd expect from a regular client-side proxy.
-So if you need to support both modes, Fusion is currently the only 
-library solving this problem gracefully.
 
 ## Next Steps
 
