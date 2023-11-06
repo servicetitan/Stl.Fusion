@@ -88,7 +88,7 @@ You can't tell whether `userService` here is a local compute service or a comput
   - Every call you make to `userService` terminates instantly if its previous result is still consistent
   - And if `GetUserName` is a method of another computed service (a local one), [computed value] backing `GetUser(id)` call that it makes would automatically extend Fusion's dependency graph for `GetUserName(id)` call!
 
-So **Fusion abstracts away the "placement" of a service, and does it much better than a typical RPC proxy:** contrary to conventional RPC proxies, Fusion proxies aren't "chatty".
+So **Fusion abstracts away the "placement" of a service, and does it much better than a conventional RPC proxy does:** Fusion proxies aren't "chatty" by default!
 
 ## Documentation
 
@@ -105,7 +105,7 @@ Check out [Samples]; some of them are covered further in this document.
 
 ## "What is your evidence?"<sup><a href="https://www.youtube.com/watch?v=7O-aNYTtx44<">*</a></sup>
 
-**All of this sounds way too good to believe it really works, right?** That's why there are lots of visual proofs in the remaining part of this document. But if you'll find anything concerning in Fusion's source code or [samples], please feel free to grill us with questions on [Discord]!
+**All of this sounds way too good to be true, right?** That's why there are lots of visual proofs in the remaining part of this document. But if you'll find anything concerning in Fusion's source code or [samples], please feel free to grill us with questions on [Discord]!
 
 Let's start with some big guns:
 
