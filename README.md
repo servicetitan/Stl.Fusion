@@ -76,7 +76,7 @@ So any `Computed<T>` is *observable*. Moreover, it can be a "replica" of a remot
 
 The presence of *step 3* makes a huge difference: any cached & still consistent result is as good as the data you'll get from the remote server, right? So it's totally fine to resolve a call that "hits" such a result locally, incurring no network round-trip! 
 
-[Compute Service Clients] act as local [Compute Services]. Look at this code:
+Finally, any [Compute Service Client] behaves as a similar local [Compute Service]. Look at this code:
 ```cs
 string GetUserName(id)
     => (await userService.GetUser(id)).Name;
@@ -88,7 +88,7 @@ You can't tell whether `userService` here is a local compute service or a comput
   - Every call you make to `userService` terminates instantly if its previous result is still consistent
   - And if `GetUserName` is a method of another computed service (a local one), [computed value] backing `GetUser(id)` call that it makes would automatically extend Fusion's dependency graph for `GetUserName(id)` call!
 
-So **Fusion abstracts away the "placement" of a service, and does it much better than a conventional RPC proxy does:** Fusion proxies aren't "chatty" by default!
+So **Fusion abstracts away the "placement" of a service**, and does it much better than conventional RPC proxies: **Fusion proxies aren't "chatty" by default!**
 
 ## Documentation
 
