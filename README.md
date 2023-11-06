@@ -10,7 +10,7 @@
 [![Downloads](https://img.shields.io/nuget/dt/Stl)](https://www.nuget.org/packages?q=Owner%3Aservicetitan+Tags%3Astl_fusion)
 
 Fusion is a .NET library that implements 
- 🦄 **D**istributed **REA**ctive **M**emoization (**DREAM**) &ndash; a novel abstraction somewhat similar to MobX or Flux, but **designed to deal with an arbitrary large state** spanning through your backend microservices, intermediate servers (e.g. API servers), and even every client of your app.
+ 🦄 **D**istributed **REA**ctive **M**emoization (**DREAM**) &ndash; a novel abstraction somewhat similar to MobX or Flux, but **designed to deal with an arbitrary large state** spanning across your backend microservices, API servers, and reaching even every client of your app.
 
 Fusion solves a set of infamously hard problems with a single hammer:
 
