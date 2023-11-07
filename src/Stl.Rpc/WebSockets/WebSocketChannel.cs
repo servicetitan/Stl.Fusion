@@ -102,14 +102,14 @@ public sealed class WebSocketChannel<T> : Channel<T>
         WhenReadCompleted = Task.Run(() => RunReader(StopToken), default);
         WhenWriteCompleted = Task.Run(() => RunWriter(StopToken), default);
         WhenClosed = Task.Run(async () => {
-            var firstCompletedTask = await Task.WhenAny(WhenReadCompleted, WhenWriteCompleted).ConfigureAwait(false);
-            if (firstCompletedTask != WhenWriteCompleted)
+            var completedTask = await Task.WhenAny(WhenReadCompleted, WhenWriteCompleted).ConfigureAwait(false);
+            if (completedTask != WhenWriteCompleted)
                 await WhenWriteCompleted.SilentAwait(false);
             else
                 await WhenReadCompleted.SilentAwait(false);
 
             try {
-                await firstCompletedTask.ConfigureAwait(false);
+                await completedTask.ConfigureAwait(false);
             }
             catch (Exception error) {
                 await CloseWebSocket(error).ConfigureAwait(false);

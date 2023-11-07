@@ -161,8 +161,10 @@ public sealed class RpcSharedStream<T> : RpcSharedStream
                             if (!whenMovedNext.IsCompleted) {
                                 // Both tasks aren't completed yet
                                 whenMovedNextAsTask ??= whenMovedNext.AsTask();
-                                var tCompleted = await Task.WhenAny(whenAckReady, whenMovedNextAsTask).ConfigureAwait(false);
-                                if (tCompleted == whenAckReady) {
+                                var completedTask = await Task
+                                    .WhenAny(whenAckReady, whenMovedNextAsTask)
+                                    .ConfigureAwait(false);
+                                if (completedTask == whenAckReady) {
                                     await _batcher.Flush(index).ConfigureAwait(false);
                                     goto nextAck; // Got Ack, must restart
                                 }
