@@ -132,7 +132,7 @@ public class OperationReprocessor(
                 LastError = null;
                 break;
             }
-            catch (Exception error) when (error is not OperationCanceledException) {
+            catch (Exception error) when (!error.IsCancellationOf(cancellationToken)) {
                 LastError = error;
                 FailedTryCount++;
                 if (!this.WillRetry(error))

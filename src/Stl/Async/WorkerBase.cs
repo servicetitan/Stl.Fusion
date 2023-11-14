@@ -33,8 +33,8 @@ public abstract class WorkerBase(CancellationTokenSource? stopTokenSource = null
             try {
                 onStartTask = OnStart(StopToken);
             }
-            catch (OperationCanceledException) {
-                onStartTask = Task.FromCanceled(StopToken);
+            catch (OperationCanceledException oce) {
+                onStartTask = Task.FromCanceled(oce.CancellationToken);
             }
             catch (Exception e) {
                 onStartTask = Task.FromException(e);

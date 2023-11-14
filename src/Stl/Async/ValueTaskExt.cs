@@ -53,35 +53,6 @@ public static class ValueTaskExt
         }
     }
 
-
-    // WaitErrorAsync
-
-    public static async ValueTask<Exception?> WaitErrorAsync(this ValueTask task, bool throwOperationCancelledException = false)
-    {
-        try {
-            await task.ConfigureAwait(false);
-            return null;
-        }
-        catch (Exception error) {
-            if (throwOperationCancelledException && error is OperationCanceledException)
-                throw;
-            return error;
-        }
-    }
-
-    public static async ValueTask<Exception?> WaitErrorAsync<T>(this ValueTask<T> task, bool throwOperationCancelledException = false)
-    {
-        try {
-            await task.ConfigureAwait(false);
-            return null;
-        }
-        catch (Exception error) {
-            if (throwOperationCancelledException && error is OperationCanceledException)
-                throw;
-            return error;
-        }
-    }
-
     // AssertXxx
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

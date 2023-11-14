@@ -61,19 +61,19 @@ public sealed class RpcPeerStateMonitor : WorkerBase
                 }
             }
             catch (Exception e) {
-                if (cancellationToken.IsCancellationRequested) {
+                if (e.IsCancellationOf(cancellationToken)) {
                     Log.LogInformation("`{PeerRef}`: monitor stopped", PeerRef);
-                    throw;
+                    return;
                 }
-                if (e is not OperationCanceledException)
+                if (peer.StopToken.IsCancellationRequested)
+                    Log.LogWarning("`{PeerRef}`: peer is terminated, will restart", PeerRef);
+                else
                     Log.LogError(e, "`{PeerRef}`: monitor failed, will restart", PeerRef);
             }
             finally {
                 _state.Value = null;
                 peerCts.CancelAndDisposeSilently();
             }
-            if (peer.StopToken.IsCancellationRequested)
-                Log.LogWarning("`{PeerRef}`: peer is terminated, will restart", PeerRef);
         }
     }
 }

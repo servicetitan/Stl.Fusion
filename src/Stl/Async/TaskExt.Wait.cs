@@ -245,19 +245,4 @@ public static partial class TaskExt
             }
         }
     }
-
-    // WaitErrorAsync
-
-    public static async Task<Exception?> WaitErrorAsync(this Task task, bool throwOperationCancelledException = false)
-    {
-        try {
-            await task.ConfigureAwait(false);
-            return null;
-        }
-        catch (Exception error) {
-            if (throwOperationCancelledException && error is OperationCanceledException)
-                throw;
-            return error;
-        }
-    }
 }

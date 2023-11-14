@@ -50,9 +50,8 @@ public class ClientComputeMethodFunction<T>(
         var cacheInfoCapture = cache != null ? new RpcCacheInfoCapture() : null;
         var call = SendRpcCall(input, cacheInfoCapture, cancellationToken);
 
-        var result = await call.UnwrapResult().ConfigureAwait(false);
-        var cacheEntry = cacheInfoCapture == null ? null :
-            await UpdateCache(cache!, cacheInfoCapture, result).ConfigureAwait(false);
+        var result = await call.GetResult(cancellationToken).ConfigureAwait(false);
+        var cacheEntry = await UpdateCacheAsync(cache!, cacheInfoCapture, result, cancellationToken).ConfigureAwait(false);
 
         var synchronizedSource = existing?.SynchronizedSource ?? AlwaysSynchronized.Source;
         return new ClientComputed<T>(
@@ -114,8 +113,8 @@ public class ClientComputeMethodFunction<T>(
         }
 
         // 3. Await for its completion
-        var result = await call.UnwrapResult().ConfigureAwait(false);
-        var cacheEntry = await cacheInfoCapture.GetEntry().ConfigureAwait(false);
+        var result = await call.GetResult().ConfigureAwait(false);
+        var (key, data) = await cacheInfoCapture.GetKeyAndData().ConfigureAwait(false);
 
         // 4. Re-entering the lock & check if cached is still consistent
         using var _ = await InputLocks.Lock(input).ConfigureAwait(false);
@@ -123,14 +122,14 @@ public class ClientComputeMethodFunction<T>(
             return; // Since the call was bound to cached, it's properly cancelled already
 
         var synchronizedSource = cached.SynchronizedSource;
-        if (!result.HasError && cacheEntry?.IsResultIdenticalTo(cached.CacheEntry!) == true) {
+        if (!result.HasError && cached.CacheEntry is { } cachedEntry && data?.DataEquals(cachedEntry.Data) == true) {
             // Existing is still intact
             synchronizedSource.TrySetResult(default);
             return;
         }
 
         // 5. Now, let's update cache entry
-        UpdateCache(cache, cacheEntry, result);
+        var cacheEntry = UpdateCache(cache, key, data);
 
         // 6. Create the new computed - it invalidates the cached one upon registering
         var computed = new ClientComputed<T>(
@@ -213,52 +212,38 @@ public class ClientComputeMethodFunction<T>(
         return call;
     }
 
-    private async ValueTask<RpcCacheEntry?> UpdateCache(
+    private RpcCacheEntry? UpdateCache(
         IClientComputedCache cache,
-        RpcCacheInfoCapture cacheInfoCapture,
-        Result<T> result)
+        RpcCacheKey? key,
+        TextOrBytes? data)
     {
-        var key = cacheInfoCapture.Key;
         if (ReferenceEquals(key, null))
             return null;
 
-        if (result.Error is { } error) {
-            if (error is not OperationCanceledException)
-                cache.Remove(key); // Error -> wipe cache entry
+        if (!data.HasValue) {
+            cache.Remove(key); // Error -> wipe cache entry
             return null;
         }
 
-        var cacheEntry = await cacheInfoCapture.GetEntry().ConfigureAwait(false);
-        if (cacheEntry == null)
-            return null; // Nothing to update
-
-        // Update cache
-        if (cacheEntry.Result.IsEmpty)
-            cache.Remove(key);  // An error, but not cancellation
-        else
-            cache.Set(cacheEntry.Key, cacheEntry.Result);
-        return cacheEntry;
+        cache.Set(key, data.GetValueOrDefault());
+        return new RpcCacheEntry(key, data.GetValueOrDefault());
     }
 
-    private void UpdateCache(
+    private async ValueTask<RpcCacheEntry?> UpdateCacheAsync(
         IClientComputedCache cache,
-        RpcCacheEntry? cacheEntry,
-        Result<T> result)
+        RpcCacheInfoCapture? cacheInfoCapture,
+        Result<T> result,
+        CancellationToken cancellationToken = default)
     {
-        if (cacheEntry is not { Key: { } key })
-            return; // Nothing to update
-
         if (result.Error is { } error) {
-            if (error is not OperationCanceledException)
-                cache.Remove(key); // Error -> wipe cache entry
-            return;
+            // No need to await for dataSource.Task in this case
+            if (!error.IsCancellationOf(cancellationToken) && cacheInfoCapture?.Key is { } key1)
+                cache.Remove(key1); // Error -> wipe cache entry
+            return null;
         }
 
-        // Update cache
-        if (cacheEntry.Result.IsEmpty)
-            cache.Remove(key);  // An error, but not cancellation
-        else
-            cache.Set(cacheEntry.Key, cacheEntry.Result);
+        var (key, data) = await cacheInfoCapture.GetKeyAndData(cancellationToken).ConfigureAwait(false);
+        return UpdateCache(cache, key, data);
     }
 
     private IClientComputedCache? GetCache(ComputeMethodInput input)

@@ -100,7 +100,7 @@ public static class EnumerableExt
                 if (hasMore)
                     item = e.Current;
             }
-            catch (Exception ex) when (ex is not OperationCanceledException) {
+            catch (Exception ex) when (!ex.IsCancellationOf(cancellationToken)) {
                 item = new Result<T>(default!, ex);
             }
 

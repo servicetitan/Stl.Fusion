@@ -262,7 +262,7 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
             await context.Call.Run().ConfigureAwait(false);
             return context;
         }
-        catch (Exception e) when (e is not OperationCanceledException) {
+        catch (Exception e) when (!e.IsCancellationOf(cancellationToken)) {
             Log.LogError(e, "Failed to process message: {Message}", message);
             return null;
         }
@@ -279,7 +279,7 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
             await context.Call.Run().ConfigureAwait(false);
             return context;
         }
-        catch (Exception e) when (e is not OperationCanceledException) {
+        catch (Exception e) when (!e.IsCancellationOf(cancellationToken)) {
             Log.LogError(e, "Failed to process message: {Message}", message);
             return null;
         }

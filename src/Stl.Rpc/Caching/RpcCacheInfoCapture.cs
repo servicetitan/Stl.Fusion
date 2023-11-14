@@ -2,7 +2,7 @@ namespace Stl.Rpc.Caching;
 
 public enum RpcCacheInfoCaptureMode
 {
-    KeyAndResult = 0,
+    KeyAndData = 0,
     KeyOnly,
 }
 
@@ -10,26 +10,25 @@ public sealed class RpcCacheInfoCapture
 {
     public readonly RpcCacheInfoCaptureMode CaptureMode;
     public RpcCacheKey? Key;
-    public TaskCompletionSource<TextOrBytes>? ResultSource; // Must never be an error, but can be cancelled
+    public TaskCompletionSource<TextOrBytes>? DataSource; // Non-error IFF RpcOutboundCall.ResultTask is non-error
 
     public RpcCacheInfoCapture(RpcCacheInfoCaptureMode captureMode = default)
     {
         CaptureMode = captureMode;
-        if (captureMode == RpcCacheInfoCaptureMode.KeyAndResult)
-            ResultSource = new();
+        if (captureMode == RpcCacheInfoCaptureMode.KeyAndData)
+            DataSource = new();
     }
 
-    public async ValueTask<RpcCacheEntry?> GetEntry()
+    public bool HasKeyAndData(out RpcCacheKey key, out TaskCompletionSource<TextOrBytes> dataSource)
     {
-        if (ReferenceEquals(Key, null) ||  ResultSource == null)
-            return null;
+        if (ReferenceEquals(Key, null) || DataSource == null) {
+            key = null!;
+            dataSource = null!;
+            return false;
+        }
 
-        try {
-            var result = await ResultSource.Task.ConfigureAwait(false);
-            return new RpcCacheEntry(Key, result);
-        }
-        catch (OperationCanceledException) {
-            return null;
-        }
+        key = Key;
+        dataSource = DataSource;
+        return true;
     }
 }

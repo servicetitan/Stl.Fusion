@@ -44,9 +44,10 @@ public class DbOperationScopeProvider<TDbContext>(IServiceProvider services) : D
             if (!scope.IsClosed)
                 await scope.Commit(cancellationToken).ConfigureAwait(false);
         }
-        catch (Exception error) when (error is not OperationCanceledException) {
+        catch (Exception error) when (!error.IsCancellationOf(cancellationToken)) {
             if (error is RetryLimitExceededException { InnerException: { } innerError })
                 throw innerError; // Strip RetryLimitExceededException, coz it masks the real one after 0 retries
+
             try {
                 var operationReprocessor = context.Items.Get<IOperationReprocessor>();
                 if (operationReprocessor == null)

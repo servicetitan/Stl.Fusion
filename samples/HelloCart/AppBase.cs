@@ -68,7 +68,7 @@ public abstract class AppBase
         IServiceProvider services, string productId, CancellationToken cancellationToken = default)
     {
         var productService = services.GetRequiredService<IProductService>();
-        var computed = await Computed.Capture(() => productService.Get(productId, cancellationToken));
+        var computed = await Computed.Capture(() => productService.Get(productId, cancellationToken), cancellationToken);
         while (true) {
             WriteLine($"  {computed.Value}");
             await computed.WhenInvalidated(cancellationToken);
@@ -80,7 +80,7 @@ public abstract class AppBase
         IServiceProvider services, string cartId, CancellationToken cancellationToken = default)
     {
         var cartService = services.GetRequiredService<ICartService>();
-        var computed = await Computed.Capture(() => cartService.GetTotal(cartId, cancellationToken));
+        var computed = await Computed.Capture(() => cartService.GetTotal(cartId, cancellationToken), cancellationToken);
         while (true) {
             WriteLine($"  {cartId}: total = {computed.Value}");
             await computed.WhenInvalidated(cancellationToken);

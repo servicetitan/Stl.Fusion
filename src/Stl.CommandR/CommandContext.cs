@@ -160,7 +160,7 @@ public sealed class CommandContext<TResult> : CommandContext
         }
         // We want to ensure we re-throw any exception even if
         // it wasn't explicitly thrown (i.e. set via SetResult)
-        if (!Result.IsValue(out var value, out var error))
+        if (Result.Error is { } error)
             ExceptionDispatchInfo.Capture(error).Throw();
     }
 

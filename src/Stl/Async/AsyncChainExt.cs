@@ -55,8 +55,9 @@ public static class AsyncChainExt
                 try {
                     await asyncChain.Start(cancellationToken).ConfigureAwait(false);
                 }
-                catch (Exception e) when (!IsAlwaysThrowable(e)) {
-                    log.LogError(e, "{ChainName} failed", asyncChain.Name);
+                catch (Exception e) {
+                    if (!IsTerminalError(e, cancellationToken))
+                        log.LogError(e, "{ChainName} failed", asyncChain.Name);
                     throw;
                 }
             }
@@ -72,24 +73,19 @@ public static class AsyncChainExt
 
         return asyncChain with {
             Start = async cancellationToken => {
-                log.IfEnabled(logLevel)?.Log(logLevel, "AsyncChain started: {ChainName}", asyncChain.Name);
-                var error = (Exception?) null;
+                log.IfEnabled(logLevel)?.Log(logLevel, "{ChainName} started", asyncChain.Name);
                 try {
                     await asyncChain.Start(cancellationToken).ConfigureAwait(false);
+                    log.IfEnabled(logLevel)?.Log(logLevel,
+                        "{ChainName} completed", asyncChain.Name);
                 }
                 catch (Exception e) {
-                    error = e;
-                }
-                finally {
-                    if (error == null || IsAlwaysThrowable(error)) {
-                        var message = cancellationToken.IsCancellationRequested
-                            ? "AsyncChain completed (cancelled): {ChainName}"
-                            : "AsyncChain completed: {ChainName}";
-                        // ReSharper disable once TemplateIsNotCompileTimeConstantProblem
-                        log.IfEnabled(logLevel)?.Log(logLevel, message, asyncChain.Name);
-                    }
+                    if (!IsTerminalError(e, cancellationToken))
+                        log.LogError(e, "{ChainName} failed", asyncChain.Name);
                     else
-                        log.LogError(error, "AsyncChain failed: {ChainName}", asyncChain.Name);
+                        log.IfEnabled(logLevel)?.Log(logLevel,
+                            "{ChainName} completed (terminal exception)", asyncChain.Name);
+                    throw;
                 }
             }
         };
@@ -112,8 +108,10 @@ public static class AsyncChainExt
             try {
                 await asyncChain.Start(cancellationToken).ConfigureAwait(false);
             }
-            catch (Exception e) when (!IsAlwaysThrowable(e)) {
-                log?.IfEnabled(LogLevel.Error)?.LogError(e, "{ChainName} failed, the error is silenced", asyncChain.Name);
+            catch (Exception e) {
+                if (!IsTerminalError(e, cancellationToken))
+                    log?.IfEnabled(LogLevel.Error)?.LogError(e,
+                        "{ChainName} failed, the error is silenced", asyncChain.Name);
             }
         });
 
@@ -170,8 +168,9 @@ public static class AsyncChainExt
                     return;
                 }
                 catch (Exception e) {
-                    if (IsAlwaysThrowable(e))
+                    if (IsTerminalError(e, cancellationToken))
                         throw;
+                    // Everything else must be retried
                 }
                 var retryDelay = retryDelays[failedTryCount];
                 await clock.Delay(retryDelay, cancellationToken).ConfigureAwait(false);
@@ -198,8 +197,9 @@ public static class AsyncChainExt
                         return;
                     }
                     catch (Exception e) {
-                        if (IsAlwaysThrowable(e) || failedTryCount >= maxCount)
+                        if (IsTerminalError(e, cancellationToken) || failedTryCount >= maxCount)
                             throw;
+                        // Everything else must be retried
                     }
                     var retryDelay = retryDelays[failedTryCount];
                     await clock.Delay(retryDelay, cancellationToken).ConfigureAwait(false);
@@ -218,12 +218,12 @@ public static class AsyncChainExt
 
     // Private methods
 
-    private static bool IsAlwaysThrowable(Exception e)
+    private static bool IsTerminalError(Exception error, CancellationToken cancellationToken)
     {
-        if (e is OperationCanceledException)
+        if (error.IsCancellationOf(cancellationToken))
             return true;
 
-        if (e is ObjectDisposedException ode
+        if (error is ObjectDisposedException ode
 #if NETSTANDARD2_0
             && ode.Message.Contains("'IServiceProvider'"))
 #else

@@ -55,29 +55,34 @@ public class RpcOutboundComputeCall<TResult>(RpcOutboundContext context)
 
             ResultVersion = resultVersion;
             if (context != null && Context.CacheInfoCapture is { } cacheInfoCapture)
-                cacheInfoCapture.ResultSource?.TrySetResult(context.Message.ArgumentData);
+                cacheInfoCapture.DataSource?.TrySetResult(context.Message.ArgumentData);
         }
     }
 
     public override void SetError(Exception error, RpcInboundContext? context, bool assumeCancelled = false)
     {
         var resultVersion = context.GetResultVersion();
+        var oce = error as OperationCanceledException;
+        var cancellationToken = oce?.CancellationToken ?? default;
         // We always use Lock to update ResultSource in this type
         lock (Lock) {
-            if (!ResultSource.TrySetException(error)) {
-                // Result is already set
+            var isResultSet = oce != null
+                ? ResultSource.TrySetCanceled(cancellationToken)
+                : ResultSource.TrySetException(error);
+            if (!isResultSet) {
+                // Result was set earlier
                 if (context == null || ResultVersion != resultVersion)  // Non-peer set or version mismatch
                     SetInvalidatedUnsafe(!assumeCancelled);
                 return;
             }
 
+            // Result was just set
             ResultVersion = resultVersion;
-            if (Context.CacheInfoCapture is { } cacheInfoCapture) {
-                if (error is OperationCanceledException)
-                    cacheInfoCapture.ResultSource?.TrySetCanceled();
+            if (Context.CacheInfoCapture is { } cacheInfoCapture)
+                if (oce != null)
+                    cacheInfoCapture.DataSource?.TrySetCanceled(cancellationToken);
                 else
-                    cacheInfoCapture.ResultSource?.TrySetResult(default);
-            }
+                    cacheInfoCapture.DataSource?.TrySetException(error);
             if (context == null) // Non-peer set
                 SetInvalidatedUnsafe(!assumeCancelled);
         }
@@ -89,7 +94,7 @@ public class RpcOutboundComputeCall<TResult>(RpcOutboundContext context)
         lock (Lock) {
             var isCancelled = ResultSource.TrySetCanceled(cancellationToken);
             if (isCancelled && Context.CacheInfoCapture is { } cacheInfoCapture)
-                cacheInfoCapture.ResultSource?.TrySetCanceled();
+                cacheInfoCapture.DataSource?.TrySetCanceled(cancellationToken);
             WhenInvalidatedSource.TrySetResult(default);
             Unregister(true);
             return isCancelled;
@@ -105,7 +110,7 @@ public class RpcOutboundComputeCall<TResult>(RpcOutboundContext context)
         lock (Lock) {
             if (SetInvalidatedUnsafe(notifyCancelled)) {
                 if (ResultSource.TrySetCanceled() && Context.CacheInfoCapture is { } cacheInfoCapture)
-                    cacheInfoCapture.ResultSource?.TrySetCanceled();
+                    cacheInfoCapture.DataSource?.TrySetCanceled();
             }
         }
     }

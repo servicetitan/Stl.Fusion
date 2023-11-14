@@ -5,6 +5,10 @@ namespace Stl;
 /// </summary>
 public static class ExceptionExt
 {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsCancellationOf(this Exception error, CancellationToken cancellationToken)
+        => error is OperationCanceledException && cancellationToken.IsCancellationRequested;
+
     public static ICollection<Exception> Flatten(this Exception? exception)
     {
         if (exception == null)

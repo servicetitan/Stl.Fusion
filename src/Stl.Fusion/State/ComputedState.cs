@@ -101,10 +101,10 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
                 if (!snapshot.WhenUpdated().IsCompleted)
                     await computed.Update(cancellationToken).ConfigureAwait(false);
             }
-            catch (OperationCanceledException) {
-                // Will break from "while" loop later if it's due to cancellationToken cancellation
-            }
             catch (Exception e) {
+                if (e.IsCancellationOf(cancellationToken))
+                    break;
+
                 Log.LogError(e, "Failure inside UpdateCycle()");
             }
         }

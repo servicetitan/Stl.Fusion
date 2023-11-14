@@ -50,7 +50,7 @@ public class PresenceReporter : WorkerBase
             await Auth.UpdatePresence(session, cancellationToken).ConfigureAwait(false);
             return true;
         }
-        catch (Exception e) when (e is not OperationCanceledException) {
+        catch (Exception e) when (!e.IsCancellationOf(cancellationToken)) {
             Log.LogError(e, "UpdatePresence failed");
             return false;
         }

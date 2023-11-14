@@ -142,8 +142,9 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
         }
         var ctr = cancellationToken.Register(static state => {
             var call = (RpcOutboundCall)state!;
-            if (call.Context.CancellationToken.IsCancellationRequested)
-                call.Cancel(call.Context.CancellationToken);
+            var cancellationToken = call.Context.CancellationToken;
+            if (cancellationToken.IsCancellationRequested)
+                call.Cancel(cancellationToken);
             else {
                 // timeoutCts is timed out
                 var error = Errors.CallTimeout(call.Peer);
@@ -172,15 +173,12 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
         ResultTask = ResultSource.Task;
     }
 
-    public async ValueTask<Result<TResult>> UnwrapResult()
+    public async ValueTask<Result<TResult>> GetResult(CancellationToken cancellationToken = default)
     {
         try {
-            return await ResultSource.Task.ConfigureAwait(false);
+            return await ResultSource.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) {
-            throw;
-        }
-        catch (Exception e) {
+        catch (Exception e) when (!e.IsCancellationOf(cancellationToken)) {
             return Result.Error<TResult>(e);
         }
     }
@@ -198,16 +196,26 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
         if (ResultSource.TrySetResult(typedResult)) {
             Unregister();
             if (context != null && Context.CacheInfoCapture is { } cacheInfoCapture)
-                cacheInfoCapture.ResultSource?.TrySetResult(context.Message.ArgumentData);
+                cacheInfoCapture.DataSource?.TrySetResult(context.Message.ArgumentData);
         }
     }
 
     public override void SetError(Exception error, RpcInboundContext? context, bool assumeCancelled = false)
     {
-        if (ResultSource.TrySetException(error)) {
-            Unregister(context == null && !assumeCancelled);
-            if (Context.CacheInfoCapture is { } cacheInfoCapture)
-                cacheInfoCapture.ResultSource?.TrySetException(error);
+        var oce = error as OperationCanceledException;
+        var cancellationToken = oce?.CancellationToken ?? default;
+        var isResultSet = oce != null
+            ? ResultSource.TrySetCanceled(cancellationToken)
+            : ResultSource.TrySetException(error);
+        if (!isResultSet)
+            return;
+
+        Unregister(context == null && !assumeCancelled);
+        if (Context.CacheInfoCapture is { } cacheInfoCapture) {
+            if (oce != null)
+                cacheInfoCapture.DataSource?.TrySetCanceled(cancellationToken);
+            else
+                cacheInfoCapture.DataSource?.TrySetException(error);
         }
     }
 
@@ -217,7 +225,7 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
         if (isCancelled) {
             Unregister(true);
             if (Context.CacheInfoCapture is { } cacheInfoCapture)
-                cacheInfoCapture.ResultSource?.TrySetCanceled(cancellationToken);
+                cacheInfoCapture.DataSource?.TrySetCanceled(cancellationToken);
         }
         return isCancelled;
     }

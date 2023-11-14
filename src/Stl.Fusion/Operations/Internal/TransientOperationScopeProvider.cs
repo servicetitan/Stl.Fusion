@@ -47,7 +47,7 @@ public class TransientOperationScopeProvider(IServiceProvider services) : IComma
         }
         catch (Exception error) {
             scope.Close(false);
-            if (error is OperationCanceledException)
+            if (error.IsCancellationOf(cancellationToken))
                 throw;
 
             // When this operation scope is used, no reprocessing is possible

@@ -178,11 +178,11 @@ public sealed class RpcSharedStream<T> : RpcSharedStream
                             else
                                 item = Result.Error<T>(NoError);
                         }
-                        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
-                            item = Result.Error<T>(Errors.RpcStreamNotFound());
-                        }
                         catch (Exception e) {
-                            item = Result.Error<T>(e);
+                            var error = e.IsCancellationOf(cancellationToken)
+                                ? Errors.RpcStreamNotFound()
+                                : e;
+                            item = Result.Error<T>(error);
                         }
 
                         isEnumerationEnded |= item.HasError;

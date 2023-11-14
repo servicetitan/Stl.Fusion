@@ -67,7 +67,7 @@ public abstract class ClientComputedCache : RpcServiceBase, IClientComputedCache
             ArgumentSerializer.Deserialize(ref resultList, methodDef.AllowResultPolymorphism, resultData);
             return (resultList.Get0<T>(), resultData);
         }
-        catch (Exception e) when (e is not OperationCanceledException) {
+        catch (Exception e) when (!e.IsCancellationOf(cancellationToken)) {
             Log.LogError(e, "Cached result read failed");
             return null;
         }

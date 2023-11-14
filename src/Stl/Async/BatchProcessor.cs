@@ -297,14 +297,15 @@ public class BatchProcessor<T, TResult>(Channel<BatchProcessor<T, TResult>.Item>
 
     private Task CompleteProcessBatch(List<Item> batch, Exception? error = null)
     {
-        foreach (var item in batch) {
-            if (error == null)
-                item.SetError(Errors.UnprocessedBatchItem());
-            else if (error is OperationCanceledException)
-                item.SetCancelled(StopToken);
-            else
-                item.SetError(error);
+        error ??= Errors.UnprocessedBatchItem();
+        if (error is OperationCanceledException oce) {
+            var cancellationToken = oce.CancellationToken;
+            foreach (var item in batch)
+                item.SetCancelled(cancellationToken);
         }
+        else
+            foreach (var item in batch)
+                item.SetError(error);
         batch.Clear();
         return Task.CompletedTask;
     }

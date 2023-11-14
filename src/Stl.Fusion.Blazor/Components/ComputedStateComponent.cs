@@ -68,11 +68,11 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
                     var computeStateTask = ComputeState(cancellationToken);
                     _ = tcs.TrySetFromTaskAsync(computeStateTask, cancellationToken);
                 }
-                catch (OperationCanceledException) {
+                catch (OperationCanceledException oce) {
                     if (cancellationToken.IsCancellationRequested)
                         tcs.TrySetCanceled(cancellationToken);
                     else
-                        tcs.TrySetCanceled();
+                        tcs.TrySetCanceled(oce.CancellationToken);
                 }
                 catch (Exception e) {
                     tcs.TrySetException(e);
@@ -93,11 +93,10 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
                         var computeStateTask = ComputeState(cancellationToken);
                         _ = tcs.TrySetFromTaskAsync(computeStateTask, cancellationToken);
                     }
-                    catch (OperationCanceledException) {
-                        if (cancellationToken.IsCancellationRequested)
-                            tcs.TrySetCanceled(cancellationToken);
-                        else
-                            tcs.TrySetCanceled();
+                    catch (OperationCanceledException oce) {
+                        tcs.TrySetCanceled(cancellationToken.IsCancellationRequested
+                            ? cancellationToken
+                            : oce.CancellationToken);
                     }
                     catch (Exception e) {
                         tcs.TrySetException(e);
@@ -111,11 +110,10 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
                             var computeStateTask = ComputeState(cancellationToken);
                             _ = tcs.TrySetFromTaskAsync(computeStateTask, cancellationToken);
                         }
-                        catch (OperationCanceledException) {
-                            if (cancellationToken.IsCancellationRequested)
-                                tcs.TrySetCanceled(cancellationToken);
-                            else
-                                tcs.TrySetCanceled();
+                        catch (OperationCanceledException oce) {
+                            tcs.TrySetCanceled(cancellationToken.IsCancellationRequested
+                                ? cancellationToken
+                                : oce.CancellationToken);
                         }
                         catch (Exception e) {
                             tcs.TrySetException(e);

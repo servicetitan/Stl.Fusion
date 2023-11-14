@@ -79,7 +79,7 @@ public class RpcWebSocketServer(
             peer.SetConnection(connection);
             await channel.WhenClosed.ConfigureAwait(false);
         }
-        catch (OperationCanceledException) {
+        catch (Exception e) when (e.IsCancellationOf(cancellationToken)) {
             // Intended: this is typically a normal connection termination
         }
     }

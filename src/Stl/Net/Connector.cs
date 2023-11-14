@@ -46,10 +46,8 @@ public sealed class Connector<TConnection> : WorkerBase
                 try {
                     return await state.Value.ConnectionTask.WaitAsync(cancellationToken).ConfigureAwait(false);
                 }
-                catch (Exception e) when (e is not OperationCanceledException) {
+                catch (Exception e) when (!e.IsCancellationOf(cancellationToken)) {
                     state = await state.WhenNext(cancellationToken).ConfigureAwait(false);
-                    if (state == null)
-                        throw new OperationCanceledException();
                 }
             }
         }
@@ -68,7 +66,7 @@ public sealed class Connector<TConnection> : WorkerBase
 #pragma warning restore VSTHRD104
 
             _state = prevState.SetNext(State.New() with {
-                LastError = error
+                LastError = error,
             });
         }
         prevState.Value.Dispose();
@@ -94,7 +92,7 @@ public sealed class Connector<TConnection> : WorkerBase
                     connection = await connectionTask.ConfigureAwait(false);
                 connectionSource.TrySetResult(connection);
             }
-            catch (Exception e) when (e is not OperationCanceledException) {
+            catch (Exception e) when (!e.IsCancellationOf(cancellationToken)) {
                 error = e;
                 connectionSource.TrySetException(e);
             }
@@ -110,7 +108,7 @@ public sealed class Connector<TConnection> : WorkerBase
                     if (Connected != null)
                         await Connected.Invoke(connection, cancellationToken).ConfigureAwait(false);
                 }
-                catch (Exception e) when (e is not OperationCanceledException) {
+                catch (Exception e) when (!e.IsCancellationOf(cancellationToken)) {
                     Log?.LogWarning(e, "{LogTag}: Connected handler failed", LogTag);
                 }
                 await state.WhenNext(cancellationToken).ConfigureAwait(false);
@@ -172,7 +170,7 @@ public sealed class Connector<TConnection> : WorkerBase
                 prevState.Value.ConnectionSource.TrySetCanceled();
 
             _state = prevState.SetNext(State.NewCancelled(StopToken));
-            _state.SetFinal(StopToken);
+            _state.SetFinal(StopToken); // StopToken is cancelled here
             prevState.Value.Dispose();
 
             if (IsConnected.Value.IsValue(out var isConnected) && isConnected)

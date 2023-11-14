@@ -38,7 +38,10 @@ public static partial class TaskCompletionSourceExt
 
     public static TaskCompletionSource WithException(this TaskCompletionSource value, Exception error)
     {
-        value.TrySetException(error);
+        if (error is OperationCanceledException oce)
+            value.TrySetCanceled(oce.CancellationToken);
+        else
+            value.TrySetException(error);
         return value;
     }
 
@@ -66,8 +69,8 @@ public static partial class TaskCompletionSourceExt
             target.SetCanceled();
 #endif
         }
-        else if (task.Exception != null)
-            target.SetException(task.Exception.GetBaseException());
+        else if (task.Exception is { } exception)
+            target.SetException(exception.GetBaseException());
         else
             target.SetResult();
     }

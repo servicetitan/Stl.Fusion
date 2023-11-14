@@ -445,6 +445,9 @@ public abstract class Computed<T> : IComputedImpl, IResult<T>
     bool IComputedImpl.IsTransientError(Exception error) => IsTransientError(error);
     protected internal bool IsTransientError(Exception error)
     {
+        if (error is OperationCanceledException)
+            return true; // Must be transient under any circumstances in IComputed
+
         ITransientErrorDetector? transientErrorDetector = null;
         try {
             var services = Input.Function.Services;
