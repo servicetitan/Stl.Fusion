@@ -51,8 +51,7 @@ public class ClientComputeMethodFunction<T>(
         var call = SendRpcCall(input, cacheInfoCapture, cancellationToken);
 
         var result = await call.GetResult(cancellationToken).ConfigureAwait(false);
-        var cacheEntry = await UpdateCacheAsync(cache!, cacheInfoCapture, result, cancellationToken).ConfigureAwait(false);
-
+        var cacheEntry = await UpdateCache(cache!, cacheInfoCapture, result, cancellationToken).ConfigureAwait(false);
         var synchronizedSource = existing?.SynchronizedSource ?? AlwaysSynchronized.Source;
         return new ClientComputed<T>(
             input.MethodDef.ComputedOptions,
@@ -77,7 +76,7 @@ public class ClientComputeMethodFunction<T>(
             return await ComputeRpc(input, cache, null, cancellationToken).ConfigureAwait(false);
 
         var cacheEntry = new RpcCacheEntry(cacheKey, cacheResult.Data);
-        var cached = new ClientComputed<T>(
+        var cachedComputed = new ClientComputed<T>(
             input.MethodDef.ComputedOptions,
             input, cacheResult.Value, VersionGenerator.NextVersion(),
             cacheEntry);
@@ -91,21 +90,21 @@ public class ClientComputeMethodFunction<T>(
         // - And if this task gets cancelled, the subscription to invalidation won't be set up,
         //   and thus the result may end up being stale forever.
         using var suppressFlow = ExecutionContextExt.SuppressFlow();
-        _ = Task.Run(() => ApplyRpcUpdate(input, cache, cached), default);
-        return cached;
+        _ = Task.Run(() => ApplyRpcUpdate(input, cache, cachedComputed), default);
+        return cachedComputed;
     }
 
     private async Task ApplyRpcUpdate(
         ComputeMethodInput input,
         IClientComputedCache cache,
-        ClientComputed<T> cached)
+        ClientComputed<T> cachedComputed)
     {
         // 1. Start the RPC call
         var cacheInfoCapture = new RpcCacheInfoCapture();
         var call = SendRpcCall(input, cacheInfoCapture, default);
 
-        // 2. Bind the call to cached computed
-        if (!cached.BindToCall(call)) {
+        // 2. Bind the call to cachedComputed
+        if (!cachedComputed.BindToCall(call)) {
             // Ok, this is a weird case: existing was invalidated manually while we were getting here.
             // This means the call is already aborted (see BindToCall logic), and since we're
             // operating in background to update cached value, we can just exit.
@@ -114,16 +113,18 @@ public class ClientComputeMethodFunction<T>(
 
         // 3. Await for its completion
         var result = await call.GetResult().ConfigureAwait(false);
-        var (key, data) = await cacheInfoCapture.GetKeyAndData().ConfigureAwait(false);
 
-        // 4. Re-entering the lock & check if cached is still consistent
+        // 4. Get cache key & data
+        var (key, data) = await cacheInfoCapture.GetKeyAndData(default).ConfigureAwait(false);
+
+        // 5. Re-entering the lock & check if cachedComputed is still consistent
         using var _ = await InputLocks.Lock(input).ConfigureAwait(false);
-        if (!cached.IsConsistent())
-            return; // Since the call was bound to cached, it's properly cancelled already
+        if (!cachedComputed.IsConsistent())
+            return; // Since the call was bound to cachedComputed, it's properly cancelled already
 
-        var synchronizedSource = cached.SynchronizedSource;
-        if (!result.HasError && cached.CacheEntry is { } cachedEntry && data?.DataEquals(cachedEntry.Data) == true) {
-            // Existing is still intact
+        var synchronizedSource = cachedComputed.SynchronizedSource;
+        if (cachedComputed.CacheEntry is { } oldEntry && data?.DataEquals(oldEntry.Data) == true) {
+            // Existing cached entry is still intact
             synchronizedSource.TrySetResult(default);
             return;
         }
@@ -229,11 +230,11 @@ public class ClientComputeMethodFunction<T>(
         return new RpcCacheEntry(key, data.GetValueOrDefault());
     }
 
-    private async ValueTask<RpcCacheEntry?> UpdateCacheAsync(
+    private async ValueTask<RpcCacheEntry?> UpdateCache(
         IClientComputedCache cache,
         RpcCacheInfoCapture? cacheInfoCapture,
         Result<T> result,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         if (result.Error is { } error) {
             // No need to await for dataSource.Task in this case
