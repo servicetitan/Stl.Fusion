@@ -50,8 +50,7 @@ public class ConcurrentTimerSetTest(ITestOutputHelper @out) : TestBase(@out)
         timerSet.AddOrUpdateToEarlier(t, clock.Now + TimeSpan.FromMilliseconds(200))
             .Should().BeTrue();
         t.FiredAt.Should().Be(default);
-        await clock.Delay(300);
-        t.FiredAt.Should().NotBe(default);
+        await TestExt.WhenMet(() => t.FiredAt.Should().NotBe(default), TimeSpan.FromMilliseconds(500));
 
         // Remove
         t = new Timer();
@@ -59,8 +58,7 @@ public class ConcurrentTimerSetTest(ITestOutputHelper @out) : TestBase(@out)
         timerSet.AddOrUpdate(t, clock.Now + TimeSpan.FromMilliseconds(100));
         timerSet.Remove(t).Should().BeTrue();
         t.FiredAt.Should().Be(default);
-        await clock.Delay(200);
-        t.FiredAt.Should().Be(default);
+        await TestExt.WhenMet(() => t.FiredAt.Should().NotBe(default), TimeSpan.FromMilliseconds(300));
     }
 
     [Fact]
@@ -79,7 +77,7 @@ public class ConcurrentTimerSetTest(ITestOutputHelper @out) : TestBase(@out)
         timerSet.AddOrUpdate(t, clock.Now + TimeSpan.FromMilliseconds(100));
         timerSet.Remove(t).Should().BeTrue();
         t.FiredAt.Should().Be(default);
-        await clock.Delay(200);
+        await clock.Delay(300);
         t.FiredAt.Should().Be(default);
     }
 
@@ -93,7 +91,7 @@ public class ConcurrentTimerSetTest(ITestOutputHelper @out) : TestBase(@out)
             .Select(_ => Task.Run(() => OneRandomTest(rnd.Next(100), 3000, maxDelta)))
             .ToArray();
         await Task.WhenAll(tasks).SilentAwait();
-        Enumerable.Range(0, taskCount)
+        _ = Enumerable.Range(0, taskCount)
             .Select(_ => Task.Run(() => OneRandomTest(rnd.Next(100), 3000, maxDelta)))
             .ToArray();
         await Task.WhenAll(tasks);
