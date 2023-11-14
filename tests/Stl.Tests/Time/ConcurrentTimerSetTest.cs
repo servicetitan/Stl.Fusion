@@ -56,9 +56,11 @@ public class ConcurrentTimerSetTest(ITestOutputHelper @out) : TestBase(@out)
         t = new Timer();
         timerSet.Remove(t).Should().BeFalse();
         timerSet.AddOrUpdate(t, clock.Now + TimeSpan.FromMilliseconds(100));
+        t.FiredAt.Should().Be(default);
         timerSet.Remove(t).Should().BeTrue();
         t.FiredAt.Should().Be(default);
-        await TestExt.WhenMet(() => t.FiredAt.Should().NotBe(default), TimeSpan.FromMilliseconds(300));
+        await Delay(0.5);
+        t.FiredAt.Should().Be(default);
     }
 
     [Fact]
