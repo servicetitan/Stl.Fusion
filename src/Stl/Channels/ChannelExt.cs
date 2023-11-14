@@ -160,8 +160,7 @@ public static partial class ChannelExt
             Channel.CreateBounded<T>(channelOptions),
             Channel.CreateBounded<T>(channelOptions));
 
-        T LogMessage(T message, bool isIncoming)
-        {
+        T LogMessage(T message, bool isIncoming) {
             var text = message?.ToString() ?? "<null>";
             if (maxLength.HasValue && text.Length > maxLength.GetValueOrDefault())
                 text = text.Substring(0, maxLength.GetValueOrDefault()) + "...";
