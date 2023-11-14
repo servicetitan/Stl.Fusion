@@ -6,7 +6,7 @@
 
   <PropertyGroup>
     <!-- Core packages -->
-    <AspNetCoreVersion>8.0.0-rc.2.*</AspNetCoreVersion>
+    <AspNetCoreVersion>8.*</AspNetCoreVersion>
     <AspNetCoreVersion7>7.*</AspNetCoreVersion7>
     <AspNetCoreVersion6>6.*</AspNetCoreVersion6>
     <AspNetCoreVersion5>5.*</AspNetCoreVersion5>
@@ -35,7 +35,7 @@
     <EntityFrameworkCoreNpgsqlVersion6>$(EntityFrameworkCoreVersion6)</EntityFrameworkCoreNpgsqlVersion6>
     <EntityFrameworkCoreNpgsqlVersion5>$(EntityFrameworkCoreVersion5)</EntityFrameworkCoreNpgsqlVersion5>
     <EntityFrameworkCoreNpgsqlVersion3>$(EntityFrameworkCoreVersion3)</EntityFrameworkCoreNpgsqlVersion3>
-    <MySqlConnectorVersion>2.3.0-beta.4</MySqlConnectorVersion>
+    <MySqlConnectorVersion>2.3.0</MySqlConnectorVersion>
     <MySqlConnectorVersion7>2.2.*</MySqlConnectorVersion7>
     <MySqlConnectorVersion6>$(MySqlConnectorVersion7)</MySqlConnectorVersion6>
     <MySqlConnectorVersion5>$(MySqlConnectorVersion6)</MySqlConnectorVersion5>
@@ -50,7 +50,7 @@
     <AspNetCoreNewtonsoftJsonVersion7>$(AspNetCoreVersion7)</AspNetCoreNewtonsoftJsonVersion7>
     <AspNetCoreNewtonsoftJsonVersion6>$(AspNetCoreVersion6)</AspNetCoreNewtonsoftJsonVersion6>
     <NewtonsoftJsonVersion>13.0.*</NewtonsoftJsonVersion>
-    <MemoryPackVersion>1.9.*</MemoryPackVersion>
+    <MemoryPackVersion>1.10.*</MemoryPackVersion>
     <MessagePackVersion>2.5.*</MessagePackVersion>
     <!-- Other -->
     <RestEaseVersion>1.6.*</RestEaseVersion>
@@ -148,7 +148,7 @@
 
     <!-- Legacy support only -->
     <PackageReference Update="IndexRange" Version="1.0.*" />
-    <PackageReference Update="Microsoft.Bcl.AsyncInterfaces" Version="7.0.0" />
+    <PackageReference Update="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
     <PackageReference Update="System.Memory" Version="4.5.5" />
     <PackageReference Update="Microsoft.AspNet.WebApi.Core" Version="5.3.0" />
     <PackageReference Update="Microsoft.AspNet.WebApi.OwinSelfHost" Version="5.3.0" />
@@ -180,7 +180,7 @@
     <!-- Analyzers -->
     <PackageReference Update="Moq.Analyzers" Version="0.0.9" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers"/>
     <PackageReference Update="xunit.analyzers" Version="1.5.0" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
-    <PackageReference Update="Microsoft.VisualStudio.Threading.Analyzers" Version="17.7.*" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
+    <PackageReference Update="Microsoft.VisualStudio.Threading.Analyzers" Version="17.8.*" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers" />
     <PackageReference Update="Roslynator.Analyzers" Version="4.6.*" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers"/>
     <PackageReference Update="Meziantou.Analyzer" Version="2.0.*" PrivateAssets="All" IncludeAssets="runtime; build; native; contentfiles; analyzers"/>
 
