@@ -77,6 +77,9 @@ public class ProxyTypeGenerator
         var disableObsoleteMemberWarnings = Trivia(
             PragmaWarningDirectiveTrivia(Token(SyntaxKind.DisableKeyword), true)
                 .WithErrorCodes(SingletonSeparatedList<ExpressionSyntax>(IdentifierName("CS0618"))));
+        var disableMissingXmlCommentWarning = Trivia(
+            PragmaWarningDirectiveTrivia(Token(SyntaxKind.DisableKeyword), true)
+                .WithErrorCodes(SingletonSeparatedList<ExpressionSyntax>(IdentifierName("CS1591"))));
         ProxyDef = ProxyDef
             .WithMembers(List(
                 StaticFields
@@ -84,7 +87,7 @@ public class ProxyTypeGenerator
                 .Concat(Properties)
                 .Concat(Constructors)
                 .Concat(Methods)))
-            .WithLeadingTrivia(disableObsoleteMemberWarnings)
+            .WithLeadingTrivia(disableObsoleteMemberWarnings, disableMissingXmlCommentWarning)
             .NormalizeWhitespace();
         // WriteDebug?.Invoke(ProxyDef.ToString());
 
