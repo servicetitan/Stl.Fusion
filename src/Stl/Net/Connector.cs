@@ -10,7 +10,7 @@ public sealed class Connector<TConnection> : WorkerBase
     private long _reconnectsAt;
 
     public AsyncState<Result<bool>> IsConnected { get; private set; } = new(false, true);
-    public Moment? ReconnectsAt {
+    public Moment? ReconnectsAt { // Relative to CpuClock.Now
         get {
             var reconnectsAt = Interlocked.Read(ref _reconnectsAt);
             return reconnectsAt == default ? null : new Moment(reconnectsAt);
