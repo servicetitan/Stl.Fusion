@@ -1,4 +1,4 @@
 namespace Stl.DependencyInjection;
 
 [AttributeUsage(AttributeTargets.Constructor)]
-public class ServiceConstructorAttribute : ActivatorUtilitiesConstructorAttribute;
+public sealed class ServiceConstructorAttribute : ActivatorUtilitiesConstructorAttribute;

@@ -1,9 +1,12 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework.Operations;
 
-public class DbOperationLogTrimmer<TDbContext> : DbTenantWorkerBase<TDbContext>
+public class DbOperationLogTrimmer<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext>
+    : DbTenantWorkerBase<TDbContext>
     where TDbContext : DbContext
 {
     public record Options
@@ -42,7 +45,7 @@ public class DbOperationLogTrimmer<TDbContext> : DbTenantWorkerBase<TDbContext>
 
             if (lastTrimCount > 0 && IsLoggingEnabled)
                 Log.Log(Settings.LogLevel,
-                    "Trim({tenant.Id}) trimmed {Count} operations", tenant.Id, lastTrimCount);
+                    "Trim({TenantId}) trimmed {Count} operations", tenant.Id, lastTrimCount);
         }).Trace(() => activitySource.StartActivity("Trim").AddTenantTags(tenant), Log);
 
         var chain = runChain

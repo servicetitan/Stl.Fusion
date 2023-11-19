@@ -36,6 +36,6 @@ public static class ConcurrentRandom
     private static Random Create()
     {
         lock (SeedRandom)
-            return new Random(SeedRandom.Next() + Thread.CurrentThread.ManagedThreadId);
+            return new Random(SeedRandom.Next() + Environment.CurrentManagedThreadId);
     }
 }

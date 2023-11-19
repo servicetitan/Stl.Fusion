@@ -1,5 +1,7 @@
 namespace Stl.Fusion.Blazor;
 
+#pragma warning disable CA1813 // Consider making sealed
+
 [AttributeUsage(
     AttributeTargets.Interface |
     AttributeTargets.Class |

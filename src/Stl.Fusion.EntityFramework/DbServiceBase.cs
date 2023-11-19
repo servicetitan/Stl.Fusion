@@ -1,11 +1,14 @@
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Stl.Multitenancy;
 using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework;
 
-public abstract class DbServiceBase<TDbContext>(IServiceProvider services)
+public abstract class DbServiceBase<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext>
+    (IServiceProvider services)
     where TDbContext : DbContext
 {
     private ILogger? _log;

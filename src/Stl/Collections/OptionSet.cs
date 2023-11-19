@@ -1,3 +1,7 @@
+using System.Diagnostics.CodeAnalysis;
+using Stl.Internal;
+using Stl.Serialization.Internal;
+
 namespace Stl.Collections;
 
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
@@ -50,6 +54,7 @@ public partial class OptionSet : IServiceProvider
     public OptionSet(ImmutableDictionary<Symbol, object>? items)
         => _items = items ?? ImmutableDictionary<Symbol, object>.Empty;
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     [JsonConstructor, MemoryPackConstructor]
     public OptionSet(Dictionary<string, NewtonsoftJsonSerialized<object>>? jsonCompatibleItems)
         : this(jsonCompatibleItems?.ToImmutableDictionary(p => (Symbol) p.Key, p => p.Value.Value))

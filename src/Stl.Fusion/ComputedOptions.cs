@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Interception.Internal;
 
 namespace Stl.Fusion;
@@ -19,13 +20,17 @@ public record ComputedOptions
     public TimeSpan InvalidationDelay { get; init; }
     public ClientCacheMode ClientCacheMode { get; init; } = ClientCacheMode.NoCache;
 
-    public static ComputedOptions? Get(Type type, MethodInfo method)
+    public static ComputedOptions? Get(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type,
+        MethodInfo method)
     {
         var isClientServiceMethod = type.IsInterface || typeof(InterfaceProxy).IsAssignableFrom(type);
+#pragma warning disable IL2026
         var cma = method.GetAttribute<ComputeMethodAttribute>(true, true);
         var rma = isClientServiceMethod
             ? method.GetAttribute<ClientComputeMethodAttribute>(true, true)
             : null;
+#pragma warning restore IL2026
         var a = rma ?? cma;
         if (a == null)
             return null;

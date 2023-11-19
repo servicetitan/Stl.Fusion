@@ -52,9 +52,7 @@ public static class ChannelTestExt
         using var dTimeoutTask = timeoutToken.ToTask();
         await Task.WhenAny(channel.Completion, dTimeoutTask.Resource).ConfigureAwait(false);
         channel.Completion.IsCompleted.Should().BeTrue();
-#pragma warning disable MA0004
-        await channel.Completion;
-#pragma warning restore MA0004
+        await channel.Completion.ConfigureAwait(false);
     }
 
     public static async Task AssertCannotRead<T>(

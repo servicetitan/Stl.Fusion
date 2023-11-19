@@ -18,8 +18,8 @@ public abstract class RedisSubBase : ProcessorBase
     public Task? WhenSubscribed { get; private set; } = null!;
 
     protected RedisSubBase(
-        RedisDb redisDb, RedisSubKey key, 
-        TimeSpan? subscribeTimeout = null, 
+        RedisDb redisDb, RedisSubKey key,
+        TimeSpan? subscribeTimeout = null,
         bool subscribe = true)
     {
         RedisDb = redisDb;

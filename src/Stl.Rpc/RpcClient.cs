@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using Stl.Internal;
 using Stl.Rpc.Infrastructure;
 
 namespace Stl.Rpc;
@@ -10,5 +12,6 @@ public abstract class RpcClient : RpcServiceBase
         : base(services)
         => ClientId = Hub.ClientIdGenerator.Invoke();
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public abstract Task<RpcConnection> CreateConnection(RpcClientPeer peer, CancellationToken cancellationToken);
 }

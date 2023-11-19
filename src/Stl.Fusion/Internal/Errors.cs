@@ -19,7 +19,7 @@ public static class Errors
             $"Wrong Computed.State: {state}.");
 
     public static Exception ComputedCurrentIsNull()
-        => new NullReferenceException($"Computed.Current() == null.");
+        => new InvalidOperationException("Computed.Current() == null.");
     public static Exception ComputedCurrentIsOfIncompatibleType(Type expectedType)
         => new InvalidCastException(
             $"Computed.Current() can't be converted to '{expectedType}'.");

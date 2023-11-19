@@ -4,8 +4,6 @@ namespace Stl.Tests.Reflection;
 
 public class MemberwiseCopierTest
 {
-    private readonly MemberwiseClonerTest _memberwiseClonerTest = new MemberwiseClonerTest();
-
     public class Example
     {
         public int Property { get; set; }

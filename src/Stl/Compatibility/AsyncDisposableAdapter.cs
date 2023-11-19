@@ -13,6 +13,7 @@ public readonly struct AsyncDisposableAdapter<T> : IAsyncDisposable
     public AsyncDisposableAdapter(T target)
         => Target = target;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public ValueTask DisposeAsync()
     {
 #if !NETSTANDARD2_0
@@ -20,6 +21,7 @@ public readonly struct AsyncDisposableAdapter<T> : IAsyncDisposable
 #else
         if (Target is IAsyncDisposable ad)
             return ad.DisposeAsync();
+
         Target?.Dispose();
         return default;
 #endif

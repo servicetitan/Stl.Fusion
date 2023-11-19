@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +28,11 @@ public interface IDbEntityResolver<TKey, TDbEntity>
 /// <typeparam name="TDbContext">The type of <see cref="DbContext"/>.</typeparam>
 /// <typeparam name="TKey">The type of entity key.</typeparam>
 /// <typeparam name="TDbEntity">The type of entity to pipeline batch for.</typeparam>
-public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbContext>,
+public class DbEntityResolver<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext,
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TKey,
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbEntity>
+    : DbServiceBase<TDbContext>,
     IDbEntityResolver<TKey, TDbEntity>,
     IAsyncDisposable
     where TDbContext : DbContext
@@ -86,7 +91,9 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
                 .Properties.Single().Name;
 
             var pEntity = Expression.Parameter(typeof(TDbEntity), "e");
+#pragma warning disable IL2026
             var eBody = Expression.PropertyOrField(pEntity, keyPropertyName);
+#pragma warning restore IL2026
             keyExtractor = Expression.Lambda<Func<TDbEntity, TKey>>(eBody, pEntity);
         }
         KeyExtractorExpression = keyExtractor;
@@ -168,7 +175,9 @@ public class DbEntityResolver<TDbContext, TKey, TDbEntity> : DbServiceBase<TDbCo
             .SingleOrDefault(m => Equals(m.Name, nameof(query.Execute))
                 && m.IsGenericMethod
                 && m.GetGenericArguments().Length == batchSize)
+#pragma warning disable IL2060
             ?.MakeGenericMethod(pKeys.Select(p => p.Type).ToArray());
+#pragma warning restore IL2060
         if (mExecute == null)
             throw Errors.BatchSizeIsTooLarge();
 

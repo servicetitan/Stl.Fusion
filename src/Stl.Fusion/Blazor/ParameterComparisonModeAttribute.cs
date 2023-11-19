@@ -1,10 +1,9 @@
 namespace Stl.Fusion.Blazor;
 
-[AttributeUsage(AttributeTargets.Class, Inherited = false)]
-public class FusionComponentAttribute : Attribute
-{
-    public ParameterComparisonMode ParameterComparisonMode { get; }
+#pragma warning disable CA1813 // Consider making sealed
 
-    public FusionComponentAttribute(ParameterComparisonMode parameterComparisonMode)
-        => ParameterComparisonMode = parameterComparisonMode;
+[AttributeUsage(AttributeTargets.Class, Inherited = false)]
+public class FusionComponentAttribute(ParameterComparisonMode parameterComparisonMode) : Attribute
+{
+    public ParameterComparisonMode ParameterComparisonMode { get; } = parameterComparisonMode;
 }

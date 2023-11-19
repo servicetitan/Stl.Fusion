@@ -7,6 +7,7 @@ public static class EnumerableCompatExt
 {
 #if NETSTANDARD2_0
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static HashSet<TSource> ToHashSet<TSource>(this IEnumerable<TSource> source)
         => new(source);
 

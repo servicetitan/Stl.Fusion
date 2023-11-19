@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Conversion;
 using Stl.Fusion.Client.Caching;
@@ -22,6 +23,7 @@ public readonly struct FusionBuilder
     public RpcBuilder Rpc { get; }
     public RpcServiceMode ServiceMode { get; }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Fusion)]
     internal FusionBuilder(
         IServiceCollection services,
         Action<FusionBuilder>? configure,
@@ -172,20 +174,28 @@ public readonly struct FusionBuilder
 
     // ComputeService
 
-    public FusionBuilder AddService<TService>(RpcServiceMode mode, bool addCommandHandlers = true)
+    public FusionBuilder AddService<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService>
+        (RpcServiceMode mode, bool addCommandHandlers = true)
         where TService : class, IComputeService
         => AddService(typeof(TService), typeof(TService), ServiceLifetime.Singleton, mode, addCommandHandlers);
-    public FusionBuilder AddService<TService, TImplementation>(RpcServiceMode mode, bool addCommandHandlers = true)
+    public FusionBuilder AddService<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TImplementation>
+        (RpcServiceMode mode, bool addCommandHandlers = true)
         where TService : class
         where TImplementation : class, TService, IComputeService
         => AddService(typeof(TService), typeof(TImplementation), ServiceLifetime.Singleton, mode, addCommandHandlers);
-    public FusionBuilder AddService<TService>(
+    public FusionBuilder AddService<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService>(
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         RpcServiceMode mode = RpcServiceMode.Default,
         bool addCommandHandlers = true)
         where TService : class, IComputeService
         => AddService(typeof(TService), typeof(TService), lifetime, mode, addCommandHandlers);
-    public FusionBuilder AddService<TService, TImplementation>(
+    public FusionBuilder AddService<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TImplementation>(
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         RpcServiceMode mode = RpcServiceMode.Default,
         bool addCommandHandlers = true)
@@ -193,21 +203,26 @@ public readonly struct FusionBuilder
         where TImplementation : class, TService, IComputeService
         => AddService(typeof(TService), typeof(TImplementation), lifetime, mode, addCommandHandlers);
 
-    public FusionBuilder AddService(Type serviceType, RpcServiceMode mode, bool addCommandHandlers = true)
+    public FusionBuilder AddService(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        RpcServiceMode mode,
+        bool addCommandHandlers = true)
         => AddService(serviceType, serviceType, ServiceLifetime.Singleton, mode, addCommandHandlers);
     public FusionBuilder AddService(
-        Type serviceType, Type implementationType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type implementationType,
         RpcServiceMode mode,
         bool addCommandHandlers = true)
         => AddService(serviceType, implementationType, ServiceLifetime.Singleton, mode, addCommandHandlers);
     public FusionBuilder AddService(
-        Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         RpcServiceMode mode = RpcServiceMode.Default,
         bool addCommandHandlers = true)
         => AddService(serviceType, serviceType, lifetime, mode, addCommandHandlers);
     public FusionBuilder AddService(
-        Type serviceType, Type implementationType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type implementationType,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         RpcServiceMode mode = RpcServiceMode.Default,
         bool addCommandHandlers = true)
@@ -232,10 +247,14 @@ public readonly struct FusionBuilder
         };
     }
 
-    public FusionBuilder AddServer<TService, TImplementation>(Symbol name = default, bool addCommandHandlers = true)
+    public FusionBuilder AddServer<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TImplementation>
+        (Symbol name = default, bool addCommandHandlers = true)
         => AddServer(typeof(TService), typeof(TImplementation), name, addCommandHandlers);
     public FusionBuilder AddServer(
-        Type serviceType, Type implementationType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type implementationType,
         Symbol name = default,
         bool addCommandHandlers = true)
     {
@@ -249,9 +268,13 @@ public readonly struct FusionBuilder
         return this;
     }
 
-    public FusionBuilder AddClient<TService>(Symbol name = default, bool addCommandHandlers = true)
+    public FusionBuilder AddClient<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService>
+        (Symbol name = default, bool addCommandHandlers = true)
         => AddClient(typeof(TService), name, addCommandHandlers);
-    public FusionBuilder AddClient(Type serviceType, Symbol name = default, bool addCommandHandlers = true)
+    public FusionBuilder AddClient(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        Symbol name = default, bool addCommandHandlers = true)
     {
         if (!serviceType.IsInterface)
             throw Stl.Internal.Errors.MustBeInterface(serviceType, nameof(serviceType));
@@ -265,10 +288,14 @@ public readonly struct FusionBuilder
         return this;
     }
 
-    public FusionBuilder AddRouter<TService, TImplementation>(Symbol name = default, bool addCommandHandlers = true)
+    public FusionBuilder AddRouter<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TImplementation>
+        (Symbol name = default, bool addCommandHandlers = true)
         => AddRouter(typeof(TService), typeof(TImplementation), name, addCommandHandlers);
     public FusionBuilder AddRouter(
-        Type serviceType, Type implementationType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type implementationType,
         Symbol name = default,
         bool addCommandHandlers = true)
     {
@@ -287,13 +314,15 @@ public readonly struct FusionBuilder
         return this;
     }
 
-    public FusionBuilder AddServingRouter<TService, TImplementation>(
+    public FusionBuilder AddServingRouter<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TImplementation>(
         Symbol name = default,
         bool addCommandHandlers = true)
         => AddServingRouter(typeof(TService), typeof(TImplementation), name, addCommandHandlers);
     public FusionBuilder AddServingRouter(
-        Type serviceType,
-        Type implementationType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type implementationType,
         Symbol name = default,
         bool addCommandHandlers = true)
     {
@@ -302,12 +331,15 @@ public readonly struct FusionBuilder
         return this;
     }
 
-    public FusionBuilder AddRoutingServer<TService, TImplementation>(
+    public FusionBuilder AddRoutingServer<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TImplementation>(
         Symbol name = default,
         bool addCommandHandlers = true)
         => AddRoutingServer(typeof(TService), typeof(TImplementation), name, addCommandHandlers);
     public FusionBuilder AddRoutingServer(
-        Type serviceType, Type implementationType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type implementationType,
         Symbol name = default,
         bool addCommandHandlers = true)
     {
@@ -332,7 +364,8 @@ public readonly struct FusionBuilder
         Func<IServiceProvider, OperationReprocessorOptions>? optionsFactory = null)
         => AddOperationReprocessor<OperationReprocessor>(optionsFactory);
 
-    public FusionBuilder AddOperationReprocessor<TOperationReprocessor>(
+    public FusionBuilder AddOperationReprocessor<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TOperationReprocessor>(
         Func<IServiceProvider, OperationReprocessorOptions>? optionsFactory = null)
         where TOperationReprocessor : class, IOperationReprocessor
     {
@@ -350,7 +383,8 @@ public readonly struct FusionBuilder
 
     // AddClientComputeCache
 
-    public FusionBuilder AddClientComputedCache<TCache, TOptions>(
+    public FusionBuilder AddClientComputedCache<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TCache, TOptions>(
         Func<IServiceProvider, TOptions>? optionsFactory = null)
         where TCache : class, IClientComputedCache
         where TOptions : class, new()
@@ -365,7 +399,8 @@ public readonly struct FusionBuilder
         return this;
     }
 
-    public FusionBuilder AddSharedClientComputedCache<TCache, TOptions>(
+    public FusionBuilder AddSharedClientComputedCache<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TCache, TOptions>(
         Func<IServiceProvider, TOptions>? optionsFactory = null)
         where TCache : ClientComputedCache
         where TOptions : class, new()
@@ -400,11 +435,13 @@ public readonly struct FusionBuilder
     // Private methods
 
     private FusionBuilder AddServiceImpl(
-        Type serviceType, Type implementationType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type implementationType,
         bool addCommandHandlers = true)
         => AddServiceImpl(serviceType, implementationType, ServiceLifetime.Singleton, addCommandHandlers);
     private FusionBuilder AddServiceImpl(
-        Type serviceType, Type implementationType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type implementationType,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         bool addCommandHandlers = true)
     {

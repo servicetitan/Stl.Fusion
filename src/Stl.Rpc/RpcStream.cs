@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Stl.Interception;
 using Stl.Internal;
 using Stl.Rpc.Infrastructure;
@@ -40,9 +41,11 @@ public abstract partial class RpcStream : IRpcObject
     public override string ToString()
         => $"{GetType().GetName()}(#{Id} @ {Peer?.Ref}, {Kind})";
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     Task IRpcObject.Reconnect(CancellationToken cancellationToken)
         => Reconnect(cancellationToken);
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     void IRpcObject.Disconnect()
         => Disconnect();
 
@@ -50,10 +53,15 @@ public abstract partial class RpcStream : IRpcObject
 
     protected internal abstract ArgumentList CreateStreamItemArguments();
     protected internal abstract ArgumentList CreateStreamBatchArguments();
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     protected internal abstract Task OnItem(long index, object? item);
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     protected internal abstract Task OnBatch(long index, object? items);
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     protected internal abstract Task OnEnd(long index, Exception? error);
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     protected abstract Task Reconnect(CancellationToken cancellationToken);
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     protected abstract void Disconnect();
 }
 
@@ -110,13 +118,17 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
     public RpcStream(IAsyncEnumerable<T> localSource)
         => _localSource = localSource;
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     ~RpcStream()
     {
         if (_localSource == null)
             Close(Errors.AlreadyDisposed(GetType()));
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
+#pragma warning disable IL2046
     public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+#pragma warning restore IL2046
     {
         if (_localSource != null)
             return _localSource.GetAsyncEnumerator(cancellationToken);
@@ -153,6 +165,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
     protected internal override ArgumentList CreateStreamBatchArguments()
         => ArgumentList.New<long, T[]>(0L, default!);
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     protected internal override Task OnItem(long index, object? item)
     {
         lock (_lock) {
@@ -170,6 +183,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
         }
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     protected internal override Task OnBatch(long index, object? items)
     {
         lock (_lock) {
@@ -190,6 +204,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
         }
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     protected internal override Task OnEnd(long index, Exception? error)
     {
         lock (_lock) {
@@ -206,6 +221,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
         }
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     protected override Task Reconnect(CancellationToken cancellationToken)
     {
         lock (_lock)
@@ -214,6 +230,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
                 : Task.CompletedTask;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     protected override void Disconnect()
     {
         lock (_lock) {
@@ -227,12 +244,14 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
 
     // Private methods
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     private void Close(Exception? error)
     {
         lock (_lock)
             CloseFromLock(error);
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     private void CloseFromLock(Exception? error)
     {
         if (_remoteChannel != null) {
@@ -246,20 +265,24 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
         }
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     private Task SendCloseFromLock()
     {
         _nextIndex = int.MaxValue;
         return SendAckFromLock(_nextIndex, true);
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     private Task SendResetFromLock(long index)
         => SendAckFromLock(index, true);
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     private Task MaybeSendAckFromLock(long index)
         => index % AckPeriod == 0 && index > 0
             ? SendAckFromLock(index)
             : Task.CompletedTask;
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     private Task SendAckFromLock(long index, bool mustReset = false)
     {
         // Debug.WriteLine($"{Id}: <- ACK: ({index}, {mustReset})");
@@ -270,7 +293,7 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
 
     // Nested types
 
-    private class RemoteChannelEnumerator : IAsyncEnumerator<T>
+    private sealed class RemoteChannelEnumerator : IAsyncEnumerator<T>
     {
         private readonly ChannelReader<T> _reader;
         private long _nextIndex;
@@ -291,7 +314,10 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
             ? _current.Value
             : throw new InvalidOperationException($"{nameof(MoveNextAsync)} should be called first.");
 
+        [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
+#pragma warning disable IL2046
         public ValueTask DisposeAsync()
+#pragma warning restore IL2046
         {
             if (!ActiveObjects.TryRemove(this, out _))
                 return default;
@@ -300,7 +326,10 @@ public sealed partial class RpcStream<T> : RpcStream, IAsyncEnumerable<T>
             return default;
         }
 
+        [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
+#pragma warning disable IL2046
         public ValueTask<bool> MoveNextAsync()
+#pragma warning restore IL2046
         {
             if (_isEnded)
                 return default;

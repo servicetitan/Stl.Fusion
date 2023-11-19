@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Toolkit.HighPerformance;
 using Stl.Internal;
@@ -31,9 +32,15 @@ public static class StringExt
     // ReSharper disable once InconsistentNaming
     public static string GetMD5HashCode(this string input)
     {
-        using var md5 = System.Security.Cryptography.MD5.Create();
         var inputBytes = Encoding.ASCII.GetBytes(input);
+#pragma warning disable CA5351
+#if NET5_0_OR_GREATER
+        var hashBytes = MD5.HashData(inputBytes);
+#else
+        using var md5 = MD5.Create();
         var hashBytes = md5.ComputeHash(inputBytes);
+#endif
+#pragma warning restore CA5351
 #if NET5_0_OR_GREATER
         return Convert.ToHexString(hashBytes);
 #elif NETSTANDARD2_0

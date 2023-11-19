@@ -1,15 +1,30 @@
+using System.Diagnostics.CodeAnalysis;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using Stl.Internal;
 
 namespace Stl.Serialization.Internal;
 
+#if !NET5_0
+[RequiresUnreferencedCode(UnreferencedCode.Serialization)]
+#endif
 public class SerializationBinder : ISerializationBinder
 {
-    public static readonly ISerializationBinder Instance = new SerializationBinder();
+#if !NET5_0
+    public static ISerializationBinder Instance { get; } = new SerializationBinder();
+#else
+    private static SerializationBinder? _instance;
+
+    public static ISerializationBinder Instance {
+        [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
+        get => _instance ??= new SerializationBinder();
+    }
+#endif
 
     private readonly ConcurrentDictionary<(string? AssemblyName, string TypeName), Type?> _cache;
     private readonly Func<(string?, string), Type?> _resolveTypeHandler;
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     public SerializationBinder()
     {
         _resolveTypeHandler = ResolveType;
@@ -30,6 +45,7 @@ public class SerializationBinder : ISerializationBinder
     protected Type? GetType(string? assemblyName, string typeName)
         => _cache.GetOrAdd((assemblyName, typeName), _resolveTypeHandler);
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     protected virtual Type? ResolveType((string? AssemblyName, string TypeName) key)
     {
         var (assemblyName, typeName) = key;
@@ -40,9 +56,11 @@ public class SerializationBinder : ISerializationBinder
                 throw new JsonSerializationException(
                     $"Could not load assembly '{assemblyName}'.");
 
+#pragma warning disable IL2026
             var type = assembly.GetType(typeName);
+#pragma warning restore IL2026
             if (type == null) {
-                if (typeName.IndexOf('`') >= 0) {
+                if (typeName.Contains('`', StringComparison.Ordinal)) {
                     try {
                         type = ResolveGenericType(typeName, assembly);
                     }
@@ -60,9 +78,10 @@ public class SerializationBinder : ISerializationBinder
         return Type.GetType(typeName);
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     protected Type? ResolveGenericType(string typeName, Assembly assembly)
     {
-        var openBracketIndex = typeName.IndexOf('[');
+        var openBracketIndex = typeName.IndexOf('[', StringComparison.Ordinal);
         string genericTypeDefName = typeName.Substring(0, openBracketIndex);
         if (openBracketIndex < 0)
             return null;

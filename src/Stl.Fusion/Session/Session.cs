@@ -42,7 +42,7 @@ public sealed partial class Session : IHasId<Symbol>, IRequirementTarget,
     public Symbol GetTenantId()
     {
         var idValue = Id.Value;
-        var atIndex = idValue.IndexOf('@');
+        var atIndex = idValue.IndexOf('@', StringComparison.Ordinal);
         if (atIndex <= 0)
             return Symbol.Empty;
         return idValue[(atIndex + 1)..];
@@ -51,7 +51,7 @@ public sealed partial class Session : IHasId<Symbol>, IRequirementTarget,
     public Session WithTenantId(Symbol tenantId)
     {
         var idValue = Id.Value;
-        var atIndex = idValue.IndexOf('@');
+        var atIndex = idValue.IndexOf('@', StringComparison.Ordinal);
         if (atIndex < 0)
             return tenantId.IsEmpty ? this : new Session($"{idValue}@{tenantId.Value}");
         var prefix = idValue[..atIndex];

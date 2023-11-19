@@ -5,7 +5,9 @@ namespace Stl.Fusion;
 public abstract class ComputedInput : IEquatable<ComputedInput>, IHasIsDisposed
 {
     public IFunction Function { get; private set; } = null!;
+#pragma warning disable CA1721
     public int HashCode { get; private set; }
+#pragma warning restore CA1721
     public virtual string Category {
         get => Function.ToString() ?? "";
         init => throw Errors.ComputedInputCategoryCannotBeSet();

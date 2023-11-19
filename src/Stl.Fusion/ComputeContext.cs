@@ -85,4 +85,4 @@ public class ComputeContext
     }
 }
 
-internal class CachedComputeContext(CallOptions callOptions) : ComputeContext(callOptions);
+internal sealed class CachedComputeContext(CallOptions callOptions) : ComputeContext(callOptions);

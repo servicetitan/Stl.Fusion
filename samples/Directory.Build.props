@@ -11,4 +11,13 @@
     <LangVersion>preview</LangVersion>
   </PropertyGroup>
 
+  <!-- Warnings - they're lowered for the simplicity here -->
+  <PropertyGroup>
+    <AnalysisMode>Default</AnalysisMode>
+    <AnalysisLevel>preview</AnalysisLevel>
+    <EnableTrimAnalyzer>false</EnableTrimAnalyzer>
+    <!-- CA2007: Consider calling ConfigureAwait on the awaited task -->
+    <NoWarn>$(NoWarn);CA2007</NoWarn>
+  </PropertyGroup>
+
 </Project>

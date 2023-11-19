@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Text;
 using Stl.OS;
 using Stl.Rpc.Infrastructure;
@@ -19,6 +21,7 @@ public sealed class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<Rpc
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     public IEnumerator<RpcServiceDef> GetEnumerator() => _serviceByName.Values.GetEnumerator();
 
+    [RequiresUnreferencedCode(UnreferencedCode.Rpc)]
     public RpcServiceRegistry(IServiceProvider services)
         : base(services)
     {
@@ -31,7 +34,7 @@ public sealed class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<Rpc
             if (_serviceByName.TryGetValue(name, out var serviceDef))
                 throw Errors.ServiceNameConflict(service.Type, serviceDef.Type, name);
 
-            serviceDef = new RpcServiceDef(hub, name, service);
+            serviceDef = new RpcServiceDef(hub, name, service, service.Type);
             if (_services.ContainsKey(serviceDef.Type))
                 throw Errors.ServiceTypeConflict(service.Type);
 
@@ -66,7 +69,7 @@ public sealed class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<Rpc
 
     public void DumpTo(StringBuilder sb, bool dumpMethods = true, string indent = "")
     {
-#pragma warning disable MA0011
+#pragma warning disable MA0011, MA0028, CA1305
         foreach (var serviceDef in _serviceByName.Values.OrderBy(s => s.Name)) {
             var serverInfo = serviceDef.HasServer  ? $" -> {serviceDef.ServerResolver}" : "";
             sb.AppendLine($"{indent}'{serviceDef.Name}': {serviceDef.Type.GetName()}{serverInfo}, {serviceDef.Methods.Count} method(s)");
@@ -76,7 +79,7 @@ public sealed class RpcServiceRegistry : RpcServiceBase, IReadOnlyCollection<Rpc
             foreach (var methodDef in serviceDef.Methods.OrderBy(m => m.Name))
                 sb.AppendLine($"{indent}- {methodDef}");
         }
-#pragma warning restore MA0011
+#pragma warning restore MA0011, MA0028, CA1305
     }
 
     public RpcServiceDef? Get<TService>()

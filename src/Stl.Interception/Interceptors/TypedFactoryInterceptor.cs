@@ -23,6 +23,8 @@ public class TypedFactoryInterceptor(IServiceProvider services) : Interceptor
         var parameterTypes = new Type[parameters.Length];
         for (int i = 0; i < parameters.Length; i++)
             parameterTypes[i] = parameters[i].ParameterType;
+#pragma warning disable IL2072
         return ActivatorUtilities.CreateFactory(method.ReturnType, parameterTypes);
+#pragma warning restore IL2072
     }
 }

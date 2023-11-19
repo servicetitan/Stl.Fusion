@@ -43,7 +43,7 @@ public abstract class State<T> : ComputedInput,
     public record Options : IState.IOptions
     {
         public ComputedOptions ComputedOptions { get; init; } = ComputedOptions.Default;
-        public Result<T> InitialOutput { get; init; } = default;
+        public Result<T> InitialOutput { get; init; }
         public string? Category { get; init; }
 
         public T InitialValue {
@@ -73,7 +73,9 @@ public abstract class State<T> : ComputedInput,
         init => _category = value;
     }
 
+#pragma warning disable CA1721
     public Computed<T> Computed {
+#pragma warning restore CA1721
         get => Snapshot.Computed;
         protected set {
             value.AssertConsistencyStateIsNot(ConsistencyState.Computing);
@@ -136,7 +138,9 @@ public abstract class State<T> : ComputedInput,
 
         // ReSharper disable once VirtualMemberCallInConstructor
         if (initialize)
+#pragma warning disable CA2214
             Initialize(settings);
+#pragma warning restore CA2214
     }
 
     public void Deconstruct(out T value, out Exception? error)

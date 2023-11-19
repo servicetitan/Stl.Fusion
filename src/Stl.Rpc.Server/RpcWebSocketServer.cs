@@ -1,5 +1,7 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Microsoft.AspNetCore.Http;
+using Stl.Internal;
 using Stl.Rpc.Clients;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.WebSockets;
@@ -29,6 +31,7 @@ public class RpcWebSocketServer(
     public RpcServerConnectionFactory ServerConnectionFactory { get; }
         = services.GetRequiredService<RpcServerConnectionFactory>();
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public async Task Invoke(HttpContext context)
     {
         var cancellationToken = context.RequestAborted;

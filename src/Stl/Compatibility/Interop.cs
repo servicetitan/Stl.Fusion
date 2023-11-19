@@ -16,7 +16,9 @@ internal static class Interop
         var status = BCrypt.BCryptGenRandom(IntPtr.Zero, buffer, length, BCrypt.BCRYPT_USE_SYSTEM_PREFERRED_RNG);
         if (status != BCrypt.NTSTATUS.STATUS_SUCCESS) {
             throw status == BCrypt.NTSTATUS.STATUS_NO_MEMORY
+#pragma warning disable CA2201
                 ? new OutOfMemoryException()
+#pragma warning restore CA2201
                 : new InvalidOperationException();
         }
     }
@@ -26,7 +28,9 @@ internal static class Interop
         internal const int BCRYPT_USE_SYSTEM_PREFERRED_RNG = 0x00000002;
 
         [DllImport(Libraries.BCrypt, CharSet = CharSet.Unicode)]
+#pragma warning disable CA5392
         internal static extern unsafe NTSTATUS BCryptGenRandom(IntPtr hAlgorithm, byte* pbBuffer, int cbBuffer, int dwFlags);
+#pragma warning restore CA5392
     }
 
     internal static partial class BCrypt

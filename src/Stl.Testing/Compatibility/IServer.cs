@@ -148,17 +148,13 @@ public class FeatureCollection : IFeatureCollection
     public void Set<TFeature>(TFeature? instance)
         => this[typeof(TFeature)] = instance;
 
-    private class KeyComparer : IEqualityComparer<KeyValuePair<Type, object>>
+    private sealed class KeyComparer : IEqualityComparer<KeyValuePair<Type, object>>
     {
         public bool Equals(KeyValuePair<Type, object> x, KeyValuePair<Type, object> y)
-        {
-            return x.Key.Equals(y.Key);
-        }
+            => x.Key == y.Key;
 
         public int GetHashCode(KeyValuePair<Type, object> obj)
-        {
-            return obj.Key.GetHashCode();
-        }
+            => obj.Key.GetHashCode();
     }
 }
 
@@ -202,25 +198,19 @@ public interface IHttpApplication<TContext>
     Task ProcessRequestAsync(TContext context);
 }
 
-internal class HostingApplication : IHttpApplication<HostingApplication.Context>
+internal sealed class HostingApplication : IHttpApplication<HostingApplication.Context>
 {
-    internal class Context
-    {
-    }
+    internal sealed class Context
+    { }
 
     public Context CreateContext(IFeatureCollection contextFeatures)
-    {
-        return new Context();
-    }
+        => new Context();
 
     public void DisposeContext(Context context, Exception exception)
-    {
-    }
+    { }
 
     public Task ProcessRequestAsync(Context context)
-    {
-        return Task.CompletedTask;
-    }
+        => Task.CompletedTask;
 }
 
 #endif

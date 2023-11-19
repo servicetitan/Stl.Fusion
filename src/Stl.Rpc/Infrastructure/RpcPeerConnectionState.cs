@@ -28,7 +28,9 @@ public sealed record RpcPeerConnectionState(
         return connection != null;
     }
 
+#pragma warning disable CA1822
     public RpcPeerConnectionState NextConnected(
+#pragma warning restore CA1822
         RpcConnection connection,
         RpcHandshake handshake,
         CancellationTokenSource readerAbortToken)

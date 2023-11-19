@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Stl.Fusion.Extensions;
 
 public static class KeyValueStoreExt
@@ -7,14 +9,20 @@ public static class KeyValueStoreExt
 
     // Set
 
-    public static Task Set<T>(this IKeyValueStore keyValueStore,
+    public static Task Set<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]T>(
+        this IKeyValueStore keyValueStore,
         Symbol tenantId, string key, T value, CancellationToken cancellationToken = default)
         => keyValueStore.Set(tenantId, key, value, null, cancellationToken);
 
-    public static Task Set<T>(this IKeyValueStore keyValueStore,
+    public static Task Set<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
+        (this IKeyValueStore keyValueStore,
         Symbol tenantId, string key, T value, Moment? expiresAt, CancellationToken cancellationToken = default)
     {
+#pragma warning disable IL2026
         var sValue = NewtonsoftJsonSerialized.New(value).Data;
+#pragma warning restore IL2026
         return keyValueStore.Set(tenantId, key, sValue, expiresAt, cancellationToken);
     }
 
@@ -56,18 +64,24 @@ public static class KeyValueStoreExt
 
     // TryGet & Get
 
-    public static async ValueTask<Option<T>> TryGet<T>(this IKeyValueStore keyValueStore,
-        Symbol tenantId, string key, CancellationToken cancellationToken = default)
+    public static async ValueTask<Option<T>> TryGet<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
+        (this IKeyValueStore keyValueStore, Symbol tenantId, string key, CancellationToken cancellationToken = default)
     {
         var sValue = await keyValueStore.Get(tenantId, key, cancellationToken).ConfigureAwait(false);
+#pragma warning disable IL2026
         return sValue == null ? Option<T>.None : NewtonsoftJsonSerialized.New<T>(sValue).Value;
+#pragma warning restore IL2026
     }
 
-    public static async ValueTask<T?> Get<T>(this IKeyValueStore keyValueStore,
-        Symbol tenantId, string key, CancellationToken cancellationToken = default)
+    public static async ValueTask<T?> Get<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
+        (this IKeyValueStore keyValueStore, Symbol tenantId, string key, CancellationToken cancellationToken = default)
     {
         var sValue = await keyValueStore.Get(tenantId, key, cancellationToken).ConfigureAwait(false);
+#pragma warning disable IL2026
         return sValue == null ? default : NewtonsoftJsonSerialized.New<T>(sValue).Value;
+#pragma warning restore IL2026
     }
 
     // ListKeysByPrefix

@@ -1,14 +1,16 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Stl.Fusion.Server.Controllers;
 using Stl.Fusion.Server.Internal;
+using Stl.Internal;
 
 namespace Stl.Fusion.Server;
 
 [StructLayout(LayoutKind.Auto)]
 public readonly struct FusionMvcWebServerBuilder
 {
-    private class AddedTag;
-    private class ControllersAddedTag;
+    private sealed class AddedTag;
+    private sealed class ControllersAddedTag;
     private static readonly ServiceDescriptor AddedTagDescriptor = new(typeof(AddedTag), new AddedTag());
     private static readonly ServiceDescriptor ControllersAddedTagDescriptor = new(typeof(ControllersAddedTag), new ControllersAddedTag());
 
@@ -47,6 +49,7 @@ public readonly struct FusionMvcWebServerBuilder
         configure?.Invoke(this);
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     public FusionMvcWebServerBuilder AddControllers()
     {
         var services = Services;
@@ -58,6 +61,7 @@ public readonly struct FusionMvcWebServerBuilder
         return this;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     public FusionMvcWebServerBuilder AddControllerFilter(Func<TypeInfo, bool> controllerFilter)
     {
         Services.AddControllers().ConfigureApplicationPartManager(

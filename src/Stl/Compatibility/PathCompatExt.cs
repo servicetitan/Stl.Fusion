@@ -2,13 +2,12 @@
 
 #pragma warning disable MA0006
 
-using System.Runtime.CompilerServices;
-
 // ReSharper disable once CheckNamespace
 namespace System.IO;
 
 public static class PathCompatExt
 {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsPathFullyQualified(string path)
         => !PartiallyQualified(path);
 
@@ -16,8 +15,8 @@ public static class PathCompatExt
     {
         // From https://stackoverflow.com/questions/275689/how-to-get-relative-path-from-absolute-path
 
-        if (relativeTo.IsNullOrEmpty()) throw new ArgumentNullException("relativeTo");
-        if (path.IsNullOrEmpty())   throw new ArgumentNullException("path");
+        if (relativeTo.IsNullOrEmpty()) throw new ArgumentNullException(nameof(relativeTo));
+        if (path.IsNullOrEmpty())   throw new ArgumentNullException(nameof(path));
 
         Uri fromUri = new(relativeTo);
         Uri toUri = new(path);
@@ -27,7 +26,7 @@ public static class PathCompatExt
         Uri relativeUri = fromUri.MakeRelativeUri(toUri);
         string relativePath = Uri.UnescapeDataString(relativeUri.ToString());
 
-        if (toUri.Scheme.Equals("file", StringComparison.InvariantCultureIgnoreCase))
+        if (toUri.Scheme.Equals("file", StringComparison.OrdinalIgnoreCase))
             relativePath = relativePath.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 
         return relativePath;
@@ -48,8 +47,9 @@ public static class PathCompatExt
             throw new ArgumentNullException(nameof(path));
         if (basePath == null)
             throw new ArgumentNullException(nameof(basePath));
-        string newPath = Path.Combine(basePath, path);
-        string absolute = Path.GetFullPath(newPath);
+
+        var newPath = Path.Combine(basePath, path);
+        var absolute = Path.GetFullPath(newPath);
         return absolute;
     }
 
@@ -59,6 +59,7 @@ public static class PathCompatExt
     {
         if (path.Length < 2)
             return true;
+
         return IsDirectorySeparator(path[0])
             ? path[1] != '?' && !IsDirectorySeparator(path[1])
             : path.Length < 3 || path[1] != ':' || !IsDirectorySeparator(path[2]) || !IsValidDriveChar(path[0]);
@@ -71,6 +72,7 @@ public static class PathCompatExt
     {
         if (value is >= 'A' and <= 'Z')
             return true;
+
         return value is >= 'a' and <= 'z';
     }
 }

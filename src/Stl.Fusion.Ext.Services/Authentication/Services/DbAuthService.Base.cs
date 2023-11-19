@@ -1,9 +1,12 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework;
 
 namespace Stl.Fusion.Authentication.Services;
 
-public abstract class DbAuthService<TDbContext>(IServiceProvider services)
+public abstract class DbAuthService<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext>
+    (IServiceProvider services)
     : DbServiceBase<TDbContext>(services), IAuth, IAuthBackend
     where TDbContext : DbContext
 {

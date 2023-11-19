@@ -1,6 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Interception;
 using Stl.Rpc.Diagnostics;
 using Stl.Rpc.Internal;
+using Errors = Stl.Rpc.Internal.Errors;
 
 namespace Stl.Rpc.Infrastructure;
 
@@ -21,6 +23,7 @@ public abstract class RpcInboundCall : RpcCall
     public abstract Task UntypedResultTask { get; }
     public List<RpcHeader>? ResultHeaders;
 
+    [RequiresUnreferencedCode(UnreferencedCode.Rpc)]
     public static RpcInboundCall New(byte callTypeId, RpcInboundContext context, RpcMethodDef? methodDef)
     {
         if (methodDef == null) {
@@ -72,8 +75,10 @@ public abstract class RpcInboundCall : RpcCall
 
     // Protected methods
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     protected abstract Task StartCompletion();
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     protected bool PrepareToStart()
     {
         var inboundCalls = Context.Peer.InboundCalls;
@@ -101,7 +106,10 @@ public class RpcInboundCall<TResult>(RpcInboundContext context, RpcMethodDef met
     public Task<TResult> ResultTask { get; private set; } = null!;
     public override Task UntypedResultTask => ResultTask;
 
+    [RequiresUnreferencedCode(UnreferencedCode.Rpc)]
+#pragma warning disable IL2046
     public override Task Run()
+#pragma warning restore IL2046
     {
         if (NoWait) {
             try {
@@ -152,6 +160,7 @@ public class RpcInboundCall<TResult>(RpcInboundContext context, RpcMethodDef met
 
     // Protected methods
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     protected ArgumentList? DeserializeArguments()
     {
         var peer = Context.Peer;
@@ -208,6 +217,7 @@ public class RpcInboundCall<TResult>(RpcInboundContext context, RpcMethodDef met
         return (Task<TResult>)methodDef.Invoker.Invoke(server, Arguments!);
     }
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     protected override Task StartCompletion()
     {
         if (!ResultTask.IsCompleted)
@@ -217,12 +227,14 @@ public class RpcInboundCall<TResult>(RpcInboundContext context, RpcMethodDef met
         return Task.CompletedTask;
     }
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     protected async Task Complete()
     {
         await ResultTask.SilentAwait(false);
         _ = CompleteSendResult();
     }
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     protected virtual Task CompleteSendResult()
     {
         var mustSendResult = !CancellationToken.IsCancellationRequested;
@@ -232,6 +244,7 @@ public class RpcInboundCall<TResult>(RpcInboundContext context, RpcMethodDef met
             : Task.CompletedTask;
     }
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     protected Task SendResult()
     {
         var resultTask = ResultTask;

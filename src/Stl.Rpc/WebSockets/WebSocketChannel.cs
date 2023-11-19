@@ -1,9 +1,11 @@
 using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
 using System.Net.WebSockets;
 using Microsoft.Toolkit.HighPerformance;
+using Stl.Internal;
 using Stl.IO;
 using Stl.IO.Internal;
-using Stl.Rpc.Internal;
+using Errors = Stl.Rpc.Internal.Errors;
 
 namespace Stl.Rpc.WebSockets;
 
@@ -60,6 +62,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
     public Task WhenWriteCompleted { get; }
     public Task WhenClosed { get; }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public WebSocketChannel(
         WebSocket webSocket,
         IServiceProvider services,
@@ -67,6 +70,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
         : this(Options.Default, webSocket, services, cancellationToken)
     { }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public WebSocketChannel(
         Options settings,
         WebSocket webSocket,
@@ -134,6 +138,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
 
     // Private methods
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     private async Task RunReader(CancellationToken cancellationToken)
     {
         var writer = _readChannel.Writer;
@@ -158,6 +163,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
         }
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     private async Task RunWriter(CancellationToken cancellationToken)
     {
         try {
@@ -224,6 +230,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
         }
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     private async IAsyncEnumerable<T> ReadAll([EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var readBufferSize = Settings.ReadBufferSize;
@@ -274,7 +281,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
                 case WebSocketMessageType.Close:
                     yield break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw Errors.UnsupportedWebSocketMessageKind();
                 }
             }
         }
@@ -308,6 +315,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
         }
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     private bool TrySerialize(T value, ArrayPoolBuffer<byte> buffer)
     {
         var startOffset = buffer.WrittenCount;
@@ -333,6 +341,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
         }
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     private bool TryDeserializeBytes(ref ReadOnlyMemory<byte> bytes, out T value)
     {
         int size = 0;
@@ -363,6 +372,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
         }
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     private bool TryDeserializeText(ReadOnlyMemory<byte> bytes, out T value)
     {
         try {

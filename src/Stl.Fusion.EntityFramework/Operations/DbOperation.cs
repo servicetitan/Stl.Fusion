@@ -28,24 +28,32 @@ public class DbOperation : IOperation
     }
 
     public string CommandJson {
+#pragma warning disable IL2026
         get => _command.Data;
+#pragma warning restore IL2026
         set => _command.Data = value;
     }
 
     public string ItemsJson {
+#pragma warning disable IL2026
         get => _items.Data;
+#pragma warning restore IL2026
         set => _items.Data = value;
     }
 
     [NotMapped]
     public object? Command {
+#pragma warning disable IL2026
         get => _command.Value;
+#pragma warning restore IL2026
         set => _command.Value = value;
     }
 
     [NotMapped]
     public OptionSet Items {
+#pragma warning disable IL2026
         get => _items.Value;
+#pragma warning restore IL2026
         set => _items.Value = value;
     }
 }

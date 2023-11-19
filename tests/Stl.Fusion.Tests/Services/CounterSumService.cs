@@ -27,7 +27,7 @@ public class CounterSumService : IComputeService
     {
         var t1 = Get0(counterIndex1, cancellationToken);
         var t2 = Get1(counterIndex2, cancellationToken);
-        await Task.WhenAll(t1);
+        await Task.WhenAll(t1, t2);
 #pragma warning disable VSTHRD103
         return t1.Result + t2.Result;
 #pragma warning restore VSTHRD103

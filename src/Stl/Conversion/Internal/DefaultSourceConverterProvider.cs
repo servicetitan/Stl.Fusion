@@ -1,4 +1,7 @@
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
+using Stl.Internal;
+using Stl.Serialization.Internal;
 
 namespace Stl.Conversion.Internal;
 
@@ -16,6 +19,7 @@ public class DefaultSourceConverterProvider<TSource>(IServiceProvider services) 
             return (Converter) mGetConverter.Invoke(self, Array.Empty<object>())!;
         }, this);
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     protected virtual Converter<TSource, TTarget> GetConverter<TTarget>()
     {
         var tSource = typeof(TSource);

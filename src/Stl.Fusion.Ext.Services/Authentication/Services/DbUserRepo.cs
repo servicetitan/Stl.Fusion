@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework;
 using Stl.Multitenancy;
@@ -28,10 +29,12 @@ public interface IDbUserRepo<in TDbContext, TDbUser, TDbUserId>
         TDbContext dbContext, UserIdentity userIdentity, bool forUpdate, CancellationToken cancellationToken = default);
 }
 
-public class DbUserRepo<TDbContext, TDbUser, TDbUserId>(
-        DbAuthService<TDbContext>.Options settings,
-        IServiceProvider services
-        ) : DbServiceBase<TDbContext>(services), IDbUserRepo<TDbContext, TDbUser, TDbUserId>
+public class DbUserRepo<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext,
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbUser,
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbUserId>
+    (DbAuthService<TDbContext>.Options settings, IServiceProvider services)
+    : DbServiceBase<TDbContext>(services), IDbUserRepo<TDbContext, TDbUser, TDbUserId>
     where TDbContext : DbContext
     where TDbUser : DbUser<TDbUserId>, new()
     where TDbUserId : notnull

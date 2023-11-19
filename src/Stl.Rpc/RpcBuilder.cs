@@ -1,9 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net.WebSockets;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Stl.OS;
 using Stl.Rpc.Clients;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Internal;
+using Errors = Stl.Rpc.Internal.Errors;
 
 namespace Stl.Rpc;
 
@@ -12,6 +13,7 @@ public readonly struct RpcBuilder
     public IServiceCollection Services { get; }
     public RpcConfiguration Configuration { get; }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Rpc)]
     internal RpcBuilder(
         IServiceCollection services,
         Action<RpcBuilder>? configure)
@@ -94,16 +96,26 @@ public readonly struct RpcBuilder
 
     // Share, Connect, Route
 
-    public RpcBuilder AddService<TService>(RpcServiceMode mode, Symbol name = default)
+    public RpcBuilder AddService<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService>
+        (RpcServiceMode mode, Symbol name = default)
         where TService : class
         => AddService(typeof(TService), mode, name);
-    public RpcBuilder AddService<TService, TServer>(RpcServiceMode mode, Symbol name = default)
+    public RpcBuilder AddService<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TServer>
+        (RpcServiceMode mode, Symbol name = default)
         where TService : class
         where TServer : class, TService
         => AddService(typeof(TService), typeof(TServer), mode, name);
-    public RpcBuilder AddService(Type serviceType, RpcServiceMode mode, Symbol name = default)
+    public RpcBuilder AddService(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        RpcServiceMode mode, Symbol name = default)
         => AddService(serviceType, serviceType, mode, name);
-    public RpcBuilder AddService(Type serviceType, Type serverType, RpcServiceMode mode, Symbol name = default)
+    public RpcBuilder AddService(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serverType,
+        RpcServiceMode mode, Symbol name = default)
         => mode switch {
             RpcServiceMode.Server => AddServer(serviceType, serverType, name),
             RpcServiceMode.Router => AddRouter(serviceType, serverType, name),
@@ -112,16 +124,26 @@ public readonly struct RpcBuilder
             _ => Service(serverType).HasName(name).Rpc,
         };
 
-    public RpcBuilder AddServer<TService>(Symbol name = default)
+    public RpcBuilder AddServer<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService>
+        (Symbol name = default)
         where TService : class
         => AddServer(typeof(TService), name);
-    public RpcBuilder AddServer<TService, TServer>(Symbol name = default)
+    public RpcBuilder AddServer<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TServer>
+        (Symbol name = default)
         where TService : class
         where TServer : class, TService
         => AddServer(typeof(TService), typeof(TServer), name);
-    public RpcBuilder AddServer(Type serviceType, Symbol name = default)
+    public RpcBuilder AddServer(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        Symbol name = default)
         => AddServer(serviceType, serviceType, name);
-    public RpcBuilder AddServer(Type serviceType, Type serverType, Symbol name = default)
+    public RpcBuilder AddServer(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serverType,
+        Symbol name = default)
     {
         if (!serviceType.IsInterface)
             throw Stl.Internal.Errors.MustBeInterface(serviceType, nameof(serviceType));
@@ -136,16 +158,26 @@ public readonly struct RpcBuilder
         return this;
     }
 
-    public RpcBuilder AddClient<TService>(Symbol name = default)
+    public RpcBuilder AddClient<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService>
+        (Symbol name = default)
         where TService : class
         => AddClient(typeof(TService), name);
-    public RpcBuilder AddClient<TService, TClient>(Symbol name = default)
+    public RpcBuilder AddClient<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TClient>
+        (Symbol name = default)
         where TService : class
         where TClient : class, TService
         => AddClient(typeof(TService), typeof(TClient), name);
-    public RpcBuilder AddClient(Type serviceType, Symbol name = default)
+    public RpcBuilder AddClient(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        Symbol name = default)
         => AddClient(serviceType, serviceType, name);
-    public RpcBuilder AddClient(Type serviceType, Type clientType, Symbol name = default)
+    public RpcBuilder AddClient(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type clientType,
+        Symbol name = default)
     {
         if (!serviceType.IsInterface)
             throw Stl.Internal.Errors.MustBeInterface(serviceType, nameof(serviceType));
@@ -159,15 +191,23 @@ public readonly struct RpcBuilder
         return this;
     }
 
-    public RpcBuilder AddRouter<TService, TServer>(Symbol name = default)
+    public RpcBuilder AddRouter<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TServer>
+        (Symbol name = default)
         where TService : class
         where TServer : class, TService
         => AddRouter(typeof(TService), typeof(TServer), name);
-    public RpcBuilder AddRouter(Type serviceType, Type serverType, Symbol name = default)
+    public RpcBuilder AddRouter(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serverType,
+        Symbol name = default)
         => serviceType == serverType
             ? throw new ArgumentOutOfRangeException(nameof(serverType))
             : AddRouter(serviceType, ServiceResolver.New(serverType), name);
-    public RpcBuilder AddRouter(Type serviceType, ServiceResolver serverResolver, Symbol name = default)
+    public RpcBuilder AddRouter(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        ServiceResolver serverResolver, Symbol name = default)
     {
         if (!serviceType.IsInterface)
             throw Stl.Internal.Errors.MustBeInterface(serviceType, nameof(serviceType));
@@ -194,11 +234,15 @@ public readonly struct RpcBuilder
         return service;
     }
 
-    public RpcBuilder AddInboundMiddleware<TMiddleware>(Func<IServiceProvider, TMiddleware>? factory = null)
+    public RpcBuilder AddInboundMiddleware<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TMiddleware>
+        (Func<IServiceProvider, TMiddleware>? factory = null)
         where TMiddleware : RpcInboundMiddleware
         => AddInboundMiddleware(typeof(TMiddleware), factory);
 
-    public RpcBuilder AddInboundMiddleware(Type middlewareType, Func<IServiceProvider, object>? factory = null)
+    public RpcBuilder AddInboundMiddleware(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type middlewareType,
+        Func<IServiceProvider, object>? factory = null)
     {
         if (!typeof(RpcInboundMiddleware).IsAssignableFrom(middlewareType))
             throw Stl.Internal.Errors.MustBeAssignableTo<RpcInboundMiddleware>(middlewareType, nameof(middlewareType));
@@ -225,11 +269,15 @@ public readonly struct RpcBuilder
         return this;
     }
 
-    public RpcBuilder AddOutboundMiddleware<TMiddleware>(Func<IServiceProvider, TMiddleware>? factory = null)
+    public RpcBuilder AddOutboundMiddleware<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TMiddleware>
+        (Func<IServiceProvider, TMiddleware>? factory = null)
         where TMiddleware : RpcOutboundMiddleware
         => AddOutboundMiddleware(typeof(TMiddleware), factory);
 
-    public RpcBuilder AddOutboundMiddleware(Type middlewareType, Func<IServiceProvider, object>? factory = null)
+    public RpcBuilder AddOutboundMiddleware(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type middlewareType,
+        Func<IServiceProvider, object>? factory = null)
     {
         if (!typeof(RpcOutboundMiddleware).IsAssignableFrom(middlewareType))
             throw Stl.Internal.Errors.MustBeAssignableTo<RpcOutboundMiddleware>(middlewareType, nameof(middlewareType));

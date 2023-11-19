@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.ExceptionServices;
 using Stl.CommandR.Internal;
 
@@ -9,14 +10,18 @@ public abstract class CommandContext(ICommander commander)
     private static readonly ConcurrentDictionary<Type, Type> CommandContextTypeCache = new();
 
     protected static readonly AsyncLocal<CommandContext?> CurrentLocal = new();
+#pragma warning disable CA1721
     public static CommandContext? Current => CurrentLocal.Value;
+#pragma warning restore CA1721
 
     protected internal IServiceScope ServiceScope { get; protected init; } = null!;
     public ICommander Commander { get; } = commander;
+#pragma warning disable CA2119
     public abstract ICommand UntypedCommand { get; }
     public abstract Task UntypedResultTask { get; }
     public abstract Result<object> UntypedResult { get; }
     public abstract bool IsCompleted { get; }
+#pragma warning restore CA2119
 
     public CommandContext? OuterContext { get; protected init; }
     public CommandContext OutermostContext { get; protected init; } = null!;
@@ -34,7 +39,9 @@ public abstract class CommandContext(ICommander commander)
         var tContext = CommandContextTypeCache.GetOrAdd(
             tCommandResult,
             static t => typeof(CommandContext<>).MakeGenericType(t));
+#pragma warning disable IL2072
         return (CommandContext)tContext.CreateInstance(commander, command, isOutermost);
+#pragma warning restore IL2072
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -77,8 +84,9 @@ public abstract class CommandContext(ICommander commander)
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public CommandContext<TResult> Cast<TResult>()
-        => (CommandContext<TResult>) this;
+        => (CommandContext<TResult>)this;
 
+#pragma warning disable CA2119
     public abstract Task InvokeRemainingHandlers(CancellationToken cancellationToken = default);
 
     public abstract void ResetResult();
@@ -86,6 +94,7 @@ public abstract class CommandContext(ICommander commander)
     public abstract void SetResult(Exception exception);
 
     public abstract bool TryComplete(CancellationToken cancellationToken);
+#pragma warning restore CA2119
 }
 
 public sealed class CommandContext<TResult> : CommandContext

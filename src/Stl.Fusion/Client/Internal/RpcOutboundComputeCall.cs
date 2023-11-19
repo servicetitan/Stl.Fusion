@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Rpc.Infrastructure;
 
 namespace Stl.Fusion.Client.Internal;
@@ -5,6 +6,8 @@ namespace Stl.Fusion.Client.Internal;
 public interface IRpcOutboundComputeCall
 {
     LTag ResultVersion { get; }
+
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     void SetInvalidated(RpcInboundContext context);
 }
 
@@ -18,6 +21,7 @@ public class RpcOutboundComputeCall<TResult>(RpcOutboundContext context)
     // ReSharper disable once InconsistentlySynchronizedField
     public Task WhenInvalidated => WhenInvalidatedSource.Task;
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     public override Task Reconnect(bool isPeerChanged, CancellationToken cancellationToken)
     {
         // ReSharper disable once InconsistentlySynchronizedField
@@ -28,6 +32,7 @@ public class RpcOutboundComputeCall<TResult>(RpcOutboundContext context)
         return Task.CompletedTask;
     }
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     public override void SetResult(object? result, RpcInboundContext? context)
     {
         var resultVersion = context.GetResultVersion();
@@ -59,6 +64,7 @@ public class RpcOutboundComputeCall<TResult>(RpcOutboundContext context)
         }
     }
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     public override void SetError(Exception error, RpcInboundContext? context, bool assumeCancelled = false)
     {
         var resultVersion = context.GetResultVersion();
@@ -88,6 +94,7 @@ public class RpcOutboundComputeCall<TResult>(RpcOutboundContext context)
         }
     }
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     public override bool Cancel(CancellationToken cancellationToken)
     {
         // We always use Lock to update ResultSource in this type
@@ -101,10 +108,12 @@ public class RpcOutboundComputeCall<TResult>(RpcOutboundContext context)
         }
     }
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     public void SetInvalidated(RpcInboundContext? context)
         // Let's be pessimistic here and ignore version check here
         => SetInvalidated(false);
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     public void SetInvalidated(bool notifyCancelled)
     {
         lock (Lock) {
@@ -117,6 +126,7 @@ public class RpcOutboundComputeCall<TResult>(RpcOutboundContext context)
 
     // Private methods
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     private bool SetInvalidatedUnsafe(bool notifyCancelled)
     {
         if (!WhenInvalidatedSource.TrySetResult(default))

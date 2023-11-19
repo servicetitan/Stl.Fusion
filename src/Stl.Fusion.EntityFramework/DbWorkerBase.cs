@@ -1,11 +1,14 @@
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Stl.Multitenancy;
 using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework;
 
-public abstract class DbWorkerBase<TDbContext> : WorkerBase
+public abstract class DbWorkerBase<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext>
+    : WorkerBase
     where TDbContext : DbContext
 {
     private ILogger? _log;

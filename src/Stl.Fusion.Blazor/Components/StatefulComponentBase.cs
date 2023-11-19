@@ -69,7 +69,7 @@ public abstract class StatefulComponentBase : FusionComponentBase, IAsyncDisposa
     private async Task CallStateHasChangedOnAsyncCompletion(Task task)
     {
         try {
-            await task;
+            await task.ConfigureAwait(false);
         }
         catch {
             // Avoiding exception filters for AOT runtime support.

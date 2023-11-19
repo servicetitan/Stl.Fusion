@@ -5,7 +5,7 @@ using Stl.Fusion.Authentication;
 
 namespace Stl.Fusion.Server;
 
-public class UseDefaultSessionAttribute : ActionFilterAttribute
+public sealed class UseDefaultSessionAttribute : ActionFilterAttribute
 {
     public override void OnActionExecuting(HttpActionContext actionContext)
     {

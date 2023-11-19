@@ -148,7 +148,7 @@ public class ConcurrentTimerSetTest(ITestOutputHelper @out) : TestBase(@out)
             timerSet.AddOrUpdate(timer, timer.DueAt);
         Out.WriteLine($"{runner}: Timers enqueued.");
 
-        var maxDueAt = timers.Any() ? timers.Max(t => t.DueAt) : start;
+        var maxDueAt = timers.Count != 0 ? timers.Max(t => t.DueAt) : start;
         await clock.Delay(maxDueAt);
         await TestExt.WhenMet(() => timerSet.Count.Should().Be(0), TimeSpan.FromSeconds(1));
         Out.WriteLine($"{runner}: All timers should be fired.");

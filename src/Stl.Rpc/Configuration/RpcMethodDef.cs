@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Interception;
 using Stl.Interception.Interceptors;
 using Stl.Rpc.Diagnostics;
@@ -22,9 +23,15 @@ public sealed class RpcMethodDef : MethodDef
     public bool NoWait { get; }
     public RpcMethodTracer? Tracer { get; }
 
-    public RpcMethodDef(RpcServiceDef service, MethodInfo method)
-        : base(service.Type, method)
+    public RpcMethodDef(
+        RpcServiceDef service,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        MethodInfo method)
+        : base(serviceType, method)
     {
+        if (serviceType != service.Type)
+            throw new ArgumentOutOfRangeException(nameof(serviceType));
+
         Hub = service.Hub;
         ArgumentListType = Parameters.Length == 0
             ? ArgumentList.Types[0]
@@ -37,11 +44,12 @@ public sealed class RpcMethodDef : MethodDef
         FullName = $"{service.Name.Value}.{Name.Value}";
         AllowResultPolymorphism = AllowArgumentPolymorphism = service.IsSystem || service.IsBackend;
 
-        ArgumentListFactory = (Func<ArgumentList>)ArgumentListType
-            .GetConstructorDelegate()!;
+#pragma warning disable IL2055, IL2072
+        ArgumentListFactory = (Func<ArgumentList>)ArgumentListType.GetConstructorDelegate()!;
         ResultListFactory = (Func<ArgumentList>)ArgumentList.Types[1]
             .MakeGenericType(UnwrappedReturnType)
             .GetConstructorDelegate()!;
+#pragma warning restore IL2055, IL2072
 
         if (!IsAsyncMethod)
             IsValid = false;

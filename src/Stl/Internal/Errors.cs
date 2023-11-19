@@ -129,7 +129,9 @@ public static class Errors
         => new InvalidOperationException("This batch item wasn't processed.");
 
     public static Exception InternalError(string message)
+#pragma warning disable CA2201
         => new SystemException(message);
+#pragma warning restore CA2201
 
     public static Exception GenericMatchForConcreteType(Type type, Type matchType)
         => new InvalidOperationException($"Generic type '{matchType}' can't be a match for concrete type '{type}'.");

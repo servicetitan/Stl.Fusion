@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Components;
 
 namespace Stl.Fusion.Blazor;
@@ -12,10 +13,14 @@ public sealed class ComponentInfo
     public ParameterComparisonMode ParameterComparisonMode { get; }
     public IReadOnlyDictionary<string, ComponentParameterInfo> Parameters { get; }
 
-    public static ComponentInfo Get(Type componentType)
+    public static ComponentInfo Get(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type componentType)
+#pragma warning disable IL2067
         => ComponentInfoCache.GetOrAdd(componentType, static t => new ComponentInfo(t));
+#pragma warning restore IL2067
 
-    private ComponentInfo(Type type)
+    private ComponentInfo(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type)
     {
         if (!typeof(IComponent).IsAssignableFrom(type))
             throw new ArgumentOutOfRangeException(nameof(type));
@@ -40,7 +45,9 @@ public sealed class ComponentInfo
                     continue; // Not a parameter
             }
 
+#pragma warning disable IL2026
             var comparer = parameterComparerProvider.Get(property);
+#pragma warning restore IL2026
             hasCustomParameterComparers |= comparer is not DefaultParameterComparer;
             var parameter = new ComponentParameterInfo() {
                 Property = property,

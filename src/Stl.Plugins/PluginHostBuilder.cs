@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Configuration;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Plugins.Internal;
 
@@ -6,9 +6,6 @@ namespace Stl.Plugins;
 
 public class PluginHostBuilder
 {
-    protected static readonly ConfigurationRoot EmptyConfiguration =
-        new(new List<IConfigurationProvider>());
-
     public IServiceCollection Services { get; set; }
     public Func<IServiceCollection, IServiceProvider> ServiceProviderFactory { get; set; } =
         services => new DefaultServiceProviderFactory().CreateServiceProvider(services);
@@ -41,9 +38,11 @@ public class PluginHostBuilder
             c.LogFor<FileSystemPluginFinder>()));
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Plugins)]
     public IPluginHost Build()
         => Task.Run(() => BuildAsync()).Result;
 
+    [RequiresUnreferencedCode(UnreferencedCode.Plugins)]
     public virtual async Task<IPluginHost> BuildAsync(CancellationToken cancellationToken = default)
     {
         var services = ServiceProviderFactory(Services);

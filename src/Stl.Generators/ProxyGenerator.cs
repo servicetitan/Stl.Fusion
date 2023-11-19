@@ -31,7 +31,7 @@ public class ProxyGenerator : IIncrementalGenerator
         var semanticModel = context.SemanticModel;
         var typeDef = (TypeDeclarationSyntax) context.Node;
 
-        var typeSymbol = semanticModel.GetDeclaredSymbol(typeDef);
+        var typeSymbol = semanticModel.GetDeclaredSymbol(typeDef, cancellationToken);
         if (typeSymbol == null)
             return default;
         if (typeSymbol.IsSealed)

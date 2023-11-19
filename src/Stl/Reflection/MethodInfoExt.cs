@@ -1,9 +1,13 @@
+using System.Diagnostics.CodeAnalysis;
+using Stl.Internal;
+
 namespace Stl.Reflection;
 
 public static class MethodInfoExt
 {
     private static readonly ConcurrentDictionary<MethodInfo, MethodInfo?> BaseOrDeclaringMethodCache = new();
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     public static MethodInfo? GetBaseOrDeclaringMethod(this MethodInfo method)
     {
         if (method == null)
@@ -27,6 +31,7 @@ public static class MethodInfoExt
         });
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     public static TAttr? GetAttribute<TAttr>(this MethodInfo method, bool inheritFromInterfaces, bool inheritFromBaseTypes)
         where TAttr : Attribute
     {
@@ -36,6 +41,7 @@ public static class MethodInfoExt
         return GetAttributeInternal<TAttr>(method, methodDef, inheritFromInterfaces, inheritFromBaseTypes);
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     public static List<TAttr> GetAttributes<TAttr>(this MethodInfo method, bool inheritFromInterfaces, bool inheritFromBaseTypes)
         where TAttr : Attribute
     {
@@ -47,6 +53,7 @@ public static class MethodInfoExt
         return result;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     private static TAttr? GetAttributeInternal<TAttr>(MethodInfo method, MethodInfo methodDef, bool inheritFromInterfaces, bool inheritFromBaseTypes)
         where TAttr : Attribute
     {
@@ -88,6 +95,7 @@ public static class MethodInfoExt
         return null;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     private static void AddAttributes<TAttr>(List<TAttr> result, HashSet<Type> excluded, MethodInfo method, MethodInfo methodDef, bool inheritFromInterfaces, bool inheritFromBaseTypes)
         where TAttr : Attribute
     {

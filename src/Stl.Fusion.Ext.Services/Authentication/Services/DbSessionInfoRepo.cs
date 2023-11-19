@@ -1,10 +1,14 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework;
 using Stl.Multitenancy;
 
 namespace Stl.Fusion.Authentication.Services;
 
-public interface IDbSessionInfoRepo<in TDbContext, TDbSessionInfo, in TDbUserId>
+public interface IDbSessionInfoRepo<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] in TDbContext,
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbSessionInfo,
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] in TDbUserId>
     where TDbContext : DbContext
     where TDbSessionInfo : DbSessionInfo<TDbUserId>, new()
     where TDbUserId : notnull
@@ -28,10 +32,12 @@ public interface IDbSessionInfoRepo<in TDbContext, TDbSessionInfo, in TDbUserId>
         TDbContext dbContext, TDbUserId userId, CancellationToken cancellationToken = default);
 }
 
-public class DbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>(
-        DbAuthService<TDbContext>.Options settings,
-        IServiceProvider services
-        ) : DbServiceBase<TDbContext>(services), IDbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>
+public class DbSessionInfoRepo<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext,
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbSessionInfo,
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbUserId>
+    (DbAuthService<TDbContext>.Options settings, IServiceProvider services)
+    : DbServiceBase<TDbContext>(services), IDbSessionInfoRepo<TDbContext, TDbSessionInfo, TDbUserId>
     where TDbContext : DbContext
     where TDbSessionInfo : DbSessionInfo<TDbUserId>, new()
     where TDbUserId : notnull

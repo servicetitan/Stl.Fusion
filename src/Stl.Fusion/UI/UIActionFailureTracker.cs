@@ -21,7 +21,9 @@ public class UIActionFailureTracker : MutableList<IUIActionResult>, IHasServices
         Services = services;
         if (mustStart)
             // ReSharper disable once VirtualMemberCallInConstructor
+#pragma warning disable CA2214
             WhenTracking = TrackFailures();
+#pragma warning restore CA2214
     }
 
     public override string ToString()

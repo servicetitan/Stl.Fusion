@@ -1,10 +1,13 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Requirements;
 
 namespace Stl;
 
 public static class RequirementExt
 {
-    public static Requirement<T> WithServiceException<T>(this Requirement<T> requirement)
+    public static Requirement<T> WithServiceException<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
+        (this Requirement<T> requirement)
     {
         if (requirement is ServiceExceptionWrapper<T>)
             return requirement;

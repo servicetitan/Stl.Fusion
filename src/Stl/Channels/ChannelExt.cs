@@ -1,3 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
+using Stl.Internal;
+
 namespace Stl.Channels;
 
 public static partial class ChannelExt
@@ -87,6 +90,7 @@ public static partial class ChannelExt
         }
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public static Channel<T> WithTextSerializer<T>(
         this Channel<string> downstreamChannel,
         ITextSerializer<T> serializer,
@@ -111,6 +115,7 @@ public static partial class ChannelExt
         return pair.Channel2;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public static Channel<T> WithByteSerializer<T>(
         this Channel<ReadOnlyMemory<byte>> downstreamChannel,
         IByteSerializer<T> serializer,
@@ -163,7 +168,12 @@ public static partial class ChannelExt
         T LogMessage(T message, bool isIncoming) {
             var text = message?.ToString() ?? "<null>";
             if (maxLength.HasValue && text.Length > maxLength.GetValueOrDefault())
+#if NETCOREAPP3_1_OR_GREATER
+                text = string.Concat(text.AsSpan(0, maxLength.GetValueOrDefault()), "...");
+#else
                 text = text.Substring(0, maxLength.GetValueOrDefault()) + "...";
+#endif
+            // ReSharper disable once TemplateIsNotCompileTimeConstantProblem
             logger.Log(logLevel, $"{channelName} {(isIncoming ? "<-" : "->")} {text}");
             return message;
         }

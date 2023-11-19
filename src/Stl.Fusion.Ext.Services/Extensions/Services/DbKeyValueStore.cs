@@ -1,9 +1,14 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework;
 
 namespace Stl.Fusion.Extensions.Services;
 
-public class DbKeyValueStore<TDbContext, TDbKeyValue>(IServiceProvider services) : DbServiceBase<TDbContext>(services),
+public class DbKeyValueStore<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext,
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbKeyValue>
+    (IServiceProvider services)
+    : DbServiceBase<TDbContext>(services),
     IKeyValueStore
     where TDbContext : DbContext
     where TDbKeyValue : DbKeyValue, new()

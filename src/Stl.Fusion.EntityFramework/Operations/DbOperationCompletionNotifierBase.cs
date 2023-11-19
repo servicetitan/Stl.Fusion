@@ -1,9 +1,12 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework.Operations;
 
-public abstract class DbOperationCompletionNotifierBase<TDbContext, TOptions> : DbServiceBase<TDbContext>,
+public abstract class DbOperationCompletionNotifierBase<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext, TOptions>
+    : DbServiceBase<TDbContext>,
     IOperationCompletionListener, IDisposable, IAsyncDisposable, IHasWhenDisposed
     where TDbContext : DbContext
     where TOptions : DbOperationCompletionTrackingOptions, new()

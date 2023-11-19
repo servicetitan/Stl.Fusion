@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Plugins.Internal;
 
 namespace Stl.Plugins.Metadata;
@@ -33,6 +34,7 @@ public class PluginInfo
         OrderByDependencyIndex = orderByDependencyIndex;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Plugins)]
     public PluginInfo(Type type, PluginSetConstructionInfo constructionInfo, IPluginInfoProvider pluginInfoProvider)
     {
         if (type.IsAbstract)

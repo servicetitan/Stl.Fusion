@@ -16,7 +16,9 @@ public interface IPluginInstanceHandle<out TPluginImpl> : IPluginInstanceHandle
 public class PluginInstanceHandle<TPluginImpl> : IPluginInstanceHandle<TPluginImpl>
     where TPluginImpl : notnull
 {
+#pragma warning disable IL2091
     private Lazy<TPluginImpl>? _lazyInstance;
+#pragma warning restore IL2091
     public TPluginImpl Instance =>
         (_lazyInstance ?? throw new ObjectDisposedException(GetType().Name)).Value;
     // ReSharper disable once HeapView.BoxingAllocation
@@ -31,8 +33,10 @@ public class PluginInstanceHandle<TPluginImpl> : IPluginInstanceHandle<TPluginIm
             throw Errors.UnknownPluginImplementationType(pluginType);
         if (pluginFilters.Any(f => !f.IsEnabled(pluginInfo)))
             throw Errors.PluginDisabled(pluginType);
+#pragma warning disable IL2091
         _lazyInstance = new Lazy<TPluginImpl>(
             () => (TPluginImpl) pluginFactory.Create(pluginType)!);
+#pragma warning restore IL2091
     }
 
     protected virtual void Dispose(bool disposing)

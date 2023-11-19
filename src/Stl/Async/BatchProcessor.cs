@@ -71,13 +71,17 @@ public class BatchProcessor<T, TResult>(Channel<BatchProcessor<T, TResult>.Item>
         }
     }
 
+#pragma warning disable CA1024
     public int GetWorkerCount()
+#pragma warning restore CA1024
     {
         lock (Lock)
             return Workers.Count;
     }
 
+#pragma warning disable CA1024
     public int GetPlannedWorkerCount()
+#pragma warning restore CA1024
     {
         lock (Lock)
             return PlannedWorkerCount;
@@ -283,7 +287,7 @@ public class BatchProcessor<T, TResult>(Channel<BatchProcessor<T, TResult>.Item>
 
     // Private methods
 
-    private async Task CompleteProcessBatchAsync(List<Item> batch, Task resultTask)
+    private static async Task CompleteProcessBatchAsync(List<Item> batch, Task resultTask)
     {
         var error = (Exception?)null;
         try {
@@ -295,7 +299,7 @@ public class BatchProcessor<T, TResult>(Channel<BatchProcessor<T, TResult>.Item>
         _ = CompleteProcessBatch(batch, error);
     }
 
-    private Task CompleteProcessBatch(List<Item> batch, Exception? error = null)
+    private static Task CompleteProcessBatch(List<Item> batch, Exception? error = null)
     {
         error ??= Errors.UnprocessedBatchItem();
         if (error is OperationCanceledException oce) {
@@ -350,7 +354,9 @@ public class BatchProcessor<T, TResult>(Channel<BatchProcessor<T, TResult>.Item>
             if (cancellationToken.IsCancellationRequested)
                 ResultSource.TrySetCanceled(cancellationToken);
             else
+#pragma warning disable CA2016
                 ResultSource.TrySetCanceled();
+#pragma warning restore CA2016
         }
 
         public bool SetCancelledIfCancelled()

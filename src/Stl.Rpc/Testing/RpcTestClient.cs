@@ -1,4 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Channels;
+using Stl.Internal;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.WebSockets;
 
@@ -64,7 +66,9 @@ public class RpcTestClient(
         return peerState;
     }
 
+#pragma warning disable IL2046
     public override async Task<RpcConnection> CreateConnection(RpcClientPeer peer, CancellationToken cancellationToken)
+#pragma warning restore IL2046
     {
         var channel = await this[peer].PullClientChannel(cancellationToken).ConfigureAwait(false);
         return new RpcConnection(channel);

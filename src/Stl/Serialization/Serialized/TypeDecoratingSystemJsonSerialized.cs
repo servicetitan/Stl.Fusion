@@ -1,3 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
+using Stl.Internal;
+
 namespace Stl.Serialization;
 
 public static class TypeDecoratingSystemJsonSerialized
@@ -19,6 +22,7 @@ public partial class TypeDecoratingSystemJsonSerialized<T> : TextSerialized<T>
     public TypeDecoratingSystemJsonSerialized(string data)
         : base(data) { }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     protected override ITextSerializer<T> GetSerializer()
         => _serializer ??= new TypeDecoratingTextSerializer(SystemJsonSerializer.Default).ToTyped<T>();
 }

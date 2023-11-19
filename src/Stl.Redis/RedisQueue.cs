@@ -1,4 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
 using StackExchange.Redis;
+using Stl.Internal;
 
 namespace Stl.Redis;
 
@@ -94,6 +96,7 @@ public sealed class RedisQueue<T> : IAsyncDisposable
     public ValueTask DisposeAsync()
         => EnqueueSub.DisposeAsync();
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public async Task Enqueue(T item)
     {
         using var bufferWriter = Settings.Serializer.Write(item);
@@ -101,6 +104,7 @@ public sealed class RedisQueue<T> : IAsyncDisposable
         await EnqueuePub.Publish(RedisValue.EmptyString).ConfigureAwait(false);
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public async Task<T> Dequeue(CancellationToken cancellationToken = default)
     {
         await EnqueueSub.Subscribe().ConfigureAwait(false);

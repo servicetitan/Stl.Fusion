@@ -1,5 +1,8 @@
 using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
+using Stl.Internal;
 using Stl.Serialization.Internal;
+using Errors = Stl.Serialization.Internal.Errors;
 
 namespace Stl.Serialization;
 
@@ -11,6 +14,7 @@ public class TypeDecoratingByteSerializer(IByteSerializer serializer, Func<Type,
     public IByteSerializer Serializer { get; } = serializer;
     public Func<Type, bool> TypeFilter { get; } = typeFilter ?? (_ => true);
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public override object? Read(ReadOnlyMemory<byte> data, Type type, out int readLength)
     {
         var actualTypeRef = Serializer.Read<TypeRef>(data, out var typeRefLength);
@@ -31,6 +35,7 @@ public class TypeDecoratingByteSerializer(IByteSerializer serializer, Func<Type,
         return result;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public override void Write(IBufferWriter<byte> bufferWriter, object? value, Type type)
     {
         if (ReferenceEquals(value, null)) {

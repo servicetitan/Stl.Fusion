@@ -1,4 +1,6 @@
 using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
+using Stl.Internal;
 using Stl.IO;
 using Stl.Serialization.Internal;
 
@@ -33,13 +35,16 @@ public sealed record DualSerializer<T>(
 
     // Read
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public T Read(TextOrBytes data)
         => data.Format == DataFormat.Text
             ? TextSerializer.Read(data.Data)
             : ByteSerializer.Read(data.Data, out _);
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public T Read(ReadOnlyMemory<byte> data)
         => Read(data, DefaultFormat);
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public T Read(ReadOnlyMemory<byte> data, DataFormat format)
         => format == DataFormat.Text
             ? TextSerializer.Read(data, out _)
@@ -47,9 +52,11 @@ public sealed record DualSerializer<T>(
 
     // Write
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public TextOrBytes Write(T value)
         => Write(value, DefaultFormat);
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public TextOrBytes Write(T value, DataFormat format)
     {
         using var bufferWriter = new ArrayPoolBuffer<byte>();
@@ -60,9 +67,11 @@ public sealed record DualSerializer<T>(
         return new TextOrBytes(format, bufferWriter.WrittenSpan.ToArray());
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public void Write(IBufferWriter<byte> bufferWriter, T value)
         => DefaultSerializer.Write(bufferWriter, value);
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public void Write(IBufferWriter<byte> bufferWriter, T value, DataFormat format)
     {
         if (format == DataFormat.Text)

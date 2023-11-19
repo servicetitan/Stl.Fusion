@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Internal;
 
@@ -22,8 +23,13 @@ public sealed class RpcServiceDef
     public RpcMethodDef this[MethodInfo method] => Get(method) ?? throw Errors.NoMethod(Type, method);
     public RpcMethodDef this[Symbol methodName] => Get(methodName) ?? throw Errors.NoMethod(Type, methodName);
 
-    public RpcServiceDef(RpcHub hub, Symbol name, RpcServiceBuilder source)
+    public RpcServiceDef(
+        RpcHub hub, Symbol name, RpcServiceBuilder source,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType)
     {
+        if (serviceType != source.Type)
+            throw new ArgumentOutOfRangeException(nameof(serviceType));
+
         Hub = hub;
         Name = name;
         Type = source.Type;
@@ -34,17 +40,19 @@ public sealed class RpcServiceDef
         _methods = new Dictionary<MethodInfo, RpcMethodDef>();
         _methodByName = new Dictionary<Symbol, RpcMethodDef>();
         var bindingFlags = BindingFlags.Instance | BindingFlags.Public;
+#pragma warning disable IL2067, IL2070
         var methods = (Type.IsInterface
-            ? Type.GetAllInterfaceMethods(bindingFlags)
-            : Type.GetMethods(bindingFlags)
+                ? serviceType.GetAllInterfaceMethods(bindingFlags)
+                : serviceType.GetMethods(bindingFlags)
             ).ToList();
+#pragma warning restore IL2067, IL2070
         foreach (var method in methods) {
             if (method.DeclaringType == typeof(object))
                 continue;
             if (method.IsGenericMethodDefinition)
                 continue;
 
-            var methodDef = new RpcMethodDef(this, method);
+            var methodDef = new RpcMethodDef(this, serviceType, method);
             if (!methodDef.IsValid)
                 continue;
 

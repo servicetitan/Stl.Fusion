@@ -1,6 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.WebSockets;
 using Microsoft.Owin;
+using Stl.Internal;
 using Stl.Rpc.Clients;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.WebSockets;
@@ -32,6 +34,7 @@ public class RpcWebSocketServer(
     public RpcServerConnectionFactory ServerConnectionFactory { get; }
         = services.GetRequiredService<RpcServerConnectionFactory>();
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public HttpStatusCode Invoke(IOwinContext context)
     {
         // Based on https://stackoverflow.com/questions/41848095/websockets-using-owin
@@ -61,6 +64,7 @@ public class RpcWebSocketServer(
         return HttpStatusCode.SwitchingProtocols;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     private async Task HandleWebSocket(IOwinContext context, WebSocketContext wsContext)
     {
         var cancellationToken = context.Request.CallCancelled;

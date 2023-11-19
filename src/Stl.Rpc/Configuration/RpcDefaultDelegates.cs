@@ -1,5 +1,7 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Generators;
 using Stl.Interception;
+using Stl.Internal;
 using Stl.Rpc.Diagnostics;
 using Stl.Rpc.Infrastructure;
 
@@ -31,7 +33,9 @@ public static class RpcDefaultDelegates
         static (method, arguments) => method.Hub.GetPeer(RpcPeerRef.Default);
 
     public static RpcInboundContextFactory InboundContextFactory { get; set; } =
+#pragma warning disable IL2026
         static (peer, message, cancellationToken) => new RpcInboundContext(peer, message, cancellationToken);
+#pragma warning restore IL2026
 
     public static RpcPeerFactory PeerFactory { get; set; } =
         static (hub, peerRef) => peerRef.IsServer
@@ -39,7 +43,9 @@ public static class RpcDefaultDelegates
             : new RpcClientPeer(hub, peerRef);
 
     public static RpcClientConnectionFactory ClientConnectionFactory { get; set; } =
+#pragma warning disable IL2026
         static (peer, cancellationToken) => peer.Hub.Client.CreateConnection(peer, cancellationToken);
+#pragma warning restore IL2026
 
     public static RpcServerConnectionFactory ServerConnectionFactory { get; set; } =
         static (peer, channel, options, cancellationToken) => Task.FromResult(new RpcConnection(channel, options));

@@ -46,8 +46,7 @@ public static class EnumerableExt
         while (stack.TryPop(out var item)) {
             if (processed.Contains(item))
                 continue;
-            if (processing.Contains(item)) {
-                processing.Remove(item);
+            if (processing.Remove(item)) {
                 processed.Add(item);
                 yield return item;
                 continue;

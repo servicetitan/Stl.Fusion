@@ -1,10 +1,13 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Owin;
 using Owin;
+using Stl.Internal;
 
 namespace Stl.Rpc.Server;
 
 public static class EndpointRouteBuilderExt
 {
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public static IAppBuilder MapRpcServer(
         this IAppBuilder appBuilder, IServiceProvider services, string? pattern = null)
     {

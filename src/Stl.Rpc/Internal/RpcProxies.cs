@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Interception;
 using Stl.Rpc.Infrastructure;
 
@@ -5,7 +6,10 @@ namespace Stl.Rpc.Internal;
 
 public static class RpcProxies
 {
-    public static object NewClientProxy(IServiceProvider services, Type serviceType, Type clientType)
+    public static object NewClientProxy(
+        IServiceProvider services,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type clientType)
     {
         var rpcHub = services.RpcHub();
         var serviceDef = rpcHub.ServiceRegistry[serviceType];
@@ -16,7 +20,10 @@ public static class RpcProxies
         return proxy;
     }
 
-    public static object NewRoutingProxy(IServiceProvider services, Type serviceType, ServiceResolver serverResolver)
+    public static object NewRoutingProxy(
+        IServiceProvider services,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        ServiceResolver serverResolver)
     {
         var rpcHub = services.RpcHub();
         var server = serverResolver.Resolve(services);

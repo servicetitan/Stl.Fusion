@@ -75,9 +75,10 @@ public static class FilePathExt
         using var textReader = new StreamReader(reader, encoding, detectEncodingFromByteOrderMarks);
         while (!textReader.EndOfStream) {
             cancellationToken.ThrowIfCancellationRequested();
-            var line = await textReader.ReadLineAsync().ConfigureAwait(false);
+            var line = await textReader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
             if (line == null)
                 break;
+
             yield return line;
         }
     }

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
@@ -11,7 +12,9 @@ public enum RpcObjectKind
 public interface IRpcObject : IHasId<RpcObjectId>
 {
     RpcObjectKind Kind { get; }
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     Task Reconnect(CancellationToken cancellationToken);
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     void Disconnect();
 }
 

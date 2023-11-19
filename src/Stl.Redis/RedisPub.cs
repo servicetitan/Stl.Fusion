@@ -1,5 +1,7 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using StackExchange.Redis;
+using Stl.Internal;
 
 namespace Stl.Redis;
 
@@ -24,14 +26,12 @@ public class RedisPub
         => Subscriber.PublishAsync(Channel, item);
 }
 
-public sealed class RedisPub<T> : RedisPub
+public sealed class RedisPub<T>(RedisDb redisDb, string key, IByteSerializer<T>? serializer = null)
+    : RedisPub(redisDb, key)
 {
-    public IByteSerializer<T> Serializer { get; }
+    public IByteSerializer<T> Serializer { get; } = serializer ?? ByteSerializer<T>.Default;
 
-    public RedisPub(RedisDb redisDb, string key, IByteSerializer<T>? serializer = null)
-        : base(redisDb, key)
-        => Serializer = serializer ?? ByteSerializer<T>.Default;
-
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public async Task<long> Publish(T item)
     {
         using var bufferWriter = Serializer.Write(item);

@@ -9,7 +9,9 @@ namespace Stl.Serialization;
 [Newtonsoft.Json.JsonConverter(typeof(Base64EncodedNewtonsoftJsonConverter))]
 [TypeConverter(typeof(Base64EncodedTypeConverter))]
 [method: MemoryPackConstructor]
+#pragma warning disable CA1710
 public readonly partial struct Base64Encoded(byte[] data)
+#pragma warning restore CA1710
     : IEquatable<Base64Encoded>, IReadOnlyCollection<byte>
 {
     private readonly byte[]? _data = data;
@@ -20,6 +22,7 @@ public readonly partial struct Base64Encoded(byte[] data)
     [IgnoreDataMember, MemoryPackIgnore]
     public int Count => Data.Length;
 
+    [DataMember]
     public byte this[int index] {
         get => Data[index];
         set => Data[index] = value;

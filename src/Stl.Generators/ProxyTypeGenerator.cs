@@ -347,7 +347,7 @@ public class ProxyTypeGenerator
         }
     }
 
-    private ExpressionSyntax GetMethodInfoExpression(
+    private static ExpressionSyntax GetMethodInfoExpression(
         TypeSyntax typeRef,
         IMethodSymbol method,
         ParameterListSyntax parameters)
@@ -375,7 +375,7 @@ public class ProxyTypeGenerator
                     )));
     }
 
-    private FieldDeclarationSyntax CachedInterceptedFieldDef(SyntaxToken name, TypeSyntax returnTypeDef)
+    private static FieldDeclarationSyntax CachedInterceptedFieldDef(SyntaxToken name, TypeSyntax returnTypeDef)
     {
         TypeSyntax fieldTypeDef;
         if (!returnTypeDef.IsVoid()) {
@@ -389,7 +389,7 @@ public class ProxyTypeGenerator
         return PrivateFieldDef(NullableType(fieldTypeDef), name);
     }
 
-    private FieldDeclarationSyntax CachedInterceptFieldDef(SyntaxToken name, TypeSyntax returnTypeDef)
+    private static FieldDeclarationSyntax CachedInterceptFieldDef(SyntaxToken name, TypeSyntax returnTypeDef)
     {
         TypeSyntax fieldTypeDef;
         if (!returnTypeDef.IsVoid()) {
@@ -449,7 +449,7 @@ public class ProxyTypeGenerator
             .WithBlock(baseInvocationBlock);
     }
 
-    private InvocationExpressionSyntax CreateArgumentList(params ArgumentSyntax[] newArgumentListParams)
+    private static InvocationExpressionSyntax CreateArgumentList(params ArgumentSyntax[] newArgumentListParams)
         => InvocationExpression(
                 MemberAccessExpression(
                     SyntaxKind.SimpleMemberAccessExpression,

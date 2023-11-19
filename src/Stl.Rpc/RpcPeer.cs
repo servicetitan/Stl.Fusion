@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Interception;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Internal;
@@ -105,7 +106,10 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
 
     protected abstract Task<RpcConnection> GetConnection(CancellationToken cancellationToken);
 
+    [RequiresUnreferencedCode(UnreferencedCode.Rpc)]
+#pragma warning disable IL2046
     protected override async Task OnRun(CancellationToken cancellationToken)
+#pragma warning restore IL2046
     {
         var semaphore = InboundConcurrencyLevel > 1
             ? new SemaphoreSlim(InboundConcurrencyLevel, InboundConcurrencyLevel)
@@ -171,7 +175,6 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
                         }
                     }, readerAbortToken);
 
-#pragma warning disable CA2012
                     if (semaphore == null)
                         while (await reader.WaitToReadAsync(readerAbortToken).ConfigureAwait(false))
                         while (reader.TryRead(out message))
@@ -188,7 +191,6 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
                                 _ = ProcessMessage(message, semaphore, peerChangedToken);
                             }
                         }
-#pragma warning restore CA2012
                 }
                 catch (Exception e) {
                     var isReaderAbort = e is OperationCanceledException
@@ -211,7 +213,10 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
         return Task.CompletedTask;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Rpc)]
+#pragma warning disable IL2046
     protected override Task OnStop()
+#pragma warning restore IL2046
     {
         _ = DisposeAsync();
         Hub.Peers.TryRemove(Ref, this);
@@ -239,6 +244,7 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
         return Reset(error, true);
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Rpc)]
     protected async Task Reset(Exception error, bool isStopped = false)
     {
         RemoteObjects.Abort();

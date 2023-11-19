@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection.Emit;
 using Stl.Internal;
 
@@ -14,13 +15,17 @@ public static class ActivatorExt
     private static readonly ConcurrentDictionary<(Type, Type, Type, Type, Type, Type), Delegate?> CtorDelegate5Cache = new();
 
     // An alternative to "new()" constraint
-    public static T New<T>(bool failIfNoDefaultConstructor = true)
+    public static T New<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>(
+        bool failIfNoDefaultConstructor = true)
     {
         var type = typeof(T);
         if (type.IsValueType)
             return default!;
         var hasDefaultCtor = HasDefaultCtorCache.GetOrAdd(type,
+#pragma warning disable IL2070
             type1 => type1.GetConstructor(Type.EmptyTypes) != null);
+#pragma warning restore IL2070
         if (hasDefaultCtor)
             return (T)type.CreateInstance();
         if (failIfNoDefaultConstructor)
@@ -28,12 +33,16 @@ public static class ActivatorExt
         return default!;
     }
 
-    public static Delegate? GetConstructorDelegate(this Type type)
+    public static Delegate? GetConstructorDelegate(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
+        this Type type)
         => CtorDelegate0Cache.GetOrAdd(
             type,
             static tObject => {
                 var argTypes = Type.EmptyTypes;
+#pragma warning disable IL2070
                 var ctor = tObject.GetConstructor(argTypes);
+#pragma warning restore IL2070
                 if (ctor == null) return null;
 
                 var m = new DynamicMethod("_Create0", tObject, Type.EmptyTypes, true);
@@ -135,37 +144,48 @@ public static class ActivatorExt
                 return m.CreateDelegate(typeof(Func<,,,,,>).MakeGenericType(tArg1, tArg2, tArg3, tArg4, tArg5, tObject));
             });
 
-    public static object CreateInstance(this Type type)
+    public static object CreateInstance(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] this Type type)
     {
-        var ctor = (Func<object>) type.GetConstructorDelegate()!;
+        var ctor = (Func<object>)type.GetConstructorDelegate()!;
         return ctor.Invoke();
     }
 
-    public static object CreateInstance<T1>(this Type type, T1 argument1)
+    public static object CreateInstance<T1>(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] this Type type,
+        T1 argument1)
     {
         var ctor = (Func<T1, object>) type.GetConstructorDelegate(typeof(T1))!;
         return ctor.Invoke(argument1);
     }
 
-    public static object CreateInstance<T1, T2>(this Type type, T1 argument1, T2 argument2)
+    public static object CreateInstance<T1, T2>(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] this Type type,
+        T1 argument1, T2 argument2)
     {
         var ctor = (Func<T1, T2, object>) type.GetConstructorDelegate(typeof(T1), typeof(T2))!;
         return ctor.Invoke(argument1, argument2);
     }
 
-    public static object CreateInstance<T1, T2, T3>(this Type type, T1 argument1, T2 argument2, T3 argument3)
+    public static object CreateInstance<T1, T2, T3>(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] this Type type,
+        T1 argument1, T2 argument2, T3 argument3)
     {
         var ctor = (Func<T1, T2, T3, object>) type.GetConstructorDelegate(typeof(T1), typeof(T2), typeof(T3))!;
         return ctor.Invoke(argument1, argument2, argument3);
     }
 
-    public static object CreateInstance<T1, T2, T3, T4>(this Type type, T1 argument1, T2 argument2, T3 argument3, T4 argument4)
+    public static object CreateInstance<T1, T2, T3, T4>(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] this Type type,
+        T1 argument1, T2 argument2, T3 argument3, T4 argument4)
     {
         var ctor = (Func<T1, T2, T3, T4, object>) type.GetConstructorDelegate(typeof(T1), typeof(T2), typeof(T3), typeof(T4))!;
         return ctor.Invoke(argument1, argument2, argument3, argument4);
     }
 
-    public static object CreateInstance<T1, T2, T3, T4, T5>(this Type type, T1 argument1, T2 argument2, T3 argument3, T4 argument4, T5 argument5)
+    public static object CreateInstance<T1, T2, T3, T4, T5>(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] this Type type,
+        T1 argument1, T2 argument2, T3 argument3, T4 argument4, T5 argument5)
     {
         var ctor = (Func<T1, T2, T3, T4, T5, object>) type.GetConstructorDelegate(typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5))!;
         return ctor.Invoke(argument1, argument2, argument3, argument4, argument5);

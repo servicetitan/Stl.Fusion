@@ -5,6 +5,8 @@ using Stl.Pooling;
 
 namespace Stl.Locking;
 
+#pragma warning disable CA2002
+
 public class AsyncLockSet<TKey>
     where TKey : notnull
 {
@@ -81,7 +83,7 @@ public class AsyncLockSet<TKey>
 
     // Nested types
 
-    private class Entry
+    private sealed class Entry
     {
         private readonly AsyncLockSet<TKey> _owner;
         private readonly TKey _key;

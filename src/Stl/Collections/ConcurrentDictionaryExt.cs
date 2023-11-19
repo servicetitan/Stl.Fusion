@@ -20,10 +20,12 @@ public static class ConcurrentDictionaryExt
 #endif
             var fTables = typeof(ConcurrentDictionary<TKey, TValue>)
                 .GetField(fTablesName, BindingFlags.Instance | BindingFlags.NonPublic)!;
+#pragma warning disable IL2075
             var fBuckets = fTables.FieldType
                 .GetField(fBucketsName, BindingFlags.Instance | BindingFlags.NonPublic)!;
             var pLength = fBuckets.FieldType
                 .GetProperty("Length", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)!;
+#pragma warning restore IL2075
 
             var m = new DynamicMethod("_CapacityReader",
                 typeof(int), new [] { typeof(ConcurrentDictionary<TKey, TValue>)},

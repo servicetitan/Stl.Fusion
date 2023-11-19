@@ -14,14 +14,14 @@ public sealed class AuthController : Controller
     [HttpGet("~/signIn/{scheme}")]
     public async Task<IActionResult> SignIn(string? scheme = null, string? returnUrl = null)
     {
-        var result = await _handler.SignIn(HttpContext, scheme, returnUrl);
+        var result = await _handler.SignIn(HttpContext, scheme, returnUrl).ConfigureAwait(false);
         return Challenge(result.AuthenticationProperties, result.AuthenticationSchemes);
     }
 
     [HttpGet("~/signOut")]
     public async Task<IActionResult> SignOut(string? returnUrl = null)
     {
-        var result = await _handler.SignOut(HttpContext, returnUrl);
+        var result = await _handler.SignOut(HttpContext, returnUrl).ConfigureAwait(false);
         return SignOut(result.AuthenticationProperties, result.AuthenticationSchemes);
     }
 }

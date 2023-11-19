@@ -10,7 +10,7 @@ public sealed class BlazorModeController(BlazorModeEndpoint handler) : Controlle
     [HttpGet("{isBlazorServer}")]
     public async Task<IActionResult> Invoke(string? isBlazorServer, string? redirectTo = null)
     {
-        var result = await handler.Invoke(HttpContext, isBlazorServer, redirectTo);
+        var result = await handler.Invoke(HttpContext, isBlazorServer, redirectTo).ConfigureAwait(false);
         return Redirect(result.Url);
     }
 }

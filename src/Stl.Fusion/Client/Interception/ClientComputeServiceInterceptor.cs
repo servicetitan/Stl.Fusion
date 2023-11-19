@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Fusion.Client.Caching;
 using Stl.Fusion.Interception;
 using Stl.Interception;
@@ -41,6 +42,7 @@ public class ClientComputeServiceInterceptor(
     protected override ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method)
         => new ClientComputeMethodFunction<T>(method, Hub.LTagVersionGenerator, Cache, Services);
 
-    protected override void ValidateTypeInternal(Type type)
+    protected override void ValidateTypeInternal(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type)
         => Hub.CommandServiceInterceptor.ValidateType(type);
 }

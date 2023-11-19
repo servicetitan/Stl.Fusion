@@ -1,26 +1,24 @@
 using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Cysharp.Text;
+using Stl.Internal;
 
 namespace Stl.Serialization.Internal;
 
-public class FuncTextSerializer<T> : ITextSerializer<T>
+public class FuncTextSerializer<T>(Func<string, T> reader, Func<T, string> writer) : ITextSerializer<T>
 {
     public bool PreferStringApi => true;
-    public Func<string, T> Reader { get; }
-    public Func<T, string> Writer { get; }
-
-    public FuncTextSerializer(Func<string, T> reader, Func<T, string> writer)
-    {
-        Reader = reader;
-        Writer = writer;
-    }
+    public Func<string, T> Reader { get; } = reader;
+    public Func<T, string> Writer { get; } = writer;
 
     // Read
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public T Read(string data)
         => Reader.Invoke(data);
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public T Read(ReadOnlyMemory<byte> data, out int readLength)
     {
         var decoder = Encoding.UTF8.GetDecoder();
@@ -35,6 +33,7 @@ public class FuncTextSerializer<T> : ITextSerializer<T>
         }
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public T Read(ReadOnlyMemory<char> data)
     {
 #if NETSTANDARD2_0
@@ -46,9 +45,11 @@ public class FuncTextSerializer<T> : ITextSerializer<T>
 
     // Write
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public string Write(T value)
         => Writer.Invoke(value);
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public void Write(IBufferWriter<byte> bufferWriter, T value)
     {
         var result = Writer.Invoke(value);
@@ -56,6 +57,7 @@ public class FuncTextSerializer<T> : ITextSerializer<T>
         encoder.Convert(result.AsSpan(), bufferWriter);
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public void Write(TextWriter textWriter, T value)
     {
         var result = Writer.Invoke(value);

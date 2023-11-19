@@ -1,6 +1,7 @@
 namespace Stl.Fusion;
 
-#pragma warning disable MA0062
+#pragma warning disable MA0062, CA2217
+
 [Flags]
 public enum CallOptions
 {

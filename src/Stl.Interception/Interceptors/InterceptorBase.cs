@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Stl.Interception.Interceptors;
 
 public abstract class InterceptorBase : Interceptor, IHasServices
@@ -71,7 +73,8 @@ public abstract class InterceptorBase : Interceptor, IHasServices
     public Func<Invocation, object?>? GetHandler(Invocation invocation)
         => _handlerCache.GetOrAdd(invocation.Method, _createHandlerUntyped, invocation);
 
-    public void ValidateType(Type type)
+    public void ValidateType(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type)
     {
         if (!IsValidationEnabled)
             return;
@@ -79,7 +82,9 @@ public abstract class InterceptorBase : Interceptor, IHasServices
         _validateTypeCache.GetOrAdd(type, static (type1, self) => {
             self.ValidationLog?.Log(self.ValidationLogLevel, "Validating: '{Type}'", type1);
             try {
+#pragma warning disable IL2067
                 self.ValidateTypeInternal(type1);
+#pragma warning restore IL2067
             }
             catch (Exception e) {
                 self.Log.LogCritical(e, "Validation of '{Type}' failed", type1);
@@ -103,9 +108,12 @@ public abstract class InterceptorBase : Interceptor, IHasServices
 
     // Abstract methods
 
-    protected abstract Func<Invocation, object?> CreateHandler<T>(
+    protected abstract Func<Invocation, object?> CreateHandler<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>(
         Invocation initialInvocation, MethodDef methodDef);
+    // We don't need to decorate this method with any dynamic access attributes
     protected abstract MethodDef? CreateMethodDef(
         MethodInfo method, Invocation initialInvocation);
-    protected abstract void ValidateTypeInternal(Type type);
+    protected abstract void ValidateTypeInternal(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type);
 }

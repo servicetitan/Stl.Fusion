@@ -17,7 +17,9 @@ public record MemoryPackSerializerOptions
     public IServiceProvider? ServiceProvider { get; init; }
 }
 
+#pragma warning disable CA1028
 public enum StringEncoding : byte
+#pragma warning restore CA1028
 {
     Utf16,
     Utf8,

@@ -22,7 +22,9 @@ public readonly partial struct Symbol : IRequirementTarget,
     public string Value => _value ?? "";
 
     [IgnoreDataMember, MemoryPackIgnore]
+#pragma warning disable CA1721
     public int HashCode => _hashCode;
+#pragma warning restore CA1721
     [IgnoreDataMember, MemoryPackIgnore]
     public bool IsEmpty => Value.Length == 0;
 
@@ -53,8 +55,13 @@ public readonly partial struct Symbol : IRequirementTarget,
     public override bool Equals(object? obj) => obj is Symbol other && Equals(other);
     public override int GetHashCode() => HashCode;
     public int CompareTo(Symbol other) => string.CompareOrdinal(Value, other.Value);
+
     public static bool operator ==(Symbol left, Symbol right) => left.Equals(right);
     public static bool operator !=(Symbol left, Symbol right) => !left.Equals(right);
+    public static bool operator <(Symbol left, Symbol right) => left.CompareTo(right) < 0;
+    public static bool operator <=(Symbol left, Symbol right) => left.CompareTo(right) <= 0;
+    public static bool operator >(Symbol left, Symbol right) => left.CompareTo(right) > 0;
+    public static bool operator >=(Symbol left, Symbol right) => left.CompareTo(right) >= 0;
 
     // Serialization
 

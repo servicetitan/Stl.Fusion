@@ -1,5 +1,6 @@
-using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Stl.Rpc.Internal;
+using UnreferencedCode = Stl.Internal.UnreferencedCode;
 
 namespace Stl.Rpc.Infrastructure;
 
@@ -7,7 +8,9 @@ namespace Stl.Rpc.Infrastructure;
 
 public abstract class RpcSharedStream(RpcStream stream) : WorkerBase, IRpcSharedObject
 {
+#pragma warning disable CA2201
     protected static readonly Exception NoError = new();
+#pragma warning restore CA2201
 
     private ILogger? _log;
     private long _lastKeepAliveAt = CpuTimestamp.Now.Value;
@@ -23,10 +26,12 @@ public abstract class RpcSharedStream(RpcStream stream) : WorkerBase, IRpcShared
         set => Interlocked.Exchange(ref _lastKeepAliveAt, value.Value);
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     Task IRpcObject.Reconnect(CancellationToken cancellationToken)
         => throw Stl.Internal.Errors.InternalError(
             $"This method should never be called on {nameof(RpcSharedStream)}.");
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     void IRpcObject.Disconnect()
         => throw Stl.Internal.Errors.InternalError(
             $"This method should never be called on {nameof(RpcSharedStream)}.");
@@ -34,6 +39,7 @@ public abstract class RpcSharedStream(RpcStream stream) : WorkerBase, IRpcShared
     public void KeepAlive()
         => LastKeepAliveAt = CpuTimestamp.Now;
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public abstract Task OnAck(long nextIndex, Guid hostId);
 }
 
@@ -67,6 +73,7 @@ public sealed class RpcSharedStream<T> : RpcSharedStream
         }
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public override Task OnAck(long nextIndex, Guid hostId)
     {
         var mustReset = hostId != default;
@@ -92,7 +99,10 @@ public sealed class RpcSharedStream<T> : RpcSharedStream
 
     // Protected & private methods
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
+#pragma warning disable IL2046
     protected override async Task OnRun(CancellationToken cancellationToken)
+#pragma warning restore IL2046
     {
         IAsyncEnumerator<T>? enumerator = null;
         try {
@@ -206,12 +216,15 @@ public sealed class RpcSharedStream<T> : RpcSharedStream
         }
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     private Task SendMissing()
         => _systemCallSender.Disconnect(Peer, new[] { Id.LocalId });
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     private Task SendInvalidPosition(long index)
         => Send(index, Result.Error<T>(Errors.RpcStreamInvalidPosition()));
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     private Task Send(long index, Result<T> item)
     {
         // Debug.WriteLine($"{Id}: <- #{index} (ack @ {ackIndex})");
@@ -243,6 +256,7 @@ public sealed class RpcSharedStream<T> : RpcSharedStream
         private readonly List<T> _items = new(BatchSize);
         private Type? _itemType;
 
+        [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
         public async ValueTask Add(long index, Result<T> item)
         {
             if (!item.IsValue(out var vItem)) {
@@ -263,6 +277,7 @@ public sealed class RpcSharedStream<T> : RpcSharedStream
             _items.Add(item);
         }
 
+        [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
         public Task Flush(long nextIndex)
         {
             var count = _items.Count;

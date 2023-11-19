@@ -1,13 +1,14 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework.Internal;
 using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework;
 
-public class MultitenantDbContextFactory<TDbContext>(
-        MultitenantDbContextFactory<TDbContext>.Options settings,
-        IServiceProvider services
-        ) : IMultitenantDbContextFactory<TDbContext>
+public class MultitenantDbContextFactory<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext>
+    (MultitenantDbContextFactory<TDbContext>.Options settings, IServiceProvider services)
+    : IMultitenantDbContextFactory<TDbContext>
     where TDbContext : DbContext
 {
     public record Options

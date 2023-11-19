@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Fusion.Multitenancy;
@@ -5,7 +6,8 @@ using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework;
 
-public readonly struct DbMultitenancyBuilder<TDbContext>
+public readonly struct DbMultitenancyBuilder<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext>
     where TDbContext : DbContext
 {
     public DbContextBuilder<TDbContext> DbContext { get; }
@@ -162,7 +164,8 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
         return this;
     }
 
-    public DbMultitenancyBuilder<TDbContext> AddTenantRegistry<TTenantRegistry>()
+    public DbMultitenancyBuilder<TDbContext> AddTenantRegistry<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TTenantRegistry>()
         where TTenantRegistry : class, ITenantRegistry<TDbContext>
     {
         Services.AddSingleton<ITenantRegistry<TDbContext>, TTenantRegistry>();
@@ -176,7 +179,8 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
         return this;
     }
 
-    public DbMultitenancyBuilder<TDbContext> AddTenantResolver<TTenantResolver>()
+    public DbMultitenancyBuilder<TDbContext> AddTenantResolver<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TTenantResolver>()
         where TTenantResolver : class, ITenantResolver<TDbContext>
     {
         Services.AddSingleton<ITenantResolver<TDbContext>, TTenantResolver>();
@@ -190,7 +194,8 @@ public readonly struct DbMultitenancyBuilder<TDbContext>
         return this;
     }
 
-    public DbMultitenancyBuilder<TDbContext> AddMultitenantDbContextFactory<TMultitenantDbContextFactory>()
+    public DbMultitenancyBuilder<TDbContext> AddMultitenantDbContextFactory<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TMultitenantDbContextFactory>()
         where TMultitenantDbContextFactory : class, IMultitenantDbContextFactory<TDbContext>
     {
         Services.AddSingleton<IMultitenantDbContextFactory<TDbContext>, TMultitenantDbContextFactory>();

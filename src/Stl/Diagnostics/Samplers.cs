@@ -19,7 +19,7 @@ public sealed record Sampler(
     public double InverseProbability { get; } = 1d / Probability;
 
     public override string ToString()
-        => Id.EndsWith(")", StringComparison.Ordinal)
+        => Id.EndsWith(')')
             ? Id // .ToConcurrent(...)-like case, the probability is already in Id there
             : $"{Id}({Probability.ToString("P1",CultureInfo.InvariantCulture)})";
 
@@ -36,7 +36,7 @@ public sealed record Sampler(
         var concurrencyMask = concurrencyLevel - 1;
         var name = $"{ToString()}.{nameof(ToConcurrent)}({concurrencyLevel})";
         var sampler = new Sampler(name, Probability, () => {
-            var sampler = samplers[Thread.CurrentThread.ManagedThreadId % concurrencyMask];
+            var sampler = samplers[Environment.CurrentManagedThreadId % concurrencyMask];
             return sampler.Next();
         }, () => ToConcurrent());
 

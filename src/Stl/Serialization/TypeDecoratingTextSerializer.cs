@@ -1,17 +1,32 @@
+using System.Diagnostics.CodeAnalysis;
 using Newtonsoft.Json.Serialization;
+using Stl.Internal;
 using Stl.Serialization.Internal;
+using Errors = Stl.Serialization.Internal.Errors;
 
 namespace Stl.Serialization;
 
+#if NET6_0_OR_GREATER
+[RequiresUnreferencedCode(UnreferencedCode.Serialization)]
+#endif
 public class TypeDecoratingTextSerializer : TextSerializerBase
 {
-    public static TypeDecoratingTextSerializer Default { get; set; } = new(SystemJsonSerializer.Default);
+    public static TypeDecoratingTextSerializer Default { get; set; }
 
     private readonly ISerializationBinder _serializationBinder;
 
     public ITextSerializer Serializer { get; }
     public Func<Type, bool> TypeFilter { get; }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
+#pragma warning disable IL2116
+    static TypeDecoratingTextSerializer()
+#pragma warning restore IL2116
+#pragma warning disable IL2026
+        => Default = new(SystemJsonSerializer.Default);
+#pragma warning restore IL2026
+
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public TypeDecoratingTextSerializer(ITextSerializer serializer, Func<Type, bool>? typeFilter = null)
     {
         Serializer = serializer;
@@ -25,6 +40,7 @@ public class TypeDecoratingTextSerializer : TextSerializerBase
         _serializationBinder = serializationBinder;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public override object? Read(string data, Type type)
     {
         using var p = ListFormat.Default.CreateParser(data);
@@ -45,6 +61,7 @@ public class TypeDecoratingTextSerializer : TextSerializerBase
         return Serializer.Read(p.Item, actualType);
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public override string Write(object? value, Type type)
     {
         using var f = ListFormat.Default.CreateFormatter();

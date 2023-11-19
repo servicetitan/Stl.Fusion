@@ -2,6 +2,8 @@ using Stl.Fusion.Internal;
 
 namespace Stl.Fusion;
 
+#pragma warning disable CA1813 // Consider making sealed
+
 [AttributeUsage(AttributeTargets.Method, Inherited = false)]
 public class ComputeMethodAttribute : Attribute
 {

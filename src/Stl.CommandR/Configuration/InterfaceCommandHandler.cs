@@ -1,14 +1,14 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Stl.CommandR.Configuration;
 
-public sealed record InterfaceCommandHandler<TCommand> : CommandHandler<TCommand>
+public sealed record InterfaceCommandHandler<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TCommand>(
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type ServiceType,
+    bool IsFilter = false, double Priority = 0)
+    : CommandHandler<TCommand>($"{ServiceType.GetName(true)} via interface", IsFilter, Priority)
     where TCommand : class, ICommand
 {
-    public Type ServiceType { get; }
-
-    public InterfaceCommandHandler(Type serviceType, bool isFilter = false, double priority = 0)
-        : base($"{serviceType.GetName(true)} via interface", isFilter, priority)
-        => ServiceType = serviceType;
-
     public override object GetHandlerService(ICommand command, CommandContext context)
         => context.Services.GetRequiredService(ServiceType);
 
@@ -29,25 +29,30 @@ public sealed record InterfaceCommandHandler<TCommand> : CommandHandler<TCommand
 
 public static class InterfaceCommandHandler
 {
-    public static InterfaceCommandHandler<TCommand> New<TCommand>(
-        Type serviceType, bool isFilter, double priority = 0)
+    public static InterfaceCommandHandler<TCommand> New<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TCommand>
+        ([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType, bool isFilter, double priority = 0)
         where TCommand : class, ICommand
         => new(serviceType, isFilter, priority);
 
-    public static InterfaceCommandHandler<TCommand> New<TService, TCommand>(
-        bool isFilter = false, double priority = 0)
+    public static InterfaceCommandHandler<TCommand> New<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TCommand>
+        (bool isFilter = false, double priority = 0)
         where TService : class
         where TCommand : class, ICommand
         => new(typeof(TService), isFilter, priority);
 
     public static CommandHandler New(
-        Type serviceType, Type commandType, bool isFilter = false, double priority = 0)
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type commandType,
+        bool isFilter = false, double priority = 0)
     {
         var ctor = typeof(InterfaceCommandHandler<>)
             .MakeGenericType(commandType)
             .GetConstructors()
             .Single();
         // ReSharper disable once HeapView.BoxingAllocation
-        return (CommandHandler) ctor.Invoke(new object[] { serviceType, isFilter, priority });
+        return (CommandHandler)ctor.Invoke(new object[] { serviceType, isFilter, priority });
     }
 }

@@ -11,7 +11,10 @@ using Microsoft.Extensions.Options;
 using Microsoft.Owin.Hosting;
 using Owin;
 
+// ReSharper disable once CheckNamespace
 namespace Stl.Testing;
+
+#pragma warning disable CA1812 // C is an internal class that is apparently never instantiated
 
 public class OwinWebApiServerOptions
 {
@@ -20,13 +23,15 @@ public class OwinWebApiServerOptions
     public Action<IServiceProvider,HttpConfiguration> ConfigureHttp { get; set; } = null!;
 }
 
-internal class OwinWebApiServer : IServer
+internal sealed class OwinWebApiServer : IServer
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ServerAddressesFeature _serverAddresses;
     private bool _hasStarted;
 #pragma warning disable 169
+#pragma warning disable CA1823 // Unused field
     private int _stopping;
+#pragma warning restore CA1823
 #pragma warning restore 169
 
     private readonly OwinWebApiServerOptions options;
@@ -73,16 +78,16 @@ internal class OwinWebApiServer : IServer
     }
 }
 
-internal class WebApiStartup
+internal sealed class WebApiStartup
 {
-    private readonly IServiceProvider serviceProvider;
+    private readonly IServiceProvider _serviceProvider;
     private readonly Action<HttpConfiguration> _setupConfiguration;
     private readonly Action<IAppBuilder> _configureAppBuilder;
 
     public WebApiStartup(IServiceProvider serviceProvider, Action<HttpConfiguration> setupConfiguration,
         Action<IAppBuilder> configureAppBuilder)
     {
-        this.serviceProvider = serviceProvider;
+        _serviceProvider = serviceProvider;
         _setupConfiguration = setupConfiguration;
         _configureAppBuilder = configureAppBuilder;
     }
@@ -97,7 +102,7 @@ internal class WebApiStartup
 
         if (_configureAppBuilder != null)
             _configureAppBuilder(appBuilder);
-        var appBuilders = serviceProvider.GetServices<Action<IAppBuilder>>();
+        var appBuilders = _serviceProvider.GetServices<Action<IAppBuilder>>();
         foreach (var service in appBuilders) {
             service(appBuilder);
         }
@@ -109,11 +114,11 @@ internal class WebApiStartup
     {
         if (_setupConfiguration != null)
             _setupConfiguration(config);
-        var configBuilders = serviceProvider.GetServices<Action<HttpConfiguration>>();
+        var configBuilders = _serviceProvider.GetServices<Action<HttpConfiguration>>();
         foreach (var service in configBuilders) {
             service(config);
         }
-        config.DependencyResolver = new DefaultDependencyResolver(serviceProvider);
+        config.DependencyResolver = new DefaultDependencyResolver(_serviceProvider);
 
         config.MapHttpAttributeRoutes();
 
@@ -155,17 +160,17 @@ public class DefaultDependencyResolver : IDependencyResolver
     }
 }
 
-internal class GenericWebHostService : IHostedService
+internal sealed class GenericWebHostService : IHostedService
 {
-    private readonly IServer server;
+    private readonly IServer _server;
 
-    public GenericWebHostService(IServer server) => this.server = server;
+    public GenericWebHostService(IServer server) => this._server = server;
 
     public Task StartAsync(CancellationToken cancellationToken)
-        => server.StartAsync(new HostingApplication(), cancellationToken);
+        => _server.StartAsync(new HostingApplication(), cancellationToken);
 
     public Task StopAsync(CancellationToken cancellationToken)
-        => server.StopAsync(cancellationToken);
+        => _server.StopAsync(cancellationToken);
 }
 
 #endif

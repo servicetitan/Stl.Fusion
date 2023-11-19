@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.ExceptionServices;
 using Stl.Conversion;
+using Stl.Internal;
 
 namespace Stl;
 
@@ -76,6 +77,7 @@ public partial class ResultBox<T> : IResult<T>
         Error = error;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
     public ResultBox(T valueOrDefault, ExceptionInfo? exceptionInfo)
     {

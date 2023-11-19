@@ -5,7 +5,7 @@ namespace Stl.Fusion.EntityFramework.Internal;
 
 #pragma warning disable EF1001
 
-internal class SuppressDisposeDbContextPool(IDbContextPoolable dbContextPoolable) : IDbContextPool
+internal sealed class SuppressDisposeDbContextPool(IDbContextPoolable dbContextPoolable) : IDbContextPool
 {
 #if !NETSTANDARD2_0
     public IDbContextPoolable Rent()

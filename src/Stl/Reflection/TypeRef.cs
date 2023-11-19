@@ -1,6 +1,9 @@
 using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
+using Stl.Internal;
 using Stl.Reflection.Internal;
+using Errors = Stl.Reflection.Internal.Errors;
 
 namespace Stl.Reflection;
 
@@ -27,7 +30,8 @@ public readonly partial struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRe
     [DataMember(Order = 0), MemoryPackOrder(0)]
     public Symbol AssemblyQualifiedName { get; }
     [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
-    public string TypeName => AssemblyQualifiedName.Value[..AssemblyQualifiedName.Value.IndexOf(',')];
+    public string TypeName
+        => AssemblyQualifiedName.Value[..AssemblyQualifiedName.Value.IndexOf(',', StringComparison.Ordinal)];
 
     public TypeRef(Type type)
         : this(type.AssemblyQualifiedName!) { }
@@ -40,8 +44,10 @@ public readonly partial struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRe
     public override string ToString()
         => AssemblyQualifiedName.Value;
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     public Type? TryResolve()
         => Resolve(AssemblyQualifiedName);
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     public Type Resolve()
         => Resolve(AssemblyQualifiedName) ?? throw Errors.TypeNotFound(AssemblyQualifiedName);
 
@@ -54,6 +60,7 @@ public readonly partial struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRe
     public static implicit operator TypeRef(string typeName) => new(typeName);
     public static implicit operator TypeRef(Type type) => new(type.AssemblyQualifiedName!);
     public static explicit operator string(TypeRef type) => type.AssemblyQualifiedName;
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     public static explicit operator Type(TypeRef type) => type.Resolve();
 
     // Equality & comparison
@@ -65,12 +72,18 @@ public readonly partial struct TypeRef : IEquatable<TypeRef>, IComparable<TypeRe
 
     public static bool operator ==(TypeRef left, TypeRef right) => left.Equals(right);
     public static bool operator !=(TypeRef left, TypeRef right) => !left.Equals(right);
+    public static bool operator <(TypeRef left, TypeRef right) => left.CompareTo(right) < 0;
+    public static bool operator <=(TypeRef left, TypeRef right) => left.CompareTo(right) <= 0;
+    public static bool operator >(TypeRef left, TypeRef right) => left.CompareTo(right) > 0;
+    public static bool operator >=(TypeRef left, TypeRef right) => left.CompareTo(right) >= 0;
 
     // Private methods
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     public static Type? Resolve(Symbol assemblyQualifiedName)
     {
-        var result = ResolveCache.GetOrAdd(assemblyQualifiedName, static aqn => Type.GetType(aqn, false, false));
+        var result = ResolveCache.GetOrAdd(assemblyQualifiedName,
+            static aqn => Type.GetType(aqn, false, false));
         if (result == null)
             ResolveCache.TryRemove(assemblyQualifiedName, out _); // Potential memory lead / attack vector
         return result;

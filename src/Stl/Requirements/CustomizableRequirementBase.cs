@@ -2,7 +2,9 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Stl.Requirements;
 
-public abstract record CustomizableRequirementBase<T> : Requirement<T>
+public abstract record CustomizableRequirementBase<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
+    : Requirement<T>
 {
     public ExceptionBuilder ExceptionBuilder { get; init; }
 

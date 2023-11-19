@@ -1,4 +1,5 @@
 using System.Reflection.Emit;
+using Stl.Internal;
 
 namespace Stl.Reflection;
 
@@ -156,7 +157,7 @@ public static class MemberInfoExt
         }
 
         if (!fromType.IsAssignableFrom(toType)) // Cast between two types which aren't related
-            throw new ArgumentOutOfRangeException();
+            throw Errors.MustBeAssignableTo(fromType, toType, nameof(toType));
 
         // Downcast (base -> ...)
         il.Emit(OpCodes.Castclass, toType);

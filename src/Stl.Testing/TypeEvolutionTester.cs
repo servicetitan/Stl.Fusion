@@ -82,7 +82,7 @@ public class TypeEvolutionTester<TOld, TNew>
         bytes = buffer.WrittenMemory.ToArray();
         var v0 = s.Read<TNew>(bytes, out var readLength);
         AssertEqual(value, v0);
-        var v1 = s.Read<TNew>(bytes[readLength..]);
+        var v1 = s.Read<TNew>(bytes.AsMemory(readLength));
         AssertEqual(value, v1);
     }
 
@@ -99,7 +99,7 @@ public class TypeEvolutionTester<TOld, TNew>
         bytes = buffer.WrittenMemory.ToArray();
         var v0 = s.Read<TNew>(bytes, out var readLength);
         AssertEqual(value, v0);
-        var v1 = s.Read<TNew>(bytes[readLength..]);
+        var v1 = s.Read<TNew>(bytes.AsMemory(readLength));
         AssertEqual(value, v1);
     }
 }

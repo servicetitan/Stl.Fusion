@@ -78,7 +78,7 @@ public static class GenerationExt
             var typeParameters = string.Join(", ", p.Parameters.Select(x => x.Identifier.Text));
             name = $"{name}<{typeParameters}>";
         }
-        var fullName = ns == "" ? name : $"{ns.WithGlobalPrefix()}.{name}";
+        var fullName = ns.Length == 0 ? name : $"{ns.WithGlobalPrefix()}.{name}";
         return ParseTypeName(fullName);
     }
 
@@ -91,7 +91,11 @@ public static class GenerationExt
 
         // Get the C# representation of the generic type minus its type arguments.
         var name = type.Name.Replace('+', '.');
-        name = name.Substring(0, name.IndexOf("`", StringComparison.Ordinal));
+#if !NETSTANDARD2_0
+        name = name.Substring(0, name.IndexOf('`', StringComparison.Ordinal));
+#else
+        name = name.Substring(0, name.IndexOf('`'));
+#endif
 
         var args = type.GetGenericArguments();
         return GenericName(

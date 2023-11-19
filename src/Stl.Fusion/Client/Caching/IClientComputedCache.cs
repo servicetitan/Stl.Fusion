@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Fusion.Interception;
 using Stl.Rpc.Caching;
 
@@ -7,6 +8,7 @@ public interface IClientComputedCache
 {
     Task WhenInitialized { get; }
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     ValueTask<(T Value, TextOrBytes Data)?> Get<T>(
         ComputeMethodInput input, RpcCacheKey key, CancellationToken cancellationToken);
     ValueTask<TextOrBytes?> Get(RpcCacheKey key, CancellationToken cancellationToken = default);

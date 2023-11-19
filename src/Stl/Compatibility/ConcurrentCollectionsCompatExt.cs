@@ -5,6 +5,7 @@ namespace System.Collections.Concurrent;
 
 public static class ConcurrentCollectionsCompatExt
 {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static TValue GetOrAdd<TKey, TValue, TArg>(
         this ConcurrentDictionary<TKey, TValue> dict,
         TKey key,

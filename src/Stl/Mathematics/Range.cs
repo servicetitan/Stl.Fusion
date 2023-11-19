@@ -1,3 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
+using Stl.Serialization.Internal;
+
 namespace Stl.Mathematics;
 
 /// <summary>
@@ -59,7 +62,9 @@ public readonly partial struct Range<T> : IEquatable<Range<T>>
 
     /// <inheritdoc />
     public override string ToString()
+#pragma warning disable IL2026
         => SystemJsonSerializer.Default.Write(this, GetType());
+#pragma warning restore IL2026
 
 #pragma warning disable CA1000, MA0018 // Do not declare static members on generic types
     /// <summary>
@@ -68,7 +73,9 @@ public readonly partial struct Range<T> : IEquatable<Range<T>>
     /// <param name="value">The string representation of the range to parse.</param>
     /// <returns>Parsed range.</returns>
     public static Range<T> Parse(string value)
+#pragma warning disable IL2026
         => SystemJsonSerializer.Default.Read<Range<T>>(value);
+#pragma warning restore IL2026
 
     /// <summary>
     /// Implicit conversion of a 2-item <see cref="ValueTuple"/> to range.

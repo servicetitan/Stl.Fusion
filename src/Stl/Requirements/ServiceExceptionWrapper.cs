@@ -2,7 +2,9 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Stl.Requirements;
 
-public record ServiceExceptionWrapper<T>(Requirement<T> BaseRequirement) : Requirement<T>
+public record ServiceExceptionWrapper<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
+    (Requirement<T> BaseRequirement) : Requirement<T>
 {
     public static readonly ServiceExceptionWrapper<T> Default =
         new(MustExistRequirement<T>.Default);

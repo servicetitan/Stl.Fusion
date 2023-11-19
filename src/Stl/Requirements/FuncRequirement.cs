@@ -2,9 +2,11 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Stl.Requirements;
 
-public record FuncRequirement<T>(Func<T?, bool> Validator) : CustomizableRequirementBase<T>
+public record FuncRequirement<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
+    (Func<T?, bool> Validator) : CustomizableRequirementBase<T>
 {
-    public FuncRequirement(ExceptionBuilder exceptionBuilder, Func<T?, bool> validator) : this(validator) 
+    public FuncRequirement(ExceptionBuilder exceptionBuilder, Func<T?, bool> validator) : this(validator)
         => ExceptionBuilder = exceptionBuilder;
 
     public static implicit operator FuncRequirement<T>((ExceptionBuilder ExceptionBuilder, Func<T?, bool> Validator) args)

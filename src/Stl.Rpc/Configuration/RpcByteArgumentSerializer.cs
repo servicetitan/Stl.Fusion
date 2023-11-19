@@ -1,13 +1,15 @@
 using System.Buffers;
-using Microsoft.Toolkit.HighPerformance.Buffers;
+using System.Diagnostics.CodeAnalysis;
 using Stl.Interception;
+using Stl.Internal;
 using Stl.IO;
-using Stl.Rpc.Internal;
+using Errors = Stl.Rpc.Internal.Errors;
 
 namespace Stl.Rpc;
 
 public sealed class RpcByteArgumentSerializer(IByteSerializer serializer) : RpcArgumentSerializer
 {
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public override TextOrBytes Serialize(ArgumentList arguments, bool allowPolymorphism)
     {
         if (arguments.Length == 0)
@@ -21,6 +23,7 @@ public sealed class RpcByteArgumentSerializer(IByteSerializer serializer) : RpcA
         return new TextOrBytes(buffer.WrittenSpan.ToArray()); // That's why we retain the last buffer
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public override void Deserialize(ref ArgumentList arguments, bool allowPolymorphism, TextOrBytes data)
     {
         if (!data.IsBytes(out var bytes))
@@ -41,6 +44,7 @@ public sealed class RpcByteArgumentSerializer(IByteSerializer serializer) : RpcA
         protected readonly IByteSerializer Serializer = serializer;
         protected readonly IBufferWriter<byte> Buffer = buffer;
 
+        [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
         public override void OnStruct<T>(T item, int index)
         {
             if (typeof(T) != typeof(CancellationToken))
@@ -48,9 +52,10 @@ public sealed class RpcByteArgumentSerializer(IByteSerializer serializer) : RpcA
         }
     }
 
-    private class ItemPolymorphicSerializer(IByteSerializer serializer, IBufferWriter<byte> buffer)
+    private sealed class ItemPolymorphicSerializer(IByteSerializer serializer, IBufferWriter<byte> buffer)
         : ItemSerializer(serializer, buffer)
     {
+        [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
         public override void OnObject(Type type, object? item, int index)
         {
             var itemType = item?.GetType() ?? type;
@@ -60,9 +65,10 @@ public sealed class RpcByteArgumentSerializer(IByteSerializer serializer) : RpcA
         }
     }
 
-    private class ItemNonPolymorphicSerializer(IByteSerializer serializer, IBufferWriter<byte> buffer)
+    private sealed class ItemNonPolymorphicSerializer(IByteSerializer serializer, IBufferWriter<byte> buffer)
         : ItemSerializer(serializer, buffer)
     {
+        [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
         public override void OnObject(Type type, object? item, int index)
         {
             Serializer.Write(Buffer, default(TypeRef));
@@ -75,15 +81,17 @@ public sealed class RpcByteArgumentSerializer(IByteSerializer serializer) : RpcA
         protected readonly IByteSerializer Serializer = serializer;
         protected ReadOnlyMemory<byte> Data = data;
 
+        [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
         public override T OnStruct<T>(int index)
             => typeof(T) == typeof(CancellationToken)
                 ? default!
                 : Serializer.Read<T>(ref Data);
     }
 
-    private class ItemPolymorphicDeserializer(IByteSerializer serializer, ReadOnlyMemory<byte> data)
+    private sealed class ItemPolymorphicDeserializer(IByteSerializer serializer, ReadOnlyMemory<byte> data)
         : ItemDeserializer(serializer, data)
     {
+        [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
         public override object? OnObject(Type type, int index)
         {
             var typeRef = Serializer.Read<TypeRef>(ref Data);
@@ -95,9 +103,10 @@ public sealed class RpcByteArgumentSerializer(IByteSerializer serializer) : RpcA
         }
     }
 
-    private class ItemNonPolymorphicDeserializer(IByteSerializer serializer, ReadOnlyMemory<byte> data)
+    private sealed class ItemNonPolymorphicDeserializer(IByteSerializer serializer, ReadOnlyMemory<byte> data)
         : ItemDeserializer(serializer, data)
     {
+        [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
         public override object? OnObject(Type type, int index)
         {
             var typeRef = Serializer.Read<TypeRef>(ref Data);

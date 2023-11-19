@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework.Operations;
 using Stl.Multitenancy;
@@ -5,7 +6,8 @@ using Stl.Redis;
 
 namespace Stl.Fusion.EntityFramework.Redis.Operations;
 
-public class RedisOperationLogChangeNotifier<TDbContext> 
+public class RedisOperationLogChangeNotifier<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext>
     : DbOperationCompletionNotifierBase<TDbContext, RedisOperationLogChangeTrackingOptions<TDbContext>>
     where TDbContext : DbContext
 {
@@ -13,14 +15,16 @@ public class RedisOperationLogChangeNotifier<TDbContext>
     protected ConcurrentDictionary<Symbol, RedisPub<TDbContext>> RedisPubCache { get; }
 
     public RedisOperationLogChangeNotifier(
-        RedisOperationLogChangeTrackingOptions<TDbContext> options, 
-        IServiceProvider services) 
+        RedisOperationLogChangeTrackingOptions<TDbContext> options,
+        IServiceProvider services)
         : base(options, services)
     {
         RedisDb = services.GetService<RedisDb<TDbContext>>() ?? services.GetRequiredService<RedisDb>();
         RedisPubCache = new();
         // ReSharper disable once VirtualMemberCallInConstructor
+#pragma warning disable CA2214
         Log.LogInformation("Using pub/sub key = '{Key}'", GetRedisPub(Tenant.Default).FullKey);
+#pragma warning restore CA2214
     }
 
     protected override async Task Notify(Tenant tenant)

@@ -38,13 +38,17 @@ public ref struct MemoryBuffer<T>
         get => index < Count
             ? BufferSpan[index]
 #pragma warning disable MA0012
+#pragma warning disable CA2201
             : throw new IndexOutOfRangeException();
+#pragma warning restore CA2201
 #pragma warning restore MA0012
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         set {
             if (index >= Count)
 #pragma warning disable MA0012
+#pragma warning disable CA2201
                 throw new IndexOutOfRangeException();
+#pragma warning restore CA2201
 #pragma warning restore MA0012
             BufferSpan[index] = value;
         }
@@ -70,7 +74,7 @@ public ref struct MemoryBuffer<T>
     public void Release()
     {
         if (MustClean)
-            _lease.Memory.Span.Fill(default!);
+            _lease.Memory.Span.Clear();
         _lease?.Dispose();
         _lease = null!;
     }
@@ -172,7 +176,7 @@ public ref struct MemoryBuffer<T>
     private void ChangeLease(IMemoryOwner<T> newLease)
     {
         if (MustClean)
-            _lease.Memory.Span.Fill(default!);
+            _lease.Memory.Span.Clear();
         _lease.Dispose();
         _lease = newLease;
         BufferSpan = _lease.Memory.Span;

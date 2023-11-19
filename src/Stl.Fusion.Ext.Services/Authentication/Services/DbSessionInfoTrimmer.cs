@@ -1,10 +1,13 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework;
 using Stl.Multitenancy;
 
 namespace Stl.Fusion.Authentication.Services;
 
-public abstract class DbSessionInfoTrimmer<TDbContext> : DbTenantWorkerBase<TDbContext>
+public abstract class DbSessionInfoTrimmer<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext>
+    : DbTenantWorkerBase<TDbContext>
     where TDbContext : DbContext
 {
     public record Options
@@ -29,10 +32,12 @@ public abstract class DbSessionInfoTrimmer<TDbContext> : DbTenantWorkerBase<TDbC
     }
 }
 
-public class DbSessionInfoTrimmer<TDbContext, TDbSessionInfo, TDbUserId>(
-        DbSessionInfoTrimmer<TDbContext>.Options settings,
-        IServiceProvider services
-        ) : DbSessionInfoTrimmer<TDbContext>(settings, services)
+public class DbSessionInfoTrimmer<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext,
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbSessionInfo,
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbUserId>
+    (DbSessionInfoTrimmer<TDbContext>.Options settings, IServiceProvider services)
+    : DbSessionInfoTrimmer<TDbContext>(settings, services)
     where TDbContext : DbContext
     where TDbSessionInfo : DbSessionInfo<TDbUserId>, new()
     where TDbUserId : notnull
@@ -53,7 +58,7 @@ public class DbSessionInfoTrimmer<TDbContext, TDbSessionInfo, TDbUserId>(
 
             if (lastTrimCount > 0 && IsLoggingEnabled)
                 Log.Log(Settings.LogLevel,
-                    "Trim({tenant.Id}) trimmed {Count} sessions", tenant.Id, lastTrimCount);
+                    "Trim({TenantId}) trimmed {Count} sessions", tenant.Id, lastTrimCount);
         }).Trace(() => activitySource.StartActivity("Trim").AddTenantTags(tenant), Log);
 
         var chain = runChain

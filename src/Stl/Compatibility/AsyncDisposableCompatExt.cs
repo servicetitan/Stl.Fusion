@@ -13,6 +13,7 @@ public static class AsyncDisposableCompatExt
     /// <typeparam name="T">The type of disposable.</typeparam>
     /// <param name="target"></param>
     /// <returns></returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static AsyncDisposableAdapter<T> ToAsyncDisposableAdapter<T>(this T target)
 #if !NETSTANDARD2_0
         where T : IAsyncDisposable?

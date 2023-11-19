@@ -49,5 +49,5 @@ public static class Errors
         => new InvalidOperationException("Backend command must be started on backend.");
 
     public static Exception LocalCommandHasNoHandler()
-        => new NullReferenceException("LocalCommand.Handler is null.");
+        => new InvalidOperationException("LocalCommand.Handler is null.");
 }

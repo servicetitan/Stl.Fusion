@@ -38,16 +38,99 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Features>strict</Features>
+    <!-- Codegen & trimming options -->
+    <IsTrimmable>false</IsTrimmable>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
     <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
+  </PropertyGroup>
+
+  <!-- Analyzers & warnings -->
+  <PropertyGroup Condition="'$(TargetFramework)' != 'netstandard2.0'">
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <EnableTrimAnalyzer>false</EnableTrimAnalyzer>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+    <AnalysisLevel>preview</AnalysisLevel>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <WarningLevel>4</WarningLevel>
+    <!-- NuGet & libraries / frameworks -->
     <!-- NU5048: The 'PackageIconUrl'/'iconUrl' element is deprecated -->
     <!-- NU5105: The package version uses SemVer 2.0.0 or components of SemVer 1.0.0 that are not supported on legacy clients -->
     <!-- NETSDK1138: The target framework 'net5.0' is out of support. -->
     <NoWarn>$(NoWarn);NU5048;NU5105;NETSDK1138</NoWarn>
-    <WarningsAsErrors>true</WarningsAsErrors>
+    <!-- C# -->
+    <!-- CA1062: Validate arguments of public methods -->
+    <!-- CS1591: Missing XML comment for publicly visible type or member -->
+    <!-- CA2254: The logging message template should not vary between calls ... -->
+    <!-- CS8669: The annotation for nullable reference types should only be used in code within a '#nullable' annotations context. Auto-generated code requires an explicit '#nullable' directive in source. -->
+    <NoWarn>$(NoWarn);CA1062;CS1591;CA2254;CS8669</NoWarn>
+    <!-- MA0009: Regular expressions should not be vulnerable to Denial of Service attacks -->
+    <!-- MA0018: Do not declare static members on generic types -->
+    <!-- MA0048: File name must match type name -->
+    <!-- RCS1047: Non-asynchronous method name should not end with 'Async' -->
+    <!-- VSTHRD003: Avoid awaiting or returning a Task representing work that was not start ed within your context as that can lead to deadlocks. -->
+    <!-- VSTHRD103: StateHasChanged synchronously blocks. Await NotifyStateHasChanged instead. -->
+    <!-- VSTHRD110: Observe the awaitable result of this method call by awaiting it, assigning to a variable, or passing it to another method. -->
+    <NoWarn>$(NoWarn);MA0009;MA0018;MA0048;RCS1047;VSTHRD003;VSTHRD103;VSTHRD110</NoWarn>
+    <!-- New .NET 8 warnings -->
+    <!-- CA1001: Type C owns disposable field(s) F but is not disposable -->
+    <!-- CA1002: Change 'List<T>' in P to use 'Collection<T>', 'ReadOnlyCollection<T>' or 'KeyedCollection<K,V>' -->
+    <!-- CA1003: Change the event X to replace the type 'System.Action<T, T>?' with a generic EventHandler -->
+    <!-- CA1030: Consider making 'XxxChanged' an event -->
+    <!-- CA1031: Modify 'ApplyMauiOSData' to catch a more specific allowed exception type, or rethrow the exception -->
+    <!-- CA1033: Make C sealed (a breaking change if this class has previously shipped), implement the method non-explicitly, or implement a new method that exposes the functionality of M and is visible to derived classes -->
+    <!-- CA1034: Do not nest type X. Alternatively, change its accessibility so that it is not externally visible. -->
+    <!-- CA1040: Avoid empty interfaces -->
+    <!-- CA1043: Use Integral Or String Argument For Indexers -->
+    <!-- CA1051: Do not declare visible instance fields -->
+    <!-- CA1054: Change the type of parameter 'url' of method M from 'string' to 'System.Uri' -->
+    <!-- CA1055: Change the return type of method 'M' from 'string' to 'System.Uri' -->
+    <!-- CA1056: Change the type of property 'HostInfo.BaseUrl' from 'string' to 'System.Uri' -->
+    <!-- CA1063: Provide an overridable implementation of Dispose(bool) on 'CompositeServiceProvider' or mark the type as sealed. -->
+    <!-- CA1065: X returns an exception of type Exception -->
+    <!-- CA1308: Replace the call to 'ToLowerInvariant' with 'ToUpperInvariant' -->
+    <!-- CA1508: someVar != null is always 'false' - !!! Gives too many false positives -->
+    <!-- CA1510: Use 'ArgumentNullException.ThrowIfNull' instead of explicitly throwing a new exception instance -->
+    <!-- CA1707: Remove the underscores from type name -->
+    <!-- CA1711: Rename type name MacNotificationsPermission so that it does not end in 'Permission' -->
+    <!-- CA1720: Identifier 'Long' contains type name -->
+    <!-- CA1724: The type name C conflicts in whole or in part with the namespace name N. -->
+    <!-- CA1725: In member M, change parameter name P to P1 in order to match the identifier as it has been declared in ... -->
+    <!-- CA1802: Field 'CheckCount' is declared as 'readonly' but is initialized with a constant value. -->
+    <!-- CA1805: Member 'F' is explicitly initialized to its default value -->
+    <!-- CA1810: Initialize all static fields in C when those fields are declared and remove the explicit static constructor -->
+    <!-- CA1815: Struct C should override Equals -->
+    <!-- CA1816: Change Dispose() to call GC.SuppressFinalize(object) -->
+    <!-- CA1819: Properties should not return arrays -->
+    <!-- CA1848: For improved performance, use the LoggerMessage delegates instead of calling ... -->
+    <!-- CA1859: Change return type of method M from TBase to T for improved performance -->
+    <!-- CA2000: Call System.IDisposable.Dispose on object created by ... before all references to it are out of scope -->
+    <!-- CA2213: C contains field F that is of IDisposable type, but it is never disposed -->
+    <!-- CA2225: Provide a method named 'M' as an alternate for operator op_Implicit -->
+    <!-- CA2234: Modify M to call 'PostAsync(Uri,...)' instead of 'PostAsync(string, ...)' -->
+    <!-- CA5394: Random is an insecure random number generator -->
+    <NoWarn>$(NoWarn);CA1001;CA1002;CA1003;CA1030;CA1031;CA1033;CA1034;CA1040;CA1043</NoWarn>
+    <NoWarn>$(NoWarn);CA1051;CA1054;CA1055;CA1056;CA1063;CA1065;CA1308;CA1508;CA1510</NoWarn>
+    <NoWarn>$(NoWarn);CA1707;CA1711;CA1720;CA1724;CA1725</NoWarn>
+    <NoWarn>$(NoWarn);CA1802;CA1805;CA1810;CA1815;CA1816;CA1819;CA1848;CA1859</NoWarn>
+    <NoWarn>$(NoWarn);CA2000;CA2213;CA2225;CA2234;CA5394</NoWarn>
+    <!-- Extra warnings special for Fusion -->
+    <!-- CA1000: Do not declare static members on generic types -->
+    <!-- CA1512: Use 'XxxException.ThrowIf' instead of ... -->
+    <!-- CA1513: Use 'ObjectDisposedException.ThrowIf' instead of explicitly throwing a new exception instance -->
+    <!-- CA1710: Rename XxxWhatever to end in either 'Collection' or 'Dictionary', 'Set', 'Stack', 'Queue' -->
+    <!-- CA1716: Rename virtual/interface member Set so that it no longer conflicts with the reserved language keyword 'Set' -->
+    <!-- CA1849: 'CancellationTokenSource.Cancel()' synchronously blocks. -->
+    <!-- CA2012: ValueTask instances returned from method calls should always be used -->
+    <!-- CA2207: Initialize all static fields in ... -->
+    <!-- CA2227: Change P to be read-only by removing the property setter -->
+    <NoWarn>$(NoWarn);CA1000;CA1512;CA1513;CA1710;CA1716;CA1849;CA2012;CA2207;CA2227</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup>

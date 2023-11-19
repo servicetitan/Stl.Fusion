@@ -67,6 +67,10 @@ public readonly partial struct FilePath : IEquatable<FilePath>, IComparable<File
     public override int GetHashCode() => StringComparer.Ordinal.GetHashCode(Value);
     public static bool operator ==(FilePath left, FilePath right) => left.Equals(right);
     public static bool operator !=(FilePath left, FilePath right) => !left.Equals(right);
+    public static bool operator <(FilePath left, FilePath right) => left.CompareTo(right) < 0;
+    public static bool operator <=(FilePath left, FilePath right) => left.CompareTo(right) <= 0;
+    public static bool operator >(FilePath left, FilePath right) => left.CompareTo(right) > 0;
+    public static bool operator >=(FilePath left, FilePath right) => left.CompareTo(right) >= 0;
 
     // Comparison
     public int CompareTo(FilePath other)

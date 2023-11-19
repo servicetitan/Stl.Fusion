@@ -1,4 +1,5 @@
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework.Internal;
 using Stl.Multitenancy;
@@ -6,7 +7,9 @@ using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework;
 
-public class DbHub<TDbContext>(IServiceProvider services)
+public class DbHub<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext>
+    (IServiceProvider services)
     where TDbContext : DbContext
 {
     private ITenantRegistry<TDbContext>? _tenantRegistry;

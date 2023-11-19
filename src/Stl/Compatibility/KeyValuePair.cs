@@ -6,9 +6,11 @@ namespace System.Collections.Generic;
 /// <summary>Creates instances of the <see cref="T:System.Collections.Generic.KeyValuePair`2" /> struct.</summary>
 public static class KeyValuePair
 {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static KeyValuePair<TKey, TValue> Create<TKey, TValue>(TKey key, TValue value)
         => new(key, value);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Deconstruct<TKey, TValue>(this KeyValuePair<TKey, TValue> self, out TKey key, out TValue value)
     {
         key = self.Key;

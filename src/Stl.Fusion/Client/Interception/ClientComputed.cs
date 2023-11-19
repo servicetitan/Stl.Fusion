@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Caching;
 using Stl.Fusion.Client.Internal;
 using Stl.Fusion.Interception;
@@ -62,9 +63,14 @@ public class ClientComputed<T> : ComputeMethodComputed<T>, IClientComputed
         StartAutoInvalidation();
     }
 
-    ~ClientComputed() => Dispose();
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
+    ~ClientComputed()
+        => Dispose();
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
+#pragma warning disable IL2046
     public void Dispose()
+#pragma warning restore IL2046
     {
         if (!WhenCallBound.IsCompleted)
             return;
@@ -77,6 +83,7 @@ public class ClientComputed<T> : ComputeMethodComputed<T>, IClientComputed
 
     internal bool BindToCall(RpcOutboundComputeCall<T>? call)
     {
+#pragma warning disable IL2026
         if (!CallSource.TrySetResult(call)) {
             if (call == null) {
                 // Call from OnInvalidated - we need to cancel the old call
@@ -91,6 +98,7 @@ public class ClientComputed<T> : ComputeMethodComputed<T>, IClientComputed
         }
         if (call == null) // Invalidated before being bound to call - nothing else to do
             return true;
+#pragma warning restore IL2026
 
         BindWhenInvalidatedToCall(call);
         return true;

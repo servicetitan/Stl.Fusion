@@ -21,7 +21,7 @@ public class BenchmarkTest(ITestOutputHelper @out) : TestBase(@out)
         RunOne("Read ManagedThreadId", baseOpCount, opCount => {
             var sum = 0L;
             for (; opCount > 0; opCount--) {
-                sum += Thread.CurrentThread.ManagedThreadId;
+                sum += Environment.CurrentManagedThreadId;
             }
             return sum;
         });

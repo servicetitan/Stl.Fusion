@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Stl.CommandR.Configuration;
 
 public abstract record CommandHandler(
     Symbol Id,
-    Type CommandType,
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type CommandType,
     bool IsFilter = false,
     double Priority = 0)
 {
@@ -21,7 +23,9 @@ public abstract record CommandHandler(
     public override int GetHashCode() => RuntimeHelpers.GetHashCode(this);
 }
 
-public abstract record CommandHandler<TCommand>(Symbol Id, bool IsFilter = false, double Priority = 0)
+public abstract record CommandHandler<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TCommand>
+    (Symbol Id, bool IsFilter = false, double Priority = 0)
     : CommandHandler(Id, typeof(TCommand), IsFilter, Priority)
     where TCommand : class, ICommand
 {

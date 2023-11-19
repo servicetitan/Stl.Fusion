@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Plugins.Metadata;
 using Stl.Plugins.Internal;
@@ -22,12 +23,14 @@ public static class PluginHostBuilderExt
         return builder;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Plugins)]
     public static TBuilder UsePlugins<TBuilder>(this TBuilder builder,
         bool resolveIndirectDependencies,
         params Type[] pluginTypes)
         where TBuilder : PluginHostBuilder
         => builder.UsePlugins(resolveIndirectDependencies, (IEnumerable<Type>) pluginTypes);
 
+    [RequiresUnreferencedCode(UnreferencedCode.Plugins)]
     public static TBuilder UsePlugins<TBuilder>(this TBuilder builder,
         bool resolveIndirectDependencies,
         IEnumerable<Type> pluginTypes)

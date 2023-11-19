@@ -1,16 +1,23 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Plugins.Metadata;
 
 namespace Stl.Plugins.Internal;
 
 public interface IPluginHandle
 {
+#pragma warning disable CA1721
     IEnumerable<object> Instances { get; }
+#pragma warning restore CA1721
+    [RequiresUnreferencedCode(UnreferencedCode.Plugins)]
     IEnumerable<object> GetInstances(Func<PluginInfo, bool> predicate);
 }
 
 public interface IPluginHandle<out TPlugin> : IPluginHandle
 {
+#pragma warning disable CA1721
     new IEnumerable<TPlugin> Instances { get; }
+#pragma warning restore CA1721
+    [RequiresUnreferencedCode(UnreferencedCode.Plugins)]
     new IEnumerable<TPlugin> GetInstances(Func<PluginInfo, bool> predicate);
 }
 
@@ -22,8 +29,11 @@ public class PluginHandle<TPlugin> : IPluginHandle<TPlugin>
     protected IEnumerable<IPluginFilter> PluginFilters { get; }
 
     IEnumerable<object> IPluginHandle.Instances => Instances.Cast<object>();
+#pragma warning disable CA1721
     public IEnumerable<TPlugin> Instances => _lazyInstances.Value;
+#pragma warning restore CA1721
 
+    [RequiresUnreferencedCode(UnreferencedCode.Plugins)]
     public PluginHandle(PluginSetInfo plugins,
         IPluginCache pluginCache, IEnumerable<IPluginFilter> pluginFilters)
     {
@@ -34,10 +44,13 @@ public class PluginHandle<TPlugin> : IPluginHandle<TPlugin>
             () => GetInstances(_ => true).Cast<TPlugin>().ToArray());
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Plugins)]
     IEnumerable<object> IPluginHandle.GetInstances(Func<PluginInfo, bool> predicate)
         => GetInstances(predicate);
+    [RequiresUnreferencedCode(UnreferencedCode.Plugins)]
     IEnumerable<TPlugin> IPluginHandle<TPlugin>.GetInstances(Func<PluginInfo, bool> predicate)
         => GetInstances(predicate).Cast<TPlugin>();
+    [RequiresUnreferencedCode(UnreferencedCode.Plugins)]
     protected IEnumerable<object> GetInstances(Func<PluginInfo, bool> predicate)
     {
         var requestedType = typeof(TPlugin);

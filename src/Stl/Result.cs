@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.ExceptionServices;
 using Stl.Conversion;
+using Stl.Internal;
 
 namespace Stl;
 
@@ -179,6 +180,7 @@ public readonly partial struct Result<T> : IResult<T>, IEquatable<Result<T>>
         Error = error;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     [JsonConstructor, Newtonsoft.Json.JsonConstructor, MemoryPackConstructor]
     public Result(T valueOrDefault, ExceptionInfo? exceptionInfo)
     {

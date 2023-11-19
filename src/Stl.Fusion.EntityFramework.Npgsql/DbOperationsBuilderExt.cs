@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Fusion.EntityFramework.Npgsql.Operations;
@@ -7,9 +8,10 @@ namespace Stl.Fusion.EntityFramework.Npgsql;
 
 public static class DbOperationsBuilderExt
 {
-    public static DbOperationsBuilder<TDbContext> AddNpgsqlOperationLogChangeTracking<TDbContext>(
-        this DbOperationsBuilder<TDbContext> dbOperations,
-        Func<IServiceProvider, NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>>? optionsFactory = null)
+    public static DbOperationsBuilder<TDbContext> AddNpgsqlOperationLogChangeTracking<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext>
+        (this DbOperationsBuilder<TDbContext> dbOperations,
+            Func<IServiceProvider, NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>>? optionsFactory = null)
         where TDbContext : DbContext
     {
         var services = dbOperations.Services;

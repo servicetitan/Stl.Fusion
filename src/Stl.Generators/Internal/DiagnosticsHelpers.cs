@@ -52,9 +52,15 @@ public static class DiagnosticsHelpers
     public static Diagnostic DebugWarning(Exception error)
     {
 #pragma warning disable MA0074
+#if !NETSTANDARD2_0
+        var text = (error.ToString() ?? "")
+            .Replace("\r\n", " | ", StringComparison.Ordinal)
+            .Replace("\n", " | ", StringComparison.Ordinal);
+#else
         var text = (error.ToString() ?? "")
             .Replace("\r\n", " | ")
             .Replace("\n", " | ");
+#endif
 #pragma warning restore MA0074
         return DebugWarning(text);
     }

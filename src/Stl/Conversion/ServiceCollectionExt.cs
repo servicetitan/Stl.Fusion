@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Conversion.Internal;
 
@@ -7,6 +8,7 @@ public static class ServiceCollectionExt
 {
     public static IServiceCollection AddConverters(
         this IServiceCollection services,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)]
         Type? sourceConverterProviderGenericType = null)
     {
         sourceConverterProviderGenericType ??= typeof(DefaultSourceConverterProvider<>);

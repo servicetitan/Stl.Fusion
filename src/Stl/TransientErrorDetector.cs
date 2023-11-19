@@ -89,7 +89,7 @@ public abstract record TransientErrorDetector : ITransientErrorDetector
 
     // Nested types
 
-    private record FuncTransientErrorDetector(Func<Exception, bool> Detector) : TransientErrorDetector
+    private sealed record FuncTransientErrorDetector(Func<Exception, bool> Detector) : TransientErrorDetector
     {
         public override bool IsTransient(Exception error)
             => Detector.Invoke(error);

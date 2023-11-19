@@ -218,7 +218,7 @@ public class RpcBasicTest(ITestOutputHelper @out) : RpcLocalTestBase(@out)
         var client = services.GetRequiredService<ITestRpcServiceClient>();
 
         var expected1 = Enumerable.Range(0, 5).ToList();
-        var stream1 = await client.StreamInt32(expected1.Count());
+        var stream1 = await client.StreamInt32(expected1.Count);
         (await stream1.ToListAsync()).Should().Equal(expected1);
         await AssertNoObjects(clientPeer);
 

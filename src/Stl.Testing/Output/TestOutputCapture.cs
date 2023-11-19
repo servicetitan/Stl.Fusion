@@ -28,7 +28,9 @@ public class TestOutputCapture : IStandardStreamWriter, ITestOutputHelper
 
     public void WriteLine(string format, params object[] args)
 #pragma warning disable MA0011
+#pragma warning disable CA1305 // Could vary based on the current user's locale settings
         => WriteLine(string.Format(format, args));
+#pragma warning restore CA1305
 #pragma warning restore MA0011
 
     public void Write(char value)

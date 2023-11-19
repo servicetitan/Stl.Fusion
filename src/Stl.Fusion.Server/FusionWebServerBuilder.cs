@@ -11,10 +11,8 @@ namespace Stl.Fusion.Server;
 [StructLayout(LayoutKind.Auto)]
 public readonly struct FusionWebServerBuilder
 {
-    private class AddedTag;
-    private class ControllersAddedTag;
+    private sealed class AddedTag;
     private static readonly ServiceDescriptor AddedTagDescriptor = new(typeof(AddedTag), new AddedTag());
-    private static readonly ServiceDescriptor ControllersAddedTagDescriptor = new(typeof(ControllersAddedTag), new ControllersAddedTag());
 
     public FusionBuilder Fusion { get; }
     public IServiceCollection Services => Fusion.Services;

@@ -40,13 +40,17 @@ public class DbSessionInfo<TDbUserId> : IHasId<string>, IHasVersion<long>
 
     // Options
     public string OptionsJson {
+#pragma warning disable IL2026
         get => _options.Data;
+#pragma warning restore IL2026
         set => _options.Data = value;
     }
 
     [NotMapped]
     public ImmutableOptionSet Options {
+#pragma warning disable IL2026
         get => _options.Value;
+#pragma warning restore IL2026
         set => _options.Value = value;
     }
 }

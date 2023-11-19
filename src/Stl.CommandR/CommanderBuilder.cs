@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.CommandR.Diagnostics;
 using Stl.CommandR.Interception;
@@ -9,12 +10,13 @@ namespace Stl.CommandR;
 
 public readonly struct CommanderBuilder
 {
-    private class AddedTag;
+    private sealed class AddedTag;
     private static readonly ServiceDescriptor AddedTagDescriptor = new(typeof(AddedTag), new AddedTag());
 
     public IServiceCollection Services { get; }
     public HashSet<CommandHandler> Handlers { get; }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Commander)]
     internal CommanderBuilder(
         IServiceCollection services,
         Action<CommanderBuilder>? configure)
@@ -59,13 +61,23 @@ public readonly struct CommanderBuilder
 
     // Handler discovery
 
-    public CommanderBuilder AddHandlers<TService>(double? priorityOverride = null)
+    public CommanderBuilder AddHandlers<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService>
+        (double? priorityOverride = null)
         => AddHandlers(typeof(TService), priorityOverride);
-    public CommanderBuilder AddHandlers<TService, TImplementation>(double? priorityOverride = null)
+    public CommanderBuilder AddHandlers<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TImplementation>
+        (double? priorityOverride = null)
         => AddHandlers(typeof(TService), typeof(TImplementation), priorityOverride);
-    public CommanderBuilder AddHandlers(Type serviceType, double? priorityOverride = null)
+    public CommanderBuilder AddHandlers(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        double? priorityOverride = null)
         => AddHandlers(serviceType, serviceType, priorityOverride);
-    public CommanderBuilder AddHandlers(Type serviceType, Type implementationType, double? priorityOverride = null)
+    public CommanderBuilder AddHandlers(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type implementationType,
+        double? priorityOverride = null)
     {
         if (!serviceType.IsAssignableFrom(implementationType))
             throw Stl.Internal.Errors.MustBeAssignableTo(implementationType, serviceType, nameof(implementationType));
@@ -85,10 +97,14 @@ public readonly struct CommanderBuilder
                 continue;
 
             var method = implementationType.GetInterfaceMap(tInterface).TargetMethods.Single();
+#pragma warning disable IL2026
             var attr = MethodCommandHandler.GetAttribute(method);
+#pragma warning restore IL2026
             var isFilter = attr?.IsFilter ?? false;
             var order = priorityOverride ?? attr?.Priority ?? 0;
+#pragma warning disable IL2072
             AddHandler(InterfaceCommandHandler.New(serviceType, tCommand, isFilter, order));
+#pragma warning restore IL2072
             interfaceMethods.Add(method);
         }
 
@@ -111,7 +127,9 @@ public readonly struct CommanderBuilder
             if (!typeof(ICommand).IsAssignableFrom(parameters[0].ParameterType))
                 continue;
 
+#pragma warning disable IL2026
             var handler = MethodCommandHandler.TryNew(serviceType, method, priorityOverride);
+#pragma warning restore IL2026
             if (handler == null)
                 continue;
 
@@ -123,12 +141,15 @@ public readonly struct CommanderBuilder
 
     // AddService
 
-    public CommanderBuilder AddService<TService>(
+    public CommanderBuilder AddService<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService>(
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         double? priorityOverride = null)
         where TService : class, ICommandService
         => AddService(typeof(TService), lifetime, priorityOverride);
-    public CommanderBuilder AddService<TService, TImplementation>(
+    public CommanderBuilder AddService<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TImplementation>(
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         double? priorityOverride = null)
         where TService : class
@@ -136,12 +157,13 @@ public readonly struct CommanderBuilder
         => AddService(typeof(TService), typeof(TImplementation), lifetime, priorityOverride);
 
     public CommanderBuilder AddService(
-        Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         double? priorityOverride = null)
         => AddService(serviceType, serviceType, lifetime, priorityOverride);
     public CommanderBuilder AddService(
-        Type serviceType, Type implementationType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type implementationType,
         ServiceLifetime lifetime = ServiceLifetime.Singleton,
         double? priorityOverride = null)
     {
@@ -158,17 +180,27 @@ public readonly struct CommanderBuilder
 
     // Low-level methods
 
-    public CommanderBuilder AddHandler<TService, TCommand>(double priority = 0)
+    public CommanderBuilder AddHandler<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TCommand>
+        (double priority = 0)
         where TService : class
         where TCommand : class, ICommand
         => AddHandler<TService, TCommand>(false, priority);
 
-    public CommanderBuilder AddHandler<TService, TCommand>(bool isFilter, double priority = 0)
+    public CommanderBuilder AddHandler<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TService,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TCommand>
+        (bool isFilter, double priority = 0)
         where TService : class
         where TCommand : class, ICommand
         => AddHandler(InterfaceCommandHandler.New<TService, TCommand>(isFilter, priority));
 
-    public CommanderBuilder AddHandler(Type serviceType, MethodInfo method, double? priorityOverride = null)
+    [RequiresUnreferencedCode(UnreferencedCode.Commander)]
+    public CommanderBuilder AddHandler(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        MethodInfo method,
+        double? priorityOverride = null)
         => AddHandler(MethodCommandHandler.New(serviceType, method, priorityOverride));
 
     public CommanderBuilder AddHandler(CommandHandler handler)
@@ -191,14 +223,16 @@ public readonly struct CommanderBuilder
         return this;
     }
 
-    public CommanderBuilder AddHandlerFilter<TCommandHandlerFilter>()
+    public CommanderBuilder AddHandlerFilter<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TCommandHandlerFilter>()
         where TCommandHandlerFilter : CommandHandlerFilter
     {
         Services.AddSingleton<CommandHandlerFilter, TCommandHandlerFilter>();
         return this;
     }
 
-    public CommanderBuilder AddHandlerFilter<TCommandHandlerFilter>(
+    public CommanderBuilder AddHandlerFilter<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TCommandHandlerFilter>(
         Func<IServiceProvider, TCommandHandlerFilter> factory)
         where TCommandHandlerFilter : CommandHandlerFilter
     {
@@ -207,7 +241,7 @@ public readonly struct CommanderBuilder
     }
 
     public CommanderBuilder AddHandlerFilter(Func<CommandHandler, Type, bool> commandHandlerFilter)
-        => AddHandlerFilter(c => new FuncCommandHandlerFilter(commandHandlerFilter));
+        => AddHandlerFilter(_ => new FuncCommandHandlerFilter(commandHandlerFilter));
 
     public CommanderBuilder AddHandlerFilter(
         Func<IServiceProvider, Func<CommandHandler, Type, bool>> commandHandlerFilterFactory)

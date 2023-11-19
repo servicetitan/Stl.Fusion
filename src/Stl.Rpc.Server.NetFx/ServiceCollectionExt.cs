@@ -1,10 +1,11 @@
-using System.Web.Http.Dependencies;
-using Stl.Rpc.Server.Internal;
+using System.Diagnostics.CodeAnalysis;
+using Stl.Internal;
 
 namespace Stl.Rpc.Server;
 
 public static class ServiceCollectionExt
 {
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     public static IServiceCollection AddControllersAsServices(this IServiceCollection services, IEnumerable<Type> controllerTypes)
     {
         foreach (var type in controllerTypes)
@@ -12,6 +13,7 @@ public static class ServiceCollectionExt
         return services;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     public static IServiceCollection AddControllersAsServices(this IServiceCollection services, IEnumerable<Assembly> assemblies)
     {
         foreach (var assembly in assemblies)
@@ -19,6 +21,7 @@ public static class ServiceCollectionExt
         return services;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     public static IServiceCollection AddControllersAsServices(this IServiceCollection services, Assembly assembly)
     {
         services.AddControllersAsServices(assembly.GetControllerTypes());

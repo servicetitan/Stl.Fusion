@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Stl.Fusion.UI;
 
 public class UICommander(IServiceProvider services) : IHasServices

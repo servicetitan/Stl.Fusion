@@ -1,9 +1,12 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Web.Http.Controllers;
+using Stl.Internal;
 
 namespace Stl.Rpc.Server;
 
 public static class AssemblyExt
 {
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     public static IEnumerable<Type> GetControllerTypes(this Assembly assembly, string? fullNamePrefixFilter = null)
     {
         var q = assembly.GetExportedTypes()

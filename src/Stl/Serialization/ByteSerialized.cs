@@ -1,3 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
+using Stl.Internal;
+
 namespace Stl.Serialization;
 
 public static class ByteSerialized
@@ -16,6 +19,7 @@ public partial class ByteSerialized<T> : IEquatable<ByteSerialized<T>>
 
     [JsonIgnore, Newtonsoft.Json.JsonIgnore, IgnoreDataMember, MemoryPackIgnore]
     public T Value {
+        [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
         get => _valueOption.IsSome(out var v) ? v : Deserialize();
         set {
             _valueOption = value;
@@ -25,6 +29,7 @@ public partial class ByteSerialized<T> : IEquatable<ByteSerialized<T>>
 
     [DataMember(Order = 0), MemoryPackOrder(0)]
     public byte[] Data {
+        [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
         get => _dataOption.IsSome(out var v) ? v : Serialize();
         set {
             _valueOption = Option<T>.None;
@@ -41,10 +46,11 @@ public partial class ByteSerialized<T> : IEquatable<ByteSerialized<T>>
     // ToString
 
     public override string ToString()
-        => $"{GetType().GetName()} {{ Data = {JsonFormatter.Format(Data)} }}";
+        => $"{GetType().GetName()}(...)";
 
     // Private & protected methods
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     private byte[] Serialize()
     {
         if (!_valueOption.IsSome(out var value))
@@ -61,6 +67,7 @@ public partial class ByteSerialized<T> : IEquatable<ByteSerialized<T>>
         return serializedValue;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     private T Deserialize()
     {
         if (!_dataOption.IsSome(out var serializedValue))
@@ -73,12 +80,16 @@ public partial class ByteSerialized<T> : IEquatable<ByteSerialized<T>>
         return value;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     protected virtual IByteSerializer<T> GetSerializer()
         => ByteSerializer<T>.Default;
 
     // Equality
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
+#pragma warning disable IL2046
     public bool Equals(ByteSerialized<T>? other)
+#pragma warning restore IL2046
     {
         if (ReferenceEquals(null, other))
             return false;
@@ -87,7 +98,10 @@ public partial class ByteSerialized<T> : IEquatable<ByteSerialized<T>>
         return StructuralComparisons.StructuralEqualityComparer.Equals(Data, other.Data);
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
+#pragma warning disable IL2046
     public override bool Equals(object? obj)
+#pragma warning restore IL2046
     {
         if (ReferenceEquals(null, obj))
             return false;
@@ -96,7 +110,10 @@ public partial class ByteSerialized<T> : IEquatable<ByteSerialized<T>>
         return Equals((ByteSerialized<T>)obj);
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
+#pragma warning disable IL2046
     public override int GetHashCode()
+#pragma warning restore IL2046
         => Data.GetHashCode();
     public static bool operator ==(ByteSerialized<T>? left, ByteSerialized<T>? right)
         => Equals(left, right);

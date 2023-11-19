@@ -1,10 +1,14 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework;
 using Stl.Multitenancy;
 
 namespace Stl.Fusion.Extensions.Services;
 
-public class DbKeyValueTrimmer<TDbContext, TDbKeyValue> : DbTenantWorkerBase<TDbContext>
+public class DbKeyValueTrimmer<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext,
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbKeyValue>
+    : DbTenantWorkerBase<TDbContext>
     where TDbContext : DbContext
     where TDbKeyValue : DbKeyValue, new()
 {
@@ -60,7 +64,7 @@ public class DbKeyValueTrimmer<TDbContext, TDbKeyValue> : DbTenantWorkerBase<TDb
 
             if (lastTrimCount > 0 && IsLoggingEnabled)
                 Log.Log(Settings.LogLevel,
-                    "Trim({tenant.Id}) trimmed {Count} entries", tenant.Id, lastTrimCount);
+                    "Trim({TenantId}) trimmed {Count} entries", tenant.Id, lastTrimCount);
         }).Trace(() => activitySource.StartActivity("Trim").AddTenantTags(tenant), Log);
 
         var chain = runChain

@@ -1,5 +1,7 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Stl.CommandR.Internal;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.Extensions.Services;
 
@@ -9,7 +11,8 @@ public static class FusionBuilderExt
 {
     // SandboxedKeyValueStore
 
-    public static FusionBuilder AddSandboxedKeyValueStore(this FusionBuilder fusion,
+    public static FusionBuilder AddSandboxedKeyValueStore(
+        this FusionBuilder fusion,
         Func<IServiceProvider, SandboxedKeyValueStore.Options>? optionsFactory = null)
     {
         var services = fusion.Services;
@@ -20,7 +23,8 @@ public static class FusionBuilderExt
 
     // InMemoryKeyValueStore
 
-    public static FusionBuilder AddInMemoryKeyValueStore(this FusionBuilder fusion,
+    public static FusionBuilder AddInMemoryKeyValueStore(
+        this FusionBuilder fusion,
         Func<IServiceProvider, InMemoryKeyValueStore.Options>? optionsFactory = null)
     {
         var services = fusion.Services;
@@ -32,13 +36,18 @@ public static class FusionBuilderExt
 
     // DbKeyValueStore
 
-    public static FusionBuilder AddDbKeyValueStore<TDbContext>(
+    [RequiresUnreferencedCode(Fusion.Internal.UnreferencedCode.Fusion)]
+    public static FusionBuilder AddDbKeyValueStore<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext>(
         this FusionBuilder fusion,
         Func<IServiceProvider, DbKeyValueTrimmer<TDbContext, DbKeyValue>.Options>? keyValueTrimmerOptionsFactory = null)
         where TDbContext : DbContext
         => fusion.AddDbKeyValueStore<TDbContext, DbKeyValue>(keyValueTrimmerOptionsFactory);
 
-    public static FusionBuilder AddDbKeyValueStore<TDbContext, TDbKeyValue>(
+    [RequiresUnreferencedCode(UnreferencedCode.Commander)]
+    public static FusionBuilder AddDbKeyValueStore<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbKeyValue>(
         this FusionBuilder fusion,
         Func<IServiceProvider, DbKeyValueTrimmer<TDbContext, TDbKeyValue>.Options>? keyValueTrimmerOptionsFactory = null)
         where TDbContext : DbContext

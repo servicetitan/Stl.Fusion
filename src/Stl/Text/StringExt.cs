@@ -15,8 +15,9 @@ public static class StringExt
     public static string[] OneToMany(string value) => OneToMany(value, ListFormat.Default);
     public static string[] OneToMany(string value, ListFormat listFormat)
     {
-        if (value == "")
+        if (value.IsNullOrEmpty())
             return Array.Empty<string>();
+
         using var p = listFormat.CreateParser(value);
         var buffer = MemoryBuffer<string>.Lease(true);
         try {

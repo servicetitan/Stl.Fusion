@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Interception;
 using Stl.Rpc.Caching;
 using Stl.Rpc.Internal;
@@ -8,7 +9,9 @@ public sealed class RpcOutboundContext(List<RpcHeader>? headers = null)
 {
     [ThreadStatic] private static RpcOutboundContext? _current;
 
+#pragma warning disable CA1721
     public static RpcOutboundContext? Current => _current;
+#pragma warning restore CA1721
 
     public List<RpcHeader>? Headers = headers;
     public RpcMethodDef? MethodDef;
@@ -41,6 +44,7 @@ public sealed class RpcOutboundContext(List<RpcHeader>? headers = null)
     public Scope Activate()
         => new(this, _current);
 
+    [RequiresUnreferencedCode(UnreferencedCode.Rpc)]
     public RpcOutboundCall? PrepareCall(RpcMethodDef methodDef, ArgumentList arguments)
     {
         if (MethodDef != null)

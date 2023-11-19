@@ -23,7 +23,9 @@ public class MultitenantRegistry<TContext> : ITenantRegistry<TContext>
         AllTenants = new MutableDictionary<Symbol, Tenant>(tenants);
         AccessedTenants = new MutableDictionary<Symbol, Tenant>(tenants);
         // ReSharper disable once VirtualMemberCallInConstructor
+#pragma warning disable CA2214
         Update();
+#pragma warning restore CA2214
     }
 
     public virtual bool TryGet(Symbol tenantId, [MaybeNullWhen(false)] out Tenant tenant)

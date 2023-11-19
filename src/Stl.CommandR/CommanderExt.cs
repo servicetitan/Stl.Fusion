@@ -1,3 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
+using Stl.CommandR.Internal;
+
 namespace Stl.CommandR;
 
 public static class CommanderExt

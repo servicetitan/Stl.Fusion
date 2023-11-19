@@ -17,8 +17,6 @@ public sealed class UnusableClock : IMomentClock
     public TimeSpan ToRealDuration(TimeSpan localDuration) => throw Errors.UnusableClock();
     public TimeSpan ToLocalDuration(TimeSpan realDuration) => throw Errors.UnusableClock();
 
-    public CancellationToken SettingsChangedToken => default;
-
     public Task Delay(TimeSpan dueIn, CancellationToken cancellationToken = default)
         => throw Errors.UnusableClock();
 }

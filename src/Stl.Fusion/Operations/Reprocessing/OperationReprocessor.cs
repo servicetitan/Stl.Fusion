@@ -77,6 +77,7 @@ public class OperationReprocessor(
 
     public virtual bool IsTransientFailure(IEnumerable<Exception> allErrors)
     {
+#pragma warning disable CA1851
         lock (KnownTransientFailures) {
             // ReSharper disable once PossibleMultipleEnumeration
             if (allErrors.Any(KnownTransientFailures.Contains))
@@ -90,6 +91,7 @@ public class OperationReprocessor(
                 return true;
             }
         }
+#pragma warning restore CA1851
         return false;
     }
 

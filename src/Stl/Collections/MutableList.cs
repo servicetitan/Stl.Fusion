@@ -1,5 +1,7 @@
 namespace Stl.Collections;
 
+#pragma warning disable CA1710
+
 public interface IReadOnlyMutableList<T> : IReadOnlyCollection<T>
 {
     ImmutableList<T> Items { get; }

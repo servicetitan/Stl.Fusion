@@ -209,7 +209,7 @@ public sealed class ComputedRegistry : IDisposable
         using var activity = type.GetActivitySource().StartActivity(type, nameof(Prune));
 
         // Debug.WriteLine(nameof(PruneInternal));
-        var randomOffset = Randomize(Thread.CurrentThread.ManagedThreadId);
+        var randomOffset = Randomize(Environment.CurrentManagedThreadId);
         foreach (var (key, handle) in _storage) {
             if (handle.Target == null && _storage.TryRemove(key, handle))
                 _gcHandlePool.Release(handle, key.HashCode + randomOffset);
@@ -232,6 +232,6 @@ public sealed class ComputedRegistry : IDisposable
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int Randomize(int random)
+    private static int Randomize(int random)
         => random + CoarseClockHelper.RandomInt32;
 }

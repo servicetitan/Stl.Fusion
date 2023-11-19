@@ -1,13 +1,14 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Stl.Multitenancy;
 using Stl.OS;
 
 namespace Stl.Fusion.EntityFramework.Operations;
 
-public class DbOperationLogReader<TDbContext>(
-        DbOperationLogReader<TDbContext>.Options settings,
-        IServiceProvider services
-        ) : DbTenantWorkerBase<TDbContext>(services)
+public class DbOperationLogReader<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext>
+    (DbOperationLogReader<TDbContext>.Options settings, IServiceProvider services)
+    : DbTenantWorkerBase<TDbContext>(services)
     where TDbContext : DbContext
 {
     public record Options

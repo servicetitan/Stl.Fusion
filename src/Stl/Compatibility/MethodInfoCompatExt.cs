@@ -3,6 +3,7 @@ namespace System.Reflection;
 
 public static class MethodInfoCompatExt
 {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsConstructedGenericMethod(this MethodInfo method)
 #if !NETSTANDARD2_0
         => method.IsConstructedGenericMethod;

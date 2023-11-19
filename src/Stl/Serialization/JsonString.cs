@@ -12,7 +12,8 @@ namespace Stl.Serialization;
 [JsonConverter(typeof(JsonStringJsonConverter))]
 [Newtonsoft.Json.JsonConverter(typeof(JsonStringNewtonsoftJsonConverter))]
 [TypeConverter(typeof(JsonStringTypeConverter))]
-public partial class JsonString :
+[method: MemoryPackConstructor]
+public partial class JsonString(string value) :
     IEquatable<JsonString>,
     IComparable<JsonString>,
     IConvertibleTo<string?>
@@ -20,17 +21,13 @@ public partial class JsonString :
     public static readonly JsonString? Null = null;
     public static readonly JsonString Empty= new("");
 
-    private readonly string? _value;
+    private readonly string? _value = value;
 
     [DataMember(Order = 0), MemoryPackOrder(0)]
     public string Value => _value ?? string.Empty;
 
     public static JsonString? New(string? value)
         => value == null ? Null : new JsonString(value);
-
-    [MemoryPackConstructor]
-    public JsonString(string value)
-        => _value = value;
 
     public override string ToString()
         => Value;
@@ -68,8 +65,14 @@ public partial class JsonString :
         => StringComparer.Ordinal.GetHashCode(Value);
     public int CompareTo(JsonString? other)
         => StringComparer.Ordinal.Compare(Value, other?.Value);
+
     public static bool operator ==(JsonString? left, JsonString? right)
         => left?.Equals(right) ?? ReferenceEquals(right, null);
     public static bool operator !=(JsonString? left, JsonString? right)
         => !(left == right);
+    public static bool operator <(JsonString left, JsonString right) => left.CompareTo(right) < 0;
+    public static bool operator <=(JsonString left, JsonString right) => left.CompareTo(right) <= 0;
+    public static bool operator >(JsonString left, JsonString right) => left.CompareTo(right) > 0;
+    public static bool operator >=(JsonString left, JsonString right) => left.CompareTo(right) >= 0;
+
 }

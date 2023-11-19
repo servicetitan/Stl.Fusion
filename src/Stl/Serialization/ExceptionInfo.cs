@@ -1,4 +1,6 @@
-using Stl.Serialization.Internal;
+using System.Diagnostics.CodeAnalysis;
+using Stl.Internal;
+using Errors = Stl.Serialization.Internal.Errors;
 
 namespace Stl.Serialization;
 
@@ -41,8 +43,11 @@ public readonly partial struct ExceptionInfo : IEquatable<ExceptionInfo>
     public override string ToString()
         => IsNone
             ? $"{GetType().Name}()"
+#pragma warning disable IL2026
             : $"{GetType().Name}({TypeRef.ToString()}, {JsonFormatter.Format(Message)})";
+#pragma warning restore IL2026
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     public Exception? ToException()
     {
         if (IsNone)
@@ -77,6 +82,7 @@ public readonly partial struct ExceptionInfo : IEquatable<ExceptionInfo>
 
     // Private methods
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     private static Exception? TryCreateException(ExceptionInfo exceptionInfo)
     {
         if (exceptionInfo.IsNone)

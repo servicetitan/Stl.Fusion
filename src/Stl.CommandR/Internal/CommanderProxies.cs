@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.CommandR.Interception;
 using Stl.Interception;
 
@@ -5,7 +6,9 @@ namespace Stl.CommandR.Internal;
 
 public static class CommanderProxies
 {
-    public static object NewServiceProxy(IServiceProvider services, Type implementationType)
+    public static object NewServiceProxy(
+        IServiceProvider services,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type implementationType)
     {
         // We should try to validate it here because if the type doesn't
         // have any virtual methods (which might be a mistake), no calls

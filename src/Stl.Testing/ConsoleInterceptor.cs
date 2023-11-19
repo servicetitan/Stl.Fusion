@@ -6,7 +6,7 @@ namespace Stl.Testing;
 
 public static class ConsoleInterceptor
 {
-    private class ProxyWriter : TextWriter
+    private sealed class ProxyWriter : TextWriter
     {
         public override Encoding Encoding { get; } = Encoding.UTF8;
         public override void Write(char value) => TestOutput.Value?.Write(value);

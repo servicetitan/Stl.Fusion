@@ -1,9 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using StackExchange.Redis;
-using Stl.Redis.Internal;
+using Stl.Internal;
+using Errors = Stl.Redis.Internal.Errors;
 
 namespace Stl.Redis;
 
-public sealed class RedisStreamer<T>
+public sealed class RedisStreamer<T>(RedisDb redisDb, string key, RedisStreamer<T>.Options? settings = null)
 {
     public record Options
     {
@@ -23,17 +25,11 @@ public sealed class RedisStreamer<T>
         public string EndedStatus { get; init; } = "]";
     }
 
-    public Options Settings { get; }
-    public RedisDb RedisDb { get; }
-    public string Key { get; }
+    public Options Settings { get; } = settings ?? new ();
+    public RedisDb RedisDb { get; } = redisDb;
+    public string Key { get; } = key;
 
-    public RedisStreamer(RedisDb redisDb, string key, Options? settings = null)
-    {
-        Settings = settings ?? new ();
-        RedisDb = redisDb;
-        Key = key;
-    }
-
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public async IAsyncEnumerable<T> Read([EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var appendSub = GetAppendSub();
@@ -46,7 +42,7 @@ public sealed class RedisStreamer<T>
         while (true) {
             cancellationToken.ThrowIfCancellationRequested(); // Redis doesn't support cancellation
             var entries = await RedisDb.Database.StreamReadAsync(Key, position, 10).ConfigureAwait(false);
-            if (entries == null || entries.Length == 0) {
+            if (entries == null! || entries.Length == 0) {
                 var appendResult = await appendNotificationTask
                     .WaitResultAsync(Settings.Clock, Settings.AppendCheckPeriod, cancellationToken)
                     .ConfigureAwait(false);
@@ -76,11 +72,13 @@ public sealed class RedisStreamer<T>
         }
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public Task Write(
         IAsyncEnumerable<T> source,
         CancellationToken cancellationToken = default)
         => Write(source, _ => default, cancellationToken);
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public Task Write(
         IAsyncEnumerable<T> source,
         Action<RedisStreamer<T>> newStreamAnnouncer,
@@ -92,6 +90,7 @@ public sealed class RedisStreamer<T>
             },
             cancellationToken);
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public async Task Write(
         IAsyncEnumerable<T> source,
         Func<RedisStreamer<T>, ValueTask> newStreamAnnouncer,
@@ -143,6 +142,7 @@ public sealed class RedisStreamer<T>
         await newStreamAnnouncer(this).ConfigureAwait(false);
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     private async Task AppendItem(
         T item,
         RedisPub appendPub,
@@ -158,6 +158,7 @@ public sealed class RedisStreamer<T>
         await appendPub.Publish(RedisValue.EmptyString).ConfigureAwait(false);
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     private async Task AppendEnd(
         Exception? error,
         RedisPub appendPub)

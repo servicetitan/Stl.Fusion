@@ -41,11 +41,15 @@
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable ArrangeConstructorOrDestructorBody
 using Cysharp.Text;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection.Emit;
+using Stl.Internal;
 
 namespace Stl.Interception;
 
 #pragma warning disable MA0012
+#pragma warning disable CA2201
+#pragma warning disable IL2046
 
 public abstract partial record ArgumentList
 {
@@ -363,6 +367,7 @@ public sealed partial record ArgumentList<<#=argumentTypes#>> : ArgumentList<#=i
             return (Func<object, ArgumentList, object?>)m.CreateDelegate(typeof(Func<object, ArgumentList, object?>));
         });
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public override void Read(ArgumentListReader reader)
     {
 <# for (var t = 0; t < itemCount; t++) { #>
@@ -373,6 +378,7 @@ public sealed partial record ArgumentList<<#=argumentTypes#>> : ArgumentList<#=i
 <# } #>
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public override void Write(ArgumentListWriter writer)
     {
 <# for (var t = 0; t < itemCount; t++) { #>

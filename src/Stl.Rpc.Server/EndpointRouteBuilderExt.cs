@@ -1,10 +1,13 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
+using Stl.Internal;
 
 namespace Stl.Rpc.Server;
 
 public static class EndpointRouteBuilderExt
 {
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public static IEndpointRouteBuilder MapRpcWebSocketServer(
         this IEndpointRouteBuilder endpoints, string? pattern = null)
     {

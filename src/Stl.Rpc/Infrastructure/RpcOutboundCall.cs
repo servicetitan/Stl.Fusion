@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Rpc.Caching;
 using Stl.Rpc.Internal;
 
@@ -15,6 +16,7 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
     public TimeSpan ConnectTimeout;
     public TimeSpan Timeout;
 
+    [RequiresUnreferencedCode(UnreferencedCode.Rpc)]
     public static RpcOutboundCall New(RpcOutboundContext context)
         => FactoryCache.GetOrAdd((context.CallTypeId, context.MethodDef!.UnwrappedReturnType), static key => {
             var (callTypeId, tResult) = key;
@@ -37,6 +39,7 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
             + (headers.Count > 0 ? $", Headers: {headers.ToDelimitedString()}" : "");
     }
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     public Task RegisterAndSend()
     {
         if (NoWait)
@@ -54,6 +57,7 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
         return sendTask;
     }
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     public Task SendNoWait(bool allowPolymorphism, ChannelWriter<RpcMessage>? sender = null)
     {
         var message = CreateMessage(Context.RelatedCallId, allowPolymorphism);
@@ -61,6 +65,7 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
         return Peer.Send(message, sender);
     }
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     public Task SendRegistered(bool isFirst = true)
     {
         RpcMessage message;
@@ -83,6 +88,7 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
         return Peer.Send(message);
     }
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     public virtual RpcMessage CreateMessage(long relatedId, bool allowPolymorphism)
     {
         var argumentData = Peer.ArgumentSerializer.Serialize(Context.Arguments!, allowPolymorphism);
@@ -93,13 +99,18 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
         return message;
     }
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     public abstract void SetResult(object? result, RpcInboundContext? context);
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     public abstract void SetError(Exception error, RpcInboundContext? context, bool assumeCancelled = false);
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     public abstract bool Cancel(CancellationToken cancellationToken);
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     public virtual Task Reconnect(bool isPeerChanged, CancellationToken cancellationToken)
         => SendRegistered(false);
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     public void Unregister(bool notifyCancelled = false)
     {
         if (!Peer.OutboundCalls.Unregister(this))
@@ -111,6 +122,7 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
 
     // Protected methods
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     protected void NotifyCancelled()
     {
         if (Context.CacheInfoCapture is { CaptureMode: RpcCacheInfoCaptureMode.KeyOnly })
@@ -130,6 +142,7 @@ public abstract class RpcOutboundCall(RpcOutboundContext context)
         }
     }
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     protected void RegisterCancellationHandler()
     {
         var cancellationToken = Context.CancellationToken;
@@ -183,6 +196,7 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
         }
     }
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     public override void SetResult(object? result, RpcInboundContext? context)
     {
         var typedResult = default(TResult)!;
@@ -200,6 +214,7 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
         }
     }
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     public override void SetError(Exception error, RpcInboundContext? context, bool assumeCancelled = false)
     {
         var oce = error as OperationCanceledException;
@@ -219,6 +234,7 @@ public class RpcOutboundCall<TResult> : RpcOutboundCall
         }
     }
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     public override bool Cancel(CancellationToken cancellationToken)
     {
         var isCancelled = ResultSource.TrySetCanceled(cancellationToken);

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Interception;
 using Stl.Interception.Interceptors;
 
@@ -26,7 +27,9 @@ public class RpcRoutingInterceptor : RpcInterceptorBase
         RemoteService = remoteService;
     }
 
-    protected override Func<Invocation, object?> CreateHandler<T>(Invocation initialInvocation, MethodDef methodDef)
+    protected override Func<Invocation, object?> CreateHandler<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
+        (Invocation initialInvocation, MethodDef methodDef)
         => invocation => {
             var rpcMethodDef = (RpcMethodDef)methodDef;
             var peer = RpcCallRouter.Invoke(rpcMethodDef, invocation.Arguments);
@@ -34,6 +37,7 @@ public class RpcRoutingInterceptor : RpcInterceptorBase
             return rpcMethodDef.Invoker.Invoke(service, invocation.Arguments);
         };
 
+    // We don't need to decorate this method with any dynamic access attributes
     protected override MethodDef? CreateMethodDef(MethodInfo method, Invocation initialInvocation)
         => ServiceDef.Methods.FirstOrDefault(m => m.Method == method);
 }

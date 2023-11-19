@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Stl.CommandR.Internal;
 
 public class Commander(IServiceProvider services) : ICommander

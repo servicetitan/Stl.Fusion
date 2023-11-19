@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Interception;
 using Stl.Interception.Interceptors;
 using Stl.Internal;
@@ -24,9 +25,11 @@ public abstract class RpcInterceptorBase(
         ServiceDef = serviceDef;
     }
 
+    // We don't need to decorate this method with any dynamic access attributes
     protected override MethodDef? CreateMethodDef(MethodInfo method, Invocation initialInvocation)
         => ServiceDef.Methods.FirstOrDefault(m => m.Method == method);
 
-    protected override void ValidateTypeInternal(Type type)
+    protected override void ValidateTypeInternal(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type)
     { }
 }

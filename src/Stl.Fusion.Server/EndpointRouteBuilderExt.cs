@@ -1,6 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Stl.Fusion.Server.Endpoints;
+using Stl.Internal;
 
 namespace Stl.Fusion.Server;
 
@@ -8,6 +10,7 @@ namespace Stl.Fusion.Server;
 
 public static class EndpointRouteBuilderExt
 {
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     public static IEndpointRouteBuilder MapFusionAuth(this IEndpointRouteBuilder endpoints)
     {
         var services = endpoints.ServiceProvider;
@@ -24,6 +27,7 @@ public static class EndpointRouteBuilderExt
         return endpoints;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     public static IEndpointRouteBuilder MapFusionBlazorMode(this IEndpointRouteBuilder endpoints)
     {
         var services = endpoints.ServiceProvider;

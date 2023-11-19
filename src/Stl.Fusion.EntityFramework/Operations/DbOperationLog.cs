@@ -1,9 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework.Operations;
 
-public interface IDbOperationLog<in TDbContext>
+public interface IDbOperationLog<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] in TDbContext>
     where TDbContext : DbContext
 {
     DbOperation New(string? id = null, string? agentId = null, object? command = null);
@@ -14,7 +16,11 @@ public interface IDbOperationLog<in TDbContext>
     Task<int> Trim(Tenant tenant, DateTime minCommitTime, int maxCount, CancellationToken cancellationToken);
 }
 
-public class DbOperationLog<TDbContext, TDbOperation>(IServiceProvider services) : DbServiceBase<TDbContext>(services),
+public class DbOperationLog<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext,
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbOperation>
+    (IServiceProvider services)
+    : DbServiceBase<TDbContext>(services),
     IDbOperationLog<TDbContext>
     where TDbContext : DbContext
     where TDbOperation : DbOperation, new()

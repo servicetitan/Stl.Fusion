@@ -1,3 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
+using Stl.Internal;
+
 namespace Stl.Fusion.Blazor;
 
 public class ParameterComparerProvider
@@ -18,7 +21,8 @@ public class ParameterComparerProvider
 #endif
     };
 
-    public static ParameterComparer Get(Type? comparerType)
+    public static ParameterComparer Get(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] Type? comparerType)
     {
         if (comparerType == null)
             return DefaultParameterComparer.Instance;
@@ -26,10 +30,13 @@ public class ParameterComparerProvider
         return Cache.GetOrAdd(comparerType, static comparerType1 => {
             if (!typeof(ParameterComparer).IsAssignableFrom(comparerType1))
                 throw new ArgumentOutOfRangeException(nameof(comparerType));
+#pragma warning disable IL2067
             return (ParameterComparer)comparerType1.CreateInstance();
+#pragma warning restore IL2067
         });
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     public virtual ParameterComparer Get(PropertyInfo property)
     {
         var comparerType = GetComparerType(property);

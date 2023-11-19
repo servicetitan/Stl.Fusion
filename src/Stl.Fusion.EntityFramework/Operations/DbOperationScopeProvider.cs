@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Stl.Fusion.EntityFramework.Internal;
@@ -5,7 +6,9 @@ using Stl.Fusion.Operations.Reprocessing;
 
 namespace Stl.Fusion.EntityFramework.Operations;
 
-public class DbOperationScopeProvider<TDbContext>(IServiceProvider services) : DbServiceBase<TDbContext>(services),
+public class DbOperationScopeProvider<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext>
+    (IServiceProvider services) : DbServiceBase<TDbContext>(services),
     ICommandHandler<ICommand>
     where TDbContext : DbContext
 {

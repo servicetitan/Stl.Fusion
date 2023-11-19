@@ -1,5 +1,7 @@
 namespace Stl.Async;
 
+#pragma warning disable CA2016
+
 #if NET5_0_OR_GREATER
 
 public static partial class TaskCompletionSourceExt

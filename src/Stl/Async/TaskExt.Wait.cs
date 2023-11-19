@@ -3,6 +3,7 @@ using Stl.Internal;
 namespace Stl.Async;
 
 #pragma warning disable MA0004
+#pragma warning disable CA2007
 
 public static partial class TaskExt
 {

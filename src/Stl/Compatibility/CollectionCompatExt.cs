@@ -7,6 +7,7 @@ namespace System.Collections.Generic;
 
 public static class CollectionCompatExt
 {
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static TValue? GetValueOrDefault<TKey, TValue>(
         this IReadOnlyDictionary<TKey, TValue> dictionary,
         TKey key)
@@ -19,6 +20,7 @@ public static class CollectionCompatExt
     {
         if (dictionary == null)
             throw new ArgumentNullException(nameof(dictionary));
+
         return !dictionary.TryGetValue(key, out var obj) ? defaultValue : obj;
     }
 
@@ -31,6 +33,7 @@ public static class CollectionCompatExt
             throw new ArgumentNullException(nameof(dictionary));
         if (dictionary.ContainsKey(key))
             return false;
+
         dictionary.Add(key, value);
         return true;
     }
@@ -57,6 +60,7 @@ public static class CollectionCompatExt
             value = default;
             return false;
         }
+
         value = stack.Pop();
         return true;
     }

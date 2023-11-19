@@ -1,5 +1,6 @@
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Stl.Fusion.EntityFramework.Internal;
@@ -22,7 +23,9 @@ public interface IDbOperationScope : IOperationScope
     bool IsTransientFailure(Exception error);
 }
 
-public class DbOperationScope<TDbContext> : SafeAsyncDisposableBase, IDbOperationScope
+public class DbOperationScope<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext>
+    : SafeAsyncDisposableBase, IDbOperationScope
     where TDbContext : DbContext
 {
     public record Options

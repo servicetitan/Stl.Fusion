@@ -4,7 +4,7 @@ public class NullChannel<T> : Channel<T>
 {
     public static readonly NullChannel<T> Instance = new();
 
-    private class NullChannelReader : ChannelReader<T>
+    private sealed class NullChannelReader : ChannelReader<T>
     {
         public override Task Completion => TaskExt.NeverEndingUnitTask;
 
@@ -18,7 +18,7 @@ public class NullChannel<T> : Channel<T>
             => ValueTaskExt.FalseTask;
     }
 
-    private class NullChannelWriter : ChannelWriter<T>
+    private sealed class NullChannelWriter : ChannelWriter<T>
     {
         public override bool TryComplete(Exception? error = null)
             => false;

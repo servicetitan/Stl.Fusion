@@ -1,10 +1,15 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework;
 
 namespace Stl.Fusion.Authentication.Services;
 
-public class DbUserConverter<TDbContext, TDbUser, TDbUserId>
-    (IServiceProvider services) : DbEntityConverter<TDbContext, TDbUser, User>(services)
+public class DbUserConverter<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext,
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbUser,
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbUserId>
+    (IServiceProvider services)
+    : DbEntityConverter<TDbContext, TDbUser, User>(services)
     where TDbContext : DbContext
     where TDbUser : DbUser<TDbUserId>, new()
     where TDbUserId : notnull

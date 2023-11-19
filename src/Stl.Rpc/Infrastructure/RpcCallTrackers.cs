@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Internal;
 
 namespace Stl.Rpc.Infrastructure;
@@ -67,6 +68,7 @@ public sealed class RpcOutboundCallTracker : RpcCallTracker<RpcOutboundCall>
         }
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public async Task Abort(Exception error)
     {
         var abortedCallIds = new HashSet<long>();

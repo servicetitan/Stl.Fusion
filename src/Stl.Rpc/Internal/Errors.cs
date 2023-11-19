@@ -93,4 +93,7 @@ public static class Errors
         => new KeyNotFoundException("RpcStream with the specified Id is not found.");
     public static Exception RpcStreamInvalidPosition()
         => new InvalidOperationException("RpcStream position is invalid.");
+
+    public static Exception UnsupportedWebSocketMessageKind()
+        => new KeyNotFoundException("Unsupported WebSocket message kind.");
 }

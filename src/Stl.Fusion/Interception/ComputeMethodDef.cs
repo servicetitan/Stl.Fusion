@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Interception;
 using Stl.Interception.Interceptors;
 
@@ -9,7 +10,7 @@ public sealed class ComputeMethodDef : MethodDef
     public readonly bool IsDisposable;
 
     public ComputeMethodDef(
-        Type type,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]Type type,
         MethodInfo method,
         ComputeServiceInterceptorBase interceptor)
         : base(type, method)

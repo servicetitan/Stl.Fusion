@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Stl.DependencyInjection.Internal;
+using Stl.Internal;
 
 namespace Stl.DependencyInjection;
 
@@ -89,11 +91,13 @@ public static class ServiceCollectionExt
 
     // AddSettings
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     public static IServiceCollection AddSettings<TSettings>(
         this IServiceCollection services,
         string? sectionName = null)
         => services.AddSettings(typeof(TSettings), sectionName);
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     public static IServiceCollection AddSettings(
         this IServiceCollection services,
         Type settingsType,
@@ -102,7 +106,7 @@ public static class ServiceCollectionExt
         var altSectionName = (string?) null;
         if (sectionName == null) {
             sectionName = settingsType.Name;
-            var plusIndex = sectionName.IndexOf('+');
+            var plusIndex = sectionName.IndexOf('+', StringComparison.Ordinal);
             if (plusIndex >= 0)
                 sectionName = sectionName[(plusIndex + 1)..];
             altSectionName = sectionName.TrimSuffix("Settings", "Cfg", "Config", "Configuration");

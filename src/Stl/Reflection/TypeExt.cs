@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using Cysharp.Text;
 
@@ -39,10 +40,18 @@ public static partial class TypeExt
         }
     }
 
+    public static void MarkUsed<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>()
+    { }
+
+    public static void MarkUsed([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type)
+    { }
+
     public static Type NonProxyType(this Type type)
         => NonProxyTypeCache.GetOrAdd(type, NonProxyTypeResolver);
 
-    public static IEnumerable<Type> GetAllBaseTypes(this Type type, bool addSelf = false, bool addInterfaces = false)
+    public static IEnumerable<Type> GetAllBaseTypes(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] this Type type,
+        bool addSelf = false, bool addInterfaces = false)
     {
         if (type == null)
             throw new ArgumentNullException(nameof(type));
@@ -64,7 +73,9 @@ public static partial class TypeExt
                 yield break;
 
             var orderedInterfaces = interfaces
+#pragma warning disable IL2070
                 .OrderBy(i => -i.GetInterfaces().Length)
+#pragma warning restore IL2070
                 .OrderByDependency(i => interfaces.Where(j => i != j && j.IsAssignableFrom(i)))
                 .Reverse();
             foreach (var @interface in orderedInterfaces)
@@ -74,7 +85,8 @@ public static partial class TypeExt
         yield return typeof(object);
     }
 
-    public static IEnumerable<MethodInfo> GetAllInterfaceMethods(this Type type,
+    public static IEnumerable<MethodInfo> GetAllInterfaceMethods(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] this Type type,
         BindingFlags bindingFlags,
         Func<Type, bool>? interfaceFilter = null)
     {
@@ -85,8 +97,10 @@ public static partial class TypeExt
         if (interfaceFilter != null)
             baseTypes = baseTypes.Where(interfaceFilter);
         foreach (var baseType in baseTypes)
-            foreach (var method in baseType.GetMethods(bindingFlags))
-                yield return method;
+#pragma warning disable IL2075
+        foreach (var method in baseType.GetMethods(bindingFlags))
+#pragma warning restore IL2075
+            yield return method;
     }
 
     public static bool MayCastSucceed(this Type castFrom, Type castTo)
@@ -208,14 +222,16 @@ public static partial class TypeExt
             var genericProxyType = DefaultNonProxyTypeResolver(genericType);
             return genericType == genericProxyType
                 ? type
+#pragma warning disable IL2055
                 : genericProxyType.MakeGenericType(type.GenericTypeArguments);
+#pragma warning restore IL2055
         }
 
         var name = type.Name;
         var namePrefix = name;
         var nameSuffix = "";
         if (type.IsGenericTypeDefinition) {
-            var backTrickIndex = name.IndexOf('`');
+            var backTrickIndex = name.IndexOf('`', StringComparison.Ordinal);
             if (backTrickIndex < 0)
                 return type; // Weird case, shouldn't happen
 
@@ -230,7 +246,9 @@ public static partial class TypeExt
         var nonProxyNamePrefix = namePrefix[..^proxy.Length];
         var nonProxyName = ZString.Concat(nonProxyNamespace, '.', nonProxyNamePrefix, nameSuffix);
         try {
+#pragma warning disable IL2026
             return type.Assembly.GetType(nonProxyName) ?? type;
+#pragma warning restore IL2026
         }
         catch {
             return type;

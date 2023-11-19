@@ -22,7 +22,7 @@ public static class EnumerableExt
             SingleReader = true,
             SingleWriter = true,
             AllowSynchronousContinuations = allowSynchronousContinuations,
-        });
+        }, cancellationToken);
         return buffer.Reader.ReadAllAsync(cancellationToken);
     }
 
@@ -31,7 +31,7 @@ public static class EnumerableExt
         BoundedChannelOptions options,
         CancellationToken cancellationToken = default)
     {
-        var buffer = source.ToBoundedChannel(options);
+        var buffer = source.ToBoundedChannel(options, cancellationToken);
         return buffer.Reader.ReadAllAsync(cancellationToken);
     }
 

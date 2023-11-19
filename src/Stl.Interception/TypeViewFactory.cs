@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Interception.Interceptors;
 
 namespace Stl.Interception;
@@ -16,7 +17,11 @@ public class TypeViewFactory(TypeViewInterceptor interceptor) : ITypeViewFactory
 
     protected Interceptor Interceptor { get; } = interceptor;
 
-    public object CreateView(object implementation, Type viewType)
+#pragma warning disable IL2092
+    public object CreateView(
+        object implementation,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type viewType)
+#pragma warning restore IL2092
     {
         if (!viewType.IsInterface)
             throw new ArgumentOutOfRangeException(nameof(viewType));

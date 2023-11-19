@@ -1,10 +1,13 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Stl.Multitenancy;
 using Stl.Versioning;
 
 namespace Stl.Fusion.EntityFramework;
 
-public abstract class DbTenantWorkerBase<TDbContext> : TenantWorkerBase<TDbContext>
+public abstract class DbTenantWorkerBase<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext>
+    : TenantWorkerBase<TDbContext>
     where TDbContext : DbContext
 {
     private ILogger? _log;

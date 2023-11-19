@@ -18,7 +18,7 @@ public class ComponentFor : ComponentBase
     /// The parameters of the component to set.
     /// </summary>
     [Parameter(CaptureUnmatchedValues = true)]
-    public Dictionary<string, object>? Attributes { get; set; } = null;
+    public Dictionary<string, object>? Attributes { get; set; }
 
     /// <inheritdoc/>
     protected override void BuildRenderTree(RenderTreeBuilder builder)
@@ -26,12 +26,12 @@ public class ComponentFor : ComponentBase
         if (Type == null)
             return;
         var i = 0;
-#pragma warning disable MA0123
+#pragma warning disable IL2072, MA0123
         builder.OpenComponent(i++, Type);
         if (Attributes != null)
             foreach (var (key, value) in Attributes)
                 builder.AddAttribute(i++, key, value);
         builder.CloseComponent();
-#pragma warning restore MA0123
+#pragma warning restore IL2072, MA0123
     }
 }

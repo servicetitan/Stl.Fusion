@@ -18,7 +18,7 @@ public readonly partial struct RedisSubKey(string key, RedisChannel.PatternMode 
     public RedisSubKey(string key) : this(key, RedisChannel.PatternMode.Auto) { }
 
     public override string ToString()
-        => $"({JsonFormatter.Format(Key)}, {PatternMode})";
+        => $"`{Key}`, {PatternMode})";
 
     public static implicit operator RedisSubKey(string key) => new(key);
     public static implicit operator RedisSubKey((string Key, RedisChannel.PatternMode PatternMode) pair)

@@ -1,7 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Interception;
-using Stl.Rpc.Internal;
+using Stl.Internal;
+using Errors = Stl.Rpc.Internal.Errors;
 
 namespace Stl.Rpc.Infrastructure;
+
+#pragma warning disable IL2046
 
 public interface IRpcSystemCalls : IRpcSystemService
 {
@@ -37,6 +41,7 @@ public class RpcSystemCalls(IServiceProvider services)
     public Task<RpcNoWait> Handshake(RpcHandshake handshake)
         => RpcNoWait.Tasks.Completed; // Does nothing: this call is processed inside RpcPeer.OnRun
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public Task<RpcNoWait> Ok(object? result)
     {
         var context = RpcInboundContext.GetCurrent();
@@ -46,6 +51,7 @@ public class RpcSystemCalls(IServiceProvider services)
         return RpcNoWait.Tasks.Completed;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public Task<RpcNoWait> Error(ExceptionInfo error)
     {
         var context = RpcInboundContext.GetCurrent();
@@ -72,6 +78,7 @@ public class RpcSystemCalls(IServiceProvider services)
     public Task<Unit> NotFound(string serviceName, string methodName)
         => throw Errors.EndpointNotFound(serviceName, methodName);
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public async Task<RpcNoWait> KeepAlive(long[] localIds)
     {
         var context = RpcInboundContext.GetCurrent();
@@ -80,6 +87,7 @@ public class RpcSystemCalls(IServiceProvider services)
         return default;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public Task<RpcNoWait> Disconnect(long[] localIds)
     {
         var context = RpcInboundContext.GetCurrent();
@@ -88,6 +96,7 @@ public class RpcSystemCalls(IServiceProvider services)
         return RpcNoWait.Tasks.Completed;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public async Task<RpcNoWait> Ack(long nextIndex, Guid hostId = default)
     {
         var context = RpcInboundContext.GetCurrent();
@@ -100,6 +109,7 @@ public class RpcSystemCalls(IServiceProvider services)
         return default;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public Task<RpcNoWait> I(long index, object? item)
     {
         var context = RpcInboundContext.GetCurrent();
@@ -110,6 +120,7 @@ public class RpcSystemCalls(IServiceProvider services)
             : RpcNoWait.Tasks.Completed;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public Task<RpcNoWait> B(long index, object? items)
     {
         var context = RpcInboundContext.GetCurrent();
@@ -120,6 +131,7 @@ public class RpcSystemCalls(IServiceProvider services)
             : RpcNoWait.Tasks.Completed;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     public Task<RpcNoWait> End(long index, ExceptionInfo error)
     {
         var context = RpcInboundContext.GetCurrent();

@@ -5,7 +5,7 @@ public static class TestRunnerInfo
     public static class Docker
     {
         public static readonly bool IsDotnetRunningInContainer =
-            "" != (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") ?? "");
+            !(Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") ?? "").IsNullOrEmpty();
     }
 
     public static class TeamCity
@@ -17,8 +17,8 @@ public static class TestRunnerInfo
         static TeamCity()
         {
             var version = Environment.GetEnvironmentVariable("TEAMCITY_VERSION");
-            if (!version.IsNullOrEmpty())
-                Version.TryParse(version, out Version);
+            if (version.IsNullOrEmpty() || !Version.TryParse(version, out Version))
+                Version = null;
             ProjectName = Environment.GetEnvironmentVariable("TEAMCITY_PROJECT_NAME") ?? "";
             BuildConfigurationName = Environment.GetEnvironmentVariable("TEAMCITY_BUILDCONF_NAME") ?? "";
         }

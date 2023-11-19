@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using Cysharp.Text;
 using Stl.Fusion.Client.Caching;
 using Stl.Fusion.Client.Internal;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Internal;
+using Stl.Internal;
 using Stl.Rpc.Caching;
 using Stl.Rpc.Infrastructure;
 using Stl.Versioning;
@@ -30,7 +32,10 @@ public class ClientComputeMethodFunction<T>(
     public override string ToString()
         => _toString ??= ZString.Concat('*', base.ToString());
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
+#pragma warning disable IL2046
     protected override ValueTask<Computed<T>> Compute(
+#pragma warning restore IL2046
         ComputedInput input, Computed<T>? existing,
         CancellationToken cancellationToken)
     {
@@ -59,6 +64,7 @@ public class ClientComputeMethodFunction<T>(
             cacheEntry, call, synchronizedSource);
     }
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     private async ValueTask<Computed<T>> ComputeCachedOrRpc(
         ComputeMethodInput input,
         IClientComputedCache cache,
@@ -197,7 +203,7 @@ public class ClientComputeMethodFunction<T>(
 
     // Private methods
 
-    private RpcOutboundComputeCall<T> SendRpcCall(
+    private static RpcOutboundComputeCall<T> SendRpcCall(
         ComputeMethodInput input,
         RpcCacheInfoCapture? cacheInfoCapture,
         CancellationToken cancellationToken)
@@ -213,7 +219,7 @@ public class ClientComputeMethodFunction<T>(
         return call;
     }
 
-    private RpcCacheEntry? UpdateCache(
+    private static RpcCacheEntry? UpdateCache(
         IClientComputedCache cache,
         RpcCacheKey? key,
         TextOrBytes? data)
@@ -230,7 +236,7 @@ public class ClientComputeMethodFunction<T>(
         return new RpcCacheEntry(key, data.GetValueOrDefault());
     }
 
-    private async ValueTask<RpcCacheEntry?> UpdateCache(
+    private static async ValueTask<RpcCacheEntry?> UpdateCache(
         IClientComputedCache cache,
         RpcCacheInfoCapture? cacheInfoCapture,
         Result<T> result,

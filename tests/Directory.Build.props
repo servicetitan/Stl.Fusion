@@ -13,34 +13,55 @@
 
   <!-- Suppressed warnings -->
   <PropertyGroup>
-    <!-- [MA0048] File name must match type name -->
-    <!-- [MA0018] Do not declare static members on generic types -->
-    <!-- [MA0026] To-do : ... -->
-    <!-- [MA0046] The delegate must have 2 parameters -->
-    <!-- [MA0016] Prefer return collection abstraction instead of implementation -->
-    <!-- [MA0097] A class that implements IComparable<T> or IComparable should override comparison operators -->
-    <!-- [MA0009] Regular expressions should not be vulnerable to Denial of Service attacks -->
-    <!-- [MA0056] Do not call overridable members in constructor -->
+    <EnableTrimAnalyzer>false</EnableTrimAnalyzer>
+    <!-- MA0048: File name must match type name -->
+    <!-- MA0018: Do not declare static members on generic types -->
+    <!-- MA0026: To-do : ... -->
+    <!-- MA0046: The delegate must have 2 parameters -->
+    <!-- MA0016: Prefer return collection abstraction instead of implementation -->
+    <!-- MA0097: A class that implements IComparable<T> or IComparable should override comparison operators -->
+    <!-- MA0009: Regular expressions should not be vulnerable to Denial of Service attacks -->
+    <!-- MA0056: Do not call overridable members in constructor -->
     <NoWarn>$(NoWarn);MA0048;MA0018;MA0026;MA0046;MA0016;MA0097;MA0009;MA0056</NoWarn>
-    <!-- [VSTHRD200] Use "Async" suffix in names of methods that return an awaitable type. -->
-    <!-- [VSTHRD110] Observe the awaitable result of this method call by awaiting it, assigning to a variable, or passing it to another method. -->
-    <!-- [VSTHRD103] Cancel synchronously blocks. Await CancelAsync instead. -->
-    <!-- [VSTHRD003] Avoid awaiting or returning a Task representing work that was not started within your context as that can lead to deadlocks. -->
-    <!-- [VSTHRD002] Synchronously waiting on tasks or awaiters may cause deadlocks. Use await or JoinableTaskFactory.Run instead. -->
+    <!-- VSTHRD200: Use "Async" suffix in names of methods that return an awaitable type. -->
+    <!-- VSTHRD110: Observe the awaitable result of this method call by awaiting it, assigning to a variable, or passing it to another method. -->
+    <!-- VSTHRD103: Cancel synchronously blocks. Await CancelAsync instead. -->
+    <!-- VSTHRD003: Avoid awaiting or returning a Task representing work that was not started within your context as that can lead to deadlocks. -->
+    <!-- VSTHRD002: Synchronously waiting on tasks or awaiters may cause deadlocks. Use await or JoinableTaskFactory.Run instead. -->
     <NoWarn>$(NoWarn);VSTHRD200;VSTHRD110;VSTHRD103;VSTHRD003;VSTHRD002</NoWarn>
 
     <!-- Testing-specific -->
-    <!-- [MA0002] Use an overload that has a IEqualityComparer<string> or IComparer<string> parameter -->
-    <!-- [MA0004] Use Task.ConfigureAwait(false) as the current SynchronizationContext is not needed -->
-    <!-- [MA0006] Use string.Equals instead of Equals operator -->
-    <!-- [MA0011] Use an overload of 'TryParse' that has a 'System.IFormatProvider' parameter -->
-    <!-- [MA0051] Method is too long (41 lines; maximum allowed: 40)-->
-    <!-- [MA0074] Use an overload of 'Contains' that has a StringComparison parameter -->
-    <!-- [NETSDK1206] Found version-specific or distribution-specific runtime identifier(s): alpine-arm, alpine-arm64, alpine-x64. Affected libraries: SQLitePCLRaw.lib.e_sqlite3. In .NET 8.0 and higher, assets for version-specific and distribution-specific runtime identifiers will not be found by default. See https://aka.ms/dotnet/rid-usage for details. -->
-    <!-- [RCS1155] Use StringComparison when comparing strings. -->
-    <!-- [xUnit1030] .ConfigureAwait(false) in tests -->
-    <!-- [xUnit1031] .ConfigureAwait(false) in tests -->
-    <NoWarn>$(NoWarn);MA0002;MA0004;MA0006;MA0011;MA0051;MA0074;NETSDK1206;RCS1155;xUnit1030;xUnit1031</NoWarn>
+    <!-- CA1032: Add the following constructor to WeirdException: ... -->
+    <!-- CA1052: Type 'Nested' is a static holder type but is neither static nor NotInheritable -->
+    <!-- CA1303: Method M passes a literal string as parameter 'value' of a call to 'void Console.WriteLine(string? value)'. Retrieve the following string(s) from a resource table instead: ... -->
+    <!-- CA1305: The behavior of 'int.ToString()' could vary -->
+    <!-- CA1307: 'string.Contains(string)' has a method overload that takes a 'StringComparison' -->
+    <!-- CA1310: The behavior of 'string.StartsWith(string)' could vary -->
+    <!-- CA1721: The property name 'X' is confusing given the existence of method 'GetX' -->
+    <!-- CA1812: C is an internal class that is apparently never instantiated. -->
+    <!-- CA1822: Member 'Delay' does not access instance data and can be marked as static -->
+    <!-- CA1852: Type C can be sealed because it has no subtypes in its containing assembly and is not externally visible -->
+    <!-- CA1861: Prefer 'static readonly' fields over constant array arguments -->
+    <!-- CA1862: Prefer the string comparison method overload of 'string.Contains(string)' that takes a 'StringComparison' -->
+    <!-- CA2007: Consider calling ConfigureAwait on the awaited task -->
+    <!-- CA2016: Forward the 'cancellationToken' parameter to the 'Delay' method -->
+    <!-- CA2201: Exception type System.NullReferenceException is reserved by the runtime -->
+    <!-- CA2237: Add [Serializable] to WeirdException -->
+    <NoWarn>$(NoWarn);CA1032;CA1052;CA1303;CA1305;CA1307;CA1310;CA1721;CA1812;CA1822;CA1852;CA1861;CA1862</NoWarn>
+    <NoWarn>$(NoWarn);CA2007;CA2016;CA2201;CA2237</NoWarn>
+    <!-- MA0002: Use an overload that has a IEqualityComparer<string> or IComparer<string> parameter -->
+    <!-- MA0004: Use Task.ConfigureAwait(false) as the current SynchronizationContext is not needed -->
+    <!-- MA0006: Use string.Equals instead of Equals operator -->
+    <!-- MA0011: Use an overload of 'TryParse' that has a 'System.IFormatProvider' parameter -->
+    <!-- MA0051: Method is too long (41 lines; maximum allowed: 40)-->
+    <!-- MA0074: Use an overload of 'Contains' that has a StringComparison parameter -->
+    <NoWarn>$(NoWarn);MA0002;MA0004;MA0006;MA0011;MA0051;MA0074</NoWarn>
+    <!-- NU1701: Package 'xunit.runner.visualstudio' was restored using .NETFramework,Version=v4.6.1 -->
+    <!-- NETSDK1206: Found version-specific or distribution-specific runtime identifier(s): alpine-arm, alpine-arm64, alpine-x64. Affected libraries: SQLitePCLRaw.lib.e_sqlite3. In .NET 8.0 and higher, assets for version-specific and distribution-specific runtime identifiers will not be found by default. See https://aka.ms/dotnet/rid-usage for details. -->
+    <!-- RCS1155: Use StringComparison when comparing strings. -->
+    <!-- xUnit1030: .ConfigureAwait(false) in tests -->
+    <!-- xUnit1031: .ConfigureAwait(false) in tests -->
+    <NoWarn>$(NoWarn);NU1701;NETSDK1206;RCS1155;xUnit1030;xUnit1031</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

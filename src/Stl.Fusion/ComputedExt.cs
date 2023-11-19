@@ -247,11 +247,11 @@ public static partial class ComputedExt
 
             var snapshot = state.Snapshot;
             if (snapshot.IsInitial)
-                return WhenUpdatedAndSynchronized(snapshot);
+                return WhenUpdatedAndSynchronized(snapshot, cancellationToken);
 
-            static async Task WhenUpdatedAndSynchronized(IStateSnapshot snapshot1) {
+            static async Task WhenUpdatedAndSynchronized(IStateSnapshot snapshot1, CancellationToken cancellationToken1) {
                 await snapshot1.WhenUpdated().ConfigureAwait(false);
-                await snapshot1.State.Computed.WhenSynchronized().ConfigureAwait(false);
+                await snapshot1.State.Computed.WhenSynchronized(cancellationToken1).ConfigureAwait(false);
             }
         }
 
@@ -264,7 +264,7 @@ public static partial class ComputedExt
             var usedArray = usedBuffer.Buffer;
             for (var i = 0; i < usedBuffer.Count; i++) {
                 var used = usedArray[i];
-                var whenSynchronized = used.WhenSynchronized();
+                var whenSynchronized = used.WhenSynchronized(cancellationToken);
                 if (!whenSynchronized.IsCompleted)
                     taskBuffer.Add(whenSynchronized);
             }

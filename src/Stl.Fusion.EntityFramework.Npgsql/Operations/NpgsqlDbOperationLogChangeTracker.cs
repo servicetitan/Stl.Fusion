@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Stl.Fusion.EntityFramework.Operations;
@@ -7,10 +8,10 @@ namespace Stl.Fusion.EntityFramework.Npgsql.Operations;
 
 #pragma warning disable EF1002
 
-public class NpgsqlDbOperationLogChangeTracker<TDbContext>(
-    NpgsqlDbOperationLogChangeTrackingOptions<TDbContext> options,
-    IServiceProvider services
-    ) : DbOperationCompletionTrackerBase<TDbContext, NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>>(options, services)
+public class NpgsqlDbOperationLogChangeTracker<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext>
+    (NpgsqlDbOperationLogChangeTrackingOptions<TDbContext> options, IServiceProvider services)
+    : DbOperationCompletionTrackerBase<TDbContext, NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>>(options, services)
     where TDbContext : DbContext
 {
     protected override DbOperationCompletionTrackerBase.TenantWatcher CreateTenantWatcher(Symbol tenantId)

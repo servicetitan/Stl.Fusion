@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Internal;
 using Stl.Rpc;
 using Stl.Rpc.Infrastructure;
@@ -37,6 +38,7 @@ public class RpcInboundComputeCall<TResult> : RpcInboundCall<TResult>, IRpcInbou
         }
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     protected override Task CompleteSendResult()
     {
         Computed<TResult>? computed;
@@ -65,6 +67,7 @@ public class RpcInboundComputeCall<TResult> : RpcInboundCall<TResult>, IRpcInbou
         // 4. Actually run completion
         return CompleteAsync();
 
+        [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
         async Task CompleteAsync() {
             var mustUnregister = false;
             try {
@@ -94,6 +97,7 @@ public class RpcInboundComputeCall<TResult> : RpcInboundCall<TResult>, IRpcInbou
         return true;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     private Task SendInvalidation()
     {
         var computeSystemCallSender = Hub.Services.GetRequiredService<RpcComputeSystemCallSender>();

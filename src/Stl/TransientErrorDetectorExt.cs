@@ -7,7 +7,7 @@ public static class TransientErrorDetectorExt
 
     // Nested types
 
-    private record CastingTransientErrorDetector<TContext>(ITransientErrorDetector BaseDetector) 
+    private sealed record CastingTransientErrorDetector<TContext>(ITransientErrorDetector BaseDetector)
         : TransientErrorDetector, ITransientErrorDetector<TContext>
     {
         public override bool IsTransient(Exception error)

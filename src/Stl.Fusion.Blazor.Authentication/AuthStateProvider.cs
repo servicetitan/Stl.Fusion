@@ -40,7 +40,9 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
         UIActionTracker = services.UIActionTracker();
 
         // ReSharper disable once VirtualMemberCallInConstructor
+#pragma warning disable CA2214
         var stateOptions = GetStateOptions(settings);
+#pragma warning restore CA2214
         State = services.StateFactory().NewComputed(stateOptions, ComputeState);
     }
 

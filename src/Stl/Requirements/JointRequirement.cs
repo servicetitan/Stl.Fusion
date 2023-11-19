@@ -2,10 +2,9 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Stl.Requirements;
 
-public record JointRequirement<T>(
-    Requirement<T> Primary,
-    Requirement<T> Secondary
-    ) : Requirement<T>
+public record JointRequirement<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
+    (Requirement<T> Primary, Requirement<T> Secondary) : Requirement<T>
 {
 #if NETSTANDARD2_0
     public override bool IsSatisfied(T? value)

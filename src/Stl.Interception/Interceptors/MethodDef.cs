@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Stl.Interception.Interceptors;
 
 public abstract class MethodDef
@@ -26,7 +28,7 @@ public abstract class MethodDef
     public bool IsValid { get; init; } = true;
 
     protected MethodDef(
-        Type type,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type,
         MethodInfo method)
     {
         var parameters = method.GetParameters();

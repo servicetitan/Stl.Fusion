@@ -2,6 +2,9 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Stl;
 
+// It's fine to disable it, coz the matching set of Requirement<T> fields/props must be declared @ T
+#pragma warning disable IL2091
+
 public static class RequirementTargetExt
 {
     // Normal overloads

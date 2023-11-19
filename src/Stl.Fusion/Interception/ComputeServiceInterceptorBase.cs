@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Fusion.Internal;
 using Stl.Interception;
 using Stl.Interception.Interceptors;
@@ -30,7 +31,9 @@ public abstract class ComputeServiceInterceptorBase(
             : (TResult)handler.Invoke(invocation)!;
     }
 
-    protected override Func<Invocation, object?> CreateHandler<T>(Invocation initialInvocation, MethodDef methodDef)
+    protected override Func<Invocation, object?> CreateHandler<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
+        (Invocation initialInvocation, MethodDef methodDef)
     {
         var computeMethodDef = (ComputeMethodDef)methodDef;
         var function = CreateFunction<T>(computeMethodDef);
@@ -57,17 +60,21 @@ public abstract class ComputeServiceInterceptorBase(
 
     protected abstract ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method);
 
+    // We don't need to decorate this method with any dynamic access attributes
     protected override MethodDef? CreateMethodDef(MethodInfo method, Invocation initialInvocation)
     {
         var type = initialInvocation.Proxy.GetType().NonProxyType();
+#pragma warning disable IL2072
         var options = Hub.ComputedOptionsProvider.GetComputedOptions(type, method);
         if (options == null)
             return null;
 
         var methodDef = new ComputeMethodDef(type, method, this);
+#pragma warning restore IL2072
         return methodDef.IsValid ? methodDef : null;
     }
 
-    protected override void ValidateTypeInternal(Type type)
+    protected override void ValidateTypeInternal(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type)
         => Hub.CommandServiceInterceptor.ValidateType(type);
 }

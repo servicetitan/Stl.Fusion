@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Stl.Fusion.Interception;
 using Stl.Rpc;
@@ -29,7 +30,9 @@ public abstract class ClientComputedCache : RpcServiceBase, IClientComputedCache
         ArgumentSerializer = Hub.InternalServices.ArgumentSerializer;
         if (initialize)
             // ReSharper disable once VirtualMemberCallInConstructor
+#pragma warning disable MA0040, CA2214
             WhenInitialized = Initialize(settings.Version);
+#pragma warning restore MA0040, CA2214
     }
 
     public virtual async Task Initialize(string version, CancellationToken cancellationToken = default)
@@ -48,6 +51,7 @@ public abstract class ClientComputedCache : RpcServiceBase, IClientComputedCache
         Set(VersionKey, expectedValue);
     }
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     public async ValueTask<(T Value, TextOrBytes Data)?> Get<T>(ComputeMethodInput input, RpcCacheKey key, CancellationToken cancellationToken)
     {
         var serviceDef = Hub.ServiceRegistry.Get(key.Service);

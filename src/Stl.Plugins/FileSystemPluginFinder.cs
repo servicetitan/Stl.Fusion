@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 #if !NETFRAMEWORK
 using System.Runtime.Loader;
@@ -32,6 +33,7 @@ public class FileSystemPluginFinder : CachingPluginFinderBase
         IPluginInfoProvider pluginInfoProvider,
         ILogger<FileSystemPluginFinder>? log = null)
         : base(settings, pluginInfoProvider, log ?? NullLogger<FileSystemPluginFinder>.Instance)
+        // ReSharper disable once ConvertToPrimaryConstructor
         => Settings = settings;
 
     protected override IAsyncCache<string, string> CreateCache()
@@ -67,6 +69,7 @@ public class FileSystemPluginFinder : CachingPluginFinderBase
             .OrderBy(path => path)
             .ToArray();
 
+    [RequiresUnreferencedCode(UnreferencedCode.Plugins)]
 #pragma warning disable 1998
     protected override async Task<PluginSetInfo> FindPlugins(CancellationToken cancellationToken)
 #pragma warning restore 1998

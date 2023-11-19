@@ -15,6 +15,8 @@ using Templates.TodoApp.Services;
 
 namespace Templates.TodoApp.UI;
 
+#pragma warning disable IL2026
+
 public static class StartupHelper
 {
     public static void ConfigureServices(IServiceCollection services, WebAssemblyHostBuilder builder)

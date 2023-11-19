@@ -1,9 +1,13 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Interception;
 using Stl.Interception.Interceptors;
 using Stl.Rpc.Internal;
 
 namespace Stl.Rpc.Infrastructure;
 
+#if !NET5_0
+[RequiresUnreferencedCode(UnreferencedCode.Rpc)]
+#endif
 public class RpcClientInterceptor(
     RpcClientInterceptor.Options settings,
     IServiceProvider services
@@ -14,11 +18,14 @@ public class RpcClientInterceptor(
         public static Options Default { get; set; } = new();
     }
 
-    protected override Func<Invocation, object?> CreateHandler<T>(Invocation initialInvocation, MethodDef methodDef)
+    protected override Func<Invocation, object?> CreateHandler<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
+        (Invocation initialInvocation, MethodDef methodDef)
     {
         var rpcMethodDef = (RpcMethodDef)methodDef;
         return invocation => {
             RpcOutboundCall? call;
+#pragma warning disable IL2026
             using (var scope = RpcOutboundContext.Use())
                 call = scope.Context.PrepareCall(rpcMethodDef, invocation.Arguments);
             if (call == null) {
@@ -34,6 +41,7 @@ public class RpcClientInterceptor(
                 _ = call.RegisterAndSend();
                 resultTask = call.ResultTask;
             }
+#pragma warning restore IL2026
 
             return rpcMethodDef.ReturnsTask
                 ? resultTask
@@ -43,6 +51,7 @@ public class RpcClientInterceptor(
         };
     }
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     private static async Task<T> GetResultTaskWithConnectTimeout<T>(RpcOutboundCall call)
     {
         var cancellationToken = call.Context.CancellationToken;

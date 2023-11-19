@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Fusion.EntityFramework.Operations;
@@ -7,9 +8,10 @@ namespace Stl.Fusion.EntityFramework.Redis;
 
 public static class DbOperationsBuilderExt
 {
-    public static DbOperationsBuilder<TDbContext> AddRedisOperationLogChangeTracking<TDbContext>(
-        this DbOperationsBuilder<TDbContext> dbOperations,
-        Func<IServiceProvider, RedisOperationLogChangeTrackingOptions<TDbContext>>? optionsFactory = null)
+    public static DbOperationsBuilder<TDbContext> AddRedisOperationLogChangeTracking<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext>
+        (this DbOperationsBuilder<TDbContext> dbOperations,
+            Func<IServiceProvider, RedisOperationLogChangeTrackingOptions<TDbContext>>? optionsFactory = null)
         where TDbContext : DbContext
     {
         var services = dbOperations.Services;

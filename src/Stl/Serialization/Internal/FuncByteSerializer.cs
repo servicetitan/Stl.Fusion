@@ -1,22 +1,17 @@
 using System.Buffers;
-using Microsoft.Toolkit.HighPerformance.Buffers;
-using Stl.IO;
+using System.Diagnostics.CodeAnalysis;
+using Stl.Internal;
 
 namespace Stl.Serialization.Internal;
 
-public class FuncByteSerializer<T> : IByteSerializer<T>
-{
-    public Func<ReadOnlyMemory<byte>, (T Value, int ReadLength)> Reader { get; }
-    public Action<IBufferWriter<byte>, T> Writer { get; }
-
-    public FuncByteSerializer(
-        Func<ReadOnlyMemory<byte>, (T Value, int ReadLength)> reader,
+public class FuncByteSerializer<T>(Func<ReadOnlyMemory<byte>, (T Value, int ReadLength)> reader,
         Action<IBufferWriter<byte>, T> writer)
-    {
-        Reader = reader;
-        Writer = writer;
-    }
+    : IByteSerializer<T>
+{
+    public Func<ReadOnlyMemory<byte>, (T Value, int ReadLength)> Reader { get; } = reader;
+    public Action<IBufferWriter<byte>, T> Writer { get; } = writer;
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public T Read(ReadOnlyMemory<byte> data, out int readLength)
     {
         var result = Reader.Invoke(data);
@@ -24,6 +19,7 @@ public class FuncByteSerializer<T> : IByteSerializer<T>
         return result.Value;
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public void Write(IBufferWriter<byte> bufferWriter, T value)
         => Writer.Invoke(bufferWriter, value);
 }

@@ -1,8 +1,13 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json.Serialization;
+using Stl.Internal;
 
 namespace Stl.Serialization.Internal;
 
+#if !NET5_0
+[RequiresUnreferencedCode(UnreferencedCode.Serialization)]
+#endif
 public class CrossPlatformSerializationBinder : SerializationBinder
 {
     private static readonly string CoreLibName = "System.Private.CoreLib";
@@ -19,6 +24,7 @@ public class CrossPlatformSerializationBinder : SerializationBinder
         IsMonoPlatform = MsCorLibRe.IsMatch(coreLibName!);
     }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Reflection)]
     protected override Type? ResolveType((string? AssemblyName, string TypeName) key)
     {
         var (assemblyName, typeName) = key;

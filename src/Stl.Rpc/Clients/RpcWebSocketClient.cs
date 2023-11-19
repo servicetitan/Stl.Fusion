@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net.WebSockets;
 using System.Text.Encodings.Web;
 using Stl.Rpc.Infrastructure;
@@ -33,9 +34,9 @@ public class RpcWebSocketClient(
                 || url.StartsWith("wss://", StringComparison.Ordinal);
             if (!isWebSocketUrl) {
                 if (url.StartsWith("http://", StringComparison.Ordinal))
-                    url = "ws://" + url.Substring(7);
+                    url = "ws://" + url[7..];
                 else if (url.StartsWith("https://", StringComparison.Ordinal))
-                    url = "wss://" + url.Substring(8);
+                    url = "wss://" + url[8..];
                 else
                     url = "wss://" + url;
                 url += settings.RequestPath;
@@ -53,6 +54,7 @@ public class RpcWebSocketClient(
 
     public Options Settings { get; } = settings;
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Serialization)]
     public override async Task<RpcConnection> CreateConnection(RpcClientPeer peer, CancellationToken cancellationToken)
     {
         var uri = Settings.ConnectionUriResolver(this, peer);

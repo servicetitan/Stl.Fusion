@@ -17,8 +17,11 @@ public abstract class FileSystemCacheBase<TKey, TValue> : AsyncCacheBase<TKey, T
     public override async ValueTask<Option<TValue>> TryGet(TKey key, CancellationToken cancellationToken = default)
     {
         try {
+#pragma warning disable CA2007
             await using var fileStreamWrapper = OpenFile(GetFileName(key), false, cancellationToken)
-                .ToAsyncDisposableAdapter().ConfigureAwait(false);
+                .ToAsyncDisposableAdapter()
+                .ConfigureAwait(false);
+#pragma warning restore CA2007
             var fileStream = fileStreamWrapper.Target;
             var pairs = Deserialize(await GetText(fileStream, cancellationToken).ConfigureAwait(false));
             return pairs != null && pairs.TryGetValue(key, out var v) ? v : Option<TValue>.None;
@@ -36,8 +39,11 @@ public abstract class FileSystemCacheBase<TKey, TValue> : AsyncCacheBase<TKey, T
             var fileName = GetFileName(key);
             var newText = (string?) null;
             var fileStreamWrapper = OpenFile(fileName, true, cancellationToken)
-                .ToAsyncDisposableAdapter().ConfigureAwait(false);
+                .ToAsyncDisposableAdapter()
+                .ConfigureAwait(false);
+#pragma warning disable CA2007
             await using (var _ = fileStreamWrapper) {
+#pragma warning restore CA2007
                 var fileStream = fileStreamWrapper.Target;
                 var originalText = await GetText(fileStream, cancellationToken).ConfigureAwait(false);
                 var pairs =
@@ -73,7 +79,7 @@ public abstract class FileSystemCacheBase<TKey, TValue> : AsyncCacheBase<TKey, T
         try {
             fileStream.Seek(0, SeekOrigin.Begin);
             using var reader = new StreamReader(fileStream, Encoding.UTF8, true, BufferSize, true);
-            var text = await reader.ReadToEndAsync().ConfigureAwait(false);
+            var text = await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
             return text.NullIfEmpty();
         }
         catch (IOException) {
@@ -86,8 +92,11 @@ public abstract class FileSystemCacheBase<TKey, TValue> : AsyncCacheBase<TKey, T
         if (fileStream == null)
             return;
         fileStream.Seek(0, SeekOrigin.Begin);
+#pragma warning disable CA2007
         await using var writerWrapper = new StreamWriter(fileStream, Encoding.UTF8, BufferSize, true)
-            .ToAsyncDisposableAdapter().ConfigureAwait(false);
+            .ToAsyncDisposableAdapter()
+            .ConfigureAwait(false);
+#pragma warning restore CA2007
         var writer = writerWrapper.Target!;
         await writer.WriteAsync(text ?? "").ConfigureAwait(false);
         fileStream.SetLength(fileStream.Position);

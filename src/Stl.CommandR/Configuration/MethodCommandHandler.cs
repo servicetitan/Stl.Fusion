@@ -1,20 +1,16 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.CommandR.Internal;
 
 namespace Stl.CommandR.Configuration;
 
-public sealed record MethodCommandHandler<TCommand> : CommandHandler<TCommand>
+public sealed record MethodCommandHandler<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TCommand>
+    ([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type ServiceType,
+    MethodInfo Method, bool IsFilter = false, double Priority = 0)
+    : CommandHandler<TCommand>($"{ServiceType.GetName(true)}.{Method.Name}", IsFilter, Priority)
     where TCommand : class, ICommand
 {
     private ParameterInfo[]? _cachedParameters;
-    public Type ServiceType { get; }
-    public MethodInfo Method { get; }
-
-    public MethodCommandHandler(Type serviceType, MethodInfo method, bool isFilter = false, double priority = 0)
-        : base($"{serviceType.GetName(true)}.{method.Name}", isFilter, priority)
-    {
-        ServiceType = serviceType;
-        Method = method;
-    }
 
     public override object GetHandlerService(ICommand command, CommandContext context)
         => context.Services.GetRequiredService(ServiceType);
@@ -67,11 +63,16 @@ public static class MethodCommandHandler
         typeof(MethodCommandHandler)
             .GetMethod(nameof(Create), BindingFlags.Static | BindingFlags.NonPublic)!;
 
+    [RequiresUnreferencedCode(UnreferencedCode.Commander)]
     public static CommandHandler New(Type serviceType, MethodInfo method, double? priorityOverride = null)
         => TryNew(serviceType, method, priorityOverride)
             ?? throw Errors.InvalidCommandHandlerMethod(method);
 
-    public static CommandHandler? TryNew(Type serviceType, MethodInfo method, double? priorityOverride = null)
+    [RequiresUnreferencedCode(UnreferencedCode.Commander)]
+    public static CommandHandler? TryNew(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        MethodInfo method,
+        double? priorityOverride = null)
     {
         var attr = GetAttribute(method);
         if (attr == null)
@@ -107,16 +108,21 @@ public static class MethodCommandHandler
         if (typeof(CancellationToken) != pCancellationToken.ParameterType)
             throw Errors.WrongCommandHandlerMethodArguments(method);
 
-        return (CommandHandler) CreateMethod
+        return (CommandHandler)CreateMethod
             .MakeGenericMethod(pCommand.ParameterType)
             .Invoke(null, new object[] { serviceType, method, isFilter, order })!;
     }
 
+    [RequiresUnreferencedCode(Stl.Internal.UnreferencedCode.Reflection)]
     public static CommandHandlerAttribute? GetAttribute(MethodInfo method)
+#pragma warning disable IL2026
         => method.GetAttribute<CommandHandlerAttribute>(true, true);
+#pragma warning restore IL2026
 
-    private static MethodCommandHandler<TCommand> Create<TCommand>(
-        Type serviceType, MethodInfo method, bool isFilter, double priority)
+    private static MethodCommandHandler<TCommand> Create<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TCommand>(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        MethodInfo method, bool isFilter, double priority)
         where TCommand : class, ICommand
         => new(serviceType, method, isFilter, priority);
 }

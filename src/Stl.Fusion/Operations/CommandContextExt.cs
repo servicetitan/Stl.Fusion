@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Stl.Fusion.Operations;
 
 public static class CommandContextExt
@@ -5,7 +7,8 @@ public static class CommandContextExt
     public static IOperation Operation(this CommandContext context)
         => context.Items.Get<IOperation>().Require();
 
-    public static IOperation Operation<TOperationScope>(this CommandContext context)
+    public static IOperation Operation<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] TOperationScope>(this CommandContext context)
         where TOperationScope : class, IOperationScope
         => context.Items.Get<TOperationScope>().Require().Operation;
 

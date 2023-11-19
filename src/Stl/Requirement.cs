@@ -13,13 +13,19 @@ public abstract record Requirement
     public abstract object CheckUntyped([NotNull] object? value);
 #endif
 
-    public static FuncRequirement<T> New<T>(ExceptionBuilder exceptionBuilder, Func<T?, bool> validator)
+    public static FuncRequirement<T> New<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
+        (ExceptionBuilder exceptionBuilder, Func<T?, bool> validator)
         => new(exceptionBuilder, validator);
-    public static FuncRequirement<T> New<T>(Func<T?, bool> validator)
+    public static FuncRequirement<T> New<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
+        (Func<T?, bool> validator)
         => new(validator);
 }
 
-public abstract record Requirement<T> : Requirement
+public abstract record Requirement<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
+    : Requirement
 {
     private const string MustExistFieldOrPropertyName = "MustExist";
     // ReSharper disable once StaticMemberInGenericType

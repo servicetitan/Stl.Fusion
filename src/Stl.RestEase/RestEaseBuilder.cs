@@ -8,7 +8,7 @@ namespace Stl.RestEase;
 
 public readonly struct RestEaseBuilder
 {
-    private class AddedTag;
+    private sealed class AddedTag;
     private static readonly ServiceDescriptor AddedTagDescriptor =
         new(typeof(AddedTag), new AddedTag());
 

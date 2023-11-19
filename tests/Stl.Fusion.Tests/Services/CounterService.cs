@@ -20,6 +20,7 @@ public class CounterService : ICounterService
     private readonly IMutableState<int> _offset;
 
     public CounterService(IMutableState<int> offset)
+        // ReSharper disable once ConvertToPrimaryConstructor
         => _offset = offset;
 
     public virtual async Task<int> Get(string key, CancellationToken cancellationToken = default)

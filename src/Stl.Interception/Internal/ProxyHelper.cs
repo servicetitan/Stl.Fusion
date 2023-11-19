@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace Stl.Interception.Internal;
 
 public static class ProxyHelper
@@ -6,7 +8,9 @@ public static class ProxyHelper
         BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static MethodInfo GetMethodInfo(Type type, string name, Type[] argumentTypes)
+    public static MethodInfo GetMethodInfo(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type,
+        string name, Type[] argumentTypes)
     {
         var result = GetMethodInfoImpl(type, name, argumentTypes);
         if (result != null)
@@ -14,7 +18,9 @@ public static class ProxyHelper
 
         if (type.IsInterface) {
             foreach (var tInterface in type.GetAllBaseTypes(false, true)) {
+#pragma warning disable IL2072
                 result = GetMethodInfoImpl(tInterface, name, argumentTypes);
+#pragma warning restore IL2072
                 if (result != null)
                     return result;
             }
@@ -23,7 +29,11 @@ public static class ProxyHelper
         throw new MissingMethodException(type.Name, name);
     }
 
-    private static MethodInfo? GetMethodInfoImpl(Type type, string name, Type[] argumentTypes)
+    private static MethodInfo? GetMethodInfoImpl(
+        [DynamicallyAccessedMembers(
+            DynamicallyAccessedMemberTypes.PublicMethods |
+            DynamicallyAccessedMemberTypes.NonPublicMethods)] Type type,
+        string name, Type[] argumentTypes)
     {
 #if NETSTANDARD || NETCOREAPP
         return type.GetMethod(name, GetMethodInfoBindingFlags, null, argumentTypes, null);

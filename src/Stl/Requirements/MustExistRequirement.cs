@@ -3,7 +3,9 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Stl.Requirements;
 
-public record MustExistRequirement<T> : CustomizableRequirementBase<T>
+public record MustExistRequirement<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
+    : CustomizableRequirementBase<T>
 {
     public static readonly MustExistRequirement<T> Default = new();
 

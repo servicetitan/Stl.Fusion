@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Fusion.Authentication;
 
 namespace Stl.Fusion.Extensions;
@@ -6,14 +7,19 @@ public static class SandboxedKeyValueStoreExt
 {
     // Set
 
-    public static Task Set<T>(this ISandboxedKeyValueStore keyValueStore,
-        Session session, string key, T value, CancellationToken cancellationToken = default)
+    public static Task Set<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
+        (this ISandboxedKeyValueStore keyValueStore, Session session, string key, T value, CancellationToken cancellationToken = default)
         => keyValueStore.Set(session, key, value, null, cancellationToken);
 
-    public static Task Set<T>(this ISandboxedKeyValueStore keyValueStore,
+    public static Task Set<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
+        (this ISandboxedKeyValueStore keyValueStore,
         Session session, string key, T value, Moment? expiresAt, CancellationToken cancellationToken = default)
     {
+#pragma warning disable IL2026
         var sValue = NewtonsoftJsonSerialized.New(value).Data;
+#pragma warning restore IL2026
         return keyValueStore.Set(session, key, sValue, expiresAt, cancellationToken);
     }
 
@@ -54,18 +60,24 @@ public static class SandboxedKeyValueStoreExt
 
     // TryGet & Get
 
-    public static async ValueTask<Option<T>> TryGet<T>(this ISandboxedKeyValueStore keyValueStore,
-        Session session, string key, CancellationToken cancellationToken = default)
+    public static async ValueTask<Option<T>> TryGet<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
+        (this ISandboxedKeyValueStore keyValueStore, Session session, string key, CancellationToken cancellationToken = default)
     {
         var sValue = await keyValueStore.Get(session, key, cancellationToken).ConfigureAwait(false);
+#pragma warning disable IL2026
         return sValue == null ? Option<T>.None : NewtonsoftJsonSerialized.New<T>(sValue).Value;
+#pragma warning restore IL2026
     }
 
-    public static async ValueTask<T?> Get<T>(this ISandboxedKeyValueStore keyValueStore,
-        Session session, string key, CancellationToken cancellationToken = default)
+    public static async ValueTask<T?> Get<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
+        (this ISandboxedKeyValueStore keyValueStore, Session session, string key, CancellationToken cancellationToken = default)
     {
         var sValue = await keyValueStore.Get(session, key, cancellationToken).ConfigureAwait(false);
+#pragma warning disable IL2026
         return sValue == null ? default : NewtonsoftJsonSerialized.New<T>(sValue).Value;
+#pragma warning restore IL2026
     }
 
     // ListKeysByPrefix

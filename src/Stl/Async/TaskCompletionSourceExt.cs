@@ -1,5 +1,7 @@
 namespace Stl.Async;
 
+#pragma warning disable CA2016
+
 public static partial class TaskCompletionSourceExt
 {
     // NewXxx

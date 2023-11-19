@@ -27,8 +27,10 @@ public static class Completion
 {
     // This is just to ensure the constructor accepting ICommand is "used",
     // because it is really used inside New, but via reflection.
+#pragma warning disable CA1823
     private static readonly Completion<ICommand> DummyCompletion =
         new(new TransientOperation() { Command = new DummyCommand() });
+#pragma warning restore CA1823
 
     public static ICompletion New(IOperation operation)
     {

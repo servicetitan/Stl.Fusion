@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.CommandR.Internal;
 
 namespace Stl.CommandR.Configuration;
@@ -17,12 +18,15 @@ public class CommandHandlerResolver
         Filter = (commandHandler, type) => filters.All(f => f.IsCommandHandlerUsed(commandHandler, type));
     }
 
-    public virtual CommandHandlerSet GetCommandHandlers(Type commandType)
+    public virtual CommandHandlerSet GetCommandHandlers(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type commandType)
         => Cache.GetOrAdd(commandType, static (commandType1, self) => {
             if (!typeof(ICommand).IsAssignableFrom(commandType1))
                 throw new ArgumentOutOfRangeException(nameof(commandType1));
 
+#pragma warning disable IL2067
             var baseTypes = commandType1.GetAllBaseTypes(true, true)
+#pragma warning restore IL2067
                 .Select((type, index) => (Type: type, Index: index))
                 .ToArray();
             var handlers = (

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Fusion.Internal;
 
 namespace Stl.Fusion.Interception;
@@ -10,7 +11,8 @@ public class ComputeServiceInterceptor(ComputeServiceInterceptor.Options setting
     protected override ComputeFunctionBase<T> CreateFunction<T>(ComputeMethodDef method)
         => new ComputeMethodFunction<T>(method, Services, Hub.LTagVersionGenerator);
 
-    protected override void ValidateTypeInternal(Type type)
+    protected override void ValidateTypeInternal(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type)
     {
         base.ValidateTypeInternal(type);
         var bindingFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;

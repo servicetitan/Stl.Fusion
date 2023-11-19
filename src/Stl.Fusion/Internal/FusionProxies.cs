@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.Fusion.Interception;
 using Stl.Fusion.Client.Interception;
 using Stl.Interception;
@@ -9,7 +10,9 @@ namespace Stl.Fusion.Internal;
 
 public static class FusionProxies
 {
-    public static object NewServiceProxy(IServiceProvider services, Type serviceType)
+    public static object NewServiceProxy(
+        IServiceProvider services,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType)
     {
         // We should try to validate it here because if the type doesn't
         // have any virtual methods (which might be a mistake), no calls
@@ -20,7 +23,9 @@ public static class FusionProxies
         return serviceProxy;
     }
 
-    public static object NewClientProxy(IServiceProvider services, Type serviceType)
+    public static object NewClientProxy(
+        IServiceProvider services,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType)
     {
         var rpcHub = services.RpcHub();
         var client = RpcProxies.NewClientProxy(services, serviceType, serviceType);
@@ -33,7 +38,10 @@ public static class FusionProxies
         return clientProxy;
     }
 
-    public static object NewRoutingProxy(IServiceProvider services, Type serviceType, ServiceResolver serverResolver)
+    public static object NewRoutingProxy(
+        IServiceProvider services,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type serviceType,
+        ServiceResolver serverResolver)
     {
         var rpcHub = services.RpcHub();
         var server = serverResolver.Resolve(services);

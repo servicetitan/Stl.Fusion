@@ -34,7 +34,9 @@ public struct ArrayBuffer<T>
     public T this[int index] {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #pragma warning disable MA0012
+#pragma warning disable CA2201
         get => index < Count ? Buffer[index] : throw new IndexOutOfRangeException();
+#pragma warning restore CA2201
 #pragma warning restore MA0012
     }
 
@@ -79,7 +81,9 @@ public struct ArrayBuffer<T>
     {
         if (index >= Count)
 #pragma warning disable MA0012
+#pragma warning disable CA2201
             throw new IndexOutOfRangeException();
+#pragma warning restore CA2201
 #pragma warning restore MA0012
         Buffer[index] = item;
     }

@@ -1,14 +1,20 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Stl.Fusion.Authentication.Services;
 using Stl.Fusion.EntityFramework;
 using Stl.Fusion.EntityFramework.Internal;
+using Stl.Fusion.Internal;
 
 namespace Stl.Fusion.Authentication;
 
 [StructLayout(LayoutKind.Auto)]
-public readonly struct DbAuthServiceBuilder<TDbContext, TDbSessionInfo, TDbUser, TDbUserId>
+public readonly struct DbAuthServiceBuilder<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext,
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbSessionInfo,
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbUser,
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbUserId>
     where TDbContext : DbContext
     where TDbSessionInfo : DbSessionInfo<TDbUserId>, new()
     where TDbUser : DbUser<TDbUserId>, new()
@@ -18,6 +24,7 @@ public readonly struct DbAuthServiceBuilder<TDbContext, TDbSessionInfo, TDbUser,
     public DbContextBuilder<TDbContext> DbContext { get; }
     public IServiceCollection Services => Fusion.Services;
 
+    [RequiresUnreferencedCode(UnreferencedCode.Fusion)]
     internal DbAuthServiceBuilder(
         FusionBuilder fusion,
         Action<DbAuthServiceBuilder<TDbContext, TDbSessionInfo, TDbUser, TDbUserId>>? configure)

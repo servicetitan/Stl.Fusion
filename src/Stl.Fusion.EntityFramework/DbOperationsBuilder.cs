@@ -1,17 +1,21 @@
 using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Stl.CommandR.Internal;
 using Stl.Fusion.EntityFramework.Internal;
 using Stl.Fusion.EntityFramework.Operations;
 
 namespace Stl.Fusion.EntityFramework;
 
-public readonly struct DbOperationsBuilder<TDbContext>
+public readonly struct DbOperationsBuilder<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext>
     where TDbContext : DbContext
 {
     public DbContextBuilder<TDbContext> DbContext { get; }
     public IServiceCollection Services => DbContext.Services;
 
+    [RequiresUnreferencedCode(UnreferencedCode.Commander)]
     internal DbOperationsBuilder(
         DbContextBuilder<TDbContext> dbContext,
         Action<DbOperationsBuilder<TDbContext>>? configure)
@@ -49,7 +53,8 @@ public readonly struct DbOperationsBuilder<TDbContext>
 
     // Core settings
 
-    public DbOperationsBuilder<TDbContext> SetDbOperationType<TDbOperation>()
+    public DbOperationsBuilder<TDbContext> SetDbOperationType<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbOperation>()
         where TDbOperation : DbOperation, new()
     {
         Services.RemoveAll<IDbOperationLog<TDbContext>>();

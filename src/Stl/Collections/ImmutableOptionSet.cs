@@ -1,3 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
+using Stl.Internal;
+
 namespace Stl.Collections;
 
 [StructLayout(LayoutKind.Auto)]
@@ -27,6 +30,7 @@ public readonly partial struct ImmutableOptionSet(
     public object? this[Symbol key] => Items.TryGetValue(key, out var v) ? v : null;
     public object? this[Type optionType] => this[optionType.ToSymbol()];
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     [JsonConstructor, MemoryPackConstructor]
     public ImmutableOptionSet(Dictionary<string, NewtonsoftJsonSerialized<object>>? jsonCompatibleItems)
         : this(jsonCompatibleItems?.ToImmutableDictionary(

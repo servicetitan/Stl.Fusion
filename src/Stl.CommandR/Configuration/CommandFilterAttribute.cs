@@ -1,5 +1,7 @@
 namespace Stl.CommandR.Configuration;
 
+#pragma warning disable CA1813 // Consider making sealed
+
 [AttributeUsage(AttributeTargets.Method, Inherited = false)]
 public class CommandFilterAttribute : CommandHandlerAttribute
 {

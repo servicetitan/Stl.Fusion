@@ -1,6 +1,6 @@
 namespace Stl.Fusion.Internal;
 
-internal class WhenInvalidatedClosure
+internal sealed class WhenInvalidatedClosure
 {
     private readonly Action<IComputed> _onInvalidatedHandler;
     private readonly TaskCompletionSource<Unit> _taskSource;

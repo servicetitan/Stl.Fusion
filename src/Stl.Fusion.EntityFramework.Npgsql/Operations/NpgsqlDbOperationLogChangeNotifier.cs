@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Stl.Fusion.EntityFramework.Operations;
 using Stl.Locking;
@@ -5,10 +6,10 @@ using Stl.Multitenancy;
 
 namespace Stl.Fusion.EntityFramework.Npgsql.Operations;
 
-public class NpgsqlDbOperationLogChangeNotifier<TDbContext>(
-    NpgsqlDbOperationLogChangeTrackingOptions<TDbContext> options,
-    IServiceProvider services
-    ) : DbOperationCompletionNotifierBase<TDbContext, NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>>(options, services)
+public class NpgsqlDbOperationLogChangeNotifier<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext>
+    (NpgsqlDbOperationLogChangeTrackingOptions<TDbContext> options, IServiceProvider services)
+    : DbOperationCompletionNotifierBase<TDbContext, NpgsqlDbOperationLogChangeTrackingOptions<TDbContext>>(options, services)
     where TDbContext : DbContext
 {
     private readonly ConcurrentDictionary<Symbol, CachedInfo> _cache = new();
@@ -54,5 +55,5 @@ public class NpgsqlDbOperationLogChangeNotifier<TDbContext>(
 
     // Nested types
 
-    private record CachedInfo(TDbContext DbContext, string Sql, SimpleAsyncLock AsyncLock);
+    private sealed record CachedInfo(TDbContext DbContext, string Sql, SimpleAsyncLock AsyncLock);
 }

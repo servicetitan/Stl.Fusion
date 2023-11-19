@@ -24,7 +24,11 @@ public interface IDbEntityConverter<TDbEntity, TModel>
     TModel? ToModel(TDbEntity? source);
 }
 
-public abstract class DbEntityConverter<TDbContext, TDbEntity, TModel>(IServiceProvider services)
+public abstract class DbEntityConverter<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext,
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbEntity,
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TModel>
+    (IServiceProvider services)
     : DbServiceBase<TDbContext>(services), IDbEntityConverter<TDbEntity, TModel>
     where TDbContext : DbContext
     where TDbEntity : class

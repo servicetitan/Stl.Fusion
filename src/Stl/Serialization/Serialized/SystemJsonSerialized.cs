@@ -1,9 +1,13 @@
+using System.Diagnostics.CodeAnalysis;
+using Stl.Internal;
+
 namespace Stl.Serialization;
 
 public static class SystemJsonSerialized
 {
     public static SystemJsonSerialized<TValue> New<TValue>() => new();
     public static SystemJsonSerialized<TValue> New<TValue>(TValue value) => new() { Value = value };
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public static SystemJsonSerialized<TValue> New<TValue>(string data) => new(data);
 }
 
@@ -15,9 +19,11 @@ public partial class SystemJsonSerialized<T> : TextSerialized<T>
 
     public SystemJsonSerialized() { }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     [MemoryPackConstructor]
     public SystemJsonSerialized(string data) : base(data) { }
 
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     protected override ITextSerializer<T> GetSerializer()
         => _serializer ??= SystemJsonSerializer.Default.ToTyped<T>();
 }

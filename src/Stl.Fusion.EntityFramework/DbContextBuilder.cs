@@ -1,9 +1,12 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Stl.CommandR.Internal;
 
 namespace Stl.Fusion.EntityFramework;
 
-public readonly struct DbContextBuilder<TDbContext>
+public readonly struct DbContextBuilder<
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbContext>
     where TDbContext : DbContext
 {
     public IServiceCollection Services { get; }
@@ -49,7 +52,10 @@ public readonly struct DbContextBuilder<TDbContext>
 
     // Entity converters
 
-    public DbContextBuilder<TDbContext> AddEntityConverter<TDbEntity, TEntity, TConverter>()
+    public DbContextBuilder<TDbContext> AddEntityConverter<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbEntity,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TEntity,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TConverter>()
         where TDbEntity : class
         where TEntity : notnull
         where TConverter : class, IDbEntityConverter<TDbEntity, TEntity>
@@ -58,7 +64,10 @@ public readonly struct DbContextBuilder<TDbContext>
         return this;
     }
 
-    public DbContextBuilder<TDbContext> TryAddEntityConverter<TDbEntity, TEntity, TConverter>()
+    public DbContextBuilder<TDbContext> TryAddEntityConverter<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbEntity,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TEntity,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TConverter>()
         where TDbEntity : class
         where TEntity : notnull
         where TConverter : class, IDbEntityConverter<TDbEntity, TEntity>
@@ -69,8 +78,10 @@ public readonly struct DbContextBuilder<TDbContext>
 
     // Entity resolvers
 
-    public DbContextBuilder<TDbContext> AddEntityResolver<TKey, TDbEntity>(
-        Func<IServiceProvider, DbEntityResolver<TDbContext, TKey, TDbEntity>.Options>? optionsFactory = null)
+    public DbContextBuilder<TDbContext> AddEntityResolver<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TKey,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbEntity>
+        (Func<IServiceProvider, DbEntityResolver<TDbContext, TKey, TDbEntity>.Options>? optionsFactory = null)
         where TKey : notnull
         where TDbEntity : class
     {
@@ -81,8 +92,11 @@ public readonly struct DbContextBuilder<TDbContext>
         return this;
     }
 
-    public DbContextBuilder<TDbContext> AddEntityResolver<TKey, TDbEntity, TResolver>(
-        Func<IServiceProvider, TResolver> resolverFactory)
+    public DbContextBuilder<TDbContext> AddEntityResolver<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TKey,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbEntity,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TResolver>
+        (Func<IServiceProvider, TResolver> resolverFactory)
         where TKey : notnull
         where TDbEntity : class
         where TResolver : class, IDbEntityResolver<TKey, TDbEntity>
@@ -91,8 +105,10 @@ public readonly struct DbContextBuilder<TDbContext>
         return this;
     }
 
-    public DbContextBuilder<TDbContext> TryAddEntityResolver<TKey, TDbEntity>(
-        Func<IServiceProvider, DbEntityResolver<TDbContext, TKey, TDbEntity>.Options>? optionsFactory = null)
+    public DbContextBuilder<TDbContext> TryAddEntityResolver<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TKey,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbEntity>
+        (Func<IServiceProvider, DbEntityResolver<TDbContext, TKey, TDbEntity>.Options>? optionsFactory = null)
         where TKey : notnull
         where TDbEntity : class
     {
@@ -103,8 +119,11 @@ public readonly struct DbContextBuilder<TDbContext>
         return this;
     }
 
-    public DbContextBuilder<TDbContext> TryAddEntityResolver<TKey, TDbEntity, TResolver>(
-        Func<IServiceProvider, TResolver> resolverFactory)
+    public DbContextBuilder<TDbContext> TryAddEntityResolver<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TKey,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TDbEntity,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] TResolver>
+        (Func<IServiceProvider, TResolver> resolverFactory)
         where TKey : notnull
         where TDbEntity : class
         where TResolver : class, IDbEntityResolver<TKey, TDbEntity>
@@ -115,9 +134,11 @@ public readonly struct DbContextBuilder<TDbContext>
 
     // Operations
 
+    [RequiresUnreferencedCode(UnreferencedCode.Commander)]
     public DbOperationsBuilder<TDbContext> AddOperations()
         => new(this, null);
 
+    [RequiresUnreferencedCode(UnreferencedCode.Commander)]
     public DbContextBuilder<TDbContext> AddOperations(Action<DbOperationsBuilder<TDbContext>> configure)
         => new DbOperationsBuilder<TDbContext>(this, configure).DbContext;
 }

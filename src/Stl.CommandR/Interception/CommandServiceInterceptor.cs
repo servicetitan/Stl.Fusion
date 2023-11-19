@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Stl.CommandR.Internal;
 using Stl.Interception;
 using Stl.Interception.Interceptors;
@@ -5,6 +6,9 @@ using Stl.Rpc.Infrastructure;
 
 namespace Stl.CommandR.Interception;
 
+#if !NET5_0
+[RequiresUnreferencedCode(UnreferencedCode.Commander)]
+#endif
 public class CommandServiceInterceptor(CommandServiceInterceptor.Options settings, IServiceProvider services)
     : InterceptorBase(settings, services)
 {
@@ -12,7 +16,9 @@ public class CommandServiceInterceptor(CommandServiceInterceptor.Options setting
 
     protected readonly ICommander Commander = services.GetRequiredService<ICommander>();
 
-    protected override Func<Invocation, object?> CreateHandler<T>(Invocation initialInvocation, MethodDef methodDef)
+    protected override Func<Invocation, object?> CreateHandler<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>
+        (Invocation initialInvocation, MethodDef methodDef)
         => invocation => {
             var arguments = invocation.Arguments;
             var command = arguments.Get<ICommand>(0);
@@ -32,7 +38,6 @@ public class CommandServiceInterceptor(CommandServiceInterceptor.Options setting
                         var cancellationToken = callArguments.Length == 2
                             ? arguments.GetCancellationToken(1)
                             : default;
-
 
                         var resultTask = Commander.Call(command, isOutermost: true, cancellationToken);
                         return methodDef.ReturnsTask
@@ -55,11 +60,14 @@ public class CommandServiceInterceptor(CommandServiceInterceptor.Options setting
             return invocation.InterceptedUntyped();
         };
 
+    // We don't need to decorate this method with any dynamic access attributes
     protected override MethodDef? CreateMethodDef(MethodInfo method, Invocation initialInvocation)
     {
         try {
             var type = initialInvocation.Proxy.GetType().NonProxyType();
+#pragma warning disable IL2072
             var methodDef = new CommandHandlerMethodDef(type, method);
+#pragma warning restore IL2072
             return methodDef.IsValid ? methodDef : null;
         }
         catch {
@@ -69,7 +77,8 @@ public class CommandServiceInterceptor(CommandServiceInterceptor.Options setting
         }
     }
 
-    protected override void ValidateTypeInternal(Type type)
+    protected override void ValidateTypeInternal(
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type)
     {
         if (typeof(ICommandHandler).IsAssignableFrom(type))
             throw Errors.OnlyInterceptedCommandHandlersAllowed(type);
@@ -81,7 +90,9 @@ public class CommandServiceInterceptor(CommandServiceInterceptor.Options setting
         foreach (var method in methods) {
             if (method.DeclaringType == typeof(object))
                 continue;
+#pragma warning disable IL2026
             var attr = MethodCommandHandler.GetAttribute(method);
+#pragma warning restore IL2026
             if (attr == null)
                 continue;
 
