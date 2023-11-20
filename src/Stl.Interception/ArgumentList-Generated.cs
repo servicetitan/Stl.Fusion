@@ -1,4 +1,4 @@
-﻿// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable ArrangeConstructorOrDestructorBody
 using Cysharp.Text;
@@ -14,6 +14,18 @@ namespace Stl.Interception;
 
 public abstract partial record ArgumentList
 {
+#if NET5_0_OR_GREATER
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ArgumentList<>))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ArgumentList<, >))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ArgumentList<, , >))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ArgumentList<, , , >))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ArgumentList<, , , , >))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ArgumentList<, , , , , >))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ArgumentList<, , , , , , >))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ArgumentList<, , , , , , , >))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ArgumentList<, , , , , , , , >))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ArgumentList<, , , , , , , , , >))]
+#endif
     public static readonly ImmutableArray<Type> Types = ImmutableArray.Create(new [] {
         typeof(ArgumentList0),
         typeof(ArgumentList<>),

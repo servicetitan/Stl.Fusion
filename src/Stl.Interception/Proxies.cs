@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Cysharp.Text;
+using Stl.Interception.Interceptors;
 using Stl.Interception.Internal;
 
 namespace Stl.Interception;
@@ -107,6 +108,20 @@ public static class Proxies
     public static Type GetProxyType(Type type)
         => TryGetProxyType(type) ?? throw Errors.NoProxyType(type);
 
+#if NET5_0_OR_GREATER
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(InterfaceProxy))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ProxyHelper))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Interceptor))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(InterceptorBase))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(TypeViewInterceptor))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(TypedFactoryInterceptor))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(InterceptorExt))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(MethodDef))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Invocation))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ArgumentList))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Result<>))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ResultBox<>))]
+#endif
     public static Type? TryGetProxyType(Type type)
         => Cache.GetOrAdd(type, static type1 => {
             if (type1.IsConstructedGenericType) {

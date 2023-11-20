@@ -1,9 +1,13 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Net.WebSockets;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Stl.Interception;
+using Stl.Rpc.Caching;
 using Stl.Rpc.Clients;
+using Stl.Rpc.Diagnostics;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Internal;
+using Stl.Rpc.Testing;
 using Errors = Stl.Rpc.Internal.Errors;
 
 namespace Stl.Rpc;
@@ -13,6 +17,37 @@ public readonly struct RpcBuilder
     public IServiceCollection Services { get; }
     public RpcConfiguration Configuration { get; }
 
+#if NET5_0_OR_GREATER
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Proxies))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcDefaultDelegates))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcMethodDef))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcServiceDef))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcServiceRegistry))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcConfiguration))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcByteArgumentSerializer))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcMethodTracer))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcMethodActivityCounters))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcClientInterceptor))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcRoutingInterceptor))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcInboundContext))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcInboundContextFactory))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcOutboundContext))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcInboundCall<>))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcInbound404Call<>))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcOutboundCall<>))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcMiddlewares<>))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcInboundMiddleware))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcOutboundMiddleware))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcServerPeer))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcClientPeer))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcHub))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcRemoteObjectTracker))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcSharedObjectTracker))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcSharedStream))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcCacheInfoCapture))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcCacheEntry))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcSystemCalls))]
+#endif
     [RequiresUnreferencedCode(UnreferencedCode.Rpc)]
     internal RpcBuilder(
         IServiceCollection services,

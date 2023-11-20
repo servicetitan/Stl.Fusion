@@ -4,6 +4,7 @@ using Stl.CommandR.Diagnostics;
 using Stl.CommandR.Interception;
 using Stl.CommandR.Internal;
 using Stl.CommandR.Rpc;
+using Stl.Interception;
 using Stl.Rpc;
 
 namespace Stl.CommandR;
@@ -16,6 +17,14 @@ public readonly struct CommanderBuilder
     public IServiceCollection Services { get; }
     public HashSet<CommandHandler> Handlers { get; }
 
+#if NET5_0_OR_GREATER
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Proxies))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(CommandHandlerMethodDef))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(MethodCommandHandler<>))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(InterfaceCommandHandler<>))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(CommandServiceInterceptor))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(CommandContext<>))]
+#endif
     [RequiresUnreferencedCode(UnreferencedCode.Commander)]
     internal CommanderBuilder(
         IServiceCollection services,

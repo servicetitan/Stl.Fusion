@@ -23,6 +23,19 @@ public readonly struct FusionBuilder
     public RpcBuilder Rpc { get; }
     public RpcServiceMode ServiceMode { get; }
 
+#if NET5_0_OR_GREATER
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(CommanderBuilder))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcBuilder))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ComputeServiceInterceptor))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ComputeMethodFunction<>))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcComputeSystemCalls))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcInboundComputeCall<>))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(RpcOutboundComputeCall<>))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ClientComputeServiceInterceptor))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ClientComputeMethodFunction<>))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(FuncComputedState<>))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(AnonymousComputedSource<>))]
+#endif
     [RequiresUnreferencedCode(UnreferencedCode.Fusion)]
     internal FusionBuilder(
         IServiceCollection services,

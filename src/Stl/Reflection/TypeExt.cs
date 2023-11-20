@@ -40,12 +40,6 @@ public static partial class TypeExt
         }
     }
 
-    public static void MarkUsed<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] T>()
-    { }
-
-    public static void MarkUsed([DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type type)
-    { }
-
     public static Type NonProxyType(this Type type)
         => NonProxyTypeCache.GetOrAdd(type, NonProxyTypeResolver);
 
