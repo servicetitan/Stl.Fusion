@@ -1,4 +1,3 @@
-using Cysharp.Text;
 using Stl.IO;
 
 namespace Stl.Testing;
@@ -26,24 +25,20 @@ public class TestIdFormatter(string testId)
         int? maxLength = null,
         bool? alwaysHash = null)
     {
-        using var sb = ZString.CreateStringBuilder(true);
+        var sb = StringBuilderExt.Acquire();
         if (withMachineId) {
             sb.Append(MachineId);
-            sb.Append("_");
+            sb.Append('_');
         }
         if (withTestId) {
             sb.Append(TestId);
-            sb.Append("_");
+            sb.Append('_');
         }
         if (withRunId) {
             sb.Append(RunId);
-            sb.Append("_");
+            sb.Append('_');
         }
-#if NETFRAMEWORK
-        var r = sb.ToString()[.. Math.Max(0, sb.Length - 1)];
-#else
-        var r = new string(sb.AsSpan()[.. Math.Max(0, sb.Length - 1)]);
-#endif
+        var r = sb.ToStringAndRelease()[.. Math.Max(0, sb.Length - 1)];
         r = FilePath.GetHashedName(r, null, maxLength ?? MaxLength, alwaysHash ?? AlwaysHash);
         r = PostProcess(r);
         return r;

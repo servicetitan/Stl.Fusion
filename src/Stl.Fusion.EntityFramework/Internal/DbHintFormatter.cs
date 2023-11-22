@@ -1,4 +1,4 @@
-using Cysharp.Text;
+using System.Text;
 
 namespace Stl.Fusion.EntityFramework.Internal;
 
@@ -21,10 +21,10 @@ public abstract class DbHintFormatter : IDbHintFormatter
                 : throw Errors.UnsupportedDbHint(hint),
         };
 
-    protected virtual void FormatTableNameTo(ref Utf16ValueStringBuilder sb, string tableName)
+    protected virtual void FormatTableNameTo(StringBuilder sb, string tableName)
     {
-        sb.Append("\"");
+        sb.Append('"');
         sb.Append(tableName);
-        sb.Append("\"");
+        sb.Append('"');
     }
 }

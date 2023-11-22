@@ -1,4 +1,3 @@
-using Cysharp.Text;
 using Newtonsoft.Json.Serialization;
 
 namespace Stl.Reflection;
@@ -40,7 +39,7 @@ public static class TypeNameHelpers
 
     private static string RemoveAssemblyDetails(string fullyQualifiedTypeName)
     {
-        using var sb = ZString.CreateStringBuilder(true);
+        var sb = StringBuilderExt.Acquire();
         var writingAssemblyName = false;
         var skipping = false;
         foreach (var c in fullyQualifiedTypeName) {
@@ -65,7 +64,7 @@ public static class TypeNameHelpers
                 break;
             }
         }
-        return sb.ToString();
+        return sb.ToStringAndRelease();
     }
 
     private static int? GetAssemblyDelimiterIndex(string fullyQualifiedTypeName)

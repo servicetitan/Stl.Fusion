@@ -40,7 +40,6 @@
 // ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable ArrangeConstructorOrDestructorBody
-using Cysharp.Text;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection.Emit;
 using Stl.Internal;
@@ -140,7 +139,7 @@ public sealed partial record ArgumentList<<#=argumentTypes#>> : ArgumentList<#=i
 
     public override string ToString()
     {
-        using var sb = ZString.CreateStringBuilder();
+        var sb = StringBuilderExt.Acquire();
         sb.Append('(');
         sb.Append(Item<#=0#>);
 <# for (var t = 1; t < itemCount; t++) { #>
@@ -148,7 +147,7 @@ public sealed partial record ArgumentList<<#=argumentTypes#>> : ArgumentList<#=i
         sb.Append(Item<#=t#>);
 <# } #>
         sb.Append(')');
-        return sb.ToString();
+        return sb.ToStringAndRelease();
     }
 
     public override object?[] ToArray()

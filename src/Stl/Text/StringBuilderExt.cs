@@ -7,11 +7,11 @@ namespace Stl.Text;
 // See https://referencesource.microsoft.com/#mscorlib/system/text/stringbuildercache.cs,a6dbe82674916ac0
 public static class StringBuilderExt
 {
-    private const int MaxCapacity = 2048;
+    private const int MaxCapacity = 1024;
     [ThreadStatic]
     private static StringBuilder? _cached;
 
-    public static StringBuilder Acquire(int capacity = 0x10)
+    public static StringBuilder Acquire(int capacity = 64)
     {
         if (capacity <= MaxCapacity) {
             var sb = _cached;

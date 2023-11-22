@@ -1,7 +1,6 @@
-// ReSharper disable UnusedAutoPropertyAccessor.Global
+﻿// ReSharper disable UnusedAutoPropertyAccessor.Global
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable ArrangeConstructorOrDestructorBody
-using Cysharp.Text;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection.Emit;
 using Stl.Internal;
@@ -117,11 +116,11 @@ public sealed partial record ArgumentList<T0> : ArgumentList1
 
     public override string ToString()
     {
-        using var sb = ZString.CreateStringBuilder();
+        var sb = StringBuilderExt.Acquire();
         sb.Append('(');
         sb.Append(Item0);
         sb.Append(')');
-        return sb.ToString();
+        return sb.ToStringAndRelease();
     }
 
     public override object?[] ToArray()
@@ -383,13 +382,13 @@ public sealed partial record ArgumentList<T0, T1> : ArgumentList2
 
     public override string ToString()
     {
-        using var sb = ZString.CreateStringBuilder();
+        var sb = StringBuilderExt.Acquire();
         sb.Append('(');
         sb.Append(Item0);
         sb.Append(", ");
         sb.Append(Item1);
         sb.Append(')');
-        return sb.ToString();
+        return sb.ToStringAndRelease();
     }
 
     public override object?[] ToArray()
@@ -702,7 +701,7 @@ public sealed partial record ArgumentList<T0, T1, T2> : ArgumentList3
 
     public override string ToString()
     {
-        using var sb = ZString.CreateStringBuilder();
+        var sb = StringBuilderExt.Acquire();
         sb.Append('(');
         sb.Append(Item0);
         sb.Append(", ");
@@ -710,7 +709,7 @@ public sealed partial record ArgumentList<T0, T1, T2> : ArgumentList3
         sb.Append(", ");
         sb.Append(Item2);
         sb.Append(')');
-        return sb.ToString();
+        return sb.ToStringAndRelease();
     }
 
     public override object?[] ToArray()
@@ -1073,7 +1072,7 @@ public sealed partial record ArgumentList<T0, T1, T2, T3> : ArgumentList4
 
     public override string ToString()
     {
-        using var sb = ZString.CreateStringBuilder();
+        var sb = StringBuilderExt.Acquire();
         sb.Append('(');
         sb.Append(Item0);
         sb.Append(", ");
@@ -1083,7 +1082,7 @@ public sealed partial record ArgumentList<T0, T1, T2, T3> : ArgumentList4
         sb.Append(", ");
         sb.Append(Item3);
         sb.Append(')');
-        return sb.ToString();
+        return sb.ToStringAndRelease();
     }
 
     public override object?[] ToArray()
@@ -1496,7 +1495,7 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4> : ArgumentList5
 
     public override string ToString()
     {
-        using var sb = ZString.CreateStringBuilder();
+        var sb = StringBuilderExt.Acquire();
         sb.Append('(');
         sb.Append(Item0);
         sb.Append(", ");
@@ -1508,7 +1507,7 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4> : ArgumentList5
         sb.Append(", ");
         sb.Append(Item4);
         sb.Append(')');
-        return sb.ToString();
+        return sb.ToStringAndRelease();
     }
 
     public override object?[] ToArray()
@@ -1971,7 +1970,7 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5> : ArgumentList
 
     public override string ToString()
     {
-        using var sb = ZString.CreateStringBuilder();
+        var sb = StringBuilderExt.Acquire();
         sb.Append('(');
         sb.Append(Item0);
         sb.Append(", ");
@@ -1985,7 +1984,7 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5> : ArgumentList
         sb.Append(", ");
         sb.Append(Item5);
         sb.Append(')');
-        return sb.ToString();
+        return sb.ToStringAndRelease();
     }
 
     public override object?[] ToArray()
@@ -2498,7 +2497,7 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5, T6> : Argument
 
     public override string ToString()
     {
-        using var sb = ZString.CreateStringBuilder();
+        var sb = StringBuilderExt.Acquire();
         sb.Append('(');
         sb.Append(Item0);
         sb.Append(", ");
@@ -2514,7 +2513,7 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5, T6> : Argument
         sb.Append(", ");
         sb.Append(Item6);
         sb.Append(')');
-        return sb.ToString();
+        return sb.ToStringAndRelease();
     }
 
     public override object?[] ToArray()
@@ -3077,7 +3076,7 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7> : Argu
 
     public override string ToString()
     {
-        using var sb = ZString.CreateStringBuilder();
+        var sb = StringBuilderExt.Acquire();
         sb.Append('(');
         sb.Append(Item0);
         sb.Append(", ");
@@ -3095,7 +3094,7 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7> : Argu
         sb.Append(", ");
         sb.Append(Item7);
         sb.Append(')');
-        return sb.ToString();
+        return sb.ToStringAndRelease();
     }
 
     public override object?[] ToArray()
@@ -3708,7 +3707,7 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8> : 
 
     public override string ToString()
     {
-        using var sb = ZString.CreateStringBuilder();
+        var sb = StringBuilderExt.Acquire();
         sb.Append('(');
         sb.Append(Item0);
         sb.Append(", ");
@@ -3728,7 +3727,7 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8> : 
         sb.Append(", ");
         sb.Append(Item8);
         sb.Append(')');
-        return sb.ToString();
+        return sb.ToStringAndRelease();
     }
 
     public override object?[] ToArray()
@@ -4391,7 +4390,7 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9
 
     public override string ToString()
     {
-        using var sb = ZString.CreateStringBuilder();
+        var sb = StringBuilderExt.Acquire();
         sb.Append('(');
         sb.Append(Item0);
         sb.Append(", ");
@@ -4413,7 +4412,7 @@ public sealed partial record ArgumentList<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9
         sb.Append(", ");
         sb.Append(Item9);
         sb.Append(')');
-        return sb.ToString();
+        return sb.ToStringAndRelease();
     }
 
     public override object?[] ToArray()

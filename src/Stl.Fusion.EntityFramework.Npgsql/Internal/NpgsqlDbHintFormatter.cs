@@ -17,23 +17,18 @@ public class NpgsqlDbHintFormatter : DbHintFormatter
 
     public override string FormatSelectSql(string tableName, ref MemoryBuffer<DbHint> hints)
     {
-        var sb = ZString.CreateStringBuilder();
-        try {
-            sb.Append("SELECT * FROM ");
-            FormatTableNameTo(ref sb, tableName);
-            var isFirst = true;
-            foreach (var hint in hints) {
-                if (isFirst)
-                    sb.Append(" FOR ");
-                else
-                    sb.Append(' ');
-                sb.Append(FormatHint(hint));
-                isFirst = false;
-            }
-            return sb.ToString();
+        var sb = StringBuilderExt.Acquire();
+        sb.Append("SELECT * FROM ");
+        FormatTableNameTo(sb, tableName);
+        var isFirst = true;
+        foreach (var hint in hints) {
+            if (isFirst)
+                sb.Append(" FOR ");
+            else
+                sb.Append(' ');
+            sb.Append(FormatHint(hint));
+            isFirst = false;
         }
-        finally {
-            sb.Dispose();
-        }
+        return sb.ToStringAndRelease();
     }
 }
