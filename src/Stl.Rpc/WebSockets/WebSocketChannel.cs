@@ -53,6 +53,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
 
     public Options Settings { get; }
     public WebSocket WebSocket { get; }
+    public IDisposable? WebSocketHelper { get; }
     public DualSerializer<T> Serializer { get; }
     public CancellationToken StopToken { get; }
     public ILogger? Log { get; }
@@ -65,20 +66,23 @@ public sealed class WebSocketChannel<T> : Channel<T>
     [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public WebSocketChannel(
         WebSocket webSocket,
+        IDisposable? webSocketHelper,
         IServiceProvider services,
         CancellationToken cancellationToken = default)
-        : this(Options.Default, webSocket, services, cancellationToken)
+        : this(Options.Default, webSocket, webSocketHelper, services, cancellationToken)
     { }
 
     [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public WebSocketChannel(
         Options settings,
         WebSocket webSocket,
+        IDisposable? webSocketHelper,
         IServiceProvider services,
         CancellationToken cancellationToken = default)
     {
         Settings = settings;
         WebSocket = webSocket;
+        WebSocketHelper = webSocketHelper;
         Serializer = settings.Serializer;
         Log = services.LogFor(GetType());
         ErrorLog = Log.IfEnabled(LogLevel.Error);
@@ -131,8 +135,13 @@ public sealed class WebSocketChannel<T> : Channel<T>
 
         stopCts.CancelAndDisposeSilently();
         await WhenClosed.SilentAwait(false);
-        if (Settings.OwnsWebSocket)
+        if (Settings.OwnsWebSocket) {
             WebSocket.Dispose();
+            if (WebSocketHelper is IAsyncDisposable ad)
+                await ad.DisposeAsync().SilentAwait(false);
+            else
+                WebSocketHelper?.Dispose();
+        }
         _writeBuffer.Dispose();
     }
 

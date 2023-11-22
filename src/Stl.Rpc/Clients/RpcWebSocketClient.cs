@@ -19,6 +19,9 @@ public class RpcWebSocketClient(
         public Func<RpcWebSocketClient, RpcClientPeer, string> HostUrlResolver { get; init; } = DefaultHostUrlResolver;
         public Func<RpcWebSocketClient, RpcClientPeer, Uri> ConnectionUriResolver { get; init; } = DefaultConnectionUriResolver;
         public WebSocketChannel<RpcMessage>.Options WebSocketChannelOptions { get; init; } = WebSocketChannel<RpcMessage>.Options.Default;
+        public Func<RpcWebSocketClient, Uri, CancellationToken, Task<(WebSocket WebSocket, IDisposable? Helper)>>
+            WebSocketConnector { get; set; } = DefaultWebSocketConnector;
+
         public TimeSpan ConnectTimeout { get; init; } = TimeSpan.FromSeconds(10);
         public string RequestPath { get; init; } = "/rpc/ws";
         public string ClientIdParameterName { get; init; } = "clientId";
@@ -50,6 +53,20 @@ public class RpcWebSocketClient(
                 uriBuilder.Query = queryTail;
             return uriBuilder.Uri;
         }
+
+        public static async Task<(WebSocket WebSocket, IDisposable? Helper)> DefaultWebSocketConnector(
+            RpcWebSocketClient client, Uri uri, CancellationToken cancellationToken)
+        {
+            var ws = client.Services.GetRequiredService<ClientWebSocket>();
+            try {
+                await ws.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
+                return (ws, null);
+            }
+            catch {
+                ws.Dispose();
+                throw;
+            }
+        }
     }
 
     public Options Settings { get; } = settings;
@@ -62,15 +79,12 @@ public class RpcWebSocketClient(
         var ctsToken = cts.Token;
         // ReSharper disable once UseAwaitUsing
         using var _ = cancellationToken.Register(static x => (x as CancellationTokenSource)?.Cancel(), cts);
-        var webSocket = await Task.Run(async () => {
-                var ws = Services.GetRequiredService<ClientWebSocket>();
-                await ws.ConnectAsync(uri, ctsToken).ConfigureAwait(false);
-                return ws;
-            }, ctsToken)
+        var (webSocket, helper) = await Task
+            .Run(() => Settings.WebSocketConnector.Invoke(this, uri, ctsToken), ctsToken)
             .WaitAsync(ctsToken) // MAUI sometimes stuck in sync part of ConnectAsync
             .ConfigureAwait(false);
 
-        var channel = new WebSocketChannel<RpcMessage>(Settings.WebSocketChannelOptions, webSocket, Services);
+        var channel = new WebSocketChannel<RpcMessage>(Settings.WebSocketChannelOptions, webSocket, helper, Services);
         var options = ImmutableOptionSet.Empty.Set(uri).Set(webSocket);
         return new RpcConnection(channel, options);
     }

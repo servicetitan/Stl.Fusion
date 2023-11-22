@@ -74,7 +74,7 @@ public class RpcWebSocketServer(
         var peer = Hub.GetServerPeer(peerRef);
         try {
             var channel = new WebSocketChannel<RpcMessage>(
-                Settings.WebSocketChannelOptions, webSocket, Services, cancellationToken);
+                Settings.WebSocketChannelOptions, webSocket, null, Services, cancellationToken);
             var options = ImmutableOptionSet.Empty.Set(context).Set(webSocket);
             var connection = await ServerConnectionFactory
                 .Invoke(peer, channel, options, cancellationToken)
