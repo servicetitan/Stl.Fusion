@@ -51,8 +51,11 @@ public class RpcWebSocketServer(
 #endif
         var webSocket = await acceptWebSocketTask.ConfigureAwait(false);
         try {
+            var webSocketOwner = new WebSocketOwner(peer.Ref.Key, webSocket, Services);
             var channel = new WebSocketChannel<RpcMessage>(
-                Settings.WebSocketChannelOptions, webSocket, null, Services, cancellationToken);
+                Settings.WebSocketChannelOptions, webSocketOwner, cancellationToken) {
+                OwnsWebSocketOwner = false,
+            };
             var options = ImmutableOptionSet.Empty.Set(context).Set(webSocket);
             var connection = await ServerConnectionFactory
                 .Invoke(peer, channel, options, cancellationToken)
@@ -63,6 +66,9 @@ public class RpcWebSocketServer(
         }
         catch (Exception e) when (e.IsCancellationOf(cancellationToken)) {
             // Intended: this is typically a normal connection termination
+        }
+        finally {
+            webSocket.Dispose();
         }
     }
 }

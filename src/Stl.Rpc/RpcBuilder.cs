@@ -7,7 +7,6 @@ using Stl.Rpc.Clients;
 using Stl.Rpc.Diagnostics;
 using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Internal;
-using Stl.Rpc.Testing;
 using Errors = Stl.Rpc.Internal.Errors;
 
 namespace Stl.Rpc;
@@ -73,11 +72,11 @@ public readonly struct RpcBuilder
         services.TryAddSingleton(_ => RpcDefaultDelegates.CallRouter);
         services.TryAddSingleton(_ => RpcDefaultDelegates.InboundContextFactory);
         services.TryAddSingleton(_ => RpcDefaultDelegates.PeerFactory);
+        services.TryAddSingleton(_ => RpcDefaultDelegates.ClientConnectionFactory);
+        services.TryAddSingleton(_ => RpcDefaultDelegates.ServerConnectionFactory);
         services.TryAddSingleton(_ => RpcDefaultDelegates.ClientIdGenerator);
         services.TryAddSingleton(_ => RpcDefaultDelegates.BackendServiceDetector);
         services.TryAddSingleton(_ => RpcDefaultDelegates.UnrecoverableErrorDetector);
-        services.TryAddSingleton(_ => RpcDefaultDelegates.ClientConnectionFactory);
-        services.TryAddSingleton(_ => RpcDefaultDelegates.ServerConnectionFactory);
         services.TryAddSingleton(_ => RpcDefaultDelegates.MethodTracerFactory);
         services.TryAddSingleton(_ => RpcArgumentSerializer.Default);
         services.TryAddSingleton(c => new RpcInboundMiddlewares(c));

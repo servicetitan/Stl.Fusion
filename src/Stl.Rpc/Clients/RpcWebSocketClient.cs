@@ -2,25 +2,27 @@ using System.Diagnostics.CodeAnalysis;
 using System.Net.WebSockets;
 using System.Text.Encodings.Web;
 using Stl.Rpc.Infrastructure;
-using Stl.Rpc.Internal;
 using Stl.Rpc.WebSockets;
 
 namespace Stl.Rpc.Clients;
 
 public class RpcWebSocketClient(
-        RpcWebSocketClient.Options settings,
-        IServiceProvider services
-        ) : RpcClient(services)
+    RpcWebSocketClient.Options settings,
+    IServiceProvider services
+    ) : RpcClient(services)
 {
     public record Options
     {
         public static Options Default { get; set; } = new();
 
-        public Func<RpcWebSocketClient, RpcClientPeer, string> HostUrlResolver { get; init; } = DefaultHostUrlResolver;
-        public Func<RpcWebSocketClient, RpcClientPeer, Uri> ConnectionUriResolver { get; init; } = DefaultConnectionUriResolver;
-        public WebSocketChannel<RpcMessage>.Options WebSocketChannelOptions { get; init; } = WebSocketChannel<RpcMessage>.Options.Default;
-        public Func<RpcWebSocketClient, Uri, CancellationToken, Task<(WebSocket WebSocket, IDisposable? Helper)>>
-            WebSocketConnector { get; set; } = DefaultWebSocketConnector;
+        public Func<RpcWebSocketClient, RpcClientPeer, string> HostUrlResolver { get; init; }
+            = DefaultHostUrlResolver;
+        public Func<RpcWebSocketClient, RpcClientPeer, Uri> ConnectionUriResolver { get; init; }
+            = DefaultConnectionUriResolver;
+        public Func<RpcWebSocketClient, RpcClientPeer, WebSocketOwner> WebSocketOwnerFactory { get; init; }
+            = DefaultWebSocketOwnerFactory;
+        public WebSocketChannel<RpcMessage>.Options WebSocketChannelOptions { get; init; }
+            = WebSocketChannel<RpcMessage>.Options.Default;
 
         public TimeSpan ConnectTimeout { get; init; } = TimeSpan.FromSeconds(10);
         public string RequestPath { get; init; } = "/rpc/ws";
@@ -54,19 +56,8 @@ public class RpcWebSocketClient(
             return uriBuilder.Uri;
         }
 
-        public static async Task<(WebSocket WebSocket, IDisposable? Helper)> DefaultWebSocketConnector(
-            RpcWebSocketClient client, Uri uri, CancellationToken cancellationToken)
-        {
-            var ws = client.Services.GetRequiredService<ClientWebSocket>();
-            try {
-                await ws.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
-                return (ws, null);
-            }
-            catch {
-                ws.Dispose();
-                throw;
-            }
-        }
+        public static WebSocketOwner DefaultWebSocketOwnerFactory(RpcWebSocketClient client, RpcClientPeer peer)
+            => new(peer.Ref.Key, new ClientWebSocket(), client.Services);
     }
 
     public Options Settings { get; } = settings;
@@ -79,13 +70,28 @@ public class RpcWebSocketClient(
         var ctsToken = cts.Token;
         // ReSharper disable once UseAwaitUsing
         using var _ = cancellationToken.Register(static x => (x as CancellationTokenSource)?.Cancel(), cts);
-        var (webSocket, helper) = await Task
-            .Run(() => Settings.WebSocketConnector.Invoke(this, uri, ctsToken), ctsToken)
+        var webSocketOwner = await Task
+            .Run(async () => {
+                WebSocketOwner? o = null;
+                try {
+                    o = Settings.WebSocketOwnerFactory.Invoke(this, peer);
+                    await o.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
+                    return o;
+                }
+                catch {
+                    if (o != null)
+                        await o.DisposeAsync().ConfigureAwait(false);
+                    throw;
+                }
+            }, ctsToken)
             .WaitAsync(ctsToken) // MAUI sometimes stuck in sync part of ConnectAsync
             .ConfigureAwait(false);
 
-        var channel = new WebSocketChannel<RpcMessage>(Settings.WebSocketChannelOptions, webSocket, helper, Services);
-        var options = ImmutableOptionSet.Empty.Set(uri).Set(webSocket);
+        var channel = new WebSocketChannel<RpcMessage>(Settings.WebSocketChannelOptions, webSocketOwner);
+        var options = ImmutableOptionSet.Empty
+            .Set(uri)
+            .Set(webSocketOwner)
+            .Set(webSocketOwner.WebSocket);
         return new RpcConnection(channel, options);
     }
 }

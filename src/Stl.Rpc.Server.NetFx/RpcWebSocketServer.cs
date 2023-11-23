@@ -67,14 +67,16 @@ public class RpcWebSocketServer(
     [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     private async Task HandleWebSocket(IOwinContext context, WebSocketContext wsContext)
     {
-        var cancellationToken = context.Request.CallCancelled;
-        var webSocket = wsContext.WebSocket;
-
         var peerRef = PeerRefFactory.Invoke(this, context);
         var peer = Hub.GetServerPeer(peerRef);
+        var cancellationToken = context.Request.CallCancelled;
         try {
+            var webSocket = wsContext.WebSocket;
+            var webSocketOwner = new WebSocketOwner(peer.Ref.Key, webSocket, Services);
             var channel = new WebSocketChannel<RpcMessage>(
-                Settings.WebSocketChannelOptions, webSocket, null, Services, cancellationToken);
+                Settings.WebSocketChannelOptions, webSocketOwner, cancellationToken) {
+                OwnsWebSocketOwner = false,
+            };
             var options = ImmutableOptionSet.Empty.Set(context).Set(webSocket);
             var connection = await ServerConnectionFactory
                 .Invoke(peer, channel, options, cancellationToken)

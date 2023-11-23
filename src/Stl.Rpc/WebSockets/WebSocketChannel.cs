@@ -16,7 +16,6 @@ public sealed class WebSocketChannel<T> : Channel<T>
     {
         public static readonly Options Default = new();
 
-        public bool OwnsWebSocket { get; init; } = true;
         public int WriteFrameSize { get; init; } = 4400;
         public int WriteBufferSize { get; init; } = 16_000; // Rented ~just once, so it can be large
         public int ReadBufferSize { get; init; } = 16_000; // Rented ~just once, so it can be large
@@ -52,12 +51,13 @@ public sealed class WebSocketChannel<T> : Channel<T>
     // ReSharper disable once InconsistentlySynchronizedField
 
     public Options Settings { get; }
+    public WebSocketOwner WebSocketOwner { get; }
     public WebSocket WebSocket { get; }
-    public IDisposable? WebSocketHelper { get; }
     public DualSerializer<T> Serializer { get; }
     public CancellationToken StopToken { get; }
     public ILogger? Log { get; }
     public ILogger? ErrorLog { get; }
+    public bool OwnsWebSocketOwner { get; init; } = true;
 
     public Task WhenReadCompleted { get; }
     public Task WhenWriteCompleted { get; }
@@ -65,26 +65,22 @@ public sealed class WebSocketChannel<T> : Channel<T>
 
     [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public WebSocketChannel(
-        WebSocket webSocket,
-        IDisposable? webSocketHelper,
-        IServiceProvider services,
+        WebSocketOwner webSocketOwner,
         CancellationToken cancellationToken = default)
-        : this(Options.Default, webSocket, webSocketHelper, services, cancellationToken)
+        : this(Options.Default, webSocketOwner, cancellationToken)
     { }
 
     [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public WebSocketChannel(
         Options settings,
-        WebSocket webSocket,
-        IDisposable? webSocketHelper,
-        IServiceProvider services,
+        WebSocketOwner webSocketOwner,
         CancellationToken cancellationToken = default)
     {
         Settings = settings;
-        WebSocket = webSocket;
-        WebSocketHelper = webSocketHelper;
+        WebSocketOwner = webSocketOwner;
+        WebSocket = webSocketOwner.WebSocket;
         Serializer = settings.Serializer;
-        Log = services.LogFor(GetType());
+        Log = webSocketOwner.Services.LogFor(GetType());
         ErrorLog = Log.IfEnabled(LogLevel.Error);
 
         _stopCts = cancellationToken.CreateLinkedTokenSource();
@@ -135,13 +131,8 @@ public sealed class WebSocketChannel<T> : Channel<T>
 
         stopCts.CancelAndDisposeSilently();
         await WhenClosed.SilentAwait(false);
-        if (Settings.OwnsWebSocket) {
-            WebSocket.Dispose();
-            if (WebSocketHelper is IAsyncDisposable ad)
-                await ad.DisposeAsync().SilentAwait(false);
-            else
-                WebSocketHelper?.Dispose();
-        }
+        if (OwnsWebSocketOwner)
+            await WebSocketOwner.DisposeAsync().ConfigureAwait(false);
         _writeBuffer.Dispose();
     }
 
@@ -345,7 +336,9 @@ public sealed class WebSocketChannel<T> : Channel<T>
         }
         catch (Exception e) {
             buffer.Index = startOffset;
-            ErrorLog?.LogError(e, "Couldn't serialize the value of type '{Type}'", value?.GetType().FullName ?? "null");
+            ErrorLog?.LogError(e,
+                "Couldn't serialize the value of type '{Type}'",
+                value?.GetType().FullName ?? "null");
             return false;
         }
     }
