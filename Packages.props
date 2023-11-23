@@ -40,7 +40,7 @@
     <MySqlConnectorVersion6>$(MySqlConnectorVersion7)</MySqlConnectorVersion6>
     <MySqlConnectorVersion5>$(MySqlConnectorVersion6)</MySqlConnectorVersion5>
     <MySqlConnectorVersion3>0.*</MySqlConnectorVersion3>
-    <EntityFrameworkCoreMySqlVersion>8.0.0-beta.1</EntityFrameworkCoreMySqlVersion>
+    <EntityFrameworkCoreMySqlVersion>8.0.0-beta.2</EntityFrameworkCoreMySqlVersion>
     <EntityFrameworkCoreMySqlVersion7>$(EntityFrameworkCoreVersion7)</EntityFrameworkCoreMySqlVersion7>
     <EntityFrameworkCoreMySqlVersion6>$(EntityFrameworkCoreVersion6)</EntityFrameworkCoreMySqlVersion6>
     <EntityFrameworkCoreMySqlVersion5>$(EntityFrameworkCoreVersion5)</EntityFrameworkCoreMySqlVersion5>
