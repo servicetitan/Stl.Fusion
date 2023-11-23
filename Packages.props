@@ -7,7 +7,7 @@
   <PropertyGroup>
     <!-- Core packages -->
     <AspNetCoreVersion>8.*</AspNetCoreVersion>
-    <AspNetCoreVersion7>8.*</AspNetCoreVersion7>
+    <AspNetCoreVersion7>7.*</AspNetCoreVersion7>
     <AspNetCoreVersion6>6.*</AspNetCoreVersion6>
     <AspNetCoreVersion5>5.*</AspNetCoreVersion5>
     <AspNetCoreVersion3>3.*</AspNetCoreVersion3>
