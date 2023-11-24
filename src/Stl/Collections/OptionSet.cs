@@ -1,9 +1,11 @@
 using System.Diagnostics.CodeAnalysis;
 using Stl.Internal;
-using Stl.Serialization.Internal;
 
 namespace Stl.Collections;
 
+#if !NET5_0
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
 public partial class OptionSet : IServiceProvider

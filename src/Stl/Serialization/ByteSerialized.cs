@@ -10,6 +10,9 @@ public static class ByteSerialized
     public static ByteSerialized<TValue> New<TValue>(byte[] data) => new(data);
 }
 
+#if !NET5_0
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
 public partial class ByteSerialized<T> : IEquatable<ByteSerialized<T>>

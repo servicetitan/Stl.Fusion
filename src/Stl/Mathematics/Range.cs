@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using Stl.Serialization.Internal;
 
 namespace Stl.Mathematics;
 
@@ -8,6 +7,9 @@ namespace Stl.Mathematics;
 /// of type <typeparamref name="T"/>.
 /// </summary>
 /// <typeparam name="T">Type of the elements inside the range.</typeparam>
+#if !NET5_0
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
 [StructLayout(LayoutKind.Sequential)] // Important!
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]

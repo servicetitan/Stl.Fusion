@@ -11,6 +11,9 @@ public static class TypeDecoratingMemoryPackSerialized
     public static TypeDecoratingMemoryPackSerialized<TValue> New<TValue>(byte[] data) => new(data);
 }
 
+#if !NET5_0
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
 public partial class TypeDecoratingMemoryPackSerialized<T> : ByteSerialized<T>

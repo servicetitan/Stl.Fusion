@@ -3,6 +3,9 @@ using Stl.Internal;
 
 namespace Stl.Collections;
 
+#if !NET5_0
+[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)]
+#endif
 [StructLayout(LayoutKind.Auto)]
 [DataContract, MemoryPackable(GenerateType.VersionTolerant)]
 [Newtonsoft.Json.JsonObject(Newtonsoft.Json.MemberSerialization.OptOut)]
