@@ -121,6 +121,7 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
         try {
             while (true) {
                 var readerAbortToken = CancellationToken.None;
+                var error = (Exception?)null;
                 try {
                     if (connectionState.IsFinal)
                         return;
@@ -193,11 +194,11 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
                         }
                 }
                 catch (Exception e) {
-                    var isReaderAbort = e is OperationCanceledException
-                        && readerAbortToken.IsCancellationRequested
+                    var isReaderAbort = readerAbortToken.IsCancellationRequested
                         && !cancellationToken.IsCancellationRequested;
-                    connectionState = SetConnectionState(connectionState.Value.NextDisconnected(isReaderAbort ? null : e));
+                    error = isReaderAbort ? null : e;
                 }
+                connectionState = SetConnectionState(connectionState.Value.NextDisconnected(error));
             }
         }
         finally {
