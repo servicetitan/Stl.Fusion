@@ -26,6 +26,8 @@ public class WebSocketOwner(
 
         Log.IfEnabled(LogLevel)?.Log(LogLevel, "'{Name}': connecting to {Uri}", Name, uri);
 #if NET7_0_OR_GREATER
+        if (Handler is HttpMessageInvoker invoker)
+            return webSocket.ConnectAsync(uri, invoker, cancellationToken);
         if (Handler is HttpMessageHandler handler)
             return webSocket.ConnectAsync(uri, new HttpMessageInvoker(handler), cancellationToken);
 #endif

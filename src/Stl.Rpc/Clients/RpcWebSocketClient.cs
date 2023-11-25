@@ -78,9 +78,13 @@ public class RpcWebSocketClient(
                     await o.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
                     return o;
                 }
-                catch {
-                    if (o != null)
+                catch when (o != null) {
+                    try {
                         await o.DisposeAsync().ConfigureAwait(false);
+                    }
+                    catch {
+                        // Intended
+                    }
                     throw;
                 }
             }, ctsToken)
