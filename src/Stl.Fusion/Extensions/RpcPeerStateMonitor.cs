@@ -36,23 +36,21 @@ public sealed class RpcPeerStateMonitor : WorkerBase
                     connectionState = connectionState.Last;
                     var nextConnectionStateTask = connectionState.WhenNext(peerCancellationToken);
                     var isConnected = connectionState.Value.IsConnected();
-                    var nextState = new RpcPeerState(isConnected, connectionState.Value.Error);
 
                     if (isConnected) {
-                        _state.Value = nextState;
+                        _state.Value = new RpcPeerState(true);
                         connectionState = await nextConnectionStateTask.ConfigureAwait(false);
                     }
                     else {
+                        _state.Value = new RpcPeerState(false, connectionState.Value.Error);
                         // Disconnected -> update ReconnectsAt value until the nextConnectionStateTask completes
                         using var reconnectAtCts = new CancellationTokenSource();
                         // ReSharper disable once AccessToDisposedClosure
                         _ = nextConnectionStateTask.ContinueWith(_ => reconnectAtCts.Cancel(), TaskScheduler.Default);
                         try {
                             var reconnectAtChanges = peer.ReconnectsAt.Changes(reconnectAtCts.Token);
-                            await foreach (var reconnectsAt in reconnectAtChanges.ConfigureAwait(false)) {
-                                nextState = nextState with { ReconnectsAt = reconnectsAt };
-                                _state.Value = nextState;
-                            }
+                            await foreach (var reconnectsAt in reconnectAtChanges.ConfigureAwait(false))
+                                _state.Value = _state.Value with { ReconnectsAt = reconnectsAt };
                         }
                         catch (OperationCanceledException) when (reconnectAtCts.IsCancellationRequested) {
                             // Intended
