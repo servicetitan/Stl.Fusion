@@ -62,12 +62,11 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
 
         // Ideally we want to suppress execution context flow here,
         // because the Update is ~ a worker-style task.
-        if (computedStateOptions.MustFlowExecutionContext) {
+        if (computedStateOptions.MustFlowExecutionContext)
             UpdateCycleTask = UpdateCycle();
-        }
         else {
             using var _ = ExecutionContextExt.SuppressFlow();
-            UpdateCycleTask = Task.Run(UpdateCycle, DisposeToken);
+            UpdateCycleTask = UpdateCycle();
         }
     }
 

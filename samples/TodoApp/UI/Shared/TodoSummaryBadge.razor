@@ -4,8 +4,8 @@
 @inject ILogger<TodoSummaryBadge> Log
 
 @{
-    Log.LogInformation("Rendering");
     var summary = State.ValueOrDefault ?? TodoSummary.None;
+    Log.LogInformation("Rendering: {Summary}", summary);
 }
 
 <Badge Color="Color.Success"><b>@summary.DoneCount</b> done</Badge>

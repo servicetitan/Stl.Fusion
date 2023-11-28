@@ -9,9 +9,12 @@
 @inject ILogger<TodoPage> Log
 
 @{
-    Log.LogInformation("Rendering, State.Computed.Version = {Version}", State.Computed.Version);
-    var error = State.Error;
-    var todos = State.ValueOrDefault ?? Array.Empty<Todo>(); // ValueOrDefault returns default if there is an Error
+    var c = State.Computed;
+    Log.LogInformation(
+        "Rendering, Computed.Version = {Version}, IsConsistent = {IsConsistent}",
+        c.Version, c.IsConsistent());
+    var error = c.Error;
+    var todos = c.ValueOrDefault ?? Array.Empty<Todo>(); // ValueOrDefault returns default if there is an Error
 }
 
 <h1>Todo List</h1>
