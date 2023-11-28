@@ -30,7 +30,9 @@ public class RpcServerPeer : RpcPeer
 
     // Protected methods
 
-    protected override async Task<RpcConnection> GetConnection(CancellationToken cancellationToken)
+    protected override async Task<RpcConnection> GetConnection(
+        RpcPeerConnectionState connectionState,
+        CancellationToken cancellationToken)
     {
         while (true) {
             AsyncState<RpcConnection?> nextConnection;

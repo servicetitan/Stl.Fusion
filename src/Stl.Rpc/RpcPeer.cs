@@ -104,7 +104,9 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
 
     // Protected methods
 
-    protected abstract Task<RpcConnection> GetConnection(CancellationToken cancellationToken);
+    protected abstract Task<RpcConnection> GetConnection(
+        RpcPeerConnectionState connectionState,
+        CancellationToken cancellationToken);
 
     [RequiresUnreferencedCode(UnreferencedCode.Rpc)]
 #pragma warning disable IL2046
@@ -128,7 +130,7 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
 
                     while (connectionState.Value.IsConnected())
                         connectionState = SetConnectionState(connectionState.Value.NextDisconnected(), connectionState);
-                    var connection = await GetConnection(cancellationToken).ConfigureAwait(false);
+                    var connection = await GetConnection(connectionState.Value, cancellationToken).ConfigureAwait(false);
                     if (connection == null)
                         throw Errors.ConnectionUnrecoverable();
 
