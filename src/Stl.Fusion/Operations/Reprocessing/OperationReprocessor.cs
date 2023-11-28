@@ -17,8 +17,8 @@ public interface IOperationReprocessor : ICommandHandler<ICommand>
     Exception? LastError { get; }
 
     void AddTransientFailure(Exception error);
-    bool IsTransientFailure(IEnumerable<Exception> allErrors);
-    bool WillRetry(IEnumerable<Exception> allErrors);
+    bool IsTransientFailure(IReadOnlyList<Exception> allErrors);
+    bool WillRetry(IReadOnlyList<Exception> allErrors);
 }
 
 public record OperationReprocessorOptions
@@ -75,7 +75,7 @@ public class OperationReprocessor(
             KnownTransientFailures.Add(error);
     }
 
-    public virtual bool IsTransientFailure(IEnumerable<Exception> allErrors)
+    public virtual bool IsTransientFailure(IReadOnlyList<Exception> allErrors)
     {
 #pragma warning disable CA1851
         lock (KnownTransientFailures) {
@@ -95,7 +95,7 @@ public class OperationReprocessor(
         return false;
     }
 
-    public virtual bool WillRetry(IEnumerable<Exception> allErrors)
+    public virtual bool WillRetry(IReadOnlyList<Exception> allErrors)
     {
         if (FailedTryCount > Options.MaxRetryCount)
             return false;

@@ -9,7 +9,7 @@ public static class ExceptionExt
     public static bool IsCancellationOf(this Exception error, CancellationToken cancellationToken)
         => error is OperationCanceledException && cancellationToken.IsCancellationRequested;
 
-    public static ICollection<Exception> Flatten(this Exception? exception)
+    public static IReadOnlyList<Exception> Flatten(this Exception? exception)
     {
         if (exception == null)
             return Array.Empty<Exception>();
@@ -18,19 +18,31 @@ public static class ExceptionExt
         Traverse(result, exception);
         return result;
 
-        void Traverse(List<Exception> list, Exception ex)
-        {
+        void Traverse(List<Exception> list, Exception ex) {
             if (ex is AggregateException ae) {
-                foreach (var e in ae.InnerExceptions) {
+                foreach (var e in ae.InnerExceptions)
                     if (e != null!)
                         Traverse(list, e);
-                }
             }
-            if (ex.InnerException is { } ie) {
+            if (ex.InnerException is { } ie)
                 Traverse(list, ie);
-            }
             list.Add(ex);
         }
+    }
+
+    public static bool Any(this Exception? exception, Func<Exception, bool> predicate)
+    {
+        if (exception == null)
+            return false;
+        if (predicate.Invoke(exception))
+            return true;
+
+        if (exception is AggregateException ae) {
+            foreach (var e in ae.InnerExceptions)
+                if (Any(e, predicate))
+                    return true;
+        }
+        return exception.InnerException is { } ie && Any(ie, predicate);
     }
 
     public static Exception GetFirstInnerException(this AggregateException exception)

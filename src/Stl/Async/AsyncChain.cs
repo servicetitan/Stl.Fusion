@@ -1,13 +1,18 @@
 namespace Stl.Async;
 
 [StructLayout(LayoutKind.Auto)]
-public readonly record struct AsyncChain(string Name, Func<CancellationToken, Task> Start)
+public readonly record struct AsyncChain(
+    string Name,
+    Func<CancellationToken, Task> Start,
+    TerminalErrorDetector TerminalErrorDetector)
 {
     public static readonly AsyncChain None = new("(no-operation)", _ => Task.CompletedTask);
     public static readonly AsyncChain NeverEnding = new("(never-ending)", _ => TaskExt.NeverEndingTask);
 
+    public AsyncChain(string name, Func<CancellationToken, Task> start)
+        : this(name, start, TerminalError.Detector) { }
     public AsyncChain(Func<CancellationToken, Task> start)
-        : this("(unnamed)", start) { }
+        : this("(unnamed)", start, TerminalError.Detector) { }
 
     // Constructor-like methods
 
