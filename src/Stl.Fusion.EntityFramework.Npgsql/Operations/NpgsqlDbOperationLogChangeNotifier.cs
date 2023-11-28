@@ -20,7 +20,10 @@ public class NpgsqlDbOperationLogChangeNotifier<
     {
         var info = GetCachedInfo(tenant);
         var (dbContext, sql, asyncLock) = info;
-        using var _ = await asyncLock.Lock().ConfigureAwait(false);
+
+        using var releaser = await asyncLock.Lock().ConfigureAwait(false);
+        releaser.MarkLockedLocally();
+
         using var cts = new CancellationTokenSource(1000);
         try {
             await dbContext.Database.ExecuteSqlRawAsync(sql, cts.Token).ConfigureAwait(false);
@@ -50,10 +53,10 @@ public class NpgsqlDbOperationLogChangeNotifier<
             .Replace("'", "''", StringComparison.Ordinal);
 #endif
         var sql = $"NOTIFY {Options.ChannelName}, '{quotedPayload}'";
-        return new CachedInfo(dbContext, sql, new SimpleAsyncLock());
+        return new CachedInfo(dbContext, sql, new AsyncLock(LockReentryMode.CheckedFail));
     }
 
     // Nested types
 
-    private sealed record CachedInfo(TDbContext DbContext, string Sql, SimpleAsyncLock AsyncLock);
+    private sealed record CachedInfo(TDbContext DbContext, string Sql, AsyncLock AsyncLock);
 }

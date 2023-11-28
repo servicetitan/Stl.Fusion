@@ -1,5 +1,3 @@
-using Stl.Internal;
-
 namespace Stl.Locking;
 
 public sealed class SimpleAsyncLock : IAsyncLock<SimpleAsyncLock.Releaser>

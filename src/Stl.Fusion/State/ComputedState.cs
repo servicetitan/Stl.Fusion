@@ -68,6 +68,7 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
             using var _ = ExecutionContextExt.SuppressFlow();
             UpdateCycleTask = UpdateCycle();
         }
+        AsyncLock.IsLockedLocally = false;
     }
 
     // ~ComputedState() => Dispose();

@@ -4,6 +4,10 @@ using Stl.Multitenancy;
 using Templates.TodoApp.Host;
 using Templates.TodoApp.Services;
 
+// That's just to debug possible issues with AsyncLock
+ThreadPool.SetMinThreads(1, 1);
+ThreadPool.SetMaxThreads(1, 1);
+
 var host = Host.CreateDefaultBuilder()
     .ConfigureHostConfiguration(cfg => {
         // Looks like there is no better way to set _default_ URL
