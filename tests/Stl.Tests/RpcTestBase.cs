@@ -13,7 +13,7 @@ namespace Stl.Tests;
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public abstract class RpcTestBase(ITestOutputHelper @out) : TestBase(@out), IAsyncLifetime
 {
-    private static readonly ReentrantAsyncLock InitializeLock = new(LockReentryMode.CheckedFail);
+    private static readonly AsyncLock InitializeLock = new(LockReentryMode.CheckedFail);
     protected static readonly RpcPeerRef ClientPeerRef = RpcPeerRef.Default;
 
     private IServiceProvider? _services;
@@ -33,7 +33,8 @@ public abstract class RpcTestBase(ITestOutputHelper @out) : TestBase(@out), IAsy
 
     public override async Task InitializeAsync()
     {
-        using var __ = await InitializeLock.Lock().ConfigureAwait(false);
+        using var releaser = await InitializeLock.Lock().ConfigureAwait(false);
+        releaser.MarkLockedLocally();
         await Services.HostedServices().Start();
     }
 

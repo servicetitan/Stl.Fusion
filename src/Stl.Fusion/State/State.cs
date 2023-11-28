@@ -61,7 +61,7 @@ public abstract class State<T> : ComputedInput,
 
     protected VersionGenerator<LTag> VersionGenerator { get; set; } = null!;
     protected ComputedOptions ComputedOptions { get; private set; } = null!;
-    protected ReentrantAsyncLock AsyncLock { get; } = new(LockReentryMode.CheckedFail);
+    protected AsyncLock AsyncLock { get; } = new(LockReentryMode.CheckedFail);
     protected object Lock => AsyncLock;
     protected ILogger Log => _log ??= Services.LogFor(GetType());
 
@@ -273,12 +273,13 @@ public abstract class State<T> : ComputedInput,
         if (computed.TryUseExisting(context, usedBy))
             return computed;
 
-        using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
+        using var releaser = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
 
         computed = Computed;
         if (computed.TryUseExistingFromLock(context, usedBy))
             return computed;
 
+        releaser.MarkLockedLocally();
         OnUpdating(computed);
         computed = await GetComputed(cancellationToken).ConfigureAwait(false);
         computed.UseNew(context, usedBy);
@@ -322,12 +323,13 @@ public abstract class State<T> : ComputedInput,
         IComputed? usedBy, ComputeContext context,
         CancellationToken cancellationToken)
     {
-        using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
+        using var releaser = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
 
         var computed = Computed;
         if (computed.TryUseExistingFromLock(context, usedBy))
             return computed.Strip(context);
 
+        releaser.MarkLockedLocally();
         OnUpdating(computed);
         computed = await GetComputed(cancellationToken).ConfigureAwait(false);
         computed.UseNew(context, usedBy);

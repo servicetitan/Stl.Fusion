@@ -124,10 +124,11 @@ public class ClientComputeMethodFunction<T>(
         var (key, data) = await cacheInfoCapture.GetKeyAndData(default).ConfigureAwait(false);
 
         // 5. Re-entering the lock & check if cachedComputed is still consistent
-        using var _ = await InputLocks.Lock(input).ConfigureAwait(false);
+        using var releaser = await InputLocks.Lock(input).ConfigureAwait(false);
         if (!cachedComputed.IsConsistent())
             return; // Since the call was bound to cachedComputed, it's properly cancelled already
 
+        releaser.MarkLockedLocally();
         var synchronizedSource = cachedComputed.SynchronizedSource;
         if (cachedComputed.CacheEntry is { } oldEntry && data?.DataEquals(oldEntry.Data) == true) {
             // Existing cached entry is still intact
@@ -159,12 +160,13 @@ public class ClientComputeMethodFunction<T>(
         if (existing.TryUseExisting(context, usedBy))
             return existing!;
 
-        using var _ = await InputLocks.Lock(input, cancellationToken).ConfigureAwait(false);
+        using var releaser = await InputLocks.Lock(input, cancellationToken).ConfigureAwait(false);
 
         existing = GetExisting(input);
         if (existing.TryUseExistingFromLock(context, usedBy))
             return existing!;
 
+        releaser.MarkLockedLocally();
         var computed = await Compute(input, existing, cancellationToken).ConfigureAwait(false);
         computed.UseNew(context, usedBy, existing);
         return computed;
@@ -190,12 +192,13 @@ public class ClientComputeMethodFunction<T>(
         ComputeContext context,
         CancellationToken cancellationToken = default)
     {
-        using var _ = await InputLocks.Lock(input, cancellationToken).ConfigureAwait(false);
+        using var releaser = await InputLocks.Lock(input, cancellationToken).ConfigureAwait(false);
 
         var existing = GetExisting(input);
         if (existing.TryUseExistingFromLock(context, usedBy))
             return existing.Strip(context);
 
+        releaser.MarkLockedLocally();
         var computed = await Compute(input, existing, cancellationToken).ConfigureAwait(false);
         computed.UseNew(context, usedBy, existing);
         return computed.Value;

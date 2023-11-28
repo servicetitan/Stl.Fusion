@@ -1,7 +1,6 @@
 using System.Reflection;
 using Stl.Locking;
 using Stl.Generators;
-using Stl.Locking.Internal;
 using Stl.Testing.Collections;
 
 namespace Stl.Tests.Async;
@@ -11,31 +10,39 @@ public class AsyncLockSetTest(ITestOutputHelper @out) : AsyncLockTestBase(@out)
 {
     protected AsyncLockSet<string> CheckedFailSet { get; } = new(LockReentryMode.CheckedFail);
     protected AsyncLockSet<string> CheckedPassSet { get; } = new(LockReentryMode.CheckedPass);
-    protected AsyncLockSet<string> UncheckedSet { get; } = new(LockReentryMode.Unchecked);
 
-    protected sealed class AsyncSetLock<TKey> : AsyncLock
+    protected sealed class AsyncSetLock<TKey>(AsyncLockSet<TKey> lockSet, TKey key)
+        : IAsyncLock<AsyncSetLock<TKey>.Releaser>
         where TKey : notnull
     {
-        public AsyncLockSet<TKey> LockSet { get; }
-        public TKey Key { get; }
+        public AsyncLockSet<TKey> LockSet { get; } = lockSet;
+        public TKey Key { get; } = key;
 
-        public AsyncSetLock(AsyncLockSet<TKey> lockSet, TKey key)
+        async ValueTask<IAsyncLockReleaser> IAsyncLock.Lock(CancellationToken cancellationToken)
         {
-            LockSet = lockSet;
-            Key = key;
+            var releaser = await LockSet.Lock(Key, cancellationToken).ConfigureAwait(false);
+            return new Releaser(releaser);
         }
 
-        public override ValueTask<AsyncLockReleaser> Lock(CancellationToken cancellationToken = default)
+        public async ValueTask<Releaser> Lock(CancellationToken cancellationToken = default)
         {
-            var task = LockSet.Lock(Key, cancellationToken);
-            return AsyncLockReleaser.NewWhenCompleted(task, this);
+            var releaser = await LockSet.Lock(Key, cancellationToken).ConfigureAwait(false);
+            return new Releaser(releaser);
         }
 
-        public override void Release()
-            => LockSet.Release(Key);
+        // Nested types
+
+        public class Releaser(AsyncLockSet<TKey>.Releaser releaser) : IAsyncLockReleaser
+        {
+            public void MarkLockedLocally()
+                => releaser.MarkLockedLocally();
+
+            public void Dispose()
+                => releaser.Dispose();
+        }
     }
 
-    protected override AsyncLock CreateAsyncLock(LockReentryMode reentryMode)
+    protected override IAsyncLock CreateAsyncLock(LockReentryMode reentryMode)
     {
         var key = RandomStringGenerator.Default.Next();
         switch (reentryMode) {
@@ -43,8 +50,6 @@ public class AsyncLockSetTest(ITestOutputHelper @out) : AsyncLockTestBase(@out)
             return new AsyncSetLock<string>(CheckedFailSet, key);
         case LockReentryMode.CheckedPass:
             return new AsyncSetLock<string>(CheckedPassSet, key);
-        case LockReentryMode.Unchecked:
-            return new AsyncSetLock<string>(UncheckedSet, key);
         default:
             throw new ArgumentOutOfRangeException(nameof(reentryMode), reentryMode, null);
         }
@@ -66,6 +71,5 @@ public class AsyncLockSetTest(ITestOutputHelper @out) : AsyncLockTestBase(@out)
 
         AssertIsEmpty(CheckedFailSet);
         AssertIsEmpty(CheckedPassSet);
-        AssertIsEmpty(UncheckedSet);
     }
 }

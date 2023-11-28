@@ -24,7 +24,7 @@ namespace Stl.Fusion.Tests;
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public abstract class FusionTestBase : RpcTestBase
 {
-    private static readonly ReentrantAsyncLock InitializeLock = new(LockReentryMode.CheckedFail);
+    private static readonly AsyncLock InitializeLock = new(LockReentryMode.CheckedFail);
 
     public FusionTestDbType DbType { get; set; } = TestRunnerInfo.IsBuildAgent()
         ? FusionTestDbType.InMemory
@@ -58,7 +58,8 @@ public abstract class FusionTestBase : RpcTestBase
         if (!IsConsoleApp && !DbType.IsAvailable())
             return;
 
-        using var __ = await InitializeLock.Lock().ConfigureAwait(false);
+        using var releaser = await InitializeLock.Lock().ConfigureAwait(false);
+        releaser.MarkLockedLocally();
 
         for (var i = 0; i < 10 && File.Exists(SqliteDbPath); i++) {
             try {

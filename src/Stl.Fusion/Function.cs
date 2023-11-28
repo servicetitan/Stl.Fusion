@@ -59,12 +59,13 @@ public abstract class FunctionBase<T>(IServiceProvider services) : IFunction<T>
         if (computed.TryUseExisting(context, usedBy))
             return computed!;
 
-        using var _ = await InputLocks.Lock(input, cancellationToken).ConfigureAwait(false);
+        using var releaser = await InputLocks.Lock(input, cancellationToken).ConfigureAwait(false);
 
         computed = GetExisting(input);
         if (computed.TryUseExistingFromLock(context, usedBy))
             return computed!;
 
+        releaser.MarkLockedLocally();
         computed = await Compute(input, computed, cancellationToken).ConfigureAwait(false);
         computed.UseNew(context, usedBy);
         return computed;
@@ -93,12 +94,13 @@ public abstract class FunctionBase<T>(IServiceProvider services) : IFunction<T>
         ComputeContext context,
         CancellationToken cancellationToken = default)
     {
-        using var _ = await InputLocks.Lock(input, cancellationToken).ConfigureAwait(false);
+        using var releaser = await InputLocks.Lock(input, cancellationToken).ConfigureAwait(false);
 
         var computed = GetExisting(input);
         if (computed.TryUseExistingFromLock(context, usedBy))
             return computed.Strip(context);
 
+        releaser.MarkLockedLocally();
         computed = await Compute(input, computed, cancellationToken).ConfigureAwait(false);
         computed.UseNew(context, usedBy);
         return computed.Value;

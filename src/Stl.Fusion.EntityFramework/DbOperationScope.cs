@@ -67,7 +67,7 @@ public class DbOperationScope<
     protected IDbOperationLog<TDbContext> DbOperationLog { get; }
     protected TransactionIdGenerator<TDbContext> TransactionIdGenerator { get; }
     protected MomentClockSet Clocks { get; }
-    protected ReentrantAsyncLock AsyncLock { get; }
+    protected AsyncLock AsyncLock { get; }
     protected ILogger Log { get; }
 
     public DbOperationScope(Options settings, IServiceProvider services)
@@ -80,7 +80,7 @@ public class DbOperationScope<
         DbContextFactory = Services.GetRequiredService<IMultitenantDbContextFactory<TDbContext>>();
         DbOperationLog = Services.GetRequiredService<IDbOperationLog<TDbContext>>();
         TransactionIdGenerator = Services.GetRequiredService<TransactionIdGenerator<TDbContext>>();
-        AsyncLock = new ReentrantAsyncLock(LockReentryMode.CheckedPass);
+        AsyncLock = new AsyncLock(LockReentryMode.CheckedPass);
         Operation = DbOperationLog.New();
         CommandContext = CommandContext.GetCurrent();
     }
@@ -89,7 +89,9 @@ public class DbOperationScope<
     {
         // Intentionally ignore disposing flag here
 
-        using var _ = await AsyncLock.Lock().ConfigureAwait(false);
+        using var releaser = await AsyncLock.Lock().ConfigureAwait(false);
+        releaser.MarkLockedLocally();
+
         try {
             if (IsUsed && !IsClosed)
                 await Rollback().ConfigureAwait(false);
@@ -120,7 +122,9 @@ public class DbOperationScope<
     {
         // This code must run in the same execution context to work, so
         // we run it first
-        using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
+        using var releaser = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
+        releaser.MarkLockedLocally();
+
         Tenant = tenant;
         if (IsClosed)
             throw Stl.Fusion.Operations.Internal.Errors.OperationScopeIsAlreadyClosed();
@@ -147,12 +151,14 @@ public class DbOperationScope<
 
     public virtual async Task Commit(CancellationToken cancellationToken = default)
     {
-        using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
+        using var releaser = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
         if (IsClosed) {
             if (IsConfirmed == true)
                 return;
             throw Stl.Fusion.Operations.Internal.Errors.OperationScopeIsAlreadyClosed();
         }
+
+        releaser.MarkLockedLocally();
         try {
             if (!IsUsed) {
                 IsConfirmed = true;
@@ -205,13 +211,15 @@ public class DbOperationScope<
 
     public virtual async Task Rollback()
     {
-        using var _ = await AsyncLock.Lock().ConfigureAwait(false);
+        using var releaser = await AsyncLock.Lock().ConfigureAwait(false);
         if (IsClosed) {
             if (IsConfirmed == false)
                 return;
 
             throw Stl.Fusion.Operations.Internal.Errors.OperationScopeIsAlreadyClosed();
         }
+
+        releaser.MarkLockedLocally();
         try {
             if (!IsUsed)
                 return;

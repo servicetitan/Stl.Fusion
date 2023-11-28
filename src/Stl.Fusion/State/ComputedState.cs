@@ -89,14 +89,25 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
     protected virtual async Task UpdateCycle()
     {
         var cancellationToken = DisposeToken;
+        try {
+            await Computed.Update(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception e) {
+            if (e.IsCancellationOf(cancellationToken)) {
+                Computed.Invalidate();
+                return;
+            }
+
+            Log.LogError(e, "Failure inside UpdateCycle()");
+        }
+
         while (!cancellationToken.IsCancellationRequested) {
             try {
                 var snapshot = Snapshot;
                 var computed = snapshot.Computed;
                 if (!computed.IsInvalidated())
                     await computed.WhenInvalidated(cancellationToken).ConfigureAwait(false);
-                if (snapshot.UpdateCount != 0)
-                    await UpdateDelayer.Delay(snapshot.RetryCount, cancellationToken).ConfigureAwait(false);
+                await UpdateDelayer.Delay(snapshot.RetryCount, cancellationToken).ConfigureAwait(false);
                 if (!snapshot.WhenUpdated().IsCompleted)
                     await computed.Update(cancellationToken).ConfigureAwait(false);
             }

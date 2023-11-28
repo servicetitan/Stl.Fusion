@@ -61,7 +61,7 @@ public static class StartupHelper
 
     public static void ConfigureSharedServices(IServiceCollection services)
     {
-        IComputedState.DefaultOptions.MustFlowExecutionContext = true;
+        IComputedState.DefaultOptions.MustFlowExecutionContext = true; // To preserve current culture
 
         // Blazorise
         services.AddBlazorise().AddBootstrapProviders().AddFontAwesomeIcons();

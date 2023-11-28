@@ -1,34 +1,34 @@
 using System.Runtime.ExceptionServices;
 using Stl.IO;
-using Stl.Locking.Internal;
 
 namespace Stl.Locking;
 
-public class FileLock : AsyncLock
+public class FileLock(FilePath path, IEnumerable<TimeSpan>? retryIntervals = null)
+    : IAsyncLock<FileLock.Releaser>
 {
     public static readonly IEnumerable<TimeSpan> DefaultRetryIntervals =
         Intervals.Exponential(TimeSpan.FromMilliseconds(50), 1.25, TimeSpan.FromSeconds(1));
 
     private FileStream? _fileStream;
 
-    public FilePath Path { get; }
-    public IEnumerable<TimeSpan> RetryIntervals { get; }
+    public FilePath Path { get; } = path;
+    public IEnumerable<TimeSpan> RetryIntervals { get; } = retryIntervals ?? DefaultRetryIntervals;
 
-    public static ValueTask<AsyncLockReleaser> Lock(FilePath path, CancellationToken cancellationToken = default)
+    public static ValueTask<Releaser> Lock(FilePath path, CancellationToken cancellationToken = default)
         => Lock(path, null, cancellationToken);
-    public static ValueTask<AsyncLockReleaser> Lock(FilePath path, IEnumerable<TimeSpan>? retryIntervals = null, CancellationToken cancellationToken = default)
+    public static ValueTask<Releaser> Lock(FilePath path, IEnumerable<TimeSpan>? retryIntervals = null, CancellationToken cancellationToken = default)
     {
         var fileLock = new FileLock(path, retryIntervals);
         return fileLock.Lock(cancellationToken);
     }
 
-    public FileLock(FilePath path, IEnumerable<TimeSpan>? retryIntervals = null)
+    async ValueTask<IAsyncLockReleaser> IAsyncLock.Lock(CancellationToken cancellationToken)
     {
-        Path = path;
-        RetryIntervals = retryIntervals ?? DefaultRetryIntervals;
+        var releaser = await Lock(cancellationToken).ConfigureAwait(false);
+        return releaser;
     }
 
-    public override async ValueTask<AsyncLockReleaser> Lock(CancellationToken cancellationToken = default)
+    public async ValueTask<Releaser> Lock(CancellationToken cancellationToken = default)
     {
         try {
             if (!File.Exists(Path))
@@ -64,13 +64,21 @@ public class FileLock : AsyncLock
                 .ConfigureAwait(false);
         }
         _fileStream = fs;
-        return new AsyncLockReleaser(this);
+        return new Releaser(this);
     }
 
-    public override void Release()
+    // Nested types
+
+    public readonly struct Releaser(FileLock fileLock) : IAsyncLockReleaser
     {
-        var fs = _fileStream;
-        _fileStream = null;
-        fs?.Dispose();
+        public void MarkLockedLocally()
+        { }
+
+        public void Dispose()
+        {
+            var fs = fileLock._fileStream;
+            fileLock._fileStream = null;
+            fs?.Dispose();
+        }
     }
 }

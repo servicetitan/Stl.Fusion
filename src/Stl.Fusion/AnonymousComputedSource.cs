@@ -20,7 +20,7 @@ public class AnonymousComputedSource<T> : ComputedInput,
     private string? _category;
     private ILogger? _log;
 
-    protected ReentrantAsyncLock AsyncLock { get; }
+    protected AsyncLock AsyncLock { get; }
     protected object Lock => AsyncLock;
     protected ILogger Log => _log ??= Services.LogFor(GetType());
 
@@ -66,7 +66,7 @@ public class AnonymousComputedSource<T> : ComputedInput,
 
         ComputedOptions = ComputedOptions.Default;
         VersionGenerator = services.VersionGenerator<LTag>();
-        AsyncLock = new ReentrantAsyncLock(LockReentryMode.CheckedFail);
+        AsyncLock = new AsyncLock(LockReentryMode.CheckedFail);
         Initialize(this, RuntimeHelpers.GetHashCode(this));
     }
 
@@ -137,12 +137,13 @@ public class AnonymousComputedSource<T> : ComputedInput,
         if (computed.TryUseExisting(context, usedBy))
             return computed!;
 
-        using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
+        using var releaser = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
 
         computed = _computed;
         if (computed.TryUseExistingFromLock(context, usedBy))
             return computed!;
 
+        releaser.MarkLockedLocally();
         computed = await GetComputed(cancellationToken).ConfigureAwait(false);
         computed.UseNew(context, usedBy);
         return computed;
@@ -164,12 +165,13 @@ public class AnonymousComputedSource<T> : ComputedInput,
         IComputed? usedBy, ComputeContext context,
         CancellationToken cancellationToken)
     {
-        using var _ = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
+        using var releaser = await AsyncLock.Lock(cancellationToken).ConfigureAwait(false);
 
         var computed = _computed;
         if (computed.TryUseExistingFromLock(context, usedBy))
             return computed.Strip(context);
 
+        releaser.MarkLockedLocally();
         computed = await GetComputed(cancellationToken).ConfigureAwait(false);
         computed.UseNew(context, usedBy);
         return computed.Value;

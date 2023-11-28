@@ -41,9 +41,4 @@ public class StringKeyValueModelState : ComputedState<KeyValueModel<string>>
             UpdateCount = updateCount + 1,
         };
     }
-
-    protected override Task UpdateCycle()
-    {
-        return base.UpdateCycle();
-    }
 }

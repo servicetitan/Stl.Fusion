@@ -1,5 +1,4 @@
 using Stl.Concurrency;
-using Stl.Locking.Internal;
 using Stl.OS;
 using Stl.Pooling;
 
@@ -7,30 +6,19 @@ namespace Stl.Locking;
 
 #pragma warning disable CA2002
 
-public class AsyncLockSet<TKey>
+public class AsyncLockSet<TKey>(LockReentryMode reentryMode, int concurrencyLevel, int capacity)
     where TKey : notnull
 {
     public static int DefaultConcurrencyLevel => HardwareInfo.GetProcessorCountFactor();
     public static int DefaultCapacity => 31;
 
-    private readonly ConcurrentDictionary<TKey, Entry> _entries;
-    private readonly ConcurrentPool<AsyncLock> _lockPool;
+    private readonly ConcurrentDictionary<TKey, Entry> _entries = new(concurrencyLevel, capacity);
+    private readonly ConcurrentPool<AsyncLock> _lockPool = new(() => new AsyncLock(reentryMode));
 
     public int Count => _entries.Count;
-    public Func<AsyncLock> LockFactory { get; }
 
     public AsyncLockSet(LockReentryMode reentryMode)
-        : this(() => AsyncLock.New(reentryMode)) { }
-    public AsyncLockSet(Func<AsyncLock> lockFactory)
-        : this(lockFactory, DefaultConcurrencyLevel, DefaultCapacity) { }
-    public AsyncLockSet(LockReentryMode reentryMode, int concurrencyLevel, int capacity)
-        : this(() => AsyncLock.New(reentryMode), concurrencyLevel, capacity) { }
-    public AsyncLockSet(Func<AsyncLock> lockFactory, int concurrencyLevel, int capacity)
-    {
-        LockFactory = lockFactory;
-        _entries = new ConcurrentDictionary<TKey, Entry>(concurrencyLevel, capacity);
-        _lockPool = new ConcurrentPool<AsyncLock>(LockFactory);
-    }
+        : this(reentryMode, DefaultConcurrencyLevel, DefaultCapacity) { }
 
     public ValueTask<Releaser> Lock(TKey key, CancellationToken cancellationToken = default)
     {
@@ -47,14 +35,6 @@ public class AsyncLockSet<TKey>
         }
     }
 
-    public void Release(TKey key)
-    {
-        if (!_entries.TryGetValue(key, out var entry) || entry.AsyncLock == null)
-            return;
-
-        entry.EndUseWithLockRelease();
-    }
-
     // Private methods
 
     private (AsyncLock, Entry) PrepareLock(TKey key)
@@ -69,7 +49,7 @@ public class AsyncLockSet<TKey>
         }
     }
 
-    private static async ValueTask<Releaser> ToReleaserTask(Entry entry, ValueTask<AsyncLockReleaser> task)
+    private static async ValueTask<Releaser> ToReleaserTask(Entry entry, ValueTask<AsyncLock.Releaser> task)
     {
         try {
             var releaser = await task.ConfigureAwait(false);
@@ -90,8 +70,6 @@ public class AsyncLockSet<TKey>
         private readonly ResourceLease<AsyncLock> _lease;
         private volatile AsyncLock? _asyncLock;
         private int _useCount;
-
-        public AsyncLock? AsyncLock => _asyncLock;
 
         public Entry(AsyncLockSet<TKey> owner, TKey key)
         {
@@ -125,31 +103,16 @@ public class AsyncLockSet<TKey>
                 _lease.Dispose();
             }
         }
-
-        public void EndUseWithLockRelease()
-        {
-            var mustRelease = false;
-            lock (this) {
-                if (_asyncLock != null) {
-                    _asyncLock.Release();
-                    if (--_useCount == 0) {
-                        _asyncLock = null;
-                        mustRelease = true;
-                    }
-                }
-            }
-            if (mustRelease) {
-                _owner._entries.TryRemove(_key, this);
-                _lease.Dispose();
-            }
-        }
     }
 
     // Nested types
 
-    public readonly struct Releaser(object entry, AsyncLockReleaser releaser) : IDisposable
+    public readonly struct Releaser(object entry, AsyncLock.Releaser releaser) : IAsyncLockReleaser
     {
         private readonly Entry _entry = (Entry)entry;
+
+        public void MarkLockedLocally()
+            => releaser.MarkLockedLocally();
 
         public void Dispose()
         {
