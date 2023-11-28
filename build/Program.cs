@@ -1,18 +1,16 @@
-using System;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Threading;
-using System.Threading.Tasks;
 using Bullseye;
 using CliWrap;
 using CliWrap.Buffered;
+using Stl;
 using Stl.IO;
 using static Bullseye.Targets;
 
 namespace Build;
+
+#pragma warning disable CA1861
 
 // DragonFruit isn't the best option here (e.g. currently it doesn't support aliases),
 // but it does the job.
@@ -274,11 +272,11 @@ internal static class Program
             dotnetExe += ".exe";
 
         var mainModulePath = FilePath.New(Process.GetCurrentProcess().MainModule?.FileName);
-        if (mainModulePath.Value != "" && mainModulePath.FileName.Value.Equals(dotnetExe, StringComparison.OrdinalIgnoreCase))
+        if (!mainModulePath.Value.IsNullOrEmpty() && mainModulePath.FileName.Value.Equals(dotnetExe, StringComparison.OrdinalIgnoreCase))
             return mainModulePath;
 
         var dotnetRoot = FilePath.New(Environment.GetEnvironmentVariable("DOTNET_ROOT"));
-        if (dotnetRoot.Value != "")
+        if (!dotnetRoot.Value.IsNullOrEmpty())
             return dotnetRoot & dotnetExe;
 
         return FindInPath(dotnetExe);

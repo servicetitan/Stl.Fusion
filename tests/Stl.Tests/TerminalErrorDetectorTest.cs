@@ -1,6 +1,6 @@
 namespace Stl.Tests;
 
-public class TerminalErrorDetectorTest(ITestOutputHelper Out)
+public class TerminalErrorDetectorTest
 {
     private TerminalErrorDetector Detector = TerminalError.Detector;
 

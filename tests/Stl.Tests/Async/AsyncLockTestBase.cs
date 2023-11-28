@@ -1,4 +1,5 @@
 using Stl.Locking;
+using Stl.OS;
 using Stl.Testing.Collections;
 
 namespace Stl.Tests.Async;
@@ -117,11 +118,11 @@ public abstract class AsyncLockTestBase(ITestOutputHelper @out) : TestBase(@out)
     [Fact]
     public async Task ConcurrentTest()
     {
-        var r = new Resource(Out, CreateAsyncLock(LockReentryMode.CheckedPass));
+        var r = new Resource(null, CreateAsyncLock(LockReentryMode.CheckedPass));
         var rnd = new Random();
         var tasks = new List<Task>();
 
-        var taskCount = 10; // TestRunnerInfo.IsBuildAgent() ? 2 : HardwareInfo.GetProcessorCountFactor(10);
+        var taskCount = TestRunnerInfo.IsBuildAgent() ? 2 : HardwareInfo.GetProcessorCountFactor(20);
         var maxDelayMs = 100;
         var maxDurationMs = 20;
         var maxDepth = 5;
