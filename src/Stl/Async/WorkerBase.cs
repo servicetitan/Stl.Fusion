@@ -8,7 +8,7 @@ public abstract class WorkerBase(CancellationTokenSource? stopTokenSource = null
 {
     private volatile Task? _whenRunning;
 
-    protected bool MustFlowExecutionContext { get; init; } = false;
+    protected bool FlowExecutionContext { get; init; } = false;
 
     public Task? WhenRunning => _whenRunning;
 
@@ -28,7 +28,7 @@ public abstract class WorkerBase(CancellationTokenSource? stopTokenSource = null
             if (StopToken.IsCancellationRequested)
                 throw Errors.AlreadyStopped();
 
-            using var _ = MustFlowExecutionContext ? default : ExecutionContextExt.TrySuppressFlow();
+            using var _ = FlowExecutionContext ? default : ExecutionContextExt.TrySuppressFlow();
             Task onStartTask;
             try {
                 onStartTask = OnStart(StopToken);

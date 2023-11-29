@@ -76,7 +76,7 @@ public class AuthStateProvider : AuthenticationStateProvider, IDisposable
             InitialValue = new(),
             UpdateDelayer = settings.UpdateDelayer,
             EventConfigurator = state => state.AddEventHandler(StateEventKind.Updated, OnStateChanged),
-            MustFlowExecutionContext = true, // To preserve current culture
+            FlowExecutionContext = true, // To preserve current culture
         };
 
     protected virtual async Task<AuthState> ComputeState(IComputedState<AuthState> state, CancellationToken cancellationToken)

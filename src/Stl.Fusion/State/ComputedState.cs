@@ -4,13 +4,15 @@ public interface IComputedState : IState, IDisposable, IHasWhenDisposed
 {
     public static class DefaultOptions
     {
-        public static bool MustFlowExecutionContext { get; set; } = false;
+        public static bool TryComputeSynchronously { get; set; } = true;
+        public static bool FlowExecutionContext { get; set; } = false;
     }
 
     public new interface IOptions : IState.IOptions
     {
         IUpdateDelayer? UpdateDelayer { get; init; }
-        public bool MustFlowExecutionContext { get; init; }
+        public bool TryComputeSynchronously { get; init; }
+        public bool FlowExecutionContext { get; init; }
     }
 
     IUpdateDelayer UpdateDelayer { get; set; }
@@ -25,7 +27,8 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
     public new record Options : State<T>.Options, IComputedState.IOptions
     {
         public IUpdateDelayer? UpdateDelayer { get; init; }
-        public bool MustFlowExecutionContext { get; init; } = IComputedState.DefaultOptions.MustFlowExecutionContext;
+        public bool TryComputeSynchronously { get; init; } = IComputedState.DefaultOptions.TryComputeSynchronously;
+        public bool FlowExecutionContext { get; init; } = IComputedState.DefaultOptions.FlowExecutionContext;
     }
 
     private volatile Computed<T>? _computingComputed;
@@ -62,10 +65,16 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
 
         // Ideally we want to suppress execution context flow here,
         // because the Update is ~ a worker-style task.
-        if (computedStateOptions.MustFlowExecutionContext)
-            UpdateCycleTask = UpdateCycle();
-        else
-            UpdateCycleTask = ExecutionContextExt.Start(ExecutionContextExt.Default, UpdateCycle);
+        if (computedStateOptions.TryComputeSynchronously)
+            UpdateCycleTask = computedStateOptions.FlowExecutionContext
+                ? UpdateCycle()
+                : ExecutionContextExt.Start(ExecutionContextExt.Default, UpdateCycle);
+        else if (computedStateOptions.FlowExecutionContext)
+            UpdateCycleTask = Task.Run(UpdateCycle, DisposeToken);
+        else {
+            using var _ = ExecutionContextExt.TrySuppressFlow();
+            UpdateCycleTask = Task.Run(UpdateCycle, DisposeToken);
+        }
     }
 
     // ~ComputedState() => Dispose();
