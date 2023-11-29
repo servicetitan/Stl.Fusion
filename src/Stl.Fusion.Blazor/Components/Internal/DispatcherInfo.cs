@@ -7,15 +7,15 @@ public static class DispatcherInfo
     // MAUI's Blazor doesn't flow ExecutionContext into InvokeAsync,
     // so we must detect & flow it in case it doesn't flow, otherwise
     // Computed.Current won't be available there.
-    private static volatile int _executionContextFlowState;
+    private static volatile int _executionContextFlow;
 
-    public static bool FlowsExecutionContext(ComponentBase anyComponent)
+    public static bool IsExecutionContextFlowSupported(ComponentBase anyComponent)
     {
-        var flowState = (ExecutionContextFlowState)_executionContextFlowState;
-        switch (flowState) {
-        case ExecutionContextFlowState.Enabled:
+        var executionContextFlow = (ExecutionContextFlow)_executionContextFlow;
+        switch (executionContextFlow) {
+        case ExecutionContextFlow.Supported:
             return true;
-        case ExecutionContextFlowState.Disabled:
+        case ExecutionContextFlow.Unsupported:
             return false;
         }
 
@@ -24,18 +24,20 @@ public static class DispatcherInfo
 
         // NullRendered is used in WASM,
         // RendererSynchronizationContextDispatcher is used in Blazor Server
-        var doesFlow = dispatcherTypeName is "NullDispatcher" or "RendererSynchronizationContextDispatcher";
-        flowState = doesFlow ? ExecutionContextFlowState.Enabled : ExecutionContextFlowState.Disabled;
-        Interlocked.Exchange(ref _executionContextFlowState, (int) flowState);
-        return doesFlow;
+        var isFlowSupported = dispatcherTypeName is "NullDispatcher" or "RendererSynchronizationContextDispatcher";
+        executionContextFlow = isFlowSupported
+            ? ExecutionContextFlow.Supported
+            : ExecutionContextFlow.Unsupported;
+        Interlocked.Exchange(ref _executionContextFlow, (int)executionContextFlow);
+        return isFlowSupported;
     }
 
     // Nested types
 
-    private enum ExecutionContextFlowState
+    private enum ExecutionContextFlow
     {
         Unknown = 0,
-        Enabled,
-        Disabled,
+        Supported,
+        Unsupported,
     }
 }

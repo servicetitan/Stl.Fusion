@@ -1,26 +1,62 @@
+#if !NET8_0_OR_GREATER
 using System.Reflection.Emit;
+#else
+using Microsoft.AspNetCore.Components.Rendering;
+#endif
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.RenderTree;
-using Stl.OS;
 
 namespace Stl.Fusion.Blazor;
 
 public static class ComponentExt
 {
-    internal static readonly Action<ComponentBase> StateHasChangedInvoker;
-    private static readonly Func<ComponentBase, bool> IsInitializedGetter;
-    private static readonly Func<ComponentBase, RenderHandle> RenderHandleGetter;
-    private static readonly Func<RenderHandle, object?> GetOptionalComponentStateGetter;
+#if NET8_0_OR_GREATER
+    [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "StateHasChanged")]
+    private static extern void StateHasChangedInvoker(ComponentBase @this);
+    [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_renderHandle")]
+    private static extern ref RenderHandle RenderHandleGetter(ComponentBase @this);
+    [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_initialized")]
+    private static extern ref bool IsInitializedGetter(ComponentBase @this);
+    [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "_renderer")]
+    private static extern ref Renderer? RendererGetter(RenderHandle @this);
+    [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "_componentId")]
+    private static extern ref int ComponentIdGetter(RenderHandle @this);
+    [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "GetOptionalComponentState")]
+    private static extern ref ComponentState? GetOptionalComponentStateGetter(Renderer @this, int componentId);
 
+    private static ComponentState? GetOptionalComponentStateGetter(RenderHandle renderHandle)
+    {
+        var renderer = RendererGetter(renderHandle);
+        if (renderer == null)
+            return null;
+
+        var componentId = ComponentIdGetter(renderHandle);
+        return GetOptionalComponentStateGetter(renderer, componentId);
+    }
+#else
+    internal static readonly Action<ComponentBase> StateHasChangedInvoker;
+    private static readonly Func<ComponentBase, RenderHandle> RenderHandleGetter;
+    private static readonly Func<ComponentBase, bool> IsInitializedGetter;
+    private static readonly Func<RenderHandle, object?> GetOptionalComponentStateGetter;
+#endif
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ComponentInfo GetComponentInfo(this ComponentBase component)
         => ComponentInfo.Get(component.GetType());
-    public static Dispatcher GetDispatcher(this ComponentBase component)
-        => RenderHandleGetter.Invoke(component).Dispatcher;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Dispatcher GetDispatcher(this ComponentBase component)
+        => RenderHandleGetter(component).Dispatcher;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool IsInitialized(this ComponentBase component)
-        => IsInitializedGetter.Invoke(component);
+        => IsInitializedGetter(component);
+
     public static bool IsDisposed(this ComponentBase component)
-        => RenderHandleGetter.Invoke(component).IsDisposed();
+    {
+        var renderHandle = RenderHandleGetter(component);
+        return GetOptionalComponentStateGetter(renderHandle) == null;
+    }
 
     /// <summary>
     /// Calls <see cref="ComponentBase.StateHasChanged"/> in the Blazor synchronization context
@@ -34,11 +70,11 @@ public static class ComponentExt
 #pragma warning disable IL2026
             if (dispatcher.IsNullDispatcher())
 #pragma warning restore IL2026
-                StateHasChangedInvoker.Invoke(component);
+                StateHasChangedInvoker(component);
             else if (component is FusionComponentBase fc)
                 _ = dispatcher.InvokeAsync(fc.StateHasChangedInvoker);
             else
-                _ = dispatcher.InvokeAsync(() => StateHasChangedInvoker.Invoke(component));
+                _ = dispatcher.InvokeAsync(() => StateHasChangedInvoker(component));
         }
         catch (ObjectDisposedException) {
             // Intended
@@ -51,12 +87,7 @@ public static class ComponentExt
         return componentInfo.ShouldSetParameters(component, parameterView) || !component.IsInitialized();
     }
 
-    // Internal and private methods
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static bool IsDisposed(this RenderHandle renderHandle)
-        => GetOptionalComponentStateGetter.Invoke(renderHandle) == null;
-
+#if !NET8_0_OR_GREATER
     static ComponentExt()
     {
         var bfInstanceNonPublic = BindingFlags.Instance | BindingFlags.NonPublic;
@@ -84,4 +115,5 @@ public static class ComponentExt
         il.Emit(OpCodes.Ret);
         GetOptionalComponentStateGetter = (Func<RenderHandle, object?>)m.CreateDelegate(typeof(Func<RenderHandle, object?>));
     }
+#endif
 }

@@ -106,8 +106,8 @@ public class Startup(IConfiguration cfg, IWebHostEnvironment environment)
         // Fusion services
         var fusion = services.AddFusion(RpcServiceMode.Server, true);
         var fusionServer = fusion.AddWebServer();
-#if true
-        // Enable this to test how client behaves w/ a delay
+#if false
+        // Enable this to test how the client behaves w/ a delay
         fusion.Rpc.AddInboundMiddleware(c => new RpcRandomDelayMiddleware(c) {
             Delay = new(0.1, 0.05),
         });
@@ -184,7 +184,9 @@ public class Startup(IConfiguration cfg, IWebHostEnvironment environment)
             o.DisconnectedCircuitRetentionPeriod = TimeSpan.FromSeconds(30);
         });
         services.AddRazorPages();
+#if NET8_0_OR_GREATER
         services.AddRazorComponents();
+#endif
         fusion.AddBlazor().AddAuthentication().AddPresenceReporter(); // Must follow services.AddServerSideBlazor()!
     }
 

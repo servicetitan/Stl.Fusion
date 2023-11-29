@@ -50,9 +50,9 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
         Func<IComputedState<TState>, CancellationToken, Task<TState>> computeState =
             (Options & ComputedStateComponentOptions.SynchronizeComputeState) == 0
                 ? UnsynchronizedComputeState
-                : DispatcherInfo.FlowsExecutionContext(this)
+                : DispatcherInfo.IsExecutionContextFlowSupported(this)
                     ? SynchronizedComputeState
-                    : SynchronizedComputeStateWithExecutionContextFlow;
+                    : SynchronizedComputeStateWithManualExecutionContextFlow;
         return StateFactory.NewComputed(GetStateOptions(), computeState);
 
         Task<TState> UnsynchronizedComputeState(
@@ -61,68 +61,16 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
 
         Task<TState> SynchronizedComputeState(
             IComputedState<TState> state, CancellationToken cancellationToken)
-        {
-            var tcs = TaskCompletionSourceExt.New<TState>();
-            _ = InvokeAsync(() => {
-                try {
-                    var computeStateTask = ComputeState(cancellationToken);
-                    _ = tcs.TrySetFromTaskAsync(computeStateTask, cancellationToken);
-                }
-                catch (OperationCanceledException oce) {
-                    if (cancellationToken.IsCancellationRequested)
-                        tcs.TrySetCanceled(cancellationToken);
-                    else
-                        tcs.TrySetCanceled(oce.CancellationToken);
-                }
-                catch (Exception e) {
-                    tcs.TrySetException(e);
-                }
-            });
-            return tcs.Task;
-        }
+            => this.GetDispatcher().InvokeAsync(() => ComputeState(cancellationToken));
 
-        Task<TState> SynchronizedComputeStateWithExecutionContextFlow(
+        Task<TState> SynchronizedComputeStateWithManualExecutionContextFlow(
             IComputedState<TState> state, CancellationToken cancellationToken)
         {
-            var tcs = TaskCompletionSourceExt.New<TState>();
             var executionContext = ExecutionContext.Capture();
-            if (executionContext == null) {
-                // Nothing to restore
-                _ = InvokeAsync(() => {
-                    try {
-                        var computeStateTask = ComputeState(cancellationToken);
-                        _ = tcs.TrySetFromTaskAsync(computeStateTask, cancellationToken);
-                    }
-                    catch (OperationCanceledException oce) {
-                        tcs.TrySetCanceled(cancellationToken.IsCancellationRequested
-                            ? cancellationToken
-                            : oce.CancellationToken);
-                    }
-                    catch (Exception e) {
-                        tcs.TrySetException(e);
-                    }
-                });
-            }
-            else {
-                _ = InvokeAsync(() => {
-                    ExecutionContext.Run(executionContext, _1 => {
-                        try {
-                            var computeStateTask = ComputeState(cancellationToken);
-                            _ = tcs.TrySetFromTaskAsync(computeStateTask, cancellationToken);
-                        }
-                        catch (OperationCanceledException oce) {
-                            tcs.TrySetCanceled(cancellationToken.IsCancellationRequested
-                                ? cancellationToken
-                                : oce.CancellationToken);
-                        }
-                        catch (Exception e) {
-                            tcs.TrySetException(e);
-                        }
-                    }, null);
-                    return tcs.Task;
-                });
-            }
-            return tcs.Task;
+            var taskFactory = () => ComputeState(cancellationToken);
+            return executionContext == null
+                ? this.GetDispatcher().InvokeAsync(taskFactory)
+                : this.GetDispatcher().InvokeAsync(() => ExecutionContextExt.Start(executionContext, taskFactory));
         }
     }
 

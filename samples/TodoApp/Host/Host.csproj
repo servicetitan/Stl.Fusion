@@ -17,6 +17,16 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
+    <PackageReference Include="AspNet.Security.OAuth.GitHub" VersionOverride="$(AspNetCoreVersion7)" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" VersionOverride="$(AspNetCoreVersion7)" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount" VersionOverride="$(AspNetCoreVersion7)" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" VersionOverride="$(BlazorVersion7)" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" VersionOverride="$(AspNetCoreVersion7)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" VersionOverride="$(EntityFrameworkCoreVersion7)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" VersionOverride="$(EntityFrameworkCoreVersion7)" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" VersionOverride="$(EntityFrameworkCoreNpgsqlVersion7)" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Stl.Fusion.EntityFramework.Redis\Stl.Fusion.EntityFramework.Redis.csproj" />

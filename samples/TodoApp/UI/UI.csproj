@@ -39,6 +39,10 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" />
     <PackageReference Include="UAParser" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net7.0'">
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" VersionOverride="$(BlazorVersion7)" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all" VersionOverride="$(BlazorVersion7)" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Stl.Fusion.Blazor\Stl.Fusion.Blazor.csproj" />

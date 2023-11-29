@@ -12,7 +12,7 @@ public class ComponentFor : ComponentBase
     /// The type of component to render.
     /// </summary>
     [Parameter]
-    public Type? Type { get; set; } = null;
+    public Type? Type { get; set; }
 
     /// <summary>
     /// The parameters of the component to set.
