@@ -1,9 +1,6 @@
-#if !NET8_0_OR_GREATER
 using System.Reflection.Emit;
-#else
-using Microsoft.AspNetCore.Components.Rendering;
-#endif
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.RenderTree;
 
 namespace Stl.Fusion.Blazor;
@@ -87,7 +84,7 @@ public static class ComponentExt
         return componentInfo.ShouldSetParameters(component, parameterView) || !component.IsInitialized();
     }
 
-#if USE_UNSAFE_ACCESSORS && NET8_0_OR_GREATER
+#if !(USE_UNSAFE_ACCESSORS && NET8_0_OR_GREATER)
     static ComponentExt()
     {
         var bfInstanceNonPublic = BindingFlags.Instance | BindingFlags.NonPublic;
