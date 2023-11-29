@@ -2,24 +2,27 @@ namespace Stl.Async;
 
 public static class ExecutionContextExt
 {
-    public static readonly ExecutionContext Default;
-
+    private const string DefaultFieldName
+#if NETSTANDARD2_0 || NETSTANDARD2_1
+        = "s_dummyDefaultEC";
+#else
+        = "Default";
+#endif
     [ThreadStatic] private static Func<Task>? _taskFactory0;
     [ThreadStatic] private static Func<object?, Task>? _taskFactory1;
     [ThreadStatic] private static Task? _task;
 
-    static ExecutionContextExt()
-    {
-        var tContext = typeof(ExecutionContext);
-#if NETSTANDARD2_0 || NETSTANDARD2_1
-        const string fDefaultName = "s_dummyDefaultEC";
+    public static readonly ExecutionContext Default
+#if NET8_0_OR_GREATER
+        = DefaultGetter(null!);
+
+    [UnsafeAccessor(UnsafeAccessorKind.StaticField, Name = DefaultFieldName)]
+    private static extern ref ExecutionContext DefaultGetter(ExecutionContext @this);
 #else
-        const string fDefaultName = "Default";
-#endif
-        Default = (ExecutionContext)tContext
-            .GetField(fDefaultName, BindingFlags.Static | BindingFlags.NonPublic)!
+        = (ExecutionContext)typeof(ExecutionContext)
+            .GetField(DefaultFieldName, BindingFlags.Static | BindingFlags.NonPublic)!
             .GetValue(null)!;
-    }
+#endif
 
 #if NET8_0_OR_GREATER
     public static AsyncFlowControl TrySuppressFlow()

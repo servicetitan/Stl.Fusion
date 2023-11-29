@@ -18,11 +18,11 @@ public static class ComponentExt
     [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_initialized")]
     private static extern ref bool IsInitializedGetter(ComponentBase @this);
     [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "_renderer")]
-    private static extern ref Renderer? RendererGetter(RenderHandle @this);
+    private static extern Renderer? RendererGetter(RenderHandle @this);
     [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "_componentId")]
-    private static extern ref int ComponentIdGetter(RenderHandle @this);
+    private static extern int ComponentIdGetter(RenderHandle @this);
     [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "GetOptionalComponentState")]
-    private static extern ref ComponentState? GetOptionalComponentStateGetter(Renderer @this, int componentId);
+    private static extern ComponentState? GetOptionalComponentStateGetter(Renderer @this, int componentId);
 
     private static ComponentState? GetOptionalComponentStateGetter(RenderHandle renderHandle)
     {
