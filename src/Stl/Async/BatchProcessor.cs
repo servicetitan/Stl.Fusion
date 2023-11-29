@@ -48,17 +48,23 @@ public class BatchProcessor<T, TResult>(Channel<BatchProcessor<T, TResult>.Item>
             : Task.CompletedTask;
     }
 
+    public ValueTask Start()
+    {
+        var minWorkerCount = WorkerPolicy.MinWorkerCount;
+        lock (Lock) {
+            if (PlannedWorkerCount != 0 || StopToken.IsCancellationRequested)
+                return default;
+
+            if (minWorkerCount < 1)
+                throw Errors.InternalError("WorkerPolicy.MinWorkerCount < 1");
+        }
+        return AddOrRemoveWorkers(minWorkerCount);
+    }
+
     public Task<TResult> Process(T input, CancellationToken cancellationToken = default)
     {
-        if (PlannedWorkerCount == 0) {
-            lock (Lock)
-                if (PlannedWorkerCount == 0 && !StopToken.IsCancellationRequested) {
-                    var minWorkerCount = WorkerPolicy.MinWorkerCount;
-                    if (minWorkerCount < 1)
-                        throw Errors.InternalError("WorkerPolicy.MinWorkerCount < 1");
-                    _ = AddOrRemoveWorkers(WorkerPolicy.MinWorkerCount);
-                }
-        }
+        if (PlannedWorkerCount == 0)
+            _ = Start();
 
         var item = new Item(input, cancellationToken);
         return Queue.Writer.TryWrite(item)
