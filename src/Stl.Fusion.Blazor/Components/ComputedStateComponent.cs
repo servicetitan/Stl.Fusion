@@ -47,13 +47,14 @@ public abstract class ComputedStateComponent<TState> : StatefulComponentBase<ICo
     {
         // Synchronizes ComputeState call as per:
         // https://github.com/servicetitan/Stl.Fusion/issues/202
+        var stateOptions = GetStateOptions();
         Func<IComputedState<TState>, CancellationToken, Task<TState>> computeState =
             (Options & ComputedStateComponentOptions.SynchronizeComputeState) == 0
                 ? UnsynchronizedComputeState
-                : DispatcherInfo.IsExecutionContextFlowSupported(this)
+                : stateOptions.FlowExecutionContext && DispatcherInfo.IsExecutionContextFlowSupported(this)
                     ? SynchronizedComputeState
                     : SynchronizedComputeStateWithManualExecutionContextFlow;
-        return StateFactory.NewComputed(GetStateOptions(), computeState);
+        return StateFactory.NewComputed(stateOptions, computeState);
 
         Task<TState> UnsynchronizedComputeState(
             IComputedState<TState> state, CancellationToken cancellationToken)
