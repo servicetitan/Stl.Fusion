@@ -87,7 +87,7 @@ public static class ComponentExt
         return componentInfo.ShouldSetParameters(component, parameterView) || !component.IsInitialized();
     }
 
-#if !NET8_0_OR_GREATER
+#if USE_UNSAFE_ACCESSORS && NET8_0_OR_GREATER
     static ComponentExt()
     {
         var bfInstanceNonPublic = BindingFlags.Instance | BindingFlags.NonPublic;
