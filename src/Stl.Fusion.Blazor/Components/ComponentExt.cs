@@ -10,17 +10,17 @@ namespace Stl.Fusion.Blazor;
 
 public static class ComponentExt
 {
-#if NET8_0_OR_GREATER
-    [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "StateHasChanged")]
-    private static extern void StateHasChangedInvoker(ComponentBase @this);
+#if USE_UNSAFE_ACCESSORS && NET8_0_OR_GREATER
     [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_renderHandle")]
     private static extern ref RenderHandle RenderHandleGetter(ComponentBase @this);
     [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_initialized")]
     private static extern ref bool IsInitializedGetter(ComponentBase @this);
-    [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "_renderer")]
-    private static extern Renderer? RendererGetter(RenderHandle @this);
-    [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "_componentId")]
-    private static extern int ComponentIdGetter(RenderHandle @this);
+    [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_renderer")]
+    private static extern ref Renderer? RendererGetter(RenderHandle @this);
+    [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_componentId")]
+    private static extern ref int ComponentIdGetter(RenderHandle @this);
+    [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "StateHasChanged")]
+    private static extern void StateHasChangedInvoker(ComponentBase @this);
     [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "GetOptionalComponentState")]
     private static extern ComponentState? GetOptionalComponentStateGetter(Renderer @this, int componentId);
 
@@ -34,9 +34,9 @@ public static class ComponentExt
         return GetOptionalComponentStateGetter(renderer, componentId);
     }
 #else
-    internal static readonly Action<ComponentBase> StateHasChangedInvoker;
     private static readonly Func<ComponentBase, RenderHandle> RenderHandleGetter;
     private static readonly Func<ComponentBase, bool> IsInitializedGetter;
+    private static readonly Action<ComponentBase> StateHasChangedInvoker;
     private static readonly Func<RenderHandle, object?> GetOptionalComponentStateGetter;
 #endif
 

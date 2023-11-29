@@ -13,7 +13,7 @@ public static class ExecutionContextExt
     [ThreadStatic] private static Task? _task;
 
     public static readonly ExecutionContext Default
-#if NET8_0_OR_GREATER
+#if USE_UNSAFE_ACCESSORS && NET8_0_OR_GREATER
         = DefaultGetter(null!);
 
     [UnsafeAccessor(UnsafeAccessorKind.StaticField, Name = DefaultFieldName)]

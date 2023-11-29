@@ -2,7 +2,7 @@ namespace Stl.Async;
 
 public static class CancellationTokenSourceExt
 {
-#if NET8_0_OR_GREATER
+#if USE_UNSAFE_ACCESSORS && NET8_0_OR_GREATER
     [UnsafeAccessor(UnsafeAccessorKind.Field, Name = "_disposed")]
     private static extern ref bool IsDisposedGetter(CancellationTokenSource @this);
 #else

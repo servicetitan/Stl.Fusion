@@ -11,6 +11,11 @@
     <DefineConstants Condition="'$(PUBLIC_BUILD)' != ''">$(DefineConstants);SIGN_ASSEMBLIES</DefineConstants>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <UseUnsafeAccessors Condition="'$(UseUnsafeAccessors)' == ''">true</UseUnsafeAccessors>
+    <DefineConstants Condition="$(UseUnsafeAccessors)">$(DefineConstants);USE_UNSAFE_ACCESSORS</DefineConstants>
+  </PropertyGroup>
+
   <!-- Suppressed warnings -->
   <PropertyGroup>
     <!-- [MA0009] Regular expressions should not be vulnerable to Denial of Service attacks -->
