@@ -2,25 +2,29 @@ using Stl.Internal;
 
 namespace Stl.Locking;
 
-public sealed class AsyncLock(LockReentryMode reentryMode)
+public sealed class AsyncLock(LockReentryMode reentryMode = LockReentryMode.Unchecked)
     : IAsyncLock<AsyncLock.Releaser>
 {
-    private readonly AsyncLocal<LockedTag?> _isLockedLocally = new();
-    private volatile TaskCompletionSource<Unit>? _whenReleasedSource;
+    private readonly AsyncLocal<LockedTag?>? _isLockedLocally
+        = reentryMode == LockReentryMode.Unchecked ? null : new AsyncLocal<LockedTag?>();
+    private readonly SemaphoreSlim _semaphore = new(1, 1);
 
     public LockReentryMode ReentryMode { get; } = reentryMode;
 
     public bool IsLockedLocally {
-        get => _isLockedLocally.Value != null;
-        set => _isLockedLocally.Value = value ? LockedTag.Instance : null;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        get => _isLockedLocally?.Value != null;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        set {
+            if (_isLockedLocally == null)
+                return;
+
+            _isLockedLocally.Value = value ? LockedTag.Instance : null;
+        }
     }
 
     async ValueTask<IAsyncLockReleaser> IAsyncLock.Lock(CancellationToken cancellationToken)
-    {
-        var releaser = await Lock(cancellationToken).ConfigureAwait(false);
-        return releaser;
-    }
-
+        => await Lock(cancellationToken).ConfigureAwait(false);
     public ValueTask<Releaser> Lock(CancellationToken cancellationToken = default)
     {
         if (IsLockedLocally)
@@ -28,33 +32,8 @@ public sealed class AsyncLock(LockReentryMode reentryMode)
                 ? throw Errors.AlreadyLocked()
                 : default;
 
-        Task<Unit>? whenReleased;
-        lock (_isLockedLocally) {
-            whenReleased = _whenReleasedSource?.Task;
-            if (whenReleased == null || whenReleased.IsCompleted) {
-                _whenReleasedSource = new();
-                return new ValueTask<Releaser>(new Releaser(this));
-            }
-        }
-        return LockAsync(whenReleased, cancellationToken).ToValueTask();
-    }
-
-    // Private methods
-
-    private async Task<Releaser> LockAsync(Task<Unit>? whenReleased, CancellationToken cancellationToken)
-    {
-        if (whenReleased != null)
-            await whenReleased.WaitAsync(cancellationToken).ConfigureAwait(false);
-        while (true) {
-            lock (_isLockedLocally) {
-                whenReleased = _whenReleasedSource?.Task;
-                if (whenReleased == null || whenReleased.IsCompleted) {
-                    _whenReleasedSource = new();
-                    return new Releaser(this);
-                }
-            }
-            await whenReleased.WaitAsync(cancellationToken).ConfigureAwait(false);
-        }
+        var task = _semaphore.WaitAsync(cancellationToken);
+        return Releaser.NewWhenCompleted(task, this);
     }
 
     // Nested types
@@ -68,6 +47,19 @@ public sealed class AsyncLock(LockReentryMode reentryMode)
 
     public readonly struct Releaser(AsyncLock? asyncLock) : IAsyncLockReleaser
     {
+        internal static ValueTask<Releaser> NewWhenCompleted(Task task, AsyncLock asyncLock)
+        {
+            return task.IsCompletedSuccessfully()
+                ? ValueTaskExt.FromResult(new Releaser(asyncLock))
+                : CompleteAsynchronously(task, asyncLock);
+
+            static async ValueTask<Releaser> CompleteAsynchronously(Task task1, AsyncLock asyncLock1)
+            {
+                await task1.ConfigureAwait(false);
+                return new Releaser(asyncLock1);
+            }
+        }
+
         public void MarkLockedLocally()
         {
             if (asyncLock == null)
@@ -81,9 +73,8 @@ public sealed class AsyncLock(LockReentryMode reentryMode)
             if (asyncLock == null)
                 return;
 
-            asyncLock._isLockedLocally.Value = null;
-            // ReSharper disable once InconsistentlySynchronizedField
-            asyncLock._whenReleasedSource?.TrySetResult(default);
+            asyncLock.IsLockedLocally = false;
+            asyncLock._semaphore.Release();
         }
     }
 }

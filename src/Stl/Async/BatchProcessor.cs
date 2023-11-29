@@ -158,7 +158,7 @@ public class BatchProcessor<T, TResult>(Channel<BatchProcessor<T, TResult>.Item>
         }
         else { // workerDelta > 0 -> add workers
             int workerCount;
-            using var flowSuppressor = ExecutionContextExt.SuppressFlow();
+            using var flowSuppressor = ExecutionContextExt.TrySuppressFlow();
             lock (Lock) {
                 WorkerCollectorTask ??= Task.Run(RunWorkerCollector, CancellationToken.None);
                 for (; delta > 0; delta--) {

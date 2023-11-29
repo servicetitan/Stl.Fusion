@@ -15,9 +15,10 @@ public class AsyncLockSet<TKey>(LockReentryMode reentryMode, int concurrencyLeve
     private readonly ConcurrentDictionary<TKey, Entry> _entries = new(concurrencyLevel, capacity);
     private readonly ConcurrentPool<AsyncLock> _lockPool = new(() => new AsyncLock(reentryMode));
 
+    public LockReentryMode ReentryMode { get; } = reentryMode;
     public int Count => _entries.Count;
 
-    public AsyncLockSet(LockReentryMode reentryMode)
+    public AsyncLockSet(LockReentryMode reentryMode = LockReentryMode.Unchecked)
         : this(reentryMode, DefaultConcurrencyLevel, DefaultCapacity) { }
 
     public ValueTask<Releaser> Lock(TKey key, CancellationToken cancellationToken = default)

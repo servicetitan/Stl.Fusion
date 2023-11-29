@@ -18,6 +18,8 @@ public class AsyncLockSetTest(ITestOutputHelper @out) : AsyncLockTestBase(@out)
         public AsyncLockSet<TKey> LockSet { get; } = lockSet;
         public TKey Key { get; } = key;
 
+        public LockReentryMode ReentryMode => LockSet.ReentryMode;
+
         async ValueTask<IAsyncLockReleaser> IAsyncLock.Lock(CancellationToken cancellationToken)
         {
             var releaser = await LockSet.Lock(Key, cancellationToken).ConfigureAwait(false);

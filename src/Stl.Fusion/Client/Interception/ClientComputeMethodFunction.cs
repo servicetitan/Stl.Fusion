@@ -87,16 +87,19 @@ public class ClientComputeMethodFunction<T>(
             input, cacheResult.Value, VersionGenerator.NextVersion(),
             cacheEntry);
 
-        // SuppressFlow here ensures that "true" computed won't be registered as a dependency -
+        // We suppress execution context flow here to ensure that
+        // "true" computed won't be registered as a dependency -
         // which is correct, coz its cached version already became a dependency, and once
         // the true computed is created, its cached (prev.) version will be invalidated.
-        // NOTE(AY): We can't use cancellationToken from here:
+        //
+        // And we can't use cancellationToken from here:
         // - We're completing the computation w/ cached value here
         // - But the code below starts the async task running the actual RPC call
         // - And if this task gets cancelled, the subscription to invalidation won't be set up,
         //   and thus the result may end up being stale forever.
-        using var suppressFlow = ExecutionContextExt.SuppressFlow();
-        _ = Task.Run(() => ApplyRpcUpdate(input, cache, cachedComputed), default);
+        _ = ExecutionContextExt.Start(
+            ExecutionContextExt.Default,
+            () => ApplyRpcUpdate(input, cache, cachedComputed));
         return cachedComputed;
     }
 

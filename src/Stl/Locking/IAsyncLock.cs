@@ -2,6 +2,7 @@ namespace Stl.Locking;
 
 public interface IAsyncLock
 {
+    LockReentryMode ReentryMode { get; }
     ValueTask<IAsyncLockReleaser> Lock(CancellationToken cancellationToken = default);
 }
 

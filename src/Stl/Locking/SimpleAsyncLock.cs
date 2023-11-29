@@ -4,12 +4,10 @@ public sealed class SimpleAsyncLock : IAsyncLock<SimpleAsyncLock.Releaser>
 {
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
-    async ValueTask<IAsyncLockReleaser> IAsyncLock.Lock(CancellationToken cancellationToken)
-    {
-        var releaser = await Lock(cancellationToken).ConfigureAwait(false);
-        return releaser;
-    }
+    public LockReentryMode ReentryMode => LockReentryMode.Unchecked;
 
+    async ValueTask<IAsyncLockReleaser> IAsyncLock.Lock(CancellationToken cancellationToken)
+        => await Lock(cancellationToken).ConfigureAwait(false);
     public ValueTask<Releaser> Lock(CancellationToken cancellationToken = default)
     {
         var task = _semaphore.WaitAsync(cancellationToken);
@@ -20,7 +18,7 @@ public sealed class SimpleAsyncLock : IAsyncLock<SimpleAsyncLock.Releaser>
 
     public readonly struct Releaser(SimpleAsyncLock asyncLock) : IAsyncLockReleaser
     {
-        public static ValueTask<Releaser> NewWhenCompleted(Task task, SimpleAsyncLock asyncLock)
+        internal static ValueTask<Releaser> NewWhenCompleted(Task task, SimpleAsyncLock asyncLock)
         {
             return task.IsCompletedSuccessfully()
                 ? ValueTaskExt.FromResult(new Releaser(asyncLock))

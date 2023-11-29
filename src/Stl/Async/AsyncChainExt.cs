@@ -22,7 +22,7 @@ public static class AsyncChainExt
         CancellationToken cancellationToken = default)
     {
         var tasks = new List<Task>();
-        using (isolate ? ExecutionContextExt.SuppressFlow() : default)
+        using (isolate ? ExecutionContextExt.TrySuppressFlow() : default)
             foreach (var chain in chains)
                 tasks.Add(chain.Run(cancellationToken));
         return Task.WhenAll(tasks);

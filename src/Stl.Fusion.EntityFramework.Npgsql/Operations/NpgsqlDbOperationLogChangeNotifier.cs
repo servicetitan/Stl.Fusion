@@ -53,7 +53,7 @@ public class NpgsqlDbOperationLogChangeNotifier<
             .Replace("'", "''", StringComparison.Ordinal);
 #endif
         var sql = $"NOTIFY {Options.ChannelName}, '{quotedPayload}'";
-        return new CachedInfo(dbContext, sql, new AsyncLock(LockReentryMode.CheckedFail));
+        return new CachedInfo(dbContext, sql, new AsyncLock(LockReentryMode.Unchecked));
     }
 
     // Nested types

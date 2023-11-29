@@ -46,7 +46,7 @@ public readonly record struct AsyncChain(
 
     public Task RunIsolated(CancellationToken cancellationToken = default)
     {
-        using var _ = ExecutionContextExt.SuppressFlow();
+        using var _ = ExecutionContextExt.TrySuppressFlow();
         return Run(cancellationToken);
     }
 }

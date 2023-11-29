@@ -25,7 +25,7 @@ public class Commander(IServiceProvider services) : ICommander
         // Task.Run is used to call RunInternal to make sure parent
         // task's ExecutionContext won't be "polluted" by temp.
         // change of CommandContext.Current (via AsyncLocal).
-        using var _ = context.IsOutermost ? ExecutionContextExt.SuppressFlow() : default;
+        using var _ = context.IsOutermost ? ExecutionContextExt.TrySuppressFlow() : default;
         return Task.Run(() => RunCommand(context, cancellationToken), CancellationToken.None);
     }
 

@@ -64,11 +64,8 @@ public abstract class ComputedState<T> : State<T>, IComputedState<T>
         // because the Update is ~ a worker-style task.
         if (computedStateOptions.MustFlowExecutionContext)
             UpdateCycleTask = UpdateCycle();
-        else {
-            using var _ = ExecutionContextExt.SuppressFlow();
-            UpdateCycleTask = UpdateCycle();
-        }
-        AsyncLock.IsLockedLocally = false;
+        else
+            UpdateCycleTask = ExecutionContextExt.Start(ExecutionContextExt.Default, UpdateCycle);
     }
 
     // ~ComputedState() => Dispose();

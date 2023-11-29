@@ -152,7 +152,7 @@ public sealed class ComputedRegistry : IDisposable
     {
         lock (Lock) {
             if (_pruneTask == null || _pruneTask.IsCompleted) {
-                using var _ = ExecutionContextExt.SuppressFlow();
+                using var _ = ExecutionContextExt.TrySuppressFlow();
                 _pruneTask = Task.Run(PruneUnsafe);
             }
             return _pruneTask;

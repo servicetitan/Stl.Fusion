@@ -25,7 +25,9 @@ public static partial class ComputedExt
             return;
         }
 
-        using var _ = ExecutionContextExt.SuppressFlow();
+        // CancellationTokenSource's continuations don't need the ExecutionContext,
+        // plus it's a good thing to ditch it here to avoid possible memory leaks.
+        using var _ = ExecutionContextExt.TrySuppressFlow();
         var cts = new CancellationTokenSource(delay);
         var registration = cts.Token.Register(() => {
             // No need to schedule this via Task.Run, since this code is
@@ -69,7 +71,9 @@ public static partial class ComputedExt
             return;
         }
 
-        using var _ = ExecutionContextExt.SuppressFlow();
+        // CancellationTokenSource's continuations don't need the ExecutionContext,
+        // plus it's a good thing to ditch it here to avoid possible memory leaks.
+        using var _ = ExecutionContextExt.TrySuppressFlow();
         var cts = new CancellationTokenSource(delay);
         var registration = cts.Token.Register(() => {
             // No need to schedule this via Task.Run, since this code is

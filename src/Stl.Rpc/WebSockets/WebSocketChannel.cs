@@ -101,7 +101,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
         Reader = _readChannel.Reader;
         Writer = _writeChannel.Writer;
 
-        using var _ = ExecutionContextExt.SuppressFlow();
+        using var _ = ExecutionContextExt.TrySuppressFlow();
         WhenReadCompleted = Task.Run(() => RunReader(StopToken), default);
         WhenWriteCompleted = Task.Run(() => RunWriter(StopToken), default);
         WhenClosed = Task.Run(async () => {

@@ -13,6 +13,7 @@ public class FileLock(FilePath path, IEnumerable<TimeSpan>? retryIntervals = nul
 
     public FilePath Path { get; } = path;
     public IEnumerable<TimeSpan> RetryIntervals { get; } = retryIntervals ?? DefaultRetryIntervals;
+    public LockReentryMode ReentryMode => LockReentryMode.Unchecked;
 
     public static ValueTask<Releaser> Lock(FilePath path, CancellationToken cancellationToken = default)
         => Lock(path, null, cancellationToken);
@@ -23,11 +24,7 @@ public class FileLock(FilePath path, IEnumerable<TimeSpan>? retryIntervals = nul
     }
 
     async ValueTask<IAsyncLockReleaser> IAsyncLock.Lock(CancellationToken cancellationToken)
-    {
-        var releaser = await Lock(cancellationToken).ConfigureAwait(false);
-        return releaser;
-    }
-
+        => await Lock(cancellationToken).ConfigureAwait(false);
     public async ValueTask<Releaser> Lock(CancellationToken cancellationToken = default)
     {
         try {

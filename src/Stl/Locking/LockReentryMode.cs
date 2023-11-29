@@ -2,6 +2,7 @@ namespace Stl.Locking;
 
 public enum LockReentryMode
 {
-    CheckedFail = 0,
+    Unchecked = 0,
+    CheckedFail,
     CheckedPass,
 }
