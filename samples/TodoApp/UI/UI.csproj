@@ -4,21 +4,23 @@
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
     <RootNamespace>Templates.TodoApp.UI</RootNamespace>
     <AssemblyName>Templates.TodoApp.UI</AssemblyName>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
     <SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
     <!-- CS8669: The annotation for nullable reference types should only be used in code within a '#nullable' annotations context. Auto-generated code requires an explicit '#nullable' directive in source. -->
     <NoWarn>CS8669</NoWarn>
   </PropertyGroup>
 
-  <!-- Publish & runtime properties -->
   <PropertyGroup>
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>partial</TrimMode>
     <IsTrimmable>true</IsTrimmable>
-    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
-    <!--
     <RunAOTCompilation>true</RunAOTCompilation>
+    <!-- Broken for now:
+    - https://github.com/dotnet/runtime/issues/92238
+    - https://github.com/dotnet/runtime/pull/90436
     -->
-    <InvariantGlobalization>false</InvariantGlobalization>
+    <WasmStripILAfterAOT>false</WasmStripILAfterAOT>
   </PropertyGroup>
 
   <!-- Extra trimming roots -->

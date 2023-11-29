@@ -12,7 +12,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <UseUnsafeAccessors Condition="'$(UseUnsafeAccessors)' == ''">true</UseUnsafeAccessors>
+    <!-- [UnsafeAccessor(...)] currently causes AOT errors, so it's disabled for now -->
+    <UseUnsafeAccessors Condition="'$(UseUnsafeAccessors)' == ''">false</UseUnsafeAccessors>
     <DefineConstants Condition="$(UseUnsafeAccessors)">$(DefineConstants);USE_UNSAFE_ACCESSORS</DefineConstants>
   </PropertyGroup>
 
