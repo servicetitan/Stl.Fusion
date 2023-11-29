@@ -6,10 +6,11 @@ namespace Stl.Fusion.Blazor;
 public abstract class StatefulComponentBase : FusionComponentBase, IAsyncDisposable, IHandleEvent
 {
     private StateEventKind _stateHasChangedTriggers = StateEventKind.Updated;
+    private IStateFactory? _stateFactory;
 
     [Inject] protected IServiceProvider Services { get; init; } = null!;
 
-    protected IStateFactory StateFactory => Services.StateFactory();
+    protected IStateFactory StateFactory => _stateFactory ??= Services.StateFactory();
     protected abstract IState UntypedState { get; }
     protected Action<IState, StateEventKind> StateChanged { get; set; }
 
@@ -107,8 +108,15 @@ public abstract class StatefulComponentBase<TState> : StatefulComponentBase
 
     protected override void OnInitialized()
     {
-        var state = _state ??= CreateState();
-        state.AddEventHandler(StateHasChangedTriggers, StateChanged);
+        if (_state != null) {
+            _state.AddEventHandler(StateHasChangedTriggers, StateChanged);
+            return;
+        }
+
+        _state = CreateState();
+        _state.AddEventHandler(StateHasChangedTriggers, StateChanged);
+        if (_state is IHasInitialize hasInitialize)
+            hasInitialize.Initialize();
     }
 
     protected virtual TState CreateState()

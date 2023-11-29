@@ -64,9 +64,7 @@ public static class ComponentExt
     {
         try {
             var dispatcher = component.GetDispatcher();
-#pragma warning disable IL2026
-            if (dispatcher.IsNullDispatcher())
-#pragma warning restore IL2026
+            if (dispatcher.CheckAccess()) // Also handles NullDispatcher, which always returns true here
                 StateHasChangedInvoker(component);
             else if (component is FusionComponentBase fc)
                 _ = dispatcher.InvokeAsync(fc.StateHasChangedInvoker);
