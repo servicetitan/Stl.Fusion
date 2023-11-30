@@ -14,4 +14,10 @@ public abstract class SimpleFusionTestBase(ITestOutputHelper @out) : RpcLocalTes
         where TService : class, IComputeService
         => CreateServices(
             services => services.AddFusion().AddService<TService>());
+
+    protected IServiceProvider CreateServicesWithComputeService<TService, TImpl>()
+        where TService : class, IComputeService
+        where TImpl : class, TService
+        => CreateServices(
+            services => services.AddFusion().AddService<TService, TImpl>());
 }

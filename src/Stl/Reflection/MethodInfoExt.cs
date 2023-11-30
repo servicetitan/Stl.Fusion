@@ -26,7 +26,11 @@ public static class MethodInfoExt
                 return null;
 
             var veryBaseMethod = method1.GetBaseDefinition();
-            var baseMethod = baseType.GetMethods().SingleOrDefault(m => m.GetBaseDefinition() == veryBaseMethod);
+            var bindingFlags = BindingFlags.Instance
+                | (method1.IsPublic ? BindingFlags.Public : BindingFlags.NonPublic);
+            var baseMethod = baseType
+                .GetMethods(bindingFlags)
+                .SingleOrDefault(m => m.GetBaseDefinition() == veryBaseMethod);
             return baseMethod;
         });
     }
