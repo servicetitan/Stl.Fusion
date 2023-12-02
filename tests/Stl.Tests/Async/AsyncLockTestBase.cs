@@ -52,7 +52,7 @@ public abstract class AsyncLockTestBase(ITestOutputHelper @out) : TestBase(@out)
                     Interlocked.Decrement(ref _lockCount).Should().Be(expectedLockCount);
                 }
             }
-            catch (OperationCanceledException e) when (e.IsCancellationOf(cancellationToken)) {
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
                 message = "cancelled";
             }
             finally {
