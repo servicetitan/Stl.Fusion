@@ -31,28 +31,26 @@ public sealed class RpcPeerStateMonitor : WorkerBase
             var peerCancellationToken = peerCts.Token;
             try {
                 // This delay gives some time for peer to connect
-                var connectionState = peer.ConnectionState;
                 while (true) {
-                    connectionState = connectionState.Last;
-                    var nextConnectionStateTask = connectionState.WhenNext(peerCancellationToken);
+                    peerCancellationToken.ThrowIfCancellationRequested();
+                    var connectionState = peer.ConnectionState;
                     var isConnected = connectionState.Value.IsConnected();
+                    var nextConnectionStateTask = connectionState.WhenNext(peerCancellationToken);
 
                     if (isConnected) {
                         _state.Value = new RpcPeerState(true);
-                        connectionState = await nextConnectionStateTask.ConfigureAwait(false);
+                        await nextConnectionStateTask.ConfigureAwait(false);
                     }
                     else {
                         _state.Value = new RpcPeerState(false, connectionState.Value.Error);
                         // Disconnected -> update ReconnectsAt value until the nextConnectionStateTask completes
-                        using var reconnectAtCts = new CancellationTokenSource();
-                        // ReSharper disable once AccessToDisposedClosure
-                        _ = nextConnectionStateTask.ContinueWith(_ => reconnectAtCts.Cancel(), TaskScheduler.Default);
+                        var stateChangedToken = CancellationTokenExt.FromTask(nextConnectionStateTask, CancellationToken.None);
                         try {
-                            var reconnectAtChanges = peer.ReconnectsAt.Changes(reconnectAtCts.Token);
+                            var reconnectAtChanges = peer.ReconnectsAt.Changes(stateChangedToken);
                             await foreach (var reconnectsAt in reconnectAtChanges.ConfigureAwait(false))
                                 _state.Value = _state.Value with { ReconnectsAt = reconnectsAt };
                         }
-                        catch (OperationCanceledException) when (reconnectAtCts.IsCancellationRequested) {
+                        catch (Exception e) when (e.IsCancellationOf(stateChangedToken)) {
                             // Intended
                         }
                     }

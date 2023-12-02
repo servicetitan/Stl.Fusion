@@ -230,8 +230,7 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
         try {
             if (_connectionState.IsFinal)
                 error = _connectionState.Value.Error
-                    ?? Stl.Internal.Errors.InternalError(
-                        "ConnectionState.IsFinal == true, but ConnectionState.Value.Error == null.");
+                    ?? Stl.Internal.Errors.InternalError("The exception wasn't provided on peer termination.");
             else {
                 error = Errors.ConnectionUnrecoverable(_connectionState.Value.Error);
                 SetConnectionState(_connectionState.Value.NextDisconnected(error));

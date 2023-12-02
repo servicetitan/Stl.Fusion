@@ -10,6 +10,25 @@ public static class CancellationTokenExt
     public static CancellationTokenSource CreateLinkedTokenSource(this CancellationToken cancellationToken)
         => CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
+    // FromTask
+
+    public static CancellationToken FromTask(Task task, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.CanBeCanceled) {
+            var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            var result = cts.Token;
+            result.Register(static state => (state as CancellationTokenSource).CancelAndDisposeSilently(), cts);
+            _ = task.ContinueWith(_ => cts.Cancel(), TaskScheduler.Default);
+            return result;
+        }
+        else {
+            var cts = new CancellationTokenSource();
+            var result = cts.Token;
+            _ = task.ContinueWith(_ => cts.CancelAndDisposeSilently(), TaskScheduler.Default);
+            return result;
+        }
+    }
+
     // ToTask
 
     public static Disposable<Task, (TaskCompletionSource<Unit>, CancellationTokenRegistration)> ToTask(

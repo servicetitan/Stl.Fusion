@@ -1,15 +1,19 @@
 namespace Stl.Fusion.UI;
 
-public class UIActionFailureTracker : MutableList<IUIActionResult>, IHasServices
+public class UIActionFailureTracker : MutableList<IUIActionResult>
 {
     public record Options
     {
         public TimeSpan MaxDuplicateRecency { get; init; } = TimeSpan.FromSeconds(1);
     }
 
-    public IServiceProvider Services { get; }
+    private ILogger? _log;
+
+    protected IServiceProvider Services { get; }
+    protected ILogger Log => _log ??= Services.LogFor(GetType());
+
     public Options Settings  { get; }
-    public Task WhenTracking { get; protected init; } = null!;
+    public Task? WhenRunning { get; protected set; }
 
     public UIActionFailureTracker(Options settings, IServiceProvider services)
         : this(settings, services, true)
@@ -20,36 +24,41 @@ public class UIActionFailureTracker : MutableList<IUIActionResult>, IHasServices
         Settings = settings;
         Services = services;
         if (mustStart)
-            // ReSharper disable once VirtualMemberCallInConstructor
-#pragma warning disable CA2214
-            WhenTracking = TrackFailures();
-#pragma warning restore CA2214
+            Start();
     }
 
     public override string ToString()
         => $"{GetType().GetName()}({Count} item(s))";
 
-    protected virtual async Task TrackFailures()
+    public void Start()
+        => WhenRunning ??= Run();
+
+    // Protected methods
+
+    protected virtual async Task Run()
     {
         var uiActionTracker = Services.GetRequiredService<UIActionTracker>();
         var cancellationToken = uiActionTracker.StopToken;
-
         var lastResultEvent = uiActionTracker.LastResult;
         while (true) {
-            lastResultEvent = await lastResultEvent.WhenNext(cancellationToken).ConfigureAwait(false);
-            if (lastResultEvent == null)
-                return;
+            try {
+                lastResultEvent = await lastResultEvent.WhenNext(cancellationToken).ConfigureAwait(false);
+                TryAddFailure(lastResultEvent.Value);
+            }
+            catch (Exception e) {
+                if (cancellationToken.IsCancellationRequested)
+                    return;
 
-            var result = lastResultEvent.Value;
-            if (result != null)
-                TryAddFailure(result);
+                Log.LogError(e, "Run() method failed, will retry");
+                // We don't want it to consume 100% CPU in case of a weird failure, so...
+                await Task.Delay(100, cancellationToken).ConfigureAwait(false);
+            }
         }
-        // ReSharper disable once FunctionNeverReturns
     }
 
-    protected virtual bool TryAddFailure(IUIActionResult result)
+    protected virtual bool TryAddFailure(IUIActionResult? result)
     {
-        if (!result.HasError)
+        if (result is not { HasError: true })
             return false;
 
         if (Settings.MaxDuplicateRecency <= TimeSpan.Zero) {
