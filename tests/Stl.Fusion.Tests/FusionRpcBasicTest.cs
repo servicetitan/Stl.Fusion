@@ -46,7 +46,7 @@ public class FusionRpcBasicTest(ITestOutputHelper @out) : SimpleFusionTestBase(@
         var testClient = services.GetRequiredService<RpcTestClient>();
         var clientPeer = testClient.Connections.First().Value.ClientPeer;
         var monitor = new RpcPeerStateMonitor(services, clientPeer);
-        var state = monitor.ComputedState;
+        var state = monitor.State;
         await state.When(x => x.IsConnected).WaitAsync(TimeSpan.FromSeconds(1));
 
         _ = clientPeer.Disconnect(false, new InvalidOperationException("Disconnected!"));

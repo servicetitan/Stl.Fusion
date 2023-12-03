@@ -25,7 +25,7 @@
     public string CssClass { get; set; } = "";
 
     protected override IState<RpcPeerComputedState> CreateState()
-        => Monitor.ComputedState;
+        => Monitor.State;
 
     private void Reconnect()
         => Services.RpcHub().InternalServices.ClientPeerReconnectDelayer.CancelDelays();
