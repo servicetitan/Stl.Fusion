@@ -4,35 +4,45 @@ namespace Stl.Fusion.Extensions;
 
 public class RpcPeerStateMonitor : WorkerBase
 {
-    private readonly IMutableState<RpcPeerState> _peerState;
+    private IMutableState<RpcPeerState> _peerState = null!;
     private ILogger? _log;
 
-    private IServiceProvider Services => RpcHub.Services;
-    private ILogger Log => _log ??= Services.LogFor(GetType());
-    private Moment Now => RpcHub.Clock.Now;
+    protected IServiceProvider Services => RpcHub.Services;
+    protected ILogger Log => _log ??= Services.LogFor(GetType());
+    protected Moment Now => RpcHub.Clock.Now;
 
     public RpcHub RpcHub { get; }
     public RpcPeerRef? PeerRef { get; }
     public TimeSpan JustDisconnectedPeriod { get; init; } = TimeSpan.FromSeconds(3);
     public TimeSpan MinReconnectsIn { get; init; } = TimeSpan.FromSeconds(1);
 
-    public IState<RpcPeerState> PeerState => _peerState;
-    public IState<Moment> LastReconnectDelayCancelledAt { get; }
-    public IState<RpcPeerComputedState> State { get; }
+    public IState<RpcPeerState> PeerState {
+        get => _peerState;
+        protected set => _peerState = (IMutableState<RpcPeerState>)value;
+    }
+    public IState<Moment> LastReconnectDelayCancelledAt { get; protected set; } = null!;
+    public IState<RpcPeerComputedState> State { get; protected set; } = null!;
 
-    public RpcPeerStateMonitor(IServiceProvider services, RpcPeerRef? peerRef, bool mustStart = true)
+    public RpcPeerStateMonitor(
+        IServiceProvider services,
+        RpcPeerRef? peerRef,
+        bool mustStart = true,
+        bool mustCreateStates = true)
     {
         RpcHub = services.RpcHub();
         PeerRef = peerRef;
+        if (!mustCreateStates)
+            return;
+
         var connectionState = peerRef == null ? null : RpcHub.GetPeer(peerRef).ConnectionState.Value;
         var isConnected = connectionState?.IsConnected() ?? true;
-        RpcPeerState initialState = isConnected
+        RpcPeerState initialPeerState = isConnected
             ? new RpcPeerConnectedState(Now)
             : new RpcPeerDisconnectedState(Now, default, connectionState?.Error);
 
         var stateFactory = services.StateFactory();
         _peerState = stateFactory.NewMutable(
-            initialState,
+            initialPeerState,
             $"{GetType().Name}.{nameof(PeerState)}");
         var stateCategory = $"{GetType().Name}.{nameof(LastReconnectDelayCancelledAt)}";
         LastReconnectDelayCancelledAt = peerRef == null
@@ -129,7 +139,7 @@ public class RpcPeerStateMonitor : WorkerBase
         }
     }
 
-    private Task<Moment> ComputeLastReconnectDelayCancelledAtState(
+    protected virtual Task<Moment> ComputeLastReconnectDelayCancelledAtState(
         IComputedState<Moment> state, CancellationToken cancellationToken)
     {
         var reconnectDelayer = RpcHub.InternalServices.ClientPeerReconnectDelayer;
@@ -143,7 +153,7 @@ public class RpcPeerStateMonitor : WorkerBase
         return Task.FromResult(Now);
     }
 
-    private async Task<RpcPeerComputedState> ComputeState(
+    protected virtual async Task<RpcPeerComputedState> ComputeState(
         IComputedState<RpcPeerComputedState> state, CancellationToken cancellationToken)
     {
         var s = await PeerState.Use(cancellationToken).ConfigureAwait(false);
