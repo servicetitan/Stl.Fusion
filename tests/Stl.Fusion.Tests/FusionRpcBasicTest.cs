@@ -45,31 +45,16 @@ public class FusionRpcBasicTest(ITestOutputHelper @out) : SimpleFusionTestBase(@
         var services = CreateServices();
         var testClient = services.GetRequiredService<RpcTestClient>();
         var clientPeer = testClient.Connections.First().Value.ClientPeer;
-        var connectionMonitor = new RpcPeerStateMonitor(services) {
-            StartDelay = TimeSpan.Zero,
-        };
-        connectionMonitor.Start();
-
-        await connectionMonitor.State.When(x => x?.IsConnected == true)
-            .WaitAsync(TimeSpan.FromSeconds(1));
+        var monitor = new RpcPeerStateMonitor(services, clientPeer);
+        var state = monitor.ComputedState;
+        await state.When(x => x.IsConnected).WaitAsync(TimeSpan.FromSeconds(1));
 
         _ = clientPeer.Disconnect(false, new InvalidOperationException("Disconnected!"));
-        try {
-            var c = await connectionMonitor.State.When(x => x?.IsConnected == false)
-                .WaitAsync(TimeSpan.FromSeconds(1));
-            c.Value!.ReconnectsAt.Should().Be(default);
-
-            // TBD: Add more checks here
-        }
-        catch (InvalidOperationException) {
-            // It's our own one
-        }
+        await state.When(x => x.Kind == RpcPeerComputedStateKind.JustDisconnected)
+            .WaitAsync(TimeSpan.FromSeconds(2));
+        await state.When(x => !x.IsOrLikelyConnected).WaitAsync(TimeSpan.FromSeconds(5));
 
         await testClient[clientPeer].Connect();
-        await connectionMonitor.State
-            .Changes()
-            .FirstAsync(c => c.Value?.IsConnected == true)
-            .AsTask()
-            .WaitAsync(TimeSpan.FromSeconds(1));
+        await state.When(x => x.IsConnected).WaitAsync(TimeSpan.FromSeconds(1));
     }
 }

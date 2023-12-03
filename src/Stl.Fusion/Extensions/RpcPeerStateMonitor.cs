@@ -13,8 +13,7 @@ public sealed class RpcPeerStateMonitor : WorkerBase
 
     public RpcHub RpcHub { get; }
     public RpcPeerRef? PeerRef { get; }
-    public TimeSpan MaybeConnectedPeriod { get; init; } = TimeSpan.FromSeconds(5);
-    public TimeSpan ReconnectsAtCheckPeriod { get; init; } = TimeSpan.FromSeconds(1);
+    public TimeSpan JustDisconnectedPeriod { get; init; } = TimeSpan.FromSeconds(3);
     public TimeSpan MinReconnectsIn { get; init; } = TimeSpan.FromSeconds(1);
 
     public IState<RpcPeerState> State => _state;
@@ -152,8 +151,8 @@ public sealed class RpcPeerStateMonitor : WorkerBase
             return new RpcPeerComputedState(RpcPeerComputedStateKind.Connected);
 
         var disconnectedFor = Now - d.DisconnectedAt;
-        if (disconnectedFor < MaybeConnectedPeriod) {
-            var invalidateIn = MaybeConnectedPeriod + TimeSpan.FromMilliseconds(250) - disconnectedFor;
+        if (disconnectedFor < JustDisconnectedPeriod) {
+            var invalidateIn = JustDisconnectedPeriod + TimeSpan.FromMilliseconds(250) - disconnectedFor;
             Computed.GetCurrent()!.Invalidate(invalidateIn, false);
             return new RpcPeerComputedState(RpcPeerComputedStateKind.JustDisconnected, d.LastError);
         }
