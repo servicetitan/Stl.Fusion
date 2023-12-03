@@ -24,8 +24,14 @@
     [Parameter]
     public string CssClass { get; set; } = "";
 
-    protected override IState<RpcPeerState> CreateState()
-        => Monitor.State;
+    protected override void OnInitialized()
+    {
+        State = Monitor.State;
+        base.OnInitialized();
+    }
+
+    public override ValueTask DisposeAsync()
+        => default; // State shouldn't be disposed
 
     private void Reconnect()
         => Services.RpcHub().InternalServices.ClientPeerReconnectDelayer.CancelDelays();
