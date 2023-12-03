@@ -25,7 +25,6 @@ public sealed class RpcHub : ProcessorBase, IHasServices, IHasId<Guid>
     internal readonly RpcBackendServiceDetector BackendServiceDetector;
     internal readonly RpcUnrecoverableErrorDetector UnrecoverableErrorDetector;
     internal readonly RpcMethodTracerFactory MethodTracerFactory;
-    internal readonly IMomentClock Clock;
     internal IEnumerable<RpcPeerTracker> PeerTrackers => _peerTrackers ??= Services.GetRequiredService<IEnumerable<RpcPeerTracker>>();
     internal RpcSystemCallSender SystemCallSender => _systemCallSender ??= Services.GetRequiredService<RpcSystemCallSender>();
     internal RpcClient Client => _client ??= Services.GetRequiredService<RpcClient>();
@@ -37,6 +36,8 @@ public sealed class RpcHub : ProcessorBase, IHasServices, IHasId<Guid>
     public RpcServiceRegistry ServiceRegistry => _serviceRegistry ??= Services.GetRequiredService<RpcServiceRegistry>();
     public RpcInternalServices InternalServices => new(this);
     public Guid Id { get; init; } = Guid.NewGuid();
+    public RpcLimits Limits { get; }
+    public IMomentClock Clock { get; }
 
     public RpcHub(IServiceProvider services)
     {
@@ -59,6 +60,7 @@ public sealed class RpcHub : ProcessorBase, IHasServices, IHasId<Guid>
         BackendServiceDetector = services.GetRequiredService<RpcBackendServiceDetector>();
         UnrecoverableErrorDetector = services.GetRequiredService<RpcUnrecoverableErrorDetector>();
         MethodTracerFactory = services.GetRequiredService<RpcMethodTracerFactory>();
+        Limits = services.GetRequiredService<RpcLimits>();
         Clock = services.Clocks().CpuClock;
     }
 

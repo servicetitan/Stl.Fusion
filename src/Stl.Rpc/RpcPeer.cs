@@ -139,14 +139,31 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
                     var reader = channel.Reader;
 
                     // Sending Handshake call
-                    await Hub.SystemCallSender
-                        .Handshake(this, sender, new RpcHandshake(Id))
-                        .ConfigureAwait(false);
-                    var message = await reader.ReadAsync(StopToken).ConfigureAwait(false);
-                    var handshakeContext = await ProcessMessage(message, StopToken).ConfigureAwait(false);
-                    var handshake = (handshakeContext?.Call.Arguments as ArgumentList<RpcHandshake>)?.Item0;
-                    if (handshake == null)
-                        throw Errors.HandshakeFailed();
+                    var handshakeCts = new CancellationTokenSource();
+                    var handshakeToken = handshakeCts.Token;
+                    _ = Hub.Clock
+                        .Delay(Hub.Limits.HandshakeTimeout, readerAbortToken)
+                        .ContinueWith(_ => handshakeCts.CancelAndDisposeSilently(), TaskScheduler.Default);
+                    RpcHandshake handshake;
+                    try {
+                        handshake = await Task
+                            .Run(async () => {
+                                await Hub.SystemCallSender
+                                    .Handshake(this, sender, new RpcHandshake(Id))
+                                    .ConfigureAwait(false);
+                                var message = await reader.ReadAsync(handshakeToken).ConfigureAwait(false);
+                                var handshakeContext = await ProcessMessage(message, handshakeToken).ConfigureAwait(false);
+                                var handshake1 = (handshakeContext?.Call.Arguments as ArgumentList<RpcHandshake>)?.Item0;
+                                return handshake1 ?? throw Errors.HandshakeFailed();
+                            }, handshakeToken)
+                            .WaitAsync(handshakeToken)
+                            .ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException) {
+                        if (!readerAbortToken.IsCancellationRequested && handshakeToken.IsCancellationRequested)
+                            throw Errors.HandshakeTimeout();
+                        throw;
+                    }
 
                     // Processing Handshake
                     var isPeerChanged = lastHandshake != null && lastHandshake.RemotePeerId != handshake.RemotePeerId;
@@ -157,7 +174,6 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
                         peerChangedToken = peerChangedSource.Token;
                         await Reset(Errors.PeerChanged()).ConfigureAwait(false);
                     }
-                    lastHandshake = handshake;
 
                     var readerAbortSource = cancellationToken.CreateLinkedTokenSource();
                     readerAbortToken = readerAbortSource.Token;
@@ -178,10 +194,12 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
                         }
                     }, readerAbortToken);
 
+                    RpcMessage? message;
                     if (semaphore == null)
-                        while (await reader.WaitToReadAsync(readerAbortToken).ConfigureAwait(false))
-                        while (reader.TryRead(out message))
-                            _ = ProcessMessage(message, peerChangedToken);
+                        while (await reader.WaitToReadAsync(readerAbortToken).ConfigureAwait(false)) {
+                            while (reader.TryRead(out message))
+                                _ = ProcessMessage(message, peerChangedToken);
+                        }
                     else
                         while (await reader.WaitToReadAsync(readerAbortToken).ConfigureAwait(false))
                         while (reader.TryRead(out message)) {

@@ -20,6 +20,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
         public int WriteBufferSize { get; init; } = 16_000; // Rented ~just once, so it can be large
         public int ReadBufferSize { get; init; } = 16_000; // Rented ~just once, so it can be large
         public int RetainedBufferSize { get; init; } = 64_000; // Any buffer is released when it hits this size
+        public int MaxItemSize { get; init; } = 130_000_000; // 130 MB;
         public TimeSpan CloseTimeout { get; init; } = TimeSpan.FromSeconds(10);
         public DualSerializer<T> Serializer { get; init; } = new();
         public BoundedChannelOptions ReadChannelOptions { get; init; } = new(128) {
@@ -45,6 +46,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
     private readonly int _writeFrameSize;
     private readonly int _writeBufferSize;
     private readonly int _releaseBufferSize;
+    private readonly int _maxItemSize;
     private readonly IByteSerializer<T> _byteSerializer;
     private readonly ITextSerializer<T> _textSerializer;
     private readonly WebSocketMessageType _defaultMessageType;
@@ -89,6 +91,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
         _writeFrameSize = settings.WriteFrameSize;
         _writeBufferSize = settings.WriteBufferSize;
         _releaseBufferSize = settings.RetainedBufferSize;
+        _maxItemSize = settings.MaxItemSize;
         _byteSerializer = settings.Serializer.ByteSerializer;
         _textSerializer = settings.Serializer.TextSerializer;
         _defaultMessageType = Serializer.DefaultFormat == DataFormat.Text
@@ -319,13 +322,21 @@ public sealed class WebSocketChannel<T> : Channel<T>
     {
         var startOffset = buffer.WrittenCount;
         try {
-            if (_defaultMessageType == WebSocketMessageType.Text)
+            int size;
+            if (_defaultMessageType == WebSocketMessageType.Text) {
                 _textSerializer.Write(buffer, value);
+                size = buffer.WrittenCount - startOffset;
+                if (size > _maxItemSize)
+                    throw Errors.ItemSizeExceedsTheLimit();
+            }
             else {
                 buffer.GetSpan(MinMessageSize);
                 buffer.Advance(4);
                 _byteSerializer.Write(buffer, value);
-                buffer.WrittenSpan.WriteUnchecked(startOffset, buffer.WrittenCount - startOffset);
+                size = buffer.WrittenCount - startOffset;
+                buffer.WrittenSpan.WriteUnchecked(startOffset, size);
+                if (size > _maxItemSize)
+                    throw Errors.ItemSizeExceedsTheLimit();
 
                 // Log?.LogInformation("Wrote: {Value}", value);
                 // Log?.LogInformation("Data({Size}): {Data}",
@@ -351,12 +362,14 @@ public sealed class WebSocketChannel<T> : Channel<T>
             size = bytes.Span.ReadUnchecked<int>();
             isSizeValid = size > 0 && size <= bytes.Length;
             if (!isSizeValid)
-                throw Errors.InvalidMessageSize();
+                throw Errors.InvalidItemSize();
+            if (size > _maxItemSize)
+                throw Errors.ItemSizeExceedsTheLimit();
 
             var data = bytes[sizeof(int)..size];
             value = _byteSerializer.Read(data, out int readSize);
             if (readSize != size - 4)
-                throw Errors.InvalidMessageSize();
+                throw Errors.InvalidItemSize();
 
             // Log?.LogInformation("Read: {Value}", value);
             // Log?.LogInformation("Data({Size}): {Data}",
@@ -377,6 +390,9 @@ public sealed class WebSocketChannel<T> : Channel<T>
     private bool TryDeserializeText(ReadOnlyMemory<byte> bytes, out T value)
     {
         try {
+            if (bytes.Length > _maxItemSize)
+                throw Errors.ItemSizeExceedsTheLimit();
+
             value = _textSerializer.Read(bytes);
             return true;
         }

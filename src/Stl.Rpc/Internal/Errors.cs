@@ -57,7 +57,9 @@ public static class Errors
             $"this scope should be used only in synchronous part of your code that happens " +
             $"right before the async method triggering the outgoing RPC call is invoked.");
 
-    public static Exception InvalidMessageSize()
+    public static Exception ItemSizeExceedsTheLimit()
+        => new SerializationException("The item size exceeds the limit.");
+    public static Exception InvalidItemSize()
         => new SerializationException("Invalid item size. The remainder of the message will be dropped.");
     public static Exception CannotDeserializeUnexpectedArgumentType(Type expectedType, Type actualType)
         => new SerializationException($"Cannot deserialize unexpected argument type: " +
@@ -70,6 +72,13 @@ public static class Errors
         => CallTimeout(peer.Ref.IsServer ? "client" : "server");
     public static Exception CallTimeout(string partyName = "server")
         => new TimeoutException($"The {partyName} didn't respond in time.");
+
+    public static Exception ConnectTimeout()
+        => new TimeoutException("Timeout on connecting to server.");
+    public static Exception HandshakeTimeout()
+        => new TimeoutException("Timeout on handshake.");
+    public static Exception KeepAliveTimeout()
+        => new TimeoutException("Timeout while waiting for \"keep-alive\" message.");
 
     public static Exception Disconnected(RpcPeer peer)
         => Disconnected(peer.Ref.IsServer ? "client" : "server");

@@ -9,12 +9,15 @@ public abstract class RpcObjectTracker
 {
     private RpcPeer _peer = null!;
 
+    protected RpcLimits Limits { get; private set; } = null!;
+
     public RpcPeer Peer {
         get => _peer;
         protected set {
             if (_peer != null)
                 throw Errors.AlreadyInitialized(nameof(Peer));
             _peer = value;
+            Limits = _peer.Hub.Limits;
         }
     }
 
@@ -26,7 +29,6 @@ public abstract class RpcObjectTracker
 
 public class RpcRemoteObjectTracker : RpcObjectTracker, IEnumerable<IRpcObject>
 {
-    public static TimeSpan KeepAlivePeriod { get; set; } = TimeSpan.FromSeconds(15);
     public static GCHandlePool GCHandlePool { get; set; } = new(new GCHandlePool.Options() {
         Capacity = HardwareInfo.GetProcessorCountPo2Factor(16),
     });
@@ -113,7 +115,7 @@ public class RpcRemoteObjectTracker : RpcObjectTracker, IEnumerable<IRpcObject>
             var clock = hub.Clock;
             var systemCallSender = hub.SystemCallSender;
             while (true) {
-                await clock.Delay(KeepAlivePeriod, cancellationToken).ConfigureAwait(false);
+                await clock.Delay(Limits.KeepAlivePeriod, cancellationToken).ConfigureAwait(false);
                 var localIds = GetAliveLocalIdsAndReleaseDeadHandles();
                 await systemCallSender.KeepAlive(Peer, localIds).ConfigureAwait(false);
             }
@@ -168,11 +170,8 @@ public class RpcRemoteObjectTracker : RpcObjectTracker, IEnumerable<IRpcObject>
 
 public sealed class RpcSharedObjectTracker : RpcObjectTracker, IEnumerable<IRpcSharedObject>
 {
-    public static TimeSpan ReleasePeriod { get; set; } = TimeSpan.FromSeconds(10);
-    public static TimeSpan ReleaseTimeout { get; set; }= TimeSpan.FromSeconds(65);
-    public static TimeSpan AbortCheckPeriod { get; set; } = TimeSpan.FromSeconds(1);
-
     private long _lastId;
+    private long _lastKeepAliveAt; // CpuTimestamp
     private readonly ConcurrentDictionary<long, IRpcSharedObject> _objects = new();
 
     public override int Count => _objects.Count;
@@ -206,12 +205,18 @@ public sealed class RpcSharedObjectTracker : RpcObjectTracker, IEnumerable<IRpcS
 
     public async Task Maintain(RpcPeerConnectionState connectionState, CancellationToken cancellationToken)
     {
+        _lastKeepAliveAt = CpuTimestamp.Now.Value;
         try {
             var hub = Peer.Hub;
             var clock = hub.Clock;
             while (true) {
-                await clock.Delay(ReleasePeriod, cancellationToken).ConfigureAwait(false);
-                var minLastKeepAliveAt = CpuTimestamp.Now - ReleaseTimeout;
+                await clock.Delay(Limits.ObjectReleasePeriod, cancellationToken).ConfigureAwait(false);
+                var keepAliveDelay = CpuTimestamp.Now - new CpuTimestamp(Interlocked.Read(ref _lastKeepAliveAt));
+                if (keepAliveDelay > Limits.KeepAliveTimeout) {
+                    await Peer.Disconnect(true, Internal.Errors.KeepAliveTimeout()).ConfigureAwait(false);
+                    return;
+                }
+                var minLastKeepAliveAt = CpuTimestamp.Now - Limits.ObjectReleaseTimeout;
                 foreach (var (_, obj) in _objects)
                     if (obj.LastKeepAliveAt < minLastKeepAliveAt && Unregister(obj))
                         TryDispose(obj);
@@ -226,6 +231,7 @@ public sealed class RpcSharedObjectTracker : RpcObjectTracker, IEnumerable<IRpcS
     [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
     public Task KeepAlive(long[] localIds)
     {
+        Interlocked.Exchange(ref _lastKeepAliveAt, CpuTimestamp.Now.Value);
         var buffer = MemoryBuffer<long>.Lease(false);
         try {
             foreach (var id in localIds) {
@@ -246,15 +252,16 @@ public sealed class RpcSharedObjectTracker : RpcObjectTracker, IEnumerable<IRpcS
     public async Task Abort(Exception error)
     {
         var abortedIds = new HashSet<long>();
-        for (int i = 0;; i++) {
+        for (int cycleIndex = 0;; cycleIndex++) {
             var abortedCountBefore = abortedIds.Count;
             foreach (var obj in this)
                 if (abortedIds.Add(obj.Id.LocalId))
                     TryDispose(obj);
-            if (i >= 2 && abortedCountBefore == abortedIds.Count)
+            var isDisposeHappened = abortedCountBefore != abortedIds.Count;
+            if (!isDisposeHappened || cycleIndex >= Limits.ObjectAbortCycleCount)
                 break;
 
-            await Task.Delay(AbortCheckPeriod).ConfigureAwait(false);
+            await Task.Delay(Limits.ObjectAbortCyclePeriod).ConfigureAwait(false);
         }
     }
 

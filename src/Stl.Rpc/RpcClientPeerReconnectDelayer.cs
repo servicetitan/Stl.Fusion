@@ -16,7 +16,7 @@ public class RpcClientPeerReconnectDelayer : RetryDelayer, IHasServices
     public RpcClientPeerReconnectDelayer(IServiceProvider services)
     {
         Services = services;
-        Clock = Services.Clocks().CpuClock;
+        ClockProvider = () => Hub.Clock; // Hub resolves this service in .ctor, so we can't resolve Hub here
         Delays = RetryDelaySeq.Exp(1, 60);
     }
 

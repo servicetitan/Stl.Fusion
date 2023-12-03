@@ -86,6 +86,7 @@ public readonly struct RpcBuilder
         services.TryAddTransient(_ => new RpcRemoteObjectTracker());
         services.TryAddTransient(_ => new RpcSharedObjectTracker());
         services.TryAddSingleton(c => new RpcClientPeerReconnectDelayer(c));
+        services.TryAddSingleton(_ => RpcLimits.Default);
 
         // Interceptors
         services.TryAddSingleton(_ => RpcClientInterceptor.Options.Default);
@@ -124,7 +125,6 @@ public readonly struct RpcBuilder
         services.AddSingleton(c => new RpcWebSocketClient(
             c.GetRequiredService<RpcWebSocketClient.Options>(), c));
         services.AddAlias<RpcClient, RpcWebSocketClient>();
-        services.AddTransient(_ => new ClientWebSocket());
         return this;
     }
 

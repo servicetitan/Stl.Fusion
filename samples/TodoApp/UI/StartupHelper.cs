@@ -29,7 +29,6 @@ public static class StartupHelper
         // Fusion services
         var fusion = services.AddFusion();
         fusion.AddAuthClient();
-        fusion.AddRpcPeerStateMonitor();
         fusion.AddBlazor().AddAuthentication().AddPresenceReporter();
 
         var rpc = fusion.Rpc;
@@ -71,6 +70,7 @@ public static class StartupHelper
         fusion.AddComputedGraphPruner(_ => new() { CheckPeriod = TimeSpan.FromSeconds(10) });
         fusion.AddFusionTime();
         fusion.AddService<TodoUI>(ServiceLifetime.Scoped);
+        services.AddScoped(c => new RpcPeerStateMonitor(c, OSInfo.IsAnyClient ? RpcPeerRef.Default : null));
 
         // Default update delay is 0.5s
         services.AddScoped<IUpdateDelayer>(c => new UpdateDelayer(c.UIActionTracker(), 0.5));

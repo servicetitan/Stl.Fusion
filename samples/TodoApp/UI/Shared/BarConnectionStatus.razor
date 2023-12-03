@@ -1,22 +1,15 @@
 @using Stl.Rpc
-@inherits ComputedStateComponent<RpcPeerState?>
-@inject RpcClientPeerReconnectDelayer RpcClientPeerReconnectDelayer
+@inherits StatefulComponentBase<IState<RpcPeerComputedState>>
 
 @{
-    var m = State.ValueOrDefault ?? new RpcPeerState(true);
-    var isReconnecting = !m.IsConnected
-        && m.ReconnectsAt <= RpcClientPeerReconnectDelayer.Clock.Now;
-    var message = m.IsConnected
-        ? "Connected."
-        : m.Error?.Message.Trim() ?? "Unknown error.";
-    if (!message.EndsWith(".") && !message.EndsWith("!") && !message.EndsWith("?"))
-        message += ".";
-    var iconName = m.IsConnected == false
-        ? FontAwesomeIcons.ExclamationTriangle
-        : FontAwesomeIcons.Cloud;
-    var textColor = m.IsConnected == false
-        ? TextColor.Warning
-        : TextColor.Default;
+    var m = State.Value;
+    var isConnected = m.IsOrLikelyConnected;
+    var iconName = isConnected
+        ? FontAwesomeIcons.Cloud
+        : FontAwesomeIcons.ExclamationTriangle;
+    var textColor = isConnected
+        ? TextColor.Default
+        : TextColor.Warning;
 }
 
 <BarItem>
@@ -26,15 +19,10 @@
         </BarDropdownToggle>
         <BarDropdownMenu>
             <BarDropdownItem TextColor="@textColor">
-                <span>@message</span>
-                @if (!m.IsConnected) {
-                    if (isReconnecting) {
-                        <span> Reconnecting... </span>
-                    }
-                    else {
-                        <span> Will reconnect <TimerBadge ExpiresAt="m.ReconnectsAt"/>. </span>
-                        <Button Color="Color.Success" Clicked="@TryReconnect">Reconnect</Button>
-                    }
+                <span>@m.GetActivityDescription(true)</span>
+                @if (m.ReconnectsIn is { } reconnectsIn) {
+                    <span> Will reconnect <TimerBadge ExpiresAt="@(Clock.Now + reconnectsIn)"/>. </span>
+                    <Button Color="Color.Success" Clicked="@Reconnect">Reconnect</Button>
                 }
             </BarDropdownItem>
         </BarDropdownMenu>
@@ -42,26 +30,14 @@
 </BarItem>
 
 @code {
-    private RpcPeerStateMonitor? _monitor;
+    [Inject] private RpcPeerStateMonitor Monitor { get; init; } = null!;
+    [Inject] private IMomentClock Clock { get; init; } = null!;
 
-    [Parameter]
-    public string CssClass { get; set; } = "";
+    [Parameter] public string CssClass { get; set; } = "";
 
-    protected override void OnInitialized()
-    {
-        _monitor = Services.GetService<RpcPeerStateMonitor>();
-        _monitor?.Start();
-        base.OnInitialized();
-    }
+    protected override IState<RpcPeerComputedState> CreateState()
+        => Monitor.ComputedState;
 
-    protected override async Task<RpcPeerState?> ComputeState(CancellationToken cancellationToken)
-    {
-        if (_monitor == null)
-            return null;
-
-        return await _monitor.State.Use(cancellationToken).ConfigureAwait(false);
-    }
-
-    private void TryReconnect()
+    private void Reconnect()
         => Services.RpcHub().InternalServices.ClientPeerReconnectDelayer.CancelDelays();
 }

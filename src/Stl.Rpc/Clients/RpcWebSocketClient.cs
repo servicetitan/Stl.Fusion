@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Net.WebSockets;
 using System.Text.Encodings.Web;
 using Stl.Rpc.Infrastructure;
+using Stl.Rpc.Internal;
 using Stl.Rpc.WebSockets;
 
 namespace Stl.Rpc.Clients;
@@ -24,7 +25,6 @@ public class RpcWebSocketClient(
         public WebSocketChannel<RpcMessage>.Options WebSocketChannelOptions { get; init; }
             = WebSocketChannel<RpcMessage>.Options.Default;
 
-        public TimeSpan ConnectTimeout { get; init; } = TimeSpan.FromSeconds(10);
         public string RequestPath { get; init; } = "/rpc/ws";
         public string ClientIdParameterName { get; init; } = "clientId";
 
@@ -66,30 +66,40 @@ public class RpcWebSocketClient(
     public override async Task<RpcConnection> CreateConnection(RpcClientPeer peer, CancellationToken cancellationToken)
     {
         var uri = Settings.ConnectionUriResolver(this, peer);
-        using var cts = new CancellationTokenSource(Settings.ConnectTimeout);
-        var ctsToken = cts.Token;
-        // ReSharper disable once UseAwaitUsing
-        using var _ = cancellationToken.Register(static x => (x as CancellationTokenSource)?.Cancel(), cts);
-        var webSocketOwner = await Task
-            .Run(async () => {
-                WebSocketOwner? o = null;
-                try {
-                    o = Settings.WebSocketOwnerFactory.Invoke(this, peer);
-                    await o.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
-                    return o;
-                }
-                catch when (o != null) {
+        var hub = peer.Hub;
+        var connectCts = new CancellationTokenSource();
+        var connectToken = connectCts.Token;
+        _ = hub.Clock
+            .Delay(hub.Limits.ConnectTimeout, cancellationToken)
+            .ContinueWith(_ => connectCts.CancelAndDisposeSilently(), TaskScheduler.Default);
+        WebSocketOwner webSocketOwner;
+        try {
+            webSocketOwner = await Task
+                .Run(async () => {
+                    WebSocketOwner? o = null;
                     try {
-                        await o.DisposeAsync().ConfigureAwait(false);
+                        o = Settings.WebSocketOwnerFactory.Invoke(this, peer);
+                        await o.ConnectAsync(uri, connectToken).ConfigureAwait(false);
+                        return o;
                     }
-                    catch {
-                        // Intended
+                    catch when (o != null) {
+                        try {
+                            await o.DisposeAsync().ConfigureAwait(false);
+                        }
+                        catch {
+                            // Intended
+                        }
+                        throw;
                     }
-                    throw;
-                }
-            }, ctsToken)
-            .WaitAsync(ctsToken) // MAUI sometimes stuck in sync part of ConnectAsync
-            .ConfigureAwait(false);
+                }, connectToken)
+                .WaitAsync(connectToken) // MAUI sometimes stucks in the sync part of ConnectAsync
+                .ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) {
+            if (!cancellationToken.IsCancellationRequested && connectToken.IsCancellationRequested)
+                throw Errors.ConnectTimeout();
+            throw;
+        }
 
         var channel = new WebSocketChannel<RpcMessage>(Settings.WebSocketChannelOptions, webSocketOwner);
         var options = ImmutableOptionSet.Empty
