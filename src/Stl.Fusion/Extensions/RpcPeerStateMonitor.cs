@@ -2,7 +2,7 @@ using Stl.Rpc;
 
 namespace Stl.Fusion.Extensions;
 
-public sealed class RpcPeerStateMonitor : WorkerBase
+public class RpcPeerStateMonitor : WorkerBase
 {
     private readonly IMutableState<RpcPeerState> _peerState;
     private ILogger? _log;
