@@ -13,6 +13,7 @@ public class RpcPeerStateMonitor : WorkerBase
 
     public RpcHub RpcHub { get; }
     public RpcPeerRef? PeerRef { get; protected set; }
+    public TimeSpan JustConnectedPeriod { get; init; } = TimeSpan.FromSeconds(1);
     public TimeSpan JustDisconnectedPeriod { get; init; } = TimeSpan.FromSeconds(3);
     public TimeSpan MinReconnectsIn { get; init; } = TimeSpan.FromSeconds(1);
 
@@ -38,12 +39,11 @@ public class RpcPeerStateMonitor : WorkerBase
         var connectionState = peerRef == null ? null : RpcHub.GetPeer(peerRef).ConnectionState.Value;
         var isConnected = connectionState?.IsConnected() ?? true;
 
+        var initialRawState = isConnected
+            ? (RpcPeerRawState)new RpcPeerRawConnectedState(Now)
+            : new RpcPeerRawDisconnectedState(Now, default, connectionState?.Error);
         var stateCategory = $"{GetType().Name}.{nameof(RawState)}";
-        _rawState = stateFactory.NewMutable(
-            isConnected
-                ? (RpcPeerRawState)new RpcPeerRawConnectedState(Now)
-                : new RpcPeerRawDisconnectedState(Now, default, connectionState?.Error),
-            stateCategory);
+        _rawState = stateFactory.NewMutable(initialRawState, stateCategory);
 
         stateCategory = $"{GetType().Name}.{nameof(LastReconnectDelayCancelledAt)}";
         LastReconnectDelayCancelledAt = peerRef == null
@@ -54,9 +54,12 @@ public class RpcPeerStateMonitor : WorkerBase
                 stateCategory);
 
         stateCategory = $"{GetType().Name}.{nameof(State)}";
+        var initialState = initialRawState.IsConnected
+            ? new RpcPeerState(RpcPeerStateKind.Connected)
+            : new RpcPeerState(RpcPeerStateKind.Disconnected, connectionState?.Error);
         State = peerRef == null
-            ? stateFactory.NewMutable(new RpcPeerState(RpcPeerStateKind.Connected), stateCategory)
-            : stateFactory.NewComputed<RpcPeerState>(FixedDelayer.Instant, ComputeState, stateCategory);
+            ? stateFactory.NewMutable(initialState, stateCategory)
+            : stateFactory.NewComputed(initialState, FixedDelayer.Instant, ComputeState, stateCategory);
         if (mustStart)
             Start();
     }
@@ -155,18 +158,28 @@ public class RpcPeerStateMonitor : WorkerBase
         IComputedState<RpcPeerState> state, CancellationToken cancellationToken)
     {
         var s = await RawState.Use(cancellationToken).ConfigureAwait(false);
-        if (s is not RpcPeerRawDisconnectedState d)
-            return new RpcPeerState(RpcPeerStateKind.Connected);
+        var now = Now;
+        if (s is not RpcPeerRawDisconnectedState d) {
+            // Connected case
+            var connectedFor = now - s.EnteredAt;
+            if (connectedFor >= JustConnectedPeriod)
+                return new RpcPeerState(RpcPeerStateKind.Connected);
 
-        var disconnectedFor = Now - d.DisconnectedAt;
+            var invalidateIn = JustConnectedPeriod + TimeSpan.FromMilliseconds(250) - connectedFor;
+            Computed.GetCurrent()!.Invalidate(invalidateIn, false);
+            return new RpcPeerState(RpcPeerStateKind.JustConnected);
+        }
+
+        // Disconnected case
+        var disconnectedFor = now - d.DisconnectedAt;
         if (disconnectedFor < JustDisconnectedPeriod) {
             var invalidateIn = JustDisconnectedPeriod + TimeSpan.FromMilliseconds(250) - disconnectedFor;
             Computed.GetCurrent()!.Invalidate(invalidateIn, false);
             return new RpcPeerState(RpcPeerStateKind.JustDisconnected, d.LastError);
         }
-        var reconnectsIn = d.ReconnectsAt - Now;
+        var reconnectsIn = d.ReconnectsAt - now;
         if (reconnectsIn < MinReconnectsIn)
-            return new RpcPeerState(RpcPeerStateKind.Reconnecting, d.LastError);
+            return new RpcPeerState(RpcPeerStateKind.Disconnected, d.LastError);
 
         // Just to create a dependency that will trigger the recompute
         await LastReconnectDelayCancelledAt.Use(cancellationToken).ConfigureAwait(false);

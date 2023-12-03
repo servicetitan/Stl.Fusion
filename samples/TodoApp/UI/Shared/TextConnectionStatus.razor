@@ -3,15 +3,15 @@
 
 @{
     var m = State.Value;
-    var isConnected = m.IsOrLikelyConnected;
+    var isOk = m.LikelyConnected;
 }
 
-<Div Margin="Margin.Is1.OnY" TextColor="@(isConnected ? TextColor.Default : TextColor.Warning)">
+<Div Margin="Margin.Is1.OnY" TextColor="@(isOk ? TextColor.Default : TextColor.Warning)">
     <span>Connection state: </span>
     <strong>
         <span>@(m.GetDescription(true))</span>
-        @if (m.ReconnectsIn is { } reconnectsIn) {
-            <span> Will reconnect <TimerBadge ExpiresAt="@(Clock.Now + reconnectsIn)"/>. </span>
+        @if (m.ReconnectsIn != default) {
+            <span> Will reconnect <TimerBadge ExpiresAt="@(Clock.Now + m.ReconnectsIn)"/>. </span>
             <Anchor TextColor="@TextColor.Success" Clicked="@Reconnect">Reconnect</Anchor>
         }
     </strong>

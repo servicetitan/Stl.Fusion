@@ -6,6 +6,7 @@ namespace Stl.Fusion.Extensions;
 
 public abstract record RpcPeerRawState
 {
+    public abstract bool IsConnected { get; }
     public abstract Moment EnteredAt { get; }
 
     public RpcPeerRawConnectedState ToConnected(Moment now)
@@ -29,6 +30,7 @@ public sealed record RpcPeerRawConnectedState(
     Moment ConnectedAt
 ) : RpcPeerRawState
 {
+    public override bool IsConnected => true;
     public override Moment EnteredAt => ConnectedAt;
 }
 
@@ -38,5 +40,6 @@ public sealed record RpcPeerRawDisconnectedState(
     Exception? LastError
 ) : RpcPeerRawState
 {
+    public override bool IsConnected => false;
     public override Moment EnteredAt => DisconnectedAt;
 }

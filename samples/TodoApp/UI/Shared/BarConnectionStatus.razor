@@ -3,11 +3,11 @@
 
 @{
     var m = State.Value;
-    var isConnected = m.IsOrLikelyConnected;
-    var iconName = isConnected
+    var isOk = m.LikelyConnected;
+    var iconName = isOk
         ? FontAwesomeIcons.Cloud
         : FontAwesomeIcons.ExclamationTriangle;
-    var textColor = isConnected
+    var textColor = isOk
         ? TextColor.Default
         : TextColor.Warning;
 }
@@ -20,8 +20,8 @@
         <BarDropdownMenu>
             <BarDropdownItem TextColor="@textColor">
                 <span>@m.GetDescription(true)</span>
-                @if (m.ReconnectsIn is { } reconnectsIn) {
-                    <span> Will reconnect <TimerBadge ExpiresAt="@(Clock.Now + reconnectsIn)"/>. </span>
+                @if (m.ReconnectsIn != default) {
+                    <span> Will reconnect <TimerBadge ExpiresAt="@(Clock.Now + m.ReconnectsIn)"/>. </span>
                     <Button Color="Color.Success" Clicked="@Reconnect">Reconnect</Button>
                 }
             </BarDropdownItem>

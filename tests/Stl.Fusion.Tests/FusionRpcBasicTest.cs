@@ -52,7 +52,7 @@ public class FusionRpcBasicTest(ITestOutputHelper @out) : SimpleFusionTestBase(@
         _ = clientPeer.Disconnect(false, new InvalidOperationException("Disconnected!"));
         await state.When(x => x.Kind == RpcPeerStateKind.JustDisconnected)
             .WaitAsync(TimeSpan.FromSeconds(2));
-        await state.When(x => !x.IsOrLikelyConnected).WaitAsync(TimeSpan.FromSeconds(5));
+        await state.When(x => !x.LikelyConnected).WaitAsync(TimeSpan.FromSeconds(5));
 
         await testClient[clientPeer].Connect();
         await state.When(x => x.IsConnected).WaitAsync(TimeSpan.FromSeconds(1));

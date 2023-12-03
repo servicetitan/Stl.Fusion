@@ -5,27 +5,27 @@ public enum RpcPeerStateKind
     Connected = 0,
     JustDisconnected,
     Disconnected,
-    Reconnecting,
+    JustConnected,
 }
 
 public sealed record RpcPeerState(
     RpcPeerStateKind Kind,
     Exception? LastError = null,
-    TimeSpan? ReconnectsIn = null)
+    TimeSpan ReconnectsIn = default)
 {
-    public bool IsConnected => Kind == RpcPeerStateKind.Connected;
-    public bool IsOrLikelyConnected =>
-        Kind == RpcPeerStateKind.Connected
-        || Kind == RpcPeerStateKind.JustDisconnected;
+    public bool IsConnected => Kind is RpcPeerStateKind.Connected or RpcPeerStateKind.JustConnected;
+    public bool LikelyConnected => Kind != RpcPeerStateKind.Disconnected;
 
     public string GetDescription(bool useLastError = false)
     {
         switch (Kind) {
+        case RpcPeerStateKind.JustConnected:
+            return "Just connected.";
         case RpcPeerStateKind.Connected:
             return "Connected.";
         case RpcPeerStateKind.JustDisconnected:
-            return "Connected, checking...";
-        case RpcPeerStateKind.Reconnecting:
+            return "Just disconnected, reconnecting...";
+        case RpcPeerStateKind.Disconnected when ReconnectsIn == default:
             return "Reconnecting...";
         }
         if (LastError == null || !useLastError)
