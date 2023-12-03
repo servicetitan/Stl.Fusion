@@ -13,9 +13,10 @@ public class RpcPeerStateMonitor : WorkerBase
 
     public RpcHub RpcHub { get; }
     public RpcPeerRef? PeerRef { get; protected set; }
-    public TimeSpan JustConnectedPeriod { get; init; } = TimeSpan.FromSeconds(1);
+    public TimeSpan JustConnectedPeriod { get; init; } = TimeSpan.FromSeconds(1.5);
     public TimeSpan JustDisconnectedPeriod { get; init; } = TimeSpan.FromSeconds(3);
     public TimeSpan MinReconnectsIn { get; init; } = TimeSpan.FromSeconds(1);
+    public TimeSpan ExtraInvalidationDelay { get; init; } = TimeSpan.FromMilliseconds(100);
 
     public IState<RpcPeerRawState> RawState {
         get => _rawState;
@@ -55,8 +56,8 @@ public class RpcPeerStateMonitor : WorkerBase
 
         stateCategory = $"{GetType().Name}.{nameof(State)}";
         var initialState = initialRawState.IsConnected
-            ? new RpcPeerState(RpcPeerStateKind.Connected)
-            : new RpcPeerState(RpcPeerStateKind.Disconnected, connectionState?.Error);
+            ? new RpcPeerState(peerRef == null ? RpcPeerStateKind.Connected : RpcPeerStateKind.JustConnected)
+            : new RpcPeerState(RpcPeerStateKind.JustDisconnected, connectionState?.Error);
         State = peerRef == null
             ? stateFactory.NewMutable(initialState, stateCategory)
             : stateFactory.NewComputed(initialState, FixedDelayer.Instant, ComputeState, stateCategory);
@@ -165,16 +166,14 @@ public class RpcPeerStateMonitor : WorkerBase
             if (connectedFor >= JustConnectedPeriod)
                 return new RpcPeerState(RpcPeerStateKind.Connected);
 
-            var invalidateIn = JustConnectedPeriod + TimeSpan.FromMilliseconds(250) - connectedFor;
-            Computed.GetCurrent()!.Invalidate(invalidateIn, false);
+            InvalidateIn(JustConnectedPeriod - connectedFor);
             return new RpcPeerState(RpcPeerStateKind.JustConnected);
         }
 
         // Disconnected case
         var disconnectedFor = now - d.DisconnectedAt;
         if (disconnectedFor < JustDisconnectedPeriod) {
-            var invalidateIn = JustDisconnectedPeriod + TimeSpan.FromMilliseconds(250) - disconnectedFor;
-            Computed.GetCurrent()!.Invalidate(invalidateIn, false);
+            InvalidateIn(JustConnectedPeriod - disconnectedFor);
             return new RpcPeerState(RpcPeerStateKind.JustDisconnected, d.LastError);
         }
         var reconnectsIn = d.ReconnectsAt - now;
@@ -183,6 +182,10 @@ public class RpcPeerStateMonitor : WorkerBase
 
         // Just to create a dependency that will trigger the recompute
         await LastReconnectDelayCancelledAt.Use(cancellationToken).ConfigureAwait(false);
+        InvalidateIn(reconnectsIn - MinReconnectsIn);
         return new RpcPeerState(RpcPeerStateKind.Disconnected, d.LastError, reconnectsIn);
     }
+
+    protected void InvalidateIn(TimeSpan delay)
+        => Computed.GetCurrent()!.Invalidate(delay + ExtraInvalidationDelay);
 }
