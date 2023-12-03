@@ -104,7 +104,7 @@ public sealed class RpcPeerStateMonitor : WorkerBase
                                 }
                             }
                         }
-                        catch (OperationCanceledException e) when (stateChangedToken.IsCancellationRequested) {
+                        catch (OperationCanceledException) when (stateChangedToken.IsCancellationRequested) {
                             // Intended
                         }
                     }

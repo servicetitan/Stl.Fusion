@@ -3,6 +3,8 @@ using Xunit.Sdk;
 
 namespace Stl.Tests.Async;
 
+#pragma warning disable CS1998 // This async method lacks 'await' operators and will run synchronously.
+
 [Collection(nameof(TimeSensitiveTests)), Trait("Category", nameof(TimeSensitiveTests))]
 public class ExecutionContextExtTest(ITestOutputHelper @out) : TestBase(@out)
 {

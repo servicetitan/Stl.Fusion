@@ -32,9 +32,7 @@ public sealed record RpcPeerComputedState(
             return "Disconnected.";
 
         var message = LastError.Message.Trim();
-        if (!(message.EndsWith(".", StringComparison.Ordinal)
-            || message.EndsWith("!", StringComparison.Ordinal)
-            || message.EndsWith("?", StringComparison.Ordinal)))
+        if (!(message.EndsWith('.') || message.EndsWith('!') || message.EndsWith('?')))
             message += ".";
         return "Disconnected: " + message;
     }
