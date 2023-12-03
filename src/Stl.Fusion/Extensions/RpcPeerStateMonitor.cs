@@ -12,7 +12,7 @@ public class RpcPeerStateMonitor : WorkerBase
     protected Moment Now => RpcHub.Clock.Now;
 
     public RpcHub RpcHub { get; }
-    public RpcPeerRef? PeerRef { get; }
+    public RpcPeerRef? PeerRef { get; protected set; }
     public TimeSpan JustDisconnectedPeriod { get; init; } = TimeSpan.FromSeconds(3);
     public TimeSpan MinReconnectsIn { get; init; } = TimeSpan.FromSeconds(1);
 
