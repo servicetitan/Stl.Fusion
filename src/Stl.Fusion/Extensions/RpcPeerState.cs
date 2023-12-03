@@ -1,42 +1,39 @@
-using Stl.Rpc.Infrastructure;
-
 namespace Stl.Fusion.Extensions;
 
-// Any Moment below is derived with RpcHub.Clock, which is CpuClock
-
-public abstract record RpcPeerState
+public enum RpcPeerStateKind
 {
-    public abstract Moment EnteredAt { get; }
+    Connected = 0,
+    JustDisconnected,
+    Disconnected,
+    Reconnecting,
+}
 
-    public RpcPeerConnectedState ToConnected(Moment now)
-        => this as RpcPeerConnectedState ?? new RpcPeerConnectedState(now);
+public sealed record RpcPeerState(
+    RpcPeerStateKind Kind,
+    Exception? LastError = null,
+    TimeSpan? ReconnectsIn = null)
+{
+    public bool IsConnected => Kind == RpcPeerStateKind.Connected;
+    public bool IsOrLikelyConnected =>
+        Kind == RpcPeerStateKind.Connected
+        || Kind == RpcPeerStateKind.JustDisconnected;
 
-    public RpcPeerDisconnectedState ToDisconnected(Moment now, Moment reconnectsAt, RpcPeerConnectionState state)
-        => ToDisconnected(now, reconnectsAt, state.Error);
-    public RpcPeerDisconnectedState ToDisconnected(Moment now, Moment reconnectsAt, Exception? lastError)
+    public string GetDescription(bool useLastError = false)
     {
-        if (this is not RpcPeerDisconnectedState d)
-            return new RpcPeerDisconnectedState(now, reconnectsAt, lastError);
+        switch (Kind) {
+        case RpcPeerStateKind.Connected:
+            return "Connected.";
+        case RpcPeerStateKind.JustDisconnected:
+            return "Connected, checking...";
+        case RpcPeerStateKind.Reconnecting:
+            return "Reconnecting...";
+        }
+        if (LastError == null || !useLastError)
+            return "Disconnected.";
 
-        if (reconnectsAt == d.ReconnectsAt && d.LastError == lastError)
-            return d;
-
-        return new RpcPeerDisconnectedState(d.DisconnectedAt, reconnectsAt, lastError ?? d.LastError);
+        var message = LastError.Message.Trim();
+        if (!(message.EndsWith('.') || message.EndsWith('!') || message.EndsWith('?')))
+            message += ".";
+        return "Disconnected: " + message;
     }
-}
-
-public sealed record RpcPeerConnectedState(
-    Moment ConnectedAt
-) : RpcPeerState
-{
-    public override Moment EnteredAt => ConnectedAt;
-}
-
-public sealed record RpcPeerDisconnectedState(
-    Moment DisconnectedAt,
-    Moment ReconnectsAt, // < Now = tries to reconnect now
-    Exception? LastError
-) : RpcPeerState
-{
-    public override Moment EnteredAt => DisconnectedAt;
 }

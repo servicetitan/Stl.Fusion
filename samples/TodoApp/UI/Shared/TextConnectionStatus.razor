@@ -1,5 +1,5 @@
 @using Stl.Rpc
-@inherits StatefulComponentBase<IState<RpcPeerComputedState>>
+@inherits StatefulComponentBase<IState<RpcPeerState>>
 
 @{
     var m = State.Value;
@@ -9,7 +9,7 @@
 <Div Margin="Margin.Is1.OnY" TextColor="@(isConnected ? TextColor.Default : TextColor.Warning)">
     <span>Connection state: </span>
     <strong>
-        <span>@(m.GetActivityDescription(true))</span>
+        <span>@(m.GetDescription(true))</span>
         @if (m.ReconnectsIn is { } reconnectsIn) {
             <span> Will reconnect <TimerBadge ExpiresAt="@(Clock.Now + reconnectsIn)"/>. </span>
             <Anchor TextColor="@TextColor.Success" Clicked="@Reconnect">Reconnect</Anchor>
@@ -24,7 +24,7 @@
     [Parameter]
     public string CssClass { get; set; } = "";
 
-    protected override IState<RpcPeerComputedState> CreateState()
+    protected override IState<RpcPeerState> CreateState()
         => Monitor.State;
 
     private void Reconnect()

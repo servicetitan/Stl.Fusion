@@ -1,5 +1,5 @@
 @using Stl.Rpc
-@inherits StatefulComponentBase<IState<RpcPeerComputedState>>
+@inherits StatefulComponentBase<IState<RpcPeerState>>
 
 @{
     var m = State.Value;
@@ -19,7 +19,7 @@
         </BarDropdownToggle>
         <BarDropdownMenu>
             <BarDropdownItem TextColor="@textColor">
-                <span>@m.GetActivityDescription(true)</span>
+                <span>@m.GetDescription(true)</span>
                 @if (m.ReconnectsIn is { } reconnectsIn) {
                     <span> Will reconnect <TimerBadge ExpiresAt="@(Clock.Now + reconnectsIn)"/>. </span>
                     <Button Color="Color.Success" Clicked="@Reconnect">Reconnect</Button>
@@ -35,7 +35,7 @@
 
     [Parameter] public string CssClass { get; set; } = "";
 
-    protected override IState<RpcPeerComputedState> CreateState()
+    protected override IState<RpcPeerState> CreateState()
         => Monitor.State;
 
     private void Reconnect()
