@@ -3,7 +3,7 @@
 
 @{
     var m = State.Value;
-    var isOk = m.LikelyConnected;
+    var isOk = m.Kind is not RpcPeerStateKind.Disconnected;
     var iconName = isOk
         ? FontAwesomeIcons.Cloud
         : FontAwesomeIcons.ExclamationTriangle;

@@ -47,14 +47,15 @@ public class FusionRpcBasicTest(ITestOutputHelper @out) : SimpleFusionTestBase(@
         var clientPeer = testClient.Connections.First().Value.ClientPeer;
         var monitor = new RpcPeerStateMonitor(services, clientPeer);
         var state = monitor.State;
-        await state.When(x => x.IsConnected).WaitAsync(TimeSpan.FromSeconds(1));
+        await state.When(x => x.Kind == RpcPeerStateKind.JustConnected).WaitAsync(TimeSpan.FromSeconds(1));
+        await state.When(x => x.Kind == RpcPeerStateKind.Connected).WaitAsync(TimeSpan.FromSeconds(2));
 
         _ = clientPeer.Disconnect(false, new InvalidOperationException("Disconnected!"));
-        await state.When(x => x.Kind == RpcPeerStateKind.JustDisconnected)
-            .WaitAsync(TimeSpan.FromSeconds(2));
-        await state.When(x => !x.LikelyConnected).WaitAsync(TimeSpan.FromSeconds(5));
+        await state.When(x => x.Kind == RpcPeerStateKind.JustDisconnected).WaitAsync(TimeSpan.FromSeconds(1));
+        await state.When(x => x.Kind == RpcPeerStateKind.Disconnected).WaitAsync(TimeSpan.FromSeconds(5));
 
         await testClient[clientPeer].Connect();
-        await state.When(x => x.IsConnected).WaitAsync(TimeSpan.FromSeconds(1));
+        await state.When(x => x.Kind == RpcPeerStateKind.JustConnected).WaitAsync(TimeSpan.FromSeconds(1));
+        await state.When(x => x.Kind == RpcPeerStateKind.Connected).WaitAsync(TimeSpan.FromSeconds(2));
     }
 }
