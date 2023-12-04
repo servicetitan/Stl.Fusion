@@ -8,6 +8,7 @@ public sealed class Connector<TConnection> : WorkerBase
     private readonly Func<CancellationToken, Task<TConnection>> _connectionFactory;
     private volatile AsyncState<State> _state = new(State.New(), true);
     private long _reconnectsAt;
+    private bool _resetTryIndex;
 
     public AsyncState<Result<bool>> IsConnected { get; private set; } = new(false, true);
     public Moment? ReconnectsAt { // Relative to CpuClock.Now
@@ -72,6 +73,12 @@ public sealed class Connector<TConnection> : WorkerBase
         prevState.Value.Dispose();
     }
 
+    public void ResetTryIndex()
+    {
+        lock (Lock)
+            _resetTryIndex = true;
+    }
+
     // Protected & private methods
 
     protected override async Task OnRun(CancellationToken cancellationToken)
@@ -117,9 +124,14 @@ public sealed class Connector<TConnection> : WorkerBase
             lock (Lock) {
                 if (state == _state) {
                     var oldState = state;
+                    var newTryIndex = state.Value.TryIndex + 1;
+                    if (_resetTryIndex) {
+                        _resetTryIndex = false;
+                        newTryIndex = 0;
+                    }
                     state = _state = oldState.SetNext(State.New() with {
                         LastError = error,
-                        TryIndex = state.Value.TryIndex + 1,
+                        TryIndex = newTryIndex,
                     });
                     oldState.Value.Dispose();
                 }

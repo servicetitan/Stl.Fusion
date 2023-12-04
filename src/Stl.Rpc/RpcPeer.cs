@@ -10,6 +10,7 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
     private ILogger? _log;
     private readonly Lazy<ILogger?> _callLogLazy;
     private AsyncState<RpcPeerConnectionState> _connectionState = new(RpcPeerConnectionState.Disconnected, true);
+    private bool _resetTryIndex;
     private ChannelWriter<RpcMessage>? _sender;
 
     protected IServiceProvider Services => Hub.Services;
@@ -100,6 +101,12 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
             readerAbortSource.CancelAndDisposeSilently();
         // ReSharper disable once MethodSupportsCancellation
         return connectionState.WhenNext();
+    }
+
+    public void ResetTryIndex()
+    {
+        lock (Lock)
+            _resetTryIndex = true;
     }
 
     // Protected methods
@@ -329,6 +336,10 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
         }
         Exception? terminalError = null;
         try {
+            if (newState.TryIndex != 0 && _resetTryIndex) {
+                _resetTryIndex = false;
+                newState = newState with { TryIndex = 0 };
+            }
             _connectionState = connectionState = connectionState.SetNext(newState);
             if (newState.Error != null && Hub.UnrecoverableErrorDetector.Invoke(newState.Error, StopToken)) {
                 terminalError = newState.Error is ConnectionUnrecoverableException
