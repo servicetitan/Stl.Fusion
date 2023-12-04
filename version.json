@@ -1,6 +1,6 @@
 {
   "$schema": "NerdBank.GitVersioning/version.schema.json",
-  "version": "6.7",
+  "version": "6.8",
   "assemblyVersion": {
     "precision": "revision"
   },
