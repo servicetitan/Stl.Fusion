@@ -3,6 +3,8 @@ using Stl.Locking;
 using Stl.RestEase;
 using Stl.Rpc;
 using Stl.Rpc.Clients;
+using Stl.Rpc.Infrastructure;
+using Stl.Rpc.WebSockets;
 using Stl.Testing.Collections;
 using Stl.Time.Testing;
 using Xunit.DependencyInjection;
@@ -21,6 +23,7 @@ public abstract class RpcTestBase(ITestOutputHelper @out) : TestBase(@out), IAsy
     private RpcWebHost? _webHost;
     private ILogger? _log;
 
+    public TimeSpan WebSocketWriteDelay { get; set; } = TimeSpan.FromMilliseconds(1);
     public bool UseLogging { get; init; } = true;
     public bool UseTestClock { get; init; }
     public bool IsLogEnabled { get; init; } = true;
@@ -111,12 +114,16 @@ public abstract class RpcTestBase(ITestOutputHelper @out) : TestBase(@out), IAsy
 
         var rpc = services.AddRpc();
         if (!isClient) {
-            services.AddSingleton(_ => new RpcWebHost(services, GetType().Assembly));
-            // rpc.UseWebSocketServer(); // Not necessary - RpcTestWebHost already does this
+            services.AddSingleton(_ => new RpcWebHost(services, GetType().Assembly) {
+                WebSocketWriteDelay = WebSocketWriteDelay,
+            });
         }
         else {
             rpc.AddWebSocketClient(_ => RpcWebSocketClient.Options.Default with {
                 HostUrlResolver = (_, _) => WebHost.ServerUri.ToString(),
+                WebSocketChannelOptions = WebSocketChannel<RpcMessage>.Options.Default with {
+                    WriteDelay = WebSocketWriteDelay,
+                },
             });
             var restEase = services.AddRestEase();
             restEase.ConfigureHttpClient((_, _, options) => {

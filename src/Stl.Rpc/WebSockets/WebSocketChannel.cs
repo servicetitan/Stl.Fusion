@@ -16,11 +16,12 @@ public sealed class WebSocketChannel<T> : Channel<T>
     {
         public static readonly Options Default = new();
 
-        public int WriteFrameSize { get; init; } = 4400;
+        public int WriteFrameSize { get; init; } = 1450 * 3; // 1500 is the default MTU
         public int WriteBufferSize { get; init; } = 16_000; // Rented ~just once, so it can be large
         public int ReadBufferSize { get; init; } = 16_000; // Rented ~just once, so it can be large
         public int RetainedBufferSize { get; init; } = 64_000; // Any buffer is released when it hits this size
         public int MaxItemSize { get; init; } = 130_000_000; // 130 MB;
+        public TimeSpan WriteDelay { get; init; } = TimeSpan.FromMilliseconds(1); // Next timer tick, actually
         public TimeSpan CloseTimeout { get; init; } = TimeSpan.FromSeconds(10);
         public DualSerializer<T> Serializer { get; init; } = new();
         public BoundedChannelOptions ReadChannelOptions { get; init; } = new(128) {
@@ -47,6 +48,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
     private readonly int _writeBufferSize;
     private readonly int _releaseBufferSize;
     private readonly int _maxItemSize;
+    private readonly TimeSpan _writeDelay;
     private readonly IByteSerializer<T> _byteSerializer;
     private readonly ITextSerializer<T> _textSerializer;
     private readonly WebSocketMessageType _defaultMessageType;
@@ -92,6 +94,7 @@ public sealed class WebSocketChannel<T> : Channel<T>
         _writeBufferSize = settings.WriteBufferSize;
         _releaseBufferSize = settings.RetainedBufferSize;
         _maxItemSize = settings.MaxItemSize;
+        _writeDelay = settings.WriteDelay.Positive();
         _byteSerializer = settings.Serializer.ByteSerializer;
         _textSerializer = settings.Serializer.TextSerializer;
         _defaultMessageType = Serializer.DefaultFormat == DataFormat.Text
@@ -172,13 +175,19 @@ public sealed class WebSocketChannel<T> : Channel<T>
             var reader = _writeChannel.Reader;
             if (_defaultMessageType == WebSocketMessageType.Binary) {
                 // Binary -> we build frames
+                if (_writeDelay != default) {
+                    // There is write delay -> we use more complex write logic
+                    await RunWriterWithWriteDelay(reader, cancellationToken).ConfigureAwait(false);
+                    return;
+                }
+
+                // Simpler logic for no write delay case
                 while (await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false)) {
                     while (reader.TryRead(out var item)) {
                         if (TrySerialize(item, _writeBuffer) && _writeBuffer.WrittenCount >= _writeFrameSize)
                             await FlushWriteBuffer(false, cancellationToken).ConfigureAwait(false);
                     }
-                    if (_writeBuffer.WrittenCount > 0)
-                        await FlushWriteBuffer(true, cancellationToken).ConfigureAwait(false);
+                    await FlushWriteBuffer(true, cancellationToken).ConfigureAwait(false);
                 }
             }
             else {
@@ -194,6 +203,66 @@ public sealed class WebSocketChannel<T> : Channel<T>
         finally {
             _ = Close();
         }
+    }
+
+    [RequiresUnreferencedCode(UnreferencedCode.Serialization)]
+    private async Task RunWriterWithWriteDelay(ChannelReader<T> reader, CancellationToken cancellationToken)
+    {
+        Task? whenMustFlush = null; // null = no flush required / nothing to flush
+        Task<bool>? waitToReadTask = null;
+        while (true) {
+            // When we are here, the sync read part is completed, so WaitToReadAsync will likely await.
+            if (whenMustFlush != null) {
+                if (whenMustFlush.IsCompleted) {
+                    // Flush is required right now.
+                    // We aren't going to check WaitToReadAsync, coz most likely it's going to await.
+                    if (_writeBuffer.WrittenCount > 0)
+                        await FlushWriteBuffer(true, cancellationToken).ConfigureAwait(false);
+                    whenMustFlush = null;
+                }
+                else {
+                    // Flush is pending.
+                    // We must await for either it or WaitToReadAsync - what comes first.
+                    waitToReadTask ??= reader.WaitToReadAsync(cancellationToken).AsTask();
+                    await Task.WhenAny(whenMustFlush, waitToReadTask).ConfigureAwait(false);
+                    if (!waitToReadTask.IsCompleted)
+                        continue; // whenMustFlush is completed, waitToReadTask is not
+                }
+            }
+
+            // If we're here, it's either:
+            // - whenMustFlush == null -> we only need to await for waitToReadTask or WaitToReadAsync
+            // - both whenMustFlush and waitToReadTask are completed
+            bool canRead;
+            if (waitToReadTask != null) {
+                canRead = await waitToReadTask.ConfigureAwait(false);
+                waitToReadTask = null;
+            }
+            else
+                canRead = await reader.WaitToReadAsync(cancellationToken).ConfigureAwait(false);
+            if (!canRead)
+                break; // Reading is done
+
+            while (reader.TryRead(out var item)) {
+                if (!TrySerialize(item, _writeBuffer))
+                    continue; // Nothing is written
+
+                if (_writeBuffer.WrittenCount >= _writeFrameSize) {
+                    await FlushWriteBuffer(false, cancellationToken).ConfigureAwait(false);
+                    // We just "crossed" _writeFrameSize boundary, so the flush we just made
+                    // flushed everything except maybe the most recent item.
+                    // We can safely "declare" that if any flush was expected before that moment,
+                    // it just happened. As for the most recent item, see the next "if".
+                    whenMustFlush = null;
+                }
+            }
+            if (whenMustFlush == null && _writeBuffer.WrittenCount > 0) {
+                // If we're here, the write flush isn't "planned" yet + there is some data to flush.
+                whenMustFlush = Task.Delay(_writeDelay, CancellationToken.None);
+            }
+        }
+        // Final write flush
+        await FlushWriteBuffer(true, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask FlushWriteBuffer(bool completely, CancellationToken cancellationToken)

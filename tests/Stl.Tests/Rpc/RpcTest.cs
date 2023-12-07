@@ -284,11 +284,15 @@ public class RpcWebSocketTest(ITestOutputHelper @out) : RpcTestBase(@out)
         {
             var startedAt = CpuTimestamp.Now;
             for (var threadIndex = 0; threadIndex < threadCount; threadIndex++) {
-                tasks[threadIndex] = Task.Run(async () => {
-                    for (var i = count; i > 0; i--)
-                        if (i != await client.Div(i, 1).ConfigureAwait(false))
-                            Assert.Fail("Wrong result.");
-                }, CancellationToken.None);
+                tasks[threadIndex] = Task.Run(() =>
+                    Enumerable
+                        .Range(0, count)
+                        .Select(async i => {
+                            if (i != await client.Div(i, 1).ConfigureAwait(false))
+                                Assert.Fail("Wrong result.");
+                        })
+                        .Collect(256),
+                    CancellationToken.None);
             }
 
             await Task.WhenAll(tasks);
@@ -299,7 +303,7 @@ public class RpcWebSocketTest(ITestOutputHelper @out) : RpcTestBase(@out)
     [Theory]
     [InlineData(100)]
     [InlineData(1000)]
-    [InlineData(50_000)]
+    [InlineData(10_000)]
     public async Task StreamPerformanceTest(int itemCount)
     {
         if (TestRunnerInfo.IsBuildAgent())

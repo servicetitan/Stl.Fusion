@@ -1,7 +1,9 @@
 using System.Reflection;
 using Microsoft.Extensions.Hosting;
 using Stl.Rpc;
+using Stl.Rpc.Infrastructure;
 using Stl.Rpc.Server;
+using Stl.Rpc.WebSockets;
 
 #if NETFRAMEWORK
 using Owin;
@@ -18,6 +20,7 @@ public class RpcWebHost : TestWebHostBase
 {
     public IServiceCollection BaseServices { get; }
     public Assembly? ControllerAssembly { get; set; }
+    public TimeSpan WebSocketWriteDelay { get; set; }
 
     public RpcWebHost(IServiceCollection baseServices, Assembly? controllerAssembly = null)
     {
@@ -33,7 +36,15 @@ public class RpcWebHost : TestWebHostBase
 
             // Since we copy all services here,
             // only web-related ones must be added to services
-            services.AddRpc().AddWebSocketServer();
+            var webSocketServer = services.AddRpc().AddWebSocketServer();
+            webSocketServer.Configure(_ => {
+                var defaultOptions = RpcWebSocketServer.Options.Default;
+                return defaultOptions with {
+                    WebSocketChannelOptions = defaultOptions.WebSocketChannelOptions with {
+                        WriteDelay = WebSocketWriteDelay,
+                    },
+                };
+            });
             if (ControllerAssembly != null) {
 #if NETFRAMEWORK
                 var controllerTypes = ControllerAssembly.GetControllerTypes().ToArray();
