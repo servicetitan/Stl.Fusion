@@ -233,6 +233,7 @@ public class RpcWebSocketTest(ITestOutputHelper @out) : RpcTestBase(@out)
     [Fact]
     public async Task StreamDebugTest()
     {
+        WebSocketWriteDelay = default;
         await using var _ = await WebHost.Serve();
         var services = ClientServices;
         var peer = services.RpcHub().GetClientPeer(ClientPeerRef);
