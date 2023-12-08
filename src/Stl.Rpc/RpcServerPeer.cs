@@ -3,15 +3,11 @@ using Stl.Rpc.Internal;
 
 namespace Stl.Rpc;
 
-public class RpcServerPeer : RpcPeer
+public class RpcServerPeer(RpcHub hub, RpcPeerRef @ref) : RpcPeer(hub, @ref)
 {
     private volatile AsyncState<RpcConnection?> _nextConnection = new(null, true);
 
     public TimeSpan CloseTimeout { get; init; } = TimeSpan.FromMinutes(10);
-
-    public RpcServerPeer(RpcHub hub, RpcPeerRef @ref)
-        : base(hub, @ref)
-        => LocalServiceFilter = static serviceDef => !serviceDef.IsBackend;
 
     public void SetConnection(RpcConnection connection)
     {

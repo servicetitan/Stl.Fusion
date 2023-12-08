@@ -27,7 +27,7 @@ public class RpcWebSocketTest(ITestOutputHelper @out) : RpcTestBase(@out)
             services.AddSingleton<RpcPeerFactory>(c => static (hub, peerRef) => {
                 return peerRef.IsServer
                     ? new RpcServerPeer(hub, peerRef) {
-                        LocalServiceFilter = static serviceDef
+                        LocalServiceFilter = static (peer, serviceDef)
                             => !serviceDef.IsBackend || serviceDef.Type == typeof(ITestRpcBackend),
                     }
                     : new RpcClientPeer(hub, peerRef);

@@ -16,6 +16,7 @@ public delegate Task<RpcConnection> RpcServerConnectionFactory(
     RpcServerPeer peer, Channel<RpcMessage> channel, ImmutableOptionSet options, CancellationToken cancellationToken);
 public delegate string RpcClientIdGenerator();
 public delegate bool RpcBackendServiceDetector(Type serviceType, Symbol serviceName);
+public delegate bool RpcLocalServiceFilter(RpcPeer peer, RpcServiceDef service);
 public delegate bool RpcUnrecoverableErrorDetector(Exception error, CancellationToken cancellationToken);
 public delegate RpcMethodTracer? RpcMethodTracerFactory(RpcMethodDef method);
 
@@ -51,11 +52,14 @@ public static class RpcDefaultDelegates
     public static RpcClientIdGenerator ClientIdGenerator { get; set; } =
         static () => RandomStringGenerator.Default.Next(32);
 
-    public static RpcBackendServiceDetector BackendServiceDetector { get; set; }=
+    public static RpcBackendServiceDetector BackendServiceDetector { get; set; } =
         static (serviceType, serviceName) =>
             typeof(IBackendService).IsAssignableFrom(serviceType)
             || serviceType.Name.EndsWith("Backend", StringComparison.Ordinal)
             || serviceName.Value.StartsWith("backend.", StringComparison.Ordinal);
+
+    public static RpcLocalServiceFilter LocalServiceFilter { get; set; } =
+        static (peer, serviceDef) => serviceDef.HasServer && !serviceDef.IsBackend;
 
     public static RpcUnrecoverableErrorDetector UnrecoverableErrorDetector { get; set; } =
         static (error, cancellationToken)

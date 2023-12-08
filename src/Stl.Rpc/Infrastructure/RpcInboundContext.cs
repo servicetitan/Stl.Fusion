@@ -47,7 +47,7 @@ public class RpcInboundContext
         if (serviceDef == null)
             return null;
 
-        if (!serviceDef.IsSystem && !Peer.LocalServiceFilter.Invoke(serviceDef))
+        if (!serviceDef.IsSystem && !Peer.LocalServiceFilter.Invoke(Peer, serviceDef))
             return null;
 
         return serviceDef.Get(Message.Method);

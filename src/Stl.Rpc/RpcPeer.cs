@@ -22,7 +22,7 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
     public RpcPeerRef Ref { get; }
     public int InboundConcurrencyLevel { get; init; } = 0; // 0 = no concurrency limit, 1 = one call at a time, etc.
     public RpcArgumentSerializer ArgumentSerializer { get; init; }
-    public Func<RpcServiceDef, bool> LocalServiceFilter { get; init; }
+    public RpcLocalServiceFilter LocalServiceFilter { get; init; }
     public RpcInboundContextFactory InboundContextFactory { get; init; }
     public RpcInboundCallTracker InboundCalls { get; init; }
     public RpcOutboundCallTracker OutboundCalls { get; init; }
@@ -44,7 +44,7 @@ public abstract class RpcPeer : WorkerBase, IHasId<Guid>
         _callLogLazy = new Lazy<ILogger?>(() => Log.IfEnabled(CallLogLevel), LazyThreadSafetyMode.PublicationOnly);
 
         ArgumentSerializer = Hub.ArgumentSerializer;
-        LocalServiceFilter = null!; // To make sure any descendant has to set it
+        LocalServiceFilter = Hub.LocalServiceFilter;
         InboundContextFactory = Hub.InboundContextFactory;
         InboundCalls = services.GetRequiredService<RpcInboundCallTracker>();
         InboundCalls.Initialize(this);

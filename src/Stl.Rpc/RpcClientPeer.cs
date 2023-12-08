@@ -15,7 +15,6 @@ public class RpcClientPeer : RpcPeer
     public RpcClientPeer(RpcHub hub, RpcPeerRef @ref)
         : base(hub, @ref)
     {
-        LocalServiceFilter = static _ => false;
         ConnectionFactory = Hub.ClientConnectionFactory;
         ReconnectDelayer = Hub.ClientPeerReconnectDelayer;
     }

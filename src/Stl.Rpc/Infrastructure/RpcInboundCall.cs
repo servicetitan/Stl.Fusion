@@ -165,11 +165,6 @@ public class RpcInboundCall<TResult>(RpcInboundContext context, RpcMethodDef met
     {
         var peer = Context.Peer;
         var message = Context.Message;
-        var isSystemServiceCall = ServiceDef.IsSystem;
-
-        if (!isSystemServiceCall && !peer.LocalServiceFilter.Invoke(ServiceDef))
-            throw Errors.NoService(ServiceDef.Type);
-
         var arguments = MethodDef.ArgumentListFactory.Invoke();
         var allowPolymorphism = MethodDef.AllowArgumentPolymorphism;
         if (!MethodDef.HasObjectTypedArguments)
