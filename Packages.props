@@ -50,7 +50,7 @@
     <AspNetCoreNewtonsoftJsonVersion7>$(AspNetCoreVersion7)</AspNetCoreNewtonsoftJsonVersion7>
     <AspNetCoreNewtonsoftJsonVersion6>$(AspNetCoreVersion6)</AspNetCoreNewtonsoftJsonVersion6>
     <NewtonsoftJsonVersion>13.0.*</NewtonsoftJsonVersion>
-    <MemoryPackVersion>1.10.*</MemoryPackVersion>
+    <MemoryPackVersion>1.9.*</MemoryPackVersion>
     <MessagePackVersion>2.5.*</MessagePackVersion>
     <!-- Other -->
     <RestEaseVersion>1.6.*</RestEaseVersion>
