@@ -76,7 +76,7 @@ public struct RingBuffer<T> : IReadOnlyList<T>
             throw new ArgumentOutOfRangeException(nameof(skipCount));
 
         var newStart = (_start + skipCount) & Capacity;
-        if (newStart > _start)
+        if (newStart >= _start)
             _buffer.AsSpan(_start, newStart - _start).Clear();
         else {
             _buffer.AsSpan(_start).Clear();
