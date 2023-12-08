@@ -75,7 +75,14 @@ public struct RingBuffer<T> : IReadOnlyList<T>
         if (skipCount < 0 || skipCount > Count)
             throw new ArgumentOutOfRangeException(nameof(skipCount));
 
-        _start = (_start + skipCount) & Capacity;
+        var newStart = (_start + skipCount) & Capacity;
+        if (newStart > _start)
+            _buffer.AsSpan(_start, newStart - _start).Clear();
+        else {
+            _buffer.AsSpan(_start).Clear();
+            _buffer.AsSpan(0, newStart).Clear();
+        }
+        _start = newStart;
     }
 
     public T PullHead()
@@ -92,7 +99,9 @@ public struct RingBuffer<T> : IReadOnlyList<T>
             return false;
         }
 
-        head = _buffer[_start];
+        ref var headRef = ref _buffer[_start];
+        head = headRef;
+        headRef = default!;
         _start = (_start + 1) & Capacity;
         return true;
     }
@@ -112,7 +121,9 @@ public struct RingBuffer<T> : IReadOnlyList<T>
         }
 
         _end = (_end - 1) & Capacity;
-        tail = _buffer[_end];
+        ref var tailRef = ref _buffer[_end];
+        tail = tailRef;
+        tailRef = default!;
         return true;
     }
 
@@ -127,8 +138,10 @@ public struct RingBuffer<T> : IReadOnlyList<T>
 
     public void PushHeadAndMoveTailIfFull(T head)
     {
-        if (IsFull)
+        if (IsFull) {
             _end = (_end - 1) & Capacity;
+            _buffer[_end] = default!;
+        }
         _start = (_start - 1) & Capacity;
         _buffer[_start] = head;
     }
@@ -142,14 +155,19 @@ public struct RingBuffer<T> : IReadOnlyList<T>
 
     public void PushTailAndMoveHeadIfFull(T tail)
     {
-        if (IsFull)
+        if (IsFull) {
+            _buffer[_start] = default!;
             _start = (_start + 1) & Capacity;
+        }
         _buffer[_end] = tail;
         _end = (_end + 1) & Capacity;
     }
 
     public void Clear()
-        => _end = _start = 0;
+    {
+        _end = _start = 0;
+        _buffer.AsSpan().Clear();
+    }
 
     // Private methods
 
