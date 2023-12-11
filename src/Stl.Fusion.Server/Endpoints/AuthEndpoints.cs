@@ -10,7 +10,7 @@ public class AuthEndpoints(AuthEndpoints.Options settings)
     {
         public static Options Default { get; set; } = new();
 
-        public string DefaultScheme { get; init; } = "";
+        public string DefaultSignInScheme { get; init; } = "";
         public string DefaultSignOutScheme { get; init; } = CookieAuthenticationDefaults.AuthenticationScheme;
         public Action<HttpContext, AuthenticationProperties>? SignInPropertiesBuilder { get; init; } = null;
         public Action<HttpContext, AuthenticationProperties>? SignOutPropertiesBuilder { get; init; } = null;
@@ -23,7 +23,7 @@ public class AuthEndpoints(AuthEndpoints.Options settings)
         string? scheme,
         string? returnUrl)
     {
-        scheme = scheme.NullIfEmpty() ?? Settings.DefaultScheme;
+        scheme = scheme.NullIfEmpty() ?? Settings.DefaultSignInScheme;
         returnUrl ??= "/";
         var properties = new AuthenticationProperties { RedirectUri = returnUrl };
         Settings.SignInPropertiesBuilder?.Invoke(httpContext, properties);

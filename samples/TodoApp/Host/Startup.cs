@@ -127,7 +127,7 @@ public class Startup(IConfiguration cfg, IWebHostEnvironment environment)
                     .WithValidator(tenantId => tenantId.Value.StartsWith("tenant")),
             });
         fusionServer.ConfigureAuthEndpoint(_ => new() {
-            DefaultScheme = MicrosoftAccountDefaults.AuthenticationScheme,
+            DefaultSignInScheme = MicrosoftAccountDefaults.AuthenticationScheme,
             SignInPropertiesBuilder = (_, properties) => {
                 properties.IsPersistent = true;
             }
