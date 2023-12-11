@@ -4,91 +4,44 @@ using Microsoft.AspNetCore.Http;
 
 namespace Stl.Fusion.Server.Endpoints;
 
-public class AuthEndpoints
+public class AuthEndpoints(AuthEndpoints.Options settings)
 {
     public record Options
     {
         public static Options Default { get; set; } = new();
 
         public string DefaultScheme { get; init; } = "";
-        public string SignOutAuthenticationScheme { get; init; } = CookieAuthenticationDefaults.AuthenticationScheme;
+        public string DefaultSignOutScheme { get; init; } = CookieAuthenticationDefaults.AuthenticationScheme;
         public Action<HttpContext, AuthenticationProperties>? SignInPropertiesBuilder { get; init; } = null;
         public Action<HttpContext, AuthenticationProperties>? SignOutPropertiesBuilder { get; init; } = null;
     }
 
-    public Options Settings { get; }
+    public Options Settings { get; } = settings;
 
-    public AuthEndpoints(Options settings)
-        => Settings = settings;
-
-    public virtual Task<ChallengeResult> SignIn(HttpContext context,
+    public virtual Task SignIn(
+        HttpContext httpContext,
         string? scheme,
-        string? returnUrl = null)
+        string? returnUrl)
     {
-        scheme ??= Settings.DefaultScheme;
+        scheme = scheme.NullIfEmpty() ?? Settings.DefaultScheme;
         returnUrl ??= "/";
-        var authenticationProperties = new AuthenticationProperties { RedirectUri = returnUrl };
-        Settings.SignInPropertiesBuilder?.Invoke(context, authenticationProperties);
-        return Task.FromResult(new ChallengeResult(authenticationProperties, scheme));
+        var properties = new AuthenticationProperties { RedirectUri = returnUrl };
+        Settings.SignInPropertiesBuilder?.Invoke(httpContext, properties);
+        return httpContext.ChallengeAsync(scheme, properties);
     }
 
-    public virtual Task<SignOutResult> SignOut(HttpContext context,
-        string? returnUrl = null)
+    public virtual Task SignOut(
+        HttpContext httpContext,
+        string? scheme,
+        string? returnUrl)
     {
         // Instruct the cookies middleware to delete the local cookie created
         // when the user agent is redirected from the external identity provider
         // after a successful authentication flow (e.g Google or Facebook).
+        scheme = scheme.NullIfEmpty() ?? Settings.DefaultSignOutScheme;
         returnUrl ??= "/";
-        var authenticationProperties = new AuthenticationProperties { RedirectUri = returnUrl };
-        Settings.SignOutPropertiesBuilder?.Invoke(context, authenticationProperties);
-        return Task.FromResult(new SignOutResult(authenticationProperties, Settings.SignOutAuthenticationScheme));
-    }
-
-    // Nested types
-
-    public class ChallengeResult
-#if NET7_0_OR_GREATER
-        : Microsoft.AspNetCore.Http.IResult
-#endif
-    {
-        public AuthenticationProperties AuthenticationProperties { get; init; }
-        public string[] AuthenticationSchemes { get; init; }
-
-        public ChallengeResult(AuthenticationProperties authenticationProperties, params string[] authenticationSchemes)
-        {
-            AuthenticationProperties = authenticationProperties;
-            AuthenticationSchemes = authenticationSchemes;
-        }
-
-#if NET7_0_OR_GREATER
-        public virtual Task ExecuteAsync(HttpContext httpContext)
-        {
-            var actualResult = Results.Challenge(AuthenticationProperties, AuthenticationSchemes);
-            return actualResult.ExecuteAsync(httpContext);
-        }
-#endif
-    }
-
-    public class SignOutResult
-#if NET7_0_OR_GREATER
-        : Microsoft.AspNetCore.Http.IResult
-#endif
-    {
-        public AuthenticationProperties AuthenticationProperties { get; init; }
-        public string[] AuthenticationSchemes { get; init; }
-
-        public SignOutResult(AuthenticationProperties authenticationProperties, params string[] authenticationSchemes)
-        {
-            AuthenticationProperties = authenticationProperties;
-            AuthenticationSchemes = authenticationSchemes;
-        }
-
-#if NET7_0_OR_GREATER
-        public virtual Task ExecuteAsync(HttpContext httpContext)
-        {
-            var actualResult = Results.SignOut(AuthenticationProperties, AuthenticationSchemes);
-            return actualResult.ExecuteAsync(httpContext);
-        }
-#endif
+        var properties = new AuthenticationProperties { RedirectUri = returnUrl };
+        Settings.SignOutPropertiesBuilder?.Invoke(httpContext, properties);
+        return httpContext.SignOutAsync(scheme, properties);
     }
 }

@@ -3,25 +3,14 @@ using Stl.Fusion.Server.Endpoints;
 
 namespace Stl.Fusion.Server.Controllers;
 
-public sealed class AuthController : Controller
+public sealed class AuthController(AuthEndpoints handler) : Controller
 {
-    private readonly AuthEndpoints _handler;
-
-    public AuthController(AuthEndpoints handler)
-        => _handler = handler;
-
     [HttpGet("~/signIn")]
     [HttpGet("~/signIn/{scheme}")]
-    public async Task<IActionResult> SignIn(string? scheme = null, string? returnUrl = null)
-    {
-        var result = await _handler.SignIn(HttpContext, scheme, returnUrl).ConfigureAwait(false);
-        return Challenge(result.AuthenticationProperties, result.AuthenticationSchemes);
-    }
+    public Task SignIn(string? scheme = null, string? returnUrl = null)
+        => handler.SignIn(HttpContext, scheme, returnUrl);
 
     [HttpGet("~/signOut")]
-    public async Task<IActionResult> SignOut(string? returnUrl = null)
-    {
-        var result = await _handler.SignOut(HttpContext, returnUrl).ConfigureAwait(false);
-        return SignOut(result.AuthenticationProperties, result.AuthenticationSchemes);
-    }
+    public Task SignOut(string? scheme = null, string? returnUrl = null)
+        => handler.SignOut(HttpContext, scheme, returnUrl);
 }
