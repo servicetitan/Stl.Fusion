@@ -23,7 +23,7 @@ async Task Run<TTest>()
     await using var test = (TTest)typeof(TTest).CreateInstance(testOutputHelper);
     test.IsConsoleApp = true;
     test.UseOperationLogChangeTracking = false;
-    test.UseEntityResolver = HasSwitch("useEntityResolver") || HasSwitch("+er");
+    test.UseEntityResolver = HasSwitch("-useEntityResolver") || HasSwitch("-er");
     await test.InitializeAsync();
     await test.ComputedPerformanceTest();
     WriteLine("");

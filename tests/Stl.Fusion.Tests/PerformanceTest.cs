@@ -39,11 +39,15 @@ public abstract class PerformanceTestBase : FusionTestBase
         var plainUsers = Services.GetRequiredService<UserService>();
         plainUsers.UseEntityResolver = UseEntityResolver;
 
-        var opCountPerCore = 8_000_000;
-        var readersPerCore = 20;
-        var readerCount = HardwareInfo.GetProcessorCountFactor(readersPerCore);
-        var fusionIterationCount = opCountPerCore / readersPerCore;
-        var nonFusionIterationCount = fusionIterationCount / (UseEntityResolver ? 2000 : 6000);
+        var fusionOpCountPerCore = 16_000_000;
+        var fusionReadersPerCore = 32;
+        var fusionIterationCount = fusionOpCountPerCore / fusionReadersPerCore;
+        var fusionReaderCount = HardwareInfo.GetProcessorCountFactor(fusionReadersPerCore);
+
+        var nonFusionOpCountPerCore = fusionOpCountPerCore / (UseEntityResolver ? 1000 : 2000);
+        var nonFusionReadersPerCore = 32; // We may need more readers here to maximize the throughput w/ parallel queries
+        var nonFusionIterationCount = nonFusionOpCountPerCore / nonFusionReadersPerCore;
+        var nonFusionReaderCount = HardwareInfo.GetProcessorCountFactor(nonFusionReadersPerCore);
 
         var withoutSerialization = (Action<User>?)null;
         var withSerialization = (Action<User>?)(u => JsonSerializer.Serialize(u)); // STJ serializer
@@ -54,20 +58,20 @@ public abstract class PerformanceTestBase : FusionTestBase
         Out.WriteLine("With Stl.Fusion:");
         if (enableSerialization)
             await Test("Multiple readers + serialization, 1 mutator", users, withSerialization, true,
-                readerCount, fusionIterationCount / 2);
+                fusionReaderCount, fusionIterationCount / 2);
         await Test("Multiple readers, 1 mutator", users, withoutSerialization, true,
-            readerCount, fusionIterationCount);
+            fusionReaderCount, fusionIterationCount);
         await Test("Single reader, no mutators", users, withoutSerialization, false,
-            1, fusionIterationCount * 20);
+            1, fusionOpCountPerCore);
 
         Out.WriteLine("Without Stl.Fusion:");
         if (enableSerialization)
             await Test("Multiple readers + serialization, 1 mutator", plainUsers, withSerialization, true,
-                readerCount, nonFusionIterationCount);
+                nonFusionReaderCount, nonFusionIterationCount);
         await Test("Multiple readers, 1 mutator", plainUsers, withoutSerialization, true,
-            readerCount, nonFusionIterationCount);
+            nonFusionReaderCount, nonFusionIterationCount);
         await Test("Single reader, no mutators", plainUsers, withoutSerialization, false,
-            1, nonFusionIterationCount * 20);
+            1, nonFusionOpCountPerCore);
     }
 
     private async Task Test(string title,
