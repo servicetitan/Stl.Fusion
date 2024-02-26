@@ -18,6 +18,9 @@ public static class EnumerableExt
         bool allowSynchronousContinuations,
         CancellationToken cancellationToken = default)
     {
+        if (bufferSize < 1)
+            return source;
+
         var buffer = source.ToBoundedChannel(new(bufferSize) {
             SingleReader = true,
             SingleWriter = true,
@@ -31,6 +34,9 @@ public static class EnumerableExt
         BoundedChannelOptions options,
         CancellationToken cancellationToken = default)
     {
+        if (options.Capacity < 1)
+            return source;
+
         var buffer = source.ToBoundedChannel(options, cancellationToken);
         return buffer.Reader.ReadAllAsync(cancellationToken);
     }
