@@ -56,7 +56,7 @@
   </ItemGroup>
 
   <!-- Global usings -->
-  <ItemGroup Condition="!($(MSBuildProjectFile.Contains('Generators')))">
+  <ItemGroup Condition="!($(MSBuildProjectFile.Contains('Generators'))) and !($(MSBuildProjectFile.Contains('Analyzers')))">
     <Using Include="System.Console" Static="True" />
     <Using Include="System.Collections" />
     <Using Include="System.Collections.Immutable" />

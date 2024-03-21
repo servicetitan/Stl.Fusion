@@ -114,6 +114,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniRpc", "samples\MiniRpc\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultiServerRpc", "samples\MultiServerRpc\MultiServerRpc.csproj", "{DDD38FE8-3105-44E6-9128-921B0713FF64}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Stl.Analyzers", "src\Stl.Analyzers\Stl.Analyzers.csproj", "{A36C2D5F-65EA-4170-ABE4-7CD9A15B381E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -250,6 +252,10 @@ Global
 		{DDD38FE8-3105-44E6-9128-921B0713FF64}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DDD38FE8-3105-44E6-9128-921B0713FF64}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DDD38FE8-3105-44E6-9128-921B0713FF64}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A36C2D5F-65EA-4170-ABE4-7CD9A15B381E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A36C2D5F-65EA-4170-ABE4-7CD9A15B381E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A36C2D5F-65EA-4170-ABE4-7CD9A15B381E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A36C2D5F-65EA-4170-ABE4-7CD9A15B381E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -289,6 +295,7 @@ Global
 		{5A8530A3-E69B-4BD3-B7A7-01A916D166EB} = {A50B98CF-9AA1-4622-B2AD-5E17610115A7}
 		{99131CAD-DDC3-4B1A-ABB8-63E0FF32B03E} = {61E78666-E338-4F6B-8CD8-8CD5E13B7C54}
 		{DDD38FE8-3105-44E6-9128-921B0713FF64} = {61E78666-E338-4F6B-8CD8-8CD5E13B7C54}
+		{A36C2D5F-65EA-4170-ABE4-7CD9A15B381E} = {A50B98CF-9AA1-4622-B2AD-5E17610115A7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B50610D6-2B28-4258-98A2-A0B486FD5907}
