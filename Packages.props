@@ -62,7 +62,7 @@
     <AspNetCoreMvcTestingVersion3>$(AspNetCoreVersion3)</AspNetCoreMvcTestingVersion3>
     <AspNetCoreMvcTestingVersionN4>$(AspNetCoreVersion5)</AspNetCoreMvcTestingVersionN4>
     <!-- Build & Samples -->
-    <BlazoriseVersion>1.3.*</BlazoriseVersion>
+    <BlazoriseVersion>2.1.*</BlazoriseVersion>
     <StlFusionVersion>6.7.*</StlFusionVersion>
   </PropertyGroup>
 
